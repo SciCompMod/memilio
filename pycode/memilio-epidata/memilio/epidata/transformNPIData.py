@@ -251,12 +251,10 @@ def print_manual_download(filename, url):
 
 
 def transform_npi_data(fine_resolution=2,
-                       read_data=dd.defaultDict['read_data'],
                        file_format=dd.defaultDict['file_format'],
                        out_folder=dd.defaultDict['out_folder'],
                        start_date=dd.defaultDict['start_date'],
-                       end_date=dd.defaultDict['end_date'],
-                       make_plot=dd.defaultDict['make_plot'],
+                       end_date=dd.defaultDict['end_date']
                        ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and transforms it according to the
@@ -295,60 +293,46 @@ def transform_npi_data(fine_resolution=2,
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    if not read_data:
+    if fine_resolution > 0:
+        # defines delay in number of days between exceeding
+        # incidence threshold and NPI getting active
+        npi_activation_delay = 0
+        print('Using a delay of NPI activation of ' +
+              str(npi_activation_delay) + ' days.')
 
-        if fine_resolution > 0:
-            # defines delay in number of days between exceeding
-            # incidence threshold and NPI getting active
-            npi_activation_delay = 0
-            print('Using a delay of NPI activation of ' +
-                  str(npi_activation_delay) + ' days.')
+        try:
+            df_npis_old = pd.read_csv(
+                os.path.join(directory, 'kr_massnahmen_unterkategorien.csv'),
+                sep=',')  # , nrows=1248)  # 1248 for debugging, only reading Flensburg
+        except FileNotFoundError:
+            print_manual_download(
+                'kr_massnahmen_unterkategorien.csv',
+                'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
+            raise FileNotFoundError
+        df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
 
-            try:
-                df_npis_old = pd.read_csv(
-                    os.path.join(
-                        directory, 'kr_massnahmen_unterkategorien.csv'),
-                    sep=',')  # , nrows=1248)  # 1248 for debugging, only reading Flensburg
-            except FileNotFoundError:
-                print_manual_download(
-                    'kr_massnahmen_unterkategorien.csv',
-                    'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
-                raise FileNotFoundError
-            df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
+        # check if rows hospitals and geriatric care are still empty;
+        # these fields have been empty so far and are thus not used
+        test_codes = ['M23_010', 'M23_020', 'M23_030', 'M23_040',
+                      'M23_050', 'M23_060', 'M24_010', 'M24_020',
+                      'M24_030', 'M24_040', 'M24_050', 'M24_060']
+        for tcode in test_codes:
+            for i in [''] + ["_" + str(i) for i in range(1, 6)]:
+                if(df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
+                    print(tcode+i + " used.")
+        # end check
 
-            # check if rows hospitals and geriatric care are still empty
-            # these fields have been empty so far and are thus not used
-            test_codes = ['M23_010', 'M23_020', 'M23_030', 'M23_040',
-                          'M23_050', 'M23_060', 'M24_010', 'M24_020',
-                          'M24_030', 'M24_040', 'M24_050', 'M24_060']
-            for tcode in test_codes:
-                for i in [''] + ["_" + str(i) for i in range(1, 6)]:
-                    if(df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
-                        print(tcode+i + " used.")
-            # end check
+    else:  # read aggregated NPIs
 
-        else:  # read aggregated NPIs
-
-            try:
-                df_npis_old = pd.read_csv(os.path.join(
-                    directory, 'kr_massnahmen_oberkategorien.csv'))
-            except FileNotFoundError:
-                print_manual_download(
-                    'datensatzbeschreibung_massnahmen.xlsx',
-                    'https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise')
-                raise FileNotFoundError
-            df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
-
-    else:  # read formatted file
-
-        if fine_resolution > 0:
-            if fine_resolution == 1:
-                filename = 'germany_counties_npi_subcat_incgrouped'
-            else:
-                filename = 'germany_counties_npi_subcat'
-        else:
-            filename = 'germany_counties_npi_maincat'
-        df_npis = pd.read_json(directory + filename + ".json")
+        try:
+            df_npis_old = pd.read_csv(os.path.join(
+                directory, 'kr_massnahmen_oberkategorien.csv'))
+        except FileNotFoundError:
+            print_manual_download(
+                'datensatzbeschreibung_massnahmen.xlsx',
+                'https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise')
+            raise FileNotFoundError
+        df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
 
     # read data frame of variable names and descriptions
     try:
@@ -390,10 +374,7 @@ def transform_npi_data(fine_resolution=2,
         npi_codes_prior[npi_codes_prior == 'M16_200_2'] = 'M16_100_2'
 
         # check for missing codes
-        if not read_data:
-            npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
-        else:
-            npi_codes_prior_data = list(df_npis.columns[2:])
+        npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
 
         missing_codes = list(set(npi_codes_prior).difference(
             npi_codes_prior_data))
@@ -463,8 +444,8 @@ def transform_npi_data(fine_resolution=2,
         # extract variable names for main categories
         npi_desc = list(df_npis_desc["Variable"][npi_codes_sorting])
 
-    # NPIs group codes and description to ensure that both are ordered
-    # the same way; do not use npi_codes or npi_desc hereafter
+    # combine NPI codes and descriptions to ensure that both are ordered
+    # the same way; delete npi_codes or npi_desc for not using hereafter
     idx_codes_retained = ~pd.Series(npi_codes).isin(codes_dropped)
     npis_dummy = {
         dd.EngEng['npiCode']: list(pd.Series(npi_codes)[idx_codes_retained]),
@@ -473,55 +454,53 @@ def transform_npi_data(fine_resolution=2,
     del npi_codes
     del npi_desc
 
-    # transform data from original format to desired format
-    if not read_data:
-        # prepare grouping of NPIs to reduce product space of
-        # NPI x active_from_inc (with values "incidence does not matter", and
-        # incidence 0, 10, 35, 50, 100) to NPI
-        if fine_resolution == 1:
-            # create hash table from parental or main code/main category
-            # to list of subcodes/subcategories
-            maincode_to_npicodes_map = dict()
-            major_code = npis.iloc[:, 0][0]
-            maincode_to_npicodes_map[major_code] = []
-            for code in npis.iloc[:, 0]:
-                if major_code in code:
-                    maincode_to_npicodes_map[major_code].append(code)
-                else:
-                    major_code = code
-                    maincode_to_npicodes_map[major_code] = [code]
+    # prepare grouping of NPIs to reduce product space of
+    # NPI x active_from_inc (with values "incidence does not matter", and
+    # incidence 0, 10, 35, 50, 100) to NPI
+    if fine_resolution == 1:
+        # create hash table from parental or main code/main category
+        # to list of subcodes/subcategories
+        maincode_to_npicodes_map = dict()
+        major_code = npis.iloc[:, 0][0]
+        maincode_to_npicodes_map[major_code] = []
+        for code in npis.iloc[:, 0]:
+            if major_code in code:
+                maincode_to_npicodes_map[major_code].append(code)
+            else:
+                major_code = code
+                maincode_to_npicodes_map[major_code] = [code]
 
-            npi_codes_aggregated = []
-            for main_code in maincode_to_npicodes_map.keys():
-                if main_code.count('_') > 1:
-                    sys.exit('Error. Subcode assigned as main code.')
-                npi_codes_aggregated.append(main_code)
+        npi_codes_aggregated = []
+        for main_code in maincode_to_npicodes_map.keys():
+            if main_code.count('_') > 1:
+                sys.exit('Error. Subcode assigned as main code.')
+            npi_codes_aggregated.append(main_code)
 
-            npis_final = npis[npis[dd.EngEng['npiCode']].isin(
-                npi_codes_aggregated)].reset_index()
-        else:
-            npis_final = npis
+        npis_final = npis[npis[dd.EngEng['npiCode']].isin(
+            npi_codes_aggregated)].reset_index()
+    else:
+        npis_final = npis
 
-        # extract incidence-threshold for NPIs
-        if fine_resolution > 0:
-            npi_incid_start = dict()
-            for i in range(len(npis)):
-                incid_threshold = 1e10
-                if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
-                    # set -1 for incidence-independent NPIs
-                    incid_threshold = -1
-                elif npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
-                    incid_threshold = int(
-                        npis.loc[i, dd.EngEng['desc']].split(' ')[1])
-                else:
-                    sys.exit(
-                        'Error in description file. NPI activation can not '
-                        'be computed. Exiting.')
-                npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
-                                ] = incid_threshold
+    # extract incidence-threshold for NPIs
+    if fine_resolution > 0:
+        npi_incid_start = dict()
+        for i in range(len(npis)):
+            incid_threshold = 1e10
+            if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
+                # set -1 for incidence-independent NPIs
+                incid_threshold = -1
+            elif npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
+                incid_threshold = int(
+                    npis.loc[i, dd.EngEng['desc']].split(' ')[1])
+            else:
+                sys.exit(
+                    'Error in description file. NPI activation can not '
+                    'be computed. Exiting.')
+            npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
+                            ] = incid_threshold
 
-            # get all incidence thresholds
-            incidence_thresholds = sorted(set(npi_incid_start.values()))
+        # get all incidence thresholds
+        incidence_thresholds = sorted(set(npi_incid_start.values()))
 
         # create hash map from thresholds to NPI indices
         incidence_thresholds_to_npis = dict(
@@ -531,290 +510,324 @@ def transform_npi_data(fine_resolution=2,
                                      [i, dd.EngEng['npiCode']]]
             incidence_thresholds_to_npis[incval].append(i)
 
-        # get county ids
-        unique_geo_entities = geoger.get_county_ids()
-        # check if more than the county of Eisenach would be removed with
-        # current county list
-        counties_removed = df_npis_old[
-            ~df_npis_old[dd.EngEng['idCounty']].isin(unique_geo_entities)][
-            dd.EngEng['idCounty']].unique()
-        if len(counties_removed) == 1 and counties_removed[0] != 16056:
-            sys.exit('Error. Other counties than that of Eisenach were removed.')
-        # remove rows for Eisenach
-        df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
-            unique_geo_entities)].reset_index(drop=True)
+    # get county ids
+    unique_geo_entities = geoger.get_county_ids()
+    # check if more than the county of Eisenach would be removed with
+    # current county list
+    counties_removed = df_npis_old[
+        ~df_npis_old[dd.EngEng['idCounty']].isin(unique_geo_entities)][
+        dd.EngEng['idCounty']].unique()
+    if len(counties_removed) == 1 and counties_removed[0] != 16056:
+        sys.exit('Error. Other counties than that of Eisenach were removed.')
+    # remove rows for Eisenach
+    df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
+        unique_geo_entities)].reset_index(drop=True)
 
-        start_npi_cols = list(
-            df_npis_old.columns).index(
-            dd.EngEng['npiCode']) + 1
+    start_npi_cols = list(
+        df_npis_old.columns).index(
+        dd.EngEng['npiCode']) + 1
 
-        # store string dates 'dYYYYMMDD' in list before parsing
-        str_dates = list(df_npis_old.iloc[:, start_npi_cols:].columns)
-        # convert string dates into other format
-        dates_new = [datetime.strptime(old_date, "d%Y%m%d")
-                     for old_date in str_dates]
+    # store string dates 'dYYYYMMDD' in list before parsing
+    str_dates = list(df_npis_old.iloc[:, start_npi_cols:].columns)
+    # convert string dates into other format
+    dates_new = [datetime.strptime(old_date, "d%Y%m%d")
+                 for old_date in str_dates]
 
-        # check for missing dates
-        date_diff = [
-            (dates_new[i + 1] - dates_new[i]).days
-            for i in range(len(dates_new) - 1)]
-        date_diff_idx = np.where(np.array(date_diff) > 1)[0]
-        if max(date_diff) > 1:
-            print("Error. Dates missing in data frame:")
-            for i in date_diff_idx:
-                print(
-                    "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
-                    str(dates_new[i] + timedelta(date_diff[i] - 1)))
-            sys.exit('Exiting. Dates missing in data frame.')
+    # check for missing dates
+    date_diff = [
+        (dates_new[i + 1] - dates_new[i]).days
+        for i in range(len(dates_new) - 1)]
+    date_diff_idx = np.where(np.array(date_diff) > 1)[0]
+    if max(date_diff) > 1:
+        print("Error. Dates missing in data frame:")
+        for i in date_diff_idx:
+            print(
+                "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
+                str(dates_new[i] + timedelta(date_diff[i] - 1)))
+        sys.exit('Exiting. Dates missing in data frame.')
 
-        min_date = []
-        max_date = []
+    min_date = []
+    max_date = []
 
-        # get RKI infectious numbers to find dates where incidence-dependent
-        # NPIs were active
+    # get RKI infectious numbers to find dates where incidence-dependent
+    # NPIs were active
+    if fine_resolution > 0:
+        df_infec_rki = pd.read_json(os.path.join(
+            directory, 'all_county_all_dates_repdate_rki.json'))
+        df_infec_rki[dd.EngEng['date']] = pd.to_datetime(
+            df_infec_rki[dd.EngEng['date']])
+        df_population = pd.read_json(
+            directory + "county_current_population.json")
+        min_date.append(
+            df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
+        max_date.append(
+            df_infec_rki[dd.EngEng['date']].max().to_pydatetime())
+
+    # adapt time series according to available dates and start_date,
+    # end_date input parameter
+    start_date_new = max(
+        min_date + [min(dates_new), pd.to_datetime(start_date)])
+    end_date_new = min(
+        max_date + [max(dates_new),
+                    pd.to_datetime(end_date)])
+
+    # create new data frame for all NPIs given in the columns,
+    # resolved by county and day
+    df_npis = pd.DataFrame(
+        columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
+        list(npis_final[dd.EngEng['npiCode']]))
+    # convert NPI data from object to int such that correlations can be
+    # computed
+    df_npis = df_npis.astype(dict(
+        zip(
+            [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
+            list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
+            ['int' for i in npis_final[dd.EngEng['npiCode']]])))
+
+    # iterate over countyIDs
+    counters = np.zeros(5)  # time counter for output only
+    countyidx = 0
+    # unique_geo_entities:
+    for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+        cid = 0
+        countyidx += 1
+
         if fine_resolution > 0:
-            df_infec_rki = pd.read_json(os.path.join(
-                directory, 'all_county_all_dates_repdate_rki.json'))
-            df_infec_rki[dd.EngEng['date']] = pd.to_datetime(
-                df_infec_rki[dd.EngEng['date']])
-            df_population = pd.read_json(
-                directory + "county_current_population.json")
-            min_date.append(
-                df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
-            max_date.append(
-                df_infec_rki[dd.EngEng['date']].max().to_pydatetime())
+            # compute incidence based on previous data frames
+            df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
+            )
+            pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
+                                          == countyID, dd.EngEng['population']].values[0]
+            incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
+                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
+            df_infec_local['Incidence'] = incidence_local / pop_local * 100000
 
-        # adapt time series according to available dates and start_date,
-        # end_date input parameter
-        start_date_new = max(
-            min_date + [min(dates_new), pd.to_datetime(start_date)])
-        end_date_new = min(
-            max_date + [max(dates_new),
-                        pd.to_datetime(end_date)])
+            # set to main data frame
+            df_infec_rki.loc[df_infec_rki[dd.EngEng['idCounty']] ==
+                             countyID, 'Incidence'] = df_infec_local['Incidence'].values
 
-        # create new data frame for all NPIs given in the columns,
-        # resolved by county and day
-        df_npis = pd.DataFrame(
+            # cut infection information at start_date_new and end_date_new
+            df_infec_local = df_infec_local.loc[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
+                df_infec_local[dd.EngEng['date']] <= end_date_new), :].reset_index()
+
+        # get county-local data frame
+        start_time = time.perf_counter()
+        df_local_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']]
+                                   == countyID].copy()
+
+        # potentially remove rows if they are not in npis dict
+        npi_rows = [i in npis[dd.EngEng['npiCode']].values
+                    for i in df_local_old[dd.EngEng['npiCode']]]
+
+        # get list of NPI codes, ordered as the rows in the current data frame
+        npi_codes_ordered_as_rows = df_local_old[dd.EngEng['npiCode']][
+            npi_rows].to_list()
+
+        # get indices of rows for the NPI codes as in the sorted npi_codes list
+        # may be superfluous if NPI code rows are sorted correctly
+        npi_code_rows_to_sorted = [
+            npi_codes_ordered_as_rows.index(i) for i in
+            npis[dd.EngEng['npiCode']].values]
+
+        # access NPI values matrix and store it as integers
+        npi_vals = df_local_old.iloc[npi_rows, start_npi_cols:].astype(int)
+
+        # create columns for date, county ID and NPI code
+        df_local_new = pd.DataFrame(
             columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-            list(npis_final[dd.EngEng['npiCode']]))
-        # convert NPI data from object to int such that correlations can be
-        # computed
-        df_npis = df_npis.astype(dict(
-            zip(
-                [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-                list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
-                ['int' for i in npis_final[dd.EngEng['npiCode']]])))
+            list(npis[dd.EngEng['npiCode']]))
 
-        # iterate over countyIDs
-        counters = np.zeros(5)  # time counter for output only
-        countyidx = 0
-        # unique_geo_entities:
+        counters[cid] += time.perf_counter()-start_time
+        cid += 1
+
+        start_time = time.perf_counter()
+
+        # fill in NPI values by transposing from columns to rows
+        df_local_new[dd.EngEng['date']] = dates_new
+        df_local_new[dd.EngEng['idCounty']] = countyID
+        # possible resorting of rows such that they are sorted according to
+        # a literal sorting of the code strings
+        df_local_new[npis[dd.EngEng['npiCode']]] = np.transpose(
+            npi_vals.iloc[npi_code_rows_to_sorted, :].values)
+
+        counters[cid] += time.perf_counter()-start_time
+        cid += 1
+
+        start_time = time.perf_counter()
+
+        # replace -99 ("not used anymore") by 0 ("not used")
+        df_local_new[npis[dd.EngEng['npiCode']]
+                     ] = df_local_new[npis[dd.EngEng['npiCode']]].replace(-99, 0)
+        # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
+        df_local_new[npis[dd.EngEng['npiCode']]
+                     ] = df_local_new[npis[dd.EngEng['npiCode']]].replace([2, 3, 4, 5], 1)
+
+        counters[cid] += time.perf_counter()-start_time
+        cid += 1
+
+        ### evaluate NPIs mentioned with respect to confirmed cases ###
+        # values > 0
+        #   - for NPIs independent of new infections mean "mentioned" = "active"
+        #   - for NPIs dependent on incidence "mentioned" does not mean
+        #       active and evaluation has to be conducted against confirmed
+        #       infections to determine whether the NPI was active
+        start_time = time.perf_counter()
+        if fine_resolution > 0:
+            # cut NPI information at start_date_new and end_date_new
+            df_local_new = df_local_new.loc[(df_local_new[dd.EngEng['date']] >= start_date_new) & (
+                df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
+            try:
+                df_local_new = df_local_new.drop(columns='index')
+            except:
+                pass
+            # get index of first NPI column in local data frame
+            npis_idx_start = list(
+                df_local_new.columns).index(
+                npis[dd.EngEng['npiCode']][0])
+
+            # iterate through all NPIs and activate if incidence threshold
+            # is exceeded
+            for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
+                if incidvalthrsh >= 0:
+                    local_incid = df_infec_local['Incidence'].copy()
+                    if npi_activation_delay > 0:
+                        # shift values to npi_activation_delay days later
+                        local_incid.iloc[npi_activation_delay:
+                                         ] = local_incid.iloc[0:-npi_activation_delay].values
+                        # take constant value of day 0 for first delay days
+                        local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
+                    # compare incidence against threshold
+                    int_active = (
+                        local_incid >= incidvalthrsh).astype(int)
+                    # multiply rows of data frame by either 1 if threshold
+                    # passed (i.e., mentioned NPI is active) or zero
+                    # (i.e., mentioned NPI is not active)
+                    # 'mul' multiplies the original data frame row by row
+                    # with the respective value in int_active
+                    df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
+                        = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
+
+            # reduction of factor space NPI x incidence threshold to NPI
+            # by max aggregation of all incidence threshold columns per NPI
+            if fine_resolution == 1:
+                for main_code, codes_group in maincode_to_npicodes_map.items():
+                    # group by incidence (former codes X1_Y, X1_Z were transformed
+                    # to X1, X2) and write max value to main code column
+                    df_local_new.loc[:, main_code] = df_local_new.loc[:, codes_group].max(
+                        axis=1)
+                # remove subcategory columns
+                df_local_new = df_local_new.loc[:, [
+                    dd.EngEng['date'], dd.EngEng['idCounty']] + npi_codes_aggregated].copy()
+
+        counters[cid] += time.perf_counter()-start_time
+        cid += 1
+        ### ###
+
+        start_time = time.perf_counter()
+        df_npis = df_npis.append(df_local_new,
+                                 ignore_index=True).copy()
+        counters[cid] += time.perf_counter()-start_time
+        cid += 1
+
+        # divide working time by completed number of counties and multiply
+        # by remaining number of counties to estimate time remaining
+        time_remain = sum(
+            counters) / countyidx * (len(unique_geo_entities) - countyidx)
+        # print progress
+        if countyidx == 1 or countyidx % int(
+                len(unique_geo_entities) / 10) == 0:
+            print('Progress ' + str(countyidx) + ' / ' +
+                  str(len(unique_geo_entities)) +
+                  '. Estimated time remaining: ' +
+                  str(int(time_remain / 60)) + ' min.')
+
+    # print sub counters
+    print('Sub task counters are: ')
+    print(counters)
+
+    # reset index and drop old index column
+    df_npis.reset_index(inplace=True)
+    try:
+        df_npis = df_npis.drop(columns='index')
+    except:
+        pass
+    try:
+        df_npis = df_npis.drop(columns='level_0')
+    except:
+        pass
+
+    #### start validation ####
+    if fine_resolution == 2:
+        start_date_validation = datetime(2020, 3, 1)
+        end_date_validation = datetime(2022, 2, 15)
+
         for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
-            cid = 0
-            countyidx += 1
-
-            if fine_resolution > 0:
-                # compute incidence based on previous data frames
-                df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
-                )
-                pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
-                                              == countyID, dd.EngEng['population']].values[0]
-                incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
-                    periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
-                df_infec_local['Incidence'] = incidence_local / pop_local * 100000
-
-                # set to main data frame
-                df_infec_rki.loc[df_infec_rki[dd.EngEng['idCounty']] ==
-                                 countyID, 'Incidence'] = df_infec_local['Incidence'].values
-
-                # cut infection information at start_date_new and end_date_new
-                df_infec_local = df_infec_local.loc[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
-                    df_infec_local[dd.EngEng['date']] <= end_date_new), :].reset_index()
-
-            # get county-local data frame
-            start_time = time.perf_counter()
-            df_local_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']]
-                                       == countyID].copy()
-
-            # potentially remove rows if they are not in npis dict
-            npi_rows = [i in npis[dd.EngEng['npiCode']].values
-                        for i in df_local_old[dd.EngEng['npiCode']]]
-
-            # get list of NPI codes, ordered as the rows in the current data frame
-            npi_codes_ordered_as_rows = df_local_old[dd.EngEng['npiCode']][
-                npi_rows].to_list()
-
-            # get indices of rows for the NPI codes as in the sorted npi_codes list
-            # may be superfluous if NPI code rows are sorted correctly
-            npi_code_rows_to_sorted = [
-                npi_codes_ordered_as_rows.index(i) for i in
-                npis[dd.EngEng['npiCode']].values]
-
-            # access NPI values matrix and store it as integers
-            npi_vals = df_local_old.iloc[npi_rows, start_npi_cols:].astype(int)
-
-            # create columns for date, county ID and NPI code
-            df_local_new = pd.DataFrame(
-                columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-                list(npis[dd.EngEng['npiCode']]))
-
-            counters[cid] += time.perf_counter()-start_time
-            cid += 1
-
-            start_time = time.perf_counter()
-
-            # fill in NPI values by transposing from columns to rows
-            df_local_new[dd.EngEng['date']] = dates_new
-            df_local_new[dd.EngEng['idCounty']] = countyID
-            # possible resorting of rows such that they are sorted according to
-            # a literal sorting of the code strings
-            df_local_new[npis[dd.EngEng['npiCode']]] = np.transpose(
-                npi_vals.iloc[npi_code_rows_to_sorted, :].values)
-
-            counters[cid] += time.perf_counter()-start_time
-            cid += 1
-
-            start_time = time.perf_counter()
-
-            # replace -99 ("not used anymore") by 0 ("not used")
-            df_local_new[npis[dd.EngEng['npiCode']]
-                         ] = df_local_new[npis[dd.EngEng['npiCode']]].replace(-99, 0)
-            # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-            df_local_new[npis[dd.EngEng['npiCode']]
-                         ] = df_local_new[npis[dd.EngEng['npiCode']]].replace([2, 3, 4, 5], 1)
-
-            counters[cid] += time.perf_counter()-start_time
-            cid += 1
-
-            ### evaluate NPIs mentioned with respect to confirmed cases ###
-            # values > 0
-            #   - for NPIs independent of new infections mean "mentioned" = "active"
-            #   - for NPIs dependent on incidence "mentioned" does not mean
-            #       active and evaluation has to be conducted against confirmed
-            #       infections to determine whether the NPI was active
-            start_time = time.perf_counter()
-            if fine_resolution > 0:
-                # cut NPI information at start_date_new and end_date_new
-                df_local_new = df_local_new.loc[(df_local_new[dd.EngEng['date']] >= start_date_new) & (
-                    df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
-                try:
-                    df_local_new = df_local_new.drop(columns='index')
-                except:
-                    pass
-                # get index of first NPI column in local data frame
-                npis_idx_start = list(
-                    df_local_new.columns).index(
-                    npis[dd.EngEng['npiCode']][0])
-
-                # iterate through all NPIs and activate if incidence threshold
-                # is exceeded
-                for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
-                    if incidvalthrsh >= 0:
-                        local_incid = df_infec_local['Incidence'].copy()
-                        if npi_activation_delay > 0:
-                            # shift values to npi_activation_delay days later
-                            local_incid.iloc[npi_activation_delay:
-                                             ] = local_incid.iloc[0:-npi_activation_delay].values
-                            # take constant value of day 0 for first delay days
-                            local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
-                        # compare incidence against threshold
-                        int_active = (
-                            local_incid >= incidvalthrsh).astype(int)
-                        # multiply rows of data frame by either 1 if threshold
-                        # passed (i.e., mentioned NPI is active) or zero
-                        # (i.e., mentioned NPI is not active)
-                        # 'mul' multiplies the original data frame row by row
-                        # with the respective value in int_active
-                        df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
-                            = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
-
-                # reduction of factor space NPI x incidence threshold to NPI
-                # by max aggregation of all incidence threshold columns per NPI
-                if fine_resolution == 1:
-                    for main_code, codes_group in maincode_to_npicodes_map.items():
-                        # group by incidence (former codes X1_Y, X1_Z were transformed
-                        # to X1, X2) and write max value to main code column
-                        df_local_new.loc[:, main_code] = df_local_new.loc[:, codes_group].max(
-                            axis=1)
-                    # remove subcategory columns
-                    df_local_new = df_local_new.loc[:, [
-                        dd.EngEng['date'], dd.EngEng['idCounty']] + npi_codes_aggregated].copy()
-
-            counters[cid] += time.perf_counter()-start_time
-            cid += 1
-            ### ###
-
-            start_time = time.perf_counter()
-            df_npis = df_npis.append(df_local_new,
-                                     ignore_index=True).copy()
-            counters[cid] += time.perf_counter()-start_time
-            cid += 1
-
-            # divide working time by completed number of counties and multiply
-            # by remaining number of counties to estimate time remaining
-            time_remain = sum(
-                counters) / countyidx * (len(unique_geo_entities) - countyidx)
-            # print progress
-            if countyidx == 1 or countyidx % int(
-                    len(unique_geo_entities) / 10) == 0:
-                print('Progress ' + str(countyidx) + ' / ' +
-                      str(len(unique_geo_entities)) +
-                      '. Estimated time remaining: ' +
-                      str(int(time_remain / 60)) + ' min.')
-
-        # print sub counters
-        print('Sub task counters are: ')
-        print(counters)
-
-        # reset index and drop old index column
-        df_npis.reset_index(inplace=True)
-        try:
-            df_npis = df_npis.drop(columns='index')
-        except:
-            pass
-        try:
-            df_npis = df_npis.drop(columns='level_0')
-        except:
-            pass
-
-        #### start validation ####
-        if fine_resolution == 2:
-            start_date_validation = datetime(2020, 3, 1)
-            end_date_validation = datetime(2022, 2, 15)
-
-            for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
-                for npiCode in [
-                    'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
-                        'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
-                    for subcode in [''] + ['_'+str(i) for i in range(1, 6)]:
-                        [
-                            a, b, oldf, newf] = validate(
-                            df_npis_old, df_npis, df_infec_rki, countyID,
-                            npiCode + subcode, start_npi_cols, npi_incid_start,
-                            start_date_validation, end_date_validation,
-                            fine_resolution)
-                        if(a != b):
-                            print('Error in NPI activation computation')
-                        else:
-                            print(a, b, a == b)
-
-        elif fine_resolution == 1:
-            start_date_validation = datetime(2020, 3, 1)
-            end_date_validation = datetime(2022, 2, 15)
-
-            for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
-                for npiCode in [
-                    'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
-                        'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
-                    [a, b, oldf, newf] = validate(df_npis_old, df_npis,
-                                                  df_infec_rki, countyID, npiCode, start_npi_cols,
-                                                  npi_incid_start, start_date_validation,
-                                                  end_date_validation, fine_resolution)
+            for npiCode in [
+                'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
+                    'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
+                for subcode in [''] + ['_'+str(i) for i in range(1, 6)]:
+                    [
+                        a, b, oldf, newf] = validate(
+                        df_npis_old, df_npis, df_infec_rki, countyID,
+                        npiCode + subcode, start_npi_cols, npi_incid_start,
+                        start_date_validation, end_date_validation,
+                        fine_resolution)
                     if(a != b):
                         print('Error in NPI activation computation')
                     else:
                         print(a, b, a == b)
-        #### end validation ####
+
+    elif fine_resolution == 1:
+        start_date_validation = datetime(2020, 3, 1)
+        end_date_validation = datetime(2022, 2, 15)
+
+        for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+            for npiCode in [
+                'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
+                    'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
+                [a, b, oldf, newf] = validate(df_npis_old, df_npis,
+                                              df_infec_rki, countyID, npiCode, start_npi_cols,
+                                              npi_incid_start, start_date_validation,
+                                              end_date_validation, fine_resolution)
+                if(a != b):
+                    print('Error in NPI activation computation')
+                else:
+                    print(a, b, a == b)
+    #### end validation ####
+
+    if fine_resolution > 0:
+        if fine_resolution == 1:
+            filename = 'germany_counties_npi_subcat_incgrouped'
+        else:
+            filename = 'germany_counties_npi_subcat'
+    else:
+        filename = 'germany_counties_npi_maincat'
+    gd.write_dataframe(df_npis, directory, filename, file_format)
+
+    # stupid validation
+    # df_validation = pd.read_json(directory + filename + ".json")
+    # if len(
+    #     np.where(
+    #         df_validation.iloc[:, start_npi_cols - 1:] != df_npis.iloc
+    #         [:, start_npi_cols - 1:])[0]) > 0:
+    #     print('Error in file writing/reading')
+
+
+def analyze_npi_data(
+        read_data=dd.defaultDict['read_data'],
+        make_plot=dd.defaultDict['make_plot']):
+
+    if not read_data:
+        x = 15
+        # transform_npi_data(fine_resolution=2,
+        #                file_format=dd.defaultDict['file_format'],
+        #                out_folder=dd.defaultDict['out_folder'],
+        #                start_date=dd.defaultDict['start_date'],
+        #                end_date=dd.defaultDict['end_date'],
+        #                make_plot=dd.defaultDict['make_plot'],
+        #                )
+
+    else:  # read formatted file
 
         if fine_resolution > 0:
             if fine_resolution == 1:
@@ -823,22 +836,13 @@ def transform_npi_data(fine_resolution=2,
                 filename = 'germany_counties_npi_subcat'
         else:
             filename = 'germany_counties_npi_maincat'
-        gd.write_dataframe(df_npis, directory, filename, file_format)
+        df_npis = pd.read_json(directory + filename + ".json")
+        # get code levels (main/subcodes) and position of main codes
+        # code_level = [i.count('_') for i in npi_codes]
+        # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
 
-        # stupid validation
-        # df_validation = pd.read_json(directory + filename + ".json")
-        # if len(
-        #     np.where(
-        #         df_validation.iloc[:, start_npi_cols - 1:] != df_npis.iloc
-        #         [:, start_npi_cols - 1:])[0]) > 0:
-        #     print('Error in file writing/reading')
-
-    # get code levels (main/subcodes) and position of main codes
-    # code_level = [i.count('_') for i in npi_codes]
-    # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
-
-    # check if any other integer than 0: not implemented or 1: implemented is
-    # used (maybe to specify the kind of implementation)
+        # check if any other integer than 0: not implemented or 1: implemented is
+        # used (maybe to specify the kind of implementation)
     if len(np.where(df_npis[npi_codes_considered] > 1)[0]) > 0:
 
         print("Info: Please ensure that NPI information is only boolean.")
@@ -1099,7 +1103,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=2, read_data=False, make_plot=True)
+    transform_npi_data(fine_resolution=0)
 
 
 if __name__ == "__main__":
