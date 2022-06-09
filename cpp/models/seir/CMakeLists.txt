@@ -1,6 +1,7 @@
 add_library(seir
-    seir.h
-    seir.cpp
+    infection_state.h
+    model.h
+    parameters.h
 )
 target_link_libraries(seir PUBLIC memilio)
 target_include_directories(seir PUBLIC
