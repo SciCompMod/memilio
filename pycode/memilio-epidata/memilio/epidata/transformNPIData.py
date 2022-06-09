@@ -182,8 +182,6 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
              start_npi_cols, npi_incid_start, start_date_validation,
              end_date_validation, fine_resolution):
-    if npiCode == 'M01a_150':
-        x = 15  # TODO
 
     if fine_resolution == 1:
         npiCodes = [npiCode + code
@@ -217,7 +215,7 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 
             # deactivate values based on incidence before taking
             # the maximum over NPI group
-            dummy_old[list(nonactive_index)] = 0
+            dummy_old[:, col][list(nonactive_index)] = 0
 
         # the intermediate step is necessary since the array has a 2nd dimension
         # of size zero if we directly set dummy_old = dummy_old.max(axis=1)
@@ -795,93 +793,6 @@ def transform_npi_data(fine_resolution=2,
                                                   end_date_validation, fine_resolution)
                     if(a != b):
                         print('Error in NPI activation computation')
-                    else:
-                        print(a == b, a, b)
-
-            # Cologne for M01a_010 and all dates (no changes)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
-                    df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    5315, 'M01a_010'].values
-            print(abs(dummy_old-dummy_new).sum() == 0)
-
-            # Flensburg for M05_120 and all dates ('2's become '1's)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1001) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M05_120')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old,
-                                       df_npis_old
-                                       [(df_npis_old
-                                         [dd.EngEng['idCounty']] == 1001) &
-                                        (df_npis_old[dd.EngEng['npiCode']] ==
-                                         'M05_120')].values[subcode]
-                                       [start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    1001, 'M05_120'].values
-            print(abs(dummy_old-dummy_new).sum() == 5)
-
-            # Munich for M01a_010 and all dates (-99 becomes 0, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
-                    df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    9162, 'M01a_010'].values
-            print(abs(dummy_old-dummy_new).sum() == 0)
-
-            # Weimar for M12_030_3 and all dates (-99 becomes 0, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 16071) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M12_030')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old,
-                                       df_npis_old
-                                       [(df_npis_old
-                                         [dd.EngEng['idCounty']] == 16071) &
-                                        (df_npis_old[dd.EngEng['npiCode']] ==
-                                         'M12_030')].values[subcode]
-                                       [start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    16071, 'M12_030'].values
-            print(abs(dummy_old-dummy_new).sum() == 19)
-
-            # Berlin for M01b_020 and all dates (2 becomes 1, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
-                    df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    11000, 'M01b_020'].values
-            print(abs(dummy_old-dummy_new).sum() == 82)
-
-            # Segeberg for M02b_035 and all dates (2 -> 1, 3 -> 1, 5 -> 1)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
-                    df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    1060, 'M02b_035'].values
-            print(abs(dummy_old-dummy_new).sum() == 151+2*53+4*22)
-
-            # Steinfurt for M16_050 and all dates (4 -> 1, ...)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5566) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M16_050')].values[0][start_npi_cols:]
-            for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old,
-                                       df_npis_old
-                                       [(df_npis_old
-                                         [dd.EngEng['idCounty']] == 5566) &
-                                        (df_npis_old[dd.EngEng['npiCode']] ==
-                                         'M16_050')].values[subcode]
-                                       [start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    5566, 'M16_050'].values
-            print(abs(dummy_old-dummy_new).sum() == 32+2*20+3*22)
         #### end validation ####
 
         if fine_resolution > 0:
