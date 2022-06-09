@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,16 +25,16 @@
 namespace pymio
 {
 
-void bind_time_series(pybind11::module& m, std::string const& name)
+void bind_time_series(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::TimeSeries<double>>(m, name.c_str())
-        .def(pybind11::init<Eigen::Index>(), pybind11::arg("num_elements"))
+    py::class_<mio::TimeSeries<double>>(m, name.c_str())
+        .def(py::init<Eigen::Index>(), py::arg("num_elements"))
         .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
         .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)
-        .def("get_time", pybind11::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_time), pybind11::arg("index"))
-        .def("get_last_time", pybind11::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
-        .def("get_value", pybind11::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), pybind11::arg("index"))
-        .def("get_last_value", pybind11::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
+        .def("get_time", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_time), py::arg("index"))
+        .def("get_last_time", py::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
+        .def("get_value", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), py::arg("index"))
+        .def("get_last_value", py::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
         .def("__len__", &mio::TimeSeries<double>::get_num_time_points)
         .def(
             "__getitem__",
@@ -43,10 +43,10 @@ void bind_time_series(pybind11::module& m, std::string const& name)
                     return self[i];
                 }
                 else {
-                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
+                    throw py::index_error("Index out of range."); //needs to throw exception for iterable
                 }
             },
-            pybind11::is_operator(), pybind11::arg("index"))
+            py::is_operator(), py::arg("index"))
         .def(
             "__setitem__",
             [](mio::TimeSeries<double>& self, Eigen::Index i, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
@@ -54,10 +54,10 @@ void bind_time_series(pybind11::module& m, std::string const& name)
                     self[i] = expr;
                 }
                 else {
-                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
+                    throw py::index_error("Index out of range."); //needs to throw exception for iterable
                 }
             },
-            pybind11::is_operator(), pybind11::arg("index"), pybind11::arg("v"))
+            py::is_operator(), py::arg("index"), py::arg("v"))
         .def("add_time_point",
              [](mio::TimeSeries<double>& self) {
                  return self.add_time_point();

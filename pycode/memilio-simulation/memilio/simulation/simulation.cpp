@@ -41,10 +41,10 @@ PYBIND11_MODULE(_simulation, m)
 {
     pymio::bind_date(m, "Date");
 
-    auto damping_class = pybind11::class_<mio::SquareDamping>(m, "Damping");
+    auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
     pymio::bind_damping_members(damping_class);
 
-    auto dampings_class = pybind11::class_<mio::SquareDampings>(m, "Dampings");
+    auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
     pymio::bind_dampings_members(dampings_class);
     
     pymio::bind_time_series(m, "TimeSeries");
@@ -55,11 +55,11 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_value(m, "UncertainValue");
 
-    auto contact_matrix_class = pybind11::class_<mio::ContactMatrix>(m, "ContactMatrix");
+    auto contact_matrix_class = py::class_<mio::ContactMatrix>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
     contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
 
-    auto contact_matrix_group_class = pybind11::class_<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
+    auto contact_matrix_group_class = py::class_<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
@@ -67,16 +67,16 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto migration_damping_class = pybind11::class_<mio::VectorDamping>(m, "MigrationDamping");
+    auto migration_damping_class = py::class_<mio::VectorDamping>(m, "MigrationDamping");
     pymio::bind_damping_members(migration_damping_class);
 
-    auto migration_dampings_class = pybind11::class_<mio::VectorDampings>(m, "MigrationDampings");
+    auto migration_dampings_class = py::class_<mio::VectorDampings>(m, "MigrationDampings");
     pymio::bind_dampings_members(migration_dampings_class);
 
-    auto migration_coeffs_class = pybind11::class_<mio::MigrationCoefficients>(m, "MigrationCoefficients");
+    auto migration_coeffs_class = py::class_<mio::MigrationCoefficients>(m, "MigrationCoefficients");
     pymio::bind_damping_expression_members(migration_coeffs_class);
 
-    auto migration_coeff_group_class = pybind11::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
+    auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
 
     pymio::bind_migration_parameters(m, "MigrationParameters");
@@ -89,15 +89,15 @@ PYBIND11_MODULE(_simulation, m)
         [](int county) {
             return int(mio::regions::de::get_state_id(mio::regions::de::CountyId(county)));
         },
-        pybind11::arg("county_id"));
+        py::arg("county_id"));
     m.def(
         "get_holidays_de",
         [](int state, mio::Date start_date, mio::Date end_date) {
             auto h = mio::regions::de::get_holidays(mio::regions::de::StateId(state), start_date, end_date);
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
-        pybind11::arg("state_id"), pybind11::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
-        pybind11::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+        py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     pymio::bind_logging(m, "LogLevel");
 

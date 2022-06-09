@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -27,7 +27,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_logging(pybind11::module& m, std::string const& name);
+void bind_logging(py::module& m, std::string const& name);
 
 } // namespace pymio
 

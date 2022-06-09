@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,23 +28,23 @@
 namespace pymio
 {
 
-void bind_uncertain_contact_matrix(pybind11::module& m, std::string const& name)
+void bind_uncertain_contact_matrix(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::UncertainContactMatrix>(m, name.c_str())
-        .def(pybind11::init<>())
-        .def(pybind11::init<const mio::ContactMatrixGroup&>())
+    py::class_<mio::UncertainContactMatrix>(m, name.c_str())
+        .def(py::init<>())
+        .def(py::init<const mio::ContactMatrixGroup&>())
         .def_property(
-            "cont_freq_mat", pybind11::overload_cast<>(&mio::UncertainContactMatrix::get_cont_freq_mat),
+            "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix::get_cont_freq_mat),
             [](mio::UncertainContactMatrix& self, const mio::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
-            "dampings", pybind11::overload_cast<>(&mio::UncertainContactMatrix::get_dampings),
+            "dampings", py::overload_cast<>(&mio::UncertainContactMatrix::get_dampings),
             [](mio::UncertainContactMatrix& self, const std::vector<mio::DampingSampling>& v) {
                 self.get_dampings() = v;
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
             "school_holidays",
             [](const mio::UncertainContactMatrix& self) {
@@ -62,7 +62,7 @@ void bind_uncertain_contact_matrix(pybind11::module& m, std::string const& name)
                 });
             })
         .def_property("school_holiday_damping",
-                      pybind11::overload_cast<>(&mio::UncertainContactMatrix::get_school_holiday_damping),
+                      py::overload_cast<>(&mio::UncertainContactMatrix::get_school_holiday_damping),
                       [](mio::UncertainContactMatrix& self, const mio::DampingSampling& v) {
                           self.get_school_holiday_damping() = v;
                       });

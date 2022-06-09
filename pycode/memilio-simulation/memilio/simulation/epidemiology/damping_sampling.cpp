@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,18 +28,18 @@
 namespace pymio
 {
 
-void bind_damping_sampling(pybind11::module& m, std::string const& name)
+void bind_damping_sampling(py::module& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::DampingSampling>(m, name.c_str())
-        .def(pybind11::init([](const mio::UncertainValue& value, int level, int type, double time,
+        .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
                  return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),
                                              mio::SimulationTime(time), matrices, groups);
              }),
-             pybind11::arg("value"), pybind11::arg("level"), pybind11::arg("type"), pybind11::arg("time"), pybind11::arg("matrix_indices"),
-             pybind11::arg("group_weights"))
-        .def_property("value", pybind11::overload_cast<>(&mio::DampingSampling::get_value), &mio::DampingSampling::set_value,
-                      pybind11::return_value_policy::reference_internal)
+             py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
+             py::arg("group_weights"))
+        .def_property("value", py::overload_cast<>(&mio::DampingSampling::get_value), &mio::DampingSampling::set_value,
+                      py::return_value_policy::reference_internal)
         .def_property(
             "level",
             [](const mio::DampingSampling& self) {
@@ -71,7 +71,7 @@ void bind_damping_sampling(pybind11::module& m, std::string const& name)
             [](mio::DampingSampling& self, const Eigen::Ref<const Eigen::VectorXd>& v) {
                 self.set_group_weights(v);
             },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
 } // namespace pymio

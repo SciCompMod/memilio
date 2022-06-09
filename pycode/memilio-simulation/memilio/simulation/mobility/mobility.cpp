@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -24,22 +24,22 @@
 namespace pymio
 {
 
-void bind_migration_parameters(pybind11::module& m, std::string const& name)
+void bind_migration_parameters(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::MigrationParameters>(m, name.c_str())
-        .def(pybind11::init<const Eigen::VectorXd&>(), pybind11::arg("coeffs"))
-        .def(pybind11::init<const mio::MigrationCoefficientGroup&>(), pybind11::arg("coeffs"))
+    py::class_<mio::MigrationParameters>(m, name.c_str())
+        .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
+        .def(py::init<const mio::MigrationCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
-            "coefficients", pybind11::overload_cast<>(&mio::MigrationParameters::get_coefficients),
+            "coefficients", py::overload_cast<>(&mio::MigrationParameters::get_coefficients),
             [](mio::MigrationParameters& self, const mio::MigrationCoefficientGroup& v) {
                 self.get_coefficients() = v;
             },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
-void bind_migration_parameter_edge(pybind11::module& m, std::string const& name)
+void bind_migration_parameter_edge(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::Edge<mio::MigrationParameters>>(m, name.c_str())
+    py::class_<mio::Edge<mio::MigrationParameters>>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationParameters>& self) {
                                    return self.start_node_idx;
@@ -50,22 +50,22 @@ void bind_migration_parameter_edge(pybind11::module& m, std::string const& name)
                                })
         .def_property_readonly(
             "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
-void bind_migration(pybind11::module& m, std::string const& name)
+void bind_migration(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::MigrationEdge>(m, name.c_str())
-        .def(pybind11::init<const Eigen::VectorXd&>(), pybind11::arg("coeffs"))
-        .def(pybind11::init<const mio::MigrationParameters&>(), pybind11::arg("params"))
+    py::class_<mio::MigrationEdge>(m, name.c_str())
+        .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
+        .def(py::init<const mio::MigrationParameters&>(), py::arg("params"))
         .def_property_readonly(
             "parameters", [](const mio::MigrationEdge& self) -> auto& { return self.get_parameters(); },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
-void bind_migration_edge(pybind11::module& m, std::string const& name)
+void bind_migration_edge(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::Edge<mio::MigrationEdge>>(m, name.c_str())
+    py::class_<mio::Edge<mio::MigrationEdge>>(m, name.c_str())
         .def_property_readonly("start_node_idx",
                                [](const mio::Edge<mio::MigrationEdge>& self) {
                                    return self.start_node_idx;
@@ -76,7 +76,7 @@ void bind_migration_edge(pybind11::module& m, std::string const& name)
                                })
         .def_property_readonly(
             "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
 } // namespace pymio

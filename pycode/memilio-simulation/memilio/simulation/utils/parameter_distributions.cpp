@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -24,9 +24,9 @@
 namespace pymio
 {
 
-void bind_parameter_distribution(pybind11::module& m, std::string const& name)
+void bind_parameter_distribution(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::ParameterDistribution>(m, name.c_str())
+    py::class_<mio::ParameterDistribution>(m, name.c_str())
         .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
                       &mio::ParameterDistribution::set_lower_bound)
         .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,
@@ -36,22 +36,22 @@ void bind_parameter_distribution(pybind11::module& m, std::string const& name)
         .def("get_sample", &mio::ParameterDistribution::get_sample);
 }
 
-void bind_parameter_distribution_normal(pybind11::module& m, std::string const& name)
+void bind_parameter_distribution_normal(py::module& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, name.c_str())
-        .def(pybind11::init<double, double, double, double>(), pybind11::arg("lb"), pybind11::arg("ub"), pybind11::arg("mean"),
-             pybind11::arg("std_dev"))
-        .def(pybind11::init<double, double, double>(), pybind11::arg("lb"), pybind11::arg("ub"), pybind11::arg("mean"))
+        .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
+             py::arg("std_dev"))
+        .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
         .def_property("mean", &mio::ParameterDistributionNormal::get_mean, &mio::ParameterDistributionNormal::set_mean)
         .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
                       &mio::ParameterDistributionNormal::set_standard_dev);
 }
 
-void bind_parameter_distribution_uniform(pybind11::module& m, std::string const& name)
+void bind_parameter_distribution_uniform(py::module& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, name.c_str())
-        .def(pybind11::init<>())
-        .def(pybind11::init<double, double>(), pybind11::arg("lb"), pybind11::arg("ub"));
+        .def(py::init<>())
+        .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 }
 
 } // namespace pymio

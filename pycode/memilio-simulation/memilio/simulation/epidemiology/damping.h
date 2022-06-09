@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef PYMIO_DAMPING_H
 #define PYMIO_DAMPING_H
 
@@ -27,16 +46,16 @@ void bind_damping_members(DampingClass& damping_class)
     bind_shape_property(damping_class);
 
     damping_class
-        .def(pybind11::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
+        .def(py::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
                  return Damping(c, mio::DampingLevel(level), mio::DampingType(type), mio::SimulationTime(t));
              }),
-             pybind11::arg("coeffs"), pybind11::arg("t"), pybind11::arg("level") = 0, pybind11::arg("type") = 0)
+             py::arg("coeffs"), py::arg("t"), py::arg("level") = 0, py::arg("type") = 0)
         .def_property(
             "coeffs", [](const Damping& self) -> const auto& { return self.get_coeffs(); },
             [](Damping& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_coeffs() = v;
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
             "time",
             [](const Damping& self) {
@@ -45,7 +64,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, double v) {
                 self.get_time() = mio::SimulationTime(v);
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
             "type",
             [](const Damping& self) {
@@ -54,7 +73,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, int v) {
                 self.get_type() = mio::DampingType(v);
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
             "level",
             [](const Damping& self) {
@@ -63,7 +82,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, int v) {
                 self.get_level() = mio::DampingLevel(v);
             },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 }
 
 /**

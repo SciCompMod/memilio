@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Maximilian Betz
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -24,10 +24,10 @@
 namespace pymio
 {
 
-void bind_uncertain_value(pybind11::module& m, std::string const& name)
+void bind_uncertain_value(py::module& m, std::string const& name)
 {
     pymio::pybind_pickle_class<mio::UncertainValue>(m, name.c_str())
-        .def(pybind11::init<ScalarType>(), pybind11::arg("value") = 0.0)
+        .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
             [](mio::UncertainValue& self) {
@@ -43,13 +43,13 @@ void bind_uncertain_value(pybind11::module& m, std::string const& name)
             [](const mio::UncertainValue& self) {
                 return self.get_distribution().get();
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def(
             "get_distribution",
             [](mio::UncertainValue& self) {
                 return self.get_distribution().get();
             },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("draw_sample", &mio::UncertainValue::draw_sample);
 }
 
