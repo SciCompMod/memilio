@@ -370,8 +370,10 @@ def transform_npi_data(fine_resolution=2,
 
     # get existing codes that are used (in df_npis_old M22-M24 are empty)
     npi_codes_prior = df_npis_desc['Variablenname']
+    npi_codes_prior_desc = df_npis_desc['Variable']
 
     # correct differences in codes between data sheet and explanation sheet
+    codes_dropped = []  # no dropping for fine_resolution == 0
     if fine_resolution > 0:
         # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
         # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
@@ -413,9 +415,21 @@ def transform_npi_data(fine_resolution=2,
         # on these codes, so drop the rows.
         codes_dropped = list(set(npi_codes_prior_data).difference(
             npi_codes_prior))
+        # also remove dummy 'Platzhalter' categories
+        dummy_categories = []
+        for i in range(len(npi_codes_prior)):
+            if 'Platzhalter' in npi_codes_prior_desc[i]:
+                dummy_categories.append(npi_codes_prior[i])
+        # codes without explanation and dummy categories
+        # sorting done for consistenty, maybe not necessary
+        codes_dropped = list(np.sort(codes_dropped + dummy_categories))
         if len(codes_dropped) > 0:
             df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
-                codes_dropped)].reset_index()
+                codes_dropped)].reset_index(drop=True)
+            # for every main code removed, all 5 subcodes have to be removed;
+            # if this is not the case, the naming of them is wrong/not consistent
+            if (len(codes_dropped) % 6) != 0:
+                sys.exit('Error in NPI names, please check.')
 
     # sort NPI codes according to numeric values (argsort gives indices
     # in input list to be used for sorted array)
@@ -449,10 +463,15 @@ def transform_npi_data(fine_resolution=2,
         # extract variable names for main categories
         npi_desc = list(df_npis_desc["Variable"][npi_codes_sorting])
 
-    # NPIs groups codes and description to ensure that both are ordered
-    # the same way
-    npis_dummy = {dd.EngEng['npiCode']: npi_codes, dd.EngEng['desc']: npi_desc}
+    # NPIs group codes and description to ensure that both are ordered
+    # the same way; do not use npi_codes or npi_desc hereafter
+    idx_codes_retained = ~pd.Series(npi_codes).isin(codes_dropped)
+    npis_dummy = {
+        dd.EngEng['npiCode']: list(pd.Series(npi_codes)[idx_codes_retained]),
+        dd.EngEng['desc']: list(pd.Series(npi_desc)[idx_codes_retained])}
     npis = pd.DataFrame(npis_dummy)
+    del npi_codes
+    del npi_desc
 
     # transform data from original format to desired format
     if not read_data:
@@ -463,9 +482,9 @@ def transform_npi_data(fine_resolution=2,
             # create hash table from parental or main code/main category
             # to list of subcodes/subcategories
             maincode_to_npicodes_map = dict()
-            major_code = npi_codes[0]
+            major_code = npis.iloc[:, 0][0]
             maincode_to_npicodes_map[major_code] = []
-            for code in npi_codes:
+            for code in npis.iloc[:, 0]:
                 if major_code in code:
                     maincode_to_npicodes_map[major_code].append(code)
                 else:
@@ -523,7 +542,7 @@ def transform_npi_data(fine_resolution=2,
             sys.exit('Error. Other counties than that of Eisenach were removed.')
         # remove rows for Eisenach
         df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
-            unique_geo_entities)].reset_index(drop=True).drop(columns='index')
+            unique_geo_entities)].reset_index(drop=True)
 
         start_npi_cols = list(
             df_npis_old.columns).index(
@@ -617,7 +636,7 @@ def transform_npi_data(fine_resolution=2,
             df_local_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                        == countyID].copy()
 
-            # remove potential rows of which codes are not in npi_codes_considered
+            # potentially remove rows if they are not in npis dict
             npi_rows = [i in npis[dd.EngEng['npiCode']].values
                         for i in df_local_old[dd.EngEng['npiCode']]]
 
@@ -760,8 +779,6 @@ def transform_npi_data(fine_resolution=2,
 
         #### start validation ####
         if fine_resolution == 2:
-            # the following validation is only valid for end_date May 14, 2021
-            # and data frames of mentioned NPIs, not active NPIs
             start_date_validation = datetime(2020, 3, 1)
             end_date_validation = datetime(2022, 2, 15)
 
@@ -778,6 +795,8 @@ def transform_npi_data(fine_resolution=2,
                             fine_resolution)
                         if(a != b):
                             print('Error in NPI activation computation')
+                        else:
+                            print(a, b, a == b)
 
         elif fine_resolution == 1:
             start_date_validation = datetime(2020, 3, 1)
@@ -793,6 +812,8 @@ def transform_npi_data(fine_resolution=2,
                                                   end_date_validation, fine_resolution)
                     if(a != b):
                         print('Error in NPI activation computation')
+                    else:
+                        print(a, b, a == b)
         #### end validation ####
 
         if fine_resolution > 0:
@@ -1078,7 +1099,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=1, read_data=False, make_plot=True)
+    transform_npi_data(fine_resolution=2, read_data=False, make_plot=True)
 
 
 if __name__ == "__main__":
