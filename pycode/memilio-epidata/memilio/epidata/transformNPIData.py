@@ -510,6 +510,48 @@ def transform_npi_data(fine_resolution=2,
                                      [i, dd.EngEng['npiCode']]]
             incidence_thresholds_to_npis[incval].append(i)
 
+    # for fine_resolution == 2 deactivation of non-combinable
+    # incidence-dependent NPIs has to be conducted; therefore we defined a
+    # matrix of possible combinations of NPIs (marked with an X if combinable)
+    # NPIs of different main category (e.g., M01a and M04) can always be
+    # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
+    # other
+    if fine_resolution == 2:
+        df_npis_combinations_pre = pd.read_excel(
+            os.path.join(
+                directory, 'combination_npis.xlsx'))
+
+        # rename essential columns and throw away others
+        column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
+        rename_columns = {column_names[i]: i for i in range(len(column_names))}
+        df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
+        df_npis_combinations_pre = df_npis_combinations_pre[[
+            'Variablenname'] + [i for i in range(0, 16)]]
+
+        # extract different NPI groups and store indices of NPIs belonging
+        # to the different groups
+        npi_groups_combinations = pd.Series(
+            code.split('_')[0]
+            for code in df_npis_combinations_pre['Variablenname'])
+        npi_groups_combinations_unique = npi_groups_combinations.unique()
+        npi_groups_idx = []
+        for code in npi_groups_combinations_unique:
+            npi_groups_idx.append(
+                list(
+                    npi_groups_combinations
+                    [npi_groups_combinations == code].index))
+        # create hash table of main code to combination matrix
+        df_npis_combinations = {
+            npi_groups_combinations_unique[i]: np.zeros(
+                (len(npi_groups_idx[i]),
+                 len(npi_groups_idx[i])))
+            for i in range(len(npi_groups_combinations_unique))}
+
+        # run through all groups and set possible combinations according to
+        # read combination matrix
+        for i in range(len(npi_groups_idx)):
+            npi_groups_idx[i]  # TODO
+
     # get county ids
     unique_geo_entities = geoger.get_county_ids()
     # check if more than the county of Eisenach would be removed with
