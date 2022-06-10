@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "seir/seir.h"
+#include "seir/model.h"
+#include "seir/infection_state.h"
+#include "seir/parameters.h"
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
@@ -37,21 +39,21 @@ protected:
 
         double total_population = 1061000;
 
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 10000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}] = 1000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}] = 1000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = total_population
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}]
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}]
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}];
+        model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::E)}] = 10000;
+        model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::I)}] = 1000;
+        model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::R)}] = 1000;
+        model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::S)}] = total_population
+                                                                                 - this->model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::E)}]
+                                                                                 - this->model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::I)}]
+                                                                                 - this->model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::R)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.set<mio::TransmissionRisk>(1.0);
-        model.parameters.set<mio::StageTimeIncubationInv>(1./5.2);
-        model.parameters.set<mio::StageTimeInfectiousInv>(1./2);;
+        model.parameters.set<mio::seir::TransmissionRisk>(1.0);
+        model.parameters.set<mio::seir::StageTimeIncubationInv>(1./5.2);
+        model.parameters.set<mio::seir::StageTimeInfectiousInv>(1./2);;
 
-        model.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 2.7;
-        model.parameters.get<mio::ContactFrequency>().add_damping(0.6, mio::SimulationTime(12.5));
+        model.parameters.get<mio::seir::ContactFrequency>().get_baseline()(0, 0) = 2.7;
+        model.parameters.get<mio::seir::ContactFrequency>().add_damping(0.6, mio::SimulationTime(12.5));
     }
 
 public:
@@ -59,13 +61,13 @@ public:
     real t0;
     real tmax;
     real dt;
-    mio::SeirModel model;
+    mio::seir::Model model;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto result = mio::simulate<mio::SeirModel>(t0, tmax, dt, model, integrator);
+    auto result = mio::simulate<mio::seir::Model>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

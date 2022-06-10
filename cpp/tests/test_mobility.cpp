@@ -20,7 +20,9 @@
 #define _USE_MATH_DEFINES
 
 #include "memilio/mobility/mobility.h"
-#include "seir/seir.h"
+#include "seir/model.h"
+#include "seir/infection_state.h"
+#include "seir/parameters.h"
 #include "secir/secir.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"
@@ -36,22 +38,22 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     auto tmax = 5;
     auto dt   = 0.5;
 
-    mio::SeirModel model1;
-    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 0.9;
-    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 0.1;
+    mio::seir::Model model1;
+    model1.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::S)}] = 0.9;
+    model1.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::E)}] = 0.1;
     model1.populations.set_total(1000);
-    model1.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 10;
-    model1.parameters.set<mio::TransmissionRisk>(0.4);
-    model1.parameters.set<mio::StageTimeIncubationInv>(1./4);
-    model1.parameters.set<mio::StageTimeInfectiousInv>(1./10);
+    model1.parameters.get<mio::seir::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model1.parameters.set<mio::seir::TransmissionRisk>(0.4);
+    model1.parameters.set<mio::seir::StageTimeIncubationInv>(1./4);
+    model1.parameters.set<mio::seir::StageTimeInfectiousInv>(1./10);
 
     auto model2 = model1;
-    model2.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 1.;
+    model2.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::S)}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_migration_sim(
         t0, dt,
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::SeirModel>>, mio::MigrationEdge>());
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::seir::Model>>, mio::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -62,8 +64,8 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = mio::Simulation<mio::SeirModel>(model1, t0);
-    auto single_sim2 = mio::Simulation<mio::SeirModel>(model2, t0);
+    auto single_sim1 = mio::Simulation<mio::seir::Model>(model1, t0);
+    auto single_sim2 = mio::Simulation<mio::seir::Model>(model2, t0);
     single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
     single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
 
