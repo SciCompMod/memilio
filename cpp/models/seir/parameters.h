@@ -20,7 +20,8 @@
 #ifndef SEIR_PARAMETERS_H
 #define SEIR_PARAMETERS_H
 
-#include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
 #include <vector>
@@ -38,10 +39,10 @@ namespace oseir
      * @brief probability of getting infected from a contact
      */
     struct InfectionProbabilityFromContact {
-        using Type = double;
-        static constexpr Type get_default()
+        using Type = UncertainValue;
+        static Type get_default()
         {
-            return 1.0;
+            return Type(1.0);
         }
         static std::string name()
         {
@@ -53,10 +54,10 @@ namespace oseir
      * @brief the latent time in day unit
      */
     struct LatentTime {
-        using Type = double;
-        static constexpr Type get_default()
+        using Type = UncertainValue;
+        static Type get_default()
         {
-            return 5.2;
+            return Type(5.2);
         }
         static std::string name()
         {
@@ -68,10 +69,10 @@ namespace oseir
      * @brief the infectious time in day unit
      */
     struct InfectiousTime {
-        using Type = double;
-        static constexpr Type get_default()
+        using Type = UncertainValue;
+        static Type get_default()
         {
-            return 6.0;
+            return Type(6.0);
         }
         static std::string name()
         {
