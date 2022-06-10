@@ -47,7 +47,6 @@ namespace oseir
         {
         }
 
-#if USE_DERIV_FUNC
         void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                              Eigen::Ref<Eigen::VectorXd> dydt) const override
         {
@@ -66,8 +65,6 @@ namespace oseir
             dydt[(size_t)InfectionState::Recovered] =
                 (1.0 / params.get<InfectiousTime>()) * y[(size_t)InfectionState::Infected];
         }
-
-#endif // USE_DERIV_FUNC
     };
 
 } // namespace oseir
