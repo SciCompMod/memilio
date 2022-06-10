@@ -28,69 +28,76 @@
 
 namespace mio
 {
-namespace seir
+namespace oseir
 {
 
-/********************
- * define the model *
- ********************/
+    /********************
+    * define the model *
+    ********************/
 
-class Model : public CompartmentalModel<Populations<InfectionState>, ParametersBase>
-{
-    using Base = CompartmentalModel<mio::Populations<InfectionState>, ParametersBase>;
-    using Po = Base::Populations;
-    using Pa = Base::ParameterSet;
-
-public:
-    Model()
-        : Base(Po({Index<InfectionState>((size_t)InfectionState::Count)}, 0.), Pa())
+    class Model : public CompartmentalModel<Populations<InfectionState>, ParametersBase>
     {
+        using Base = CompartmentalModel<mio::Populations<InfectionState>, ParametersBase>;
+        using Po   = Base::Populations;
+        using Pa   = Base::ParameterSet;
+
+    public:
+        Model()
+            : Base(Po({Index<InfectionState>((size_t)InfectionState::Count)}, 0.), Pa())
+        {
 #if !USE_DERIV_FUNC
-        //S to E
-        this->add_flow(std::make_tuple(InfectionState::S), std::make_tuple(InfectionState::E),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
-                           ScalarType cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
+            //S to E
+            this->add_flow(
+                std::make_tuple(InfectionState::Susceptible), std::make_tuple(InfectionState::Exposed),
+                [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                    ScalarType cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
 
-                           //TODO: We should probably write a static Po::get_total_from function
-                           ScalarType divN = 1.0 / (Po::get_from(y, InfectionState::S) + Po::get_from(y, InfectionState::E) +
-                                                    Po::get_from(y, InfectionState::I) + Po::get_from(y, InfectionState::R));
-                           return cont_freq_eff * Po::get_from(y, InfectionState::S) * Po::get_from(pop, InfectionState::I) *
-                                  divN;
-                       });
+                    //TODO: We should probably write a static Po::get_total_from function
+                    ScalarType divN =
+                        1.0 / (Po::get_from(y, InfectionState::Susceptible) + Po::get_from(y, InfectionState::Exposed) +
+                               Po::get_from(y, InfectionState::Infected) + Po::get_from(y, InfectionState::Recovered));
+                    return cont_freq_eff * Po::get_from(y, InfectionState::Susceptible) *
+                           Po::get_from(pop, InfectionState::Infected) * divN;
+                });
 
-        //E to I
-        this->add_flow(std::make_tuple(InfectionState::E), std::make_tuple(InfectionState::I),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                           return p.times.get_incubation_inv() * Po::get_from(y, InfectionState::E);
-                       });
+            //E to I
+            this->add_flow(std::make_tuple(InfectionState::Exposed), std::make_tuple(InfectionState::Infected),
+                           [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
+                              Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return p.times.get_incubation_inv() * Po::get_from(y, InfectionState::Exposed);
+                           });
 
-        //I to R
-        this->add_flow(std::make_tuple(InfectionState::I), std::make_tuple(InfectionState::R),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                           return p.times.get_infectious_inv() * Po::get_from(y, InfectionState::I);
-                       });
+            //I to R
+            this->add_flow(std::make_tuple(InfectionState::Infected), std::make_tuple(InfectionState::Recovered),
+                           [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
+                              Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return p.times.get_infectious_inv() * Po::get_from(y, InfectionState::Infected);
+                           });
 #endif
-    }
+        }
 
 #if USE_DERIV_FUNC
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
-                         Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
-    {
-        auto& params = this->parameters;
-        double S2E_coeff = params.get<ContactFrequency>().get_matrix_at(t)(0, 0) * params.get<TransmissionRisk>()
-                / populations.get_total();
+        void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                             Eigen::Ref<Eigen::VectorXd> dydt) const override
+        {
+            auto& params     = this->parameters;
+            double S2E_coeff = params.get<ContactFrequency>().get_matrix_at(t)(0, 0) * params.get<TransmissionRisk>() /
+                               populations.get_total();
 
-        dydt[(size_t)InfectionState::S] = -S2E_coeff * y[(size_t)InfectionState::S] * pop[(size_t)InfectionState::I];
-        dydt[(size_t)InfectionState::E] = S2E_coeff * y[(size_t)InfectionState::S] * pop[(size_t)InfectionState::I] -
-                                    params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::E];
-        dydt[(size_t)InfectionState::I] = params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::E] -
-                                    params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::I];
-        dydt[(size_t)InfectionState::R] = params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::I];
-    }
+            dydt[(size_t)InfectionState::Susceptible] =
+                -S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+            dydt[(size_t)InfectionState::Exposed] =
+                S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
+                params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::Exposed];
+            dydt[(size_t)InfectionState::Infected] =
+                params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::Exposed] -
+                params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::Infected];
+            dydt[(size_t)InfectionState::Recovered] =
+                params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::Infected];
+        }
 
 #endif // USE_DERIV_FUNC
-};
+    };
 
 } // namespace seir
 } // namespace mio

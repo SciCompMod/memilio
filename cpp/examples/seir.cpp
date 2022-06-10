@@ -33,21 +33,23 @@ int main()
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::seir::Model model;
+    mio::oseir::Model model;
 
-    double total_population = 10000;
-    model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::E)}] = 100;
-    model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::I)}] = 100;
-    model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::R)}] = 100;
-    model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::S)}] = total_population - model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::E)}]
-                                                                                              - model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::I)}]
-                                                                                              - model.populations[{mio::Index<mio::seir::InfectionState>(mio::seir::InfectionState::R)}];
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::seir::StageTimeIncubationInv>(1./5.2);
-    model.parameters.set<mio::seir::StageTimeInfectiousInv>(1./6);
-    model.parameters.set<mio::seir::TransmissionRisk>(0.04);
-    model.parameters.get<mio::seir::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model.parameters.set<mio::oseir::StageTimeIncubationInv>(1. / 5.2);
+    model.parameters.set<mio::oseir::StageTimeInfectiousInv>(1. / 6);
+    model.parameters.set<mio::oseir::TransmissionRisk>(0.04);
+    model.parameters.get<mio::oseir::ContactFrequency>().get_baseline()(0, 0) = 10;
 
     // print_seir_params(model);
 

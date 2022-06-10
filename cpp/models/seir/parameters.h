@@ -27,49 +27,46 @@
 
 namespace mio
 {
-namespace seir
+namespace oseir
 {
 
-/*******************************************
- * Define Parameters of the SEIR model *
- *******************************************/
+    /*******************************************
+      * Define Parameters of the SEIR model *
+    *******************************************/
 
-struct TransmissionRisk
-{
-    using Type=double;
-    static constexpr Type get_default() {
-        return 1.0;
-    }
-};
-struct StageTimeIncubationInv
-{
-    using Type=double;
-    static constexpr Type get_default() {
-        return 1.0 / 5.2;
-    }
-};
-struct StageTimeInfectiousInv
-{
-    using Type=double;
-    static constexpr Type get_default() {
-        return 1.0 / 6.0;
-    }
-};
-struct ContactFrequency
-{
-    using Type=ContactMatrix;
-    static Type get_default() {
-        return ContactMatrix{1};
-    }
-};
+    struct TransmissionRisk {
+        using Type = double;
+        static constexpr Type get_default()
+        {
+            return 1.0;
+        }
+    };
+    struct StageTimeIncubationInv {
+        using Type = double;
+        static constexpr Type get_default()
+        {
+            return 1.0 / 5.2;
+        }
+    };
+    struct StageTimeInfectiousInv {
+        using Type = double;
+        static constexpr Type get_default()
+        {
+            return 1.0 / 6.0;
+        }
+    };
+    struct ContactFrequency {
+        using Type = ContactMatrix;
+        static Type get_default()
+        {
+            return ContactMatrix{1};
+        }
+    };
 
-using ParametersBase =
-        ParameterSet<TransmissionRisk,
-                    StageTimeIncubationInv,
-                    StageTimeInfectiousInv,
-                    ContactFrequency>;
+    using ParametersBase =
+        ParameterSet<TransmissionRisk, StageTimeIncubationInv, StageTimeInfectiousInv, ContactFrequency>;
 
-} // namespace seir
+} // namespace oseir
 } // namespace mio
 
 #endif // SEIR_PARAMETERS_H

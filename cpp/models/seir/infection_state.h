@@ -22,23 +22,23 @@
 
 namespace mio
 {
-namespace seir
+namespace oseir
 {
 
-/**
- * @brief The InfectionState enum describes the possible
- * categories for the infectious state of persons
- */
-enum class InfectionState
-{
-    S,
-    E,
-    I,
-    R,
-    Count = 4
-};
+    /**
+     * @brief The InfectionState enum describes the possible
+     * categories for the infectious state of persons
+     */
+    enum class InfectionState
+    {
+        Susceptible,
+        Exposed,
+        Infected,
+        Recovered,
+        Count
+    };
 
-} // namespace seir
+} // namespace oseir
 } // namespace mio
 
 #endif // SEIR_INFECTIONSTATE_H
