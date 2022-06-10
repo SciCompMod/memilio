@@ -356,6 +356,75 @@ def transform_npi_data(fine_resolution=2,
     npi_codes_prior = df_npis_desc['Variablenname']
     npi_codes_prior_desc = df_npis_desc['Variable']
 
+    # for fine_resolution == 2 deactivation of non-combinable
+    # incidence-dependent NPIs has to be conducted; therefore we defined a
+    # matrix of possible combinations of NPIs (marked with an X if combinable)
+    # NPIs of different main category (e.g., M01a and M04) can always be
+    # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
+    # other
+    if fine_resolution == 2:
+        df_npis_combinations_pre = pd.read_excel(
+            os.path.join(
+                directory, 'combination_npis.xlsx'))
+
+        # rename essential columns and throw away others
+        column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
+        rename_columns = {column_names[i]: i for i in range(len(column_names))}
+        df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
+        df_npis_combinations_pre = df_npis_combinations_pre[[
+            'Variablenname'] + [i for i in range(0, 16)]]
+        # replace empty cells by zeros and x-marked cells by ones
+        df_npis_combinations_pre = df_npis_combinations_pre.replace(np.nan, 0)
+        df_npis_combinations_pre = df_npis_combinations_pre.replace('x', 1)
+
+        # extract different NPI groups and store indices of NPIs belonging
+        # to the different groups
+        npi_groups_combinations = pd.Series(
+            code.split('_')[0]
+            for code in df_npis_combinations_pre['Variablenname'])
+        npi_groups_combinations_unique = npi_groups_combinations.unique()
+        npi_groups_idx = []
+        for code in npi_groups_combinations_unique:
+            npi_groups_idx.append(
+                list(
+                    npi_groups_combinations
+                    [npi_groups_combinations == code].index))
+        # create hash table of main code to combination matrix
+        df_npis_combinations = {
+            npi_groups_combinations_unique[i]: np.eye(len(npi_groups_idx[i]))
+            for i in range(len(npi_groups_combinations_unique))}
+
+        # run through all groups and set possible combinations according to
+        # read combination matrix
+        start_comb_matrix = list(
+            df_npis_combinations_pre.columns).index('Variablenname')+1
+        for i in range(len(npi_groups_idx)):
+            df_npis_combinations[npi_groups_combinations_unique[i]] = df_npis_combinations_pre.iloc[npi_groups_idx[i],
+                                                                                                    start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
+            if (df_npis_combinations[npi_groups_combinations_unique[i]]-np.transpose(df_npis_combinations[npi_groups_combinations_unique[i]])).max() > 0:
+                print('Error in input file: Please correct combination matrix input.')
+
+        writer = pd.ExcelWriter(os.path.join(
+            directory, 'combinations_npis_cleanoutput.xlsx'))
+        # use to_excel function and specify the sheet_name and index
+        # to store the dataframe in specified sheet
+        for i in range(len(npi_groups_combinations_unique)):
+            codes_out = df_npis_combinations_pre.loc[npi_groups_idx[i],
+                                                     'Variablenname'].values
+            df_out = pd.DataFrame(
+                df_npis_combinations
+                [npi_groups_combinations_unique[i]],
+                columns=codes_out)
+            df_out.insert(0, 'Code', codes_out)
+            df_out.insert(
+                0, 'Description (German)',
+                [desc
+                 for desc in npi_codes_prior_desc
+                 [npi_codes_prior.isin(codes_out)].values])
+            df_out.to_excel(
+                writer, sheet_name=npi_groups_combinations_unique[i])
+        writer.save()
+
     # correct differences in codes between data sheet and explanation sheet
     codes_dropped = []  # no dropping for fine_resolution == 0
     if fine_resolution > 0:
@@ -509,48 +578,6 @@ def transform_npi_data(fine_resolution=2,
             incval = npi_incid_start[npis.loc
                                      [i, dd.EngEng['npiCode']]]
             incidence_thresholds_to_npis[incval].append(i)
-
-    # for fine_resolution == 2 deactivation of non-combinable
-    # incidence-dependent NPIs has to be conducted; therefore we defined a
-    # matrix of possible combinations of NPIs (marked with an X if combinable)
-    # NPIs of different main category (e.g., M01a and M04) can always be
-    # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
-    # other
-    if fine_resolution == 2:
-        df_npis_combinations_pre = pd.read_excel(
-            os.path.join(
-                directory, 'combination_npis.xlsx'))
-
-        # rename essential columns and throw away others
-        column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
-        rename_columns = {column_names[i]: i for i in range(len(column_names))}
-        df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
-        df_npis_combinations_pre = df_npis_combinations_pre[[
-            'Variablenname'] + [i for i in range(0, 16)]]
-
-        # extract different NPI groups and store indices of NPIs belonging
-        # to the different groups
-        npi_groups_combinations = pd.Series(
-            code.split('_')[0]
-            for code in df_npis_combinations_pre['Variablenname'])
-        npi_groups_combinations_unique = npi_groups_combinations.unique()
-        npi_groups_idx = []
-        for code in npi_groups_combinations_unique:
-            npi_groups_idx.append(
-                list(
-                    npi_groups_combinations
-                    [npi_groups_combinations == code].index))
-        # create hash table of main code to combination matrix
-        df_npis_combinations = {
-            npi_groups_combinations_unique[i]: np.zeros(
-                (len(npi_groups_idx[i]),
-                 len(npi_groups_idx[i])))
-            for i in range(len(npi_groups_combinations_unique))}
-
-        # run through all groups and set possible combinations according to
-        # read combination matrix
-        for i in range(len(npi_groups_idx)):
-            npi_groups_idx[i]  # TODO
 
     # get county ids
     unique_geo_entities = geoger.get_county_ids()
@@ -1145,7 +1172,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=0)
+    transform_npi_data(fine_resolution=2)
 
 
 if __name__ == "__main__":
