@@ -389,9 +389,14 @@ def transform_npi_data(fine_resolution=2,
                 list(
                     npi_groups_combinations
                     [npi_groups_combinations == code].index))
-        # create hash table of main code to combination matrix
+        # create hash table of main code to contained codes and combination matrix
         df_npis_combinations = {
-            npi_groups_combinations_unique[i]: np.eye(len(npi_groups_idx[i]))
+            npi_groups_combinations_unique[i]:
+            [
+                list(
+                    df_npis_combinations_pre['Variablenname']
+                    [npi_groups_idx[0]]),
+                np.eye(len(npi_groups_idx[i]))]
             for i in range(len(npi_groups_combinations_unique))}
 
         # run through all groups and set possible combinations according to
@@ -399,28 +404,34 @@ def transform_npi_data(fine_resolution=2,
         start_comb_matrix = list(
             df_npis_combinations_pre.columns).index('Variablenname')+1
         for i in range(len(npi_groups_idx)):
-            df_npis_combinations[npi_groups_combinations_unique[i]] = df_npis_combinations_pre.iloc[npi_groups_idx[i],
-                                                                                                    start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
-            if (df_npis_combinations[npi_groups_combinations_unique[i]]-np.transpose(df_npis_combinations[npi_groups_combinations_unique[i]])).max() > 0:
+            codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
+                                                       'Variablenname'].values
+            df_npis_combinations[npi_groups_combinations_unique[i]][1] = df_npis_combinations_pre.iloc[npi_groups_idx[i],
+                                                                                                       start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
+            if (df_npis_combinations[npi_groups_combinations_unique[i]][1]-np.transpose(df_npis_combinations[npi_groups_combinations_unique[i]][1])).max() > 0:
                 print('Error in input file: Please correct combination matrix input.')
+            # make it a dataframe to allow easy removal of code lines and rows
+            # if they are not used later on
+            df_npis_combinations[npi_groups_combinations_unique[i]][1] = pd.DataFrame(
+                df_npis_combinations[npi_groups_combinations_unique[i]][1],
+                columns=codes_local)
+            df_npis_combinations[npi_groups_combinations_unique[i]][1].insert(
+                0, 'Code', codes_local)
 
         writer = pd.ExcelWriter(os.path.join(
             directory, 'combinations_npis_cleanoutput.xlsx'))
         # use to_excel function and specify the sheet_name and index
         # to store the dataframe in specified sheet
         for i in range(len(npi_groups_combinations_unique)):
-            codes_out = df_npis_combinations_pre.loc[npi_groups_idx[i],
-                                                     'Variablenname'].values
-            df_out = pd.DataFrame(
-                df_npis_combinations
-                [npi_groups_combinations_unique[i]],
-                columns=codes_out)
-            df_out.insert(0, 'Code', codes_out)
+            codes_local = df_npis_combinations[npi_groups_combinations_unique[i]
+                                               ][1].columns[1:]
+            df_out = df_npis_combinations[npi_groups_combinations_unique[i]][
+                1].copy()
             df_out.insert(
                 0, 'Description (German)',
                 [desc
                  for desc in npi_codes_prior_desc
-                 [npi_codes_prior.isin(codes_out)].values])
+                 [npi_codes_prior.isin(codes_local)].values])
             df_out.to_excel(
                 writer, sheet_name=npi_groups_combinations_unique[i])
         writer.save()
