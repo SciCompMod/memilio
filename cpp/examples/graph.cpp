@@ -33,15 +33,15 @@ int main(int argc, char** argv)
 
     mio::oseir::Model model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
-    model.parameters.set<mio::oseir::StageTimeIncubationInv>(1);
-    model.parameters.get<mio::oseir::ContactFrequency>().get_baseline()(0, 0) = 2.7;
-    model.parameters.set<mio::oseir::StageTimeInfectiousInv>(1);
+    model.parameters.set<mio::oseir::LatentTime>(1);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
+    model.parameters.set<mio::oseir::InfectiousTime>(1);
 
     //two mostly identical groups
     auto model_group1 = model;
     auto model_group2 = model;
     //some contact restrictions in group 1
-    model_group1.parameters.get<mio::oseir::ContactFrequency>().add_damping(0.5, mio::SimulationTime(5));
+    model_group1.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.5, mio::SimulationTime(5));
     //infection starts in group 1
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 9990;
     model_group1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 10;

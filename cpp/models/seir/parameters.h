@@ -34,37 +34,67 @@ namespace oseir
       * Define Parameters of the SEIR model *
     *******************************************/
 
-    struct TransmissionRisk {
+    /**
+     * @brief probability of getting infected from a contact
+     */
+    struct InfectionProbabilityFromContact {
         using Type = double;
         static constexpr Type get_default()
         {
             return 1.0;
         }
-    };
-    struct StageTimeIncubationInv {
-        using Type = double;
-        static constexpr Type get_default()
+        static std::string name()
         {
-            return 1.0 / 5.2;
-        }
-    };
-    struct StageTimeInfectiousInv {
-        using Type = double;
-        static constexpr Type get_default()
-        {
-            return 1.0 / 6.0;
-        }
-    };
-    struct ContactFrequency {
-        using Type = ContactMatrix;
-        static Type get_default()
-        {
-            return ContactMatrix{1};
+            return "InfectionProbabilityFromContact";
         }
     };
 
-    using ParametersBase =
-        ParameterSet<TransmissionRisk, StageTimeIncubationInv, StageTimeInfectiousInv, ContactFrequency>;
+    /**
+     * @brief the latent time in day unit
+     */
+    struct LatentTime {
+        using Type = double;
+        static constexpr Type get_default()
+        {
+            return 5.2;
+        }
+        static std::string name()
+        {
+            return "LatentTime";
+        }
+    };
+
+    /**
+     * @brief the infectious time in day unit
+     */
+    struct InfectiousTime {
+        using Type = double;
+        static constexpr Type get_default()
+        {
+            return 6.0;
+        }
+        static std::string name()
+        {
+            return "InfectiousTime";
+        }
+    };
+
+    /**
+     * @brief the contact patterns within the society are modelled using a ContactMatrix
+     */
+    struct ContactPatterns {
+        using Type = ContactMatrix;
+        static Type get_default()
+        {
+            return Type{1};
+        }
+        static std::string name()
+        {
+            return "ContactPatterns";
+        }
+    };
+
+    using ParametersBase = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
 
 } // namespace oseir
 } // namespace mio

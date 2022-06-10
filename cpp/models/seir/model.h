@@ -81,25 +81,25 @@ namespace oseir
                              Eigen::Ref<Eigen::VectorXd> dydt) const override
         {
             auto& params     = this->parameters;
-            double S2E_coeff = params.get<ContactFrequency>().get_matrix_at(t)(0, 0) * params.get<TransmissionRisk>() /
-                               populations.get_total();
+            double S2E_coeff = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                               params.get<InfectionProbabilityFromContact>() / populations.get_total();
 
             dydt[(size_t)InfectionState::Susceptible] =
                 -S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
             dydt[(size_t)InfectionState::Exposed] =
                 S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-                params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::Exposed];
+                (1.0 / params.get<LatentTime>()) * y[(size_t)InfectionState::Exposed];
             dydt[(size_t)InfectionState::Infected] =
-                params.get<StageTimeIncubationInv>() * y[(size_t)InfectionState::Exposed] -
-                params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::Infected];
+                (1.0 / params.get<LatentTime>()) * y[(size_t)InfectionState::Exposed] -
+                (1.0 / params.get<InfectiousTime>()) * y[(size_t)InfectionState::Infected];
             dydt[(size_t)InfectionState::Recovered] =
-                params.get<StageTimeInfectiousInv>() * y[(size_t)InfectionState::Infected];
+                (1.0 / params.get<InfectiousTime>()) * y[(size_t)InfectionState::Infected];
         }
 
 #endif // USE_DERIV_FUNC
     };
 
-} // namespace seir
+} // namespace oseir
 } // namespace mio
 
 #endif // SEIR_MODEL_H

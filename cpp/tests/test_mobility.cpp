@@ -42,10 +42,10 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
     model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
     model1.populations.set_total(1000);
-    model1.parameters.get<mio::oseir::ContactFrequency>().get_baseline()(0, 0) = 10;
-    model1.parameters.set<mio::oseir::TransmissionRisk>(0.4);
-    model1.parameters.set<mio::oseir::StageTimeIncubationInv>(1. / 4);
-    model1.parameters.set<mio::oseir::StageTimeInfectiousInv>(1. / 10);
+    model1.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model1.parameters.set<mio::oseir::InfectionProbabilityFromContact>(0.4);
+    model1.parameters.set<mio::oseir::LatentTime>(4);
+    model1.parameters.set<mio::oseir::InfectiousTime>(10);
 
     auto model2                                                                                           = model1;
     model2.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
