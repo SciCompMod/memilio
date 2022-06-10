@@ -18,6 +18,8 @@
 * limitations under the License.
 */
 #include "seir/model.h"
+#include "seir/infection_state.h"
+#include "seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 
