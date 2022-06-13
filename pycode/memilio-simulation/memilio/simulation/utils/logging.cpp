@@ -20,6 +20,8 @@
 #include "utils/logging.h"
 #include "memilio/utils/logging.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 

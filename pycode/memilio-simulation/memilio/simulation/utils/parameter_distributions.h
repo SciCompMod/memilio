@@ -22,16 +22,14 @@
 
 #include "pybind11/pybind11.h"
 
-namespace py = pybind11;
-
 namespace pymio
 {
 
-void bind_parameter_distribution(py::module& m, std::string const& name);
+void bind_parameter_distribution(pybind11::module& m, std::string const& name);
 
-void bind_parameter_distribution_normal(py::module& m, std::string const& name);
+void bind_parameter_distribution_normal(pybind11::module& m, std::string const& name);
 
-void bind_parameter_distribution_uniform(py::module& m, std::string const& name);
+void bind_parameter_distribution_uniform(pybind11::module& m, std::string const& name);
 
 } // namespace pymio
 

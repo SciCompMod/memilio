@@ -22,12 +22,10 @@
 
 #include "pybind11/pybind11.h"
 
-namespace py = pybind11;
-
 namespace pymio
 {
 
-void bind_time_series(py::module& m, std::string const& name);
+void bind_time_series(pybind11::module& m, std::string const& name);
 
 } // namespace pymio
 

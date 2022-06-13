@@ -25,8 +25,6 @@
 
 #include "pybind11/pybind11.h"
 
-namespace py = pybind11;
-
 namespace pymio
 {
 
@@ -46,16 +44,16 @@ void bind_damping_members(DampingClass& damping_class)
     bind_shape_property(damping_class);
 
     damping_class
-        .def(py::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
+        .def(pybind11::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
                  return Damping(c, mio::DampingLevel(level), mio::DampingType(type), mio::SimulationTime(t));
              }),
-             py::arg("coeffs"), py::arg("t"), py::arg("level") = 0, py::arg("type") = 0)
+             pybind11::arg("coeffs"), pybind11::arg("t"), pybind11::arg("level") = 0, pybind11::arg("type") = 0)
         .def_property(
             "coeffs", [](const Damping& self) -> const auto& { return self.get_coeffs(); },
             [](Damping& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_coeffs() = v;
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def_property(
             "time",
             [](const Damping& self) {
@@ -64,7 +62,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, double v) {
                 self.get_time() = mio::SimulationTime(v);
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def_property(
             "type",
             [](const Damping& self) {
@@ -73,7 +71,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, int v) {
                 self.get_type() = mio::DampingType(v);
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def_property(
             "level",
             [](const Damping& self) {
@@ -82,7 +80,7 @@ void bind_damping_members(DampingClass& damping_class)
             [](Damping& self, int v) {
                 self.get_level() = mio::DampingLevel(v);
             },
-            py::return_value_policy::reference_internal);
+            pybind11::return_value_policy::reference_internal);
 }
 
 /**

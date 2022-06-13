@@ -22,6 +22,8 @@
 
 #include "pybind11/eigen.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 

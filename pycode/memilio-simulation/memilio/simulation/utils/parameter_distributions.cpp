@@ -21,6 +21,8 @@
 #include "pybind_util.h"
 #include "memilio/utils/parameter_distributions.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 

@@ -21,6 +21,8 @@
 #include "pybind_util.h"
 #include "memilio/utils/uncertain_value.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 

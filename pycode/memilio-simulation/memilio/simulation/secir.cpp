@@ -82,8 +82,11 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
+            [](mio::ParameterStudy<Simulation>& self,
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+                self.run([&handle_result](auto&& g) {
+                    handle_result(std::move(g));
+                });
             },
             py::arg("handle_result_func"))
         .def("run",
@@ -103,7 +106,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         });
 }
 
-using Simulation = mio::SecirSimulation<>;
+using Simulation     = mio::SecirSimulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
 } // namespace
@@ -173,9 +176,12 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
-          "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-          py::arg("model"));
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::SecirModel& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     pymio::bind_ModelNode<mio::SecirModel>(m, "SecirModelNode");
     pymio::bind_SimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");

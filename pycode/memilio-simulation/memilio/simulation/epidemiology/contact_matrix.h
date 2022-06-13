@@ -25,8 +25,6 @@
 
 #include "pybind11/pybind11.h"
 
-namespace py = pybind11;
-
 namespace pymio
 {
 
@@ -47,9 +45,9 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
     //matrix constructors have to be defined before shape constructors.
     //otherwise 1x1 numpy matrices/vectors are converted to scalars and used as shape arguments
     damping_expression_class
-        .def(py::init<const Eigen::Ref<const Matrix>&, const Eigen::Ref<const Matrix>&>(), py::arg("baseline"),
-             py::arg("minimum"))
-        .def(py::init<const Eigen::Ref<const Matrix>&>(), py::arg("baseline"));
+        .def(pybind11::init<const Eigen::Ref<const Matrix>&, const Eigen::Ref<const Matrix>&>(),
+             pybind11::arg("baseline"), pybind11::arg("minimum"))
+        .def(pybind11::init<const Eigen::Ref<const Matrix>&>(), pybind11::arg("baseline"));
     bind_shape_constructor(damping_expression_class);
 
     damping_expression_class
@@ -62,13 +60,13 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_baseline() = v;
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def_property(
             "minimum", [](const DampingExpression& self) -> auto& { return self.get_minimum(); },
             [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_minimum() = v;
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def("get_dampings",
              [](const DampingExpression& self) {
                  return std::vector<Damping>(self.get_dampings().begin(), self.get_dampings().end());
@@ -108,15 +106,15 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
         .def(
             "__getitem__", [](DampingExpressionGroup & self, size_t i) -> auto& {
                 if (i < 0 || i >= self.get_num_matrices()) {
-                    throw py::index_error("index out of range");
+                    throw pybind11::index_error("index out of range");
                 }
                 return self[i];
             },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def("__setitem__",
              [](DampingExpressionGroup& self, size_t i, const DampingExpression& m) {
                  if (i < 0 && i >= self.get_num_matrices()) {
-                     throw py::index_error("index out of range");
+                     throw pybind11::index_error("index out of range");
                  }
                  self[i] = m;
              })

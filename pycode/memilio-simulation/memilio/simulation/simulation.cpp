@@ -46,7 +46,7 @@ PYBIND11_MODULE(_simulation, m)
 
     auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
     pymio::bind_dampings_members(dampings_class);
-    
+
     pymio::bind_time_series(m, "TimeSeries");
 
     pymio::bind_parameter_distribution(m, "ParameterDistribution");
