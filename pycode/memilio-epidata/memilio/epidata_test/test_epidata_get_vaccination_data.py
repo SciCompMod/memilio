@@ -112,16 +112,15 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)
     def test_sanity_checks(self, mockv):
-
         # test empty dataframe
-        df = pd.DataFrame()
+        df1 = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df)
+            gvd.sanity_checks(df1)
         error_message = "Download of Vaccination Data failed. File is empty."
         self.assertEqual(str(error.exception), error_message)
 
         # test wrong number of data categories
-        df = pd.DataFrame(
+        df2 = pd.DataFrame(
             {"Impfdatum": ["2022-01-12"],
              "LandkreisId_Impfort": ["05754"],
              "Altersgruppe": ["01-59"],
@@ -129,25 +128,25 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
              "Anzahl": [10000],
              "xyz": ['Error']})
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df)
+            gvd.sanity_checks(df2)
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)
 
         # test wrong columns names 
-        df = pd.DataFrame(
+        df3 = pd.DataFrame(
             {"Impfdatum": ["2022-01-12"],
              "LandkreisId_Impfort": ["05754"],
              "Altersgruppe": ["01-59"],
              "Impfschutz": [1],
              "xyz": ['Error']})
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df)
+            gvd.sanity_checks(df3)
         error_message = "Error: Data categories have changed."
         self.assertEqual(str(error.exception), error_message)
 
         # test no errors
         # this test should not raise any errors
-        df = pd.DataFrame(
+        df4 = pd.DataFrame(
             {"Impfdatum":
                 ["2022-01-12", "2022-01-12", "2022-01-12", "2022-01-12",
                  "2022-01-12"],
@@ -155,7 +154,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "Altersgruppe": ["01-59", "01-59", "01-59", "01-59", "01-59"],
                 "Impfschutz": [1, 1, 2, 3, 1],
                 "Anzahl": [10000, 1, 2, 3, 4]})
-        gvd.sanity_checks(df)
+        gvd.sanity_checks(df4)
 
 
     @patch('builtins.print')
@@ -271,23 +270,22 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                       '11+'].drop(['vacc_1', 'vacc_2'], axis=1)
         test_4['vacc_1'] = [17*3/8.5, 17*2/8.5, 17*3.5/8.5, 4.0, 0.0, 19.0]
         test_4['vacc_2'] = [8*3/8.5, 8*2/8.5, 8*3.5/8.5, 1.0, 0.0, 0.0]
-        returndata = gvd.sanitizing_based_on_regions(data, to_county_map, age_groups, [
+        returndata = gvd.sanitizing_average_regions(data, to_county_map, age_groups, [
                                                      'vacc_1', 'vacc_2'], population)
         pd.testing.assert_frame_equal(
-            returndata[returndata['Age_RKI'] == '0-1'],
-            test_1, check_dtype=False)
+            returndata[returndata['Age_RKI'] == '0-1'].reset_index(drop=True),
+            test_1.reset_index(drop=True), check_dtype=False)
         pd.testing.assert_frame_equal(
-            returndata[returndata['Age_RKI'] == '2-3'],
-            test_2, check_dtype=False)
+            returndata[returndata['Age_RKI'] == '2-3'].reset_index(drop=True),
+            test_2.reset_index(drop=True), check_dtype=False)
         pd.testing.assert_frame_equal(
-            returndata[returndata['Age_RKI'] == '4-10'],
-            test_3, check_dtype=False)
+            returndata[returndata['Age_RKI'] == '4-10'].reset_index(drop=True),
+            test_3.reset_index(drop=True), check_dtype=False)
         pd.testing.assert_frame_equal(
-            returndata[returndata['Age_RKI'] == '11+'],
-            test_4, check_dtype=False)
+            returndata[returndata['Age_RKI'] == '11+'].reset_index(drop=True),
+            test_4.reset_index(drop=True), check_dtype=False)
 
     def test_extrapolate_age_groups(self):
-
         unique_age_groups_old = ['00-04', '05-11', '12-17', '18+']
         unique_age_groups_new = ['00-05', '06-16', '17-19', '20+']
         column_names = ['vacc_1', 'vacc_2']

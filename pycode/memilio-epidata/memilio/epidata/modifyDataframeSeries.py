@@ -170,6 +170,8 @@ def split_column_based_on_values(
     @param compute_cumsum Computes cumulative sum in new generated columns
     @return a dataframe with the new splitted columns
     """
+    # TODO: Maybe we should input a map e.g. 1->Vacc_partially, 2->Vacc_completed etc. This is more future proof.
+    # check number of given names and correct if necessary
     column_identifiers = sorted(df_to_split[column_to_split].unique())
     i = 2
     while len(column_identifiers) > len(new_column_labels):

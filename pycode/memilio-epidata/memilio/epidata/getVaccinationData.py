@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 from datetime import datetime
-import time
 import os
 import itertools
 import pandas as pd
@@ -49,7 +48,6 @@ def download_vaccination_data():
     except Exception:
         print("Error in reading csv while downloading vaccination data.")
         raise
-
     sanity_checks(df)
 
     return df
@@ -60,14 +58,12 @@ def sanity_checks(df):
         raise gd.DataError("Download of Vaccination Data failed. File is empty.")
 
     actual_strings_list = df.columns.tolist()
-
     # check number of data categories
     if len(actual_strings_list) != 5:
         raise gd.DataError("Error: Number of data categories changed.")
 
-    # These strings need to be in the header
+    # these strings need to be in the header
     test_strings = {"Impfdatum","LandkreisId_Impfort","Altersgruppe","Impfschutz","Anzahl"}
-    
     # check if headers are those we want
     for name in test_strings:
         if(name not in actual_strings_list):
@@ -157,14 +153,14 @@ def compute_vaccination_ratios(
     return df_vacc_ratios
 
 
-def sanitizing_based_on_regions(df, to_county_map, age_groups, column_names, age_population):
-    """! All vaccinations in a region are split up proptoionately per population to all counties in this region. 
-    This is done by summing up all vaccinations in this region and divide this by the population ratios per region.
+def sanitizing_average_regions(df, to_county_map, age_groups, column_names, age_population):
+    """! Vaccinations in all regions are split up per population of its counties. 
+    This is done by summing up all vaccinations in this region and divide this by the population ratios.
     This is done for every age group and number of vaccination seperately.
     A new dataframme is created where the new data is stored.
 
     @param df DataFrame with Data to compute.
-    @param to_county_map Dict with regions as keys and countyIDs as values.
+    @param to_county_map dict with regions as keys and countyIDs as values.
     @param age_groups list of all age groups as in df.
     @param column_names list of columns to compute.
     @param age_population Dataframe with number of population per age group and county.
@@ -172,11 +168,11 @@ def sanitizing_based_on_regions(df, to_county_map, age_groups, column_names, age
     """
     
     df_total=pd.DataFrame()
-    #computation is done for all Age Groups seperately
+    # computation is done for all Age Groups seperately
     for age in age_groups:
         # create subframe with specific age group
         df_age = df[df[dd.EngEng['ageRKI']]==age].copy()
-        # Loop over all regions
+        # loop over all regions
         for region, counties_list in to_county_map.items():
             vacc_sums = df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                 counties_list)].groupby(dd.EngEng['date'])[column_names].sum()
@@ -186,18 +182,31 @@ def sanitizing_based_on_regions(df, to_county_map, age_groups, column_names, age
             population_ratios = pd.merge(df_age.loc[df_age[dd.EngEng['idCounty']].isin(counties_list)][dd.EngEng['idCounty']],
                 age_population.loc[age_population[dd.EngEng['idCounty']].isin(counties_list)][[dd.EngEng['idCounty'], age]])[age]/\
                 age_population.loc[age_population[dd.EngEng['idCounty']].isin(counties_list)][age].sum()
-            # For each column: vaccinations = all vaccinations * population_ratios
+            # for each column: vaccinations = all vaccinations * population_ratios
             for column in column_names:
                 df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                     counties_list), column] = vacc_sums[column].values*population_ratios.values
 
-        df_total = df_total.append(df_age)
-        
+        df_total = pd.concat([df_total, df_age], ignore_index=True, sort=False)
+
     return df_total
 
 
-def sanitizing_based_on_mobility(df, age_groups, column_names, age_population, neighbors_mobility):
-    
+def sanitizing_extrapolation_mobility(df, age_groups, column_names, age_population, neighbors_mobility):
+    """! ATTENTION: DO NOT USE! ONLY FOR BACKWARD STABILITY AND DEVELOPMENT PURPOSES.
+    Distributes vaccinations of a county to connected counties if a lot more vaccinations than the federal state average were reported at the newest date.
+    Thus for different max dates data for a specific date can be different.
+    The average vaccination ratio per age group is only computed for completed vaccinations.
+    The average vaccination ratios for partially and refreshed vaccinations are not computed. Those vaccinations are also distributed by the ratios of completed vaccinations.
+    Since the distribution is done for one county after another a different order of counties may result in different data.
+
+    @param df DataFrame with Data to compute.
+    @param age_groups list of all age groups as in df.
+    @param column_names list of columns to compute.
+    @param age_population Dataframe with number of population per age group and county.
+    @param neighbors_mobility dict with counties as keys and commuter migration to other counties as values.
+    @return New DataFrame with sanitized data.
+    """
     max_sanit_threshold_arr = np.zeros((len(age_groups)))
 
     # compute average vaccination ratio per age group for full vaccinations
@@ -270,7 +279,6 @@ def sanitizing_based_on_mobility(df, age_groups, column_names, age_population, n
     # a lot more than the federal state average were reported to be
     # vaccinated here
     for ii in range(len(df_fullsum)):
-        start_time_county = time.perf_counter()
         # get county id
         id = df_fullsum.loc[ii, dd.EngEng['idCounty']]
 
@@ -367,11 +375,6 @@ def sanitizing_based_on_mobility(df, age_groups, column_names, age_population, n
                                age_groups[ageidx]),
                     column_names].values
 
-        if ii < 401:
-            end_time = time.perf_counter()
-            print("Time needed for sanitizing county " + str(id) + ": " +
-                    str(int(end_time - start_time_county)) + " sec")
-
         if len(
                 np.where(np.isnan(df_san[column_names]) == True)[0]) > 0:
             raise gd.DataError(
@@ -408,10 +411,10 @@ def extrapolate_age_groups(
         df_data, population_all_ages, unique_age_groups_old,
         unique_age_groups_new, column_names, age_old_to_all_ages_indices,
         min_all_ages, all_ages_to_age_new_share):
-    """! All vaccinations in a region are split up proptoionately per population to all counties in this region. 
-    This is done by summing up all vaccinations in this region and divide this by the population ratios per region.
-    This is done for every age group and number of vaccination seperately.
-    A new dataframme is created where the new data is stored.
+    """! Original age groups (05-11, 12-17, 18-59, 60+) are replaced by infection data age groups 
+    (0-4, 5-14, 15-34, 35-59, 60-79, 80+). For every county the vacinations of old age groups are split to infection 
+    data age groups by its population ratio.
+    For every age group and county a new dataframe is created. After the extrapolation all subframes are merged together.
 
     @param df_data DataFrame with Data to compute.
     @param population_all_ages Dataframe with number of population for every age group and county.
@@ -443,7 +446,7 @@ def extrapolate_age_groups(
             # get dataframe with only specific agegroup
             county_age_df = vacc_df[vacc_df[dd.EngEng['ageRKI']]
                                     == unique_age_groups_old[i]]
-            #create new Dataframe with dates, ids, etc.
+            # create new Dataframe with dates, ids, etc.
             info_df = county_age_df.drop(
                 column_names, axis=1).drop(
                 dd.EngEng['ageRKI'], axis=1)
@@ -536,8 +539,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         state level.
     @param moving_average 0 [Default] or Number>0. Defines the number of days for which a centered moving average is computed.
     """
-    start_time = time.perf_counter()
-    timestamp_1 = start_time
     # data for all dates is automatically added
     impute_dates = True
 
@@ -800,9 +801,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs.loc[df_data_agevacc_county_cs[dd.EngEng["idState"]]
                                       == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
 
-    timestamp_2 = time.perf_counter()
-    print("Time needed initial phase: " +
-          str(int(timestamp_2 - timestamp_1)) + " sec")
     if sanitize_data == 1 or sanitize_data == 2:
 
         if sanitize_data == 1:
@@ -814,7 +812,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             to_county_map = geoger.get_intermediateregionid_to_countyids_map(
                 merge_eisenach=True)
 
-        df_data_agevacc_county_cs = sanitizing_based_on_regions(
+        df_data_agevacc_county_cs = sanitizing_average_regions(
             df_data_agevacc_county_cs, to_county_map, unique_age_groups_old,
             vacc_column_names, population_old_ages)
 
@@ -826,7 +824,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         neighbors_mobility = gcm.get_neighbors_mobility_all(
             direction='in', abs_tol=10, merge_eisenach=True,
             out_folder=out_folder)
-        df_data_agevacc_county_cs = sanitizing_based_on_mobility(df_data_agevacc_county_cs, unique_age_groups_old,
+        df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(df_data_agevacc_county_cs, unique_age_groups_old,
             vacc_column_names, population_old_ages, neighbors_mobility)
         # compute the moving average
         df_data_agevacc_county_cs = modifyDataframeSeries.impute_and_reduce_df(
@@ -838,11 +836,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             min_date=min_date, max_date=max_date)
     else:
         print('Sanitizing deactivated.')
-    timestamp_1 = time.perf_counter()
-    if sanitize_data > 0:
-        print(
-            "Time needed for sanitizing: " + str(int(timestamp_1 - timestamp_2)) +
-            " sec")
 
     if make_plot:
         # have a look extrapolated vaccination ratios (TODO: create plotting for production)
@@ -932,9 +925,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_data_state_cs,
                        directory, filename, file_format)
 
-    timestamp_2 = time.perf_counter()
-    print("Time needed for writing files: " + str(int(timestamp_2 - timestamp_1)) + " sec")
-
     ####### age resolved with extrapolation to other age groups #######
     # write data frame resolved per county and age (with age classes as
     # provided in RKI infection tables: 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
@@ -965,10 +955,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         {column: sum for column in vacc_column_names}).reset_index()
     gd.write_dataframe(df_data_ageinf_state_cs,
                        directory, filename, file_format)
-
-    timestamp_1 = time.perf_counter()
-    print("Time needed for age extrapolation: " +
-          str(int(timestamp_1 - timestamp_2)) + " sec.\n", "Total time: "+ str(int(timestamp_1-start_time)) + " sec")
 
     # make plot of relative numbers of original and extrapolated age resolution
     if make_plot:
