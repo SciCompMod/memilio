@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "seir/model.h"
-#include "seir/infection_state.h"
-#include "seir/parameters.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>

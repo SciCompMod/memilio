@@ -20,9 +20,9 @@
 #define _USE_MATH_DEFINES
 
 #include "memilio/mobility/mobility.h"
-#include "seir/model.h"
-#include "seir/infection_state.h"
-#include "seir/parameters.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
 #include "secir/secir.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"

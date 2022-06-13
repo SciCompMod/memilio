@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "seir/model.h"
-#include "seir/infection_state.h"
-#include "seir/parameters.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/compartments/simulation.h"
 
