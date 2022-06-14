@@ -48,16 +48,16 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     
     assert(std::is_sorted(interpolation_times.begin(), interpolation_times.end()) && "Time points for interpolation have to be sorted in non-descending order.");
     
-    if ((int)interpolation_times.size() > 2) {
+    if (interpolation_times.size() >= 2) {
         assert((interpolation_times[1] > simulation_result.get_time(0) && interpolation_times.rbegin()[1] <= simulation_result.get_last_time()) && "All but the first and the last time point of interpolation have lie between simulation times (strictly for lower boundary).");
     }
     
-    if ((int)interpolation_times.size() == 0) {
-        std::cout << "Warning: Vector of interpolation times is empty. Returning empty TimeSeries.";
+    TimeSeries<double> interpolated(simulation_result.get_num_elements());
+    
+    if (interpolation_times.size() == 0) {
+        return interpolated;
     }
     
-    TimeSeries<double> interpolated(simulation_result.get_num_elements());
-
     size_t interp_idx = 0;
     // add first time point of interpolation times in case it is smaller than the first time point of simulation_result
     // this is used for the case that it equals the first time point of simulation up to tolerance
