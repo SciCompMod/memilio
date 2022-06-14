@@ -166,26 +166,6 @@ TEST(TestInterpolateTimeSeries, timePointsCanBeChosen)
     ASSERT_THAT(interpolated[4], MatrixNear(Vec::Constant(1, 2.0 + 10. / 11. * 1.0))); // at 2.4
 }
 
-TEST(TestInterpolateTimeSeries, timePointsCanBeChosenWithTolerance)
-{
-    using Vec = mio::TimeSeries<double>::Vector;
-    mio::TimeSeries<double> ts(1);
-    ts.add_time_point(0.1, Vec::Constant(1, 0.0));
-    ts.add_time_point(1.0, Vec::Constant(1, 2.0));
-    ts.add_time_point(2.0, Vec::Constant(1, 4.0));
-
-    auto tol = 1e-4;
-    std::vector<double> tps;
-    tps.push_back(0.1 - 1e-5);
-    tps.push_back(2.0 + 1e-5);
-    
-    auto interpolated = mio::interpolate_simulation_result(ts, tps, tol);
-    
-    ASSERT_THAT(interpolated.get_times(), testing::ElementsAreArray(tps));
-    ASSERT_THAT(interpolated[0], MatrixNear(Vec::Constant(1, 0.0))); // at 0.1
-    ASSERT_THAT(interpolated[1], MatrixNear(Vec::Constant(1, 4.0))); // at 2.0
-}
-
 TEST(TestInterpolateGraph, basic)
 {
     using Model      = mio::SecirModel;

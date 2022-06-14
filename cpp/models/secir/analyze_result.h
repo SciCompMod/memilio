@@ -47,10 +47,9 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
  * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
  * @param simulation_result time series to interpolate
  * @param interpolations_times std::vector of time points at which simulation results are interpolated.
- * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days. The vector of interpolation times
  * @return interpolated time series at given interpolation points
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times, const double abs_tol = 1e-14);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times);
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)

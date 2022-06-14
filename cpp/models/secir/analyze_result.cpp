@@ -39,15 +39,18 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     std::vector<double> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);
     std::iota(tps.begin(), tps.end(), day0);
     
-    return interpolate_simulation_result(simulation_result, tps, abs_tol);
+    return interpolate_simulation_result(simulation_result, tps);
 }
 
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times, const double abs_tol)
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times)
 {
     assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
     
-    assert((*std::min_element(interpolation_times.begin(), interpolation_times.end()) + abs_tol >= simulation_result.get_time(0) && *std::max_element(interpolation_times.begin(), interpolation_times.end()) - abs_tol <= simulation_result.get_last_time()) && "Interpolation times have lie between simulation times (up to given tolerance).");
-    unused(abs_tol);
+    assert(std::is_sorted(interpolation_times.begin(), interpolation_times.end()) && "Time points for interpolation have to be sorted in non-descending order.");
+    
+    if ((int)interpolation_times.size() > 2) {
+        assert((interpolation_times[1] > simulation_result.get_time(0) && interpolation_times.rbegin()[1] <= simulation_result.get_last_time()) && "All but the first and the last time point of interpolation have lie between simulation times (strictly for lower boundary).");
+    }
     
     if ((int)interpolation_times.size() == 0) {
         std::cout << "Warning: Vector of interpolation times is empty. Returning empty TimeSeries.";
@@ -56,7 +59,8 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     TimeSeries<double> interpolated(simulation_result.get_num_elements());
 
     size_t interp_idx = 0;
-    // add first time point of interpolation times in case it equals the first time point of simulation (up to tolerance)
+    // add first time point of interpolation times in case it is smaller than the first time point of simulation_result
+    // this is used for the case that it equals the first time point of simulation up to tolerance
     // this is necessary even if the tolerance is 0 due to the way the comparison in the loop is implemented (< and >=)
     if (simulation_result.get_time(0) >= interpolation_times[0]) {
         interpolated.add_time_point(interpolation_times[0], simulation_result[0]);
@@ -79,7 +83,8 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
         }
     }
     
-    // add last time point of interpolation times in case it equals the last time point of simulation (up to tolerance (which is already checked for))
+    // add last time point of interpolation times in case it is larger than the last time point of simulation_result
+    // this is used for the case that it equals the last time point of simulation up to tolerance
     if (interp_idx < interpolation_times.size() && simulation_result.get_last_time() < interpolation_times[interp_idx]) {
         interpolated.add_time_point(interpolation_times[interp_idx], simulation_result.get_last_value());
     }

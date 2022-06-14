@@ -127,8 +127,8 @@ PYBIND11_MODULE(_simulation_secir, m)
           (&mio::interpolate_simulation_result), py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
     m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double>
-          (*)(const mio::TimeSeries<double>&, const std::vector<double>&, const double)>
-          (&mio::interpolate_simulation_result), py::arg("ts"), py::arg("interpolation_times"), py::arg("abs_tol") = 1e-14);
+          (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>
+          (&mio::interpolate_simulation_result), py::arg("ts"), py::arg("interpolation_times"));
     
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
