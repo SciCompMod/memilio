@@ -113,14 +113,14 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
            return_value=df_vacc_data_altern)
     def test_sanity_checks(self, mockv):
         # test empty dataframe
-        df1 = pd.DataFrame()
+        df_empty = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df1)
+            gvd.sanity_checks(df_empty)
         error_message = "Download of Vaccination Data failed. File is empty."
         self.assertEqual(str(error.exception), error_message)
 
         # test wrong number of data categories
-        df2 = pd.DataFrame(
+        df_wrong_categories = pd.DataFrame(
             {"Impfdatum": ["2022-01-12"],
              "LandkreisId_Impfort": ["05754"],
              "Altersgruppe": ["01-59"],
@@ -128,25 +128,25 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
              "Anzahl": [10000],
              "xyz": ['Error']})
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df2)
+            gvd.sanity_checks(df_wrong_categories)
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)
 
         # test wrong columns names 
-        df3 = pd.DataFrame(
+        df_wrong_column_names = pd.DataFrame(
             {"Impfdatum": ["2022-01-12"],
              "LandkreisId_Impfort": ["05754"],
              "Altersgruppe": ["01-59"],
              "Impfschutz": [1],
              "xyz": ['Error']})
         with self.assertRaises(gd.DataError) as error:
-            gvd.sanity_checks(df3)
+            gvd.sanity_checks(df_wrong_column_names)
         error_message = "Error: Data categories have changed."
         self.assertEqual(str(error.exception), error_message)
 
         # test no errors
         # this test should not raise any errors
-        df4 = pd.DataFrame(
+        df_no_errors = pd.DataFrame(
             {"Impfdatum":
                 ["2022-01-12", "2022-01-12", "2022-01-12", "2022-01-12",
                  "2022-01-12"],
@@ -154,7 +154,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "Altersgruppe": ["01-59", "01-59", "01-59", "01-59", "01-59"],
                 "Impfschutz": [1, 1, 2, 3, 1],
                 "Anzahl": [10000, 1, 2, 3, 4]})
-        gvd.sanity_checks(df4)
+        gvd.sanity_checks(df_no_errors)
 
 
     @patch('builtins.print')
