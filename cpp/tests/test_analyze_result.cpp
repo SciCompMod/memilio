@@ -129,7 +129,7 @@ TEST(TestInterpolateTimeSeries, timePointsCanHaveGivenTolerance)
 {
     mio::TimeSeries<double> ts(10);
     auto zeros = mio::TimeSeries<double>::Vector::Zero(10);
-    auto tol = 5e-3;
+    auto tol   = 5e-3;
     ts.add_time_point(0.0 + 1e-2, zeros); // out of tolerance
     ts.add_time_point(1.0, zeros);
     ts.add_time_point(2.0 - 1e-3, zeros); // within tolerance
@@ -155,9 +155,9 @@ TEST(TestInterpolateTimeSeries, timePointsCanBeChosen)
     tps.push_back(1.0);
     tps.push_back(1.3);
     tps.push_back(2.4);
-    
+
     auto interpolated = mio::interpolate_simulation_result(ts, tps);
-    
+
     ASSERT_THAT(interpolated.get_times(), testing::ElementsAreArray(tps));
     ASSERT_THAT(interpolated[0], MatrixNear(Vec::Constant(1, 1. / 8.))); // at 0.2
     ASSERT_THAT(interpolated[1], MatrixNear(Vec::Constant(1, 5. / 8.))); // at 0.6
@@ -376,37 +376,37 @@ TEST(TestEnsembleParamsPercentile, basic)
     mio::SecirModel model(2);
     mio::SecirModel model2(2);
 
-    auto& params = model.parameters;
-    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)] = 3;
-    params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)] = 5;
-    params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)] = 0.2;
-    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)] = 0.5;
+    auto& params                                                             = model.parameters;
+    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 3;
+    params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)]               = 5;
+    params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.2;
+    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.5;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 10;
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 10;
 
-    auto& params2 = model2.parameters;
-    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)] = 5;
-    params2.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)] = 2;
-    params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)] = 0.4;
-    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)] = 0.2;
+    auto& params2                                                             = model2.parameters;
+    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 5;
+    params2.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)]               = 2;
+    params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.4;
+    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.2;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 20;
     model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 12;
 
     auto g = std::vector<mio::SecirModel>({model, model2});
 
     params.set<mio::Seasonality>(0.4);
-    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)] = 4;
-    params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)] = 6;
-    params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)] = 0.3;
-    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)] = 0.6;
+    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 4;
+    params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)]               = 6;
+    params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.3;
+    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.6;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 11;
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 11;
 
     params2.set<mio::Seasonality>(0.4);
-    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)] = 6;
-    params2.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)] = 1;
-    params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)] = 0.5;
-    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)] = 0.3;
+    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 6;
+    params2.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(1)]               = 1;
+    params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.5;
+    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.3;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 22;
     model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 14;
 

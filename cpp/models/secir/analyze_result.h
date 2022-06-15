@@ -40,7 +40,8 @@ namespace mio
  * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
  * @return interpolated time series
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const double abs_tol = 1e-14);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const double abs_tol = 1e-14);
 
 /**
  * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
@@ -49,7 +50,8 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
  * @param interpolations_times std::vector of time points at which simulation results are interpolated.
  * @return interpolated time series at given interpolation points
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const std::vector<double>& interpolation_times);
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)
