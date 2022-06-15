@@ -60,11 +60,11 @@ def clean_data(
         """
     file_types = []
     if json:
-        file_types += "json"
+        file_types.append("json")
     if hdf5:
-        file_types += "h5"
+        file_types.append("h5")
     if txt:
-        file_types += "txt"
+        file_types.append("txt")
 
     # TODO: get list from other packages which data they write.
     # Otherwise when changing anything this tool has to be changes as well
@@ -110,7 +110,7 @@ def clean_data(
 
     else:
         for ending in file_types:
-            # john hopkins data has to be removed from diffrent directories
+            # john hopkins data has to be removed from different directories
             if john_hopkins:
                 # TODO: make general dictionary with all countries used
                 directories = ['Germany/', 'Spain/', 'France/',
