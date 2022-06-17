@@ -18,9 +18,10 @@
 * limitations under the License.
 */
 
-#include "ide_seir/ide_seir.h"
+#include "ide_seir/model.h"
 #include "memilio/utils/logging.h"
 #include "ide_seir/parameters.h"
+#include "ide_seir/infection_state.h"
 
 #include <iostream>
 
@@ -50,7 +51,7 @@ namespace iseir
         return 0.0;
     }
 
-    double IdeSeirModel::central_difference_quotient(TimeSeries<double> const& ts_ide, iSeirInfType compartment,
+    double IdeSeirModel::central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
                                                      Eigen::Index idx) const
     {
         return (ts_ide[idx + 1][Eigen::Index(compartment)] - ts_ide[idx - 1][Eigen::Index(compartment)]) / (2 * m_dt);
@@ -59,13 +60,13 @@ namespace iseir
     double IdeSeirModel::num_integration_inner_integral(Eigen::Index idx) const
     {
         double res     = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
-                                central_difference_quotient(m_result, iSeirInfType::S, m_k) +
+                                central_difference_quotient(m_result, InfectionState::S, m_k) +
                             generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_l)) *
-                                central_difference_quotient(m_result, iSeirInfType::S, idx - m_l));
+                                central_difference_quotient(m_result, InfectionState::S, idx - m_l));
         Eigen::Index i = idx - m_k + 1;
         while (i <= idx - m_l - 2) {
             res += (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(i)) *
-                    central_difference_quotient(m_result, iSeirInfType::S, i));
+                    central_difference_quotient(m_result, InfectionState::S, i));
             ++i;
         }
         return res;
@@ -107,9 +108,9 @@ namespace iseir
         Eigen::Index num_points = m_result.get_num_time_points();
         double S, E, I, R;
         for (Eigen::Index i = m_k; i < num_points; ++i) {
-            S = m_result[i][Eigen::Index(iSeirInfType::S)];
-            E = m_result[i - m_l][Eigen::Index(iSeirInfType::S)] - S;
-            I = m_result[i - m_k][Eigen::Index(iSeirInfType::S)] - m_result[i - m_l][Eigen::Index(iSeirInfType::S)];
+            S = m_result[i][Eigen::Index(InfectionState::S)];
+            E = m_result[i - m_l][Eigen::Index(InfectionState::S)] - S;
+            I = m_result[i - m_k][Eigen::Index(InfectionState::S)] - m_result[i - m_l][Eigen::Index(InfectionState::S)];
             R = m_N - S - E - I;
             m_result_SEIR.add_time_point(m_result.get_time(i), (Vec(4) << S, E, I, R).finished());
         }
@@ -123,16 +124,18 @@ namespace iseir
             Eigen::Index num_points = m_result_SEIR.get_num_time_points();
             for (Eigen::Index i = 0; i < num_points; ++i) {
                 printf(" %.9f %.9f %.9f %.9f %.9f\n", m_result_SEIR.get_time(i),
-                       m_result_SEIR[i][Eigen::Index(iSeirInfType::S)], m_result_SEIR[i][Eigen::Index(iSeirInfType::E)],
-                       m_result_SEIR[i][Eigen::Index(iSeirInfType::I)],
-                       m_result_SEIR[i][Eigen::Index(iSeirInfType::R)]);
+                       m_result_SEIR[i][Eigen::Index(InfectionState::S)],
+                       m_result_SEIR[i][Eigen::Index(InfectionState::E)],
+                       m_result_SEIR[i][Eigen::Index(InfectionState::I)],
+                       m_result_SEIR[i][Eigen::Index(InfectionState::R)]);
             }
         }
         else {
             std::cout << "# time  |  number of susceptibles" << std::endl;
             Eigen::Index num_points = m_result.get_num_time_points();
             for (Eigen::Index i = 0; i < num_points; ++i) {
-                std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(iSeirInfType::S)] << std::endl;
+                std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(InfectionState::S)]
+                          << std::endl;
             }
         }
     }

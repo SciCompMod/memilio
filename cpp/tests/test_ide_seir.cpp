@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "ide_seir/ide_seir.h"
-#include "ide_seir/ide_seir.cpp"
+#include "ide_seir/model.h"
+#include "ide_seir/model.cpp"
 #include "ide_seir/parameters.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"

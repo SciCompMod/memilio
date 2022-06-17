@@ -29,15 +29,6 @@ namespace mio
 {
 namespace iseir
 {
-    enum class iSeirInfType
-    {
-        S,
-        E,
-        I,
-        R,
-        Count = 4
-    };
-
     /****************************************************
     * define some parameters used in the IDE SEIR model *
     *****************************************************/

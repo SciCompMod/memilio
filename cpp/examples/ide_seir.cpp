@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ide_seir/ide_seir.h"
+#include "ide_seir/model.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"

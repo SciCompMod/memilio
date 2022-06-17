@@ -24,6 +24,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "ide_seir/parameters.h"
+#include "ide_seir/infection_state.h"
 
 #include <vector>
 
@@ -110,7 +111,7 @@ namespace iseir
         * @param[in] compartment Compartment for which the numerical differentiation is to be performed.
         * @return Numerically approximated derivative of the function belonging to the compartment at the point t[idx].
         */
-        double central_difference_quotient(TimeSeries<double> const& ts_ide, iSeirInfType compartment,
+        double central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
                                            Eigen::Index idx) const;
 
         /**
