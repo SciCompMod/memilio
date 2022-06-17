@@ -28,11 +28,11 @@ namespace mio
 {
 namespace iseir
 {
-    using Pa  = IdeSeirParameters;
+    using Pa  = ParametersBase;
     using Vec = TimeSeries<double>::Vector;
 
     IdeSeirModel::IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
-        : m_parameters{Parameterset_init}
+        : parameters{Parameterset_init}
         , m_result{std::move(init)}
         , m_dt{dt_init}
         , m_N{N_init}
@@ -41,11 +41,11 @@ namespace iseir
 
     double IdeSeirModel::generalized_beta_distribution(double tau, double p, double q) const
     {
-        if ((m_parameters.get<LatencyTime>() < tau) &&
-            (m_parameters.get<InfectiousTime>() + m_parameters.get<LatencyTime>() > tau)) {
-            return tgamma(p + q) * pow(tau - m_parameters.get<LatencyTime>(), p - 1) *
-                   pow(m_parameters.get<InfectiousTime>() + m_parameters.get<LatencyTime>() - tau, q - 1) /
-                   (tgamma(p) * tgamma(q) * pow(m_parameters.get<InfectiousTime>(), p + q - 1));
+        if ((parameters.get<LatencyTime>() < tau) &&
+            (parameters.get<InfectiousTime>() + parameters.get<LatencyTime>() > tau)) {
+            return tgamma(p + q) * pow(tau - parameters.get<LatencyTime>(), p - 1) *
+                   pow(parameters.get<InfectiousTime>() + parameters.get<LatencyTime>() - tau, q - 1) /
+                   (tgamma(p) * tgamma(q) * pow(parameters.get<InfectiousTime>(), p + q - 1));
         }
         return 0.0;
     }
@@ -74,8 +74,8 @@ namespace iseir
     TimeSeries<double> const& IdeSeirModel::simulate(int t_max)
     {
 
-        m_l = (int)std::floor(m_parameters.get<LatencyTime>() / m_dt);
-        m_k = (int)std::ceil((m_parameters.get<InfectiousTime>() + m_parameters.get<LatencyTime>()) / m_dt);
+        m_l = (int)std::floor(parameters.get<LatencyTime>() / m_dt);
+        m_k = (int)std::ceil((parameters.get<InfectiousTime>() + parameters.get<LatencyTime>()) / m_dt);
         if (m_result.get_time(0) > -(m_k - 1) * m_dt) {
             log_warning("Constraint check: Initial data starts later than necessary. The simulation may be distorted. "
                         "Start the data at time {:.4f} at the latest.",
@@ -87,12 +87,12 @@ namespace iseir
             Eigen::Index idx = m_result.get_num_time_points();
 
             // R0t is the effective reproduction number at time t
-            auto R0t1 = m_parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(
-                            m_result.get_time(idx - 2))(0, 0) *
-                        m_parameters.get<TransmissionRisk>() * m_parameters.get<InfectiousTime>();
+            auto R0t1 =
+                parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
+                parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
             auto R0t2 =
-                m_parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
-                m_parameters.get<TransmissionRisk>() * m_parameters.get<InfectiousTime>();
+                parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
+                parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
 
             m_result.get_last_value() =
                 Vec::Constant(1, m_result[idx - 2][0] * exp(m_dt * (0.5 * 1 / m_N) *

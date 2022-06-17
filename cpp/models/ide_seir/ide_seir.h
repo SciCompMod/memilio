@@ -33,36 +33,39 @@ namespace iseir
 {
     class IdeSeirModel
     {
-        using Pa = IdeSeirParameters;
+        using Pa = ParametersBase;
 
     public:
         /**
         * @brief Create an IDE SEIR model.
         *
-        * @param[in, out] init TimeSeries containing the initial time and corresponding number of Susceptibles.
-        *   The initial time steps should be equidistant with distance equal to the time step used for the simulation. 
-        *   The first point of time should be small enough. A warning is displayed if the condition is violated.
-        *   Concretely, the first time should be earlier than -(k-1)*TimeStep with k=ceil((InfectiousTime + LatencyTime)/TimeStep).
-        *   The last point of time should be 0.
+        * @param[in, out] init TimeSeries with the initial values of the number of susceptibles at associated initial times.
+        *   The time steps in this vector should be equidistant and equal to the time step used for the simulation. 
+        *   A certain history of time steps and values for susceptibles is needed. 
+        *   A warning is displayed if the condition is violated.
+        *   Co be more precise, the first time point needs to be smaller than -(k-1)*TimeStep with 
+        *       k=ceil((InfectiousTime + LatencyTime)/TimeStep).
+        *   The last time point in this vector should be a time 0.
         * @param[in] dt_init The size of the time step used for numerical simulation.
         * @param[in] N_init The population of the considered region. 
         */
         IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
 
         /**
-        * @brief Simulate the course of infection with the given IDE SEIR model.
+        * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.
         *
         * The simulation is performed by solving the underlying model equation numerically. 
         * Here, an integro-differential equation is to be solved. The model parameters and the initial data are used.
         *
         * @param[in] t_max Last simulation day. 
         *   If the last point of time of the initial TimeSeries was 0, the simulation will be executed for t_max days.
-        * @return The result of the simulation, stored in a TimeSeries with simulation time and associated number of susceptibles (S).
+        * @return The result of the simulation, stored in a TimeSeries with simulation time and 
+        *       associated number of susceptibles.
         */
         TimeSeries<double> const& simulate(int t_max);
 
         /**
-        * @brief Calculate the distribution of the population in E,I and R based on the calculated values for S.
+        * @brief Calculate the distribution of the population in E, I and, R based on the calculated values for S.
         *
         * The values are calculated using the average latency and infection time, not using model equations. 
         * The simulated values of S are used for this purpose, so the simulate() function should be called beforehand.
@@ -85,7 +88,7 @@ namespace iseir
         void print_result(bool calculated_SEIR = false) const;
 
         // Used Parameters for the simulation.
-        Pa m_parameters{};
+        Pa parameters{};
 
     private:
         /**
@@ -101,6 +104,8 @@ namespace iseir
         /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
         * 
+        * @param[in] ts_ide TimeSeries with the time steps already calculated. 
+        *       Used as function values in numerical differentiation.
         * @param[in] idx Time index at which the numerical differentiation should be performed.
         * @param[in] compartment Compartment for which the numerical differentiation is to be performed.
         * @return Numerically approximated derivative of the function belonging to the compartment at the point t[idx].
@@ -117,9 +122,9 @@ namespace iseir
         */
         double num_integration_inner_integral(Eigen::Index idx) const;
 
-        // TimeSeries containing point of time and the corresponding number of susceptibles.
+        // TimeSeries containing points of time and the corresponding number of susceptibles.
         TimeSeries<double> m_result;
-        // TimeSeries containing point of time and the corresponding number of susceptibles, exposed,
+        // TimeSeries containing points of time and the corresponding number of susceptibles, exposed,
         // infected and recovered.
         TimeSeries<double> m_result_SEIR = TimeSeries<double>(4);
 
@@ -128,7 +133,7 @@ namespace iseir
         // Population of the considered region.
         int m_N{0};
 
-        // Two Indizes used for simulation.
+        // Two Indices used for simulation.
         Eigen::Index m_k{0};
         Eigen::Index m_l{0};
     };

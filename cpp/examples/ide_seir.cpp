@@ -27,7 +27,7 @@ int main()
 {
     /**
     * Note: the initial values as well as all other parameters are randomly chosen for this example and are not 
-    * intend to depict the real world.
+    * intended to characterize the real world.
     * This example has the purpose to show how the IDE SEIR model can be applied. 
     */
 
@@ -53,14 +53,14 @@ int main()
     mio::iseir::IdeSeirModel model(std::move(result), dt, N);
 
     // Set working parameters.
-    model.m_parameters.set<mio::iseir::LatencyTime>(3.3);
-    model.m_parameters.set<mio::iseir::InfectiousTime>(8.2);
-    model.m_parameters.set<mio::iseir::TransmissionRisk>(0.015);
+    model.parameters.set<mio::iseir::LatencyTime>(3.3);
+    model.parameters.set<mio::iseir::InfectiousTime>(8.2);
+    model.parameters.set<mio::iseir::TransmissionRisk>(0.015);
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     // Add damping.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
-    model.m_parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Carry out simulation.
     model.simulate(tmax);
