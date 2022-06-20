@@ -40,36 +40,37 @@ TEST(TestSaveResult, compareResultWithH5)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     mio::SecirModel model(1);
-    auto& params     = model.parameters;
-    mio::AgeGroup nb_groups = params.get_num_groups();;
+    auto& params            = model.parameters;
+    mio::AgeGroup nb_groups = params.get_num_groups();
+    ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::IncubationTime>()[i] = tinc;
-        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<mio::SerialInterval>()[i] = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::IncubationTime>()[i]             = tinc;
+        params.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
+        params.get<mio::SerialInterval>()[i]             = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
         params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
+        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
-        model.populations[{i, mio::InfectionState::Exposed}] = nb_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}] = nb_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}] = nb_inf_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]      = nb_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}]      = nb_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}]     = nb_inf_t0;
         model.populations[{i, mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}] = nb_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}] = nb_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}] = nb_dead_t0;
+        model.populations[{i, mio::InfectionState::ICU}]          = nb_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]    = nb_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]         = nb_dead_t0;
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
-        params.get<mio::RelativeCarrierInfectability>()[i] = 0.67;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<mio::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
+        params.get<mio::DeathsPerICU>()[i]                    = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -81,7 +82,7 @@ TEST(TestSaveResult, compareResultWithH5)
     std::vector<int> ids                                  = {1, 2};
 
     TempFileRegister file_register;
-    auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
     auto save_result_status = mio::save_result(results_from_sim, ids, results_file_path);
     ASSERT_TRUE(save_result_status);
 

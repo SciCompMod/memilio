@@ -74,8 +74,11 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
+            [](mio::ParameterStudy<Simulation>& self,
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+                self.run([&handle_result](auto&& g) {
+                    handle_result(std::move(g));
+                });
             },
             py::arg("handle_result_func"))
         .def("run",
@@ -95,7 +98,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         });
 }
 
-using Simulation = mio::SecirSimulation<>;
+using Simulation     = mio::SecirSimulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
 } // namespace
@@ -122,15 +125,22 @@ std::string pretty_name<mio::AgeGroup>()
 PYBIND11_MODULE(_simulation_secir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&)>(
-                                               &mio::interpolate_simulation_result));
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
     m.def("ensemble_mean", &mio::ensemble_mean);
     m.def("ensemble_percentile", &mio::ensemble_percentile);
 
-    py::enum_<mio::InfectionState>(m, "InfectionState")
+    pymio::iterable_enum<mio::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::InfectionState::Susceptible)
         .value("Exposed", mio::InfectionState::Exposed)
         .value("Carrier", mio::InfectionState::Carrier)
@@ -138,9 +148,7 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Hospitalized", mio::InfectionState::Hospitalized)
         .value("ICU", mio::InfectionState::ICU)
         .value("Recovered", mio::InfectionState::Recovered)
-        .value("Dead", mio::InfectionState::Dead)
-        .value("Count", mio::InfectionState::Count)
-        .export_values();
+        .value("Dead", mio::InfectionState::Dead);
 
     pymio::bind_Index<mio::InfectionState>(m, "Index_InfectionState");
     pymio::bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");
@@ -167,9 +175,12 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
-          "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-          py::arg("model"));
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::SecirModel& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     pymio::bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
     pymio::bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");

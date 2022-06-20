@@ -59,36 +59,36 @@ int main()
     model.parameters.set<mio::StartDay>(0);
     model.parameters.set<mio::Seasonality>(0);
 
-    model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0] = tinc;
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0] = tinfmild;
-    model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0] = tserint;
-    model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
-    model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
-    model.parameters.get<mio::HospitalizedToICUTime>()[(mio::AgeGroup)0] = thosp2icu;
-    model.parameters.get<mio::ICUToHomeTime>()[(mio::AgeGroup)0] = ticu2home;
-    model.parameters.get<mio::ICUToDeathTime>()[(mio::AgeGroup)0] = ticu2death;
+    model.parameters.get<mio::IncubationTime>()         = tinc;
+    model.parameters.get<mio::InfectiousTimeMild>()     = tinfmild;
+    model.parameters.get<mio::SerialInterval>()         = tserint;
+    model.parameters.get<mio::HospitalizedToHomeTime>() = thosp2home;
+    model.parameters.get<mio::HomeToHospitalizedTime>() = thome2hosp;
+    model.parameters.get<mio::HospitalizedToICUTime>()  = thosp2icu;
+    model.parameters.get<mio::ICUToHomeTime>()          = ticu2home;
+    model.parameters.get<mio::ICUToDeathTime>()         = ticu2death;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}] = nb_dead_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
-    model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0] = carr_infec;
-    model.parameters.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)0] = alpha;
-    model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0] = beta;
-    model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0] = rho;
-    model.parameters.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)0] = theta;
-    model.parameters.get<mio::DeathsPerHospitalized>()[(mio::AgeGroup)0] = delta;
+    model.parameters.get<mio::InfectionProbabilityFromContact>() = inf_prob;
+    model.parameters.get<mio::RelativeCarrierInfectability>()    = carr_infec;
+    model.parameters.get<mio::AsymptomaticCasesPerInfectious>()    = alpha;
+    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = beta;
+    model.parameters.get<mio::HospitalizedCasesPerInfectious>()  = rho;
+    model.parameters.get<mio::ICUCasesPerHospitalized>()         = theta;
+    model.parameters.get<mio::DeathsPerICU>()                    = delta;
 
     model.apply_constraints();
 

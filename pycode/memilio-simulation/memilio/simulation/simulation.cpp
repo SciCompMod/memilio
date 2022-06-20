@@ -52,6 +52,7 @@ PYBIND11_MODULE(_simulation, m)
         .def("get_last_time", py::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
         .def("get_value", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), py::arg("index"))
         .def("get_last_value", py::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
+        .def("__len__", &mio::TimeSeries<double>::get_num_time_points)
         .def(
             "__getitem__",
             [](mio::TimeSeries<double>& self, Eigen::Index i) {
@@ -296,6 +297,16 @@ PYBIND11_MODULE(_simulation, m)
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
+
+    py::enum_<mio::LogLevel>(m, "LogLevel")
+        .value("Off", mio::LogLevel::off)
+        .value("Critical", mio::LogLevel::critical)
+        .value("Error", mio::LogLevel::err)
+        .value("Warning", mio::LogLevel::warn)
+        .value("Info", mio::LogLevel::info)
+        .value("Debug", mio::LogLevel::debug)
+        .value("Trace", mio::LogLevel::trace);
+    m.def("set_log_level", &mio::set_log_level);
 
     m.attr("__version__") = "dev";
 }

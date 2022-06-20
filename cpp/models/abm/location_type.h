@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,6 +25,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * type of a location.
@@ -38,12 +40,16 @@ enum class LocationType : std::uint32_t
     BasicsShop, // groceries and other necessities
     Hospital,
     ICU,
+    Car,
+    PublicTransport,
+    TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
 
     Count //last!
 };
 
 static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
 
+} // namespace abm
 } // namespace mio
 
 #endif

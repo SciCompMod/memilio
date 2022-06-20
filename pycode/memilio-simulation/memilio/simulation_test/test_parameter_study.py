@@ -62,11 +62,11 @@ class Test_ParameterStudy(unittest.TestCase):
             (A0, secir.Index_InfectionState(secir.InfectionState.Susceptible)), 10000)
 
         model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09
-        model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25
+        model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2
         model.parameters.ICUCasesPerHospitalized[A0] = 0.25
-        model.parameters.DeathsPerHospitalized[A0] = 0.3
+        model.parameters.DeathsPerICU[A0] = 0.3
 
         model.apply_constraints()
         return model

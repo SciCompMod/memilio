@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, David Kerkmann, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -31,13 +31,27 @@ namespace mio
 {
 
 /**
- * interpolate time series with evenly spaced, integer time points.
- * time points [t0, t1, t2, ..., tmax] interpolated as [floor(t0), floor(t0) + 1,...,ceil(tmax)].
+ * @brief interpolate time series with evenly spaced, integer time points that represent whole days.
+ * time points [t0, t1, t2, ..., tmax] interpolated as days [ceil(t0), floor(t0) + 1,...,floor(tmax)].
+ * tolerances in the first and last time point (t0 and t_max) are accounted for.
  * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @see interpolate_simulation_result
  * @param simulation_result time series to interpolate
+ * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
  * @return interpolated time series
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const double abs_tol = 1e-14);
+
+/**
+ * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
+ * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @param simulation_result time series to interpolate
+ * @param interpolations_times std::vector of time points at which simulation results are interpolated.
+ * @return interpolated time series at given interpolation points
+ */
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const std::vector<double>& interpolation_times);
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)
@@ -46,7 +60,7 @@ template <class T>
 using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
 
 /**
- * @brief Interpolates results of all runs with evenly spaced, integer time points.
+ * @brief Interpolates results of all runs with evenly spaced, integer time points that represent whole days.
  * @see interpolate_simulation_result
  * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
  * @return interpolated time series, one (or as many as nodes in the graph) per result in the ensemble
@@ -156,9 +170,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToICUTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToHomeTime>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<HospitalizedToHomeTime>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<HomeToHospitalizedTime>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<HomeToHospitalizedTime>()[i];
+                });
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });
             param_percentil(
@@ -170,15 +188,15 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RiskOfInfectionFromSympomatic>()[i];
+                    return model.parameters.template get<RiskOfInfectionFromSymptomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<MaxRiskOfInfectionFromSympomatic>()[i];
+                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<AsymptoticCasesPerInfectious>()[i];
+                    return model.parameters.template get<AsymptomaticCasesPerInfectious>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
@@ -189,7 +207,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     return model.parameters.template get<ICUCasesPerHospitalized>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerHospitalized>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerICU>()[i]; });
         }
         // group independent params
         param_percentil(
@@ -199,11 +217,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
         for (size_t run = 0; run < num_runs; run++) {
 
-            auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.parameters.template get<mio::ICUCapacity>() * params.populations.get_total();
+            auto const& params = ensemble_params[run][node];
+            single_element_ensemble[run] =
+                params.parameters.template get<mio::ICUCapacity>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<mio::ICUCapacity>(single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+        percentile[node].parameters.template set<mio::ICUCapacity>(
+            single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;
 }
@@ -216,7 +236,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
  * @param result2 second result.
  * @return Computed distance between result1 and result2.
  */
-double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1, const std::vector<mio::TimeSeries<double>>& result2);
+double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
+                             const std::vector<mio::TimeSeries<double>>& result2);
 
 /**
  * Compute the distance between two SECIR simulation results in one compartment.

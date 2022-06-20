@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "seir/seir.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
@@ -37,21 +39,23 @@ protected:
 
         double total_population = 1061000;
 
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 10000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}] = 1000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}] = 1000;
-        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = total_population
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}]
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}]
-                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}];
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+            total_population -
+            this->model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+            this->model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+            this->model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.set<mio::TransmissionRisk>(1.0);
-        model.parameters.set<mio::StageTimeIncubationInv>(1./5.2);
-        model.parameters.set<mio::StageTimeInfectiousInv>(1./2);;
+        model.parameters.set<mio::oseir::InfectionProbabilityFromContact>(1.0);
+        model.parameters.set<mio::oseir::LatentTime>(5.2);
+        model.parameters.set<mio::oseir::InfectiousTime>(2);
+        ;
 
-        model.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 2.7;
-        model.parameters.get<mio::ContactFrequency>().add_damping(0.6, mio::SimulationTime(12.5));
+        model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
+        model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
     }
 
 public:
@@ -59,32 +63,30 @@ public:
     real t0;
     real tmax;
     real dt;
-    mio::SeirModel model;
+    mio::oseir::Model model;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto result = mio::simulate<mio::SeirModel>(t0, tmax, dt, model, integrator);
+    auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
     for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
-        double t = refData[static_cast<size_t>(irow)][0];
+        double t     = refData[static_cast<size_t>(irow)][0];
         auto rel_tol = 1e-6;
-        
+
         //test result diverges at damping because of changes, not worth fixing at the moment
-        if (t > 11.0 && t < 13.0)
-        { 
+        if (t > 11.0 && t < 13.0) {
             //strong divergence around damping
             rel_tol = 0.5;
         }
-        else if (t > 13.0)
-        {
+        else if (t > 13.0) {
             //minor divergence after damping
             rel_tol = 1e-2;
         }
-        
+
         ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
         for (size_t icol = 0; icol < 4; ++icol) {
             double ref    = refData[static_cast<size_t>(irow)][icol + 1];

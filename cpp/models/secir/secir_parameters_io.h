@@ -319,7 +319,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                 static_cast<int>(model[county].parameters.template get<HospitalizedToICUTime>()[AgeGroup(group)]));
             t_icu_to_dead[county].push_back(static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[AgeGroup(group)]));
 
-            mu_C_R[county].push_back(model[county].parameters.template get<AsymptoticCasesPerInfectious>()[AgeGroup(group)]);
+            mu_C_R[county].push_back(model[county].parameters.template get<AsymptomaticCasesPerInfectious>()[AgeGroup(group)]);
             mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
             mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)]);
 
@@ -344,7 +344,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         std::vector<double> num_icu(model.size(), 0.0);
 
         BOOST_OUTCOME_TRY(details::read_rki_data(
-            path_join(data_dir, "all_county_age_ma_rki.json"), id_name, region, date, num_exp, num_car, num_inf, num_hosp,
+            path_join(data_dir, "cases_all_county_age_ma7.json"), id_name, region, date, num_exp, num_car, num_inf, num_hosp,
             dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp,
             t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), id_name, region, date, num_icu));
@@ -406,7 +406,7 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
         log_warning("No DIVI data available for this date");
     }
     BOOST_OUTCOME_TRY(
-        details::set_rki_data(model, path_join(dir, "all_age_ma_rki.json"), id_name, {0}, date, scaling_factor_inf));
+        details::set_rki_data(model, path_join(dir, "cases_all_age_ma7.json"), id_name, {0}, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", {0}));
     return success();
@@ -435,7 +435,7 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
         log_warning("No DIVI data available for this date");
     }
 
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "all_state_age_ma_rki.json"), id_name, state, date,
+    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_state_age_ma7.json"), id_name, state, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", state));
@@ -465,7 +465,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "all_county_age_ma_rki.json"), id_name, county, date,
+    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), id_name, county, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county));

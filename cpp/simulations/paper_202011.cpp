@@ -169,16 +169,16 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
     array_assign_uniform_distribution(params.get<mio::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
     array_assign_uniform_distribution(params.get<mio::RelativeCarrierInfectability>(), carr_infec_min, carr_infec_max);
-    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
+    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
-    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSympomatic>(), beta_high_incidence_min,
+    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), beta_high_incidence_min,
                                       beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<mio::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
+    array_assign_uniform_distribution(params.get<mio::AsymptomaticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max);
     array_assign_uniform_distribution(params.get<mio::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
     array_assign_uniform_distribution(params.get<mio::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::DeathsPerHospitalized>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -242,8 +242,9 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     auto contacts_at_home = [=](auto t, auto min, auto max) {
         auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::Home)), t,
-                                    {size_t(ContactLocation::Home)}, group_weights_all);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::Home)), t, {size_t(ContactLocation::Home)},
+                                    group_weights_all);
     };
     auto school_closure = [=](auto t, auto min, auto max) {
         auto v = mio::UncertainValue();
@@ -276,9 +277,10 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     auto physical_distancing_home_school = [=](auto t, auto min, auto max) {
         auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(
-            v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)), mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-            {size_t(ContactLocation::Home), size_t(ContactLocation::School)}, group_weights_all);
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+                                    {size_t(ContactLocation::Home), size_t(ContactLocation::School)},
+                                    group_weights_all);
     };
     auto physical_distancing_work_other = [=](auto t, auto min, auto max) {
         auto v = mio::UncertainValue();
@@ -387,25 +389,27 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     //local dynamic NPIs
     auto& dynamic_npis        = params.get<mio::DynamicNPIsInfected>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
-    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 1.0, 1.0)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3));
-    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(
+        contacts_at_home(mio::SimulationTime(0), 0.6, 0.8)); // increased from [0.4, 0.6] in Nov
+    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.25, 0.25)); // see paper
+    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3)); // ...
+    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.1, 0.2));
+    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.6, 0.8));
     dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
     dynamic_npis.set_interval(mio::SimulationTime(3.0));
     dynamic_npis.set_duration(mio::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);
+    dynamic_npis.set_threshold(200.0, dynamic_npi_dampings);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = mio::UncertainValue();
     assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
-    contacts.get_school_holiday_damping() = mio::DampingSampling(
-        school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)), mio::DampingType(int(Intervention::SchoolClosure)),
-        mio::SimulationTime(0.0), {size_t(ContactLocation::School)}, group_weights_all);
+    contacts.get_school_holiday_damping() =
+        mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
+                             mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
+                             {size_t(ContactLocation::School)}, group_weights_all);
 
     return mio::success();
 }
@@ -415,7 +419,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
-void set_synthetic_population_data(std::vector<mio::SecirModel>& counties) 
+void set_synthetic_population_data(std::vector<mio::SecirModel>& counties)
 {
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
@@ -628,7 +632,7 @@ mio::IOResult<void> save_graph(const mio::Graph<mio::SecirModel, mio::MigrationP
  * @return graph with county nodes but no edges.
  */
 auto make_graph_no_edges(const std::vector<mio::SecirModel>& params, const std::vector<int>& county_ids)
-{        
+{
     //make a graph without edges for writing to file
     auto graph = mio::Graph<mio::SecirModel, mio::MigrationParameters>();
     for (auto i = size_t(0); i < county_ids.size(); ++i) {
@@ -654,7 +658,8 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
     BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
+    BOOST_OUTCOME_TRY(
+        mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
     return mio::success();
 }
 
@@ -738,11 +743,16 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto make_graph = [&county_ids](auto&& params) {
             return make_graph_no_edges(params, county_ids);
         };
-        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(
+            mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(
+            mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(
+            mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(
+            mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(
+            mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
     }
     return mio::success();
 }
@@ -792,7 +802,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //run parameter study
-    auto parameter_study  = mio::ParameterStudy<mio::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+    auto parameter_study =
+        mio::ParameterStudy<mio::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::SecirModel>>{};

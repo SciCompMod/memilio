@@ -25,6 +25,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * select a random transition from a list of possible transitions from the current state to others.
@@ -45,9 +47,11 @@ namespace mio
 template <class T, size_t NumTransitions>
 T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&transitions)[NumTransitions])
 {
-    assert(std::all_of(std::begin(transitions), std::end(transitions), [](auto& p) {
-        return p.second >= 0.0;
-    }) && "transition rates must be non-negative");
+    assert(std::all_of(std::begin(transitions), std::end(transitions),
+                       [](auto& p) {
+                           return p.second >= 0.0;
+                       }) &&
+           "transition rates must be non-negative");
 
     //check if any transition happens using exponential distribution with the sum of all transition rates
     auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
@@ -70,4 +74,5 @@ T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&t
     return current_state;
 }
 
+} // namespace abm
 } // namespace mio

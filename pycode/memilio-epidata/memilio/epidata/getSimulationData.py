@@ -23,7 +23,7 @@
 @brief Executes all data downloads which belong to the epidata package and downloads external data
 
 The functions which are called are:
-- getRKIData.get_rki_data
+- getCaseData.get_case_data
 - getPopulationData.get_population_data
 - getVacccinationData.get_vaccination_data
 - getDIVIData.get_divi_data
@@ -34,7 +34,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getVaccinationData
 from memilio.epidata import getPopulationData
-from memilio.epidata import getRKIData
+from memilio.epidata import getCaseData
 from memilio.epidata import getDIVIData
 
 
@@ -59,7 +59,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     """! Downloads all data from external sources
 
     The functions which are called are:
-    - getRKIData.get_rki_data
+    - getCaseData.get_case_data
     - getPopulationData.get_population_data
     - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
@@ -81,7 +81,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         "read_data": read_data, "file_format": file_format,
         "out_folder": out_folder, "no_raw": no_raw}
 
-    arg_dict_rki = {**arg_dict_all, "make_plot": make_plot,
+    arg_dict_cases = {**arg_dict_all, "make_plot": make_plot,
                     "impute_dates": impute_dates,
                     "moving_average": moving_average,
                     "split_berlin": split_berlin}
@@ -93,28 +93,27 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                      "moving_average": moving_average}
 
     try:
-        getRKIData.get_rki_data(**arg_dict_rki)
-    except:
-        print_error('RKI')
+        getCaseData.get_case_data(**arg_dict_cases)
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
+        print_error('case')
 
     try:
         getPopulationData.get_population_data(**arg_dict_all)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
-        getPopulationData.get_age_population_data(**arg_dict_all)
-    except:
-        print_error('age-resolved population')
-
-    try:
         getDIVIData.get_divi_data(**arg_dict_divi)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
         getVaccinationData.get_vaccination_data(**arg_dict_vacc)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
 
 

@@ -17,12 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+"""@PlotGermanData.py
+WARNING: This file is currently not tested and maintained.
+"""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-df = pd.read_json('all_age_rki.json')
+df = pd.read_json('cases_all_age.json')
 
 for i in range(len(df)):
     df.Date[i] = df.Date[i].date()
@@ -54,7 +57,7 @@ for comp, j in zip(compartiments, range(len(compartiments))):
 ax[2].set_xticks(tick_range)
 ax[2].set_xticklabels(datelist[tick_range],rotation=45)
 fig.tight_layout()
-fig.savefig('RKI_Groups.pdf')
+fig.savefig('Cases_Groups.pdf')
 
 
 all_data = np.sum(group_data, axis=1)
@@ -72,5 +75,5 @@ ax[3].set_title('New Daily Infections')
 ax[3].set_xticks(tick_range)
 ax[3].set_xticklabels(datelist[tick_range],rotation=45)
 fig.tight_layout()
-fig.savefig('RKI_All.pdf')
+fig.savefig('Cases_All.pdf')
 plt.show()

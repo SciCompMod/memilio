@@ -31,9 +31,9 @@ from memilio.epidata import defaultDict as dd
 
 from memilio.epidata import getVaccinationData
 from memilio.epidata import getPopulationData
-from memilio.epidata import getRKIData
+from memilio.epidata import getCaseData
 from memilio.epidata import getDIVIData
-from memilio.epidata import getRKIDatawithEstimations
+from memilio.epidata import getCaseDatawithEstimations
 from memilio.epidata import getJHData
 
 
@@ -42,7 +42,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     path = '/home/x/'
 
     data = ("""{"type": "FeatureCollection",\
-"name": "RKI_COVID19",\
+"name": "Cases_COVID19",\
 "features": [\
 { "type": "Feature", "properties": { "ObjectId": 1, "IdBundesland": 1, "Bundesland": "Schleswig-Holstein",\
 "Landkreis": "SK Flensburg", "Altersgruppe": "A15-A34", "Geschlecht": "M", "AnzahlFall": 1, "AnzahlTodesfall": 0,\
@@ -57,7 +57,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        del sys.argv[1:] # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
+        # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
+        del sys.argv[1:]
         # TODO:Is this is a good way to solve this?
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.urlopen')
@@ -65,26 +66,26 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         mock_urlopen.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadGeojson("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.geojson' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_excel')
     def test_load_Excel_error(self, mock_urlopen):
 
         mock_urlopen.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadExcel("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.xls' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
     def test_load_csv_error(self, mock_csv):
@@ -116,18 +117,18 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     def test_load_csv_working(self, mock_csv):
         mock_csv.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadCsv("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.csv' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     def test_cli_correct_default(self):
-        
+
         out_path_default = dd.defaultDict['out_folder']
-        
+
         arg_dict = gd.cli("population")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
@@ -138,19 +139,19 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
-        
+
         arg_dict = gd.cli("jh")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         out_folder = arg_dict["out_folder"]
-        no_raw = arg_dict["no_raw"]                                             
-        
+        no_raw = arg_dict["no_raw"]
+
         assert read_data == dd.defaultDict['read_data']
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
 
-        arg_dict = gd.cli("rki")
+        arg_dict = gd.cli("cases")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         out_folder = arg_dict["out_folder"]
@@ -171,7 +172,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert no_raw == dd.defaultDict['no_raw']
         assert rep_date == dd.defaultDict['rep_date']
 
-        arg_dict = gd.cli("rkiest")
+        arg_dict = gd.cli("cases_est")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         make_plot = arg_dict["make_plot"]
@@ -242,23 +243,23 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('sys.stderr', new_callable=StringIO)
     def test_cli_correct_raise_exit(self, mock_stderr):
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as error:
             gd.cli("wrong_key")
 
-        the_exception = cm.exception
-        self.assertEqual(the_exception.code, "Wrong key or cli_dict.")
+        the_exception = error.exception
+        self.assertEqual(str(the_exception), "Wrong key or cli_dict.")
 
         test_args = ["prog", '-f', 'wrong_format']
         with patch.object(sys, 'argv', test_args):
 
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
+                gd.cli("cases")
             self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
 
         test_args = ["prog", '--update-data', ]
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
+                gd.cli("cases")
             self.assertRegexpMatches(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
@@ -266,7 +267,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         test_args = ["prog", '--start_date']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
+                gd.cli("cases")
             self.assertRegexpMatches(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
@@ -274,7 +275,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         test_args = ["prog", '--end_date']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
+                gd.cli("cases")
             self.assertRegexpMatches(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
@@ -335,7 +336,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                      '--moving-average', 0, '--no-raw', '--impute-dates']
 
         with patch.object(sys, 'argv', test_args):
-            arg_dict = gd.cli("rki")
+            arg_dict = gd.cli("cases")
             [read_data, file_format, out_folder, impute_dates, make_plot,
              moving_average, split_berlin, no_raw, rep_date] = [
                 arg_dict["read_data"],
@@ -362,7 +363,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                      folder, '--file-format', 'json', '--make-plot']
 
         with patch.object(sys, 'argv', test_args):
-            arg_dict = gd.cli("rkiest")
+            arg_dict = gd.cli("cases_est")
             [read_data, file_format, out_folder, no_raw, make_plot] = [
                 arg_dict["read_data"],
                 arg_dict["file_format"],
@@ -523,22 +524,22 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
         df = pd.DataFrame(data=d)
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as error:
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
-        exit_string = "Error: The file format: " + 'wrong' + " does not exist. Use another one."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The file format: " + 'wrong' + \
+                        " does not exist. Use json, json_timeasstring or hdf5."
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
-    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
-    @patch('memilio.epidata.getPopulationData.get_age_population_data')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
-    @patch('memilio.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
+    @patch('memilio.epidata.getCaseDatawithEstimations.get_case_data_with_estimations')
     @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
-            self, mock_jh, mock_rkiwe, mock_vaccination, mock_agep, mock_popul,
-            mock_rki, mock_divi):
+            self, mock_jh, mock_caseswe, mock_vaccination, mock_popul,
+            mock_cases, mock_divi):
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],
@@ -553,10 +554,10 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "moving_average": dd.defaultDict['moving_average'],
             "start_date": dd.defaultDict['start_date']}
 
-        arg_dict_rki_est = {**arg_dict_all,
-                            "make_plot": dd.defaultDict['make_plot']}
+        arg_dict_cases_est = {**arg_dict_all,
+                              "make_plot": dd.defaultDict['make_plot']}
 
-        arg_dict_rki = {
+        arg_dict_cases = {
             **arg_dict_all,
             "impute_dates": dd.defaultDict['impute_dates'],
             "make_plot": dd.defaultDict['make_plot'],
@@ -575,22 +576,20 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
 
         getPopulationData.main()
-        mock_agep.assert_called()
-        mock_agep.assert_called_with(**arg_dict_all)
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
-        getRKIData.main()
-        mock_rki.assert_called()
-        mock_rki.assert_called_with(**arg_dict_rki)
+        getCaseData.main()
+        mock_cases.assert_called()
+        mock_cases.assert_called_with(**arg_dict_cases)
 
         getDIVIData.main()
         mock_divi.assert_called()
         mock_divi.assert_called_with(**arg_dict_divi)
 
-        getRKIDatawithEstimations.main()
-        mock_rkiwe.assert_called()
-        mock_rkiwe.assert_called_with(**arg_dict_rki_est)
+        getCaseDatawithEstimations.main()
+        mock_caseswe.assert_called()
+        mock_caseswe.assert_called_with(**arg_dict_cases_est)
 
         getJHData.main()
         mock_jh.assert_called()

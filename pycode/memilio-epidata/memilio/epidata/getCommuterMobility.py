@@ -25,11 +25,10 @@
 import collections
 import os
 import wget
-import sys
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
-from memilio.epidata import getPopulationData
+from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import defaultDict as dd
@@ -39,20 +38,13 @@ def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
-    try:
-        test_if_array_like = np.array(countykey_list)
-    except:
-        print("Not an array like object.")
-        return False
-
+    countykey_list_is_sorted = np.all(np.array(
+        countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
+    if countykey_list_is_sorted:
+        return True
     else:
-        countykey_list_is_sorted = np.all(np.array(
-            countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
-        if countykey_list_is_sorted:
-            return True
-        else:
-            print('Error. Input list not sorted.')
-            return False
+        print('Error. Input list not sorted.')
+        return False
 
 
 def assign_geographical_entities(countykey_list, govkey_list):
@@ -72,8 +64,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     """
 
     if verify_sorted(countykey_list) == False:
-        exit_string = "Error. Input list not sorted."
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Input list not sorted.")
 
     # Create list of government regions with lists of counties that belong to them and list of states with government
     # regions that belong to them; only works with sorted lists of keys.
@@ -176,17 +167,11 @@ def get_commuter_data(setup_dict='',
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    try:
-        population = pd.read_json(directory + "county_current_population.json")
-        if len(population) != len(countykey_list):
-            population = getPopulationData.get_age_population_data(
-                out_folder=out_folder, merge_eisenach=False, write_df=True)
-    except:
-        print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_age_population_data(
-            out_folder=out_folder, merge_eisenach=False, write_df=True)
+    
+    population = gPd.get_population_data(
+        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
 
-    countypop_list = list(population["Total"])
+    countypop_list = list(population[dd.EngEng["population"]])
 
     countykey2numlist = collections.OrderedDict(
         zip(countykey_list, list(range(0, len(countykey_list)))))
@@ -219,7 +204,7 @@ def get_commuter_data(setup_dict='',
         filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
         # Unzip it
-        zipfile = wget.download(url)
+        zipfile = wget.download(url, filepath)
         with ZipFile(zipfile, 'r') as zipObj:
             zipObj.extractall(path = filepath)
         # Read the file
@@ -227,6 +212,11 @@ def get_commuter_data(setup_dict='',
         file = filename.replace('-','_')
         commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
+
+        # delete zip folder after extracting
+        os.remove(os.path.join(filepath, item))
+        # delete file after reading
+        os.remove(os.path.join(filepath, file))
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -410,9 +400,9 @@ def get_commuter_data(setup_dict='',
                           ', relative error:', abs_err / checksum)
 
         n += 1
-        print('Federal state read. Progress ', n, '/ 16')
+        print(' Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
-            sys.exit(
+            raise gd.DataError(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
     if n != 16:
@@ -462,19 +452,13 @@ def get_commuter_data(setup_dict='',
 
 
 def commuter_sanity_checks(df):
-    # Check if return value is a dataframe
-    if not isinstance(df, pd.DataFrame):
-        exit_string = ("Error. Data should be a dataframe")
-        sys.exit(exit_string)
     # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
-        exit_string = "Error. "
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Dataframe should be of squared form.")
     # There were 401 counties at beginning of 2021 and 400 at end of 2021.
     # Check if exactly 400 counties are in dataframe.
     if not len(df) == 400:
-        exit_string = "Error. Size of dataframe unexpected."
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Size of dataframe unexpected.")
 
 
 def get_neighbors_mobility(
@@ -512,7 +496,7 @@ def get_neighbors_mobility(
         else:
             commuter = pd.read_json(os.path.join(
                 directory, "migration_bfa_2020_dim401.json"))
-    except:
+    except ValueError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
 
