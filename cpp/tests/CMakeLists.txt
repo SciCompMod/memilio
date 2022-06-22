@@ -13,6 +13,7 @@ set(TESTSOURCES
   test_smoother.cpp
   test_damping.cpp
   test_secir.cpp
+  test_odesecirvvs.cpp
   test_implicit_euler.cpp
   test_mobility.cpp
   test_date.cpp
@@ -60,7 +61,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio secir seir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio secir seir abm ode_secirvvs gtest_main)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 #make unit tests find the test data files

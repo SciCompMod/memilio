@@ -324,6 +324,7 @@ private:
 
         Iterator operator+(const int& rhs) const { return Iterator(m_ptr + rhs);}
         Iterator operator-(const int& rhs) const { return Iterator(m_ptr - rhs);}
+        difference_type operator-(const Iterator& rhs) const { return m_ptr - rhs.m_ptr; }
 
         friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; }
         friend bool operator!= (const Iterator& a, const Iterator& b) { return !(a==b); }
