@@ -436,8 +436,8 @@ namespace osecirvvs
                 // iterate over age groups in region
                 for (auto g = AgeGroup(0); g < num_groups; ++g) {
 
-                    model[i].parameters.template get<DailyFirstVaccination>().resize(SimulationDay(num_days));
-                    model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days));
+                    model[i].parameters.template get<DailyFirstVaccination>().resize(SimulationDay(num_days + 1));
+                    model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days + 1));
                     for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
                         model[i].parameters.template get<DailyFirstVaccination>()[{g, d}] = 0.0;
                         model[i].parameters.template get<DailyFullVaccination>()[{g, d}] = 0.0;

@@ -137,8 +137,12 @@ const IOResultPrintWrap<T>& print_wrap(const mio::IOResult<T>& r)
  */
 MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
 {
-    mio::unused(result_listener);
-    return bool(arg);
+    if (arg) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
 }
 
 /**
@@ -148,8 +152,12 @@ MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
  */
 MATCHER_P(IsFailure, status_code, std::string(negation ? "isn't" : "is") + " failure. ")
 {
-    mio::unused(result_listener);
-    return arg.error().code() == status_code;
+    if (arg.error().code() == status_code) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
 }
 
 /**

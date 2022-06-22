@@ -1158,7 +1158,7 @@ namespace osecirvvs
         }
         else {
             log_warning("No DIVI data available for this date");
-        }        
+        }
 
         BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"),
                                                             county, date, scaling_factor_inf));

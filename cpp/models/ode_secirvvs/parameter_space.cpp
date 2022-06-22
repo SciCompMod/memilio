@@ -36,10 +36,11 @@ namespace osecirvvs
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
             double group_total = model.populations.get_group_total(i);
 
-            //sample (most) initial compartments
+            //sample initial compartments (with exceptions)
             for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
-                if (inf_state != InfectionState::SusceptibleNaive && inf_state != InfectionState::Dead &&
-                    inf_state != InfectionState::TotalInfections) {
+                if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
+                    inf_state != InfectionState::Dead && //not sampled, fixed from data
+                    inf_state != InfectionState::TotalInfections) { //not sampled, only for record keeping
                     model.populations[{i, inf_state}].draw_sample();
                 }
             }
