@@ -44,6 +44,8 @@ namespace osecirvvs
         auto num_runs   = ensemble_params.size();
         auto num_nodes  = ensemble_params[0].size();
         auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
+        auto num_days =
+            ensemble_params[0][0].parameters.template get<DailyFirstVaccination>().template size<mio::SimulationDay>();
 
         std::vector<double> single_element_ensemble(num_runs);
 
@@ -61,6 +63,9 @@ namespace osecirvvs
         };
 
         for (size_t node = 0; node < num_nodes; node++) {
+            percentile[node].parameters.template get<DailyFirstVaccination>().resize(num_days);
+            percentile[node].parameters.template get<DailyFullVaccination>().resize(num_days);
+            
             for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
                 //Population
                 for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
@@ -146,13 +151,12 @@ namespace osecirvvs
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectivePartialImmunity>()[i]; });
                 param_percentil(
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectiveImprovedImmunity>()[i]; });
-                for (auto day = SimulationDay(0);
-                     day < get<1>(ensemble_params[0][0].parameters.template get<DailyFirstVaccination>().size());
-                     ++day) {
+
+                for (auto day = SimulationDay(0); day < num_days; ++day) {
                     param_percentil(
                         node, [i, day](auto&& model) -> auto& { return model.parameters.template get<DailyFirstVaccination>()[{i, day}]; });
                     param_percentil(
-                        node, [i, day](auto&& model) -> auto& { return model.parameters.template get<DailyFullVaccination>()[{i, day}]; });                    
+                        node, [i, day](auto&& model) -> auto& { return model.parameters.template get<DailyFullVaccination>()[{i, day}]; });
                 }
                 //virus variants
                 param_percentil(

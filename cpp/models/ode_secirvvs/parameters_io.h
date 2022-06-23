@@ -632,7 +632,7 @@ namespace osecirvvs
     * @param num_days Number of days for which the time series is exported.
     */
     template <class Model>
-    IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, const std::string& data_dir,
+    IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& model, const std::string& data_dir,
                                                        const std::string& results_dir, std::vector<int> const& region,
                                                        Date start_date, const std::vector<double>& scaling_factor_inf,
                                                        double scaling_factor_icu, int num_days)

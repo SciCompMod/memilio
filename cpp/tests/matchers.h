@@ -72,7 +72,10 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
-    mio::unused(result_listener);
+    if (arg.rows() != other.rows() || arg.cols() != other.cols()) {
+        *result_listener << "different dimensions";
+        return false;
+    }
     return ((arg - other).array().abs() <= (atol + rtol * other.array().abs())).all();
 }
 

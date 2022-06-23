@@ -651,12 +651,27 @@ public:
         return m_commuter_nondetection;
     }
 
+    double get_commuter_nondetection() const
+    {
+        return m_commuter_nondetection;
+    }
+
     double& get_start_commuter_detection()
     {
         return m_start_commuter_detection;
     }
 
+    double get_start_commuter_detection() const
+    {
+        return m_start_commuter_detection;
+    }
+
     double& get_end_commuter_detection()
+    {
+        return m_end_commuter_detection;
+    }
+
+    double get_end_commuter_detection() const
     {
         return m_end_commuter_detection;
     }

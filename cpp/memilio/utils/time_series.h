@@ -323,6 +323,19 @@ public:
         return m_data.data();
     }
 
+    /**
+     * Matrix expression that contains one time point per column.
+     * Each column contains the corresponding time at index 0.
+     * @{
+     */
+    auto matrix() {
+        return get_valid_block();
+    }
+    auto matrix() const {
+        return get_valid_block();
+    }
+    /** @} */
+
     /*********************
      * 
      * Iterator interface to iterate over values.
