@@ -18,7 +18,15 @@
 * limitations under the License.
 */
 
-#include "templates.h"
+#include "pybind_util.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "utils/index.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/mobility.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"
@@ -182,9 +190,9 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-    pymio::bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
-    pymio::bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
-    pymio::bind_SecirModelGraph<mio::SecirModel>(m, "SecirModelGraph");
+    pymio::bind_ModelNode<mio::SecirModel>(m, "SecirModelNode");
+    pymio::bind_SimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
+    pymio::bind_ModelGraph<mio::SecirModel>(m, "SecirModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
