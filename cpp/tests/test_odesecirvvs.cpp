@@ -42,6 +42,7 @@
 #include "ode_secirvvs/parameter_space.h"
 #include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
+#include "ode_secirvvs/analyze_result.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock-matchers.h"
@@ -386,8 +387,6 @@ TEST(TestOdeSECIRVVS, export_data)
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
 }
 
-#endif
-
 TEST(TestOdeSECIRVVS, run_simulation)
 {
     auto num_age_groups = 3;
@@ -397,15 +396,14 @@ TEST(TestOdeSECIRVVS, run_simulation)
     auto result = mio::osecirvvs::simulate(0, num_days, 0.1, model);
     result      = mio::interpolate_simulation_result(result); //reduce influence of time steps chosen by the integrator
 
-    // auto x = mio::save_result({result}, {1002}, num_age_groups, mio::path_join(TEST_DATA_DIR, "results_osecirvvs.h5"));
-    // ASSERT_THAT(x, IsSuccess());
-
     //load result of a previous run; only tests stability, not correctness
     auto expected_result =
         mio::read_result(mio::path_join(TEST_DATA_DIR, "results_osecirvvs.h5")).value()[0].get_groups();
 
     ASSERT_THAT(print_wrap(result.matrix()), MatrixNear(print_wrap(expected_result.matrix()), 1e-5, 1e-5));
 }
+
+#endif
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
 {

@@ -21,8 +21,6 @@
 #define ODESECIRVVS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
-#include "memilio/io/epi_data.h"
-#include "memilio/utils/logging.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -31,9 +29,11 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/mobility.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/date.h"
 
 namespace mio
