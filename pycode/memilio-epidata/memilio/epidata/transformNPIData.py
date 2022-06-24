@@ -552,8 +552,16 @@ def transform_npi_data(fine_resolution=2,
     npis = pd.DataFrame(npis_dummy)
     del npi_codes
     del npi_desc
+    # remove rows and columns of unused codes
+    for code in df_npis_combinations.keys():
+        local_codes_used_rows = df_npis_combinations[code][1].Code.isin(
+            npis.NPI_code)
+        local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
+            npis.NPI_code)
 
-    # TODO: df_npis_combinations['M01a'][1][ isin (npis.NPI_code)]
+        # overwrite item 0 since codes are stored in *.columns
+        df_npis_combinations[code] = df_npis_combinations[code][1].loc[local_codes_used_rows,
+                                                                       local_codes_used_cols].reset_index(drop=True).copy()
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -808,11 +816,13 @@ def transform_npi_data(fine_resolution=2,
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
-                    # TODO
                     # if new, dynamic NPIs for higher incidence cannot be
                     # combined with older, dynamic NPIs for lower indices,
                     # the latter have to be deactivated
                     # (incidence_thresholds_to_npis.keys() has to be sorted !)
+                    # TODO
+                    for code in df_npis_combinations.keys():
+                        df_npis_combinations[code]
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
