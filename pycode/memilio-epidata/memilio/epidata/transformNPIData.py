@@ -418,10 +418,16 @@ def transform_npi_data(fine_resolution=2,
             df_npis_combinations[npi_groups_combinations_unique[i]][1].insert(
                 0, 'Code', codes_local)
 
-        writer = pd.ExcelWriter(os.path.join(
-            directory, 'combinations_npis_cleanoutput.xlsx'))
         # use to_excel function and specify the sheet_name and index
-        # to store the dataframe in specified sheet
+        # to store the dataframe in specified sheet if file not yet existent
+        # otherwise just valid results against stored sheets
+        write_file = False
+        if not os.path.exists(os.path.join(
+                directory,
+                'combinations_npis_cleanoutput.xlsx')):
+            writer = pd.ExcelWriter(os.path.join(
+                directory, 'combinations_npis_cleanoutput.xlsx'))
+            write_file = True
         for i in range(len(npi_groups_combinations_unique)):
             codes_local = df_npis_combinations[npi_groups_combinations_unique[i]
                                                ][1].columns[1:]
@@ -432,9 +438,22 @@ def transform_npi_data(fine_resolution=2,
                 [desc
                  for desc in npi_codes_prior_desc
                  [npi_codes_prior.isin(codes_local)].values])
-            df_out.to_excel(
-                writer, sheet_name=npi_groups_combinations_unique[i])
-        writer.save()
+            try:
+                # store verified output
+                df_in_valid = pd.read_excel(
+                    os.path.join(
+                        directory, 'combinations_npis_cleanoutput.xlsx'),
+                    sheet_name=i)
+                if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
+                    print('Error in combination matrix.')
+            except:
+                pass
+
+            if write_file:
+                df_out.to_excel(
+                    writer, sheet_name=npi_groups_combinations_unique[i])
+        if write_file:
+            writer.save()
 
     # correct differences in codes between data sheet and explanation sheet
     codes_dropped = []  # no dropping for fine_resolution == 0
@@ -534,6 +553,8 @@ def transform_npi_data(fine_resolution=2,
     del npi_codes
     del npi_desc
 
+    # TODO: df_npis_combinations['M01a'][1][ isin (npis.NPI_code)]
+
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
     # incidence 0, 10, 35, 50, 100) to NPI
@@ -579,7 +600,7 @@ def transform_npi_data(fine_resolution=2,
             npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
                             ] = incid_threshold
 
-        # get all incidence thresholds
+        # get all incidence thresholds (This list has to be sorted)
         incidence_thresholds = sorted(set(npi_incid_start.values()))
 
         # create hash map from thresholds to NPI indices
@@ -786,6 +807,12 @@ def transform_npi_data(fine_resolution=2,
                     # with the respective value in int_active
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
+
+                    # TODO
+                    # if new, dynamic NPIs for higher incidence cannot be
+                    # combined with older, dynamic NPIs for lower indices,
+                    # the latter have to be deactivated
+                    # (incidence_thresholds_to_npis.keys() has to be sorted !)
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
