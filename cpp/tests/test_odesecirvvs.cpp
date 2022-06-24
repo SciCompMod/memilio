@@ -331,6 +331,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
     ASSERT_FALSE((populations1.array() == populations0.array()).all()) << "Failure might be spurious, check RNG seeds.";
 }
 
+#if defined(MEMILIO_HAS_HDF5) && defined(MEMILIO_HAS_JSONCPP)
+
 TEST(TestOdeSECIRVVS, read_data)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
@@ -383,6 +385,8 @@ TEST(TestOdeSECIRVVS, export_data)
     ASSERT_THAT(print_wrap(results.value()[0].get_groups().matrix()),
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
 }
+
+#endif
 
 TEST(TestOdeSECIRVVS, run_simulation)
 {
