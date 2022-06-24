@@ -47,6 +47,8 @@ add_library(memilio
     math/eigen_util.h
     math/matrix_shape.h
     math/matrix_shape.cpp
+    math/interpolation.h
+    math/interpolation.cpp
     mobility/mobility.h
     mobility/mobility.cpp
     mobility/graph_simulation.h

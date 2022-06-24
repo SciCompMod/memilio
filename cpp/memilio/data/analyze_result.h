@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 *
-* Authors: Wadim Koslow, Daniel Abele
+* Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -30,13 +30,27 @@ namespace mio
 {
 
 /**
- * interpolate time series with evenly spaced, integer time points.
- * time points [t0, t1, t2, ..., tmax] interpolated as [floor(t0), floor(t0) + 1,...,ceil(tmax)].
+ * @brief interpolate time series with evenly spaced, integer time points that represent whole days.
+ * time points [t0, t1, t2, ..., tmax] interpolated as days [ceil(t0), floor(t0) + 1,...,floor(tmax)].
+ * tolerances in the first and last time point (t0 and t_max) are accounted for.
  * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @see interpolate_simulation_result
  * @param simulation_result time series to interpolate
+ * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
  * @return interpolated time series
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const double abs_tol = 1e-14);
+
+/**
+ * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
+ * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @param simulation_result time series to interpolate
+ * @param interpolations_times std::vector of time points at which simulation results are interpolated.
+ * @return interpolated time series at given interpolation points
+ */
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result,
+                                                 const std::vector<double>& interpolation_times);
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)
@@ -45,7 +59,7 @@ template <class T>
 using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
 
 /**
- * @brief Interpolates results of all runs with evenly spaced, integer time points.
+ * @brief Interpolates results of all runs with evenly spaced, integer time points that represent whole days.
  * @see interpolate_simulation_result
  * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
  * @return interpolated time series, one (or as many as nodes in the graph) per result in the ensemble

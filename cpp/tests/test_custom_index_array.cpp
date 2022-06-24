@@ -18,7 +18,8 @@
 * limitations under the License.
 */
 #include "memilio/utils/custom_index_array.h"
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 // A category can be a tag
 struct Dim1;
@@ -97,6 +98,25 @@ TEST(CustomIndexArray, RangeInitialization)
     ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(0)}]), 0.4);
     ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(1)}]), 0.5);
     ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(2)}]), 0.6);
+}
+
+TEST(CustomIndexArray, equality)
+{
+    using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
+
+    auto array = ArrayType({mio::Index<Dim1>(3), mio::Index<Dim2>(4)}, 5);
+    ASSERT_EQ(array, ArrayType({mio::Index<Dim1>(3), mio::Index<Dim2>(4)}, 5));
+    ASSERT_NE(array, ArrayType({mio::Index<Dim1>(3), mio::Index<Dim2>(4)}, 4));
+    ASSERT_NE(array, ArrayType({mio::Index<Dim1>(4), mio::Index<Dim2>(3)}, 5));
+}
+
+TEST(CustomIndexArray, constantAssignment)
+{
+    using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
+
+    auto array = ArrayType({mio::Index<Dim1>(3), mio::Index<Dim2>(4)}, 3);
+    array = 4;
+    ASSERT_EQ(array, ArrayType({mio::Index<Dim1>(3), mio::Index<Dim2>(4)}, 4));
 }
 
 TEST(CustomIndexArray, forEach)
@@ -227,6 +247,19 @@ TEST(CustomIndexArray, slice)
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2), Tag3(1)}]), 7);
 }
 
+TEST(CustomIndexArray, slice_single)
+{
+    mio::CustomIndexArray<int, Tag0, Tag1> array{{Tag0(2), Tag1(3)}};
+    array[{mio::Index<Tag0>(0), mio::Index<Tag1>(0)}] = 1;
+    array[{mio::Index<Tag0>(0), mio::Index<Tag1>(1)}] = 2;
+    array[{mio::Index<Tag0>(0), mio::Index<Tag1>(2)}] = 3;
+    array[{mio::Index<Tag0>(1), mio::Index<Tag1>(0)}] = 4;
+    array[{mio::Index<Tag0>(1), mio::Index<Tag1>(1)}] = 5;
+    array[{mio::Index<Tag0>(1), mio::Index<Tag1>(2)}] = 6;
+
+    ASSERT_THAT(array.slice(mio::Index<Tag1>(1)), testing::ElementsAre(2, 5));
+}
+
 TEST(CustomIndexArray, slice_with_stride)
 {
     mio::CustomIndexArray<double, Tag0, Tag1, Tag2, Tag3>
@@ -309,6 +342,22 @@ TEST(CustomIndexArray, chained_slice)
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(1), Tag3(1)}]), 42);
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2), Tag3(0)}]), 42);
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2), Tag3(1)}]), 42);
+}
+
+TEST(CustomIndexArray, sliceConstantAssignment)
+{
+    mio::CustomIndexArray<double, Tag0, Tag1, Tag2>
+            array({Tag0(1), Tag1(2), Tag2(3)}, 3.1459);
+    
+    array.slice<Tag2>({1,2}) = 42.0; //sequence of 2 indices along one dimension
+    array.slice(Tag2(0)) = 17.0; //single index along one dimension
+
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(0), Tag2(0)}]), 17.0);
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(0), Tag2(1)}]), 42.0);
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(0), Tag2(2)}]), 42.0);
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(0)}]), 17.0);
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(1)}]), 42.0);
+    ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2)}]), 42.0);
 }
 
 TEST(CustomIndexArray, resize_all)

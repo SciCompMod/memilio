@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -30,8 +30,10 @@
 
 namespace mio
 {
+namespace abm
+{
 
-LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc     = person.get_location_id().type;
     auto make_transition = [current_loc](auto l) {
@@ -46,42 +48,42 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
     return current_loc;
 }
 
-LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params) && !person.is_in_quarantine()) {
-        return mio::LocationType::School;
+        person.get_age() == AgeGroup::Age5to14 && person.goes_to_school(t, params) && !person.is_in_quarantine()) {
+        return LocationType::School;
     }
     //return home
-    if (current_loc == mio::LocationType::School && t.hour_of_day() >= 15) {
-        return mio::LocationType::Home;
+    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
+        return LocationType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
+        (person.get_age() == AgeGroup::Age15to34 || person.get_age() == AgeGroup::Age35to59) &&
         t.day_of_week() < 5 && t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {
-        return mio::LocationType::Work;
+        return LocationType::Work;
     }
     //return home
-    if (current_loc == mio::LocationType::Work && t.hour_of_day() >= 17) {
-        return mio::LocationType::Home;
+    if (current_loc == LocationType::Work && t.hour_of_day() >= 17) {
+        return LocationType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
     //leave
@@ -99,7 +101,7 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Ab
     return current_loc;
 }
 
-LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
     //leave
@@ -120,8 +122,18 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
     return current_loc;
 }
 
+LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+                              const MigrationParameters& /*params*/)
+{
+    auto current_loc = person.get_location_id().type;
+    if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
+        return LocationType::Home;
+    }
+    return current_loc;
+}
+
 LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                            const AbmMigrationParameters& /*params*/)
+                            const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Severe) {
@@ -130,7 +142,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const AbmMigrationParameters& /*params*/)
+LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Critical) {
@@ -140,7 +152,7 @@ LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, c
 }
 
 LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                                        const AbmMigrationParameters& /*params*/)
+                                        const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
@@ -150,4 +162,5 @@ LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, T
     return current_loc;
 }
 
+} // namespace abm
 } // namespace mio

@@ -299,7 +299,7 @@ namespace details
                     model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
 
                 mu_C_R[county].push_back(
-                    model[county].parameters.get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
+                    model[county].parameters.get<AsymptomaticCasesPerInfectious>()[(AgeGroup)group]);
                 mu_I_H[county].push_back(
                     model[county].parameters.get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
                 mu_H_U[county].push_back(

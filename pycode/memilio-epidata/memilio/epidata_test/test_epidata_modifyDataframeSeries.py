@@ -20,7 +20,10 @@
 
 import unittest
 import pandas as pd
+import numpy as np
 from pyfakefs import fake_filesystem_unittest
+from datetime import date
+
 from memilio.epidata import modifyDataframeSeries as mDfS
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
@@ -46,6 +49,27 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
          'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
          'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
          'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+    df_dates = pd.DataFrame({
+        'Date':[
+            '2022-01-01', '2022-01-01', '2022-01-03', '2022-01-03',
+            '2022-01-04', '2022-01-06'],
+        'col_int': [1, 10, 3, 3, 4, 6],
+        'col_str': ['a', 'a', 'b', 'c', 'd', 'e']})
+    df_dates_unsorted = pd.DataFrame({
+        'Date':[
+            '2022-01-06', '2022-01-03', '2022-01-01', '2022-01-06',
+            '2022-01-03', '2022-01-04'],
+        'col_int': [60, 3, 1, 6, 3, 4],
+        'col_str': ['a', 'b', 'a', 'e', 'c', 'd']})
+    df_dates_result = pd.DataFrame({
+        'Date': ['2022-01-03', '2022-01-03', '2022-01-04'],
+        'col_int': [3, 3, 4], 'col_str': ['b', 'c', 'd']})
+    int_map = [(10*i, i) for i in range(10)]
+    str_map = [('A','a'), ('X','x'), ('T','t'), ('B','b')]
+    df_str_map_col = pd.Series(
+        data = ['A', 'X', 'T', 'A', 'B', 'A', 'X', 'T', 'A', 'B', 'A', 'X', 'T',
+                'A', 'B'],
+        name = 'inserted_col')
 
 
     def setUp(self):
@@ -167,6 +191,175 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col1'].item(), 4 + 1 / 3)
         # (1+ 1 + 3) / 3 = 1 + 2 / 3
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col3'].item(), 1 + 2 / 3)
+
+    def test_split_column_based_on_values(self):
+        col_names_vacc_data = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
+            'Anzahl']
+
+        vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),
+            ('2020-12-27', '1001', '05-11', 4, 1),
+            ('2020-12-27', '1001', '12-17', 1, 10),
+            ('2020-12-27', '1001', '12-17', 2, 15),
+            ('2020-12-27', '1001', '12-17', 3, 72),
+            ('2020-12-27', '1001', '12-17', 4, 20),
+            ('2020-12-27', '1001', '18-59', 1, 2),
+            ('2020-12-27', '1001', '18-59', 2, 3),
+            ('2020-12-27', '1001', '18-59', 3, 222),
+            ('2020-12-27', '1001', '18-59', 4, 12),
+            ('2020-12-27', '1001', '60+', 1, 22),
+            ('2020-12-27', '1001', '60+', 2, 332),
+            ('2020-12-27', '1001', '60+', 3, 76),
+            ('2020-12-27', '1001', '60+', 4, 2)
+        ]
+        df_to_split = pd.DataFrame(
+            vacc_data, columns=col_names_vacc_data)
+
+        test_df = pd.DataFrame(
+            {'Vacc_partially': [3, 10, 2, 22],
+             'Vacc_completed': [2, 15, 3, 332],
+             'Vacc_refreshed': [1, 72, 222, 76],
+             'Vacc_refreshed_2': [1, 20, 12, 2]})
+
+        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
+        column_ident = 'Impfschutz'
+        column_vals_name = 'Anzahl'
+        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
+        test_labels = new_col_labels.copy()
+        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
+
+        self.assertEqual(test_labels, returned_column_labels)
+        pd.testing.assert_frame_equal(df_split[test_labels],test_df)
+        new_column_names = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe',
+            'Vacc_partially', 'Vacc_completed', 'Vacc_refreshed',
+            'Vacc_refreshed_2']
+
+        for i in range(0, len(new_column_names)):
+            self.assertIn(df_split.columns[i], new_column_names)
+            self.assertIn(new_column_names[i], df_split.columns)
+
+        # test wrong length of new columns
+
+        vacc_data_length_wrong = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),
+            ('2020-12-27', '1001', '12-17', 1, 10),
+            ('2020-12-27', '1001', '12-17', 2, 15),
+            ('2020-12-27', '1001', '12-17', 3, 72),
+            ('2020-12-27', '1001', '18-59', 1, 2),
+            ('2020-12-27', '1001', '18-59', 2, 3),
+            ('2020-12-27', '1001', '18-59', 3, 222),
+            ('2020-12-27', '1001', '60+', 1, 22),
+            ('2020-12-27', '1001', '60+', 2, 332),
+            ('2020-12-27', '1001', '60+', 3, 76)
+        ]
+        df_to_split_length_wrong = pd.DataFrame(
+            vacc_data_length_wrong, columns=col_names_vacc_data)
+
+        test_df_length_wrong = pd.DataFrame(
+            {'Vacc_partially': [3, 10, 2, 22],
+             'Vacc_completed': [2, 15, 3, 332],
+             'Vacc_completed_2': [1, 72, 222, 76]})
+
+        # wrong amount for data
+        new_col_labels_length_wrong = ['Vacc_partially', 'Vacc_completed']
+        test_labels_length_wrong = new_col_labels_length_wrong.copy()
+        returned_column_labels_length_wrong, df_split_length_wrong = mDfS.split_column_based_on_values(
+            df_to_split_length_wrong, column_ident, column_vals_name, groupby_list, new_col_labels_length_wrong, compute_cumsum=False)
+
+        new_column_names_length_wrong = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe',
+            'Vacc_partially', 'Vacc_completed', 'Vacc_completed_2']
+
+        col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_completed_2']
+
+        self.assertNotEqual(test_labels_length_wrong, returned_column_labels_length_wrong)
+        pd.testing.assert_frame_equal(df_split_length_wrong[col_labels],test_df_length_wrong)
+
+        for i in range(0, len(new_column_names_length_wrong)):
+            self.assertIn(df_split_length_wrong.columns[i], new_column_names_length_wrong)
+            self.assertIn(new_column_names_length_wrong[i], df_split_length_wrong.columns)
+
+    def test_split_column_based_on_values_compute_cumsum(self):
+        df_to_split = pd.DataFrame({'Date': 
+            3*(['2022-05-11' for i in range(0, 16)] +
+            ['2022-05-12' for i in range(0, 16)] +
+            ['2022-05-13' for i in range(0, 16)]),
+            'ID_County': 9*sorted(8*[1000+i for i in range (0,2)]),
+            'Age_RKI': 48*['18+'] + 48*['12-17']+48*['0-11'],
+            'Impfschutz':36*[1,2,3,4],
+            'Anzahl':[i for i in range(0,144)]
+            })
+        groupby_list = ['Date', 'ID_County', 'Age_RKI']
+        column_ident = 'Impfschutz'
+        column_vals_name = 'Anzahl'
+        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
+        test_labels = new_col_labels.copy()
+        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=True)
+        # test returned labels
+        self.assertEqual(test_labels, returned_column_labels)
+        # test if cumulative sum is correct
+        df_county1 = df_split[df_split.ID_County == 1000]
+        df_county2 = df_split[df_split.ID_County == 1001]
+        # second dataframe should have + 16 at first date, then cumulativ sum
+        for column in returned_column_labels:
+            self.assertEqual(list(df_county1[column].values + np.array(3*[16]+ 3*[32]+ 3*[48])), list(df_county2[column].values))
+        # test return for county 1000 in age group 18+
+        return_1 = pd.DataFrame({'Vacc_partially':[4,40,108],'Vacc_completed':[6,44,114], 'Vacc_refreshed':[8,48,120], 'Vacc_refreshed_2':[10,52,126]})
+        pd.testing.assert_frame_equal(df_county1[df_county1.Age_RKI=='18+'][returned_column_labels].reset_index(drop=True), return_1)
+        # test return for county 1001 in age group 0-11
+        return_2 = pd.DataFrame({'Vacc_partially':[212,456,732],'Vacc_completed':[214,460,738], 'Vacc_refreshed':[216,464,744], 'Vacc_refreshed_2':[218,468,750]})
+        pd.testing.assert_frame_equal(df_county2[df_county2.Age_RKI=='0-11'][returned_column_labels].reset_index(drop=True), return_2)
+
+    def test_extract_subframe_based_on_dates(self):
+        test_df = self.df_dates.copy()
+        # test with start and end value in dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates, date(2022, 1, 3), date(2022, 1, 4))
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+        # check that input frame is not manipulated in the function
+        pd.testing.assert_frame_equal(self.df_dates, test_df)
+        # test with start and end value not in dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates, date(2022, 1, 2), date(2022, 1, 5))
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+        pd.testing.assert_frame_equal(self.df_dates, test_df)
+        # test with unsorted dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+
+
+    def test_insert_column_by_map(self):
+        old_cols = self.test_df1.columns.to_list()
+
+        #test with integer mapping
+        df = mDfS.insert_column_by_map(
+            self.test_df1, 'test_col3', 'inserted_col', self.int_map)
+        new_cols = df.columns.to_list()
+        exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
+            'inserted_col', 'ID']
+        self.assertEqual(new_cols, exp_cols)
+        pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
+        exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col')
+        pd.testing.assert_series_equal(df['inserted_col'], exp_new_col)
+
+        # test with string mapping
+        df = mDfS.insert_column_by_map(
+            self.test_df1, 'test_col2', 'inserted_col', self.str_map)
+        new_cols = df.columns.to_list()
+        exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
+            'test_col3', 'ID']
+        self.assertEqual(new_cols, exp_cols)
+        pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
+        pd.testing.assert_series_equal(df['inserted_col'], self.df_str_map_col)
 
 
 if __name__ == '__main__':

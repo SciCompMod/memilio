@@ -40,6 +40,7 @@ set(TESTSOURCES
   test_mobility_io.cpp
   test_transform_iterator.cpp
   test_metaprogramming.cpp
+  test_ide_seir.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
@@ -62,7 +63,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio secir seir abm ode_secirvvs gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio secir ode_seir abm ode_secirvvs gtest_main)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 #make unit tests find the test data files

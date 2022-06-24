@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "secir/analyze_result.h"
+#include "memilio/math/interpolation.h"
 
 namespace mio
 {

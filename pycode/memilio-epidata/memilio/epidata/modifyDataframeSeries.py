@@ -24,6 +24,7 @@
 """
 import pandas as pd
 import itertools
+from datetime import datetime
 
 from memilio.epidata import defaultDict as dd
 
@@ -154,4 +155,89 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         # rearrange indices from 0 to N
         df_new.index = (range(len(df_new)))
 
+    return df_new
+
+def split_column_based_on_values(
+        df_to_split, column_to_split, column_vals_name, groupby_list, new_column_labels, compute_cumsum):
+    """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
+    all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
+
+    @param df_to_split global pandas dataframe
+    @param column_to_split identifier of the column for which separate values will define separate dataframes 
+    @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
+    @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
+    @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
+    @param compute_cumsum Computes cumulative sum in new generated columns
+    @return a dataframe with the new splitted columns
+    """
+    # TODO: Maybe we should input a map e.g. 1->Vacc_partially, 2->Vacc_completed etc. This is more future proof.
+    # check number of given names and correct if necessary
+    column_identifiers = sorted(df_to_split[column_to_split].unique())
+    i = 2
+    while len(column_identifiers) > len(new_column_labels):
+        new_column_labels.append(new_column_labels[-1]+'_'+str(i))
+        i+=1
+
+    # create empty copy of the df_to_split
+    df_joined = pd.DataFrame(
+        columns=df_to_split.columns).drop(
+        columns=[column_to_split, column_vals_name])
+
+    for i in range(0, len(column_identifiers)):
+        df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
+            columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
+        df_reduced = df_reduced.groupby(
+            groupby_list).agg({new_column_labels[i]: sum})
+        if compute_cumsum:
+            # compute cummulative sum over level index of ID_County and level
+            # index of Age_RKI
+            df_reduced = df_reduced.groupby(level=[groupby_list.index(
+                dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum()
+        # joins new generated column to dataframe
+        df_joined = df_reduced.reset_index().join(
+            df_joined.set_index(groupby_list),
+            on=groupby_list, how='outer')
+
+    return new_column_labels, df_joined
+
+def extract_subframe_based_on_dates(df, start_date, end_date):
+    """! Removes all data with date lower than start date or higher than end date.
+
+    Returns the Dataframe with only dates between start date and end date.
+    Resets the Index of the Dataframe.
+
+    @param df The dataframe which has to be edited
+    @param start_date Date of first date in dataframe
+    @param end_date Date of last date in dataframe
+    """
+
+    upperdate = datetime.strftime(end_date, '%Y-%m-%d')
+    lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+
+    # Removes dates higher than end_date
+    df_new = df[df[dd.EngEng['date']] <= upperdate]
+    # Removes dates lower than start_date
+    df_new = df_new[df_new[dd.EngEng['date']] >= lowerdate]
+
+    df_new.reset_index(drop=True, inplace=True)
+
+    return df_new
+
+def insert_column_by_map(df, col_to_map, new_col_name, map):
+    """! Adds a column to a given dataframe based on a mapping of values of a given column
+
+    The mapping is defined by a list containing tupels of the form (new_value, old_value)
+    where old_value is a value in the col_to_map and new_value the value
+    that is added in the new column if col_to_map contains the old_value.
+    @param df dataframe to modify
+    @param col_to_map column containing values to be mapped
+    @param new_col_name name of the new column containing the mapped values
+    @param map List of tuples of values in the column to be added and values in the given column
+    @return dataframe df with column of state names correspomding to state ids
+    """
+    df_new = df.copy()
+    loc_new_col = df_new.columns.get_loc(col_to_map)+1
+    df_new.insert(loc=loc_new_col, column=new_col_name, value=df_new[col_to_map])
+    for item in map:
+        df_new.loc[df_new[col_to_map] == item[1], [new_col_name]] = item[0]
     return df_new

@@ -190,7 +190,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
             t_icu_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
 
-            mu_C_R[county].push_back(model[county].parameters.template get<AsymptoticCasesPerInfectious>()[AgeGroup(group)]);
+            mu_C_R[county].push_back(model[county].parameters.template get<AsymptomaticCasesPerInfectious>()[AgeGroup(group)]);
             mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
             mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)]);
             mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);

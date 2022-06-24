@@ -132,25 +132,30 @@ size_t flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
  *
  * struct AgeGroup{};
  *
- * enum GenderE
+ * enum class Gender
  * {
  *    Female,
  *    Male,
  *    Diverse,
- *    NumGenders = 3
+ *    Count, //number of values in the enum to allow iterating over the enum
  * };
  * struct Gender{};
  *
- * CustomIndexArray<size_t, AgeGroup, Gender> populations({Index<AgeGroup>(2), Index<Gender>(NumGenders)});
+ * CustomIndexArray<size_t, AgeGroup, Gender> populations({Index<AgeGroup>(2), Index<Gender>(Gender::Count)});
  *
  * Here, populations represents a 2x3 size_t array (though the data is stored contigously).
  * An element can be accessed using a MultiIndex:
  *
- * auto x = populations[{Index<AgeGroup>(0), Index<Gender>(Female)}];
+ * auto x = populations[{Index<AgeGroup>(0), Index<Gender>(Gender::Female)}];
+ * 
+ * If the category is an enum class, the Index class can be omitted for convenience in almost all cases since
+ * Index<E> is implicitly constructible from enum type E, e.g.:
+ * 
+ * CustomIndexArray<size_t, AgeGroup, Gender> populations({Index<AgeGroup>(2), Gender::Count});
+ * auto x = populations[{Index<AgeGroup>(0), Gender::Female}];
  *
  * @tparam Typ the type stored in the array
- * @tparam Categories The custom Index types
- *
+ * @tparam Tags Types that tag the custom Index types, must be unique.
  */
 template <class Typ, class... Tags>
 class CustomIndexArray
@@ -277,6 +282,29 @@ public:
         return m_y[get_flat_index(index)];
     }
 
+    /**
+     * Assign the same value to each element of the array.
+     * @param scalar scalar value.
+     */
+    CustomIndexArray& operator=(const Type& scalar)
+    {
+        m_y = scalar;
+        return *this;
+    }
+
+    /**
+     * Equality comparison.
+     * @{
+     */
+    bool operator==(const CustomIndexArray& other) const
+    {
+        return this->m_dimensions == other.m_dimensions && (this->m_y.array() == other.m_y.array()).all();
+    }
+    bool operator!=(const CustomIndexArray& other) const
+    {
+        return !(*this == other);
+    }
+    /**@}*/
 
     /**
      * @brief get_flat_index returns the flat index into the stored array, given the
@@ -442,12 +470,13 @@ private:
         };
 
     public:
-
-        using iterator        = Iterator<Type>;
-        using const_iterator  = Iterator<Type const>;
+        using value_type     = Type;
+        using reference      = Type&;
+        using iterator       = Iterator<Type>;
+        using const_iterator = Iterator<Type const>;
 
         /**
-         * @brief Slice represents a slice into the CustomIndexarray
+         * @brief Constructs a slice into the CustomIndexarray
          * @param dimensions the dimensions of the CustomIndexArray
          * @param start_iter An iterator to the first element of the data
          * @param idx_sequence_ A sequence of indices into the slice
@@ -515,7 +544,7 @@ private:
         friend bool operator!= (const Slice& a, const Slice& b) { return !(a==b); }
 
         /**
-         * @brief slice creates a subslice from the current slice
+         * @brief Creates a subslice from the current slice
          * @tparam The Tag corresponding to the dimension of the slice
          * @param idx_seq An index sequence, consisting of the first index,
          *                the number of indices and a stride
@@ -527,9 +556,8 @@ private:
             return Slice<OtherTag, iterator>(m_dimensions, begin(), idx_sequence_);
         }
 
-
         /**
-         * @brief slice creates a subslice from the current slice
+         * @brief Creates a subslice from the current slice
          * @tparam The Tag corresponding to the dimension of the slice
          * @param idx_seq An index sequence, consisting of the first index,
          *                the number of indices and a stride
@@ -539,6 +567,17 @@ private:
         Slice<OtherTag, const_iterator> slice(Seq<size_t> idx_sequence_) const
         {
             return Slice<OtherTag, const_iterator>(m_dimensions, begin(), idx_sequence_);
+        }
+
+        /**
+         * Assign same value to each element of the slice.
+         * @param scalar Scalar value.
+         */
+        Slice& operator=(const Type& scalar) {
+            for (auto&& e : *this) {
+                e = scalar;
+            }
+            return *this;
         }
 
     private:
@@ -565,7 +604,7 @@ public:
     using const_iterator    = Iterator<Type const>;
 
     /**
-     * @brief begin returns a start iterator for the elements
+     * @brief Get a start iterator for the elements
      * @return random access iterator
      */
     iterator begin()
@@ -574,7 +613,7 @@ public:
     }
 
     /**
-     * @brief begin returns a start iterator for the elements
+     * @brief Get a start iterator for the elements
      * @return random access iterator
      */
     const_iterator begin() const
@@ -583,7 +622,7 @@ public:
     }
 
     /**
-     * @brief begin returns an end iterator for the elements
+     * @brief Get an end iterator for the elements
      * @return random access iterator
      */
     iterator end()
@@ -592,7 +631,7 @@ public:
     }
 
     /**
-     * @brief begin returns an end iterator for the elements
+     * @brief Get an end iterator for the elements
      * @return random access iterator
      */
     const_iterator end() const
@@ -601,30 +640,54 @@ public:
     }
 
     /**
-     * @brief slice creates a slice into the multidimensional array
+     * @brief Creates a slice into the multidimensional array.
+     * Selects a sequence of indices of one dimension.
      * @tparam The Tag corresponding to the dimension of the slice
      * @param idx_seq An index sequence, consisting of the first index,
      *                the number of indices and a stride
      * @return The slice
+     * @{
      */
     template <typename Tag>
     Slice<Tag, iterator> slice(Seq<size_t> idx_seq)
     {
         return Slice<Tag, iterator>(m_dimensions, begin(), idx_seq);
     }
-
-    /**
-     * @brief slice creates a slice into the multidimensional array
-     * @tparam The Tag corresponding to the dimension of the slice
-     * @param idx_seq An index sequence, consisting of the first index,
-     *                the number of indices and a stride
-     * @return The slice
-     */
     template <typename Tag>
     Slice<Tag, const_iterator> slice(Seq<size_t> idx_seq) const
     {
         return Slice<Tag, const_iterator>(m_dimensions, begin(), idx_seq);
     }
+    /**@}*/
+
+    /**
+     * @brief Creates a slice into the multidimensional array.
+     * Selects a single index of one dimension.
+     * @tparam The Tag corresponding to the dimension of the slice
+     * @param idx index to be selected for the slice.
+     * @{
+     */
+    template <typename Tag>
+    Slice<Tag, iterator> slice(mio::Index<Tag> idx)
+    {
+        return slice<Tag>({(size_t)idx, 1});
+    }
+    template <typename Tag>
+    Slice<Tag, const_iterator> slice(mio::Index<Tag> idx) const
+    {
+        return slice<Tag>({(size_t)idx, 1});
+    }
+    template <typename Tag, std::enable_if_t<std::is_enum<Tag>::value, void*> = nullptr>
+    Slice<Tag, iterator> slice(Tag idx)
+    {
+        return slice<Tag>(mio::Index<Tag>(idx));
+    }
+    template <typename Tag, std::enable_if_t<std::is_enum<Tag>::value, void*> = nullptr>
+    Slice<Tag, const_iterator> slice(Tag idx) const
+    {
+        return slice<Tag>(mio::Index<Tag>(idx));
+    }
+    /**@}*/
 
     /**
      * serialize this. 

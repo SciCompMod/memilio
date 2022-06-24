@@ -264,7 +264,7 @@ struct RelativeCarrierInfectability {
 /**
 * @brief the percentage of asymptomatic cases in the SECIR model
 */
-struct AsymptoticCasesPerInfectious {
+struct AsymptomaticCasesPerInfectious {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -272,14 +272,14 @@ struct AsymptoticCasesPerInfectious {
     }
     static std::string name()
     {
-        return "AsymptoticCasesPerInfectious";
+        return "AsymptomaticCasesPerInfectious";
     }
 };
 
 /**
 * @brief the risk of infection from symptomatic cases in the SECIR model
 */
-struct RiskOfInfectionFromSympomatic {
+struct RiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -287,14 +287,14 @@ struct RiskOfInfectionFromSympomatic {
     }
     static std::string name()
     {
-        return "RiskOfInfectionFromSympomatic";
+        return "RiskOfInfectionFromSymptomatic";
     }
 };
 
 /**
 * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
 */
-struct MaxRiskOfInfectionFromSympomatic {
+struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -302,7 +302,7 @@ struct MaxRiskOfInfectionFromSympomatic {
     }
     static std::string name()
     {
-        return "MaxRiskOfInfectionFromSympomatic";
+        return "MaxRiskOfInfectionFromSymptomatic";
     }
 };
 
@@ -400,8 +400,8 @@ using SecirParamsBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
                  IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, HospitalizedToHomeTime,
                  HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
-                 InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
-                 RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
+                 InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptomaticCasesPerInfectious,
+                 RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerICU>;
 
 /**
@@ -514,18 +514,18 @@ public:
                 this->get<RelativeCarrierInfectability>()[i] = 0;
             }
 
-            if (this->get<AsymptoticCasesPerInfectious>()[i] < 0.0 ||
-                this->get<AsymptoticCasesPerInfectious>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter AsymptoticCasesPerInfectious changed from {:0.4f} to {:d} ",
-                            this->get<AsymptoticCasesPerInfectious>()[i], 0);
-                this->get<AsymptoticCasesPerInfectious>()[i] = 0;
+            if (this->get<AsymptomaticCasesPerInfectious>()[i] < 0.0 ||
+                this->get<AsymptomaticCasesPerInfectious>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter AsymptomaticCasesPerInfectious changed from {:0.4f} to {:d} ",
+                            this->get<AsymptomaticCasesPerInfectious>()[i], 0);
+                this->get<AsymptomaticCasesPerInfectious>()[i] = 0;
             }
 
-            if (this->get<RiskOfInfectionFromSympomatic>()[i] < 0.0 ||
-                this->get<RiskOfInfectionFromSympomatic>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RiskOfInfectionFromSympomatic changed from {:0.4f} to {:d}",
-                            this->get<RiskOfInfectionFromSympomatic>()[i], 0);
-                this->get<RiskOfInfectionFromSympomatic>()[i] = 0;
+            if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic changed from {:0.4f} to {:d}",
+                            this->get<RiskOfInfectionFromSymptomatic>()[i], 0);
+                this->get<RiskOfInfectionFromSymptomatic>()[i] = 0;
             }
 
             if (this->get<HospitalizedCasesPerInfectious>()[i] < 0.0 ||
@@ -624,15 +624,15 @@ public:
                 log_warning("Constraint check: Parameter RelativeCarrierInfectability smaller {:d}", 0);
             }
 
-            if (this->get<AsymptoticCasesPerInfectious>()[i] < 0.0 ||
-                this->get<AsymptoticCasesPerInfectious>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter AsymptoticCasesPerInfectious smaller {:d} or larger {:d}", 0,
+            if (this->get<AsymptomaticCasesPerInfectious>()[i] < 0.0 ||
+                this->get<AsymptomaticCasesPerInfectious>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter AsymptomaticCasesPerInfectious smaller {:d} or larger {:d}", 0,
                             1);
             }
 
-            if (this->get<RiskOfInfectionFromSympomatic>()[i] < 0.0 ||
-                this->get<RiskOfInfectionFromSympomatic>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RiskOfInfectionFromSympomatic smaller {:d} or larger {:d}", 0,
+            if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
                             1);
             }
 

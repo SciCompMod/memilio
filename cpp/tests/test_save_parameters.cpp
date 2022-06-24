@@ -72,8 +72,8 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
         model.parameters.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
         model.parameters.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
-        model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         model.parameters.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         model.parameters.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -173,10 +173,10 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
         ASSERT_EQ(model.parameters.get<mio::InfectionProbabilityFromContact>()[i],
                   read_model.parameters.get<mio::InfectionProbabilityFromContact>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i],
-                  read_model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i],
-                  read_model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i],
+                  read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i],
+                  read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]);
         ASSERT_EQ(model.parameters.get<mio::DeathsPerICU>()[i], read_model.parameters.get<mio::DeathsPerICU>()[i]);
         ASSERT_EQ(model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i],
                   read_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]);
@@ -185,10 +185,10 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
         check_distribution(*model.parameters.get<mio::InfectionProbabilityFromContact>()[i].get_distribution(),
                            *read_model.parameters.get<mio::InfectionProbabilityFromContact>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::DeathsPerICU>()[i].get_distribution(),
                            *read_model.parameters.get<mio::DeathsPerICU>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i].get_distribution(),
@@ -243,9 +243,9 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
         model.parameters.get<mio::InfectionProbabilityFromContact>()[i]  = 0.06;
         model.parameters.get<mio::RelativeCarrierInfectability>()[i]     = 0.67;
-        model.parameters.get<mio::AsymptoticCasesPerInfectious>()[i]     = alpha;
-        model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[i]    = beta;
-        model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>()[i] = beta * 3;
+        model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]     = alpha;
+        model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]    = beta;
+        model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[i] = beta * 3;
         model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]   = rho;
         model.parameters.get<mio::ICUCasesPerHospitalized>()[i]          = theta;
         model.parameters.get<mio::DeathsPerICU>()[i]                     = delta;
@@ -344,12 +344,12 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
             ASSERT_EQ(graph_model.parameters.get<mio::InfectionProbabilityFromContact>()[group],
                       graph_read_model.parameters.get<mio::InfectionProbabilityFromContact>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[group],
-                      graph_read_model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>()[group],
-                      graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::AsymptoticCasesPerInfectious>()[group],
-                      graph_read_model.parameters.get<mio::AsymptoticCasesPerInfectious>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[group],
+                      graph_read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group],
+                      graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[group],
+                      graph_read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::DeathsPerICU>()[group],
                       graph_read_model.parameters.get<mio::DeathsPerICU>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[group],
@@ -391,8 +391,8 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                 *graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>()[group]
+                *graph_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group]
                      .get_distribution()
                      .get());
             check_distribution(*graph_model.parameters.get<mio::DeathsPerICU>()[group].get_distribution().get(),
@@ -423,7 +423,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
@@ -466,7 +466,7 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
@@ -511,7 +511,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
@@ -554,7 +554,7 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     std::vector<int> county = {1002};
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
