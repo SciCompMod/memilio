@@ -18,7 +18,15 @@
 * limitations under the License.
 */
 
-#include "templates.h"
+#include "pybind_util.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "utils/index.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/mobility.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"
@@ -74,8 +82,11 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
+            [](mio::ParameterStudy<Simulation>& self,
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+                self.run([&handle_result](auto&& g) {
+                    handle_result(std::move(g));
+                });
             },
             py::arg("handle_result_func"))
         .def("run",
@@ -95,7 +106,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         });
 }
 
-using Simulation = mio::SecirSimulation<>;
+using Simulation     = mio::SecirSimulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
 } // namespace
@@ -122,8 +133,15 @@ std::string pretty_name<mio::AgeGroup>()
 PYBIND11_MODULE(_simulation_secir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&)>(
-                                               &mio::interpolate_simulation_result));
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
@@ -165,13 +183,16 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
-          "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-          py::arg("model"));
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::SecirModel& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-    pymio::bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
-    pymio::bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
-    pymio::bind_SecirModelGraph<mio::SecirModel>(m, "SecirModelGraph");
+    pymio::bind_ModelNode<mio::SecirModel>(m, "SecirModelNode");
+    pymio::bind_SimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
+    pymio::bind_ModelGraph<mio::SecirModel>(m, "SecirModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 

@@ -22,6 +22,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * a duration of time.
@@ -312,6 +314,7 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
+} // namespace abm
 } // namespace mio
 
 #endif

@@ -26,11 +26,13 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * run the simulation in discrete steps, evolve the world and report results.
  */
-class AbmSimulation
+class Simulation
 {
     using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
@@ -40,7 +42,7 @@ public:
      * @param t the starting time of the simulation
      * @param world the world to simulate
      */
-    AbmSimulation(TimePoint t, World&& world);
+    Simulation(TimePoint t, World&& world);
 
     /**
      * Create a simulation with an empty world.
@@ -48,8 +50,8 @@ public:
      * @see Simulation::get_world
      * @param t the starting time of the simulation.
      */
-    AbmSimulation(TimePoint t)
-        : AbmSimulation(t, World())
+    Simulation(TimePoint t)
+        : Simulation(t, World())
     {}
 
     /** 
@@ -91,6 +93,7 @@ private:
     TimeSpan m_dt;
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

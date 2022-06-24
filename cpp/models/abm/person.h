@@ -31,6 +31,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 class Location;
 
@@ -73,7 +75,7 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
+    Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
            const GlobalInfectionParameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
@@ -85,7 +87,7 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
+    Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
            const GlobalInfectionParameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
@@ -132,7 +134,7 @@ public:
      * Get the age group of this person.
      * @return age.
      */
-    AbmAgeGroup get_age() const
+    AgeGroup get_age() const
     {
         return m_age;
     }
@@ -198,27 +200,27 @@ public:
      * Depending on this number and the time, the person works from home in case of a lockdown.
      * @return if the person works from home
      */
-    bool goes_to_work(TimePoint t, const AbmMigrationParameters& params) const;
+    bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
 
     /**
      * Every person has a random number to determine what time to go to work.
      * Depending on this number person decides what time has to go to work;
      * @return the time of going to work
      */
-    TimeSpan get_go_to_work_time(const AbmMigrationParameters& params) const;
+    TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
 
     /**
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
-    bool goes_to_school(TimePoint t, const AbmMigrationParameters& params) const;
+    bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
 
     /**
      * Every person has a random number to determine what time to go to school.
      * Depending on this number person decides what time has to go to school;
      * @return the time of going to school
      */
-    TimeSpan get_go_to_school_time(const AbmMigrationParameters& params) const;
+    TimeSpan get_go_to_school_time(const MigrationParameters& params) const;
 
     /**
      * Answers the question if a person is currently in quarantine.
@@ -258,7 +260,7 @@ private:
     VaccinationState m_vaccination_state;
     TimeSpan m_time_until_carrier;
     bool m_quarantine;
-    AbmAgeGroup m_age;
+    AgeGroup m_age;
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;
@@ -269,6 +271,7 @@ private:
     std::vector<uint32_t> m_cells;
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

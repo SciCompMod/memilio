@@ -31,6 +31,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * A trip describes a migration from one location to another location.
@@ -109,6 +111,8 @@ private:
     std::vector<Trip> m_trips;
     uint32_t m_current_index;
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif

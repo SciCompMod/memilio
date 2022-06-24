@@ -32,12 +32,14 @@
 
 namespace mio
 {
+namespace abm
+{
 
 struct IncubationPeriod {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -46,10 +48,10 @@ struct IncubationPeriod {
 };
 
 struct SusceptibleToExposedByCarrier {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -58,10 +60,10 @@ struct SusceptibleToExposedByCarrier {
 };
 
 struct SusceptibleToExposedByInfected {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -70,10 +72,10 @@ struct SusceptibleToExposedByInfected {
 };
 
 struct CarrierToInfected {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -82,10 +84,10 @@ struct CarrierToInfected {
 };
 
 struct CarrierToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -94,10 +96,10 @@ struct CarrierToRecovered {
 };
 
 struct InfectedToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -106,10 +108,10 @@ struct InfectedToRecovered {
 };
 
 struct InfectedToSevere {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -118,10 +120,10 @@ struct InfectedToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -130,10 +132,10 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -142,10 +144,10 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -154,10 +156,10 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -166,10 +168,10 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 0.);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 0.);
     }
     static std::string name()
     {
@@ -178,10 +180,10 @@ struct RecoveredToSusceptible {
 };
 
 struct DetectInfection {
-    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 0.5);
+        return Type({AgeGroup::Count, VaccinationState::Count}, 0.5);
     }
     static std::string name()
     {
@@ -190,10 +192,10 @@ struct DetectInfection {
 };
 
 struct TestWhileInfected {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 0.005);
+        return Type({AgeGroup::Count}, 0.005);
     }
     static std::string name()
     {
@@ -263,10 +265,10 @@ struct LockdownDate {
     }
 };
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
+        return CustomIndexArray<double, AgeGroup>(AgeGroup::Count, 1.0);
     }
     static std::string name()
     {
@@ -299,7 +301,7 @@ struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
     {
-        return Type(Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count, 1.0));
+        return Type(Eigen::VectorXd::Constant((size_t)AgeGroup::Count, 1.0));
     }
     static std::string name()
     {
@@ -308,10 +310,10 @@ struct SocialEventRate {
 };
 
 struct GotoWorkTimeMinimum {
-    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(6));
     }
     static std::string name()
     {
@@ -320,10 +322,10 @@ struct GotoWorkTimeMinimum {
 };
 
 struct GotoWorkTimeMaximum {
-    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(9));
     }
     static std::string name()
     {
@@ -332,10 +334,10 @@ struct GotoWorkTimeMaximum {
 };
 
 struct GotoSchoolTimeMinimum {
-    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(6));
     }
     static std::string name()
     {
@@ -344,10 +346,10 @@ struct GotoSchoolTimeMinimum {
 };
 
 struct GotoSchoolTimeMaximum {
-    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(AgeGroup::Count, hours(9));
     }
     static std::string name()
     {
@@ -358,9 +360,10 @@ struct GotoSchoolTimeMaximum {
 /**
  * parameters that control the migration between locations.
  */
-using AbmMigrationParameters =
+using MigrationParameters =
     ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
+} // namespace abm
 } // namespace mio
 #endif
