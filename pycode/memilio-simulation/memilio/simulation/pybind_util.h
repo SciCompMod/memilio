@@ -144,7 +144,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
 
     struct Values {
     };
-    pybind11::class_<Values>(m, (name + "Values").c_str(), std::forward<Args>(args)...)
+    pybind11::class_<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__",
              [](Values& /*self*/) {
                  return E(0);
@@ -168,6 +168,19 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
         }
     });
     return enum_class;
+}
+
+// if the python object is None: returns empty optional.
+// otherwise: casts the python object to type T.
+// throws exception if obj cannot be cast to T.
+template<class T, class Obj>
+boost::optional<T> cast_or_none(Obj&& obj)
+{
+    if (obj.is_none()) {
+        return {};
+    } else {
+        return obj.template cast<T>();
+    }
 }
 
 } // namespace pymio

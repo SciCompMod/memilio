@@ -29,35 +29,28 @@
 #include "pybind11/cast.h"
 
 #include "boost/optional.hpp"
+#include <type_traits>
 
 namespace pymio
 {
 
+// recursively bind the member of custom index array
+// that require a single Tag as a template argument
 template <class C>
 void bind_templated_members_CustomIndexArray(pybind11::class_<C>&)
 {
 }
-
 template <class C, class T, class... Ts>
 void bind_templated_members_CustomIndexArray(pybind11::class_<C>& c)
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
 
-    // recursively bind the member for each type
-    bind_templated_members_CustomIndexArray<C, Ts...>(c);
+    bind_templated_members_CustomIndexArray<C, Ts...>(c); //next Tag
 }
 
-template<class T, class Obj>
-boost::optional<T> cast_if_not_none(Obj&& obj)
-{
-    if (obj.is_none()) {
-        return {};
-    } else {
-        return obj.template cast<T>();
-    }
-}
-
+//represents a python index slice, i.e. start:stop:step
+//where each argument can be None
 template<class Index>
 struct Slice
 {
@@ -70,14 +63,14 @@ struct Slice
 //the expression is either a python slice expression (i.e. `start:stop:step`)
 //or a single index.
 template <class Tag>
-Slice<mio::Index<Tag>> make_slice(const pybind11::object& obj)
+Slice<mio::Index<Tag>> convert_to_slice(const pybind11::object& obj)
 {
     if (pybind11::isinstance<pybind11::slice>(obj)) {
         //convert a python slice expression
         auto slice = obj.cast<pybind11::slice>();
-        return {cast_if_not_none<mio::Index<Tag>>(slice.attr("start")),
-                cast_if_not_none<mio::Index<Tag>>(slice.attr("stop")),
-                cast_if_not_none<mio::Index<Tag>>(slice.attr("step"))};
+        return {cast_or_none<mio::Index<Tag>>(slice.attr("start")),
+                cast_or_none<mio::Index<Tag>>(slice.attr("stop")),
+                cast_or_none<mio::Index<Tag>>(slice.attr("step"))};
     }
     else {
         //make a slice from a single index, i.e. `i:i+1:1`
@@ -103,8 +96,8 @@ auto get_slice_of_array(C& self, S& slice, const pybind11::tuple& tup)
     //normal case of recursion
     //slice along dimension I, identified by tag T
     const auto I = C::Index::size - sizeof...(Ts) - 1;
-    auto c_slice = make_slice<T>(tup[I]);
-    auto size    = mio::get<I>(self.size());
+    auto c_slice = convert_to_slice<T>(tup[I]);
+    auto size    = self.template size<T>();
     auto start   = get_optional_value_or(c_slice.start, mio::Index<T>(0));
     auto stop    = get_optional_value_or(c_slice.stop, size);
     auto step    = get_optional_value_or(c_slice.step, mio::Index<T>(1));
@@ -114,15 +107,15 @@ auto get_slice_of_array(C& self, S& slice, const pybind11::tuple& tup)
     stop   = std::min(std::max(stop, start), size); //python slicing just ignores everything beyond the end of the array
     auto n = (size_t(stop) - size_t(start)) / size_t(step);
     auto array_slice = slice.template slice<T>({size_t(start), n, size_t(step)});
-    return get_slice_of_array<C, decltype(array_slice), Ts...>(self, array_slice, tup);
+    return get_slice_of_array<C, decltype(array_slice), Ts...>(self, array_slice, tup); //next dimension
 }
 
-//bind slicing for one dimensional arrays
-//accepts single slice as indices
+//bind slicing operations
 template<class C, class... Ts>
 void bind_slicing_operations_CustomIndexArray(pybind11::class_<C>& c) 
 {
     static_assert(sizeof...(Ts) == C::Index::size, "");
+    //scalar assignment
     c.def("__setitem__", [](C& self, pybind11::object indices, const typename C::value_type& value) {
         auto index_tuple = self.size().size == 1 ? pybind11::make_tuple(indices) : indices.cast<pybind11::tuple>();
         if (index_tuple.size() != self.size().size) {
@@ -130,22 +123,34 @@ void bind_slicing_operations_CustomIndexArray(pybind11::class_<C>& c)
         }
         get_slice_of_array<C, C, Ts...>(self, self, index_tuple) = value;
     });
-    //TODO: set slice from (numpy) array
-    //TODO: __getitem__
+    //scalar assignment with conversion from double
+    //TODO: this only makes sense for array value types that are convertible from double, e.g. UncertainValue
+    c.def("__setitem__", [](C& self, pybind11::object indices, double value) { 
+        auto index_tuple = self.size().size == 1 ? pybind11::make_tuple(indices) : indices.cast<pybind11::tuple>();
+        if (index_tuple.size() != self.size().size) {
+            throw pybind11::index_error("Invalid number of dimensions.");
+        }
+        get_slice_of_array<C, C, Ts...>(self, self, index_tuple) = value;
+    });
+    //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
+    //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
 }
 
-// //bind slicing for one dimensional arrays
-// //accepts tuple of slices as indices
-// template<class C, class T, class... Ts>
-// std::enable_if_t<(sizeof...(Ts) > 0)> bind_slicing_operations_CustomIndexArray(pybind11::class_<C>& c) 
-// {    
-//     c.def("__setitem__", [](C& self, pybind11::tuple tup, const typename C::value_type& value) {
-//         if (tup.size() != self.size().size) {
-//             throw pybind11::index_error("Invalid number of dimensions.");
-//         }
-//         get_slice_of_array<0, C, C, T, Ts...>(self, self, tup) = value;
-//     });
-// }
+//bind members that are different for arrays with single or multi index
+template <class C, class Tag>
+void bind_rank_dependent_members_CustomIndexArray(pybind11::class_<C>& c)
+{
+    c.def("size", [](const C& self) {
+        return self.size();
+    });
+}
+template <class C, class... Tags>
+std::enable_if_t<(sizeof...(Tags) > 1)> bind_rank_dependent_members_CustomIndexArray(pybind11::class_<C>& c)
+{
+    c.def("size", [](const C& self) {
+        return self.size().indices;
+    });
+}
 
 template <class Type, class... Tags>
 void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
@@ -155,7 +160,7 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
     pybind11::class_<C> c(m, name.c_str());
     c.def(pybind11::init([](Index const& sizes, Type const& val) {
          return C(sizes, val);
-     }))
+        }))
         .def(pybind11::init([](Index const& sizes) {
             return C(sizes);
         }))
@@ -185,6 +190,8 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
             },
             pybind11::keep_alive<0, 1>())
         .def("get_flat_index", &C::get_flat_index);
+
+    bind_rank_dependent_members_CustomIndexArray<C, Tags...>(c);
 
     // slicing of arrays
     bind_slicing_operations_CustomIndexArray<C, Tags...>(c);
