@@ -882,7 +882,7 @@ namespace osecirvvs
             model.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
         for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
-            auto date = offset_date_by_days(start_date, day);
+            auto date = offset_date_by_days(start_date, int(day));
             
             // unvaccinated
             std::vector<std::vector<double>> num_exp_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
