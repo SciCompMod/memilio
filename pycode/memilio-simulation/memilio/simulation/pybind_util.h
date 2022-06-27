@@ -150,7 +150,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
                  return E(0);
              })
         .def("__len__", [](Values& /*self*/) {
-            return E::Count;
+            return (size_t)E::Count;
         });
 
     auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
