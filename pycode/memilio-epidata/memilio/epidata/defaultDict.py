@@ -143,7 +143,8 @@ GerEng = {
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'], 
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],
