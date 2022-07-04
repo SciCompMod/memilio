@@ -17,10 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
- 
+
 from memilio.simulation.secir import SecirPopulationArray, AgeGroupArray, AgeGroup, InfectionState
 from memilio.simulation import UncertainValue
 from unittest import TestCase, main
+
 
 class TestCustomIndexArray(TestCase):
     def test_init(self):
@@ -42,7 +43,8 @@ class TestCustomIndexArray(TestCase):
         array[:, :] = 1.0
         array[:, InfectionState.Exposed] = 2.0
         array[AgeGroup(0), InfectionState.Carrier] = 3.0
-        self.assertEqual(array[AgeGroup(0), InfectionState.Susceptible].value, 1.0)
+        self.assertEqual(
+            array[AgeGroup(0), InfectionState.Susceptible].value, 1.0)
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 2.0)
         self.assertEqual(array[AgeGroup(0), InfectionState.Carrier].value, 3.0)
 
@@ -53,6 +55,7 @@ class TestCustomIndexArray(TestCase):
             v.value = 1
         self.assertEqual(array[AgeGroup(0)].value, 1)
         self.assertEqual(array[AgeGroup(2)].value, 1)
+
 
 if __name__ == '__main__':
     main()
