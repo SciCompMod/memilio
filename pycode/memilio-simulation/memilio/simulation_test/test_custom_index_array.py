@@ -48,6 +48,16 @@ class TestCustomIndexArray(TestCase):
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 2.0)
         self.assertEqual(array[AgeGroup(0), InfectionState.Carrier].value, 3.0)
 
+    def test_assign_steps(self):
+        dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
+        array = SecirPopulationArray(dims)
+        array[::AgeGroup(1), InfectionState.Carrier] = 1.0
+        array[::AgeGroup(2), InfectionState.Exposed] = 2.0
+        self.assertEqual(array[AgeGroup(0), InfectionState.Carrier].value, 1.0)
+        self.assertEqual(array[AgeGroup(1), InfectionState.Carrier].value, 1.0)
+        self.assertEqual(array[AgeGroup(0), InfectionState.Exposed].value, 2.0)
+        self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 0.0)
+
     def test_iter(self):
         dims = AgeGroup(3)
         array = AgeGroupArray(dims)
