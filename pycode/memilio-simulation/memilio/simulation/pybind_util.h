@@ -142,6 +142,8 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
 
+    //dummy type that provides iteration of enums
+    //not meant to be used directly by users, so name starts with _
     struct Values {
     };
     pybind11::class_<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
@@ -150,7 +152,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
                  return E(0);
              })
         .def("__len__", [](Values& /*self*/) {
-            return (size_t)E::Count;
+            return (size_t)E::Count; //len() expects integer
         });
 
     auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
@@ -170,9 +172,9 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
     return enum_class;
 }
 
-// if the python object is None: returns empty optional.
-// otherwise: casts the python object to type T.
-// throws exception if obj cannot be cast to T.
+// If the python object is None: returns empty optional.
+// Otherwise: casts the python object to type T.
+// Throws exception if obj cannot be cast to T.
 template<class T, class Obj>
 boost::optional<T> cast_or_none(Obj&& obj)
 {
