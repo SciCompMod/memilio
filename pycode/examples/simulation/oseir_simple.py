@@ -24,20 +24,16 @@ import numpy as np
 import argparse
 
 
-def run_secir_simulation(show_plot = True):
+def run_oseir_simulation():
     """
-    Runs the c++ secir model using one age group 
-    and plots the results
+    Runs the c++ oseir model
     """
 
-    # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'Infected', 'Recovered']
     # Define population of age groups
     populations = [83000]
 
     days = 100  # number of days to simulate
     dt = 0.1
-    num_compartments = len(compartments)
 
     # Initialize Parameters
     model = Model()
@@ -74,6 +70,5 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'secir_simple', 
         description = 'Simple example demonstrating the setup and simulation of the OSEIR model.')
-    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
-    run_secir_simulation(**args.__dict__)
+    run_oseir_simulation()
