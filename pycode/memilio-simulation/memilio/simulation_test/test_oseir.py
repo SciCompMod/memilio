@@ -41,8 +41,8 @@ class Test_oseir_integration(unittest.TestCase):
         model.populations[Index_InfectionState(State.Recovered)] = 50
 
 
-        model.parameters.ContactPatterns.baseline = np.ones((1, 1)) * 1
-        model.parameters.ContactPatterns.minimum = np.ones((1, 1)) * 0
+        model.parameters.ContactPatterns.baseline = np.ones((1, 1))
+        model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
         model.parameters.ContactPatterns.add_damping(
             Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 

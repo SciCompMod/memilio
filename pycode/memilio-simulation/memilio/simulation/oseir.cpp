@@ -27,9 +27,6 @@
 #include "epidemiology/populations.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
-#include "Eigen/Core"
-#include "pybind11/stl_bind.h"
-#include <vector>
 
 namespace py = pybind11;
 
@@ -54,13 +51,13 @@ pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
 pymio::bind_Index<mio::oseir::InfectionState>(m, "Index_InfectionState");
 pymio::bind_CustomIndexArray<mio::UncertainValue, mio::oseir::InfectionState>(m, "PopulationArray");
 
-pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
+pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 
 pymio::bind_Population<mio::oseir::InfectionState>(m, "Population");
 
 using Populations = mio::Populations<mio::oseir::InfectionState>;
-pymio::bind_CompartmentalModel<Populations, mio::oseir::ParametersBase>(m, "ModelBase");
-py::class_<mio::oseir::Model, mio::CompartmentalModel<Populations, mio::oseir::ParametersBase>>(m, "Model")
+pymio::bind_CompartmentalModel<Populations, mio::oseir::Parameters>(m, "ModelBase");
+py::class_<mio::oseir::Model, mio::CompartmentalModel<Populations, mio::oseir::Parameters>>(m, "Model")
    .def(py::init<>());
 
 m.def(

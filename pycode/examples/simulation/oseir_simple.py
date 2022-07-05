@@ -53,8 +53,8 @@ def run_oseir_simulation():
         (Index_InfectionState(State.Susceptible)), populations[0])
 
     # model.parameters.ContactPatterns = ContactMatrix(np.r_[0.5])
-    model.parameters.ContactPatterns.baseline = np.ones((1, 1)) * 1
-    model.parameters.ContactPatterns.minimum = np.ones((1, 1)) * 0
+    model.parameters.ContactPatterns.baseline = np.ones((1, 1))
+    model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
