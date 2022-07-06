@@ -21,6 +21,7 @@
 #define PYMIO_INDEX_H
 
 #include "memilio/utils/index.h"
+#include "memilio/utils/custom_index_array.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/operators.h"
