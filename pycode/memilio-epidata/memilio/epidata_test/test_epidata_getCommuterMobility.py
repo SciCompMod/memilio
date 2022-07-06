@@ -361,6 +361,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_to = countykey2numlist['01053']
         self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 14)
 
+    @unittest.skip
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print):
 
