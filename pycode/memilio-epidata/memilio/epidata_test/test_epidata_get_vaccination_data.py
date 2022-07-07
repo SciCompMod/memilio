@@ -103,6 +103,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
+    @unittest.skip
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     def test_get_standard_vaccination_sanitize_3(
