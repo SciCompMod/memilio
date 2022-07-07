@@ -15,6 +15,7 @@ class Generator:
         self.substitutions_cpp["model_class"] = model.name
         self.substitutions_cpp["model_cpp_name"] = model.name.split("::")[-1]
         self.substitutions_cpp["pymio_name"] = model.pymio_name
+        self.substitutions_cpp["simulation_class"] = model.simulation_name
         self.substitutions_cpp["namespace"] = ("::".join(model.name.split("::")[:-1]) + "::")
         self.substitutions_cpp["includes"] = self.include_string(model)
         self.substitutions_cpp["pretty_name"] = self.pretty_name_string(model)
@@ -23,7 +24,7 @@ class Generator:
         self.substitutions_cpp["model_init"] = self.model_init(model)
         self.substitutions_cpp["enum_population_states"] = self.enum(model)
 
-    def generate_files(self, config):
+    def generate_files(self, model):
         with open("./generator/template/template_py.txt") as t:
             template_py = string.Template(t.read())
         with open("./generator/template/template_cpp.txt") as t:
@@ -32,8 +33,8 @@ class Generator:
         output_py = template_py.safe_substitute(**self.substitutions_py)
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)
 
-        py_filename = "test_oseir.py"
-        cpp_filename = "test_oseir.cpp"
+        py_filename = model.pymio_name + ".py"
+        cpp_filename = model.pymio_name + ".cpp"
         with open(py_filename, "w") as output:
             output.write(output_py)
         with open(cpp_filename, "w") as output:
@@ -98,7 +99,7 @@ class Generator:
                 continue
 
             return (
-                "pymio::bind_Index<{enum_class}>(m, \"Index_{enum_name}\");\n"
+                "pymio::bind_Index<{enum_class}>(m, \"Index_{enum_name}\");\n\t"
                 "pymio::bind_CustomIndexArray<mio::UncertainValue, {enum_class}>(m, \"PopulationArray\");\n"
             ).format(
                 enum_class=key,
@@ -113,10 +114,10 @@ class Generator:
             if len(init["type"]) > 1:
                 continue
             elif len(init["type"]) == 0:
-                str += "   .def(py::init<>())\n"
+                str += "    .def(py::init<>())\n\t"
             else:
                 str += (
-                    "   .def(py::init<{type}>(), py::arg(\"{name}\"))\n"
+                    "    .def(py::init<{type}>(), py::arg(\"{name}\"))\n\t"
                 ).format(
                     type = init["type"][0],
                     name = init["name"][0]
@@ -132,7 +133,7 @@ class Generator:
                 continue
 
             str += (
-                "pymio::iterable_enum<{enum_class}>(m, \"{enum_name}\")\n"
+                "pymio::iterable_enum<{enum_class}>(m, \"{enum_name}\")\n\t"
                 ).format(
                     enum_class=key,
                     enum_name=key.split("::")[-1]
@@ -140,7 +141,7 @@ class Generator:
 
             for value in values:
                 str += (
-                    "    .value(\"{comp_name}\", {comp_class})\n"
+                    "    .value(\"{comp_name}\", {comp_class})\n\t"
                 ).format(
                     comp_class = value,
                     comp_name = value.split("::")[-1]

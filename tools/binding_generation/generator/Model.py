@@ -24,23 +24,26 @@ class Model:
         return
 
     def __str__(self):
-        return(
-            "class Model()\n"
-            "name: {name}, enum_dict: {enum}\n"
-            "init: {init}, population_groups: {pop_group}\n"
-            "compartments: {comp}"
-            ).format(
-                name = self.name,
-                init = self.init,
-                enum = self.enum_dict,
-                pop_group = self.population_groups,
-                comp = self.compartments
-            )
+        """
+        Print all attributes of object
+        """
+        out = ""
+        for key, value in self.__dict__.items():
+            out += (key + ": " + str(value) + "\n")
+        return out
 
     def finalize(self, conf):
-        if conf.model_name is None:
-            self.pymio_name = self.name
-        self.pymio_name = conf.model_name
+        """
+        Finalize the input of the model. Call before using model to generate code.
+        """
+        self.pymio_name = conf.python_module_name
+        if self.pymio_name is None:
+            self.pymio_name = self.name.split("::")[-1]
+        
+        self.simulation_name = conf.simulation_name
+        if self.simulation_name is None:
+            self.simulation_name = "mio::Simulation<" + self.name + ">"
+
         #assert(self.name != None), "set a model name using generator.name()"
         #assert(self.namespace!= None), "set a model name using generator.namespace()"
         #assert(len(self.compartments) != 0), "add compartments using generator.compartments"

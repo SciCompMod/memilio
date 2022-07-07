@@ -1,5 +1,5 @@
 import generator as gen
-import scanner.scanner_clang as scanner
+from scanner.scanner_clang import Scanner
 import scanner.scanner_config as config
 
 project_path = ""
@@ -8,17 +8,21 @@ if project_path == "":
     from subprocess import check_output
     project_path = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/pycode/memilio-simulation/memilio/simulation/"
 
+# Define ScannerConfig and initialize Scanner
 conf = config.ScannerConfig()
-conf.folder = "ode_seir"
-conf.model_name = "test_seir"
+conf.set_folder("ode_seir")
+conf.set_python_module_name("test_seir")
+scanner = Scanner(conf)
 
+# Extract results of Scanner into a model data
 model = gen.Model()
-scanner.get_infos_clang(model, conf)
+scanner.extract_results(model)
 model.finalize(conf)
+#print(model)
 
-header_file = model.pymio_name + ".py"
-source_file = model.pymio_name + ".cpp"
-
+# Generate code
 generator = gen.Generator()
 generator.create_substitutions(model)
-generator.generate_files(conf)
+generator.generate_files(model)
+
+scanner.output_ast(2)
