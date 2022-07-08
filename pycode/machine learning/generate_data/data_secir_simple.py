@@ -2,9 +2,14 @@ from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
 from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
+import pandas as pd
 from datetime import date
 from math import ceil
 import random
+import os
+from progress.bar import Bar # pip install progess
+from skimpy import skim # show overview over dataset at the end. Sometimes really helpful
+
 
 
 def run_secir_simulation():
@@ -17,10 +22,13 @@ def run_secir_simulation():
     populations = [500000 * random.random()]
 
     days = 100  # number of days to simulate
+
     # since we defined the number of days, we already know the dimension of our dataset.
     # We aim to save the compartment population for each day.
     # i.e. for days = 100 (+1 for t0) and len(compartments = 8) -> 101 x  8 array
-    data = np.zeros((days+1,len(compartments)))
+    # we also add one column for the damping factor
+    data = np.zeros((days+1,len(compartments) + 1))
+
     start_day = 1
     start_month = 1
     start_year = 2019
@@ -37,6 +45,9 @@ def run_secir_simulation():
     # Define random values for damping coef and start date
     damping_factor = random.random()
     damping_date = ceil(random.random() * days) # scale with days since random is in Interval (0,1)
+
+    # save damping factor in vector. -1 for index correction
+    data[damping_date-1:,-1] = damping_factor
 
     # Set parameters
 
@@ -89,24 +100,17 @@ def run_secir_simulation():
 
     # Run Simulation
     # store data for t = 0
-    data[0,:] = model.populations.get_compartments()
+    data[0,:-1] = model.populations.get_compartments()
     # TODO: Do we need to build the whole Model for new, if we only change the number of days?
     for day in range(1, days+1):
-        print("Simulate with day =" , day)
         result = simulate(0, day, dt, model)
 
         # Maybe round data
         # data[day,:] = np.ceil(result_day)
-        data[day,:] = result.get_last_value()
+        data[day,:-1] = result.get_last_value()
 
     return data
 
-def getDataAndLabels(data):
-    rows = np.shape(data)[0]
-    cols = np.shape(data)[1]
-    X = data[:100,:]
-    Y = data[1:,:]
-    return X,Y
 
 
 
@@ -114,6 +118,40 @@ if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the normal one and the damping-
 
-    # data_ = 
-    data = run_secir_simulation()
-    X,Y = getDataAndLabels(run_secir_simulation())
+    # merging several data with Dataframes is not efficient.
+    # Instead generate a dataframe in the end
+    data = []
+    num_runs = 5
+
+    # show progess in terminal for longer runs
+    bar = Bar('Number of Runs done', max=num_runs)
+    for run in range(0, num_runs):
+        data_run = run_secir_simulation()
+        data.append(data_run)
+        bar.next()
+    
+    bar.finish()
+    
+    columns = ['Susceptible', 'Exposed', 'Carrier',
+                    'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead', 'Damping Factor']
+
+    dataset = pd.DataFrame(np.concatenate(data), columns=columns)
+
+    # short overview over dataset
+    skim(dataset)
+
+    # save train dataset as csv file
+    path = os.path.dirname(os.path.realpath(__file__))
+    dataset.to_csv(
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'traindata.txt'),
+        sep=' ', index=False,
+        header=False)
+
+    
+
+
+
+    
+    
+    
+    
