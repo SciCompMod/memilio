@@ -29,6 +29,19 @@
 namespace pymio
 {
 
+//bind members of Index class that only exist if the Tag is not an enum type
+template <class Tag>
+std::enable_if_t<!std::is_enum<Tag>::value> bind_Index_members_if_enum(pybind11::class_<mio::Index<Tag>>& c)
+{
+}
+
+//bind members of Index class that only exist if the Tag is an enum type
+template <class Tag>
+std::enable_if_t<std::is_enum<Tag>::value> bind_Index_members_if_enum(pybind11::class_<mio::Index<Tag>>& c)
+{
+    pybind11::implicitly_convertible<Tag, mio::Index<Tag>>();
+}
+
 // bind an index for a single tag
 template <class Tag>
 void bind_Index(pybind11::module& m, std::string const& name)
@@ -37,6 +50,8 @@ void bind_Index(pybind11::module& m, std::string const& name)
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
     c.def(pybind11::self == pybind11::self);
     c.def(pybind11::self != pybind11::self);
+
+    bind_Index_members_if_enum(c);
 }
 
 // helper function for implicitly casting from pybind11::tuple to Index in Python.

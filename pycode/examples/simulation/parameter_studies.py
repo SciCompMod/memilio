@@ -40,22 +40,15 @@ def parameter_study():
         model.parameters.ICUToHomeTime[group] = 8
         model.parameters.ICUToDeathTime[group] = 5
 
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Exposed)] = 100
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Carrier)] = 50
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Infected)] = 20
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Hospitalized)] = 20
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.ICU)] = 10
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Recovered)] = 50
-        model.populations[group, secir.Index_InfectionState(
-            secir.InfectionState.Dead)] = 10
+        model.populations[group, secir.InfectionState.Exposed] = 100
+        model.populations[group, secir.InfectionState.Carrier] = 50
+        model.populations[group, secir.InfectionState.Infected] = 20
+        model.populations[group, secir.InfectionState.Hospitalized] = 20
+        model.populations[group, secir.InfectionState.ICU] = 10
+        model.populations[group, secir.InfectionState.Recovered] = 50
+        model.populations[group, secir.InfectionState.Dead] = 10
         model.populations.set_difference_from_group_total_AgeGroup(
-            (group, secir.Index_InfectionState(secir.InfectionState.Susceptible)), 10000)
+            (group, secir.InfectionState.Susceptible), 10000)
 
         model.parameters.InfectionProbabilityFromContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
