@@ -1,0 +1,5 @@
+memilio_simulation  >= 0.1.0
+numpy >= 1.23.1
+pandas >= 1.4.3
+progress  >= 1.6
+skimpy  >= 0.0.6
