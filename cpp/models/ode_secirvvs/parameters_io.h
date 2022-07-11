@@ -766,34 +766,39 @@ namespace osecirvvs
                 t_icu_to_rec_pv[county].push_back(
                     static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
 
-                double reduc_vacc_exp  = model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
-                double reduc_vacc_inf  = model[county].parameters.template get<InfectedFactorPartialImmunity>()[(AgeGroup)group];
-                double reduc_vacc_hosp = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
-                double reduc_vacc_icu  = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
-                double reduc_vacc_dead = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                double exp_fact_part_immune =
+                    model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
+                double inf_fact_part_immune =
+                    model[county].parameters.template get<InfectedFactorPartialImmunity>()[(AgeGroup)group];
+                double hosp_fact_part_immune =
+                    model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                double icu_fact_part_immune =
+                    model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                double death_fact_part_immune =
+                    model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
                 mu_C_R_pv[county].push_back(
                     (1 -
-                     reduc_vacc_inf / reduc_vacc_exp *
+                     inf_fact_part_immune / exp_fact_part_immune *
                          (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
                 mu_I_H_pv[county].push_back(
-                    reduc_vacc_hosp / reduc_vacc_inf *
+                    hosp_fact_part_immune / inf_fact_part_immune *
                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
                 // transfer from H to U, D unchanged.
                 mu_H_U_pv[county].push_back(
-                    reduc_vacc_icu / reduc_vacc_hosp *
+                    icu_fact_part_immune / hosp_fact_part_immune *
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
-                mu_U_D_pv[county].push_back(reduc_vacc_dead / reduc_vacc_icu *
+                mu_U_D_pv[county].push_back(death_fact_part_immune / icu_fact_part_immune *
                                             model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
 
                 sum_mu_I_U_pv[county] +=
-                    reduc_vacc_icu / reduc_vacc_hosp *
+                    icu_fact_part_immune / hosp_fact_part_immune *
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                    reduc_vacc_hosp / reduc_vacc_inf *
+                    hosp_fact_part_immune / inf_fact_part_immune *
                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
                 mu_I_U_pv[county].push_back(
-                    reduc_vacc_icu / reduc_vacc_hosp *
+                    icu_fact_part_immune / hosp_fact_part_immune *
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                    reduc_vacc_hosp / reduc_vacc_inf *
+                    hosp_fact_part_immune / inf_fact_part_immune *
                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
             }
         }

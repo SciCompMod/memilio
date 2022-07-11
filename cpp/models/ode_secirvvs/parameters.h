@@ -544,6 +544,7 @@ struct InfectedFactorImprovedImmunity {
 
 /**
  * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
+ * Also applies to ICU and Death risk.
  */
 struct HospitalizedFactorPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
