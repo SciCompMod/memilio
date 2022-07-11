@@ -95,7 +95,7 @@ namespace oseir
         }
     };
 
-    using ParametersBase = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
+    using Parameters = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
 
 } // namespace oseir
 } // namespace mio
