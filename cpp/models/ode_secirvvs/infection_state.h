@@ -29,7 +29,7 @@ namespace osecirvvs
     * categories for the infectious state of persons.
     * Enum is usable as an index, e.g. in CustomIndexArray.
     * Suffix `Naive` means no immunity through vaccination or infection.
-    * Suffix `PartiaImmunity` means vaccinated once.
+    * Suffix `PartialImmunity` means vaccinated once.
     * Suffix `ImprovedImmunity` means vaccinated twice or recovered from infection.
     * Suffix `Confirmed` means infection has been confirmed by a test, e.g. during commute.
     */
