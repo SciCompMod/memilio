@@ -25,8 +25,10 @@ import json
 import pandas as pd
 
 from memilio.epidata import getCaseData as gcd
+from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch
+from datetime import date, datetime
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -167,6 +169,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -176,9 +180,12 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(directory, file)
 
         with self.assertRaises(FileNotFoundError) as error:
-            gcd.get_case_data(read_data, file_format, out_folder, no_raw,
-                              impute_dates, make_plot, moving_average,
-                              split_berlin, rep_date)
+            gcd.get_case_data(
+                read_data=read_data, file_format=file_format,
+                out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+                end_date=end_date, impute_dates=impute_dates,
+                make_plot=make_plot, moving_average=moving_average,
+                split_berlin=split_berlin, rep_date=rep_date)
 
         self.assertEqual(
             str(error.exception),
@@ -191,8 +198,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, impute_dates, make_plot,
-            moving_average, no_raw, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 14)
@@ -323,6 +333,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -339,8 +351,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             os.path.join(directory, "CaseDataNotFull.json"))
         with self.assertRaises(FileNotFoundError) as error:
             gcd.get_case_data(
-                read_data, file_format, out_folder, no_raw, impute_dates,
-                make_plot, moving_average, split_berlin, rep_date)
+                read_data=read_data, file_format=file_format,
+                out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+                end_date=end_date, impute_dates=impute_dates,
+                make_plot=make_plot, moving_average=moving_average,
+                split_berlin=split_berlin, rep_date=rep_date)
         self.assertEqual(
             str(error.exception),
             "Something went wrong, dataframe is empty for csv and geojson!")
@@ -359,8 +374,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             os.path.join(directory, "CaseDataArcgis.json"))
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         mock_loadGeojson.assert_called()
         mock_loadCsv.assert_called()
@@ -416,6 +434,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = True
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -431,8 +451,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         mock_loadGeojson.return_value = pd.DataFrame()
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         mock_loadGeojson.assert_not_called()
         mock_loadCsv.assert_called()
@@ -514,6 +537,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = False
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -524,8 +549,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -695,6 +723,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -705,8 +735,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -825,6 +858,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = True
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -835,8 +870,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # check if expected files are written (27  same number as with split_berlin=False)
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -875,6 +913,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = True
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -885,8 +925,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         # check if expected files are written (27  same number as with split_berlin=False)
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -915,6 +958,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -924,8 +969,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             self.test_string_all_federal_states_and_counties_github)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         mock_loadCsv.assert_called()
 
@@ -1012,17 +1060,78 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = False
         rep_date = True
+        start_date = date(2020, 4, 24)
+        end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot, moving_average, split_berlin, rep_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
 
         mocklcsv.assert_called()
         self.assertEqual(len(os.listdir(directory)), 27)
 
+    def test_get_case_data_timeframe(self):
+
+        read_data = True
+        file_format = 'json_timeasstring'
+        out_folder = self.path
+        no_raw = False
+        impute_dates = False
+        make_plot = False
+        moving_average = 0
+        split_berlin = False
+        rep_date = False
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        # write file
+        self.write_case_data(directory)
+        # check if expected file is written
+        self.assertEqual(len(os.listdir(directory)), 1)
+
+        # start and end date 
+        start_date=date(2020, 12, 24)
+        end_date=date(2021,5,17)
+
+        gcd.get_case_data(
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            rep_date=rep_date)
+
+        file = 'cases_all_germany.json'
+        f_read = os.path.join(directory, file)
+        df_germany_start_end_date = pd.read_json(f_read)
+
+        # get case data without start date and end date
+        gcd.get_case_data(
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
+            make_plot=make_plot, moving_average=moving_average,
+            split_berlin=split_berlin, rep_date=rep_date)
+
+        f_read = os.path.join(directory, file)
+        df_germany = pd.read_json(f_read)
+
+        # extract dates which are between start and end date
+        upperdate = datetime.strftime(end_date, '%Y-%m-%d')
+        lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+        df_germany = df_germany[df_germany[dd.EngEng['date']] <= upperdate]
+        df_germany = df_germany[df_germany[dd.EngEng['date']] >= lowerdate]
+
+        # dataframes should be equal
+        self.assertEqual(len(df_germany_start_end_date),len(df_germany),"Dataframes don't have the same length.")
+        self.assertEqual(list(df_germany['Confirmed']),list(df_germany['Confirmed']),"Dataframes don't have the same confirmed cases.")
+        self.assertEqual(list(df_germany['Recovered']),list(df_germany['Recovered']),"Dataframes don't have the same recovered cases.")
+        self.assertEqual(list(df_germany['Deaths']),list(df_germany['Deaths']),"Dataframes don't have the same death cases.")
 
 if __name__ == '__main__':
     unittest.main()

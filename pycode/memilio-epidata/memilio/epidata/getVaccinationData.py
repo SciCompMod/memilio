@@ -486,7 +486,7 @@ def extrapolate_age_groups(
 
 # gets rki vaccination monitoring data for all states and extrapolates the values for counties according to their population
 # Missing ratio values for the two different age groups are also estimated
-def get_vaccination_data(sanitize_data=True,
+def get_vaccination_data(sanitize_data=1,
                          read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'],
@@ -518,13 +518,6 @@ def get_vaccination_data(sanitize_data=True,
 
     - Start and end dates can be provided to define the length of the returned data frames.
 
-    @param read_data False [Default]. Data is always downloaded from the internet.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-    @param no_raw True or False [Default]. Defines if raw data is saved or not.
-    @param start_date [Default = '', taken from read data] Start date of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
     @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
         vaccination data is not correctly attributed to home locations of 
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
@@ -539,7 +532,18 @@ def get_vaccination_data(sanitize_data=True,
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
         state level.
-    @param moving_average 0 [Default] or Number>0. Defines the number of days for which a centered moving average is computed.
+    @param read_data [Currently not used] True or False. Defines if data is read from file or downloaded.
+        Here Data is always downloaded from the internet.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. 
+        Here Dates are always imputed so False changes nothing.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects.  Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.   
     """
     # data for all dates is automatically added
     impute_dates = True
