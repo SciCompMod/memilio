@@ -62,7 +62,7 @@ namespace details
     template<class EpiDataEntry>
     int get_region_id(const EpiDataEntry& entry)
     {
-        return entry.state_id ? entry.state_id->get() : (entry.county_id ? entry.county_id->get() : 0);
+        return entry.county_id ? entry.county_id->get() : (entry.state_id ? entry.state_id->get() : 0);
     }
     //overload for integers, so the comparison of data entry to integers is symmetric (required by e.g. equal_range)
     int get_region_id(int id)
