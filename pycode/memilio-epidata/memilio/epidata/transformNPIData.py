@@ -609,15 +609,30 @@ def transform_npi_data(fine_resolution=2,
                             ] = incid_threshold
 
         # get all incidence thresholds (This list has to be sorted)
-        incidence_thresholds = sorted(set(npi_incid_start.values()))
+        incidence_thresholds = []
+        for code, threshold in npi_incid_start.items():
+            if len(code.split('_')) < 3:
+                if not (threshold, '') in incidence_thresholds:
+                    incidence_thresholds.append((threshold, ''))
+            else:
+                if not (threshold, '_' + code.split('_')[2]) in incidence_thresholds:
+                    incidence_thresholds.append(
+                        (threshold, '_' + code.split('_')[2]))
+        for i in range(len(incidence_thresholds)-1):
+            if incidence_thresholds[i][0] > incidence_thresholds[i+1][0]:
+                sys.exit('List needs to be sorted.')
 
         # create hash map from thresholds to NPI indices
         incidence_thresholds_to_npis = dict(
             zip(incidence_thresholds, [[] for i in range(len(incidence_thresholds))]))
         for i in range(len(npis)):
-            incval = npi_incid_start[npis.loc
-                                     [i, dd.EngEng['npiCode']]]
-            incidence_thresholds_to_npis[incval].append(i)
+            code_considered = npis.loc[i, dd.EngEng['npiCode']]
+            incval = npi_incid_start[code_considered]
+            if len(code_considered.split('_')) < 3:
+                incidence_thresholds_to_npis[(incval, '')].append(i)
+            else:
+                incidence_thresholds_to_npis[(
+                    incval, '_' + code_considered.split('_')[2])].append(i)
 
     # get county ids
     unique_geo_entities = geoger.get_county_ids()
@@ -797,7 +812,7 @@ def transform_npi_data(fine_resolution=2,
             # iterate through all NPIs and activate if incidence threshold
             # is exceeded
             for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
-                if incidvalthrsh >= 0:
+                if incidvalthrsh[0] >= 0:
                     local_incid = df_infec_local['Incidence'].copy()
                     if npi_activation_delay > 0:
                         # shift values to npi_activation_delay days later
@@ -807,7 +822,7 @@ def transform_npi_data(fine_resolution=2,
                         local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
                     # compare incidence against threshold
                     int_active = (
-                        local_incid >= incidvalthrsh).astype(int)
+                        local_incid >= incidvalthrsh[0]).astype(int)
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
                     # (i.e., mentioned NPI is not active)
@@ -821,8 +836,17 @@ def transform_npi_data(fine_resolution=2,
                     # the latter have to be deactivated
                     # (incidence_thresholds_to_npis.keys() has to be sorted !)
                     # TODO
-                    for code in df_npis_combinations.keys():
-                        df_npis_combinations[code]
+                    columns_treated = list(
+                        df_local_new.iloc
+                        [:, npis_idx_start + np.array(npi_indices)].columns)
+                    # check if subcodes that are incidence dependent were
+                    # treated (they have two underscores in their codes)
+                    if all([len(col.split('_')) == 3 for col in columns_treated]):
+                        columns_treated_main = pd.Series(
+                            [code_val[0:-2] for code_val in columns_treated])
+                        for code in df_npis_combinations.keys():
+                            npi_combo_submatrix_indices_changed = np.where(
+                                columns_treated_main.isin(df_npis_combinations[code].columns) == True)[0]
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
