@@ -91,6 +91,15 @@ int main()
     model.parameters.get<mio::DeathsPerICU>()                    = delta;
 
     model.apply_constraints();
+    
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+
+    bool print_to_terminal = true;
+
+    if (print_to_terminal) {
+        char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+        printf("\n # t");
+        for (size_t k = 0; k < (size_t)mio::InfectionState::Count; k++) {
             printf(" %c", vars[k]);
         }
         auto num_points = static_cast<size_t>(secir.get_num_time_points());

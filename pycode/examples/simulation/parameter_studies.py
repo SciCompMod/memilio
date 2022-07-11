@@ -106,7 +106,6 @@ def parameter_study():
     study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
-
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'parameter_studies', 
