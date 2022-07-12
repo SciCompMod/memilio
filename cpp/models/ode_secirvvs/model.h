@@ -578,9 +578,7 @@ public:
     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-
-        auto& start_day        = this->get_model().parameters.template get<StartDay>();
-        auto& start_summer     = this->get_model().parameters.template get<StartSummer>();
+        auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfected>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
@@ -614,7 +612,7 @@ public:
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    if (Base::get_result().get_last_time() < start_summer - start_day) {
+                    if (t < t_end_dyn_npis) {
                         auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
                                        dyn_npis.get_base_value();
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);

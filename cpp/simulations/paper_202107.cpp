@@ -27,6 +27,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/utils/date.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "boost/filesystem.hpp"
@@ -663,20 +664,13 @@ mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
 create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
              bool long_time)
 {
-    const auto start_day = mio::get_day_in_year(start_date);
-    int start_summer;
-    if (late) {
-        start_summer = mio::get_day_in_year(mio::Date(2021, 8, 1));
-    }
-    else {
-        start_summer = mio::get_day_in_year(mio::Date(2021, 7, 1));
-    }
+    const auto summer_date = late ? mio::Date(2021, 8, 1) : mio::Date(2021, 7, 1);
 
     //global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
-    params.get<mio::osecirvvs::StartDay>()    = start_day;
-    params.get<mio::osecirvvs::StartSummer>() = start_summer;
+    params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
+    params.get_end_dynamic_npis()          = mio::get_offset_in_days(start_date, summer_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));

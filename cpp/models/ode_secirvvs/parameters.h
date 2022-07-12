@@ -55,18 +55,6 @@ struct StartDay {
     }
 };
 
-struct StartSummer {
-    using Type = double;
-    static Type get_default(AgeGroup)
-    {
-        return 0.;
-    }
-    static std::string name()
-    {
-        return "StartSummer";
-    }
-};
-
 /**
 * @brief the seasonality in the SECIR model
 * the seasonality is given as (1+k*sin()) where the sine
@@ -619,7 +607,7 @@ struct BaseInfectiousnessB161 {
 };
 
 using ParametersBase =
-    ParameterSet<StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
+    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
                  DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval,
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
@@ -647,16 +635,21 @@ public:
         return m_num_groups;
     }
 
+    /**
+     * Percentage of infected commuters that are not detected.
+     */
     double& get_commuter_nondetection()
     {
         return m_commuter_nondetection;
     }
-
     double get_commuter_nondetection() const
     {
         return m_commuter_nondetection;
     }
 
+    /**
+     * Time in simulation before which no infected commuters are detected.
+     */
     double& get_start_commuter_detection()
     {
         return m_start_commuter_detection;
@@ -667,6 +660,9 @@ public:
         return m_start_commuter_detection;
     }
 
+    /**
+     * Time in simulation after which no infected commuters are detected.
+     */
     double& get_end_commuter_detection()
     {
         return m_end_commuter_detection;
@@ -675,6 +671,18 @@ public:
     double get_end_commuter_detection() const
     {
         return m_end_commuter_detection;
+    }
+
+    /**
+     * Time in simulation after which no dynamic NPIs are applied.
+     */
+    double& get_end_dynamic_npis() 
+    {
+        return m_end_dynamic_npis;
+    }
+    double get_end_dynamic_npis() const
+    {
+        return m_end_dynamic_npis;
     }
 
     /**
@@ -932,6 +940,7 @@ private:
     double m_commuter_nondetection    = 0.0;
     double m_start_commuter_detection = 0.0;
     double m_end_commuter_detection   = 0.0;
+    double m_end_dynamic_npis         = 0.0;
 };
 
 } // namespace osecirvvs
