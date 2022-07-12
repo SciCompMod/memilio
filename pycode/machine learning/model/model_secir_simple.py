@@ -1,3 +1,4 @@
+from cProfile import label
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
 from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
 from memilio.simulation.secir import InfectionState as State
@@ -133,10 +134,11 @@ def run_secir_simulation():
 
 
 
-def generate_data(num_runs, save_data=True):
+def generate_data(num_runs, path, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
 
    @param num_runs Number of times, the function run_secir_simulation is called.
+   @param path Path, where the datasets are stored.
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
     data = []
@@ -165,34 +167,76 @@ def generate_data(num_runs, save_data=True):
         skim(dataset)
 
         # save train dataset as csv file
-        path = os.path.dirname(os.path.realpath(__file__))
+
+        # check if data directory exists. If necessary create it.
+        
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        # save data
         dataset.to_csv(
-            os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'traindata_secir_simple.txt'),
+            os.path.join(path, 'traindata_secir_simple.txt'),
             sep=' ', index=False,
             header=True)
 
         labels_set.to_csv(
-            os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'labels_secir_simple.txt'),
+            os.path.join(path, 'labels_secir_simple.txt'),
             sep=' ', index=False,
             header=True)
 
 
 def visualize_predictions(
-               testdata ,
                testlabels,
-               predictions):
+               predictions,
+               save_evaluation_pdf,
+               path_data):
     """! Visualize the predictions of the trained model to evaluate the performance.
 
     @param testdata Testdata thats different than the traindata and not known for the model.
     @param testlabels Same as testdata but with labels.
     @param predictions Output of the model with testdata as input
     """
-    # Todo: Visualization. We need the data in correct order.
+    labels = testlabels.to_numpy()
+    titel = np.array(['Susceptible', 'Exposed', 'Carrier',
+                    'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])              
+    x = list(range(1, 101))
+
+    for i in range(0,titel.size):
+            plt.plot(x,labels[:,i] , "b" , label="Secir simple")
+            plt.plot(x,predictions[:,i], "-r", label="Model prediction")
+            plt.xlabel('Days')
+            plt.ylabel('population')
+            plt.title(titel[i])
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0), ncol=2, fancybox=True, shadow=True)
+
+            # max error in %
+            err = abs(labels[:,i] - predictions[:,i])
+            indx_max_error = np.where(err == np.amax(err))[0][0]
+            if predictions[indx_max_error,i] > 0:
+                e = err.max() / predictions[indx_max_error,i] * 100
+            else:
+                raise ValueError("Population values of zero or lower are outside the defined area!")
+
+            # Display the maximal error , rounded to the 4st decimal, under the actual plot
+            plt.figtext(0.5, 0.01, 'Maximal Error in "%%" = (%s)'%(format(e, '.4f')), 
+                ha="center", fontsize=15, bbox={"facecolor":"orange", "alpha":0.5, "pad":5})
+
+            if save_evaluation_pdf:
+                path_save = os.path.join(path_data, 'evaluation_secir_simple')
+                if not os.path.isdir(path_save):
+                    os.mkdir(path_save)
+                plt.savefig(os.path.join(path_save,'evaluation_secir_simple_' + titel[i] + '.pdf')) 
+            # only show plot for Susceptible compartment. Others are saved
+            if not i :
+                plt.show()   
+
+            # clean currect figure
+            plt.clf() 
     return None
 
 # create and train an neural network based on the secir simple example. 
-# if no dataset is already create, we build one with default 50 runs
-def network_secir_simple(path, epochs=30, num_runs_traindata=50):
+# if no dataset is already create, we build one with default 500 runs
+def network_secir_simple(path, epochs=30, num_runs_traindata=500, save_evaluation_pdf=False, path_save=""):
     """! Generate the model and train with the created dataset.
 
     If the dataset is not created yet, we create a new one with default value
@@ -207,7 +251,7 @@ def network_secir_simple(path, epochs=30, num_runs_traindata=50):
     if not os.path.isfile(os.path.join(path, 'traindata_secir_simple.txt')) or \
         not os.path.isfile(os.path.join(path, 'traindata_secir_simple.txt')):
 
-        generate_data(num_runs)
+        generate_data(num_runs, path)
 
     input = pd.read_csv(
             os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'traindata_secir_simple.txt'),
@@ -239,7 +283,7 @@ def network_secir_simple(path, epochs=30, num_runs_traindata=50):
     tf.random.set_seed(42)
 
     # we want to predict the population in the diferent compartments. 
-    # Todo: Maybe add drop out or other mechanics against overfitting.
+    # Todo: Maybe add drop out or other regularization against overfitting.
     model = Sequential([
         Dense(128, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
         Dense(128, activation=tf.keras.layers.LeakyReLU(alpha=0.01)),
@@ -256,18 +300,23 @@ def network_secir_simple(path, epochs=30, num_runs_traindata=50):
 
     model.fit(X_train, Y_train, epochs=epochs)
 
+    model.evaluate(X_test, Y_test)
+
+    # Use the orderer dataset to evaluate the performance of the trained model
+    X_test = transformer.transform(input.tail(100))
     preds = model.predict(X_test)
-    visualize_predictions(X_test,Y_test,preds)
+    visualize_predictions(labels.tail(100), preds, save_evaluation_pdf, path_data=path)
 
 
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
-    num_runs = 50
-    generate_data(num_runs)
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
-    network_secir_simple(path_data)
+
+    num_runs = 1000
+    generate_data(num_runs, path_data)
+    network_secir_simple(path_data, epochs=50, save_evaluation_pdf=True)
     
     
