@@ -831,11 +831,32 @@ def transform_npi_data(fine_resolution=2,
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
-                    # if new, dynamic NPIs for higher incidence cannot be
-                    # combined with older, dynamic NPIs for lower indices,
-                    # the latter have to be deactivated
-                    # (incidence_thresholds_to_npis.keys() has to be sorted !)
-                    # TODO
+                # if new, dynamic NPIs for higher incidence cannot be
+                # combined with older, dynamic NPIs for lower indices,
+                # the latter have to be deactivated
+                # (incidence_thresholds_to_npis.keys() has to be sorted !)
+                # TODO
+                for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
+                    if incidvalthrsh[0] >= 0:
+                        for code in df_npis_combinations.keys():
+                            code_cols = df_npis_combinations[code].columns
+                            # iterate over subcode indices
+                            for scidx in range(len(code_cols)-1):
+                                subcodes_nocombi = df_npis_combinations[code].loc[scidx,
+                                                                                  code_cols[scidx+1:]]
+                                # only consider those codes which cannot be
+                                # combined; for these values of 1 have to be
+                                # set to 0
+                                subcodes_nocombi = list(
+                                    subcodes_nocombi[subcodes_nocombi == 0].index)
+                                # iterate over exclusive subcodes
+                                for subcode_excl in subcodes_nocombi:
+                                    # iterate over less strict dynamic NPIs
+                                    # i.e., where threshold is higher
+                                    for level in incidence_thresholds_to_npis.keys():
+                                        if level[0] > incidvalthrsh[0]:
+                                            x = 15  # TODO
+
                     columns_treated = list(
                         df_local_new.iloc
                         [:, npis_idx_start + np.array(npi_indices)].columns)
