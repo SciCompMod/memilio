@@ -660,6 +660,9 @@ IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 template <class IOContext, class T>
 using serialize_t = decltype(std::declval<T>().serialize(std::declval<IOContext&>()));
 
+template<class IOContext, class T>
+using has_serialize = is_expression_valid<serialize_t, IOContext, T>;
+
 /**
  * serialize an object that has a serialize(io) member function.
  * @tparam IOContext a type that models the IOContext concept.
@@ -678,6 +681,9 @@ void serialize_internal(IOContext& io, const T& t)
 template <class IOContext, class T>
 using deserialize_t = decltype(T::deserialize(std::declval<IOContext&>()));
 
+template<class IOContext, class T>
+using has_deserialize = is_expression_valid<deserialize_t, IOContext, T>;
+
 /**
  * deserialize an object that has a deserialize(io) static member function.
  * @tparam IOContext a type that models the IOContext concept.
@@ -686,8 +692,7 @@ using deserialize_t = decltype(T::deserialize(std::declval<IOContext&>()));
  * @param tag defines the type of the object for overload resolution.
  * @return the restored object if succesful, an error otherwise.
  */
-template <class IOContext, class T,
-          std::enable_if_t<is_expression_valid<deserialize_t, IOContext, T>::value, void*> = nullptr>
+template <class IOContext, class T, std::enable_if_t<has_deserialize<IOContext, T>::value, void*> = nullptr>
 IOResult<T> deserialize_internal(IOContext& io, Tag<T> /*tag*/)
 {
     return T::deserialize(io);
@@ -720,10 +725,9 @@ using is_container = is_expression_valid<details::compare_iterators_t, C>;
  * @param io an IO context.
  * @param container a container to be serialized.
  */
-template <
-    class IOContext, class Container,
-    std::enable_if_t<(is_container<Container>::value && !is_expression_valid<serialize_t, IOContext, Container>::value),
-                     void*> = nullptr>
+template <class IOContext, class Container,
+          std::enable_if_t<conjunction_v<is_container<Container>, negation<has_serialize<IOContext, Container>>>,
+                           void*> = nullptr>
 void serialize_internal(IOContext& io, const Container& container)
 {
     auto obj = io.create_object("List");

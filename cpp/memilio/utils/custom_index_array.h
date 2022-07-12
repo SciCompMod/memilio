@@ -185,6 +185,22 @@ public:
     {}
 
     /**
+     * Initializes array with values from a range.
+     * Each element of the array will be assigned the corresponding value from the range.
+     * @param dims dimensions of the array.
+     * @param b begin of the range of values.
+     * @param e end of the range of values.
+     */
+    template<class Iter>
+    CustomIndexArray(Index const& dims, Iter b, Iter e)
+        : m_dimensions(dims)
+        , m_numel(product(dims))
+        , m_y(m_numel, 1)
+    {
+        std::copy(b, e, begin());
+    }
+
+    /**
      * @brief numel returns the number of elements
      *
      * This corresponds to the product of the dimension sizes
@@ -212,6 +228,27 @@ public:
      */
     Index size() const {
         return m_dimensions;
+    }
+
+    /**
+     * Resize all dimensions.
+     * @param new_dims new dimensions.
+     */
+    void resize(Index new_dims) {
+        m_dimensions = new_dims;
+        m_numel = product(m_dimensions);
+        m_y.conservativeResize(m_numel);
+    }
+
+    /**
+     * Resize a single dimension.
+     * @param new dimension.
+     */
+    template<class Tag>
+    void resize(mio::Index<Tag> new_dim) {
+        std::get<mio::Index<Tag>>(m_dimensions.indices) = new_dim;
+        m_numel = product(m_dimensions);
+        m_y.conservativeResize(m_numel);
     }
 
     /**
@@ -298,7 +335,7 @@ private:
         Iterator(pointer ptr) : m_ptr(ptr) {}
 
         Iterator& operator=(pointer rhs) { m_ptr = rhs; return *this;}
-        Iterator& operator=(const Iterator &rhs) { m_ptr = rhs._ptr; return *this;}
+        Iterator& operator=(const Iterator &rhs) { m_ptr = rhs.m_ptr; return *this;}
         Iterator& operator+=(const int& rhs) { m_ptr += rhs; return *this;}
         Iterator& operator-=(const int& rhs) { m_ptr -= rhs; return *this;}
 
@@ -315,6 +352,7 @@ private:
 
         Iterator operator+(const int& rhs) const { return Iterator(m_ptr + rhs);}
         Iterator operator-(const int& rhs) const { return Iterator(m_ptr - rhs);}
+        difference_type operator-(const Iterator& rhs) const { return m_ptr - rhs.m_ptr; }
 
         friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; }
         friend bool operator!= (const Iterator& a, const Iterator& b) { return !(a==b); }

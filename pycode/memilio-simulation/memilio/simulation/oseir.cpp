@@ -56,8 +56,8 @@ pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 pymio::bind_Population<mio::oseir::InfectionState>(m, "Population");
 
 using Populations = mio::Populations<mio::oseir::InfectionState>;
-pymio::bind_CompartmentalModel<Populations, mio::oseir::Parameters>(m, "ModelBase");
-py::class_<mio::oseir::Model, mio::CompartmentalModel<Populations, mio::oseir::Parameters>>(m, "Model")
+pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>(m, "ModelBase");
+py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
    .def(py::init<>());
 
 m.def(
