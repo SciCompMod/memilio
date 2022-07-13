@@ -27,4 +27,4 @@ scanner = Scanner(conf)
 #generator.create_substitutions(model)
 #generator.generate_files(model)
 
-scanner.output_ast_file(0)
+#scanner.output_ast_file()

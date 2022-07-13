@@ -13,48 +13,15 @@ class Scanner:
         self.folder = conf["scanner_input"]["source_folder"]
         self.parser_information = conf["parser_information"]
         self.data_information = conf["data_information"]
+        self.database = conf["database"]
         
-        #call("")
-        self.list_ast = []
-        if conf["database"]["use_database"]:
-            self.create_database_ast(conf["database"]["main_file"])
-        else:
-            self.create_ast()
-        for dig in self.list_ast[0].diagnostics:
-            print(dig)
+        self.ast = None
+        self.create_ast(self.database["main_file"])
+        #for dig in self.ast.diagnostics:
+        #    print(dig)
         #output_cursor_and_children(list_ast[1].cursor)
 
-    def create_ast(self):
-        """
-        Creates an Ast for every .cpp/.h-file in the folder defined in the ScannerConf. 
-        Saves them in list_ast.
-        """
-        # look if folder exists
-        project_path = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/cpp/models/"
-        folder_path = project_path + self.folder
-        idx = Index.create()
-        file_args = ['CMakeFiles/ode_seir.dir/model.cpp.o', "-c", "-Xclang", "-ast-dump", "-fsyntax-only"]
-        ast = idx.parse(folder_path + "/" + "test.cpp", args=file_args)
-        self.list_ast.append(ast)
-
-    def create_ast2(self):
-        """
-        Creates an Ast for every .cpp/.h-file in the folder defined in the ScannerConf. 
-        Saves them in list_ast.
-        """
-        # look if folder exists
-        project_path = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/cpp/models/"
-        folder_path = project_path + self.folder
-        idx = Index.create()
-        file_args = ["clang++", 'CMakeFiles/ode_seir.dir/model.cpp.o', "-c", "-Xclang", "-ast-dump", "-fsyntax-only"]
-        for _, _, files in os.walk(folder_path):
-            for file_name in files:
-                if file_name.endswith((".cpp")):#, ".h")): 
-                    #ast = idx.parse(folder_path + "/" + file_name, args=['-x', 'c++'], options=0)
-                    ast = idx.parse(folder_path + "/" + file_name, file_args)
-                    self.list_ast.append(ast)
-
-    def create_database_ast(self, file_name):
+    def create_ast(self, file_name):
         """
         Creates an Ast for a main .cpp file with database. Requires an compile_commands.json.
         Saves them in list_ast.
@@ -65,25 +32,28 @@ class Scanner:
         idx = Index.create()
         
         # Step 1: load the compilation database
-        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/build")
+        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.database["path_database"])
         commands = compdb.getCompileCommands(folder_path + "/" + file_name)
-        file_args = []
+        file_args = ["clang", folder_path + "/" + file_name ]
+
         for command in commands:
           for argument in command.arguments:
-                if argument != '-DKF_IN_UE=1' and argument != '-DWITH_EDITOR=1':
+                if argument != '-DKF_IN_UE=1' and argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++':
                     # if '-IG:\\RedApp\\Plugins\\' in argument:
                     file_args.append(argument)
 
-        file_args = file_args[0:-1]
+        file_args = file_args[:-1]
         #file_args.append(r'-DDLLIMPORT=')
         #file_args.append(r'-DDLLEXPORT=')
+        #file_args.append(r'-I/usr/lib/gcc/x86_64-linux-gnu/9/include')
         file_args.append(r'-Xclang')
-        #file_args.append(r'-ast-dump')
+        file_args.append(r'-ast-dump')
         #file_args.append(r'-Wdeprecated')
         file_args.append(r'-fsyntax-only')
-        #file_args.append(r'-Wunused-command-line-argument')
-        ast = idx.parse(folder_path + "/" + "test.cpp", file_args)
-        self.list_ast.append(ast)      
+        file_args.append(r'-Wunused-command-line-argument')
+        with open('output_command.txt', 'wb', 0) as outputfile:
+            call(file_args, stdout=outputfile)
+        #self.ast = idx.parse(folder_path + "/" + file_name, file_args) 
         
     def extract_results(self):
         """
@@ -91,16 +61,10 @@ class Scanner:
         Iterates over list of list_ast and calls find_node to visit all nodes of ast.
         """
         model = Model()
-        if type(self.list_ast) is not list:
-            output_cursor(self.list_ast.cursor, 1)
-            self.find_node(self.list_ast.cursor, model)
-            return
-        for ast in self.list_ast:
-            output_cursor(ast.cursor, 1)
-            self.find_node(ast.cursor, model)
+        output_cursor(self.ast.cursor, 1)
+        self.find_node(self.ast.cursor, model)
         self.finalize(model)
         return model
-
 
     def find_node(self, node, model, namespace = ""):
         """
@@ -211,15 +175,15 @@ class Scanner:
                     prefix = ":".join(prefix.split(":")[:-1])
         return result
 
-    def output_ast(self, index):
+    def output_ast(self):
         """
-        Outputs the ast at index in self.list_ast
+        Outputs the ast
         """
-        output_cursor_and_children(self.list_ast[index].cursor)
+        output_cursor_and_children(self.ast.cursor)
     
-    def output_ast_file(self, index):
+    def output_ast_file(self):
         with open('output.txt', 'a') as f:
-            output_cursor_and_children_file(self.list_ast[index].cursor, f)
+            output_cursor_and_children_file(self.ast.cursor, f)
 
 def indent(level):
     """ 

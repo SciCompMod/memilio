@@ -4,7 +4,7 @@
         "source_folder": "ode_seir"
     },
     "database": {
-        "use_database": false,
+        "path_database": "/build",
         "main_file": "model.cpp"
     },
     "parser_information": {
