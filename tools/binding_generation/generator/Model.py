@@ -4,12 +4,16 @@ from sympy import symbols as Symbols
 class Model:
     def __init__(self):
         self.name               = None
-        self.pymio_name         = None
+        self.python_module_name = None
         self.init               = []
         self.namespace          = None
         self.enum_dict          = {}
         self.population_groups  = []
         self.compartments       = []
+        self.simulation_name    = None
+
+    def set_attribute(self, attribute_name, value):
+        self.__setattr__(attribute_name, value)
 
     def set_name(self, name):
         err = "model name must be a string"
@@ -31,19 +35,3 @@ class Model:
         for key, value in self.__dict__.items():
             out += (key + ": " + str(value) + "\n")
         return out
-
-    def finalize(self, conf):
-        """
-        Finalize the input of the model. Call before using model to generate code.
-        """
-        self.pymio_name = conf.python_module_name
-        if self.pymio_name is None:
-            self.pymio_name = self.name.split("::")[-1]
-        
-        self.simulation_name = conf.simulation_name
-        if self.simulation_name is None:
-            self.simulation_name = "mio::Simulation<" + self.name + ">"
-
-        #assert(self.name != None), "set a model name using generator.name()"
-        #assert(self.namespace!= None), "set a model name using generator.namespace()"
-        #assert(len(self.compartments) != 0), "add compartments using generator.compartments"

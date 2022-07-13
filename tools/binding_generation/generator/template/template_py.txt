@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio ${model_name} model.
+Python bindings for MEmilio ${python_module_name} model.
 """
 
-from memilio._simulation_${model_name} import *
+from memilio._simulation_${python_module_name} import *

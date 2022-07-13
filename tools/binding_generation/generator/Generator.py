@@ -9,12 +9,12 @@ class Generator:
         # create the substitutions with a given model
 
         self.substitutions_py = {}
-        self.substitutions_py["model_name"] = model.pymio_name
+        self.substitutions_py["python_module_name"] = model.python_module_name
 
         self.substitutions_cpp = {}
         self.substitutions_cpp["model_class"] = model.name
         self.substitutions_cpp["model_cpp_name"] = model.name.split("::")[-1]
-        self.substitutions_cpp["pymio_name"] = model.pymio_name
+        self.substitutions_cpp["python_module_name"] = model.python_module_name
         self.substitutions_cpp["simulation_class"] = model.simulation_name
         self.substitutions_cpp["namespace"] = ("::".join(model.name.split("::")[:-1]) + "::")
         self.substitutions_cpp["includes"] = self.include_string(model)
@@ -33,8 +33,8 @@ class Generator:
         output_py = template_py.safe_substitute(**self.substitutions_py)
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)
 
-        py_filename = model.pymio_name + ".py"
-        cpp_filename = model.pymio_name + ".cpp"
+        py_filename = model.python_module_name + ".py"
+        cpp_filename = model.python_module_name + ".cpp"
         with open(py_filename, "w") as output:
             output.write(output_py)
         with open(cpp_filename, "w") as output:

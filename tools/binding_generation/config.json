@@ -1,0 +1,23 @@
+{
+    "scanner_input": {
+        "libclang_library_path": "/home/betz_mx/memilio/pycode/virtualenv/lib/python3.8/site-packages/libclang-14.0.1-py3.8-linux-x86_64.egg/clang/native/libclang.so",
+        "source_folder": "ode_seir"
+    },
+    "database": {
+        "use_database": false,
+        "main_file": "model.cpp"
+    },
+    "parser_information": {
+        "model_name": "Model",
+        "parameterset": "Parameters",
+        "namespace": "mio::oseir::",
+        "optional": {
+            "simulation_name": "option",
+            "use_age_group": false
+        }
+    },
+    "data_information": {
+        "python_module_name": "test_oseir",
+        "parameterset": "Parameters"
+    }
+}

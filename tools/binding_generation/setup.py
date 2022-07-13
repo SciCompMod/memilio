@@ -27,6 +27,7 @@ setup(
         'sympy',
         'matplotlib',
         'libclang',
+        'clang',
     ],
     extras_require={
         'dev': ['numpy >= 1.21'],

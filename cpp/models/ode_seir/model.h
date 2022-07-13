@@ -37,11 +37,11 @@ namespace oseir
 
     class Model : public CompartmentalModel<Populations<InfectionState>, ParametersBase>
     {
+    public:
         using Base = CompartmentalModel<mio::Populations<InfectionState>, ParametersBase>;
         using Po   = Base::Populations;
         using Pa   = Base::ParameterSet;
 
-    public:
         Model()
             : Base(Po({Index<InfectionState>((size_t)InfectionState::Count)}, 0.), Pa())
         {
