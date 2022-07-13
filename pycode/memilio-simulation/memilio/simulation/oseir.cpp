@@ -49,13 +49,17 @@ pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
     .value("Recovered", mio::oseir::InfectionState::Recovered);
 
 pymio::bind_Index<mio::oseir::InfectionState>(m, "Index_InfectionState");
+try{
+    pymio::bind_Index<mio::oseir::InfectionState>(m, "Index_InfectionState");
+}catch(...){
+    py::print("Exception Thrown");
+}
 pymio::bind_CustomIndexArray<mio::UncertainValue, mio::oseir::InfectionState>(m, "PopulationArray");
 
 pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 
-pymio::bind_Population<mio::oseir::InfectionState>(m, "Population");
-
 using Populations = mio::Populations<mio::oseir::InfectionState>;
+pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
 pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>(m, "ModelBase");
 py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
    .def(py::init<>());
