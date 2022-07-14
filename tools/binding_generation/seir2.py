@@ -15,13 +15,12 @@ conf = json.load(file)
 scanner = Scanner(conf)
 
 # Extract results of Scanner into a model data
-#model = scanner.extract_results()
-#model.finalize(conf)
-#print(model)
+model = scanner.extract_results()
+print(model)
 
 # Generate code
-#generator = gen.Generator()
-#generator.create_substitutions(model)
-#generator.generate_files(model)
+generator = gen.Generator()
+generator.create_substitutions(model)
+generator.generate_files(model)
 
-scanner.output_ast_file()
+#scanner.output_ast_file()

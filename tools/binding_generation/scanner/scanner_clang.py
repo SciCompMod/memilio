@@ -11,7 +11,8 @@ import re
 
 class Scanner:
     def __init__(self, conf):
-
+        
+        # Maybe use clang -v to get install dir from clang. Need to be same version
         Config.set_library_file(conf["scanner_input"]["libclang_library_path"])
         self.folder = conf["scanner_input"]["source_folder"]
         self.parser_information = conf["parser_information"]
@@ -48,50 +49,12 @@ class Scanner:
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()
-        with open('text.txt', 'wb', 0) as ast_file:
+        with tempfile.NamedTemporaryFile() as ast_file:
             # Since `clang.Index.read` expects a file path, write generated AST to a
             # temporary named file. This file will be automatically deleted when closed.
             ast_file.write(clang_cmd_result.stdout)
             self.ast = idx.read(ast_file.name)
-        """
-        clang_cmd_result = subprocess.Popen(["clang", "-v", "-x", "c++", "-"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, out = clang_cmd_result.communicate('')
-        reg = re.compile('lib/clang.*/include$')
-        print(out)
-        #c_command = next(line.strip() for line in out.split('\n') if reg.search(line))
-        print("finished")
-        # Step 1: load the compilation database
-        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.database["path_database"])
-        commands = compdb.getCompileCommands(folder_path + "/" + file_name)
-        file_args = ["clang", "-cc1"]
-        #file_args = ["clang++"]#, folder_path + "/" + file_name]
-        for command in commands:
-          for argument in command.arguments:
-                if argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++':# and argument != "--driver-mode=g++":
-                    file_args.append(argument)
 
-        file_args = file_args[:-1]
-        #file_args.append(r"-stdlib=libc++")
-        #file_args.append(r'-nostdinc++')
-        #file_args.append(r'/home/betz_mx/memilio/tools/binding_generation/out.txt')
-        #file_args.append(r"-emit-ast")
-        #file_args = file_args + c_commands
-        file_args.append(r'-Xclang')
-        file_args.append(r"-cc1")
-        file_args.append(r'-frecovery-ast')
-        #file_args.append(r"-stdlib=libc++")
-        #file_args.append(r'-ast-dump')
-        file_args.append(r'-Wdeprecated')
-        file_args.append(r'-fsyntax-only')
-        #file_args.append(r'-Wunused-command-line-argument')
-        #call(file_args)
-        #with open('output_command.txt', 'wb', 0) as outputfile:
-        #    call(file_args, stdout=outputfile)
-        self.ast = idx.parse(folder_path + "/" + file_name, file_args)
-        self.ast.save("text.c")
-        self.ast = idx.read("text.c")
-        """
-        
     def extract_results(self):
         """
         Extracts the information of the asts and saves them in the data class model.
