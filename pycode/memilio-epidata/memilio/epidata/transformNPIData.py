@@ -811,8 +811,8 @@ def transform_npi_data(fine_resolution=2,
 
             # iterate through all NPIs and activate if incidence threshold
             # is exceeded
-            for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
-                if incidvalthrsh[0] >= 0:
+            for level, npi_indices in incidence_thresholds_to_npis.items():
+                if level[0] >= 0: # level[0] = incidvalthrsh
                     local_incid = df_infec_local['Incidence'].copy()
                     if npi_activation_delay > 0:
                         # shift values to npi_activation_delay days later
@@ -822,7 +822,7 @@ def transform_npi_data(fine_resolution=2,
                         local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
                     # compare incidence against threshold
                     int_active = (
-                        local_incid >= incidvalthrsh[0]).astype(int)
+                        local_incid >= level[0]).astype(int) # level[0] = incidvalthrsh
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
                     # (i.e., mentioned NPI is not active)
@@ -836,38 +836,44 @@ def transform_npi_data(fine_resolution=2,
                 # the latter have to be deactivated
                 # (incidence_thresholds_to_npis.keys() has to be sorted !)
                 # TODO
-                for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
-                    if incidvalthrsh[0] >= 0:
+                for level in incidence_thresholds_to_npis.keys():
+                    if level[0] >= 0:
                         for code in df_npis_combinations.keys():
                             code_cols = df_npis_combinations[code].columns
                             # iterate over subcode indices
                             for scidx in range(len(code_cols)-1):
-                                subcodes_nocombi = df_npis_combinations[code].loc[scidx,
-                                                                                  code_cols[scidx+1:]]
-                                # only consider those codes which cannot be
-                                # combined; for these values of 1 have to be
-                                # set to 0
-                                subcodes_nocombi = list(
-                                    subcodes_nocombi[subcodes_nocombi == 0].index)
-                                # iterate over exclusive subcodes
-                                for subcode_excl in subcodes_nocombi:
-                                    # iterate over less strict dynamic NPIs
-                                    # i.e., where threshold is higher
-                                    for level in incidence_thresholds_to_npis.keys():
-                                        if level[0] > incidvalthrsh[0]:
-                                            x = 15  # TODO
+                                # check if code was used, otherwise nothing to
+                                # exclude, i.e. no combination possible anyway.
+                                if df_local_new.loc[:,code_cols[scidx]+level[1]].any():
+                                    # extract codes that whose interference was not
+                                    # considered before. So only consider upper
+                                    # triangle (except main diagonal).
+                                    subcodes_nocombi = df_npis_combinations[code].loc[scidx,
+                                                                                    code_cols[scidx+1:]]
+                                    # only consider those codes which cannot be
+                                    # combined; for these values of 1 have to be
+                                    # set to 0
+                                    subcodes_nocombi = list(
+                                        subcodes_nocombi[subcodes_nocombi == 0].index)
+                                    # iterate over exclusive subcodes
+                                    for subcode_excl in subcodes_nocombi:
+                                        # iterate over less strict dynamic NPIs
+                                        # i.e., where threshold is higher
+                                        for level_other in incidence_thresholds_to_npis.keys():
+                                            if level_other[0] > level[0]:
+                                                x = 15  # TODO
 
-                    columns_treated = list(
-                        df_local_new.iloc
-                        [:, npis_idx_start + np.array(npi_indices)].columns)
-                    # check if subcodes that are incidence dependent were
-                    # treated (they have two underscores in their codes)
-                    if all([len(col.split('_')) == 3 for col in columns_treated]):
-                        columns_treated_main = pd.Series(
-                            [code_val[0:-2] for code_val in columns_treated])
-                        for code in df_npis_combinations.keys():
-                            npi_combo_submatrix_indices_changed = np.where(
-                                columns_treated_main.isin(df_npis_combinations[code].columns) == True)[0]
+                    # columns_treated = list(
+                    #     df_local_new.iloc
+                    #     [:, npis_idx_start + np.array(npi_indices)].columns)
+                    # # check if subcodes that are incidence dependent were
+                    # # treated (they have two underscores in their codes)
+                    # if all([len(col.split('_')) == 3 for col in columns_treated]):
+                    #     columns_treated_main = pd.Series(
+                    #         [code_val[0:-2] for code_val in columns_treated])
+                    #     for code in df_npis_combinations.keys():
+                    #         npi_combo_submatrix_indices_changed = np.where(
+                    #             columns_treated_main.isin(df_npis_combinations[code].columns) == True)[0]
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
