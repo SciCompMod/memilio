@@ -1,6 +1,6 @@
 {
     "scanner_input": {
-        "libclang_library_path": "/home/betz_mx/memilio/pycode/virtualenv/lib/python3.8/site-packages/libclang-14.0.1-py3.8-linux-x86_64.egg/clang/native/libclang.so",
+        "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
         "source_folder": "ode_seir"
     },
     "database": {

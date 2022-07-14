@@ -1,10 +1,13 @@
 import os
 from os.path import exists
 from clang.cindex import *
+import subprocess
 from subprocess import check_output, call
 import clang.cindex
-import copy
 from generator.Model import Model
+from scanner.utility import *
+import tempfile
+import re
 
 class Scanner:
     def __init__(self, conf):
@@ -17,8 +20,8 @@ class Scanner:
         
         self.ast = None
         self.create_ast(self.database["main_file"])
-        #for dig in self.ast.diagnostics:
-        #    print(dig)
+        for dig in self.ast.diagnostics:
+            print(dig)
         #output_cursor_and_children(list_ast[1].cursor)
 
     def create_ast(self, file_name):
@@ -31,29 +34,63 @@ class Scanner:
         folder_path = project_path + self.folder
         idx = Index.create()
         
+        file_args = []
+        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.database["path_database"])
+        commands = compdb.getCompileCommands(folder_path + "/" + file_name)
+        #file_args = ["clang++"]#, folder_path + "/" + file_name]
+        for command in commands:
+          for argument in command.arguments:
+                if argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++' and argument != "--driver-mode=g++":
+                    file_args.append(argument)
+        file_args = file_args[:-4]
+
+        clang_cmd = ["clang", folder_path + "/" + file_name, '-emit-ast', '-o', '-']
+        clang_cmd.extend(file_args)
+        clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
+        clang_cmd_result.check_returncode()
+        with open('text.txt', 'wb', 0) as ast_file:
+            # Since `clang.Index.read` expects a file path, write generated AST to a
+            # temporary named file. This file will be automatically deleted when closed.
+            ast_file.write(clang_cmd_result.stdout)
+            self.ast = idx.read(ast_file.name)
+        """
+        clang_cmd_result = subprocess.Popen(["clang", "-v", "-x", "c++", "-"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _, out = clang_cmd_result.communicate('')
+        reg = re.compile('lib/clang.*/include$')
+        print(out)
+        #c_command = next(line.strip() for line in out.split('\n') if reg.search(line))
+        print("finished")
         # Step 1: load the compilation database
         compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.database["path_database"])
         commands = compdb.getCompileCommands(folder_path + "/" + file_name)
-        file_args = ["clang", folder_path + "/" + file_name ]
-
+        file_args = ["clang", "-cc1"]
+        #file_args = ["clang++"]#, folder_path + "/" + file_name]
         for command in commands:
           for argument in command.arguments:
-                if argument != '-DKF_IN_UE=1' and argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++':
-                    # if '-IG:\\RedApp\\Plugins\\' in argument:
+                if argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++':# and argument != "--driver-mode=g++":
                     file_args.append(argument)
 
         file_args = file_args[:-1]
-        #file_args.append(r'-DDLLIMPORT=')
-        #file_args.append(r'-DDLLEXPORT=')
-        #file_args.append(r'-I/usr/lib/gcc/x86_64-linux-gnu/9/include')
+        #file_args.append(r"-stdlib=libc++")
+        #file_args.append(r'-nostdinc++')
+        #file_args.append(r'/home/betz_mx/memilio/tools/binding_generation/out.txt')
+        #file_args.append(r"-emit-ast")
+        #file_args = file_args + c_commands
         file_args.append(r'-Xclang')
-        file_args.append(r'-ast-dump')
-        #file_args.append(r'-Wdeprecated')
+        file_args.append(r"-cc1")
+        file_args.append(r'-frecovery-ast')
+        #file_args.append(r"-stdlib=libc++")
+        #file_args.append(r'-ast-dump')
+        file_args.append(r'-Wdeprecated')
         file_args.append(r'-fsyntax-only')
-        file_args.append(r'-Wunused-command-line-argument')
-        with open('output_command.txt', 'wb', 0) as outputfile:
-            call(file_args, stdout=outputfile)
-        #self.ast = idx.parse(folder_path + "/" + file_name, file_args) 
+        #file_args.append(r'-Wunused-command-line-argument')
+        #call(file_args)
+        #with open('output_command.txt', 'wb', 0) as outputfile:
+        #    call(file_args, stdout=outputfile)
+        self.ast = idx.parse(folder_path + "/" + file_name, file_args)
+        self.ast.save("text.c")
+        self.ast = idx.read("text.c")
+        """
         
     def extract_results(self):
         """
@@ -182,92 +219,5 @@ class Scanner:
         output_cursor_and_children(self.ast.cursor)
     
     def output_ast_file(self):
-        with open('output.txt', 'a') as f:
+        with open('output_ast.txt', 'a') as f:
             output_cursor_and_children_file(self.ast.cursor, f)
-
-def indent(level):
-    """ 
-    Indentation string for pretty-printing
-    """ 
-    return '  '*level
-
-def output_cursor(cursor, level):
-    """ 
-    Low level cursor output
-    """
-    spelling = ''
-    displayname = ''
-
-    if cursor.spelling:
-        spelling = cursor.spelling
-    if cursor.displayname:
-        displayname = cursor.displayname
-    kind = cursor.kind
-
-    print(indent(level) + spelling, '<' + str(kind) + '>')
-    print(indent(level+1) + '"'  + displayname + '"')
-
-
-def output_cursor_and_children(cursor, level=0):
-    """ 
-    Output this cursor and its children with minimal formatting.
-    """
-    output_cursor(cursor, level)
-    if cursor.kind.is_reference():
-        print(indent(level) + 'reference to:')
-        output_cursor(cursor.referenced, level+1)
-
-    # Recurse for children of this cursor
-    has_children = False
-    for c in cursor.get_children():
-        if not has_children:
-            print(indent(level) + '{')
-            has_children = True
-        output_cursor_and_children(c, level+1)
-
-    if has_children:
-        print(indent(level) + '}')
-
-def indent(level):
-    """ 
-    Indentation string for pretty-printing
-    """ 
-    return '  '*level
-
-def output_cursor_file(cursor, f, level):
-    """ 
-    Low level cursor output
-    """
-    spelling = ''
-    displayname = ''
-
-    if cursor.spelling:
-        spelling = cursor.spelling
-    if cursor.displayname:
-        displayname = cursor.displayname
-    kind = cursor.kind
-
-    f.write(indent(level) + spelling + ' <' + str(kind) + '> ')
-    if cursor.location.file:
-        f.write(cursor.location.file.name + '\n')
-    f.write(indent(level+1) + '"'  + displayname + '"\n')
-
-def output_cursor_and_children_file(cursor, f, level=0):
-    """ 
-    Output this cursor and its children with minimal formatting.
-    """
-    output_cursor_file(cursor, f, level)
-    if cursor.kind.is_reference():
-        f.write(indent(level) + 'reference to:\n')
-        output_cursor_file(cursor.referenced, f, level+1)
-
-    # Recurse for children of this cursor
-    has_children = False
-    for c in cursor.get_children():
-        if not has_children:
-            f.write(indent(level) + '{\n')
-            has_children = True
-        output_cursor_and_children_file(c, f, level+1)
-
-    if has_children:
-        f.write(indent(level) + '}\n')

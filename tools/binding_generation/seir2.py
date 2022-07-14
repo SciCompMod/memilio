@@ -10,9 +10,6 @@ if project_path == "":
     project_path = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/pycode/memilio-simulation/memilio/simulation/"
 
 # Define ScannerConfig and initialize Scanner
-#conf = config.ScannerConfig()
-#conf.set_folder("ode_seir")
-#conf.set_python_module_name("test_seir")
 file = open("config.json")
 conf = json.load(file)
 scanner = Scanner(conf)
@@ -27,4 +24,4 @@ scanner = Scanner(conf)
 #generator.create_substitutions(model)
 #generator.generate_files(model)
 
-#scanner.output_ast_file()
+scanner.output_ast_file()
