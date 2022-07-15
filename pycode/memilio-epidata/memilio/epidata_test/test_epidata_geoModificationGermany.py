@@ -19,6 +19,7 @@
 #############################################################################
 import unittest
 import pandas as pd
+import numpy as np
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
@@ -542,8 +543,9 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
     def test_merge_df_counties(self):
         test_df = pd.DataFrame(self.eisenach_unmerged_data)
         group_columns = ['Date', 'labels']
+        separated_ids = np.array( [16063, 16056],dtype=np.int64)
         result_df = geoger.merge_df_counties(
-            test_df, 16063, [16063, 16056], group_columns, group_columns)
+            test_df, 16063, separated_ids, group_columns, group_columns)
         pd.testing.assert_frame_equal(result_df, self.eisenach_merged_df)
         # the test dataframe should be unchanged as it is the input of the function
         pd.testing.assert_frame_equal(

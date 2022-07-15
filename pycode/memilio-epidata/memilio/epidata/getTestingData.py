@@ -105,9 +105,9 @@ def transform_weeks_to_dates(df_test):
 # gets rki testing monitoring data resolved by federal states (which only
 # is a subset of the total conducted tests)
 # extrapolates the values for counties according to their population
-def get_testing_data(read_data=dd.defaultDict['read_data'],
+def get_testing_data(data_folder,
+                     read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
-                     out_folder=dd.defaultDict['out_folder'],
                      no_raw=dd.defaultDict['no_raw'],
                      start_date=dd.defaultDict['start_date'],
                      end_date=dd.defaultDict['end_date'],
@@ -120,7 +120,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     only positive rates are provided.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "data_folder"/Germany/.
     To store and change the data we use pandas.
 
     While working with the data
@@ -143,12 +143,12 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     - Start and end dates can be provided to define the length of the 
         returned data frames.
 
+    @param data_folder Path to folder where data is written in folder 
+        data_folder/Germany.
     @param read_data False [Default]. Data is always downloaded from 
         the internet.
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder 
-        out_folder/Germany.
     @param no_raw True or False [Default]. Defines if raw data is 
         saved or not.
     @param start_date [Default = '', taken from read data] Start date
@@ -163,8 +163,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # data for all dates is automatically added
     impute_dates = True
 
-    directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
 
     df_test = download_testing_data()
@@ -280,8 +279,9 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("testing")
-    get_testing_data(**arg_dict)
+    get_testing_data(path, **arg_dict)
 
 if __name__ == "__main__":
 

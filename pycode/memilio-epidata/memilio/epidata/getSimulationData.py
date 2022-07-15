@@ -30,6 +30,7 @@ The functions which are called are:
 """
 
 
+import os
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getVaccinationData
@@ -45,9 +46,9 @@ def print_error(text):
           ' data could not be stored correctly.')
 
 
-def get_simulation_data(read_data=dd.defaultDict['read_data'],
+def get_simulation_data(data_folder,
+                        read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
-                        out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
                         end_date=dd.defaultDict['end_date'],
                         impute_dates=dd.defaultDict['impute_dates'],
@@ -65,9 +66,9 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     - getDIVIData.get_divi_data
 
     Keyword arguments:
+    @param data_folder Path to folder where data is written in.
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param end_date [Optional] Date to stop to download data [Default = today].
     @param impute_dates False [Default] or True. Defines if dates where nothing changed are added.
@@ -79,7 +80,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
     arg_dict_all = {
         "read_data": read_data, "file_format": file_format,
-        "out_folder": out_folder, "no_raw": no_raw}
+        "no_raw": no_raw}
 
     arg_dict_cases = {**arg_dict_all, "make_plot": make_plot,
                     "impute_dates": impute_dates,
@@ -93,25 +94,25 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                      "moving_average": moving_average}
 
     try:
-        getCaseData.get_case_data(**arg_dict_cases)
+        getCaseData.get_case_data(data_folder, **arg_dict_cases)
     except Exception as exp:
         print(str(type(exp).__name__) + ": " + str(exp))
         print_error('case')
 
     try:
-        getPopulationData.get_population_data(**arg_dict_all)
+        getPopulationData.get_population_data(data_folder, **arg_dict_all)
     except Exception as exp:
         print(str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
-        getDIVIData.get_divi_data(**arg_dict_divi)
+        getDIVIData.get_divi_data(data_folder, **arg_dict_divi)
     except Exception as exp:
         print(str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
-        getVaccinationData.get_vaccination_data(**arg_dict_vacc)
+        getVaccinationData.get_vaccination_data(data_folder, **arg_dict_vacc)
     except Exception as exp:
         print(str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
@@ -120,8 +121,9 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("sim")
-    get_simulation_data(**arg_dict)
+    get_simulation_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

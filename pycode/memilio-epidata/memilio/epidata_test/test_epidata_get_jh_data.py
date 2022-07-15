@@ -94,7 +94,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(out_folder, file)
 
         with self.assertRaises(FileNotFoundError) as error:
-            gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+            gJHD.get_jh_data(out_folder, read_data, file_format, no_raw)
         self.assertEqual(str(error.exception),
                          "Error: The file: " + file_with_path + \
                          " does not exist. Call program without -r "
@@ -108,7 +108,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(self.path)), 1)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(out_folder, read_data, file_format, no_raw)
 
         # check if expected files are written
         # 7 country-folders+3 all countries-files
@@ -197,7 +197,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(out_folder, read_data, file_format, no_raw)
 
         mock_loadcsv.assert_called_once()
 
@@ -291,7 +291,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(out_folder, read_data, file_format, no_raw)
 
         mock_loadcsv.assert_called_once()
 

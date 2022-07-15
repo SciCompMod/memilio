@@ -34,8 +34,9 @@ import memilio.epidata.defaultDict as dd
 
 yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
 
-# folder where divi and case data can be found after downloading with default out_folder
-data_folder = os.path.join(dd.defaultDict['out_folder'], "pydata", "Germany")
+# folder where divi and case data can be found after downloading
+data_folder = os.path.join(os.getcwd(), 'data', 'pydata')
+data_folder_germany = os.path.join(data_folder, "pydata", "Germany")
 
 
 def get_Data(endday_divi=yesterday, moving_average=True):
@@ -44,11 +45,11 @@ def get_Data(endday_divi=yesterday, moving_average=True):
     @param moving_average Defines if moving average is used"""
     print('Download case data from the Internet, takes some time')
     getCaseData.get_case_data(
-        out_folder=dd.defaultDict['out_folder'],
+        data_folder,
         moving_average=moving_average)
     print('Download DIVI Data from the Internet, takes some time')
     getDIVIData.get_divi_data(
-        out_folder=dd.defaultDict['out_folder'],
+        data_folder,
         end_date=endday_divi)
 
 
@@ -60,7 +61,7 @@ def plot_cases(
         @param daystart Day at which should be started in timestamp format
         @param simulationperiod number in integer format of days for which data should be plotted
         @param saveplot boolean value; says if plot should be saved """
-    df = pd.read_json(os.path.join(data_folder, "cases_infected.json"))
+    df = pd.read_json(os.path.join(data_folder_germany, "cases_infected.json"))
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
     mask = (
@@ -81,7 +82,7 @@ def plot_cases(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_infected_ma7.json"))
+        df = pd.read_json(os.path.join(data_folder_germany, "cases_infected_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
@@ -98,7 +99,7 @@ def plot_cases(
         if saveplot:
             plt.savefig('Plots/plot_cases_confirmed_infections_ma7.png')
 
-    df = pd.read_json(os.path.join(data_folder, "cases_deaths.json"))
+    df = pd.read_json(os.path.join(data_folder_germany, "cases_deaths.json"))
     mask = (
         df['Date'] >= daystart) & (
         df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
@@ -117,7 +118,7 @@ def plot_cases(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_deaths_ma7.json"))
+        df = pd.read_json(os.path.join(data_folder_germany, "cases_deaths_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
@@ -145,7 +146,7 @@ def plot_cases_age(
     @param saveplot boolean value; says if plot should be saved """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
-    df = pd.read_json(os.path.join(data_folder, "cases_all_age.json"))
+    df = pd.read_json(os.path.join(data_folder_germany, "cases_all_age.json"))
     mask = (
         df['Date'] >= daystart) & (
         df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
@@ -183,7 +184,7 @@ def plot_cases_age(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_all_age_ma7.json"))
+        df = pd.read_json(os.path.join(data_folder_germany, "cases_all_age_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
@@ -233,7 +234,7 @@ def plot_cases_county(
     @param saveplot boolean value; says if plot should be saved """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
-    df = pd.read_json(os.path.join(data_folder, "cases_all_county.json"))
+    df = pd.read_json(os.path.join(data_folder_germany, "cases_all_county.json"))
     mask = (df['Date'] >= daystart) & (
         df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
     fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_")
@@ -264,7 +265,7 @@ def plot_cases_county(
 
     if moving_average:
         df = pd.read_json(os.path.join(
-            data_folder, "cases_all_county_ma7.json"))
+            data_folder_germany, "cases_all_county_ma7.json"))
         mask = (df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
         fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_") + '_ma7'
@@ -308,7 +309,7 @@ def plot_DIVI_data(
             + daystart.strftime("%d.%m.%Y") +
             ". Data for this date is not available.")
     else:
-        df = pd.read_json(os.path.join(data_folder, "germany_divi.json"))
+        df = pd.read_json(os.path.join(data_folder_germany, "germany_divi.json"))
         if not (daystart + pd.DateOffset(days=simulationperiod) <= endday_divi):
             simulationperiod = (endday_divi - daystart).days
         mask = (

@@ -316,12 +316,12 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
 
-    @unittest.skip
+    # @unittest.skip
     def test_commuter_data(self):
         """! Tests migration data by some randomly chosen tests.
         """
 
-        df_commuter_migration = gcm.get_commuter_data(out_folder=self.path)
+        df_commuter_migration = gcm.get_commuter_data(self.path)
         # the first column and first row are just the county IDs
         # mat_commuter_migration is the real Data that should be tested
         mat_commuter_migration = df_commuter_migration.iloc[:, 0:]
@@ -341,7 +341,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_from = countykey2numlist['05316']
         city_to = countykey2numlist['16069']
         population = gpd.get_population_data(
-            out_folder=self.path, merge_eisenach=False)
+            self.path, merge_eisenach=False)
         countypop_list = list(population[dd.EngEng['population']])
         self.assertEqual(countypop_list[city_from], 163905)
         self.assertAlmostEqual(
@@ -362,7 +362,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_to = countykey2numlist['01053']
         self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 14)
 
-    @unittest.skip
+    # @unittest.skip
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print):
 
@@ -370,8 +370,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         tci = testcountyid
         #direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
-            tci, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            self.path, tci, direction='both', abs_tol=0, rel_tol=0,
+            tol_comb='or', merge_eisenach=True)
         self.assertEqual(len(countykey_list), 398)
         self.assertAlmostEqual(228, commuter_all[0], 2)
         self.assertAlmostEqual(2146, commuter_all[9], 2)
@@ -380,8 +380,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
-            tci, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            self.path, tci, direction='in', abs_tol=0, rel_tol=0,
+            tol_comb='or', merge_eisenach=True)
         self.assertEqual(len(countykey_list), 393)
         self.assertAlmostEqual(48, commuter_all[0], 2)
         self.assertAlmostEqual(842, commuter_all[9], 2)
@@ -389,8 +389,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
-            tci, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            self.path, tci, direction='out', abs_tol=0, rel_tol=0,
+            tol_comb='or', merge_eisenach=True)
         self.assertEqual(len(countykey_list), 375)
         self.assertAlmostEqual(180, commuter_all[0], 2)
         self.assertAlmostEqual(1304, commuter_all[9], 2)

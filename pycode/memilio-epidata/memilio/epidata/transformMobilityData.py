@@ -35,7 +35,7 @@ def getMobilityFromFile(directory, mobility_file):
     @return Mobility matrix data frame.
     """
     mobility_matrix = gd.loadCsv(
-        '', directory + mobility_file, extension='.txt',
+        '', os.path.join(directory, mobility_file), extension='.txt',
         param_dict={'sep': ' ', 'header': None})
 
     return mobility_matrix
@@ -130,8 +130,9 @@ def updateMobility2022(directory, mobility_file):
 
 def main():
     """! Main program entry."""
-    directory = dd.defaultDict['out_folder'].split('/pydata')[0]
-    directory = os.path.join(directory, 'mobility/')
+
+    path = os.path.join(os.getcwd(), 'data')
+    directory = os.path.join(path, 'mobility/')
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
     updateMobility2022(directory, mobility_file='twitter_scaled_1252')

@@ -230,8 +230,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_with_estimations(self):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [True, False, "json", self.path, False]
+        [out_folder, read_data, make_plot, file_format, no_raw] \
+            = [self.path, True, False, "json", False]
 
         # write files which should be read in by program
 
@@ -249,7 +249,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            out_folder, read_data, file_format, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -336,8 +336,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_with_estimations_age_data(self):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [True, False, "json", self.path, False]
+        [out_folder, read_data, make_plot, file_format, no_raw] \
+            = [self.path, True, False, "json", False]
 
         # write files which should be read in by program
 
@@ -355,7 +355,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            out_folder, read_data, file_format, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -408,8 +408,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             self, mock_get_jh_data, mock_get_case_data,
             mock_download_weekly_deaths_numbers):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [False, False, "json", self.path, False]
+        [out_folder, read_data, make_plot, file_format, no_raw] \
+            = [self.path, False, False, "json", False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -420,9 +420,6 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             directory)
 
         # write files which should be read in by program
-
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
 
         case_files_to_change = [
             "cases_all_germany", "cases_all_gender", "cases_all_age",
@@ -455,7 +452,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            out_folder, read_data, file_format, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -582,7 +579,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.write_jh_data(directory)
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            out_folder, read_data, file_format, no_raw, make_plot)
 
         # print is called 9 times, because no file exists
         self.assertEqual(len(mock_print.mock_calls), 9)

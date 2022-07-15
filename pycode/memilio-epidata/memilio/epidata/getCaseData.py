@@ -60,9 +60,9 @@ def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
     return False
 
 
-def get_case_data(read_data=dd.defaultDict['read_data'],
+def get_case_data(data_folder,
+                  read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
-                  out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
                   impute_dates=dd.defaultDict['impute_dates'],
                   make_plot=dd.defaultDict['make_plot'],
@@ -76,7 +76,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
     If not a different source is tried.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "data_folder"/Germany/.
     To store and change the data we use pandas.
 
     While working with the data
@@ -105,9 +105,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
         - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
+    @param data_folder Path to folder where data is written in folder data_folder/Germany.
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param impute_dates False [Default] or True. Defines if values for dates without new information are imputed.
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
@@ -116,7 +116,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     @param split_berlin True or False [Default]. Defines if Berlin's disctricts are kept separated or get merged.
     """
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
     filename = "CaseDataFull"
 
@@ -684,8 +684,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("cases")
-    get_case_data(**arg_dict)
+    get_case_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

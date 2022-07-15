@@ -28,9 +28,9 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import modifyDataframeSeries
 
 
-def transformWeatherData(read_data=dd.defaultDict['read_data'],
+def transformWeatherData(data_folder,
+                         read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
-                         out_folder=dd.defaultDict['out_folder'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
                          make_plot=dd.defaultDict['make_plot'],
@@ -39,10 +39,10 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          merge_eisenach=False
                          ):
     """! ...
+    @param data_folder Path to folder where data is written in folder 
+        data_folder/Germany.
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder 
-        out_folder/Germany.
     @param start_date [Default = '', taken from read data] Start date
         of stored data frames.
     @param end_date [Default = '', taken from read data] End date of
@@ -53,8 +53,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         days for which a centered moving average is computed.
     """
 
-    directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
 
     if not read_data:
@@ -190,7 +189,8 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transformWeatherData(read_data=False, make_plot=True, moving_average=30)
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
+    transformWeatherData(path, read_data=False, make_plot=True, moving_average=30)
 
 
 if __name__ == "__main__":

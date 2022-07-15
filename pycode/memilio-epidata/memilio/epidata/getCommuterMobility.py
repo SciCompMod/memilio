@@ -127,10 +127,10 @@ def assign_geographical_entities(countykey_list, govkey_list):
     return countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table
 
 
-def get_commuter_data(setup_dict='',
+def get_commuter_data(data_path,
+                      setup_dict='',
                       read_data=dd.defaultDict['read_data'],
                       file_format=dd.defaultDict['file_format'],
-                      out_folder=dd.defaultDict['out_folder'],
                       make_plot=dd.defaultDict['make_plot'],
                       no_raw=dd.defaultDict['no_raw']):
     """! Computes DataFrame of commuter migration patterns based on the Federal
@@ -159,7 +159,7 @@ def get_commuter_data(setup_dict='',
                       'rel_tol': rel_tol,
                       'path': path}
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_path, 'Germany/')
     gd.check_dir(directory)
 
     countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
@@ -169,7 +169,7 @@ def get_commuter_data(setup_dict='',
     # This is not very nice either to have the same file with either Eisenach merged or not...
     
     population = gPd.get_population_data(
-        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
+        data_path, merge_eisenach=False, read_data=read_data)
 
     countypop_list = list(population[dd.EngEng["population"]])
 
@@ -201,22 +201,21 @@ def get_commuter_data(setup_dict='',
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
         # This File is in a zip folder so it has to be unzipped first before it can be read.
         param_dict={"sheet_name": 3, "engine": "pyxlsb"}
-        filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
         # Unzip it
-        zipfile = wget.download(url, filepath)
+        zipfile = wget.download(url, directory)
         with ZipFile(zipfile, 'r') as zipObj:
-            zipObj.extractall(path = filepath)
+            zipObj.extractall(path = directory)
         # Read the file
         filename = item.split('-20')[0] + '.xlsb'
         file = filename.replace('-','_')
-        commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
+        commuter_migration_file = pd.read_excel(directory + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
         # delete zip folder after extracting
-        os.remove(os.path.join(filepath, item))
+        os.remove(os.path.join(directory, item))
         # delete file after reading
-        os.remove(os.path.join(filepath, file))
+        os.remove(os.path.join(directory, file))
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -462,8 +461,8 @@ def commuter_sanity_checks(df):
 
 
 def get_neighbors_mobility(
-        countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        data_path, countyid, direction='both', abs_tol=0, rel_tol=0,
+        tol_comb='or', merge_eisenach=True):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -487,7 +486,7 @@ def get_neighbors_mobility(
         commuters from and to the neighbors.
     '''
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_path, 'Germany/')
     gd.check_dir(directory)
     try:
         if merge_eisenach:
@@ -498,7 +497,7 @@ def get_neighbors_mobility(
                 directory, "migration_bfa_2020_dim401.json"))
     except ValueError:
         print("Commuter data was not found. Download and process it from the internet.")
-        commuter = get_commuter_data(out_folder=out_folder)
+        commuter = get_commuter_data(data_path)
 
     countykey_list = commuter.columns
     commuter.index = countykey_list
@@ -521,8 +520,8 @@ def get_neighbors_mobility(
 
 
 def get_neighbors_mobility_all(
-        direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        data_path, direction='both', abs_tol=0, rel_tol=0,
+        tol_comb='or', merge_eisenach=True):
     '''! Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -542,23 +541,25 @@ def get_neighbors_mobility_all(
         both ('and')
     @return Neighbors of all counties with respect to mobility.
     '''
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_path, 'Germany/')
     gd.check_dir(directory)
     countyids = geoger.get_county_ids(merge_eisenach=merge_eisenach)
     neighbors_table = []
     for id in countyids:
         neighbors_table.append(
             get_neighbors_mobility(
-                id, direction=direction, abs_tol=abs_tol,
-                rel_tol=rel_tol, tol_comb=tol_comb,
-                merge_eisenach=merge_eisenach,
-                out_folder=out_folder))
+                data_path, id, direction=direction, 
+                abs_tol=abs_tol, rel_tol=rel_tol,
+                tol_comb=tol_comb, merge_eisenach=merge_eisenach))
 
     return dict(zip(countyids, neighbors_table))
 
 
 def main():
     """! Main program entry."""
+
+    
+    data_path = os.path.join(os.getcwd(), 'data', 'pydata')
 
     arg_dict = gd.cli("commuter_official")
     ref_year = 2020
@@ -572,10 +573,10 @@ def main():
                   'rel_tol': rel_tol,
                   'path': path}
 
-    get_neighbors_mobility(1001, abs_tol=0, rel_tol=0, tol_comb='or',
-                           merge_eisenach=True, out_folder=dd.defaultDict['out_folder'])
+    get_neighbors_mobility(data_path, 1001, abs_tol=0, rel_tol=0, tol_comb='or',
+                           merge_eisenach=True)
 
-    mat_commuter_migration = get_commuter_data(setup_dict, **arg_dict)
+    mat_commuter_migration = get_commuter_data(data_path, setup_dict, **arg_dict)
 
 
 if __name__ == "__main__":

@@ -132,7 +132,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def test_get_population(self, mock_data):
 
         gpd.get_population_data(
-            read_data=True, file_format='json', out_folder=self.path,
+            self.path, read_data=True, file_format='json', 
             no_raw=False, split_gender=False, merge_eisenach=False)
 
         test_df = pd.read_json(os.path.join(
@@ -147,7 +147,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def test_popul_split_gender(self, mock_data):
 
         test_df = gpd.get_population_data(
-            read_data=False, file_format='json', out_folder=self.path,
+            self.path, read_data=False, file_format='json',
             no_raw=False, split_gender=True, merge_eisenach=False)
 
         test_df = test_df.drop(
@@ -165,11 +165,11 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         directory = os.path.join(self.path, 'Germany/')
 
         counties_write, zensus_write, reg_key_write = gpd.load_population_data(
-            out_folder=self.path, read_data=False)
+            self.path, read_data=False)
         self.assertEqual(len(os.listdir(directory)), 3)
 
         counties_read, zensus_read, reg_key_read = gpd.load_population_data(
-            out_folder=self.path, read_data=True)
+            self.path, read_data=True)
 
         pd.testing.assert_frame_equal(
             counties_read, counties_write, check_dtype=False)

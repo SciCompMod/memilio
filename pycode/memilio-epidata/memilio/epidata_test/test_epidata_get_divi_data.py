@@ -72,7 +72,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # test read_data Error call if json file is not found
         mockrjson.side_effect = ValueError
         with self.assertRaises(FileNotFoundError) as error:
-            gdd.get_divi_data(read_data=True, out_folder=self.path)
+            gdd.get_divi_data(self.path, read_data=True)
         file_in = os.path.join(self.path, "Germany/FullData_DIVI.json")
         error_message = "Error: The file: " + file_in + " does not exist. "\
             "Call program without -r flag to get it."
@@ -81,7 +81,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # test loadCsv Error if file can't be downloaded
         mocklcsv.side_effect = Exception
         with self.assertRaises(FileNotFoundError) as error:
-            gdd.get_divi_data(read_data=False)
+            gdd.get_divi_data(self.path, read_data=False)
         error_message = "Error: Download link for Divi data has changed."
         self.assertEqual(str(error.exception), error_message)
 
@@ -92,7 +92,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # test Error for empty returned dataframe
         mocklcsv.value = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
-            gdd.get_divi_data(read_data=False)
+            gdd.get_divi_data(self.path, read_data=False)
         error_message = "Something went wrong, dataframe is empty."
         self.assertEqual(str(error.exception), error_message)
 
@@ -102,7 +102,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_get_divi_data_prints(self, mock_print, mock_csv, mock_san):
         mock_csv.return_value = self.df_test
         # case with start_date before 2020-04-24
-        gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
+        gdd.get_divi_data(self.path, start_date=date(2020, 1, 1))
         expected_call = [
             call(
                 'Warning: First data available on 2020-04-24. You asked for 2020-01-01.')]
@@ -117,7 +117,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_get_divi_data(self, mock_print, mock_csv, mock_san):
         mock_csv.return_value = self.df_test
         # test case with standard parameters
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(out_folder=self.path)
+        (df, df_county, df_states, df_ger) = gdd.get_divi_data(self.path)
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
@@ -154,7 +154,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_csv.return_value = self.df_test
         # test case with moving average
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, moving_average=3)
+            self.path, moving_average=3)
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertAlmostEqual(
@@ -191,7 +191,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_csv.return_value = self.df_test
         # test case with impute dates is True
         (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, impute_dates=True)
+            self.path, impute_dates=True)
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
@@ -273,7 +273,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # test if it works in main
         with self.assertRaises(gd.DataError) as error:
-            gdd.get_divi_data(read_data=True, out_folder=self.path)
+            gdd.get_divi_data(self.path, read_data=True)
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)
 

@@ -37,9 +37,9 @@ from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getJHData as gjd
 
 
-def get_case_data_with_estimations(read_data=dd.defaultDict['read_data'],
+def get_case_data_with_estimations(data_folder,
+                                   read_data=dd.defaultDict['read_data'],
                                    file_format=dd.defaultDict['file_format'],
-                                   out_folder=dd.defaultDict['out_folder'],
                                    no_raw=dd.defaultDict['no_raw'],
                                    make_plot=dd.defaultDict['make_plot']):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
@@ -49,14 +49,14 @@ WARNING: This file is experimental and has not been tested.
     With this fraction every existing case data from RKI is scaled.
     The new columns recovered_estimated and deaths_estimated are added.
 
+    @param data_folder Folder where data is written to.
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param file_format json [Default]
-    @param out_folder Folder where data is written to.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param make_plot [Optional] case data from RKI and estimated data can be compared by plots
     """
 
-    data_path = os.path.join(out_folder, 'Germany/')
+    data_path = os.path.join(data_folder, 'Germany/')
 
     if not read_data:
         impute_dates = False
@@ -66,11 +66,11 @@ WARNING: This file is experimental and has not been tested.
 
         # get case data
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            data_path, read_data, file_format, no_raw, impute_dates,
             make_plot_cases, moving_average, no_raw, split_berlin)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gjd.get_jh_data(data_path, read_data, file_format, no_raw)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -379,8 +379,9 @@ def download_weekly_deaths_numbers(data_path):
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("cases_est")
-    get_case_data_with_estimations(**arg_dict)
+    get_case_data_with_estimations(path, **arg_dict)
 
 
 if __name__ == "__main__":

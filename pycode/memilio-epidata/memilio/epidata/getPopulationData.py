@@ -116,7 +116,7 @@ def get_new_counties(data):
     return data_temp
 
 
-def load_population_data(out_folder=dd.defaultDict['out_folder'],
+def load_population_data(data_folder,
                          read_data=dd.defaultDict['read_data'],
                          no_raw=dd.defaultDict['no_raw'],
                          file_format=dd.defaultDict['file_format']):
@@ -130,16 +130,16 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
    - Zensus2011 data from opendata splitted for age and gender
         [stored in "zensus"]
 
-   Data is either downloaded or read from "out_folder"/Germany/.
+   Data is either downloaded or read from "data_folder"/Germany/.
 
-   @param out_folder Path to folder where data is written in folder out_folder/Germany. Default defined in defaultDict.
+   @param data_folder Path to folder where data is written in folder data_folder/Germany.
    @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
    @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @return 3 Dataframes of migration, reg_key and zensus
     """
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
 
     filename_counties = 'migration'
@@ -222,9 +222,9 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     return counties, zensus, reg_key
 
 
-def get_population_data(read_data=dd.defaultDict['read_data'],
+def get_population_data(data_folder,
+                        read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
-                        out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
                         split_gender=False,
                         merge_eisenach=True):
@@ -247,7 +247,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
     krfr. Städte". 
 
-    Download the xlsx file and put it under dd.defaultDict['out_folder'], 
+    Download the xlsx file and put it under data_folder, 
     this normally is Memilio/data/pydata/Germany. 
     The folders 'pydata/Germany' have to be created if they do not exist yet. 
     Then this script can be run.
@@ -260,14 +260,14 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     represents the relative increase/decrease in population size
     between 2011 and 2019 for each county"
     This data can either be downloaded automatically or read from
-    "out_folder"/Germany/ if it was downloaded before.
+    "data_folder"/Germany/ if it was downloaded before.
 
+    @param data_folder Path to folder where data is written in folder
+        data_folder/Germany. 
     @param read_data False or True. Defines if data is read from file or
         downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data.
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder
-        out_folder/Germany. Default defined in defaultDict.
     @param no_raw True or False. Defines if unchanged raw data is written or
         not. Default defined in defaultDict.
     @param split_gender [Default: False] or True. Defines whether data is
@@ -277,7 +277,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         combined as one entity 'Wartburgkreis'.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
+    directory = os.path.join(data_folder, 'Germany')
+    gd.check_dir(directory)
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
     new_data_file = os.path.join(directory, filename)
     new_data_avail = os.path.isfile(new_data_file + '.xlsx')
@@ -409,9 +410,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         df_pop_export[dd.EngEng['population']
                       ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
-
         filename = 'county_current_population_dim401'
         gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
@@ -429,7 +427,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     else:
         counties, zensus, reg_key = load_population_data(
-            out_folder, read_data=read_data, no_raw=no_raw,
+            data_folder, read_data=read_data, no_raw=no_raw,
             file_format=file_format)
 
         # find region keys for census population data
@@ -520,9 +518,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         df_current = pd.DataFrame(
             np.round(data_current).astype(int), columns=columns)
 
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
-
         if merge_eisenach == True:
             # Merge Eisenach and Wartburgkreis
             df_current = geoger.merge_df_counties_all(
@@ -547,8 +542,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("population")
-    get_population_data(**arg_dict)
+    get_population_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

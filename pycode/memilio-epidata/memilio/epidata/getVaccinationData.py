@@ -488,9 +488,9 @@ def extrapolate_age_groups(
 
 # gets rki vaccination monitoring data for all states and extrapolates the values for counties according to their population
 # Missing ratio values for the two different age groups are also estimated
-def get_vaccination_data(read_data=dd.defaultDict['read_data'],
+def get_vaccination_data(data_folder,
+                         read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
-                         out_folder=dd.defaultDict['out_folder'],
                          no_raw=dd.defaultDict['no_raw'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
@@ -500,7 +500,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "data_folder"/Germany/.
     To store and change the data we use pandas.
 
     While working with the data
@@ -519,9 +519,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     - Start and end dates can be provided to define the length of the returned data frames.
 
+    @param data_folder Path to folder where data is written in folder data_folder/Germany.
     @param read_data False [Default]. Data is always downloaded from the internet.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
     @param no_raw True or False [Default]. Defines if raw data is saved or not.
     @param start_date [Default = '', taken from read data] Start date of stored data frames.
     @param end_date [Default = '', taken from read data] End date of stored data frames.
@@ -545,7 +545,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # data for all dates is automatically added
     impute_dates = True
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
 
     df_data = download_vaccination_data()
@@ -618,7 +618,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     except ValueError:
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
-            read_data=False, file_format=file_format, out_folder=out_folder,
+            data_folder, read_data=False, file_format=file_format,
             no_raw=no_raw, split_gender=False, merge_eisenach=True)
 
     min_age_pop = []
@@ -825,8 +825,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         # commuter inflow from other counties as first weight to distribute
         # vaccinations from vaccination county to extrapolated home counties
         neighbors_mobility = gcm.get_neighbors_mobility_all(
-            direction='in', abs_tol=10, merge_eisenach=True,
-            out_folder=out_folder)
+            data_folder, direction='in', abs_tol=10, merge_eisenach=True)
         df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(df_data_agevacc_county_cs, unique_age_groups_old,
             vacc_column_names, population_old_ages, neighbors_mobility)
         # compute the moving average
@@ -1046,8 +1045,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("vaccination")
-    get_vaccination_data(**arg_dict)
+    get_vaccination_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

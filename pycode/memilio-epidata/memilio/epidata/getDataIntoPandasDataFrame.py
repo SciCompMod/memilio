@@ -164,7 +164,6 @@ def cli(what):
     The following default arguments are added to the parser:
     - read-from-disk
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
-    - out_path
     - no_raw
     The default values are defined in default dict.
 
@@ -202,10 +201,6 @@ def cli(what):
     except KeyError:
         raise ValueError("Wrong key or cli_dict.")
 
-    out_path_default = dd.defaultDict['out_folder']
-
-    check_dir(out_path_default)
-
     parser = argparse.ArgumentParser(description=what_list[0])
     group = parser.add_mutually_exclusive_group()
 
@@ -220,9 +215,7 @@ def cli(what):
         choices=['json', 'hdf5', 'json_timeasstring'],
         help='Defines output format for data files. Default is \"' +
         str(dd.defaultDict['file_format'] + "\"."))
-    parser.add_argument('-o', '--out-folder', type=str,
-                        default=out_path_default,
-                        help='Defines folder for output.')
+
     parser.add_argument(
         '-n', '--no-raw', default=dd.defaultDict['no_raw'],
         help='Defines if raw data will be stored for further use.',

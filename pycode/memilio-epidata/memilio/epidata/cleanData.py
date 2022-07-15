@@ -211,10 +211,8 @@ def cli():
     - delete all
     - delete just cases, jh, population, divi, vaccination, commuter or testing
     - choose file format: json or hdf5
-    - define path to files
     """
 
-    out_path_default = dd.defaultDict['out_folder']
 
     parser = argparse.ArgumentParser()
 
@@ -247,15 +245,11 @@ def cli():
                         action='store_true')
     parser.add_argument('-tx', '--txt', help='Deletes txt files.', 
                         action='store_true')
-    parser.add_argument(
-        '-o', '--out_path', type=str, default=out_path_default,
-        help='Defines folder for output.')
-
     args = parser.parse_args()
 
     return_args = [args.all_data, args.cases, args.john_hopkins, args.population,
                    args.divi, args.vaccination, args.commuter, args.testing, 
-                   args.json, args.hdf5, args.txt, args.out_path]
+                   args.json, args.hdf5, args.txt]
 
     return return_args
 
@@ -263,8 +257,9 @@ def cli():
 def main():
     """! Main program entry."""
 
+    out_path = os.path.join(os.getcwd(), 'data', 'pydata')
     [all_data, cases, john_hopkins, population, divi,
-        vaccination, commuter, testing, json, hdf5, txt, out_path] = cli()
+        vaccination, commuter, testing, json, hdf5, txt] = cli()
 
     clean_data(all_data, cases, john_hopkins, population, divi,
                vaccination, commuter, testing, json, hdf5, txt, out_path)

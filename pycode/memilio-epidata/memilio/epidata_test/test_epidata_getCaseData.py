@@ -158,9 +158,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_read(self):
         # Test without downloading data
+        out_folder = self.path
         read_data = True
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -176,7 +176,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(directory, file)
 
         with self.assertRaises(FileNotFoundError) as error:
-            gcd.get_case_data(read_data, file_format, out_folder, no_raw,
+            gcd.get_case_data(out_folder, read_data, file_format, no_raw,
                               impute_dates, make_plot, moving_average,
                               split_berlin, rep_date)
 
@@ -191,7 +191,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, impute_dates, make_plot,
+            out_folder, read_data, file_format, impute_dates, make_plot,
             moving_average, no_raw, split_berlin, rep_date)
 
         # check if expected files are written
@@ -314,9 +314,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseData.gd.loadCsv')
     def test_get_case_data_download(self, mock_loadCsv, mock_loadGeojson):
         # Test with downloading data
+        out_folder = self.path
         read_data = False
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -339,7 +339,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             os.path.join(directory, "CaseDataNotFull.json"))
         with self.assertRaises(FileNotFoundError) as error:
             gcd.get_case_data(
-                read_data, file_format, out_folder, no_raw, impute_dates,
+                out_folder, read_data, file_format, no_raw, impute_dates,
                 make_plot, moving_average, split_berlin, rep_date)
         self.assertEqual(
             str(error.exception),
@@ -359,7 +359,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             os.path.join(directory, "CaseDataArcgis.json"))
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         mock_loadGeojson.assert_called()
@@ -407,9 +407,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             self, mock_loadCsv, mock_loadGeojson):
         # Test case with downloading data where first csv-source is incomplete and second one is used
         # and split_berlin = True
+        out_folder = self.path
         read_data = False
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -431,7 +431,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         mock_loadGeojson.return_value = pd.DataFrame()
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         mock_loadGeojson.assert_not_called()
@@ -505,9 +505,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     def test_get_case_data_read_moving_average(self):
         # Test without downloading data
 
+        out_folder = self.path
         read_data = True
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -524,7 +524,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         # check if expected files are written
@@ -686,9 +686,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_read_impute_dates(self):
         # Test without downloading data
+        out_folder = self.path
         read_data = True
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = True
         make_plot = False
@@ -705,7 +705,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         # check if expected files are written
@@ -816,9 +816,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     def test_get_case_data_read_moving_average_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
 
+        out_folder = self.path
         read_data = True
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -835,7 +835,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         # check if expected files are written (27  same number as with split_berlin=False)
@@ -866,9 +866,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_read_all_dates_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
+        out_folder = self.path
         read_data = True
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = True
         make_plot = False
@@ -885,7 +885,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         # check if expected files are written (27  same number as with split_berlin=False)
@@ -906,9 +906,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseData.gd.loadCsv')
     def test_no_raw(self, mock_loadCsv):
         # Test with downloading data
+        out_folder = self.path
         read_data = False
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = True
         impute_dates = False
         make_plot = False
@@ -924,7 +924,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             self.test_string_all_federal_states_and_counties_github)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         mock_loadCsv.assert_called()
@@ -970,9 +970,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseData.gd.cli')
     def test_main(self, mock_cli):
 
-        mock_cli.return_value = {"read_data": True,
+        mock_cli.return_value = {"out_folder": self.path,
+                                 "read_data": True,
                                  "file_format": 'json_timeasstring',
-                                 "out_folder": self.path,
                                  "impute_dates": False, "make_plot": False,
                                  "moving_average": 0, "split_berlin": False,
                                  "no_raw": False, "rep_date": False}
@@ -1003,9 +1003,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         mocklcsv.return_value = pd.read_json(
             self.test_string_all_federal_states_and_counties_github)
 
+        out_folder = self.path
         read_data = False
         file_format = 'json_timeasstring'
-        out_folder = self.path
         no_raw = False
         impute_dates = False
         make_plot = False
@@ -1017,7 +1017,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
 
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
+            out_folder, read_data, file_format, no_raw, impute_dates,
             make_plot, moving_average, split_berlin, rep_date)
 
         mocklcsv.assert_called()

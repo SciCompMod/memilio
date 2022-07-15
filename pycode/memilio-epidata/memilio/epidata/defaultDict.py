@@ -32,19 +32,9 @@ and of calling the console scripts the default values are the same
 import os
 from datetime import date
 
-default_file_path = os.path.dirname(os.path.abspath(__file__))
-# Divide the path at the Memilio subfolder. 
-# This prevents a changed out_folder by previous subfolders containing the name Memilio.
-# Since Windows ('\\') and Linux ('/') use different directory separators, we use os.sep
-dfp_vec = default_file_path.split(os.sep + 'memilio' + os.sep)
-if len(dfp_vec) > 0:
-    default_file_path = os.path.join(
-        dfp_vec[0], 'memilio', 'data', 'pydata')
-
 defaultDict = {
     'read_data': False,
     'make_plot': False,
-    'out_folder': default_file_path,
     'start_date': date(2020, 4, 24),
     'end_date': date.today(),
     'split_berlin': False,

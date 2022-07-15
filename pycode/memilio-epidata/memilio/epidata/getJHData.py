@@ -30,9 +30,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 
 
-def get_jh_data(read_data=dd.defaultDict['read_data'],
+def get_jh_data(data_folder,
+                read_data=dd.defaultDict['read_data'],
                 file_format=dd.defaultDict['file_format'],
-                out_folder=dd.defaultDict['out_folder'],
                 no_raw=dd.defaultDict['no_raw']):
     """! Download data from John Hopkins University
 
@@ -47,16 +47,16 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
        - Germany, SouthKorea, Spain, France, Italy, US, China
    - furthermore, all countries, for which provinces are added, are written to a file
 
+   @param data_folder Path to directory where data is written in. Here data_folder/Germany.
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
 
     filename = "FullData_JohnHopkins"
 
     if read_data:
-        file_in = os.path.join(out_folder, filename + ".json")
+        file_in = os.path.join(data_folder, filename + ".json")
         # if once dowloaded just read json file
         try:
             df = pandas.read_json(file_in)
@@ -77,7 +77,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
         # output data to not always download it
         if not no_raw:
-            gd.write_dataframe(df, out_folder, filename, "json")
+            gd.write_dataframe(df, data_folder, filename, "json")
 
     df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
     print("Available columns:", df.columns)
@@ -86,13 +86,13 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     df.loc[df['CountryRegion'] == "Korea, South", ['CountryRegion']] = 'SouthKorea'
 
     # Generate folders if needed
-    directory_ger = os.path.join(out_folder, 'Germany/')
-    directory_es = os.path.join(out_folder, 'Spain/')
-    directory_fr = os.path.join(out_folder, 'France/')
-    directory_it = os.path.join(out_folder, 'Italy/')
-    directory_us = os.path.join(out_folder, 'US/')
-    directory_rok = os.path.join(out_folder, 'SouthKorea/')
-    directory_prc = os.path.join(out_folder, 'China/')
+    directory_ger = os.path.join(data_folder, 'Germany/')
+    directory_es = os.path.join(data_folder, 'Spain/')
+    directory_fr = os.path.join(data_folder, 'France/')
+    directory_it = os.path.join(data_folder, 'Italy/')
+    directory_us = os.path.join(data_folder, 'US/')
+    directory_rok = os.path.join(data_folder, 'SouthKorea/')
+    directory_prc = os.path.join(data_folder, 'China/')
 
     # dictionary of countries
     countries = {
@@ -109,7 +109,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     gb = df.groupby(['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_countries_jh", file_format)
+    gd.write_dataframe(gb.reset_index(), data_folder, "all_countries_jh", file_format)
 
     for key in countries:
         # get data for specific countries
@@ -128,7 +128,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
         {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_provincestate_jh", file_format)
+    gd.write_dataframe(gb.reset_index(), data_folder, "all_provincestate_jh", file_format)
 
     # print(dfD[dfD.ProvinceState=="Saskatchewan"])
     # print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])
@@ -143,8 +143,9 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli("jh")
-    get_jh_data(**arg_dict)
+    get_jh_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

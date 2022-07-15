@@ -899,39 +899,14 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_cli_default(self):
 
-        out_path_default = dd.defaultDict['out_folder']
-
         test_args = ["prog"]
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
-
-            print([all_data, cases, jh, popul, hdf5, out_path])
-
-            self.assertEqual(all_data, False)
-            self.assertEqual(cases, False)
-            self.assertEqual(jh, False)
-            self.assertEqual(popul, False)
-            self.assertEqual(divi, False)
-            self.assertEqual(vacc, False)
-            self.assertEqual(commuter, False)
-            self.assertEqual(testing, False)
-            self.assertEqual(json, False)
-            self.assertEqual(hdf5, False)
-            self.assertEqual(txt, False)
-            self.assertEqual(out_path, out_path_default)
-
-    def test_cli_folder(self):
-
-        folder = "some_folder"
-        test_args = ["prog", '--out_path', folder]
-
-        with patch.object(sys, 'argv', test_args):
-
-            [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
+                
+            print([all_data, cases, jh, popul, hdf5])
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -944,18 +919,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
-            self.assertEqual(out_path, folder)
 
     def test_cli_all(self):
-
-        out_path_default = dd.defaultDict['out_folder']
 
         test_args = ["prog", '--all']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
 
             self.assertEqual(all_data, True)
             self.assertEqual(cases, False)
@@ -968,18 +940,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
-            self.assertEqual(out_path, out_path_default)
 
     def test_cli_cases(self):
-
-        out_path_default = dd.defaultDict['out_folder']
 
         test_args = ["prog", '--cases', '--txt']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, True)
@@ -992,18 +961,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, True)
-            self.assertEqual(out_path, out_path_default)
 
     def test_cli_jh(self):
-
-        out_path_default = dd.defaultDict['out_folder']
 
         test_args = ["prog", '-j', '--json', '--hdf5']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1016,18 +982,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
             self.assertEqual(txt, False)
-            self.assertEqual(out_path, out_path_default)
 
     def test_cli_popul(self):
-
-        out_path_default = dd.defaultDict['out_folder']
 
         test_args = ['prog', '--population', '-js', '-h5', '-tx']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1040,18 +1003,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
             self.assertEqual(txt, True)
-            self.assertEqual(out_path, out_path_default)
 
     def test_cli_divi_vacc_commuter_testing(self):
-
-        out_path_default = dd.defaultDict['out_folder']
 
         test_args = ['prog', '-d', '-v', '-co', '-t']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, json, hdf5, txt] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1064,7 +1024,6 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
-            self.assertEqual(out_path, out_path_default)
 
     def test_clean_divi_vacc_commuter_testing_json(self):
 

@@ -45,9 +45,9 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import modifyDataframeSeries
 
 
-def get_divi_data(read_data=dd.defaultDict['read_data'],
+def get_divi_data(data_folder,
+                  read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
-                  out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
                   end_date=dd.defaultDict['end_date'],
                   start_date=dd.defaultDict['start_date'],
@@ -58,7 +58,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
-    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If it does not already exist, the folder Germany is generated in the given data_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
 
@@ -69,10 +69,10 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
+    @param data_folder Folder where data is written to.
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
-    @param out_folder Folder where data is written to.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param start_date [Optional] Date of first date in dataframe. Default defined in defaultDict.
     @param end_date [Optional] Date of last date in dataframe. Default defined in defaultDict.
@@ -87,7 +87,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
               "You asked for " + start_date.strftime("%Y-%m-%d") + ".")
         start_date = date(2020, 4, 24)
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(data_folder, 'Germany/')
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
@@ -221,8 +221,9 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 def main():
     """ Main program entry."""
 
+    path = os.path.join(os.getcwd(), 'data', 'pydata')
     arg_dict = gd.cli('divi',)
-    get_divi_data(**arg_dict)
+    get_divi_data(path, **arg_dict)
 
 
 if __name__ == "__main__":

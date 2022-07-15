@@ -41,9 +41,9 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def test_get_call_sub_functions(self, mock_popul, mock_cases,
                                     mock_divi, mock_vaccination):
 
-        [read_data, file_format, out_folder, no_raw, end_date, impute_dates,
-         make_plot, moving_average, split_berlin, start_date] = [False,
-                                                                 "json_timeasstring", self.path,
+        [out_folder, read_data, file_format, no_raw, end_date, impute_dates,
+         make_plot, moving_average, split_berlin, start_date] = [self.path, False,
+                                                                 "json_timeasstring",
                                                                  False, dd.defaultDict['end_date'],
                                                                  dd.defaultDict['impute_dates'],
                                                                  dd.defaultDict['make_plot'],
@@ -52,13 +52,12 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
                                                                  dd.defaultDict['start_date']]
 
         gsd.get_simulation_data(
-            read_data, file_format, out_folder, no_raw, end_date, impute_dates,
+            out_folder, read_data, file_format, no_raw, end_date, impute_dates,
             make_plot, moving_average, split_berlin, start_date)
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],
             "file_format": dd.defaultDict['file_format'],
-            "out_folder": self.path,
             'no_raw': dd.defaultDict["no_raw"]}
 
         arg_dict_cases = {
@@ -78,16 +77,16 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "moving_average": dd.defaultDict['moving_average']}
 
         mock_popul.assert_called()
-        mock_popul.assert_called_with(**arg_dict_all)
+        mock_popul.assert_called_with(out_folder, **arg_dict_all)
 
         mock_cases.assert_called()
-        mock_cases.assert_called_with(**arg_dict_cases)
+        mock_cases.assert_called_with(out_folder, **arg_dict_cases)
 
         mock_divi.assert_called()
-        mock_divi.assert_called_with(**arg_dict_divi)
+        mock_divi.assert_called_with(out_folder, **arg_dict_divi)
 
         mock_vaccination.assert_called()
-        mock_vaccination.assert_called_with(**arg_dict_vaccination)
+        mock_vaccination.assert_called_with(out_folder, **arg_dict_vaccination)
 
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
@@ -101,7 +100,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         mock_cases.side_effect = Exception
         mock_divi.side_effect = Exception
         mock_vaccination.side_effect = Exception
-        gsd.get_simulation_data()
+        gsd.get_simulation_data(self.path)
         populprint = call(
             'Error: Something went wrong while getting ' + 'population' +
             ' data. This was likely caused by a changed file format'

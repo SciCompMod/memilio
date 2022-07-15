@@ -76,10 +76,7 @@ optional arguments working for all are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -h, --help                                  | show this help message and exit                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -r, --read-data                             | Reads the data from file "json" instead of downloading it.|
-+---------------------------------------------+-----------------------------------------------------------+
-| -o OUT_FOLDER,                              | Defines folder for output.                                |
-| --out-folder OUT_FOLDER                     |                                                           |
+| -r, --read-data                             | Reads the data from file "json" instead of downloading it.|               |                                                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ff {json,hdf5,json_timeasstring}           | Defines output format for data files.                     |
 | --file-format {json,hdf5,json_timeasstring} | Default is "json_timeasstring".                           |
