@@ -24,7 +24,7 @@
 """
 
 import os
-from datetime import datetime, date
+from datetime import date
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -78,12 +78,13 @@ WARNING: This file is experimental and has not been tested.
 
         # get case data
         gcd.get_case_data(
-            read_data, out_folder, no_raw, end_date, start_date, impute_dates,
-            moving_average, make_plot_cases, split_berlin, rep_date)
+            split_berlin, rep_date, read_data, file_format, out_folder, no_raw,
+            start_date, end_date, impute_dates, moving_average,
+            make_plot_cases)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, out_folder, no_raw, end_date,
-                        start_date, impute_dates, moving_average, make_plot_jh)
+        gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
+            start_date, end_date, impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data

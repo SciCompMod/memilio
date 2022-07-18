@@ -23,7 +23,7 @@ import pandas as pd
 import numpy as np
 from pyfakefs import fake_filesystem_unittest
 from datetime import date
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
     test_df1 = pd.DataFrame(
@@ -104,7 +104,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         mod_cols = ['test_col1', 'test_col3']
 
         # test impute forward and fill dates with moving average = 3
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df1, group_by_cols, mod_cols, impute='forward',
             moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=False)
@@ -127,7 +127,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col3'].item(), 1)
 
         # test impute zeros with moving average = 3
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df1, group_by_cols, mod_cols, impute='zeros',
             moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=False)
@@ -153,7 +153,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         # test fill missing dates moving average = 4
         # if moving average is an even number it always should calculate with one more earlier date
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df2, group_by_cols, mod_cols, impute='forward',
             moving_average=4, min_date='2021-01-06', max_date='2021-01-13',
             start_w_firstval=False)
@@ -175,7 +175,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         # test mod_cols = ['test_col1']. test_col3 should not be modified
         mod_cols = ['test_col1']
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df2, group_by_cols, mod_cols, impute='forward',
             moving_average=4, min_date='2021-01-06', max_date='2021-01-13',
             start_w_firstval=False)
@@ -194,7 +194,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         mod_cols = ['test_col1', 'test_col3']
         # test start date higher than end date
         # empty dataframe should be returned
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df1, group_by_cols, mod_cols, impute='forward',
             moving_average=4, min_date='2021-01-13', max_date='2021-01-06',
             start_w_firstval=False)
@@ -202,7 +202,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(edf),len(df))
 
         # test start_w_firstval = True
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             self.test_df1, group_by_cols, mod_cols, impute='forward',
             moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=True)
@@ -252,7 +252,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         column_vals_name = 'Anzahl'
         new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
         test_labels = new_col_labels.copy()
-        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+        returned_column_labels, df_split = mdfs.split_column_based_on_values(
             df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
 
         self.assertEqual(test_labels, returned_column_labels)
@@ -293,7 +293,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         # wrong amount for data
         new_col_labels_length_wrong = ['Vacc_partially', 'Vacc_completed']
         test_labels_length_wrong = new_col_labels_length_wrong.copy()
-        returned_column_labels_length_wrong, df_split_length_wrong = mDfS.split_column_based_on_values(
+        returned_column_labels_length_wrong, df_split_length_wrong = mdfs.split_column_based_on_values(
             df_to_split_length_wrong, column_ident, column_vals_name, groupby_list, new_col_labels_length_wrong, compute_cumsum=False)
 
         new_column_names_length_wrong = [
@@ -324,7 +324,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         column_vals_name = 'Anzahl'
         new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
         test_labels = new_col_labels.copy()
-        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+        returned_column_labels, df_split = mdfs.split_column_based_on_values(
             df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=True)
         # test returned labels
         self.assertEqual(test_labels, returned_column_labels)
@@ -344,27 +344,38 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
     def test_extract_subframe_based_on_dates(self):
         test_df = self.df_dates.copy()
         # test with start and end value in dataframe
-        extracted_df = mDfS.extract_subframe_based_on_dates(
-            self.df_dates, date(2022, 1, 3), date(2022, 1, 4))
+        extracted_df = mdfs.extract_subframe_based_on_dates(
+            self.df_dates, date(2022, 1, 3), date(2022, 1, 5))
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
         # check that input frame is not manipulated in the function
         pd.testing.assert_frame_equal(self.df_dates, test_df)
         # test with start and end value not in dataframe
-        extracted_df = mDfS.extract_subframe_based_on_dates(
-            self.df_dates, date(2022, 1, 2), date(2022, 1, 5))
-        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+        extracted_df = mdfs.extract_subframe_based_on_dates(
+            self.df_dates, date(2021, 1, 2), date(2023, 1, 5))
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates)
         pd.testing.assert_frame_equal(self.df_dates, test_df)
         # test with unsorted dataframe
-        extracted_df = mDfS.extract_subframe_based_on_dates(
+        extracted_df = mdfs.extract_subframe_based_on_dates(
             self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+
+    def test_extract_subframe_based_on_dates_moving_average(self):
+        test_df = self.date_df.copy()
+        # test extracted dates with moving average
+        extracted_ma_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,10), date(2021,9,13), moving_average=3)
+        extracted_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,9), date(2021,9,14))
+        pd.testing.assert_frame_equal(extracted_df, extracted_ma_df)
+        # test with even moving average
+        extracted_ma_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,10), date(2021,9,13), moving_average=4)
+        extracted_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,8), date(2021,9,14))
+        pd.testing.assert_frame_equal(extracted_df, extracted_ma_df)
 
 
     def test_insert_column_by_map(self):
         old_cols = self.test_df1.columns.to_list()
 
         #test with integer mapping
-        df = mDfS.insert_column_by_map(
+        df = mdfs.insert_column_by_map(
             self.test_df1, 'test_col3', 'inserted_col', self.int_map)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
@@ -375,7 +386,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_series_equal(df['inserted_col'], exp_new_col)
 
         # test with string mapping
-        df = mDfS.insert_column_by_map(
+        df = mdfs.insert_column_by_map(
             self.test_df1, 'test_col2', 'inserted_col', self.str_map)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
@@ -386,14 +397,14 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
     def test_extract_subframe_based_on_dates_single_date(self):
         # test if only dates from 2021-09-09 are returned
-        extracted_df = mDfS.extract_subframe_based_on_dates(
+        extracted_df = mdfs.extract_subframe_based_on_dates(
             self.date_df, date(2021, 9, 9),
             date(2021, 9, 9))
         pd.testing.assert_frame_equal(self.test_date_df2, extracted_df)
     
     def test_extract_subframe_based_on_dates_multiple_dates(self):
         # test if only dates from 2021-09-12 to 2021-09-14 are returned
-        extracted_df = mDfS.extract_subframe_based_on_dates(
+        extracted_df = mdfs.extract_subframe_based_on_dates(
             self.date_df, date(2021, 9, 12),
             date(2021, 9, 14))
         pd.testing.assert_frame_equal(self.test_date_df1, extracted_df)

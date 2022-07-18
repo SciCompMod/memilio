@@ -37,12 +37,11 @@ data explanation:
 
 import os
 import pandas as pd
-import numpy as np
-from datetime import date, timedelta
+from datetime import date
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
@@ -125,13 +124,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
     # extract dataframe with relevant dates for computing moving average
-    df = mDfS.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
+    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
     if (impute_dates == True) or (moving_average > 0):
-        df = mDfS.impute_and_reduce_df(
+        df = mdfs.impute_and_reduce_df(
             df,
             {dd.EngEng["idCounty"]: geoger.get_county_ids()},
             [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
@@ -147,7 +146,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df = geoger.insert_names_of_counties(df)
     
     # extract subframe of dates
-    mDfS.extract_subframe_based_on_dates(df, start_date, end_date)
+    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],

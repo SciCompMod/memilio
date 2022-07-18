@@ -27,7 +27,7 @@ import os
 import pandas
 from datetime import date
 
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 
@@ -96,7 +96,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     print("Available columns:", df.columns)
     
     # extract subframe of dates
-    df=mDfS.extract_subframe_based_on_dates(df, start_date, end_date)
+    df=mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
 
     # Change "Korea, South" to SouthKorea

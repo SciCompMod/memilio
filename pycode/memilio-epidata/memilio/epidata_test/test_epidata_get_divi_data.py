@@ -26,7 +26,7 @@ import pandas as pd
 
 from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 from unittest.mock import patch, call
 
 

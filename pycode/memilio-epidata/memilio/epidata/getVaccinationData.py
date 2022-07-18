@@ -17,8 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import date, datetime
-import time
+from datetime import datetime
 import os
 import itertools
 import pandas as pd
@@ -27,7 +26,7 @@ import numpy as np
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getPopulationData as gpd
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
@@ -557,7 +556,7 @@ def get_vaccination_data(sanitize_data=1,
         gd.write_dataframe(df_data, directory, "RKIVaccFull", "json")
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
-    df_data = mDfS.extract_subframe_based_on_dates(
+    df_data = mdfs.extract_subframe_based_on_dates(
         df_data, start_date, end_date, moving_average)
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
@@ -765,7 +764,7 @@ def get_vaccination_data(sanitize_data=1,
         moving_average_sanit = 0
         impute_sanit = 'zeros'
 
-    vacc_column_names, df_data_joined = mDfS.split_column_based_on_values(
+    vacc_column_names, df_data_joined = mdfs.split_column_based_on_values(
         df_data, "Impfschutz", "Number", groupby_list, vacc_column_names,
         compute_cumsum)
 
@@ -773,7 +772,7 @@ def get_vaccination_data(sanitize_data=1,
     # transform and write data frame resolved per county and age (with age
     # classes as provided in vaccination tables: 05-11, 12-17, 18-59, 60+)
 
-    df_data_agevacc_county_cs = mDfS.impute_and_reduce_df(
+    df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_joined,
             {dd.EngEng['idCounty']: df_data_joined[dd.EngEng['idCounty']].unique(),
              dd.EngEng['ageRKI']: unique_age_groups_old},
@@ -835,7 +834,7 @@ def get_vaccination_data(sanitize_data=1,
         df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(df_data_agevacc_county_cs, unique_age_groups_old,
             vacc_column_names, population_old_ages, neighbors_mobility)
         # compute the moving average
-        df_data_agevacc_county_cs = mDfS.impute_and_reduce_df(
+        df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_agevacc_county_cs,
             {dd.EngEng['idCounty']: df_data_agevacc_county_cs[dd.EngEng['idCounty']].unique(),
                 dd.EngEng['ageRKI']: unique_age_groups_old},

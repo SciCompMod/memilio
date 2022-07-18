@@ -37,7 +37,7 @@ from datetime import date
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import geoModificationGermany as geoger
 
 
@@ -249,7 +249,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     print("Available columns:", df.columns)
 
     # extract dataframe with relevant dates for computing moving average
-    df = mDfS.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
+    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
 
     ######## Data for whole Germany all ages ##########
 
@@ -270,12 +270,12 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbNF_cs.reset_index(),
             start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNF_cs = mDfS.impute_and_reduce_df(
+        gbNF_cs = mdfs.impute_and_reduce_df(
             gbNF_cs.reset_index(),
             {},
             ['Confirmed'],
@@ -284,7 +284,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbNF_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -307,12 +307,12 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbNT_cs.reset_index(),
             start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNT_cs = mDfS.impute_and_reduce_df(
+        gbNT_cs = mdfs.impute_and_reduce_df(
             gbNT_cs.reset_index(),
             {},
             ['Deaths'],
@@ -321,7 +321,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbNT_cs.reset_index(),
                 start_date, end_date),
             directory, prefix + filename, file_format)
@@ -348,12 +348,12 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbNF_cs.reset_index(),
             start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNF_cs = mDfS.impute_and_reduce_df(
+        gbNF_cs = mdfs.impute_and_reduce_df(
             gbNF_cs.reset_index(),
             {},
             ['Confirmed', 'Deaths', 'Recovered'],
@@ -362,7 +362,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbNF_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -381,11 +381,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbNFst_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNFst_cs = mDfS.impute_and_reduce_df(
+        gbNFst_cs = mdfs.impute_and_reduce_df(
             gbNFst_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed'],
@@ -394,7 +394,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbNFst_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -418,11 +418,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllSt_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllSt_cs = mDfS.impute_and_reduce_df(
+        gbAllSt_cs = mdfs.impute_and_reduce_df(
             gbAllSt_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed', 'Deaths', 'Recovered'],
@@ -431,7 +431,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllSt_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -461,11 +461,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(mDfS.extract_subframe_based_on_dates(
+    gd.write_dataframe(mdfs.extract_subframe_based_on_dates(
         gbNFc_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNFc_cs = mDfS.impute_and_reduce_df(
+        gbNFc_cs = mdfs.impute_and_reduce_df(
             gbNFc_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed'],
@@ -474,7 +474,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbNFc_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -495,11 +495,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllC_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllC_cs = mDfS.impute_and_reduce_df(
+        gbAllC_cs = mdfs.impute_and_reduce_df(
             gbAllC_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
@@ -508,7 +508,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllC_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -529,11 +529,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllG_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllG_cs = mDfS.impute_and_reduce_df(
+        gbAllG_cs = mdfs.impute_and_reduce_df(
             gbAllG_cs,
             {dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
@@ -542,7 +542,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllG_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -571,11 +571,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllGState_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllGState_cs = mDfS.impute_and_reduce_df(
+        gbAllGState_cs = mdfs.impute_and_reduce_df(
             gbAllGState_cs,
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
@@ -585,7 +585,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllGState_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -607,11 +607,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllGCounty_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllGCounty_cs = mDfS.impute_and_reduce_df(
+        gbAllGCounty_cs = mdfs.impute_and_reduce_df(
             gbAllGCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
@@ -621,7 +621,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllGCounty_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -641,11 +641,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllA_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllA_cs = mDfS.impute_and_reduce_df(
+        gbAllA_cs = mdfs.impute_and_reduce_df(
             gbAllA_cs,
             {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
@@ -654,7 +654,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllA_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -693,11 +693,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllAgeState_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllAgeState_cs = mDfS.impute_and_reduce_df(
+        gbAllAgeState_cs = mdfs.impute_and_reduce_df(
             gbAllAgeState_cs,
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
@@ -707,7 +707,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllAgeState_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 
@@ -729,11 +729,11 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
     else:
         filename_orig = filename
     gd.write_dataframe(
-        mDfS.extract_subframe_based_on_dates(
+        mdfs.extract_subframe_based_on_dates(
             gbAllAgeCounty_cs, start_date, end_date),
         directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllAgeCounty_cs = mDfS.impute_and_reduce_df(
+        gbAllAgeCounty_cs = mdfs.impute_and_reduce_df(
             gbAllAgeCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
@@ -743,7 +743,7 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
         if rep_date:
             filename = filename + '_repdate'
         gd.write_dataframe(
-            mDfS.extract_subframe_based_on_dates(
+            mdfs.extract_subframe_based_on_dates(
                 gbAllAgeCounty_cs, start_date, end_date),
             directory, prefix + filename, file_format)
 

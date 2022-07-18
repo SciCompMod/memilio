@@ -24,7 +24,7 @@ import io
 import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 
@@ -171,13 +171,14 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         df_test = [[], []]
 
         county_file_in = os.path.join(directory, filename_county + ".json")
-        state_file_in = os.path.join(directory, filename_state + ".json")
         try:
             df_test[0] = pd.read_json(county_file_in)
         except ValueError:
             raise FileNotFoundError("Error: The file: " + county_file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")
+                                  
+        state_file_in = os.path.join(directory, filename_state + ".json")
         try:
             df_test[1] = pd.read_json(state_file_in)
         except ValueError:
@@ -194,11 +195,6 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(
             df_test[1],
             directory, filename_state, "json")
-    
-    # extract dataframe with relevant dates for computing moving average
-    # df_test[0] = modifyDataframeSeries.extract_subframe_based_on_dates(df_test[0], start_date, end_date)
-    # df_test[1] = modifyDataframeSeries.extract_subframe_based_on_dates(df_test[1], start_date, end_date)
-
 
     # transform calender week to date by using Thursday ('-4')
     # of the corresponding calender week
@@ -231,14 +227,14 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                        == stateName, dd.EngEng['idState']] = stateID
 
     # set last values for missing dates via forward imputation
-    df_test[0] = modifyDataframeSeries.impute_and_reduce_df(
+    df_test[0] = mdfs.impute_and_reduce_df(
         df_test[0],
         {},
         [dd.EngEng['positiveRate']],
         impute='forward', moving_average=moving_average)
 
     # extract subframe of dates
-    df_test[0] = modifyDataframeSeries.extract_subframe_based_on_dates(
+    df_test[0] = mdfs.extract_subframe_based_on_dates(
         df_test[0], start_date, end_date)
     
     # store positive rates for the whole country
@@ -257,15 +253,15 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             "Germany_Testing_positive_rate")
 
     # set last values for missing dates via forward imputation
-    df_test[1] = modifyDataframeSeries.impute_and_reduce_df(
+    df_test[1] = mdfs.impute_and_reduce_df(
         df_test[1],
         {dd.EngEng["idState"]: [k for k in geoger.get_state_ids()]},
         [dd.EngEng['positiveRate']],
         impute='forward', moving_average=moving_average)
 
     # extract subframe of dates
-    df_test[0] = modifyDataframeSeries.extract_subframe_based_on_dates(
-        df_test[0], start_date, end_date)
+    df_test[1] = mdfs.extract_subframe_based_on_dates(
+        df_test[1], start_date, end_date)
     # store positive rates for the all federal states
     filename = 'germany_states_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)

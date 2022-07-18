@@ -91,7 +91,7 @@ int main()
     model.parameters.get<mio::DeathsPerICU>()                    = delta;
 
     model.apply_constraints();
-    
+
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
     bool print_to_terminal = true;

@@ -169,7 +169,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -333,7 +333,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -434,7 +434,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = True
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -537,7 +537,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = False
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -723,7 +723,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -858,7 +858,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = True
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -913,7 +913,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = True
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -958,7 +958,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 0
         split_berlin = False
         rep_date = False
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -1060,7 +1060,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         moving_average = 7
         split_berlin = False
         rep_date = True
-        start_date = date(2020, 4, 24)
+        start_date = date(2020, 1, 1)
         end_date = date.today()
 
         directory = os.path.join(out_folder, 'Germany/')
