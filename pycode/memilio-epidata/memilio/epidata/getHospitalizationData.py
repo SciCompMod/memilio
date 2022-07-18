@@ -34,7 +34,7 @@ from datetime import date, timedelta
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 def download_hospitalization_data():
     # RKI content from github
@@ -71,33 +71,37 @@ def sanity_checks(df):
             raise gd.DataError("Error: Data categories have changed.")
 
 def compute_hospitailzations_per_day(daily_values, seven_days_values):
-    if min(seven_days_values[6:])==0:
-        first_zero_index = list(seven_days_values[6:]).index(0)+6
-        backward=daily_values[:first_zero_index]
-        forward=daily_values[first_zero_index:]
+    to_split = seven_days_values.copy()
+    # start at first known value
+    for i in range(7,len(to_split)):
+        if to_split[i-1]<to_split[i]:
+            daily_values[i] = to_split[i]-to_split[i-1]
+            for day in range(7):
+                try:
+                    to_split[i+day]-=daily_values[i]
+                except IndexError:
+                    pass
+    # backward computation if necessary
+    if max(to_split)>0:
         last_seven_days=[0,0,0,0,0,0,0]
-        # backward calculation of hospitalizations from lowest value
-        for i in range(len(backward)-7):
+        backward = np.zeros(len(daily_values), dtype = float)
+        for i in range(len(daily_values)-7):
             last_seven_days.pop(0)
             last_seven_days.append(0)
-            backward[-7-i]=seven_days_values[first_zero_index-i-1]-sum(last_seven_days)
+            backward[-7-i]=to_split[-i-1]-sum(last_seven_days)
             last_seven_days[-1]=backward[-7-i]
-        # forward calculation of hospitalizations from lowest value
-        last_seven_days=[0,0,0,0,0,0,0]
-        for i in range(len(forward)):
-            last_seven_days.pop(0)
-            last_seven_days.append(0)
-            forward[i]=seven_days_values[i+first_zero_index]-sum(last_seven_days)
-            last_seven_days[-1]=forward[i]
-        daily_values = np.append(backward, forward)
-        # check that daily values are calculated correctly
-        if abs((sum(seven_days_values)+sum([last_seven_days[i+1]*(i+1) for i in range(len(last_seven_days)-1)]))/7 - sum(daily_values))>10**(-10):
-            print('Error '+str((sum(seven_days_values)+sum([last_seven_days[i+1]*(i+1) for i in range(len(last_seven_days)-1)]))/7 - sum(daily_values)))
-        if len(daily_values[daily_values<0])>0:
-            print('Error. Negative Hospitalizations found: '+ str(daily_values[daily_values<0]))
-    else: 
-        # TODO: Estimate number of hospitalizations
-        daily_values = seven_days_values/7
+        daily_values+=backward
+
+    # check that no negative hospitalizations get into the dataframe
+    if len(daily_values[daily_values<0])>0:
+        raise gd.DataError('Negative Hospitalizations found.')
+    # check that daily values are calculated correctly
+    check = np.zeros(len(daily_values)+7, dtype = float)
+    for i in range(len(daily_values)):
+        for day in range(7):
+            check[i+day]+=daily_values[i]
+    if sum(check[6:-7]-seven_days_values[6:])>0:
+        raise gd.DataError("Can't get hospitalizations per day from incidence.")
     
     return daily_values
 
@@ -140,8 +144,8 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     df_data = df_data[df_data[dd.EngEng['idState']]!=0]
     df_data = df_data[df_data[dd.EngEng['ageRKI']]!='00+']
     df_data = df_data.sort_values(by=['Date', 'ID_State', 'Age_RKI']).reset_index(drop=True)
-    # impute Missing Dates
-    df_data = mDfS.impute_and_reduce_df(
+    # impute 6 days before min_date to split up the seven day cases 
+    df_data = mdfs.impute_and_reduce_df(
         df_old=df_data,
         group_by_cols={dd.EngEng['idState']:
                        df_data[dd.EngEng['idState']].unique(),
@@ -167,6 +171,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
             df_age_stateid.drop(['7T_Hospitalisierung_Faelle'], axis = 1)
             df_daily = pd.concat([df_daily.reset_index(drop=True), df_age_stateid.reset_index(drop=True)], join='outer')
     # write dataframe with all states
+    df_daily = mdfs.extract_subframe_based_on_dates(df_daily, start_date, end_date)
     filename = gd.append_filename('hospit_all_states', impute_dates, moving_average=0)
     gd.write_dataframe(df_daily, directory, filename, file_format)
     
