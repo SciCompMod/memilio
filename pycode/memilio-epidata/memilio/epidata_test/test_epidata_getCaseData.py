@@ -970,15 +970,14 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseData.gd.cli')
     def test_main(self, mock_cli):
 
-        mock_cli.return_value = {"out_folder": self.path,
-                                 "read_data": True,
+        mock_cli.return_value = {"read_data": True,
                                  "file_format": 'json_timeasstring',
                                  "impute_dates": False, "make_plot": False,
                                  "moving_average": 0, "split_berlin": False,
                                  "no_raw": False, "rep_date": False}
 
-        out_folder = self.path
-        directory = os.path.join(out_folder, 'Germany/')
+        data_folder = self.path
+        directory = os.path.join(data_folder, 'Germany/')
         gd.check_dir(directory)
 
         # Test case where file does not exist
@@ -989,7 +988,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        gcd.main()
+        arg_dict = gd.cli("cases")
+        gcd.get_case_data(data_folder, **arg_dict)
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 14)
 
