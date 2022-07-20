@@ -32,13 +32,8 @@
 
 #include "boost/optional.hpp"
 #include <type_traits>
-
-#include <iostream>
-
-#include <exception>
 #include <stdexcept>
-#include <typeinfo>
-#include <stdexcept>
+
 
 namespace pymio
 {
