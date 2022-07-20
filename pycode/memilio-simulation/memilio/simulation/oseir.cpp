@@ -48,7 +48,6 @@ pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
     .value("Infected", mio::oseir::InfectionState::Infected)
     .value("Recovered", mio::oseir::InfectionState::Recovered);
 
-pymio::bind_CustomIndexArray<mio::UncertainValue, mio::oseir::InfectionState>(m, "PopulationArray");
 pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 
 using Populations = mio::Populations<mio::oseir::InfectionState>;

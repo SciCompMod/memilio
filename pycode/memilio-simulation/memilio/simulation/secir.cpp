@@ -169,7 +169,6 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Recovered", mio::InfectionState::Recovered)
         .value("Dead", mio::InfectionState::Dead);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::InfectionState>(m, "SecirPopulationArray");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
     pymio::bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
