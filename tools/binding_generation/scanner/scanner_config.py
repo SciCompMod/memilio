@@ -1,32 +1,27 @@
-class ScannerConfig:
-    def __init__(self):
-        self.python_module_name         = None
-        self.folder             = None
-        self.simulation_name    = None
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
+from subprocess import check_output
 
-    def set_python_module_name(self, python_module_name):
-        """
-        Set the name of the python module.
-        """
-        err = "module name must be a string"
-        if type(python_module_name) is not str: raise TypeError(err)
-        self.python_module_name = python_module_name
-        return
-        
-    def set_folder(self, folder):
-        """
-        Set the folder with the source code for the cpp model.
-        """
-        err = "namespace must be a string"
-        if type(folder) is not str: raise TypeError(err)
-        self.folder = folder
-        return
-    
-    def set_simulation_name(self, simulation_name):
-        """
-        Simulation name is the name of the class used for simulating a model with its namespace.
-        """
-        err = "simulation name must be a string"
-        if type(simulation_name) is not str: raise TypeError(err)
-        self.simulation_name = simulation_name
-        return
+from pyparsing import Optional
+
+@dataclass_json
+@dataclass
+class ScannerConfig:
+    libclang_library_path   : str
+    source_file             : str
+    path_database           : str
+    namespace               : str
+    optional                : dict = field(default_factory=dict)
+    model_name              : str  = field(init = False)
+    main_file               : str  = field(init = False)
+    parameterset_name       : str  = field(init = False)
+    project_path            : str  = field(init = False)
+
+    def __post_init__(self):
+        # Predefined Variables
+        self.model_name         = "Model"
+        self.parameterset_name  = "Parameters"
+        self.project_path       = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
+
+
+

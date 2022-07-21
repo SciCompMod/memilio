@@ -4,6 +4,7 @@ from clang.cindex import *
 import subprocess
 from subprocess import check_output, call
 import clang.cindex
+from dataclasses_json import config
 from generator.Model import Model
 from scanner.utility import *
 import tempfile
@@ -13,31 +14,26 @@ class Scanner:
     def __init__(self, conf):
         
         # Maybe use clang -v to get install dir from clang. Need to be same version
-        Config.set_library_file(conf["scanner_input"]["libclang_library_path"])
-        self.folder = conf["scanner_input"]["source_folder"]
-        self.parser_information = conf["parser_information"]
-        self.data_information = conf["data_information"]
-        self.database = conf["database"]
-        
+        self.config = conf
+        Config.set_library_file(self.config.libclang_library_path)
+
         self.ast = None
-        self.create_ast(self.database["main_file"])
+        self.create_ast()
         for dig in self.ast.diagnostics:
             print(dig)
         #output_cursor_and_children(list_ast[1].cursor)
 
-    def create_ast(self, file_name):
+    def create_ast(self):
         """
         Creates an Ast for a main .cpp file with database. Requires an compile_commands.json.
         Saves them in list_ast.
         """
         # look if folder exists
-        project_path = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + "/cpp/models/"
-        folder_path = project_path + self.folder
         idx = Index.create()
         
         file_args = []
-        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.database["path_database"])
-        commands = compdb.getCompileCommands(folder_path + "/" + file_name)
+        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.config.path_database)
+        commands = compdb.getCompileCommands(self.config.source_file)
         #file_args = ["clang++"]#, folder_path + "/" + file_name]
         for command in commands:
           for argument in command.arguments:
@@ -45,7 +41,7 @@ class Scanner:
                     file_args.append(argument)
         file_args = file_args[:-4]
 
-        clang_cmd = ["clang", folder_path + "/" + file_name, '-emit-ast', '-o', '-']
+        clang_cmd = ["clang", self.config.source_file, '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()
@@ -74,7 +70,7 @@ class Scanner:
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
         else:
-            self.check_node_kind(node, model, namespace)
+            self.check_node_kind_2(node, model, namespace)
         
         for n in node.get_children(): 
             self.find_node(n, model, namespace)
@@ -84,7 +80,7 @@ class Scanner:
         Checks the kind of node and calls the appropriate method for the given node kind.
         """
         kind = node.kind
-        if namespace != self.parser_information["namespace"]:
+        if namespace != self.config.namespace:
             pass
         elif kind == CursorKind.ENUM_DECL and node.spelling != "": # alternative self.folder in node.location.file.name:
             model.enum_dict[node.spelling] = []
@@ -93,26 +89,75 @@ class Scanner:
             model.enum_dict[key].append(key + "::" + node.spelling)
         elif kind == CursorKind.CLASS_DECL:
             self.check_class(node, model)
+        elif kind == CursorKind.CXX_BASE_SPECIFIER:
+            self.check_base_class(node, model)
         elif kind == CursorKind.CONSTRUCTOR:
             self.check_constructor(node, model)
         elif kind == CursorKind.STRUCT_DECL:
             self.check_struct(node, model)
 
+    def check_node_kind_2(self, node, model, namespace):
+        """
+        Checks the kind of node and calls the appropriate method for the given node kind.
+        """
+        switch = {
+            CursorKind.ENUM_DECL: self.check_enum,
+            CursorKind.ENUM_CONSTANT_DECL: self.check_enum_const,
+            CursorKind.CLASS_DECL: self.check_class,
+            CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
+            CursorKind.CONSTRUCTOR: self.check_constructor,
+            CursorKind.STRUCT_DECL: self.check_struct
+        }  
+
+        if namespace != self.config.namespace:
+            return
+        if switch.get(node.kind):
+            switch.get(node.kind)(node, model)
+
+    def check_enum(self, node, model):
+        if node.spelling != "": # alternative self.folder in node.location.file.name:
+            model.enum_dict[node.spelling] = []
+
+    def check_enum_const(self, node, model):
+        if node.semantic_parent.spelling in model.enum_dict.keys():
+            key = node.semantic_parent.spelling
+            model.enum_dict[key].append(key + "::" + node.spelling)
 
     def check_class(self, node, model):
         """
         Inspect the nodes of kind CLASS_DECL and writes needed informations into model.
         Informations: model.name, model.population_groups
         """
-        if node.spelling == self.parser_information["model_name"]:
+        if node.spelling == self.config.model_name:
             model.name = node.spelling
+            self.check_base_specifier(node, model)
             base_classes = self.get_base_class_string(node)
             for base_class in base_classes:
                 if base_class.startswith("CompartmentalModel:Populations:"):
                     model.population_groups.append(base_class.lstrip("CompartmentalModel:Populations:"))
-        elif self.parser_information["optional"].get("simulation_name") and node.spelling == self.parser_information["optional"].get("simulation_name"):
+        elif self.config.optional.get("simulation_name") and node.spelling == self.config.optional.get("simulation_name"):
             model.simulation_name = node.spelling
-        
+    
+    def check_base_specifier(self, node, model):
+
+        for c in node.get_children():
+            if c.kind != CursorKind.CXX_BASE_SPECIFIER:
+                continue
+            for base in c.get_children():
+                if base.kind == CursorKind.CLASS_TEMPLATE:
+                    if base.spelling == "Populations":
+                        print(base.tokens)
+                    elif base.spelling == self.config.parameterset_name:
+                        model.parameterset = base.spelling
+                    continue
+                if base.kind == CursorKind.TEMPLATE_REF:
+                    if base.spelling == "Populations":
+                        #print(base.get_definition().get_num_template_arguments())
+                        for ch in base.get_definition().get_children():
+                            pass
+                            #print(ch.spelling)
+                    elif base.spelling == self.config.parameterset_name:
+                        model.parameterset = base.spelling
     
     def check_constructor(self, node, model):
         """
@@ -130,13 +175,13 @@ class Scanner:
             model.init.append(init)
 
     def check_struct(self, node, model):
-        if self.parser_information["parameterset"] in node.location.file.name:
-            pass
+        #if self.config.parameterset_name in node.location.file.name:
+        pass
     
     def finalize(self, model):
-        for key, value in self.data_information.items():
-            model.set_attribute(key, value)
-        model.set_attribute("namespace", self.parser_information["namespace"])
+        #for key, value in self.config.items():
+        #    model.set_attribute(key, value)
+        model.set_attribute("namespace", self.config.namespace)
         
         #assert(model.name != None), "set a model name"
         #assert(model.namespace != None), "set a model name"
