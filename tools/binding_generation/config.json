@@ -1,23 +1,11 @@
 {
-    "scanner_input": {
-        "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
-        "source_folder": "ode_seir"
-    },
-    "database": {
-        "path_database": "/build",
-        "main_file": "model.cpp"
-    },
-    "parser_information": {
-        "model_name": "Model",
-        "parameterset": "Parameters",
-        "namespace": "mio::oseir::",
-        "optional": {
-            "simulation_name": "option",
-            "use_age_group": false
-        }
-    },
-    "data_information": {
+    "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
+    "source_file": "../../cpp/models/ode_seir/model.cpp",
+    "path_database": "/build",
+    "namespace": "mio::oseir::",
+    "optional": {
         "python_module_name": "test_oseir",
-        "parameterset": "Parameters"
+        "simulation_name": "option",
+        "use_age_group": false
     }
 }
