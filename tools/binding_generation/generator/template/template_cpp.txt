@@ -28,33 +28,30 @@ PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<${simulation_cla
 
 PYBIND11_MODULE(_simulation_${python_module_name}, m)
 {
-    ${enum_population_states}
+    ${enum_populations}
 
-    ${indexing}
-
+    ${parameterset_indexing}
     pymio::bind_ParameterSet<${namespace}Parameters>(m, "Parameters");
 
-    pymio::bind_Population${population_template_arguments}(m, "Population");
+    ${parameterset_wrapper}
 
-    using Populations = mio::Populations${population_template_arguments};
-    pymio::bind_CompartmentalModel<Populations, ${namespace}Parameters>(m, "ModelBase");
-    py::class_<${model_class}, mio::CompartmentalModel<Populations, ${namespace}Parameters>>(m, "${model_cpp_name}")
+    using Populations = ${population};
+    pymio::bind_Population(m, "Population", mio::Tag<${namespace}${model_class}::Populations>{});
+    ${age_group}
+    pymio::bind_CompartmentalModel<${model_base_templates}>(m, "${model_class}Base");
+    py::class_<${namespace}${model_class}, ${model_base}>(m, "${model_class}")
     ${model_init}
 
-    pymio::bind_Simulation<${simulation_class}>(m, "Simulation");
+    ${simulation}
 
     m.def(
         "simulate",
-        [](double t0, double tmax, double dt, const ${model_class}& model) {
+        [](double t0, double tmax, double dt, const ${namespace}${model_class}& model) {
             return mio::simulate(t0, tmax, dt, model);
         },
-        "Simulates a ${model_cpp_name} from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
-
-    pymio::bind_ModelNode<${model_class}>(m, "ModelNode");
-    pymio::bind_SimulationNode<${simulation_class}>(m, "SimulationNode");
-    pymio::bind_ModelGraph<${model_class}>(m, "ModelGraph");
-    pymio::bind_MigrationGraph<${simulation_class}>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<${simulation_class}>, mio::MigrationEdge>>(m, "MigrationSimulation");
+        "Simulates a ${model_class} from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+    
+    ${simulation_graph}
 
     m.attr("__version__") = "dev";
 }

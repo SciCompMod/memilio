@@ -69,102 +69,77 @@ class Scanner:
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
-        else:
-            self.check_node_kind_2(node, model, namespace)
+        elif namespace == self.config.namespace:
+            self.switch_node_kind(node.kind)(node, model)
         
         for n in node.get_children(): 
             self.find_node(n, model, namespace)
-    
-    def check_node_kind(self, node, model, namespace):
-        """
-        Checks the kind of node and calls the appropriate method for the given node kind.
-        """
-        kind = node.kind
-        if namespace != self.config.namespace:
-            pass
-        elif kind == CursorKind.ENUM_DECL and node.spelling != "": # alternative self.folder in node.location.file.name:
-            model.enum_dict[node.spelling] = []
-        elif kind == CursorKind.ENUM_CONSTANT_DECL and node.semantic_parent.spelling in model.enum_dict.keys():
-            key = node.semantic_parent.spelling
-            model.enum_dict[key].append(key + "::" + node.spelling)
-        elif kind == CursorKind.CLASS_DECL:
-            self.check_class(node, model)
-        elif kind == CursorKind.CXX_BASE_SPECIFIER:
-            self.check_base_class(node, model)
-        elif kind == CursorKind.CONSTRUCTOR:
-            self.check_constructor(node, model)
-        elif kind == CursorKind.STRUCT_DECL:
-            self.check_struct(node, model)
 
-    def check_node_kind_2(self, node, model, namespace):
+    def switch_node_kind(self, kind):
         """
-        Checks the kind of node and calls the appropriate method for the given node kind.
+        Returns the appropriate method for the given kind.
         """
         switch = {
             CursorKind.ENUM_DECL: self.check_enum,
             CursorKind.ENUM_CONSTANT_DECL: self.check_enum_const,
             CursorKind.CLASS_DECL: self.check_class,
+            CursorKind.CLASS_TEMPLATE: self.check_class,
             CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
             CursorKind.CONSTRUCTOR: self.check_constructor,
             CursorKind.STRUCT_DECL: self.check_struct
-        }  
-
-        if namespace != self.config.namespace:
-            return
-        if switch.get(node.kind):
-            switch.get(node.kind)(node, model)
+        }
+        return switch.get(kind, lambda *args: None)
 
     def check_enum(self, node, model):
-        if node.spelling != "": # alternative self.folder in node.location.file.name:
-            model.enum_dict[node.spelling] = []
+        if node.spelling.strip() != "": # alternative self.folder in node.location.file.name:
+            model.enum_populations[node.spelling] = []
 
     def check_enum_const(self, node, model):
-        if node.semantic_parent.spelling in model.enum_dict.keys():
+        if node.semantic_parent.spelling in model.enum_populations.keys():
             key = node.semantic_parent.spelling
-            model.enum_dict[key].append(key + "::" + node.spelling)
+            model.enum_populations[key].append(key + "::" + node.spelling)
 
     def check_class(self, node, model):
         """
         Inspect the nodes of kind CLASS_DECL and writes needed informations into model.
         Informations: model.name, model.population_groups
         """
-        if node.spelling == self.config.model_name:
-            model.name = node.spelling
+        if node.spelling == self.config.model_class:
+            model.model_class = node.spelling
             self.check_base_specifier(node, model)
-            base_classes = self.get_base_class_string(node)
-            for base_class in base_classes:
-                if base_class.startswith("CompartmentalModel:Populations:"):
-                    model.population_groups.append(base_class.lstrip("CompartmentalModel:Populations:"))
-        elif self.config.optional.get("simulation_name") and node.spelling == self.config.optional.get("simulation_name"):
-            model.simulation_name = node.spelling
+            if self.config.optional.get("age_group"):
+                self.check_age_group(node, model)
+        elif self.config.optional.get("simulation_class") and node.spelling == self.config.optional.get("simulation_class"):
+            model.simulation_class = node.spelling
     
     def check_base_specifier(self, node, model):
 
-        for c in node.get_children():
-            if c.kind != CursorKind.CXX_BASE_SPECIFIER:
+        for base in node.get_children():
+            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
-            for base in c.get_children():
-                if base.kind == CursorKind.CLASS_TEMPLATE:
-                    if base.spelling == "Populations":
-                        print(base.tokens)
-                    elif base.spelling == self.config.parameterset_name:
-                        model.parameterset = base.spelling
-                    continue
-                if base.kind == CursorKind.TEMPLATE_REF:
-                    if base.spelling == "Populations":
-                        #print(base.get_definition().get_num_template_arguments())
-                        for ch in base.get_definition().get_children():
-                            pass
-                            #print(ch.spelling)
-                    elif base.spelling == self.config.parameterset_name:
-                        model.parameterset = base.spelling
+            base_type = base.get_definition().type
+            model.model_base = get_base_class_string(base_type)
     
+    def check_age_group(self, node, model):
+
+        for base in node.get_children():
+            if base.kind != CursorKind.CXX_BASE_SPECIFIER:
+                continue
+            for base_template_arg in base.get_children():
+                if base_template_arg.kind == CursorKind.TYPE_REF and "AgeGroup" in base_template_arg.spelling:
+                    for child in base_template_arg.get_definition().get_children():
+                        if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+                            model.age_group["base"] = child.get_definition().type.spelling
+                        elif child.kind == CursorKind.CONSTRUCTOR:
+                            model.age_group["init"] = [arg.spelling for arg in child.type.argument_types()]
+                            
+
     def check_constructor(self, node, model):
         """
         Inspect the nodes of kind CONSTRUCTOR and writes needed informations into model.
         Informations: model.init
         """
-        if node.spelling == model.name:
+        if node.spelling == model.model_class:
             init = {"type" : [], "name" : []}
             for arg in node.get_arguments():
                 tokens = []
@@ -172,53 +147,31 @@ class Scanner:
                     tokens.append(token.spelling)
                 init["type"].append(" ".join(tokens[:-1]))
                 init["name"].append(tokens[-1])
-            model.init.append(init)
+            model.model_init.append(init)
 
     def check_struct(self, node, model):
         #if self.config.parameterset_name in node.location.file.name:
         pass
     
     def finalize(self, model):
-        #for key, value in self.config.items():
-        #    model.set_attribute(key, value)
+
+        # remove unnecesary enum
+        population_groups = []
+        for value in model.model_base[1:]:
+            if "Population" in value[0]:
+                population_groups = [pop[0].split("::")[-1] for pop in value[1:]]
+        model.population_groups = population_groups
+        new_enum = {}
+        for key in model.enum_populations:
+            if key in population_groups:
+                new_enum[key] = model.enum_populations[key]
+        model.enum_populations = new_enum
+
         model.set_attribute("namespace", self.config.namespace)
+        model.set_attribute("python_module_name", self.config.optional.get("python_module_name"))
         
         #assert(model.name != None), "set a model name"
         #assert(model.namespace != None), "set a model name"
-
-    @staticmethod
-    def get_base_class_string(node):
-        """
-        Input: node of kind CLASS_DECL
-        Returns the base class as a list of strings.
-        
-        Example: 
-            Model : Base<Template> {} 
-            returns ["Base", "Base:Template"]
-        """
-
-        if node.kind != CursorKind.CLASS_DECL:
-            return None
-        prefix = ""
-        is_base = False
-        result = []
-
-        for token in node.get_tokens():
-            if token.spelling == "{" or token.spelling == ";":
-                    return result 
-            if not is_base:
-                if token.spelling == ":":
-                    is_base = True
-                continue
-
-            if token.kind == TokenKind.IDENTIFIER:
-                result.append((prefix + ":" + token.spelling).lstrip(":"))
-            elif token.kind == TokenKind.PUNCTUATION:
-                if token.spelling == "<":
-                    prefix = result[-1]
-                elif token.spelling == ">":
-                    prefix = ":".join(prefix.split(":")[:-1])
-        return result
 
     def output_ast(self):
         """
