@@ -185,6 +185,7 @@ def cli(what):
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
                 "jh": ['Downloads data from Johns Hopkins University'],
+                "hospit": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "sim": ['Download all data needed for simulations', 'start_date', 'end_date',
                         'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
 

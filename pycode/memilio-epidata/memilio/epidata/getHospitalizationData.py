@@ -30,11 +30,12 @@ import os
 import pandas as pd
 import numpy as np
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import modifyDataframeSeries as mdfs
+
 
 def download_hospitalization_data():
     # RKI content from github
@@ -51,10 +52,12 @@ def download_hospitalization_data():
 
     return df
 
+
 def sanity_checks(df):
     #test if dataframe is empty
     if df.empty:
-        raise gd.DataError("Download of Vaccination Data failed. File is empty.")
+        raise gd.DataError(
+            "Download of Vaccination Data failed. File is empty.")
 
     actual_strings_list = df.columns.tolist()
     # check number of data categories
@@ -70,39 +73,41 @@ def sanity_checks(df):
         if(name not in actual_strings_list):
             raise gd.DataError("Error: Data categories have changed.")
 
+
 def compute_hospitailzations_per_day(daily_values, seven_days_values):
     to_split = seven_days_values.copy()
     # start at first known value
-    for i in range(7,len(to_split)):
-        if to_split[i-1]<to_split[i]:
+    for i in range(7, len(to_split)):
+        if to_split[i-1] < to_split[i]:
             daily_values[i] = to_split[i]-to_split[i-1]
             for day in range(7):
                 try:
-                    to_split[i+day]-=daily_values[i]
+                    to_split[i+day] -= daily_values[i]
                 except IndexError:
                     pass
     # backward computation if necessary
-    if max(to_split)>0:
-        last_seven_days=[0,0,0,0,0,0,0]
-        backward = np.zeros(len(daily_values), dtype = float)
+    if max(to_split) > 0:
+        last_seven_days = [0, 0, 0, 0, 0, 0, 0]
+        backward = np.zeros(len(daily_values), dtype=float)
         for i in range(len(daily_values)-7):
             last_seven_days.pop(0)
             last_seven_days.append(0)
-            backward[-7-i]=to_split[-i-1]-sum(last_seven_days)
-            last_seven_days[-1]=backward[-7-i]
-        daily_values+=backward
+            backward[-7-i] = to_split[-i-1]-sum(last_seven_days)
+            last_seven_days[-1] = backward[-7-i]
+        daily_values += backward
 
     # check that no negative hospitalizations get into the dataframe
-    if len(daily_values[daily_values<0])>0:
+    if len(daily_values[daily_values < 0]) > 0:
         raise gd.DataError('Negative Hospitalizations found.')
     # check that daily values are calculated correctly
-    check = np.zeros(len(daily_values)+7, dtype = float)
+    check = np.zeros(len(daily_values)+7, dtype=float)
     for i in range(len(daily_values)):
         for day in range(7):
-            check[i+day]+=daily_values[i]
-    if sum(check[6:-7]-seven_days_values[6:])>0:
-        raise gd.DataError("Can't get hospitalizations per day from incidence.")
-    
+            check[i+day] += daily_values[i]
+    if sum(check[6:-7]-seven_days_values[6:]) > 0:
+        raise gd.DataError(
+            "Can't get hospitalizations per day from incidence.")
+
     return daily_values
 
 
@@ -116,7 +121,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              moving_average=dd.defaultDict['moving_average'],
                              make_plot=dd.defaultDict['make_plot']
                              ):
-    impute_dates=True
+    impute_dates = True
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -138,13 +143,15 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
             gd.write_dataframe(df_raw, directory, filename, file_format)
     df_data = df_raw.copy()
     # drop unwanted columns and rows, rename and sort dataframe
-    df_data.rename(dd.GerEng, axis = 1, inplace = True)
+    df_data.rename(dd.GerEng, axis=1, inplace=True)
     df_data.rename(columns={'Datum': dd.EngEng['date']}, inplace=True)
     df_data = df_data.drop(columns=['State', '7T_Hospitalisierung_Inzidenz'])
-    df_data = df_data[df_data[dd.EngEng['idState']]!=0]
-    df_data = df_data[df_data[dd.EngEng['ageRKI']]!='00+']
-    df_data = df_data.sort_values(by=['Date', 'ID_State', 'Age_RKI']).reset_index(drop=True)
-    # impute 6 days before min_date to split up the seven day cases 
+    df_data = df_data.sort_values(
+        by=[dd.EngEng['date'],
+            dd.EngEng['idState'],
+            dd.EngEng['ageRKI']]).reset_index(
+        drop=True)
+    # impute 6 days before min_date to split up the seven day cases
     df_data = mdfs.impute_and_reduce_df(
         df_old=df_data,
         group_by_cols={dd.EngEng['idState']:
@@ -152,35 +159,71 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                        dd.EngEng['ageRKI']:
                        df_data[dd.EngEng['ageRKI']].unique()},
         mod_cols=['7T_Hospitalisierung_Faelle'],
-        impute='zeros', moving_average=0, min_date=pd.to_datetime(min(df_data.Date)).date()-timedelta(6), max_date='',
-        start_w_firstval=False)
+        impute='zeros', moving_average=0, min_date=pd.to_datetime(
+            min(df_data.Date)).date() - timedelta(6),
+        max_date='', start_w_firstval=False)
 
     # get data for each day
     # for each state and age group seperately
     df_daily = pd.DataFrame()
     for age in df_data[dd.EngEng['ageRKI']].unique():
-        df_age = df_data[df_data[dd.EngEng['ageRKI']]==age]
+        df_age = df_data[df_data[dd.EngEng['ageRKI']] == age]
         for stateid in df_data[dd.EngEng['idState']].unique():
-            df_age_stateid = df_age[df_age[dd.EngEng['idState']]==stateid].copy()
+            df_age_stateid = df_age[df_age[dd.EngEng['idState']]
+                                    == stateid].copy()
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
-            daily_values = np.zeros(len(seven_days_values), dtype = float)
-            daily_values = compute_hospitailzations_per_day(daily_values, seven_days_values)
+            daily_values = np.zeros(len(seven_days_values), dtype=float)
+            daily_values = compute_hospitailzations_per_day(
+                daily_values, seven_days_values)
             # save data in dataframe
-            df_age_stateid['hospitalized']=daily_values
-            df_age_stateid.drop(['7T_Hospitalisierung_Faelle'], axis = 1)
-            df_daily = pd.concat([df_daily.reset_index(drop=True), df_age_stateid.reset_index(drop=True)], join='outer')
+            df_age_stateid['hospitalized'] = daily_values
+            df_age_stateid = df_age_stateid.drop(
+                ['7T_Hospitalisierung_Faelle'], axis=1)
+            df_daily = pd.concat(
+                [df_daily.reset_index(drop=True),
+                 df_age_stateid.reset_index(drop=True)],
+                join='outer')
+
+    df_daily = mdfs.extract_subframe_based_on_dates(
+        df_daily, start_date, end_date)
     # write dataframe with all states
-    df_daily = mdfs.extract_subframe_based_on_dates(df_daily, start_date, end_date)
-    filename = gd.append_filename('hospit_all_states', impute_dates, moving_average=0)
-    gd.write_dataframe(df_daily, directory, filename, file_format)
-    
- 
+    # drop columns for states and all age groups
+    df_state_age = df_daily[df_daily[dd.EngEng['idState']] != 0]
+    df_state_age = df_state_age[df_state_age[dd.EngEng['ageRKI']] != '00+']
+    filename = gd.append_filename(
+        'hospit_state_age', impute_dates, moving_average=0)
+    gd.write_dataframe(df_state_age, directory, filename, file_format)
+    # write dataframe for germany and all age groups
+    df_germany_age = df_daily[df_daily[dd.EngEng['idState']] == 0]
+    df_germany_age = df_germany_age[
+        df_germany_age[dd.EngEng['ageRKI']] != '00+'].drop(
+        columns=[dd.EngEng['idState']])
+    filename = gd.append_filename(
+        'hospit_germany_age', impute_dates, moving_average=0)
+    gd.write_dataframe(df_germany_age, directory, filename, file_format)
+    # write dataframe for states and combined age groups
+    df_state = df_daily[df_daily[dd.EngEng['idState']] != 0]
+    df_state = df_state[df_state[dd.EngEng['ageRKI']] == '00+'].drop(
+        columns=[dd.EngEng['ageRKI']])
+    filename = gd.append_filename(
+        'hospit_state', impute_dates, moving_average=0)
+    gd.write_dataframe(df_state, directory, filename, file_format)
+    # write dataframe for germany and combined age groups
+    df_germany = df_daily[df_daily[dd.EngEng['idState']] == 0]
+    df_germany = df_germany[df_germany[dd.EngEng['ageRKI']] == '00+'].drop(
+        columns=[dd.EngEng['idState'],
+                 dd.EngEng['ageRKI']])
+    filename = gd.append_filename(
+        'hospit_germany', impute_dates, moving_average=0)
+    gd.write_dataframe(df_germany, directory, filename, file_format)
+
 
 def main():
     """! Main program entry."""
+    arg_dict = gd.cli('hospit')
+    get_hospitalization_data(**arg_dict)
 
-    get_hospitalization_data()
 
 if __name__ == "__main__":
 
