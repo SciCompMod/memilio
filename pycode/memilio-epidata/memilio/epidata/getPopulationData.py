@@ -25,6 +25,7 @@
 """
 
 import os
+from urllib.error import URLError
 import requests
 import io
 import numpy as np
@@ -188,7 +189,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         # A TimeoutError often occurs when downloading this file.
         # To handle this error, it is downloaded with requests.
         # This usually takes longer than reading it with pandas.
-        except TimeoutError:
+        except (URLError, TimeoutError):
             try: 
                 header = {'User-Agent': 'Mozilla/5.0'}
                 # Timeout after 60 seconds
