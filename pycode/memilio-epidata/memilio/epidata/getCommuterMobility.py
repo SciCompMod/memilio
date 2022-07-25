@@ -132,7 +132,6 @@ def get_commuter_data(setup_dict='',
                       file_format=dd.defaultDict['file_format'],
                       out_folder=dd.defaultDict['out_folder'],
                       no_raw=dd.defaultDict['no_raw'],
-                      moving_average=dd.defaultDict['moving_average'],
                       make_plot=dd.defaultDict['make_plot']):
     """! Computes DataFrame of commuter migration patterns based on the Federal
     Agency of Work data.
@@ -147,8 +146,6 @@ def get_commuter_data(setup_dict='',
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
     @param no_raw  [Currently not used] True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
-    @param moving_average  [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
     @param make_plot  [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @return df_commuter_migration DataFrame of commuter migration.
         df_commuter_migration[i][j]= number of commuters from county with county-id i to county with county-id j

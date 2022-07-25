@@ -46,6 +46,8 @@ def print_error(text):
 
 
 def get_simulation_data(split_berlin=dd.defaultDict['split_berlin'],
+                        rep_date=dd.defaultDict['rep_date'],
+                        sanitize_data=dd.defaultDict['sanitize_data'],
                         read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
@@ -81,17 +83,18 @@ def get_simulation_data(split_berlin=dd.defaultDict['split_berlin'],
     arg_dict_all = {
         "read_data": read_data, "file_format": file_format,
         "out_folder": out_folder, "no_raw": no_raw}
+    
+    arg_dict_data_download = {"start_date": start_date, "end_date": end_date,
+        "impute_dates": impute_dates, "moving_average": moving_average,
+        "make_plot": make_plot}
 
-    arg_dict_cases = {**arg_dict_all, "make_plot": make_plot,
-                    "impute_dates": impute_dates,
-                    "moving_average": moving_average,
-                    "split_berlin": split_berlin}
+    arg_dict_cases = {**arg_dict_all, **arg_dict_data_download,
+                      "rep_date": rep_date, "split_berlin": split_berlin}
 
-    arg_dict_divi = {**arg_dict_all, "end_date": end_date,
-                     "start_date": start_date, "moving_average": moving_average}
+    arg_dict_vacc = {**arg_dict_all, **arg_dict_data_download,
+                     "sanitize_data": sanitize_data}
 
-    arg_dict_vacc = {**arg_dict_all, "make_plot": make_plot,
-                     "moving_average": moving_average}
+    arg_dict_divi = {**arg_dict_all, **arg_dict_data_download}
 
     try:
         getCaseData.get_case_data(**arg_dict_cases)

@@ -166,7 +166,8 @@ def cli(what):
     - split_berlin
     - moving_average
     - impute_dates
-    - rep-date
+    - rep_date
+    - sanitize_data
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -177,16 +178,15 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "cases": ['Download case data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+                "cases": ['Download case data from RKI', 'split_berlin', 'rep_date', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'split_berlin', 'rep_date', 'start_date','end_date','impute_dates','moving_average','make_plot'],
                 "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "jh": ['Downloads data from Johns Hopkins University'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date',
-                        'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
+                "vaccination": ['Download vaccination data', 'sanitize_data', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+                "testing": ['Download testing data', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+                "sim": ['Download all data needed for simulations', 'rep_date', 'split_berlin', 'sanitize_data', 'start_date','end_date','impute_dates','moving_average','make_plot']}
 
     try:
         what_list = cli_dict[what]
@@ -257,6 +257,11 @@ def cli(what):
             'Default is 2020-04-24',
             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
             default=dd.defaultDict['start_date'])
+    if 'sanitize_data' in what_list:
+        parser.add_argument(
+            '-sd', '--sanitize_data', type=int, default=1,
+            help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
+        )
     args = parser.parse_args()
 
     return vars(args)

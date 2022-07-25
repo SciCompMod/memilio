@@ -22,7 +22,7 @@ from pyfakefs import fake_filesystem_unittest
 import os
 import sys
 from io import StringIO
-from unittest.mock import patch, call, mock_open
+from unittest.mock import patch, call
 from datetime import date, datetime
 import pandas as pd
 
@@ -249,9 +249,9 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         the_exception = error.exception
         self.assertEqual(str(the_exception), "Wrong key or cli_dict.")
 
+        # test wrong keys
         test_args = ["prog", '-f', 'wrong_format']
         with patch.object(sys, 'argv', test_args):
-
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
             self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
@@ -280,14 +280,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
-        test_args = ["prog", '--make-plot']
-        with patch.object(sys, 'argv', test_args):
-            with self.assertRaises(SystemExit) as cm:
-                gd.cli("divi")
-            self.assertRegexpMatches(
-                mock_stderr.getvalue(),
-                r"unrecognized arguments")
-
+        # test wrong date format
         test_args = ["prog", '--start-date', '2020,3,24']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
@@ -546,30 +539,30 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "file_format": dd.defaultDict['file_format'],
             "out_folder": os.path.join(dd.defaultDict['out_folder']),
             'no_raw': dd.defaultDict["no_raw"]}
-
-        arg_dict_vaccination = {
-            **arg_dict_all,
+        
+        arg_dict_data_download = {
+            "start_date": dd.defaultDict['start_date'],
             "end_date": dd.defaultDict['end_date'],
-            "make_plot": dd.defaultDict['make_plot'],
+            "impute_dates": dd.defaultDict['impute_dates'],
             "moving_average": dd.defaultDict['moving_average'],
-            "start_date": dd.defaultDict['start_date']}
-
-        arg_dict_cases_est = {**arg_dict_all,
-                              "make_plot": dd.defaultDict['make_plot']}
+            "make_plot": dd.defaultDict['make_plot']}
 
         arg_dict_cases = {
-            **arg_dict_all,
-            "impute_dates": dd.defaultDict['impute_dates'],
-            "make_plot": dd.defaultDict['make_plot'],
-            "moving_average": dd.defaultDict['moving_average'],
-            "split_berlin": dd.defaultDict['split_berlin'],
-            "rep_date": dd.defaultDict['rep_date']}
+            **arg_dict_all, **arg_dict_data_download,
+            "rep_date": dd.defaultDict['rep_date'],
+            "split_berlin": dd.defaultDict['split_berlin']}
 
         arg_dict_divi = {
-            **arg_dict_all, "end_date": dd.defaultDict['end_date'],
-            "impute_dates": dd.defaultDict['impute_dates'],
-            "moving_average": dd.defaultDict['moving_average'],
-            "start_date": dd.defaultDict['start_date']}
+            **arg_dict_all, **arg_dict_data_download}
+
+        arg_dict_vaccination = {
+            **arg_dict_all, **arg_dict_data_download,
+            "sanitize_data": dd.defaultDict['sanitize_data']}
+        
+        arg_dict_cases_est = {**arg_dict_cases}
+
+        arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
+
 
         getVaccinationData.main()
         mock_vaccination.assert_called()
@@ -593,7 +586,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         getJHData.main()
         mock_jh.assert_called()
-        mock_jh.assert_called_with(**arg_dict_all)
+        mock_jh.assert_called_with(**arg_dict_jh)
 
 
 if __name__ == '__main__':

@@ -485,7 +485,7 @@ def extrapolate_age_groups(
 
 # gets rki vaccination monitoring data for all states and extrapolates the values for counties according to their population
 # Missing ratio values for the two different age groups are also estimated
-def get_vaccination_data(sanitize_data=1,
+def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
                          read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'],

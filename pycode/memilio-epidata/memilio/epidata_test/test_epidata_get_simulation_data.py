@@ -63,22 +63,25 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "file_format": dd.defaultDict['file_format'],
             "out_folder": self.path,
             'no_raw': dd.defaultDict["no_raw"]}
-
-        arg_dict_cases = {
-            **arg_dict_all, "make_plot": dd.defaultDict['make_plot'],
+        
+        arg_dict_data_download = {
+            "start_date": dd.defaultDict['start_date'],
+            "end_date": dd.defaultDict['end_date'],
             "impute_dates": dd.defaultDict['impute_dates'],
             "moving_average": dd.defaultDict['moving_average'],
+            "make_plot": dd.defaultDict['make_plot']}
+
+        arg_dict_cases = {
+            **arg_dict_all, **arg_dict_data_download,
+            "rep_date": dd.defaultDict['rep_date'],
             "split_berlin": dd.defaultDict['split_berlin']}
 
         arg_dict_divi = {
-            **arg_dict_all, "end_date": dd.defaultDict['end_date'],
-            "start_date": dd.defaultDict['start_date'],
-            "moving_average": dd.defaultDict['moving_average']}
+            **arg_dict_all, **arg_dict_data_download}
 
         arg_dict_vaccination = {
-            **arg_dict_all,
-            "make_plot": dd.defaultDict['make_plot'],
-            "moving_average": dd.defaultDict['moving_average']}
+            **arg_dict_all, **arg_dict_data_download,
+            "sanitize_data": dd.defaultDict['sanitize_data']}
 
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
