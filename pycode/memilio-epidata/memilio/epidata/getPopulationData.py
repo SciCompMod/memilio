@@ -25,7 +25,8 @@
 """
 
 import os
-import sys
+import requests
+import io
 import numpy as np
 import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -184,9 +185,22 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         except ValueError:
             error_message = "Error: The counties file does not exist."
             raise FileNotFoundError(error_message)
-
+        # A TimeoutError often occurs when downloading this file.
+        # To handle this error, it is downloaded with requests.
+        # This usually takes longer than reading it with pandas.
+        except TimeoutError:
+            try: 
+                header = {'User-Agent': 'Mozilla/5.0'}
+                # Timeout after 60 seconds
+                r = requests.get(path_counties, headers=header, timeout=60)
+                with io.BytesIO(r.content) as fh:
+                    counties_file = pd.io.excel.ExcelFile(fh, engine='openpyxl')
+                    counties = pd.read_excel(
+                        counties_file, sheet_name=1, header=3, engine='openpyxl')
+            except ValueError:
+                error_message = "Error: The counties file does not exist."
+                raise FileNotFoundError(error_message)
         # Download zensus
-
         try:
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly

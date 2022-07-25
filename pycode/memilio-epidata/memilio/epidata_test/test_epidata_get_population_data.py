@@ -180,11 +180,13 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         # TODO: How to test hdf5 export?
 
+    @ patch('requests.get')
     @ patch('memilio.epidata.getPopulationData.gd.loadCsv')
     @ patch('memilio.epidata.getPopulationData.gd.loadExcel')
-    def test_errors(self, mocklexcel, mocklcsv):
+    def test_errors(self, mocklexcel, mocklcsv, rget):
         mocklexcel.side_effect = ValueError
         mocklcsv.side_effect = ValueError
+        rget.side_effect = None
 
         with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
@@ -198,6 +200,13 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         error_message = "Error: The zensus file does not exist."
         self.assertEqual(str(error.exception), error_message)
 
+        mocklexcel.side_effect = TimeoutError
+        mocklcsv.side_effect = None
+        rget.side_effect = ValueError
+        with self.assertRaises(FileNotFoundError) as error:
+            gpd.load_population_data(self.path)
+        error_message = "Error: The counties file does not exist."
+        self.assertEqual(str(error.exception), error_message)
 
 if __name__ == '__main__':
     unittest.main()

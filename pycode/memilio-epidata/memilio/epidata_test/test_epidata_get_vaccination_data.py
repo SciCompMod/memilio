@@ -97,14 +97,12 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    @unittest.skip
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
     def test_get_vaccination_data_alternative_ages_no_errors_with_plots(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
-    @unittest.skip
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     def test_get_standard_vaccination_sanitize_3(
