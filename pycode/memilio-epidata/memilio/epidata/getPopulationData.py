@@ -117,6 +117,14 @@ def get_new_counties(data):
     data_temp = data_temp[sorted_inds, :]
     return data_temp
 
+def request_excel_file(path):
+    header = {'User-Agent': 'Mozilla/5.0'}
+    # Timeout after 60 seconds
+    r = requests.get(path, headers=header, timeout=60)
+    df_file = pd.io.excel.ExcelFile(io.BytesIO(r.content), engine='openpyxl')
+    df = pd.read_excel(df_file, sheet_name=1, header=3, engine='openpyxl')
+
+    return df
 
 def load_population_data(out_folder=dd.defaultDict['out_folder'],
                          read_data=dd.defaultDict['read_data'],
@@ -179,34 +187,20 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     else:
         try:
             path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-            counties = gd.loadExcel(
-                targetFileName='', apiUrl=path_counties, extension='',
-                param_dict={"sheet_name": 1, "header": 3,
-                            "engine": 'openpyxl'})
+            # A TimeoutError often occurs when downloading this file.
+            # To handle this error, it is downloaded with requests.
+            # This usually takes longer than reading it with pandas.
+            counties = request_excel_file(path_counties)
         except ValueError:
             error_message = "Error: The counties file does not exist."
             raise FileNotFoundError(error_message)
-        # A TimeoutError often occurs when downloading this file.
-        # To handle this error, it is downloaded with requests.
-        # This usually takes longer than reading it with pandas.
-        except (URLError, TimeoutError):
-            try: 
-                header = {'User-Agent': 'Mozilla/5.0'}
-                # Timeout after 60 seconds
-                r = requests.get(path_counties, headers=header, timeout=60)
-                with io.BytesIO(r.content) as fh:
-                    counties_file = pd.io.excel.ExcelFile(fh, engine='openpyxl')
-                    counties = pd.read_excel(
-                        counties_file, sheet_name=1, header=3, engine='openpyxl')
-            except ValueError:
-                error_message = "Error: The counties file does not exist."
-                raise FileNotFoundError(error_message)
         # Download zensus
         try:
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
-                "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding":'utf_8_sig'})
+                "abad92e8eead46a4b0d252ee9438eb53_1",
+                param_dict={"encoding": 'utf_8_sig'})
         except ValueError:
             error_message = "Error: The zensus file does not exist."
             raise FileNotFoundError(error_message)

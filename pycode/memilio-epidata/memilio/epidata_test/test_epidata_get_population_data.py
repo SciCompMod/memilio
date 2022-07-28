@@ -155,12 +155,12 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(
             test_df.astype('int64'), self.test_current_population_gender_result)
 
-    @ patch('pandas.read_excel', return_value=test_counties)
+    @ patch('memilio.epidata.getPopulationData.request_excel_file', return_value=test_counties)
     @ patch('pandas.read_excel', return_value=test_reg_key)
     @ patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv',
             return_value=test_zensus)
     def test_load_population_data(
-            self, mock_read_excel1, mock_read_excel2, mock_read_csv):
+            self, mock_read_csv, mock_read_excel, mock_request_excel):
 
         directory = os.path.join(self.path, 'Germany/')
 
@@ -180,29 +180,28 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         # TODO: How to test hdf5 export?
 
-    @ patch('requests.get')
+    @ patch('memilio.epidata.getPopulationData.request_excel_file')
     @ patch('memilio.epidata.getPopulationData.gd.loadCsv')
     @ patch('memilio.epidata.getPopulationData.gd.loadExcel')
-    def test_errors(self, mocklexcel, mocklcsv, rget):
+    def test_errors(self, mocklexcel, mocklcsv, mockrequest):
         mocklexcel.side_effect = ValueError
         mocklcsv.side_effect = ValueError
-        rget.side_effect = None
+        mockrequest.side_effect = ValueError
 
         with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
         error_message = "Error: The counties file does not exist."
         self.assertEqual(str(error.exception), error_message)
 
-        mocklexcel.side_effect = None
+        mockrequest.side_effect = None
         mocklexcel.return_value = self.test_counties.copy()
         with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
         error_message = "Error: The zensus file does not exist."
         self.assertEqual(str(error.exception), error_message)
 
-        mocklexcel.side_effect = TimeoutError
         mocklcsv.side_effect = None
-        rget.side_effect = ValueError
+        mockrequest.side_effect = ValueError
         with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
         error_message = "Error: The counties file does not exist."
