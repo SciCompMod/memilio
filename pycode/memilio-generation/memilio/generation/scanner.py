@@ -1,47 +1,48 @@
 import os
 from os.path import exists
+from warnings import catch_warnings
 from clang.cindex import *
 import subprocess
 from subprocess import check_output, call
-import clang.cindex
 from dataclasses_json import config
-from generator.Model import Model
-from scanner.utility import *
+from memilio.generation import Model
+import memilio.generation.utility as Utility
 import tempfile
-import re
 
 class Scanner:
     def __init__(self, conf):
         
         # Maybe use clang -v to get install dir from clang. Need to be same version
         self.config = conf
-        Config.set_library_file(self.config.libclang_library_path)
-
+        
+        # Catch all exceptions besides the one. Important for testing, because library file gets set multiple times
+        try:
+            Config.set_library_file(self.config.libclang_library_path)
+        except Exception as e:
+            if str(e) != "library file must be set before before using any other functionalities in libclang." :
+                raise(e)
         self.ast = None
         self.create_ast()
         for dig in self.ast.diagnostics:
             print(dig)
-        #output_cursor_and_children(list_ast[1].cursor)
 
     def create_ast(self):
         """
         Creates an Ast for a main .cpp file with database. Requires an compile_commands.json.
         Saves them in list_ast.
         """
-        # look if folder exists
         idx = Index.create()
         
         file_args = []
-        compdb = CompilationDatabase.fromDirectory(check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1] + self.config.path_database)
-        commands = compdb.getCompileCommands(self.config.source_file)
-        #file_args = ["clang++"]#, folder_path + "/" + file_name]
+        compdb = CompilationDatabase.fromDirectory(self.config.project_path + self.config.path_database)
+        commands = compdb.getCompileCommands(self.config.project_path + self.config.source_file)
         for command in commands:
           for argument in command.arguments:
                 if argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++' and argument != "--driver-mode=g++":
                     file_args.append(argument)
         file_args = file_args[:-4]
 
-        clang_cmd = ["clang", self.config.source_file, '-emit-ast', '-o', '-']
+        clang_cmd = ["clang", self.config.project_path + self.config.source_file, '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()
@@ -57,7 +58,7 @@ class Scanner:
         Iterates over list of list_ast and calls find_node to visit all nodes of ast.
         """
         model = Model()
-        output_cursor(self.ast.cursor, 1)
+        Utility.output_cursor(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, model)
         self.finalize(model)
         return model
@@ -118,7 +119,7 @@ class Scanner:
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
             base_type = base.get_definition().type
-            model.model_base = get_base_class_string(base_type)
+            model.model_base = Utility.get_base_class_string(base_type)
     
     def check_age_group(self, node, model):
 
@@ -169,16 +170,18 @@ class Scanner:
 
         model.set_attribute("namespace", self.config.namespace)
         model.set_attribute("python_module_name", self.config.optional.get("python_module_name"))
+        model.set_attribute("target_folder", self.config.target_folder)
+        model.set_attribute("project_path", self.config.project_path)
         
-        #assert(model.name != None), "set a model name"
-        #assert(model.namespace != None), "set a model name"
+        assert(model.model_class != None), "set a model name"
+        assert(model.namespace != None), "set a model name_space"
 
     def output_ast(self):
         """
         Outputs the ast
         """
-        output_cursor_and_children(self.ast.cursor)
+        Utility.output_cursor_and_children(self.ast.cursor)
     
     def output_ast_file(self):
         with open('output_ast.txt', 'a') as f:
-            output_cursor_and_children_file(self.ast.cursor, f)
+            Utility.output_cursor_and_children_file(self.ast.cursor, f)

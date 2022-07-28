@@ -18,11 +18,13 @@ class ScannerConfig:
 
     def __post_init__(self):
         # Predefined Variables
-        #self.model_class         = "SecirModel"
-        #self.parameterset_name  = "SecirParamsBase"
-        self.model_class         = "Model"
-        self.parameterset_name  = "Parameters"
-        self.project_path       = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
+        #self.model_class            = "SecirModel"
+        #self.parameterset_name      = "SecirParamsBase"
+        self.model_class            = "Model"
+        self.parameterset_name      = "Parameters"
+        self.project_path           = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
+        print(self.project_path)
+        self.target_folder          = self.project_path + self.optional["target_folder"]
 
 
 

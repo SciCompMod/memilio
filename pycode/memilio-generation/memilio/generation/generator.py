@@ -1,6 +1,6 @@
 from statistics import mode
 import string
-import generator.template.template_string as StringTemplates
+import memilio.generation.template.template_string as StringTemplates
 
 class Generator:
     def __init__(self):
@@ -37,9 +37,9 @@ class Generator:
 
 
     def generate_files(self, model):
-        with open("./generator/template/template_py.txt") as t:
+        with open("./memilio/generation/template/template_py.txt") as t:
             template_py = string.Template(t.read())
-        with open("./generator/template/template_cpp.txt") as t:
+        with open("./memilio/generation/template/template_cpp.txt") as t:
             template_cpp = string.Template(t.read())
         
         output_py = template_py.safe_substitute(**self.substitutions_py)
@@ -47,7 +47,7 @@ class Generator:
 
         py_filename = model.python_module_name + ".py"
         cpp_filename = model.python_module_name + ".cpp"
-        with open(py_filename, "w") as output:
+        with open(model.target_folder + "/" + py_filename, "w") as output:
             output.write(output_py)
-        with open(cpp_filename, "w") as output:
+        with open(model.target_folder + "/" + cpp_filename, "w") as output:
             output.write(output_cpp)

@@ -7,6 +7,8 @@ class Model:
     python_module_name  : str   = None
     parameterset        : str   = None
     simulation_class    : str   = None
+    project_path        : str   = None
+    target_folder       : str   = None
     enum_populations    : dict  = field(default_factory=dict)
     model_init          : list  = field(default_factory=list)
     model_base          : list  = field(default_factory=list)

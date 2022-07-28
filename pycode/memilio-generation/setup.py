@@ -3,19 +3,10 @@ import os
 import subprocess
 from setuptools import setup, find_packages
 
-try:
-    from skbuild import setup
-except ImportError:
-    print('scikit-build is required to build from source.')
-    print('Installation:  python -m pip install scikit-build')
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "scikit-build"])
-    from skbuild import setup
-
 __version__ = '0.1.0'
 
 setup(
-    name='model_generation',
+    name='memilio-generation',
     version=__version__,
     author='DLR-SC',
     author_email='maximilian.betz@dlr.de',
@@ -28,10 +19,11 @@ setup(
         'matplotlib',
         'libclang',
         'clang',
+        'dataclasses_json',
     ],
     extras_require={
         'dev': ['numpy >= 1.21'],
     },
     long_description='',
-    test_suite='memilio.simulation_test',
+    test_suite='memilio.generation_test',
 )
