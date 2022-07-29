@@ -50,26 +50,26 @@ def parameter_study():
 
     #two regions with different populations and with some migration between them
     graph = secir.SecirModelGraph()
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Exposed)] = 100
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Carrier)] = 50
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Infected)] = 50
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Hospitalized)] = 20
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.ICU)] = 10 
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Recovered)] = 10
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Dead)] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Carrier] = 50
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Infected] = 50
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Hospitalized] = 20
+    model.populations[secir.AgeGroup(0), secir.InfectionState.ICU] = 10 
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 10
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup(secir.Index_Agegroup_InfectionState(
-        secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Susceptible)), 10000)
+        secir.AgeGroup(0), secir.InfectionState.Susceptible), 10000)
     model.apply_constraints()
     graph.add_node(id = 0, model = model) #copies the model into the graph
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Exposed)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Carrier)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Infected)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Hospitalized)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.ICU)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Recovered)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Dead)] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Carrier] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Infected] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Hospitalized] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.ICU] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup(secir.Index_Agegroup_InfectionState(
-        secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Susceptible)), 2000)
+        secir.AgeGroup(0), secir.InfectionState.Susceptible), 2000)
     model.apply_constraints()
     graph.add_node(id = 1, model = model)
     migration_coefficients = 0.1 * np.ones(8)
@@ -86,7 +86,7 @@ def parameter_study():
             result = node.property.result
             model = node.property.model
             print("  node {}".format(node_idx))
-            print("  initial carrier count {}.".format(model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Carrier)].value))
+            print("  initial carrier count {}.".format(model.populations[secir.AgeGroup(0), secir.InfectionState.Carrier].value))
             print("  compartments at t = {}:".format(result.get_time(0)))
             print("  ", result.get_value(0))
             print("  compartments at t = {}:".format(result.get_last_time()))
@@ -95,8 +95,7 @@ def parameter_study():
 
     #study with unknown number of undetected carriers
     carrier_distribution = mio.ParameterDistributionNormal(50, 2000, 200, 100)
-    graph.get_node(0).property.populations[secir.AgeGroup(0), secir.Index_InfectionState(
-        secir.InfectionState.Carrier)].set_distribution(carrier_distribution)
+    graph.get_node(0).property.populations[secir.AgeGroup(0), secir.InfectionState.Carrier].set_distribution(carrier_distribution)
     
     t0 = 0
     tmax = 50

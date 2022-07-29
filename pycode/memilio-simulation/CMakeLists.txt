@@ -52,3 +52,10 @@ pybind11_add_module(_simulation MODULE
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
 install(TARGETS _simulation LIBRARY DESTINATION memilio)
+
+pybind11_add_module(_simulation_oseir MODULE
+    memilio/simulation/oseir.cpp
+)
+target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
+target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
+install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)

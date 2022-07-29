@@ -83,11 +83,6 @@ public:
     /**
      * @brief Conversion to scalar by returning the scalar contained in UncertainValue
      */
-    operator ScalarType() const
-    {
-        return m_value;
-    }
-
     ScalarType value() const
     {
         return m_value;
@@ -97,6 +92,10 @@ public:
      * @brief Conversion to scalar reference by returning the scalar contained in UncertainValue
      */
     operator ScalarType&()
+    {
+        return m_value;
+    }
+    operator const ScalarType&() const
     {
         return m_value;
     }

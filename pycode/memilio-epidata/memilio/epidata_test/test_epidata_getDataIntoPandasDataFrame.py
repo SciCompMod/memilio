@@ -96,7 +96,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         expected_call = [
             call(
                 'https://opendata.arcgis.com/datasets/' +
-                "targetFileName" + '.csv', encoding=None)]
+                "targetFileName" + '.csv', sep=',',  header=0, encoding=None, dtype=None)]
         mock_csv.assert_has_calls(expected_call)
 
         assert df_test.empty
@@ -108,7 +108,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         expected_call = [
             call(
                 'https://opendata.arcgis.com/datasets/different/' +
-                "targetFileName" + '.notcsv', encoding=None)]
+                "targetFileName" + '.notcsv', sep=',',  header=0, encoding=None, dtype=None)]
         mock_csv.assert_has_calls(expected_call)
 
         assert df_test.empty
@@ -528,7 +528,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
         error_message = "Error: The file format: " + 'wrong' + \
-                        " does not exist. Use json, json_timeasstring or hdf5."
+                        " does not exist. Use json, json_timeasstring, hdf5 or txt."
         self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
