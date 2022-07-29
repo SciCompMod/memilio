@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 @dataclass
-class Model:
+class IntermediateRepresentation:
     namespace           : str   = None
     model_class         : str   = None
     python_module_name  : str   = None

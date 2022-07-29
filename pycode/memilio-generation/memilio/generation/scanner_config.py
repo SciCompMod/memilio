@@ -7,7 +7,6 @@ from pyparsing import Optional
 @dataclass_json
 @dataclass
 class ScannerConfig:
-    libclang_library_path   : str
     source_file             : str
     path_database           : str
     namespace               : str
@@ -23,8 +22,4 @@ class ScannerConfig:
         self.model_class            = "Model"
         self.parameterset_name      = "Parameters"
         self.project_path           = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
-        print(self.project_path)
         self.target_folder          = self.project_path + self.optional["target_folder"]
-
-
-

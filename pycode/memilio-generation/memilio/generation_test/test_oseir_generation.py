@@ -25,11 +25,11 @@ class TestOseirGeneration(unittest.TestCase):
 
     def setUp(self):
         config_json =   {
-                        "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
-                        "source_file": "../../cpp/models/ode_seir/model.cpp",
+                        "source_file": "/cpp/models/ode_seir/model.cpp",
                         "path_database": "/build",
                         "namespace": "mio::oseir::",
                         "optional": {
+                            "libclang_library_path": "",
                             "python_module_name": "generated_oseir",
                             "simulation_name": "",
                             "age_group": False,
@@ -40,17 +40,17 @@ class TestOseirGeneration(unittest.TestCase):
         self.scanner = Scanner(conf)
         
     def test_clean_oseir(self):
-        model = self.scanner.extract_results()
+        irdata = self.scanner.extract_results()
 
         generator = Generator()
-        generator.create_substitutions(model)
-        generator.generate_files(model)
+        generator.create_substitutions(irdata)
+        generator.generate_files(irdata)
 
-        with open(model.target_folder + "/generated_oseir.py") as result:
-            with open(model.target_folder + "/test_oseir.py.txt") as expected:
+        with open(irdata.target_folder + "/generated_oseir.py") as result:
+            with open(irdata.target_folder + "/test_oseir.py.txt") as expected:
                 self.assertMultiLineEqual(result.read(), expected.read())
-        with open(model.target_folder + "/generated_oseir.cpp") as result:
-            with open(model.target_folder + "/test_oseir.cpp.txt") as expected:
+        with open(irdata.target_folder + "/generated_oseir.cpp") as result:
+            with open(irdata.target_folder + "/test_oseir.cpp.txt") as expected:
                 self.assertMultiLineEqual(result.read(), expected.read())
 
     def test_wrong_model_name(self):

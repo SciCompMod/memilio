@@ -1,26 +1,26 @@
 [
     {
-        "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
         "source_file": "/cpp/models/ode_seir/model.cpp",
         "path_database": "/build",
         "namespace": "mio::oseir::",
         "optional": {
+            "libclang_library_path": "",
             "python_module_name": "test_oseir",
             "simulation_name": "",
             "age_group": false,
-            "target_folder": "/pycode/memilio-generation/tools"
+            "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
     },
     {
-        "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
         "source_file": "/cpp/models/secir/secir.cpp",
         "path_database": "/build",
         "namespace": "mio::",
         "optional": {
+            "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
             "python_module_name": "test_secir",
             "simulation_class": "SecirSimulation",
             "age_group": true,
-            "target_folder": "/pycode/memilio-generation/tools"
+            "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
     }
 ]

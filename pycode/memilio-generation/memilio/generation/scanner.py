@@ -5,30 +5,23 @@ from clang.cindex import *
 import subprocess
 from subprocess import check_output, call
 from dataclasses_json import config
-from memilio.generation import Model
+from memilio.generation import IntermediateRepresentation
 import memilio.generation.utility as Utility
 import tempfile
 
 class Scanner:
     def __init__(self, conf):
         
-        # Maybe use clang -v to get install dir from clang. Need to be same version
+        # Maybe use clang -v to get install dir from clang. 
+        # Need to be same version as libclang
         self.config = conf
-        
-        # Catch all exceptions besides the one. Important for testing, because library file gets set multiple times
-        try:
-            Config.set_library_file(self.config.libclang_library_path)
-        except Exception as e:
-            if str(e) != "library file must be set before before using any other functionalities in libclang." :
-                raise(e)
+        Utility.try_set_libclang_path(self.config.optional.get("libclang_library_path"))
         self.ast = None
         self.create_ast()
-        for dig in self.ast.diagnostics:
-            print(dig)
 
     def create_ast(self):
         """
-        Creates an Ast for a main .cpp file with database. Requires an compile_commands.json.
+        Creates an AST for a main .cpp file with database. Requires an compile_commands.json.
         Saves them in list_ast.
         """
         idx = Index.create()
@@ -54,16 +47,16 @@ class Scanner:
 
     def extract_results(self):
         """
-        Extracts the information of the asts and saves them in the data class model.
+        Extracts the information of the asts and saves them in the data class intermed_repr.
         Iterates over list of list_ast and calls find_node to visit all nodes of ast.
         """
-        model = Model()
+        intermed_repr = IntermediateRepresentation()
         Utility.output_cursor(self.ast.cursor, 1)
-        self.find_node(self.ast.cursor, model)
-        self.finalize(model)
-        return model
+        self.find_node(self.ast.cursor, intermed_repr)
+        self.finalize(intermed_repr)
+        return intermed_repr
 
-    def find_node(self, node, model, namespace = ""):
+    def find_node(self, node, intermed_repr, namespace = ""):
         """
         Recursively walks over every node of an ast. Saves the namespace the node is in.
         Calls check_node_kind for extracting information out of the nodes.
@@ -71,10 +64,10 @@ class Scanner:
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
         elif namespace == self.config.namespace:
-            self.switch_node_kind(node.kind)(node, model)
+            self.switch_node_kind(node.kind)(node, intermed_repr)
         
         for n in node.get_children(): 
-            self.find_node(n, model, namespace)
+            self.find_node(n, intermed_repr, namespace)
 
     def switch_node_kind(self, kind):
         """
@@ -91,37 +84,37 @@ class Scanner:
         }
         return switch.get(kind, lambda *args: None)
 
-    def check_enum(self, node, model):
+    def check_enum(self, node, intermed_repr):
         if node.spelling.strip() != "": # alternative self.folder in node.location.file.name:
-            model.enum_populations[node.spelling] = []
+            intermed_repr.enum_populations[node.spelling] = []
 
-    def check_enum_const(self, node, model):
-        if node.semantic_parent.spelling in model.enum_populations.keys():
+    def check_enum_const(self, node, intermed_repr):
+        if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
-            model.enum_populations[key].append(key + "::" + node.spelling)
+            intermed_repr.enum_populations[key].append(key + "::" + node.spelling)
 
-    def check_class(self, node, model):
+    def check_class(self, node, intermed_repr):
         """
-        Inspect the nodes of kind CLASS_DECL and writes needed informations into model.
-        Informations: model.name, model.population_groups
+        Inspect the nodes of kind CLASS_DECL and writes needed informations into intermed_repr.
+        Informations: intermed_repr.model_class, intermed_repr.population_groups
         """
         if node.spelling == self.config.model_class:
-            model.model_class = node.spelling
-            self.check_base_specifier(node, model)
+            intermed_repr.model_class = node.spelling
+            self.check_base_specifier(node, intermed_repr)
             if self.config.optional.get("age_group"):
-                self.check_age_group(node, model)
+                self.check_age_group(node, intermed_repr)
         elif self.config.optional.get("simulation_class") and node.spelling == self.config.optional.get("simulation_class"):
-            model.simulation_class = node.spelling
+            intermed_repr.simulation_class = node.spelling
     
-    def check_base_specifier(self, node, model):
+    def check_base_specifier(self, node, intermed_repr):
 
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
             base_type = base.get_definition().type
-            model.model_base = Utility.get_base_class_string(base_type)
+            intermed_repr.model_base = Utility.get_base_class_string(base_type)
     
-    def check_age_group(self, node, model):
+    def check_age_group(self, node, intermed_repr):
 
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -130,17 +123,17 @@ class Scanner:
                 if base_template_arg.kind == CursorKind.TYPE_REF and "AgeGroup" in base_template_arg.spelling:
                     for child in base_template_arg.get_definition().get_children():
                         if child.kind == CursorKind.CXX_BASE_SPECIFIER:
-                            model.age_group["base"] = child.get_definition().type.spelling
+                            intermed_repr.age_group["base"] = child.get_definition().type.spelling
                         elif child.kind == CursorKind.CONSTRUCTOR:
-                            model.age_group["init"] = [arg.spelling for arg in child.type.argument_types()]
+                            intermed_repr.age_group["init"] = [arg.spelling for arg in child.type.argument_types()]
                             
 
-    def check_constructor(self, node, model):
+    def check_constructor(self, node, intermed_repr):
         """
-        Inspect the nodes of kind CONSTRUCTOR and writes needed informations into model.
-        Informations: model.init
+        Inspect the nodes of kind CONSTRUCTOR and writes needed informations into intermed_repr.
+        Informations: intermed_repr.init
         """
-        if node.spelling == model.model_class:
+        if node.spelling == intermed_repr.model_class:
             init = {"type" : [], "name" : []}
             for arg in node.get_arguments():
                 tokens = []
@@ -148,33 +141,33 @@ class Scanner:
                     tokens.append(token.spelling)
                 init["type"].append(" ".join(tokens[:-1]))
                 init["name"].append(tokens[-1])
-            model.model_init.append(init)
+            intermed_repr.model_init.append(init)
 
-    def check_struct(self, node, model):
+    def check_struct(self, node, intermed_repr):
         #if self.config.parameterset_name in node.location.file.name:
         pass
     
-    def finalize(self, model):
+    def finalize(self, intermed_repr):
 
         # remove unnecesary enum
         population_groups = []
-        for value in model.model_base[1:]:
+        for value in intermed_repr.model_base[1:]:
             if "Population" in value[0]:
                 population_groups = [pop[0].split("::")[-1] for pop in value[1:]]
-        model.population_groups = population_groups
+        intermed_repr.population_groups = population_groups
         new_enum = {}
-        for key in model.enum_populations:
+        for key in intermed_repr.enum_populations:
             if key in population_groups:
-                new_enum[key] = model.enum_populations[key]
-        model.enum_populations = new_enum
+                new_enum[key] = intermed_repr.enum_populations[key]
+        intermed_repr.enum_populations = new_enum
 
-        model.set_attribute("namespace", self.config.namespace)
-        model.set_attribute("python_module_name", self.config.optional.get("python_module_name"))
-        model.set_attribute("target_folder", self.config.target_folder)
-        model.set_attribute("project_path", self.config.project_path)
+        intermed_repr.set_attribute("namespace", self.config.namespace)
+        intermed_repr.set_attribute("python_module_name", self.config.optional.get("python_module_name"))
+        intermed_repr.set_attribute("target_folder", self.config.target_folder)
+        intermed_repr.set_attribute("project_path", self.config.project_path)
         
-        assert(model.model_class != None), "set a model name"
-        assert(model.namespace != None), "set a model name_space"
+        assert(intermed_repr.model_class != None), "set a model name"
+        assert(intermed_repr.namespace != None), "set a model name_space"
 
     def output_ast(self):
         """
