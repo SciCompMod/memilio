@@ -43,10 +43,6 @@ public:
     {
         return m_active;
     }
-    void set_active_status(const bool active)
-    {
-        m_active = active;
-    }
 
 private:
     std::vector<TestRule> m_test_rules = {};
@@ -80,9 +76,9 @@ public:
         m_probability = p;
     }
 
-    bool active_status(TimePoint t) const
+    bool get_active_status() const
     {
-        return;
+        return m_active_status;
     }
 
 private:
@@ -92,6 +88,7 @@ private:
 
     std::pair<TimeSpan, TimeSpan> m_time_interval; // Time Span where this test is active.
     double m_probability; // Probability that a given person actually tests themself.
+    bool m_active_status = true;
     LocalTestingParameters m_testing_parameters; // Local testing parameters.
 }
 

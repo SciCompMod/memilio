@@ -41,12 +41,16 @@ TestingScheme::add_rule(const TestRule& rule)
 
 TestingScheme::check_rules_for_activeness() const
 {
+    m_active = false;
     for (const TestRule& rule : m_test_rules) {
         if (rule.get_active_status()) {
             m_active = true;
         }
     }
-    m_active = false;
+}
+
+TestingScheme::run_scheme(const Person& person, const Time& time, const LocationType& location_type)
+{
 }
 
 } // namespace abm

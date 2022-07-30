@@ -66,10 +66,10 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /** 
      * prepare the world for the next simulation step.
@@ -186,12 +186,15 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    TestingScheme& add_testing_scheme(TestingScheme testing_scheme);
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
+    std::vector<TestingScheme> m_testin_schemes;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
