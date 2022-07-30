@@ -233,7 +233,19 @@ struct TestParameters {
     double specificity;
 };
 
-struct AntigenTest {
+struct GenericTest {
+    using Type = TestParameters;
+    static Type get_default()
+    {
+        return Type{0.5, 0.5};
+    }
+    static std::string name()
+    {
+        return "GenericTest";
+    }
+};
+
+struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static constexpr Type get_default()
     {
@@ -245,10 +257,27 @@ struct AntigenTest {
     }
 };
 
+struct PCRTest : public GenericTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.9, 0.99};
+    }
+    static std::string name()
+    {
+        return "PCRTest";
+    }
+};
+
 /**
  * parameters of the testing that are the same everywhere in the world.
  */
 using GlobalTestingParameters = ParameterSet<AntigenTest>;
+
+/**
+ * parameters of the testing that are the local to the testinRule.
+ */
+using LocalTestingParameters = ParameterSet<GenericTest>;
 
 /**
  * parameters that govern the migration between locations.
