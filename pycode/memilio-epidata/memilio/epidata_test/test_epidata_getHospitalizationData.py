@@ -124,17 +124,17 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
     def test_compute_hospitailzations_per_day(self):
         # test constant input array
         inputarray_c = self.array_to_test_constant
-        result_c = ghd.compute_hospitailzations_per_day(inputarray_c)
+        result_c = ghd.get_hospitailzations_per_day(inputarray_c)
         self.assertEqual(list(result_c), self.output_constant)
 
         # test standart input
         inputarray_s = self.array_to_test_standart
-        result_s = ghd.compute_hospitailzations_per_day(inputarray_s)
+        result_s = ghd.get_hospitailzations_per_day(inputarray_s)
         self.assertEqual(list(result_s), self.output_standart)
 
         # test random input
         inputarray_r = self.array_to_test_random
-        result_r = ghd.compute_hospitailzations_per_day(inputarray_r)
+        result_r = ghd.get_hospitailzations_per_day(inputarray_r)
         # for random inputs the values in the result doesn't necessarily have to be integers.
         # Therefore we check the 7 day sum:
         control_sum = np.array([0. for i in range(len(result_r))])
