@@ -21,13 +21,12 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
-#include "abm/age.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
-#include "abm/testing_scheme.h"
 #include "abm/trip_list.h"
+#include "abm/testing_scheme.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -186,12 +185,17 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    void add_testing_scheme(const TestingScheme& testing_scheme);
+    const std::vector<TestingScheme>& get_testing_schemes() const;
+    void set_testing_schemes(const std::vector<TestingScheme> testing_schemes);
+    
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
-
+    
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
+    std::vector<TestingScheme> m_testing_schemes;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;

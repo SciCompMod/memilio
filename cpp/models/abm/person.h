@@ -24,8 +24,7 @@
 #include "abm/age.h"
 #include "abm/time.h"
 #include "abm/parameters.h"
-#include "abm/world.h"
-#include "abm/time.h"
+#include "abm/location.h"
 
 #include <functional>
 

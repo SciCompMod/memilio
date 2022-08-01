@@ -111,10 +111,16 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                if (target != &get_location(*person)) {
-                    if (target->get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                if (std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, target, t, this](TestingScheme ts) {
+                    if (ts.isActive(t)) {
+                        return ts.run_scheme(*person, *target, m_testing_parameters);
+                    }
+                    return false;
+                    } )) {
+                    if (target != &get_location(*person)) {
                         person->migrate_to(get_location(*person), *target);
                     }
+                    
                     break;
                 }
             }
@@ -128,7 +134,12 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                if (std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, &target, t, this](TestingScheme ts) {
+                    if (ts.isActive(t)) {
+                        return ts.run_scheme(*person, target, m_testing_parameters);
+                    }
+                    return false;
+                    } )) {
                     person->migrate_to(get_location(*person), target);
                 }
             }
@@ -144,6 +155,22 @@ void World::begin_step(TimePoint /*t*/, TimeSpan dt)
             location.begin_step(dt, m_infection_parameters);
         }
     }
+}
+
+void World::add_testing_scheme(const TestingScheme& testing_scheme)
+{
+    m_testing_schemes.push_back(testing_scheme);
+    std::unique(m_testing_schemes.begin(), m_testing_schemes.end());
+}
+
+const std::vector<TestingScheme>& World::get_testing_schemes() const
+{
+    return m_testing_schemes;
+}
+
+void World::set_testing_schemes(const std::vector<TestingScheme> testing_schemes)
+{
+    m_testing_schemes = testing_schemes;
 }
 
 auto World::get_locations() const -> Range<

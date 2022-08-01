@@ -34,7 +34,6 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_index(index)
     , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
-    , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
 {
 }
