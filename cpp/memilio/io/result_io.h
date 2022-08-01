@@ -17,14 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_RESULT_IO_H
-#define SECIR_RESULT_IO_H
+#ifndef MEMILIO_IO_RESULT_IO_H
+#define MEMILIO_IO_RESULT_IO_H
 
 #include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_HDF5
 
-#include "secir/secir.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/io.h"
@@ -33,12 +32,13 @@ namespace mio
 {
 
 /**
- * @brief save secir simulation result to h5 file
- * @param times Vector of timesteps used during simulation
- * @param secir Results of secir simulation
+ * @brief save results of a graph simulation to h5 file
+ * @param result simulation results per node of the graph.
+ * @param ids identifier of each node of the graph. 
+ * @param num_groups number of groups in the results.
  * @param filename name of file
  */
-IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids,
+IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids, int num_groups,
                            const std::string& filename);
 
 class SecirSimulationResult
@@ -88,12 +88,11 @@ private:
 /**
  * @brief read secir simulation result from h5 file
  * @param filename name of file
- * @param nb_groups number of groups used during simulation
  */
-IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename, int nb_groups);
+IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename);
 
 } // namespace mio
 
 #endif // MEMILIO_HAS_HDF5
 
-#endif // SECIR_RESULT_IO_H
+#endif // MEMILIO_IO_RESULT_IO_H

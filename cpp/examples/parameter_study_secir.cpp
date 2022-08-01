@@ -19,8 +19,9 @@
 */
 #include "secir/secir_parameters_io.h"
 #include "secir/parameter_space.h"
-#include "secir/parameter_studies.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
+#include "memilio/io/result_io.h"
 
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
@@ -68,8 +69,10 @@ write_single_run_result(const int run,
     std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
         return node.id;
     });
+    auto num_groups = (int)(size_t)graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
     BOOST_OUTCOME_TRY(
-        mio::save_result(all_results, ids, mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+        mio::save_result(all_results, ids, num_groups,
+                    mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
 }
@@ -163,17 +166,20 @@ int main()
 
     //create study
     auto num_runs = size_t(1);
-    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, num_runs);
+    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, num_runs);
 
     //run study
-    int run     = 0;
-    auto lambda = [&run](auto&& graph) {
+    int run           = 0;
+    auto sample_graph = [](auto&& graph) {
+        return mio::draw_sample(graph);
+    };
+    auto handle_result = [&run](auto&& graph) {
         auto write_result_status = write_single_run_result(run++, graph);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }
     };
-    parameter_study.run(lambda);
+    parameter_study.run(sample_graph, handle_result);
 
     return 0;
 }

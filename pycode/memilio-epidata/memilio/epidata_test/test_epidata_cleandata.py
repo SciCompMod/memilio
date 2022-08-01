@@ -177,7 +177,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, , False, True, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 0)
@@ -197,7 +197,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 3)
@@ -212,7 +212,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -266,7 +266,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, True, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -335,7 +335,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             ["cases_a.json", "CaseDataFull.json"])
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -372,7 +372,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -427,7 +427,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, True, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -497,7 +497,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(dir_path)), len(population_files))
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -530,7 +530,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
     def test_all_false(self):
 
         cd.clean_data(False, False, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # test if writte fct works as expected
 
@@ -591,7 +591,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir1a = os.listdir(os.path.join(self.path, 'Germany/'))
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, False, False, "/home/y")
+                      False, False, False, False, True, False, False, "/home/y")
 
         dir2 = os.listdir(self.path)
         dir2a = os.listdir(os.path.join(self.path, 'Germany/'))
@@ -606,7 +606,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -654,7 +654,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, True, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -702,9 +702,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, True, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany']
 
@@ -737,6 +737,20 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 for file in os.listdir(dir_path):
                     self.assertIn(file, fakefiles)
 
+    def test_clean_txt(self):
+        # write file
+        dir_path = os.path.join(self.path, 'Germany')
+        os.makedirs(dir_path)
+        with open(os.path.join(self.path, 'Germany', 'commuter_test.txt'), 'w') as f:
+            f.write('foo')
+        # check if file is written 
+        self.assertEqual(os.listdir(os.path.join(self.path, 'Germany')), ['commuter_test.txt'])
+        # delete file and folder
+        cd.clean_data(False, False, False,False, False, False, True, False, False, False, False, True, self.path)
+        #check if folder is deleted
+        self.assertEqual(os.listdir(self.path), [])
+        
+
     def test_file_not_found_cases(self):
 
         self.set_dirs_and_files("cases")
@@ -748,8 +762,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, False, self.path)
-
+                      False, False, False, False, True, False, False, self.path)
+    
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
@@ -764,7 +778,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -780,7 +794,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -796,7 +810,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, True,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -812,7 +826,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      True, False, False, False, False, self.path)
+                      True, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -828,7 +842,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      False, True, False, False, False, self.path)
+                      False, True, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -844,7 +858,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      False, False, True, False, False, self.path)
+                      False, False, True, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -857,31 +871,31 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         # no data in folder
         # jh
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # population
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # cases
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # divi
         cd.clean_data(False, False, False, False, True,
-                      False, False, False, False, False, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # vaccination
         cd.clean_data(False, False, False, False, False,
-                      True, False, False, False, False, self.path)
+                      True, False, False, False, True, True, True, self.path)
 
         # commuter
         cd.clean_data(False, False, False, False, False,
-                      False, True, False, False, False, self.path)
+                      False, True, False, False, True, True, True, self.path)
 
         # testing
         cd.clean_data(False, False, False, False, False,
-                      False, False, True, False, False, self.path)
+                      False, False, True, False, True, True, True, self.path)
 
     def test_cli_default(self):
 
@@ -892,7 +906,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             print([all_data, cases, jh, popul, hdf5, out_path])
 
@@ -905,7 +919,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
+            self.assertEqual(txt, False)
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_folder(self):
@@ -916,7 +932,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -927,7 +943,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
+            self.assertEqual(txt, False)
             self.assertEqual(out_path, folder)
 
     def test_cli_all(self):
@@ -939,7 +957,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, True)
             self.assertEqual(cases, False)
@@ -950,19 +968,21 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
+            self.assertEqual(txt, False)
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_cases(self):
 
         out_path_default = dd.defaultDict['out_folder']
 
-        test_args = ["prog", '--cases']
+        test_args = ["prog", '--cases', '--txt']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, True)
@@ -973,19 +993,21 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
+            self.assertEqual(txt, True)
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_jh(self):
 
         out_path_default = dd.defaultDict['out_folder']
 
-        test_args = ["prog", '-j', '--hdf5']
+        test_args = ["prog", '-j', '--json', '--hdf5']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -996,19 +1018,21 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
+            self.assertEqual(txt, False)
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_popul(self):
 
         out_path_default = dd.defaultDict['out_folder']
 
-        test_args = ['prog', '--population', '-h5']
+        test_args = ['prog', '--population', '-js', '-h5', '-tx']
 
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1019,7 +1043,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
+            self.assertEqual(txt, True)
             self.assertEqual(out_path, out_path_default)
 
     def test_cli_divi_vacc_commuter_testing(self):
@@ -1031,7 +1057,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, hospitalization, hdf5, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1042,7 +1068,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(commuter, True)
             self.assertEqual(testing, True)
             self.assertEqual(hospitalization, False)
+            self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
+            self.assertEqual(txt, False)
             self.assertEqual(out_path, out_path_default)
 
     def test_clean_divi_vacc_commuter_testing_json(self):
@@ -1051,7 +1079,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files('all')
 
         cd.clean_data(False, False, False, False, True,
-                      True, True, True, False, False, self.path)
+                      True, True, True, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']

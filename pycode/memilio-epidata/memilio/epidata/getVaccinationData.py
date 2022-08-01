@@ -41,10 +41,13 @@ def download_vaccination_data():
     df = pd.DataFrame()
     # try to read csv
     try:
-        df = pd.read_csv(
-            url,
-            dtype={'LandkreisId_Impfort': "string", 'Altersgruppe': "string",
-                   'Impfschutz': int, 'Anzahl': int})
+        df = gd.loadCsv(
+            '', url, '',
+            param_dict={
+                'dtype':
+                {'LandkreisId_Impfort': "string",
+                 'Altersgruppe': "string", 'Impfschutz': int,
+                 'Anzahl': int}})
     except Exception:
         print("Error in reading csv while downloading vaccination data.")
         raise
