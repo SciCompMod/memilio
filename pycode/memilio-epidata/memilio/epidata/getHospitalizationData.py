@@ -45,15 +45,14 @@ def download_hospitalization_data():
     # try to read csv
     try:
         df = pd.read_csv(url)
-    except Exception:
-        print("Error in reading csv while downloading vaccination data.")
-        raise
-    sanity_checks(df)
+    except Exception as err:
+        raise FileNotFoundError("Error in download of Hospitalization data.") from err
+    hospit_sanity_checks(df)
 
     return df
 
 
-def sanity_checks(df):
+def hospit_sanity_checks(df):
     #test if dataframe is empty
     if df.empty:
         raise gd.DataError(
@@ -62,7 +61,7 @@ def sanity_checks(df):
     actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 6:
-        raise gd.DataError("Error: Number of data categories changed.")
+        print("Warning: Number of data categories changed.")
 
     # these strings need to be in the header
     test_strings = {
@@ -74,29 +73,44 @@ def sanity_checks(df):
             raise gd.DataError("Error: Data categories have changed.")
 
 
-def compute_hospitailzations_per_day(daily_values, seven_days_values):
+def compute_hospitailzations_per_day(seven_days_values):
+    
+    daily_values = np.zeros(len(seven_days_values), dtype=float)
     to_split = seven_days_values.copy()
-    # start at first known value
-    for i in range(7, len(to_split)):
-        if to_split[i-1] < to_split[i]:
-            daily_values[i] = to_split[i]-to_split[i-1]
-            for day in range(7):
-                try:
-                    to_split[i+day] -= daily_values[i]
-                except IndexError:
-                    pass
-    # backward computation if necessary
-    if max(to_split) > 0:
-        last_seven_days = [0, 0, 0, 0, 0, 0, 0]
-        backward = np.zeros(len(daily_values), dtype=float)
-        for i in range(len(daily_values)-7):
-            last_seven_days.pop(0)
-            last_seven_days.append(0)
-            backward[-7-i] = to_split[-i-1]-sum(last_seven_days)
-            last_seven_days[-1] = backward[-7-i]
-        daily_values += backward
+    run = 1
+    while sum(to_split[6:])!=0 and run < 5:
+        # backward computation 
+        if max(to_split[6:])!=min(to_split[6:]):
+            backward = np.zeros(len(daily_values), dtype=float)
+            for i in range(1, len(daily_values)-6):
+                if to_split[-i-1]>to_split[-i]:
+                    backward[-i-7] = to_split[-i-1]-to_split[-i]
+                    for day in range(7):
+                        try:
+                            to_split[-i-1-day]-=backward[-7-i]
+                        except IndexError:
+                            pass
+            daily_values += backward
+        # start at first known value
+        if max(to_split[6:])>0:
+            forward = np.zeros(len(daily_values), dtype=float)
+            for i in range(7, len(to_split)):
+                if to_split[i-1] < to_split[i]:
+                    forward[i] += to_split[i]-to_split[i-1]
+                    for day in range(7):
+                        try:
+                            to_split[i+day] -= forward[i]
+                        except IndexError:
+                            pass
+            daily_values += forward
 
-    # check that no negative hospitalizations get into the dataframe
+        if max(to_split[6:])==min(to_split[6:]):
+            daily_values = daily_values + max(to_split[6:])/7
+            to_split[6:]-=max(to_split[6:])
+        run+=1
+    
+    if run == 5:
+        print("Can't get hospitalizations per day from incidence.")
     if len(daily_values[daily_values < 0]) > 0:
         raise gd.DataError('Negative Hospitalizations found.')
     # check that daily values are calculated correctly
@@ -105,8 +119,7 @@ def compute_hospitailzations_per_day(daily_values, seven_days_values):
         for day in range(7):
             check[i+day] += daily_values[i]
     if sum(check[6:-7]-seven_days_values[6:]) > 0:
-        raise gd.DataError(
-            "Can't get hospitalizations per day from incidence.")
+        raise gd.DataError("Check failed.")
 
     return daily_values
 
@@ -173,9 +186,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                                     == stateid].copy()
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
-            daily_values = np.zeros(len(seven_days_values), dtype=float)
-            daily_values = compute_hospitailzations_per_day(
-                daily_values, seven_days_values)
+            daily_values = compute_hospitailzations_per_day(seven_days_values)
             # save data in dataframe
             df_age_stateid['hospitalized'] = daily_values
             df_age_stateid = df_age_stateid.drop(
