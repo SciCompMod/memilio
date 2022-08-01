@@ -35,9 +35,10 @@ namespace mio
 class Person;
 
 /**
- * 
+ * LocationCapacity describes the size of a location. 
+ * It consists of a volume and a capacity in persons which is an upper bound for the number of people that can be at the location at the same time.
  */
-struct Capacity {
+struct LocationCapacity {
     int volume;
     int persons;
 };
@@ -152,7 +153,7 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params, bool generalized = false);
+    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params, bool consider_capacity = true);
 
     /** 
      * number of persons at this location in one infection state.
@@ -195,23 +196,36 @@ public:
         return m_cells;
     }
 
+    int get_population()
+    {
+        return m_num_persons;
+    }
+
     /**
- * Set the default capacity object
  * @param type the type of the location
  */
-    void set_default_capacity(LocationType type);
+    LocationCapacity get_default_capacity();
+
+    void set_capacity(int persons, int volume)
+    {
+        m_capacity.persons = persons;
+        m_capacity.volume  = volume;
+    }
 
     /**
- * @param use_volume if true returns the capacity in volume
+ * @param use_volume if true returns the capacity in volume, else capacity in persons
  * @return the capacity in volume or persons
  */
-    int get_capacity(bool use_volume = true);
+    LocationCapacity get_capacity()
+    {
+        return m_capacity;
+    }
 
     /**
- * @param generalized if true considers the capacity of the location
+ * @param consider_capacity if true calculates the relative risk based on the capacity of the location
  * @return the relative risk factor for the location
  */
-    double compute_rel_risk(bool generalized = false);
+    double compute_relative_transmission_risk(bool consider_capacity);
 
 private:
     void change_subpopulation(InfectionState s, int delta);
@@ -220,7 +234,7 @@ private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
-    Capacity m_capacity;
+    LocationCapacity m_capacity;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> m_cached_exposure_rate;
