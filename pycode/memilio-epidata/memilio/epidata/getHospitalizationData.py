@@ -53,6 +53,13 @@ def download_hospitalization_data():
 
 
 def hospit_sanity_checks(df):
+    """! Checks the sanity of the divi_data dataframe
+
+    Checks if type of the given data is a dataframe
+    Checks if the headers of the dataframe are those which are needed
+
+    @param df The dataframe which has to be checked
+    """
     #test if dataframe is empty
     if df.empty:
         raise gd.DataError(
@@ -73,7 +80,20 @@ def hospit_sanity_checks(df):
             raise gd.DataError("Error: Data categories have changed.")
 
 
-def compute_hospitailzations_per_day(seven_days_values):
+def get_hospitailzations_per_day(seven_days_values):
+    """! Gets the daily cases of hospitalizations from the seven day sum.
+
+    A zero filled array is created where the one day data is stored.
+    For each calculated daily case the copied array is adjusted to include only the remaining values.
+    Whenever the seven day sum changes to the following day, the difference is the same as the daily case difference from last week.
+    The computation can be done forward and backward. Both is done until the array is flattened.
+    If there are constant cases left on each day, they are divided on each date by one seventh.
+    After that, a few tests are done to check if all cases were distributed correctly.
+
+    @param seven_days_values Array. Total hospitalizations over the last seven days
+
+    @return daily_values Hospitalizations per day.
+    """
     
     daily_values = np.zeros(len(seven_days_values), dtype=float)
     to_split = seven_days_values.copy()
@@ -134,6 +154,32 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              moving_average=dd.defaultDict['moving_average'],
                              make_plot=dd.defaultDict['make_plot']
                              ):
+    """! Downloads or reads the RKI hospitalization data and writes them in different files.
+
+    Available data starts from 2020-03-01.
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file "RKIHospitFull.json" exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+
+    The downloaded dataframe is written to the file "RKIHospitFull".
+    After that, the columns are renamed to English.
+    From the sum of the cases of the last seven days the daily cases are calculated.
+    Afterwards, the data is stored in four differetn files:
+    "hospit_state_age", "hospit_state", "hospit_germany_age" and "hospit_germany"
+    for states or germany and age groups.
+
+    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+        Here Dates are always imputed so False changes nothing.
+    @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects.  Default defined in defaultDict.
+    @param make_plot [currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
+    """
     impute_dates = True
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -186,7 +232,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                                     == stateid].copy()
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
-            daily_values = compute_hospitailzations_per_day(seven_days_values)
+            daily_values = get_hospitailzations_per_day(seven_days_values)
             # save data in dataframe
             df_age_stateid['hospitalized'] = daily_values
             df_age_stateid = df_age_stateid.drop(
@@ -232,7 +278,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
 def main():
     """! Main program entry."""
-    arg_dict = gd.cli('hospit')
+    arg_dict = gd.cli('hospitalization')
     get_hospitalization_data(**arg_dict)
 
 
