@@ -35,7 +35,7 @@ mio::InfectionState determine_infection_state(double exposed, double infected, d
     double susceptible          = 1 - exposed - infected - carrier - recovered;
     std::vector<double> weights = {susceptible,  exposed,      carrier,       infected / 3,
                                    infected / 3, infected / 3, recovered / 2, recovered / 2};
-    if (weights.size() != (size_t)mio::InfectionState::Count) {
+    if (weights.size() != (size_t)mio::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
     uint32_t state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
