@@ -25,7 +25,6 @@
 """
 
 import os
-from urllib.error import URLError
 import requests
 import io
 import numpy as np
@@ -118,9 +117,8 @@ def get_new_counties(data):
     return data_temp
 
 def request_excel_file(path):
-    header = {'User-Agent': 'Mozilla/5.0'}
     # Timeout after 60 seconds
-    r = requests.get(path, headers=header, timeout=60)
+    r = requests.get(path, timeout=60)
     df_file = pd.io.excel.ExcelFile(io.BytesIO(r.content), engine='openpyxl')
     df = pd.read_excel(df_file, sheet_name=1, header=3, engine='openpyxl')
 
