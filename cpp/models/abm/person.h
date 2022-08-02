@@ -96,8 +96,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc,
-                  const GlobalTestingParameters& global_testing_params);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc);
 
     /** 
      * migrate to a different location.

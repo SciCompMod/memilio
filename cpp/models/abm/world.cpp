@@ -59,7 +59,7 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
+        person->interact(dt, m_infection_parameters, loc);
     }
 }
 
@@ -163,7 +163,7 @@ void World::update_testing_scheme_activity_status(const TimePoint t)
 
 bool World::run_testing_schemes(Person& person, const Location& location)
 {
-    std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, this](TestingScheme ts) {
+    return std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
         if (ts.is_active()) {
             return ts.run_scheme(person, location);
         }

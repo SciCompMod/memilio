@@ -49,7 +49,7 @@ public:
     void add_infection_state(const InfectionState infection_state);
     void remove_infection_state(const InfectionState infection_state);
 
-    bool evaluate(const Person& p, const Location& l, const InfectionState& is) const;
+    bool evaluate(const Person& p, const Location& l) const;
 
 private:
     bool has_requested_age(const Person& p) const;

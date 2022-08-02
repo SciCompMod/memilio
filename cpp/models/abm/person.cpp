@@ -60,8 +60,7 @@ Person::Person(Location& location, InfectionProperties infection_properties, Age
 {
 }
 
-void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc,
-                      const GlobalTestingParameters& global_testing_params)
+void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc)
 {
     auto infection_state     = m_infection_state;
     auto new_infection_state = infection_state;

@@ -66,7 +66,7 @@ void TestingRule::remove_infection_state(const InfectionState infection_state)
     std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
 }
 
-bool TestingRule::evaluate(const Person& p, const Location& l, const InfectionState& is) const
+bool TestingRule::evaluate(const Person& p, const Location& l) const
 {
     return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p);
 }

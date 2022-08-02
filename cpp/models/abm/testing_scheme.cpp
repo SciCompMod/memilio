@@ -96,7 +96,7 @@ bool TestingScheme::run_scheme(Person& person, const Location& location) const
         double random = UniformDistribution<double>::get_instance()();
         if (random < m_probability) {
             if (std::any_of(m_testing_rules.begin(), m_testing_rules.end(), [person, location](TestingRule tr) {
-                    return tr.evaluate(person, location, person.get_infection_state());
+                    return tr.evaluate(person, location);
                 })) {
                 return !person.get_tested(m_test_type.get_default());
             }
