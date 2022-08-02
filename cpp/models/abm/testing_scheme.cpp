@@ -27,11 +27,15 @@ namespace mio
 namespace abm
 {
 
-TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan interval,
-                             const double probability)
+TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan testing_frequency,
+                             TimePoint start_date, TimePoint end_date, const double probability,
+                             const GenericTest& test_type)
     : m_testing_rules(testing_rules)
-    , m_testing_frequency(interval)
+    , m_testing_frequency(testing_frequency)
+    , m_start_date(start_date)
+    , m_end_date(end_date)
     , m_probability(probability)
+    , m_test_type(test_type)
 {
 }
 

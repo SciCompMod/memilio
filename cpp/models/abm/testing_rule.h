@@ -32,8 +32,9 @@ namespace abm
 class TestingRule
 {
 public:
-    TestingRule(const std::vector<AgeGroup> ages = {}, const std::vector<LocationType> location_type = {},
-                const std::vector<InfectionState> infection_states = {});
+    TestingRule() = default;
+    TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_type,
+                const std::vector<InfectionState> infection_states);
 
     bool operator==(const TestingRule& other) const
     {

@@ -100,6 +100,9 @@ void World::migration(TimePoint t, TimeSpan dt)
             std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
             std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
     }
+
+    update_testing_scheme_activity_status(t);
+
     for (auto&& person : m_persons) {
         for (auto rule : rules) {
             //check if transition rule can be applied

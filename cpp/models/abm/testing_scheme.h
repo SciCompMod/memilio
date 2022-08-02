@@ -40,8 +40,8 @@ public:
      * @param interval the interval in which people who go to the location get tested
      * @param probability probability with which a person gets tested
      */
-    TestingScheme(const std::vector<TestingRule> testing_rules = {}, const TimeSpan testing_frequency = TimeSpan(),
-                  const double probability = 1);
+    TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan testing_frequency, TimePoint start_date,
+                  TimePoint end_date, const double probability, const GenericTest& test_type);
 
     bool operator==(const TestingScheme& other) const
     {
@@ -83,12 +83,12 @@ public:
     bool run_scheme(Person& person, const Location& location) const;
 
 private:
-    std::vector<TestingRule> m_testing_rules;
-    TimeSpan m_testing_frequency;
+    std::vector<TestingRule> m_testing_rules = {};
+    TimeSpan m_testing_frequency             = TimeSpan(1);
     TimePoint m_start_date;
     TimePoint m_end_date;
-    double m_probability;
-    bool m_is_active;
+    double m_probability = 1;
+    bool m_is_active     = false;
     GenericTest m_test_type;
 };
 
