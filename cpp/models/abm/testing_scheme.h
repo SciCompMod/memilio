@@ -40,8 +40,9 @@ public:
      * @param interval the interval in which people who go to the location get tested
      * @param probability probability with which a person gets tested
      */
-    TestingScheme(const std::vector<TestingRule> testing_rules = {}, const TimeSpan interval = TimeSpan(), const double probability = 1);
-    
+    TestingScheme(const std::vector<TestingRule> testing_rules = {}, const TimeSpan testing_frequency = TimeSpan(),
+                  const double probability = 1);
+
     bool operator==(const TestingScheme& other) const
     {
         return this == &other; // compare pointers. Still possible to clone Rules.
@@ -55,7 +56,7 @@ public:
      * get probability of this testing scheme
      */
     double get_probability() const;
-    
+
     /**
      * set the time interval of this testing scheme
      */
@@ -68,26 +69,27 @@ public:
 
     void add_testing_rule(const TestingRule rule);
     void remove_testing_rule(const TestingRule rule);
-    const std::vector<TestingRule>& get_testing_rules() const;
-    void set_testing_rules(const std::vector<TestingRule> testing_rules);
-    
-    const TimePoint& get_start_date() const;
-    const TimePoint& get_end_date() const;
-    const TimeSpan get_duration() const;
-    bool isActive(const TimePoint t) const;
+
+    // const TimePoint& get_start_date() const;
+    // const TimePoint& get_end_date() const;
+    // const TimeSpan get_duration() const; maybe later
+
+    bool is_active() const;
+    void update_activity_status(const TimePoint t);
     /**
      * runs the testing scheme and tests a person if necessary
      * @return if the person is allowed to enter the location
      */
-    bool run_scheme(Person& person, const Location& location, const GlobalTestingParameters& params) const;
+    bool run_scheme(Person& person, const Location& location) const;
 
 private:
     std::vector<TestingRule> m_testing_rules;
-    TimeSpan m_time_interval;
+    TimeSpan m_testing_frequency;
     TimePoint m_start_date;
     TimePoint m_end_date;
     double m_probability;
-    
+    bool m_is_active;
+    GenericTest m_test_type;
 };
 
 } // namespace abm

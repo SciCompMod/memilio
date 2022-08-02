@@ -84,12 +84,6 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         new_infection_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
     }
-    else if (new_infection_state == InfectionState::Infected) {
-        double rand = UniformDistribution<double>::get_instance()();
-        if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age] * dt.days()) {
-            this->get_tested(global_testing_params.get<AntigenTest>());
-        }
-    }
     else {
         m_quarantine = false;
     }

@@ -186,13 +186,13 @@ public:
     bool use_migration_rules() const;
 
     void add_testing_scheme(const TestingScheme& testing_scheme);
-    const std::vector<TestingScheme>& get_testing_schemes() const;
-    void set_testing_schemes(const std::vector<TestingScheme> testing_schemes);
-    
+    void update_testing_scheme_activity_status(const TimePoint t);
+    bool run_testing_schemes(Person& person, const Location& location);
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
-    
+
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
     std::vector<TestingScheme> m_testing_schemes;

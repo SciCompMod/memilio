@@ -27,16 +27,17 @@ namespace mio
 namespace abm
 {
 
-TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan interval, const double probability)
+TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan interval,
+                             const double probability)
     : m_testing_rules(testing_rules)
-    , m_time_interval(interval)
+    , m_testing_frequency(interval)
     , m_probability(probability)
 {
 }
 
 const TimeSpan& TestingScheme::get_interval() const
 {
-    return m_time_interval;
+    return m_testing_frequency;
 }
 
 double TestingScheme::get_probability() const
@@ -46,7 +47,7 @@ double TestingScheme::get_probability() const
 
 void TestingScheme::set_interval(TimeSpan t)
 {
-    m_time_interval = t;
+    m_testing_frequency = t;
 }
 
 void TestingScheme::set_probability(double p)
@@ -65,45 +66,41 @@ void TestingScheme::remove_testing_rule(const TestingRule rule)
     std::remove(m_testing_rules.begin(), m_testing_rules.end(), rule);
 }
 
-const std::vector<TestingRule>& TestingScheme::get_testing_rules() const
+// const TimePoint& TestingScheme::get_start_date() const
+// {
+//     return m_start_date;
+// }
+
+// const TimePoint& TestingScheme::get_end_date() const
+// {
+//     return m_end_date;
+// }
+
+// const TimeSpan TestingScheme::get_duration() const
+// {
+//     return TimeSpan(m_end_date.seconds() - m_start_date.seconds());
+// }
+
+bool TestingScheme::is_active() const
 {
-    return m_testing_rules;
+    return m_is_active;
+}
+void TestingScheme::update_activity_status(const TimePoint t)
+{
+    m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-void TestingScheme::set_testing_rules(const std::vector<TestingRule> testing_rules)
+bool TestingScheme::run_scheme(Person& person, const Location& location) const
 {
-    m_testing_rules = testing_rules;
-}
-
-const TimePoint& TestingScheme::get_start_date() const
-{
-    return m_start_date;
-}
-
-const TimePoint& TestingScheme::get_end_date() const
-{
-    return m_end_date;
-}
-
-const TimeSpan TestingScheme::get_duration() const
-{
-    return TimeSpan(m_end_date.seconds() - m_start_date.seconds());
-}
-
-bool TestingScheme::isActive(const TimePoint t) const
-{
-    return (m_start_date <= t && t <= m_end_date) ? true : false;
-}
-
-bool TestingScheme::run_scheme(Person &person, const Location &location, const GlobalTestingParameters &params) const
-{
-    if (person.get_time_since_negative_test() > m_time_interval) {
+    if (person.get_time_since_negative_test() > m_testing_frequency) {
         double random = UniformDistribution<double>::get_instance()();
         if (random < m_probability) {
-            if (std::any_of(m_testing_rules.begin(), m_testing_rules.end(), [person, location](TestingRule tr){ return tr.evaluate(person, location); })) {
-                    return !person.get_tested(params.get<AntigenTest>());
-                }
+            if (std::any_of(m_testing_rules.begin(), m_testing_rules.end(), [person, location](TestingRule tr) {
+                    return tr.evaluate(person, location, person.get_infection_state());
+                })) {
+                return !person.get_tested(m_test_type.get_default());
             }
+        }
     }
     return true;
 }

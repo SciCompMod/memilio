@@ -272,12 +272,7 @@ struct PCRTest : public GenericTest {
 /**
  * parameters of the testing that are the same everywhere in the world.
  */
-using GlobalTestingParameters = ParameterSet<AntigenTest>;
-
-/**
- * parameters of the testing that are the local to the testinRule.
- */
-using LocalTestingParameters = ParameterSet<GenericTest>;
+using GlobalTestingParameters = ParameterSet<AntigenTest, PCRTest>;
 
 /**
  * parameters that govern the migration between locations.

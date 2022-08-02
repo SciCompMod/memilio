@@ -111,16 +111,12 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                if (std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, target, t, this](TestingScheme ts) {
-                    if (ts.isActive(t)) {
-                        return ts.run_scheme(*person, *target, m_testing_parameters);
-                    }
-                    return false;
-                    } )) {
+                //auslagern in eine Funktion
+                if (run_testing_schemes(*person, *target)) {
                     if (target != &get_location(*person)) {
                         person->migrate_to(get_location(*person), *target);
                     }
-                    
+
                     break;
                 }
             }
@@ -134,12 +130,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, &target, t, this](TestingScheme ts) {
-                    if (ts.isActive(t)) {
-                        return ts.run_scheme(*person, target, m_testing_parameters);
-                    }
-                    return false;
-                    } )) {
+                if (run_testing_schemes(*person, target)) {
                     person->migrate_to(get_location(*person), target);
                 }
             }
@@ -163,14 +154,21 @@ void World::add_testing_scheme(const TestingScheme& testing_scheme)
     std::unique(m_testing_schemes.begin(), m_testing_schemes.end());
 }
 
-const std::vector<TestingScheme>& World::get_testing_schemes() const
+void World::update_testing_scheme_activity_status(const TimePoint t)
 {
-    return m_testing_schemes;
+    for (auto& ts : m_testing_schemes) {
+        ts.update_activity_status(t);
+    }
 }
 
-void World::set_testing_schemes(const std::vector<TestingScheme> testing_schemes)
+bool World::run_testing_schemes(Person& person, const Location& location)
 {
-    m_testing_schemes = testing_schemes;
+    std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, this](TestingScheme ts) {
+        if (ts.is_active()) {
+            return ts.run_scheme(person, location);
+        }
+        return false;
+    });
 }
 
 auto World::get_locations() const -> Range<

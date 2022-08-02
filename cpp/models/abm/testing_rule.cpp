@@ -26,21 +26,12 @@ namespace mio
 namespace abm
 {
 
-TestingRule::TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_types, const std::vector<InfectionState> infection_states)
+TestingRule::TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_types,
+                         const std::vector<InfectionState> infection_states)
     : m_ages(ages)
     , m_location_types(location_types)
     , m_infection_states(infection_states)
 {
-}
-
-void TestingRule::set_age_groups(const std::vector<AgeGroup> ages)
-{
-    m_ages = ages;
-}
-
-const std::vector<AgeGroup>& TestingRule::get_age_groups() const
-{
-    return m_ages;
 }
 
 void TestingRule::add_age_group(const AgeGroup ageGroup)
@@ -54,47 +45,28 @@ void TestingRule::remove_age_group(const AgeGroup ageGroup)
     std::remove(m_ages.begin(), m_ages.end(), ageGroup);
 }
 
-void TestingRule::set_location_types(const std::vector<LocationType> locationTypes)
-{
-    m_location_types = locationTypes;
-}
-
-const std::vector<LocationType>& TestingRule::get_location_types() const
-{
-    return m_location_types;
-}
-
 void TestingRule::add_location_type(const LocationType locationType)
 {
     m_location_types.push_back(locationType);
     std::unique(m_location_types.begin(), m_location_types.end());
 }
-
 void TestingRule::remove_location_type(const LocationType locationType)
 {
     std::remove(m_location_types.begin(), m_location_types.end(), locationType);
 }
 
-void TestingRule::set_infection_states(const std::vector<InfectionState> infection_states)
+void TestingRule::add_infection_state(const InfectionState infection_state)
 {
-    m_infection_states = infection_states;
-}
-
-const std::vector<InfectionState>& TestingRule::get_infection_states() const {
-    return m_infection_states;
-}
-
-void TestingRule::add_infection_state(const InfectionState infection_state) {
     m_infection_states.push_back(infection_state);
     std::unique(m_infection_states.begin(), m_infection_states.end());
 }
 
-void TestingRule::remove_infection_state(const InfectionState infection_state) {
+void TestingRule::remove_infection_state(const InfectionState infection_state)
+{
     std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
 }
 
-
-bool TestingRule::evaluate(const Person& p, const Location& l) const
+bool TestingRule::evaluate(const Person& p, const Location& l, const InfectionState& is) const
 {
     return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p);
 }
@@ -104,7 +76,7 @@ bool TestingRule::has_requested_age(const Person& p) const
     if (m_ages.empty()) {
         return true; // no condition on the age
     }
-    return std::count(m_ages.begin(), m_ages.end(), p.get_age()) ? true : false;
+    return std::find(m_ages.begin(), m_ages.end(), p.get_age()) != m_ages.end();
 }
 
 bool TestingRule::is_requested_location_type(const Location& l) const
@@ -112,7 +84,7 @@ bool TestingRule::is_requested_location_type(const Location& l) const
     if (m_location_types.empty()) {
         return true; // no condition on the location
     }
-    return std::count(m_location_types.begin(), m_location_types.end(), l.get_type()) ? true : false;
+    return std::find(m_location_types.begin(), m_location_types.end(), l.get_type()) != m_location_types.end();
 }
 
 bool TestingRule::has_requested_infection_state(const Person& p) const
@@ -120,7 +92,8 @@ bool TestingRule::has_requested_infection_state(const Person& p) const
     if (m_infection_states.empty()) {
         return true; // no condition on infection state
     }
-    return std::count(m_infection_states.begin(), m_infection_states.end(), p.get_infection_state()) ? true : false;
+    return std::find(m_infection_states.begin(), m_infection_states.end(), p.get_infection_state()) !=
+           m_infection_states.end();
 }
 
 } // namespace abm
