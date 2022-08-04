@@ -66,15 +66,15 @@ def run_secir_simulation(show_plot = True):
     model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
     # Initial number of people in each compartment
-    model.populations[A0, Index_InfectionState(State.Exposed)] = 100
-    model.populations[A0, Index_InfectionState(State.Carrier)] = 50
-    model.populations[A0, Index_InfectionState(State.Infected)] = 50
-    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 20
-    model.populations[A0, Index_InfectionState(State.ICU)] = 10
-    model.populations[A0, Index_InfectionState(State.Recovered)] = 10
-    model.populations[A0, Index_InfectionState(State.Dead)] = 0
+    model.populations[A0, State.Exposed] = 100
+    model.populations[A0, State.Carrier] = 50
+    model.populations[A0, State.Infected] = 50
+    model.populations[A0, State.Hospitalized] = 20
+    model.populations[A0, State.ICU] = 10
+    model.populations[A0, State.Recovered] = 10
+    model.populations[A0, State.Dead] = 0
     model.populations.set_difference_from_total(
-        (A0, Index_InfectionState(State.Susceptible)), populations[0])
+        (A0, State.Susceptible), populations[0])
 
     # Compartment transition propabilities
     model.parameters.RelativeCarrierInfectability[A0] = 0.67

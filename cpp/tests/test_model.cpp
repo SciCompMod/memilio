@@ -109,7 +109,7 @@ TEST(TestCompartmentalModel, secir)
 
     using Pa = mio::ParameterSet<IncubationTime, SerialInterval>;
 
-    mio::CompartmentalModel<Po, Pa> model;
+    mio::CompartmentalModel<InfectionType, Po, Pa> model;
 
     /********************
      * Define the flows *

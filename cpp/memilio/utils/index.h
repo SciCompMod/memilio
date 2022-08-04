@@ -55,6 +55,7 @@ template <typename CategoryTag>
 class Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>
                          , public OperatorComparison<Index<CategoryTag>>
                          , public OperatorAdditionSubtraction<Index<CategoryTag>>
+                         , public OperatorScalarMultiplicationDivision<Index<CategoryTag>, size_t>
 {
 public:
     using TypeSafe<size_t, Index<CategoryTag>>::TypeSafe;

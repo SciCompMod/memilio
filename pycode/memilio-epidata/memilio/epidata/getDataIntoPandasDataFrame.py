@@ -77,7 +77,7 @@ def loadGeojson(
 
 def loadCsv(
         targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='.csv', encoding=None):
+        extension='.csv', param_dict={}):
     """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data
     item ID into a pandas DataFrame and returns the DataFrame.
@@ -85,15 +85,24 @@ def loadCsv(
     @param targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
     @param apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
-    @param extension -- Data format extension (string, default 'csv')
-    @param encoding -- CSV Encoding format (string, default None)
-    return dataframe
+    @param extension -- Data format extension (string, default '.csv')
+    @param param_dict -- Defines the parameter for read_csv:
+            "sep": Delimiter to use (string, default ',')
+            "header": Row to use for column labels (Use None if there is no header) (int, default 0)
+            "encoding": Encoding to use for UTF when reading (string, default None)
+            "dtype": Data type for data or column (dict of column -> type, default None)
+    @return dataframe 
     """
 
     url = apiUrl + targetFileName + extension
+    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+
+    for k in param_dict_default:
+        if k not in param_dict:
+            param_dict[k] = param_dict_default[k]
 
     try:
-        df = pd.read_csv(url, encoding=encoding)
+        df = pd.read_csv(url, **param_dict)
     except OSError as err:
         raise FileNotFoundError(
             "ERROR: URL " + url + " could not be opened.") from err
@@ -287,7 +296,7 @@ def check_dir(directory):
         os.makedirs(directory)
 
 
-def write_dataframe(df, directory, file_prefix, file_type):
+def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     """! Writes pandas dataframe to file
 
     This routine writes a pandas dataframe to a file in a given format.
@@ -296,20 +305,23 @@ def write_dataframe(df, directory, file_prefix, file_type):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json or hdf5.
+    The file format can be json, hdf5 or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
     @param directory directory where to safe (string)
     @param file_prefix filename without ending (string)
     @param file_type defines ending (string)
+    @param param_dict defines parameters for to_csv/txt(dictionary)
 
     """
 
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
-               'hdf5': [".h5", {"key": "data"}]}
+               'hdf5': [".h5", {"key": "data"}],
+               'txt': [".txt", param_dict]}
 
     try:
         outFormEnd = outForm[file_type][0]
@@ -317,7 +329,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring or hdf5.")
+            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -330,6 +342,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == "txt":
+        df.to_csv(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)
 

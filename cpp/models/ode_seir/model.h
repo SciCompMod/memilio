@@ -35,15 +35,12 @@ namespace oseir
     * define the model *
     ********************/
 
-    class Model : public CompartmentalModel<Populations<InfectionState>, Parameters>
+    class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
     {
-    public:
-        using Base = CompartmentalModel<mio::Populations<InfectionState>, Parameters>;
-        using Po   = Base::Populations;
-        using Pa   = Base::ParameterSet;
+        using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
 
         Model()
-            : Base(Po({Index<InfectionState>((size_t)InfectionState::Count)}, 0.), Pa())
+            : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
         {
         }
 

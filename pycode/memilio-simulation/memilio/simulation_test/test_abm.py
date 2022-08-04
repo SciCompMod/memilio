@@ -92,10 +92,10 @@ class TestAbm(unittest.TestCase):
         social_event = world.locations[social_event_id.type][social_event_id.index]
         social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
         world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
-        world.infection_parameters.InfectedToSevere[abm.AgeIndex(
-            abm.AgeGroup.Age0to4), abm.VaccinationIndex(abm.VaccinationState.Unvaccinated)] = 0.0
-        world.infection_parameters.InfectedToRecovered[abm.AgeIndex(
-            abm.AgeGroup.Age0to4), abm.VaccinationIndex(abm.VaccinationState.Unvaccinated)] = 0.0
+        world.infection_parameters.InfectedToSevere[abm.AgeGroup.Age0to4,
+                                                    abm.VaccinationState.Unvaccinated] = 0.0
+        world.infection_parameters.InfectedToRecovered[abm.AgeGroup.Age0to4,
+                                                       abm.VaccinationState.Unvaccinated] = 0.0
 
         #trips
         trip_list = abm.TripList()
