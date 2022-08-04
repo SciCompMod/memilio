@@ -173,7 +173,7 @@ TEST(TestPerson, init)
     ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::abm::TimeSpan dt = mio::abm::hours(1);
-    person.interact(dt, {}, location, {});
+    person.interact(dt, {}, location);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Carrier);
 }
 
@@ -229,7 +229,7 @@ TEST(TestWorld, findLocation)
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age60to79,
-                                   world.get_global_infection_parameters());
+                                    world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& school = world.get_individualized_location(school_id);
     auto& work   = world.get_individualized_location(work_id);
@@ -249,8 +249,8 @@ TEST(TestLocation, beginStep)
     // Test should work identically work with any age.
     mio::abm::AgeGroup age =
         mio::abm::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::abm::AgeGroup::Count) - 1));
-    mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
-        mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
+    mio::abm::VaccinationState vaccination_state =
+        mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
     mio::abm::GlobalInfectionParameters params;
     params.set<mio::abm::CarrierToInfected>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
@@ -339,8 +339,8 @@ TEST(TestLocation, interact)
     // Test should work identically work with any age.
     mio::abm::AgeGroup age =
         mio::abm::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::abm::AgeGroup::Count) - 1));
-    mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
-        mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
+    mio::abm::VaccinationState vaccination_state =
+        mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
     mio::abm::GlobalInfectionParameters params;
     params.set<mio::abm::CarrierToInfected>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
@@ -388,8 +388,7 @@ TEST(TestLocation, interact)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
-        mock_discrete_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
 
     {
         auto susceptible =
@@ -527,8 +526,7 @@ TEST(TestPerson, quarantine)
     auto home                 = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto work                 = mio::abm::Location(mio::abm::LocationType::Work, 0);
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.6))
@@ -545,11 +543,10 @@ TEST(TestPerson, quarantine)
     //setup rng mock so the person has a state transition to Recovered_Infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
-        mock_discrete_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.04));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
-    person.interact(dt, infection_parameters, home, {});
+    person.interact(dt, infection_parameters, home);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Recovered_Infected);
     ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, {}), mio::abm::LocationType::Work);
 }
@@ -562,8 +559,7 @@ TEST(TestPerson, get_tested)
     auto infected    = mio::abm::Person(loc, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
     auto susceptible = mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, {});
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(4)
         .WillOnce(Return(0.4))
@@ -602,12 +598,11 @@ TEST(TestPerson, interact)
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
-        mock_discrete_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    person.interact(dt, infection_parameters, loc, {});
+    person.interact(dt, infection_parameters, loc);
     EXPECT_EQ(person.get_infection_state(), mio::abm::InfectionState::Recovered_Infected);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Recovered_Infected), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Infected), 0);
@@ -640,29 +635,28 @@ TEST(TestPerson, interact_exposed)
     //setup rng mock so the person becomes exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
-        mock_discrete_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.49));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     //person becomes exposed
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Exposed), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Carrier), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Infected), 2);
 
     //person becomes a carrier after the incubation time runs out, not random
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(24), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(24), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(1), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(1), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Carrier);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Exposed), 0);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Carrier), 2);
@@ -750,8 +744,7 @@ TEST(TestWorld, evolveStateTransition)
     //setup mock so only p2 transitions
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
-        mock_discrete_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::AtLeast(3))
         .WillOnce(Return(0.51))
@@ -769,8 +762,7 @@ TEST(TestWorld, evolveStateTransition)
 
 TEST(TestMigrationRules, student_goes_to_school)
 {
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.6))
@@ -794,8 +786,7 @@ TEST(TestMigrationRules, student_goes_to_school)
 
 TEST(TestMigrationRules, students_go_to_school_in_different_times)
 {
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         //Mocking the random values will define at what time the student should go to school, i.e:
@@ -830,8 +821,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
 
 TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_time_steps)
 {
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         //Mocking the random values will define at what time the student should go to school, i.e:
@@ -884,8 +874,7 @@ TEST(TestMigrationRules, school_return)
 TEST(TestMigrationRules, worker_goes_to_work)
 {
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.6))
@@ -913,8 +902,7 @@ TEST(TestMigrationRules, worker_goes_to_work)
 TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 {
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.6))
@@ -942,8 +930,7 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 {
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.))
@@ -1053,7 +1040,7 @@ TEST(TestMigrationRules, shop_return)
     auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
-    p.interact(dt, {}, shop, {}); //person only returns home after some time passed
+    p.interact(dt, {}, shop); //person only returns home after some time passed
 
     ASSERT_EQ(mio::abm::go_to_shop(p, t, dt, {}), mio::abm::LocationType::Home);
 }
@@ -1092,7 +1079,7 @@ TEST(TestMigrationRules, event_return)
     auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
-    p.interact(dt, {}, shop, {});
+    p.interact(dt, {}, shop);
 
     ASSERT_EQ(mio::abm::go_to_event(p, t, dt, {}), mio::abm::LocationType::Home);
 }
@@ -1106,8 +1093,7 @@ TEST(TestLockdownRules, school_closure)
     auto school    = mio::abm::Location(mio::abm::LocationType::School, 0);
 
     //setup rng mock so one person is home schooled and the other goes to school
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.4))
@@ -1143,8 +1129,7 @@ TEST(TestLockdownRules, school_opening)
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto school    = mio::abm::Location(mio::abm::LocationType::School, 0);
     //setup rng mock so the person is homeschooled in case of lockdown
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.6))
@@ -1175,8 +1160,7 @@ TEST(TestLockdownRules, home_office)
     mio::abm::set_home_office(t, 0.4, params);
 
     //setup rng mock so one person goes to work and the other works at home
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(4))
         .WillOnce(testing::Return(0.5))
@@ -1206,8 +1190,7 @@ TEST(TestLockdownRules, no_home_office)
     auto work      = mio::abm::Location(mio::abm::LocationType::Work, 0);
 
     //setup rng mock so the person works in home office
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))

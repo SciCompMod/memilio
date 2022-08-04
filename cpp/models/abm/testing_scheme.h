@@ -50,22 +50,22 @@ public:
     /**
      * get the time interval of this testing scheme
      */
-    const TimeSpan& get_interval() const;
+    //const TimeSpan& get_interval() const;
 
     /**
      * get probability of this testing scheme
      */
-    double get_probability() const;
+    //double get_probability() const;
 
-    /**
-     * set the time interval of this testing scheme
-     */
-    void set_interval(TimeSpan t);
+    // /**
+    //  * set the time interval of this testing scheme
+    //  */
+    // void set_interval(TimeSpan t);
 
-    /**
-     * set probability of this testing scheme
-     */
-    void set_probability(double p);
+    // /**
+    //  * set probability of this testing scheme
+    //  */
+    // void set_probability(double p);
 
     void add_testing_rule(const TestingRule rule);
     void remove_testing_rule(const TestingRule rule);
@@ -83,13 +83,13 @@ public:
     bool run_scheme(Person& person, const Location& location) const;
 
 private:
-    std::vector<TestingRule> m_testing_rules = {};
-    TimeSpan m_testing_frequency             = TimeSpan(1);
+    std::vector<TestingRule> m_testing_rules;
+    TimeSpan m_testing_frequency;
+    double m_probability;
     TimePoint m_start_date;
     TimePoint m_end_date;
-    double m_probability = 1;
-    bool m_is_active     = false;
     GenericTest m_test_type;
+    bool m_is_active = false;
 };
 
 } // namespace abm

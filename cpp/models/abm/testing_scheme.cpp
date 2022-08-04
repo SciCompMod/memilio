@@ -39,35 +39,37 @@ TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const
 {
 }
 
-const TimeSpan& TestingScheme::get_interval() const
-{
-    return m_testing_frequency;
-}
+// const TimeSpan& TestingScheme::get_interval() const
+// {
+//     return m_testing_frequency;
+// }
 
-double TestingScheme::get_probability() const
-{
-    return m_probability;
-}
+// double TestingScheme::get_probability() const
+// {
+//     return m_probability;
+// }
 
-void TestingScheme::set_interval(TimeSpan t)
-{
-    m_testing_frequency = t;
-}
+// void TestingScheme::set_interval(TimeSpan t)
+// {
+//     m_testing_frequency = t;
+// }
 
-void TestingScheme::set_probability(double p)
-{
-    m_probability = p;
-}
+// void TestingScheme::set_probability(double p)
+// {
+//     m_probability = p;
+// }
 
 void TestingScheme::add_testing_rule(const TestingRule rule)
 {
     m_testing_rules.push_back(rule);
-    std::unique(m_testing_rules.begin(), m_testing_rules.end());
+    auto last = std::unique(m_testing_rules.begin(), m_testing_rules.end());
+    m_testing_rules.erase(last, m_testing_rules.end());
 }
 
 void TestingScheme::remove_testing_rule(const TestingRule rule)
 {
-    std::remove(m_testing_rules.begin(), m_testing_rules.end(), rule);
+    auto last = std::remove(m_testing_rules.begin(), m_testing_rules.end(), rule);
+    m_testing_rules.erase(last, m_testing_rules.end());
 }
 
 // const TimePoint& TestingScheme::get_start_date() const

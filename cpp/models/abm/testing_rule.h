@@ -32,7 +32,6 @@ namespace abm
 class TestingRule
 {
 public:
-    TestingRule() = default;
     TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_type,
                 const std::vector<InfectionState> infection_states);
 
@@ -56,9 +55,9 @@ private:
     bool has_requested_age(const Person& p) const;
     bool is_requested_location_type(const Location& l) const;
     bool has_requested_infection_state(const Person& p) const;
-    std::vector<AgeGroup> m_ages                   = {};
-    std::vector<LocationType> m_location_types     = {};
-    std::vector<InfectionState> m_infection_states = {};
+    std::vector<AgeGroup> m_ages;
+    std::vector<LocationType> m_location_types;
+    std::vector<InfectionState> m_infection_states;
 };
 
 } // namespace abm

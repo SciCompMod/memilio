@@ -235,9 +235,9 @@ struct TestParameters {
 
 struct GenericTest {
     using Type = TestParameters;
-    static Type get_default()
+    static constexpr Type get_default()
     {
-        return Type{0.5, 0.5};
+        return Type{0.9, 0.99};
     }
     static std::string name()
     {

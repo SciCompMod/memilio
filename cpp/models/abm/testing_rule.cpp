@@ -37,33 +37,39 @@ TestingRule::TestingRule(const std::vector<AgeGroup> ages, const std::vector<Loc
 void TestingRule::add_age_group(const AgeGroup ageGroup)
 {
     m_ages.push_back(ageGroup);
-    std::unique(m_ages.begin(), m_ages.end());
+    auto last = std::unique(m_ages.begin(), m_ages.end());
+    m_ages.erase(last, m_ages.end());
 }
 
 void TestingRule::remove_age_group(const AgeGroup ageGroup)
 {
-    std::remove(m_ages.begin(), m_ages.end(), ageGroup);
+    auto last = std::remove(m_ages.begin(), m_ages.end(), ageGroup);
+    m_ages.erase(last, m_ages.end());
 }
 
 void TestingRule::add_location_type(const LocationType locationType)
 {
     m_location_types.push_back(locationType);
-    std::unique(m_location_types.begin(), m_location_types.end());
+    auto last = std::unique(m_location_types.begin(), m_location_types.end());
+    m_location_types.erase(last, m_location_types.end());
 }
 void TestingRule::remove_location_type(const LocationType locationType)
 {
-    std::remove(m_location_types.begin(), m_location_types.end(), locationType);
+    auto last = std::remove(m_location_types.begin(), m_location_types.end(), locationType);
+    m_location_types.erase(last, m_location_types.end());
 }
 
 void TestingRule::add_infection_state(const InfectionState infection_state)
 {
     m_infection_states.push_back(infection_state);
-    std::unique(m_infection_states.begin(), m_infection_states.end());
+    auto last = std::unique(m_infection_states.begin(), m_infection_states.end());
+    m_infection_states.erase(last, m_infection_states.end());
 }
 
 void TestingRule::remove_infection_state(const InfectionState infection_state)
 {
-    std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
+    auto last = std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
+    m_infection_states.erase(last, m_infection_states.end());
 }
 
 bool TestingRule::evaluate(const Person& p, const Location& l) const
