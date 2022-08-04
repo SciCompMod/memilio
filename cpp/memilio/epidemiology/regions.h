@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef MEMILIO_EPIDEMIOLOGY_REGIONS_H
+#define MEMILIO_EPIDEMIOLOGY_REGIONS_H
+
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
@@ -92,3 +95,5 @@ namespace regions
     } // namespace de
 } // namespace regions
 } // namespace mio
+
+#endif //MEMILIO_EPIDEMIOLOGY_REGIONS_H
