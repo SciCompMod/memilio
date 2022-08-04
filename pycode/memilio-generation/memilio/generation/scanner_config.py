@@ -12,14 +12,15 @@ class ScannerConfig:
     namespace               : str
     optional                : dict = field(default_factory=dict)
     model_class             : str  = field(init = False)
-    parameterset_name       : str  = field(init = False)
+    parameterset            : str  = field(init = False)
     project_path            : str  = field(init = False)
+    target_folder           : str  = field(init = False)
 
     def __post_init__(self):
         # Predefined Variables
         #self.model_class            = "SecirModel"
-        #self.parameterset_name      = "SecirParamsBase"
+        #self.parameterset           = "SecirParamsBase"
         self.model_class            = "Model"
-        self.parameterset_name      = "Parameters"
+        self.parameterset           = "Parameters"
         self.project_path           = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
         self.target_folder          = self.project_path + self.optional["target_folder"]

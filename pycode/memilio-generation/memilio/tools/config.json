@@ -8,6 +8,7 @@
             "python_module_name": "test_oseir",
             "simulation_name": "",
             "age_group": false,
+            "parameterset_wrapper": false,
             "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
     },
@@ -20,6 +21,7 @@
             "python_module_name": "test_secir",
             "simulation_class": "SecirSimulation",
             "age_group": true,
+            "parameterset_wrapper": true,
             "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
     }

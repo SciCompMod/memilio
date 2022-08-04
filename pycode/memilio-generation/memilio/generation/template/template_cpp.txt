@@ -24,8 +24,7 @@ namespace py = pybind11;
 
 ${pretty_name}
 
-PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<${simulation_class}>, mio::MigrationEdge>>);
-
+${simulation_vector_definition}
 PYBIND11_MODULE(_simulation_${python_module_name}, m)
 {
     ${enum_populations}
@@ -34,7 +33,6 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     pymio::bind_ParameterSet<${namespace}Parameters>(m, "Parameters");
 
     ${parameterset_wrapper}
-
     using Populations = ${population};
     pymio::bind_Population(m, "Population", mio::Tag<${namespace}${model_class}::Populations>{});
     ${age_group}

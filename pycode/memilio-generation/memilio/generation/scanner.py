@@ -80,7 +80,8 @@ class Scanner:
             CursorKind.CLASS_TEMPLATE: self.check_class,
             CursorKind.CXX_BASE_SPECIFIER: self.check_base_specifier,
             CursorKind.CONSTRUCTOR: self.check_constructor,
-            CursorKind.STRUCT_DECL: self.check_struct
+            CursorKind.STRUCT_DECL: self.check_struct,
+            CursorKind.TYPE_ALIAS_DECL: self.check_type_alias
         }
         return switch.get(kind, lambda *args: None)
 
@@ -91,7 +92,7 @@ class Scanner:
     def check_enum_const(self, node, intermed_repr):
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
-            intermed_repr.enum_populations[key].append(key + "::" + node.spelling)
+            intermed_repr.enum_populations[key].append(node.spelling)
 
     def check_class(self, node, intermed_repr):
         """
@@ -100,13 +101,15 @@ class Scanner:
         """
         if node.spelling == self.config.model_class:
             intermed_repr.model_class = node.spelling
-            self.check_base_specifier(node, intermed_repr)
+            self.check_model_base(node, intermed_repr)
             if self.config.optional.get("age_group"):
                 self.check_age_group(node, intermed_repr)
         elif self.config.optional.get("simulation_class") and node.spelling == self.config.optional.get("simulation_class"):
             intermed_repr.simulation_class = node.spelling
+        elif self.config.optional.get("parameterset_wrapper") and self.config.namespace + self.config.parameterset in [base.spelling for base in node.get_children()]:
+            intermed_repr.parameterset_wrapper = node.spelling
     
-    def check_base_specifier(self, node, intermed_repr):
+    def check_model_base(self, node, intermed_repr):
 
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -114,8 +117,10 @@ class Scanner:
             base_type = base.get_definition().type
             intermed_repr.model_base = Utility.get_base_class_string(base_type)
     
-    def check_age_group(self, node, intermed_repr):
+    def check_base_specifier(self, node, intermed_repr):
+        pass
 
+    def check_age_group(self, node, intermed_repr):
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
@@ -143,8 +148,11 @@ class Scanner:
                 init["name"].append(tokens[-1])
             intermed_repr.model_init.append(init)
 
+    def check_type_alias(self, node, intermed_repr):
+        if node.spelling == self.config.parameterset:
+            intermed_repr.parameterset = node.spelling
+    
     def check_struct(self, node, intermed_repr):
-        #if self.config.parameterset_name in node.location.file.name:
         pass
     
     def finalize(self, intermed_repr):
@@ -166,8 +174,7 @@ class Scanner:
         intermed_repr.set_attribute("target_folder", self.config.target_folder)
         intermed_repr.set_attribute("project_path", self.config.project_path)
         
-        assert(intermed_repr.model_class != None), "set a model name"
-        assert(intermed_repr.namespace != None), "set a model name_space"
+        intermed_repr.check_complete_data(self.config.optional)
 
     def output_ast(self):
         """

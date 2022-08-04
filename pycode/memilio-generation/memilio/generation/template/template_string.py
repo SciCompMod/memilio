@@ -1,16 +1,18 @@
 import string
 
-def include_string(model):
-   return (
-        "#include \"templates.h\"\n"
-        "#include \"ode_seir/model.h\"\n"
-        "#include \"Eigen/Core\"\n"
-        "#include \"pybind11/stl_bind.h\"\n"
-        "#include <vector>\n"
-    ).format(
+def include_string(intermed_repr):
+    str = (
+        "#include \"pybind_util.h\"\n"
+        "//Includes from pymio\n"
+        "//Includes for the model\n"
+        "//Includes from Memilio\n"
+        "//Optional Includes: \"pybind11/stl_bind.h\", \"Eigen/Core\""
     )
+    if intermed_repr.simulation_class is not None:
+        str += "#include <vector>\n"
+    return str
 
-def pretty_name_string(model):
+def pretty_name_string(intermed_repr):
     str = (
         "namespace pymio"
         "{"
@@ -18,7 +20,7 @@ def pretty_name_string(model):
         "//specialization of pretty_name\n"
     )
 
-    for key in model.population_groups:
+    for key in intermed_repr.population_groups:
 
         str += (
             "template <>\n"
@@ -28,40 +30,41 @@ def pretty_name_string(model):
             "}}\n"
             "\n"
         ).format(
-            namespace = model.namespace,
+            namespace = intermed_repr.namespace,
             enum_class = key
         )
 
     return str + "} // namespace pymio\n"
 
-def enum_populations(model):
+def enum_populations(intermed_repr):
     str = ""
-    for key, values in model.enum_populations.items():
+    for key, values in intermed_repr.enum_populations.items():
         str += (
             "pymio::iterable_enum<{namespace}{enum_class}>(m, \"{enum_class}\")\n\t"
             ).format(
-                namespace = model.namespace,
+                namespace = intermed_repr.namespace,
                 enum_class=key
             )
 
         for value in values:
             str += (
-                "    .value(\"{comp_class}\", {namespace}{comp_class})\n\t"
+                "    .value(\"{comp_class}\", {namespace}{enum_class}::{comp_class})\n\t"
             ).format(
-                namespace = model.namespace,
-                comp_class = value
+                namespace = intermed_repr.namespace,
+                comp_class = value,
+                enum_class = key
             )
         str = str.rstrip() + ";\n\n"
     return str
 
-def population_string(model):
-    for value in model.model_base[1:]:
+def population_string(intermed_repr):
+    for value in intermed_repr.model_base[1:]:
         if "Population" in value[0]:
             return value[0]
 
-def model_init(model):
+def model_init(intermed_repr):
     str = ""
-    for init in model.model_init:
+    for init in intermed_repr.model_init:
 
         if len(init["type"]) > 1:
             continue
@@ -76,28 +79,52 @@ def model_init(model):
             )
     return str.rstrip() + ";\n"
 
-def agegroup(model):
-    if not model.age_group:
+def parameterset_indexing(intermed_repr):
+    if not intermed_repr.parameterset_wrapper:
         return ""
     return (
-        "py::class_<mio::AgeGroup, {base}>(m, \"AgeGroup\").def(py::init<{init}>());"
+        "pymio::bind_CustomIndexArray<mio::UncertainValue, {namespace}AgeGroup>(m, \"AgeGroupArray\");\n"
     ).format(
-        base = model.age_group["base"],
-        init = model.age_group["init"][0]
+        namespace = intermed_repr.namespace,
     )
 
-def simulation(model):
-    if model.simulation_class is None or (not model.simulation_class.strip()):
+def parameterset_wrapper(intermed_repr):
+    if not intermed_repr.parameterset_wrapper:
+        return ""
+    return (
+        "py::class_<{namespace}{parameterset_wrapper}, {namespace}{parameterset}>(m, \"{parameterset_wrapper}\")\n"
+        "\t.def(py::init<{namespace}AgeGroup>())\n"
+        "\t.def(\"check_constraints\", &{namespace}SecirParams::check_constraints)\n"
+        "\t.def(\"apply_constraints\", &{namespace}SecirParams::apply_constraints);\n"
+    ).format(
+        namespace = intermed_repr.namespace,
+        parameterset = intermed_repr.parameterset,
+        parameterset_wrapper = intermed_repr.parameterset_wrapper
+    )
+
+def age_group(intermed_repr):
+    if not intermed_repr.age_group:
+        return ""
+    return (
+        "py::class_<{namespace}AgeGroup, {base}>(m, \"AgeGroup\").def(py::init<{init}>());"
+    ).format(
+        namespace = intermed_repr.namespace,
+        base = intermed_repr.age_group["base"],
+        init = intermed_repr.age_group["init"][0]
+    )
+
+def simulation(intermed_repr):
+    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
         return ""
     return (
         "pymio::bind_Simulation<{namespace}{simulation_class}<>>(m, \"{simulation_class}\");\n"
     ).format(
-        namespace = model.namespace,
-        simulation_class = model.simulation_class
+        namespace = intermed_repr.namespace,
+        simulation_class = intermed_repr.simulation_class
     )
 
-def simulation_graph(model):
-    if model.simulation_class is None or (not model.simulation_class.strip()):
+def simulation_graph(intermed_repr):
+    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
         return ""
     return (
         "pymio::bind_ModelNode<{namespace}{model_class}>(m, \"ModelNode\");\n\t"
@@ -106,7 +133,17 @@ def simulation_graph(model):
         "pymio::bind_MigrationGraph<{namespace}{simulation_class}<>>(m, \"MigrationGraph\");\n\t"
         "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MigrationEdge>>(m, \"MigrationSimulation\");\n\t"
     ).format(
-        namespace = model.namespace,
-        model_class = model.model_class,
-        simulation_class = model.simulation_class
+        namespace = intermed_repr.namespace,
+        model_class = intermed_repr.model_class,
+        simulation_class = intermed_repr.simulation_class
+    )
+
+def simulation_vector_definition(intermed_repr):
+    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
+        return ""
+    return (
+        "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}>, mio::MigrationEdge>>);\n"
+    ).format(
+        namespace = intermed_repr.namespace,
+        simulation_class = intermed_repr.simulation_class
     )

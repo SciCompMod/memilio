@@ -27,12 +27,13 @@ class Generator:
         self.substitutions_cpp["population"] = StringTemplates.population_string(intermed_repr)
 
         # optionals
-        self.substitutions_cpp["parameterset_wrapper"] = None
-        self.substitutions_cpp["parameterset_indexing"] = None
-        self.substitutions_cpp["age_group"] = StringTemplates.agegroup(intermed_repr)
+        self.substitutions_cpp["parameterset_indexing"] = StringTemplates.parameterset_indexing(intermed_repr)
+        self.substitutions_cpp["parameterset_wrapper"] = StringTemplates.parameterset_wrapper(intermed_repr)
+        self.substitutions_cpp["age_group"] = StringTemplates.age_group(intermed_repr)
 
-        self.substitutions_cpp["simulation"] = StringTemplates.simulation_graph(intermed_repr)
+        self.substitutions_cpp["simulation"] = StringTemplates.simulation(intermed_repr)
         self.substitutions_cpp["simulation_graph"] = StringTemplates.simulation_graph(intermed_repr)
+        self.substitutions_cpp["simulation_vector_definition"] = StringTemplates.simulation_vector_definition(intermed_repr)
 
 
     def generate_files(self, intermed_repr):
