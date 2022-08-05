@@ -35,47 +35,51 @@ namespace abm
 class TestingScheme
 {
 public:
+    
     /**
-     * create a testing scheme.
-     * @param interval the interval in which people who go to the location get tested
-     * @param probability probability with which a person gets tested
+     * Create a testing scheme.
+     * @param testing_rules vector of testing rules that are checked for testing
+     * @param testing_frequency time length of how often this scheme applies, i. e., a new test is performed after a person's last test
+     * @param start_date starting date of the scheme
+     * @param end_date ending date of the scheme
+     * @param probability probability of the test to be performed if a testing rule applies
+     * @param test_type the type of test to be performed
      */
     TestingScheme(const std::vector<TestingRule> testing_rules, const TimeSpan testing_frequency, TimePoint start_date,
                   TimePoint end_date, const double probability, const GenericTest& test_type);
 
+    /**
+     * Compares two testing schemes for equality.
+     * Compare references. Still possible to clone schemes.
+     */
     bool operator==(const TestingScheme& other) const
     {
-        return this == &other; // compare pointers. Still possible to clone Rules.
+        return this == &other;
     }
+        
     /**
-     * get the time interval of this testing scheme
+     * add a testing rule to the set of age groups that are checked for testing
+     * @param rule testing rule to be added
      */
-    //const TimeSpan& get_interval() const;
-
-    /**
-     * get probability of this testing scheme
-     */
-    //double get_probability() const;
-
-    // /**
-    //  * set the time interval of this testing scheme
-    //  */
-    // void set_interval(TimeSpan t);
-
-    // /**
-    //  * set probability of this testing scheme
-    //  */
-    // void set_probability(double p);
-
     void add_testing_rule(const TestingRule rule);
+    
+    /**
+     * remove a testing rule from the set of age groups that are checked for testing
+     * @param rule testing rule to be removed
+     */
     void remove_testing_rule(const TestingRule rule);
 
-    // const TimePoint& get_start_date() const;
-    // const TimePoint& get_end_date() const;
-    // const TimeSpan get_duration() const; maybe later
-
+    /**
+     * @return activity status of the scheme
+     */
     bool is_active() const;
+    
+    /**
+     * checks if the scheme is active at a given time and updates activity status
+     * @param t time to be updated at
+     */
     void update_activity_status(const TimePoint t);
+    
     /**
      * runs the testing scheme and tests a person if necessary
      * @return if the person is allowed to enter the location

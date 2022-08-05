@@ -151,21 +151,21 @@ public:
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
 
     /** 
-     *get migration parameters
+     * get migration parameters
      */
     MigrationParameters& get_migration_parameters();
 
     const MigrationParameters& get_migration_parameters() const;
 
     /** 
-     *get global infection parameters
+     * get global infection parameters
      */
     GlobalInfectionParameters& get_global_infection_parameters();
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
     /** 
-     *get global testing parameters
+     * get global testing parameters
      */
     GlobalTestingParameters& get_global_testing_parameters();
 
@@ -185,8 +185,23 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    /**
+     * adds a testing scheme to the set of all testing schemes for the simulation
+     * @param testing_scheme testing scheme to be added
+     */
     void add_testing_scheme(const TestingScheme& testing_scheme);
+    
+    /**
+     * updates activity status of all testing scheme at a given time point
+     * @param t time point to be updated for
+     */
     void update_testing_scheme_activity_status(const TimePoint t);
+    
+    /**
+     * runs all testing schemes for a given person and a given location
+     * @param person person to be checked
+     * @param location location to be checked
+     */
     bool run_testing_schemes(Person& person, const Location& location);
 
 private:

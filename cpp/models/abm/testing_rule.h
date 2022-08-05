@@ -32,28 +32,85 @@ namespace abm
 class TestingRule
 {
 public:
-    TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_type,
+    /**
+     * Create a testing rule.
+     * @param ages vector of age groups that are allowed for testing
+     * @param location_types vector of location types that are allowed for testing
+     * @param infection_states vector of infection states that are allowed for testing
+     * An empty vector of ages/location types/infection states means that no condition on the corresponding property is set!
+     */
+    TestingRule(const std::vector<AgeGroup> ages, const std::vector<LocationType> location_types,
                 const std::vector<InfectionState> infection_states);
 
+    /**
+     * Compares two testing rules for equality.
+     * Compare references. Still possible to clone rules.
+     */
     bool operator==(const TestingRule& other) const
     {
-        return this == &other; // compare pointers. Still possible to clone Rules.
+        return this == &other;
     }
-    // nothing means everything is accepted!
-    void add_age_group(const AgeGroup ageGroup);
-    void remove_age_group(const AgeGroup ageGroup);
+    
+    /**
+     * add an age group to the set of age groups that are allowed for testing
+     * @param age_group age group to be added
+     */
+    void add_age_group(const AgeGroup age_group);
+    
+    /**
+     * remove an age group from the set of age groups that are allowed for testing
+     * @param age_group age group to be removed
+     */
+    void remove_age_group(const AgeGroup age_group);
 
-    void add_location_type(const LocationType locationType);
-    void remove_location_type(const LocationType locationType);
+    /**
+     * add a location type to the set of location types that are allowed for testing
+     * @param location_type location type to be added
+     */
+    void add_location_type(const LocationType location_type);
+    
+    /**
+     * remove a location tpye from the set of location tpyes that are allowed for testing
+     * @param location_type location type to be removed
+     */
+    void remove_location_type(const LocationType location_type);
 
+    /**
+     * add an infection state to the set of infection states that are allowed for testing
+     * @param infection_state infection state to be added
+     */
     void add_infection_state(const InfectionState infection_state);
+    
+    /**
+     * remove an infection state from the set of infection states that are allowed for testing
+     * @param infection_state infection state to be removed
+     */
     void remove_infection_state(const InfectionState infection_state);
 
+    /**
+     * check if a person and a location meet all the required properties to get tested
+     * @param p person to be checked
+     * @param l location to be checked
+     */
     bool evaluate(const Person& p, const Location& l) const;
 
 private:
+    /**
+     * check if a person has the required age to get tested
+     * @param p person to be checked
+     */
     bool has_requested_age(const Person& p) const;
+    
+    /**
+     * check if a location is in the set of locations that are allowed for testing
+     * @param l location to be checked
+     */
     bool is_requested_location_type(const Location& l) const;
+    
+    /**
+     * check if a person has the required infection state to get tested
+     * @param p person to be checked
+     */
     bool has_requested_infection_state(const Person& p) const;
     std::vector<AgeGroup> m_ages;
     std::vector<LocationType> m_location_types;

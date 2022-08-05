@@ -34,28 +34,28 @@ TestingRule::TestingRule(const std::vector<AgeGroup> ages, const std::vector<Loc
 {
 }
 
-void TestingRule::add_age_group(const AgeGroup ageGroup)
+void TestingRule::add_age_group(const AgeGroup age_group)
 {
-    m_ages.push_back(ageGroup);
+    m_ages.push_back(age_group);
     auto last = std::unique(m_ages.begin(), m_ages.end());
     m_ages.erase(last, m_ages.end());
 }
 
-void TestingRule::remove_age_group(const AgeGroup ageGroup)
+void TestingRule::remove_age_group(const AgeGroup age_group)
 {
-    auto last = std::remove(m_ages.begin(), m_ages.end(), ageGroup);
+    auto last = std::remove(m_ages.begin(), m_ages.end(), age_group);
     m_ages.erase(last, m_ages.end());
 }
 
-void TestingRule::add_location_type(const LocationType locationType)
+void TestingRule::add_location_type(const LocationType location_type)
 {
-    m_location_types.push_back(locationType);
+    m_location_types.push_back(location_type);
     auto last = std::unique(m_location_types.begin(), m_location_types.end());
     m_location_types.erase(last, m_location_types.end());
 }
-void TestingRule::remove_location_type(const LocationType locationType)
+void TestingRule::remove_location_type(const LocationType location_type)
 {
-    auto last = std::remove(m_location_types.begin(), m_location_types.end(), locationType);
+    auto last = std::remove(m_location_types.begin(), m_location_types.end(), location_type);
     m_location_types.erase(last, m_location_types.end());
 }
 

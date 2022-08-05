@@ -32,32 +32,12 @@ TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const
                              const GenericTest& test_type)
     : m_testing_rules(testing_rules)
     , m_testing_frequency(testing_frequency)
+    , m_probability(probability)
     , m_start_date(start_date)
     , m_end_date(end_date)
-    , m_probability(probability)
     , m_test_type(test_type)
 {
 }
-
-// const TimeSpan& TestingScheme::get_interval() const
-// {
-//     return m_testing_frequency;
-// }
-
-// double TestingScheme::get_probability() const
-// {
-//     return m_probability;
-// }
-
-// void TestingScheme::set_interval(TimeSpan t)
-// {
-//     m_testing_frequency = t;
-// }
-
-// void TestingScheme::set_probability(double p)
-// {
-//     m_probability = p;
-// }
 
 void TestingScheme::add_testing_rule(const TestingRule rule)
 {
@@ -71,21 +51,6 @@ void TestingScheme::remove_testing_rule(const TestingRule rule)
     auto last = std::remove(m_testing_rules.begin(), m_testing_rules.end(), rule);
     m_testing_rules.erase(last, m_testing_rules.end());
 }
-
-// const TimePoint& TestingScheme::get_start_date() const
-// {
-//     return m_start_date;
-// }
-
-// const TimePoint& TestingScheme::get_end_date() const
-// {
-//     return m_end_date;
-// }
-
-// const TimeSpan TestingScheme::get_duration() const
-// {
-//     return TimeSpan(m_end_date.seconds() - m_start_date.seconds());
-// }
 
 bool TestingScheme::is_active() const
 {
