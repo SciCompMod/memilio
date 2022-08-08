@@ -1,4 +1,5 @@
 import string
+import os
 import memilio.generation.template.template_string as StringTemplates
 
 class Generator:
@@ -37,17 +38,17 @@ class Generator:
 
 
     def generate_files(self, intermed_repr):
-        with open(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_py.txt") as t:
+        with open(os.path.join(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_py.txt")) as t:
             template_py = string.Template(t.read())
-        with open(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_cpp.txt") as t:
+        with open(os.path.join(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_cpp.txt")) as t:
             template_cpp = string.Template(t.read())
         
         output_py = template_py.safe_substitute(**self.substitutions_py)
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)
 
-        py_filename = intermed_repr.python_module_name + ".py"
-        cpp_filename = intermed_repr.python_module_name + ".cpp"
-        with open(intermed_repr.target_folder + "/" + py_filename, "w") as output:
+        py_filename = "/" + intermed_repr.python_module_name + ".py"
+        cpp_filename = "/" + intermed_repr.python_module_name + ".cpp"
+        with open(os.path.join(intermed_repr.target_folder + py_filename), "w") as output:
             output.write(output_py)
-        with open(intermed_repr.target_folder + "/" + cpp_filename, "w") as output:
+        with open(os.path.join(intermed_repr.target_folder + cpp_filename), "w") as output:
             output.write(output_cpp)

@@ -64,9 +64,9 @@ class TestOseirGeneration(fake_filesystem_unittest.TestCase):
         generator.create_substitutions(irdata)
         generator.generate_files(irdata)
 
-        with open(irdata.target_folder + "/test_oseir.py") as result:
+        with open(os.path.join(irdata.target_folder + "/test_oseir.py")) as result:
                 self.assertEqual(result.read(), self.expected_test_oseir_py)
-        with open(irdata.target_folder + "/test_oseir.cpp") as result:
+        with open(os.path.join(irdata.target_folder + "/test_oseir.cpp")) as result:
                 self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):

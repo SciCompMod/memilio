@@ -27,15 +27,15 @@ class Scanner:
         idx = Index.create()
         
         file_args = []
-        compdb = CompilationDatabase.fromDirectory(self.config.project_path + self.config.path_database)
-        commands = compdb.getCompileCommands(self.config.project_path + self.config.source_file)
+        compdb = CompilationDatabase.fromDirectory(os.path.join(self.config.project_path + self.config.path_database))
+        commands = compdb.getCompileCommands(os.path.join(self.config.project_path + self.config.source_file))
         for command in commands:
           for argument in command.arguments:
                 if argument != '-Wno-unknown-warning' and argument!= '/usr/bin/g++' and argument != "--driver-mode=g++":
                     file_args.append(argument)
         file_args = file_args[:-4]
 
-        clang_cmd = ["clang", self.config.project_path + self.config.source_file, '-emit-ast', '-o', '-']
+        clang_cmd = ["clang", os.path.join(self.config.project_path + self.config.source_file), '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()

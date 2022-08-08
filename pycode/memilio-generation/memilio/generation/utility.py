@@ -1,5 +1,6 @@
 from clang.cindex import Config
 import subprocess
+import os
 
 def try_set_libclang_path(path):
     """
@@ -12,7 +13,7 @@ def try_set_libclang_path(path):
         clang_cmd_result = subprocess.check_output(clang_cmd)
         path = clang_cmd_result.rstrip()
     try:
-        Config.set_library_file(path)
+        Config.set_library_file(os.path.abspath(path))
     except Exception as e:
         if str(e) != "library file must be set before before using any other functionalities in libclang." :
             raise(e)
