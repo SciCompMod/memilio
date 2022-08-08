@@ -26,13 +26,15 @@
 
 namespace mio
 {
+namespace abm
+{
 
 Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity(get_default_capacity())
     , m_subpopulations{}
-    , m_cached_exposure_rate({AbmAgeGroup::Count, mio::VaccinationState::Count})
+    , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
 {
@@ -96,7 +98,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     if (m_cells.empty() && m_num_persons == 0) {
-        m_cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
+        m_cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
     }
     else if (m_cells.empty()) {
         auto num_carriers               = get_subpopulation(InfectionState::Carrier);
@@ -111,7 +113,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     else {
         for (auto& cell : m_cells) {
             if (cell.num_people == 0) {
-                cell.cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
+                cell.cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
             }
             else {
                 auto relative_transmission_risk = compute_relative_transmission_risk(consider_capacity);
@@ -273,4 +275,5 @@ double Location::compute_relative_transmission_risk(bool consider_capacity)
     }
 }
 
+} // namespace abm
 } // namespace mio

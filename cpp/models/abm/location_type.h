@@ -25,6 +25,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * type of a location.
@@ -47,6 +49,7 @@ enum class LocationType : std::uint32_t
 
 static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
 
+} // namespace abm
 } // namespace mio
 
 #endif

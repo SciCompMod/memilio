@@ -29,6 +29,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 class Person;
 
@@ -94,6 +96,7 @@ private:
     double m_probability;
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

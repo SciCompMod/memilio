@@ -191,7 +191,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
-                "abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
+                "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding":'utf_8_sig'})
         except ValueError:
             error_message = "Error: The zensus file does not exist."
             raise FileNotFoundError(error_message)

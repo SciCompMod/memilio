@@ -130,10 +130,19 @@ public:
     /** copy assignment */
     TimeSeries& operator=(const TimeSeries& other)
     {
-        auto data = Matrix(other.get_num_elements() + 1, details::next_pow2(other.m_num_time_points));
-        data.leftCols(other.m_num_time_points) = other.get_valid_block();
-        m_data                                 = std::move(data);
-        m_num_time_points                      = other.m_num_time_points;
+        if (get_num_elements() == other.get_num_elements()) {
+            //assign with preserved storage if possible
+            reserve(other.m_num_time_points);
+            m_num_time_points = other.m_num_time_points;
+            get_valid_block() = other.get_valid_block();
+        }
+        else {
+            //assign with new storage
+            auto data = Matrix(other.get_num_elements() + 1, details::next_pow2(other.m_num_time_points));
+            data.leftCols(other.m_num_time_points) = other.get_valid_block();
+            m_data                                 = std::move(data);
+            m_num_time_points                      = other.m_num_time_points;
+        }
         return *this;
     }
 
@@ -313,6 +322,19 @@ public:
         assert(m_data.outerStride() == m_data.rows());
         return m_data.data();
     }
+
+    /**
+     * Matrix expression that contains one time point per column.
+     * Each column contains the corresponding time at index 0.
+     * @{
+     */
+    auto matrix() {
+        return get_valid_block();
+    }
+    auto matrix() const {
+        return get_valid_block();
+    }
+    /** @} */
 
     /*********************
      * 

@@ -25,9 +25,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
 import os
+import argparse
 
 
-def run_secir_groups_simulation():
+def run_secir_groups_simulation(show_plot = True):
     """
     Runs the c++ secir model using mulitple age groups 
     and plots the results
@@ -83,28 +84,23 @@ def run_secir_groups_simulation():
         model.parameters.ICUToDeathTime[AgeGroup(i)] = 5.  # 3.5-7 (=R5^(-1))
 
         # Initial number of peaople in each compartment
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Exposed)] = 100
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Carrier)] = 50
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Infected)] = 50
-        model.populations[AgeGroup(i), Index_InfectionState(
-            State.Hospitalized)] = 20
-        model.populations[AgeGroup(i), Index_InfectionState(State.ICU)] = 10
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Recovered)] = 10
-        model.populations[AgeGroup(i), Index_InfectionState(State.Dead)] = 0
+        model.populations[AgeGroup(i), State.Exposed] = 100
+        model.populations[AgeGroup(i), State.Carrier] = 50
+        model.populations[AgeGroup(i), State.Infected] = 50
+        model.populations[AgeGroup(i), State.Hospitalized] = 20
+        model.populations[AgeGroup(i), State.ICU] = 10
+        model.populations[AgeGroup(i), State.Recovered] = 10
+        model.populations[AgeGroup(i), State.Dead] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
-            (AgeGroup(i), Index_InfectionState(State.Susceptible)), populations[i])
+            (AgeGroup(i), State.Susceptible), populations[i])
 
         # Compartment transition propabilities
 
         model.parameters.RelativeCarrierInfectability[AgeGroup(i)] = 0.67
         model.parameters.InfectionProbabilityFromContact[AgeGroup(i)] = 1.0
-        model.parameters.AsymptoticCasesPerInfectious[AgeGroup(
+        model.parameters.AsymptomaticCasesPerInfectious[AgeGroup(
             i)] = 0.09  # 0.01-0.16
-        model.parameters.RiskOfInfectionFromSympomatic[AgeGroup(
+        model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(
             i)] = 0.25  # 0.05-0.5
         model.parameters.HospitalizedCasesPerInfectious[AgeGroup(
             i)] = 0.2  # 0.1-0.35
@@ -112,7 +108,7 @@ def run_secir_groups_simulation():
             i)] = 0.25  # 0.15-0.4
         model.parameters.DeathsPerICU[AgeGroup(i)] = 0.3  # 0.15-0.77
         # twice the value of RiskOfInfectionFromSymptomatic
-        model.parameters.MaxRiskOfInfectionFromSympomatic[AgeGroup(i)] = 0.5
+        model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
     model.parameters.StartDay = (
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
@@ -200,11 +196,17 @@ def run_secir_groups_simulation():
     fig.suptitle('SECIR simulation results by compartment (entire population)')
     fig.savefig('Secir_all_parts.pdf')
 
-    plt.show()
-    plt.close()
+    if show_plot:
+        plt.show()
+        plt.close()
 
     # return data
 
 
 if __name__ == "__main__":
-    run_secir_groups_simulation()
+    arg_parser = argparse.ArgumentParser(
+        'secir_groups', 
+        description = 'Simple example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
+    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+    args = arg_parser.parse_args()
+    run_secir_groups_simulation(**args.__dict__)

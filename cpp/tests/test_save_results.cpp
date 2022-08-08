@@ -21,7 +21,7 @@
 #include "memilio/compartments/simulation.h"
 #include "secir/secir.h"
 #include "memilio/utils/time_series.h"
-#include "secir/secir_result_io.h"
+#include "memilio/io/result_io.h"
 #include "temp_file_register.h"
 #include <gtest/gtest.h>
 
@@ -66,8 +66,8 @@ TEST(TestSaveResult, compareResultWithH5)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
         params.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -83,10 +83,10 @@ TEST(TestSaveResult, compareResultWithH5)
 
     TempFileRegister file_register;
     auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
-    auto save_result_status = mio::save_result(results_from_sim, ids, results_file_path);
+    auto save_result_status = mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, results_file_path);
     ASSERT_TRUE(save_result_status);
 
-    auto results_from_file = mio::read_result(results_file_path, static_cast<int>(size_t(nb_groups)));
+    auto results_from_file = mio::read_result(results_file_path);
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
 

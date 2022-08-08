@@ -27,6 +27,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
@@ -36,7 +38,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age)
+Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
@@ -72,7 +74,7 @@ void World::set_infection_state(Person& person, InfectionState inf_state)
 void World::migration(TimePoint t, TimeSpan dt)
 {
     // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
-    using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const AbmMigrationParameters&);
+    using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
     std::vector<std::pair<migration_rule, std::vector<LocationType>>> rules;
     if (m_use_migration_rules) {
         rules = {
@@ -121,12 +123,14 @@ void World::migration(TimePoint t, TimeSpan dt)
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
-        while (m_trip_list.get_next_trip_time() < t + dt && m_trip_list.get_current_index() < num_trips) {
+        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
             auto& trip   = m_trip_list.get_next_trip();
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                person->migrate_to(get_location(*person), target, trip.cells);
+                if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                    person->migrate_to(get_location(*person), target);
+                }
             }
             m_trip_list.increase_index();
         }
@@ -188,12 +192,12 @@ int World::get_subpopulation_combined(InfectionState s, LocationType type) const
     });
 }
 
-AbmMigrationParameters& World::get_migration_parameters()
+MigrationParameters& World::get_migration_parameters()
 {
     return m_migration_parameters;
 }
 
-const AbmMigrationParameters& World::get_migration_parameters() const
+const MigrationParameters& World::get_migration_parameters() const
 {
     return m_migration_parameters;
 }
@@ -233,4 +237,10 @@ void World::use_migration_rules(bool param)
     m_use_migration_rules = param;
 }
 
+bool World::use_migration_rules() const
+{
+    return m_use_migration_rules;
+}
+
+} // namespace abm
 } // namespace mio

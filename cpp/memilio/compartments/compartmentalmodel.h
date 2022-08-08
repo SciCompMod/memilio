@@ -58,7 +58,7 @@ template <class T>
 using has_apply_constraints_member_function = is_expression_valid<details::apply_constraints_expr_t, T>;
 
 /**
- * @brief ComppartmentalModel is a template for a compartmental model for an
+ * @brief CompartmentalModel is a template for a compartmental model for an
  * array of initial populations and a parameter set
  *
  * The Populations must be a concrete class derived from the Populations template,
@@ -71,9 +71,10 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Pop, class Params>
+template <class Comp, class Pop, class Params>
 struct CompartmentalModel {
 public:
+    using Compartments = Comp;
     using Populations = Pop;
     using ParameterSet = Params;
 

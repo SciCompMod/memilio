@@ -12,7 +12,7 @@ add_executable(adapt_rk_example adapt_rk_test.cpp)
 target_link_libraries(adapt_rk_example PRIVATE memilio)
 
 add_executable(seir_example seir.cpp)
-target_link_libraries(seir_example PRIVATE memilio seir)
+target_link_libraries(seir_example PRIVATE memilio ode_seir)
 
 add_executable(secir_example secir.cpp)
 target_link_libraries(secir_example PRIVATE memilio secir)
@@ -21,7 +21,7 @@ add_executable(secir_ageres_example secir_ageres.cpp)
 target_link_libraries(secir_ageres_example PRIVATE memilio secir)
 
 add_executable(graph_example graph.cpp)
-target_link_libraries(graph_example PRIVATE memilio seir)
+target_link_libraries(graph_example PRIVATE memilio ode_seir)
 
 add_executable(abm_example abm.cpp)
 target_link_libraries(abm_example PRIVATE memilio abm)
@@ -44,3 +44,6 @@ if (MEMILIO_HAS_JSONCPP)
   add_executable(serialize_example serialize.cpp)
   target_link_libraries(serialize_example PRIVATE memilio)
 endif()
+
+add_executable(ide_seir_example ide_seir.cpp)
+target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
