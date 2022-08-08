@@ -25,7 +25,7 @@
 """
 
 import os
-import requests
+import wget
 import io
 import numpy as np
 import pandas as pd
@@ -116,14 +116,6 @@ def get_new_counties(data):
     data_temp = data_temp[sorted_inds, :]
     return data_temp
 
-def request_excel_file(path):
-    # Timeout after 60 seconds
-    r = requests.get(path, timeout=60)
-    df_file = pd.io.excel.ExcelFile(io.BytesIO(r.content), engine='openpyxl')
-    df = pd.read_excel(df_file, sheet_name=1, header=3, engine='openpyxl')
-
-    return df
-
 def load_population_data(out_folder=dd.defaultDict['out_folder'],
                          read_data=dd.defaultDict['read_data'],
                          no_raw=dd.defaultDict['no_raw'],
@@ -183,15 +175,17 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
                 "could not be read. Call program without -r flag to get it."
             raise FileNotFoundError(error_message)
     else:
+        # Download counties
         try:
             path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-            # A TimeoutError often occurs when downloading this file.
-            # To handle this error, it is downloaded with requests.
-            # This usually takes longer than reading it with pandas.
-            counties = request_excel_file(path_counties)
+                    
+            file = wget.download(path_counties)
+            counties = pd.read_excel(file, sheet_name=1, header=3, engine='openpyxl')
+
         except ValueError:
             error_message = "Error: The counties file does not exist."
             raise FileNotFoundError(error_message)
+
         # Download zensus
         try:
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
@@ -204,7 +198,6 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             raise FileNotFoundError(error_message)
 
         # Download reg_key
-
         try:
             path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                            '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
