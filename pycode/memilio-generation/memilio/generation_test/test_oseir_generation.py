@@ -20,8 +20,23 @@
 
 from memilio.generation import Scanner, ScannerConfig, Generator
 import unittest
+from pyfakefs import fake_filesystem_unittest
 
-class TestOseirGeneration(unittest.TestCase):
+import os
+
+class TestOseirGeneration(fake_filesystem_unittest.TestCase):
+    path = '/home/GeneratedFiles'
+
+    # Get a file object with write permission.
+    here = os.path.dirname(os.path.abspath(__file__))
+
+    # Load expected results for oseir generation.
+    with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
+        expected_test_oseir_py = expected.read()
+
+    with open(os.path.join(here + "/test_data/test_oseir.cpp.txt"), 'r') as expected:
+        expected_test_oseir_cpp = expected.read()
+
 
     def setUp(self):
         config_json =   {
@@ -30,28 +45,29 @@ class TestOseirGeneration(unittest.TestCase):
                         "namespace": "mio::oseir::",
                         "optional": {
                             "libclang_library_path": "",
-                            "python_module_name": "generated_oseir",
+                            "python_module_name": "test_oseir",
                             "simulation_name": "",
-                            "age_group": False,
-                            "target_folder": "/pycode/memilio-generation/memilio/generation_test"
+                            "age_group": False
                             }
                         }
         conf = ScannerConfig.from_dict(config_json)
         self.scanner = Scanner(conf)
-        
+        self.setUpPyfakefs()
+        os.makedirs(self.path)
+        self.fs.add_real_directory(os.path.join(conf.project_path + '/pycode/memilio-generation/memilio/generation/template'))
+
     def test_clean_oseir(self):
         irdata = self.scanner.extract_results()
+        irdata.target_folder = self.path
 
         generator = Generator()
         generator.create_substitutions(irdata)
         generator.generate_files(irdata)
 
-        with open(irdata.target_folder + "/generated_oseir.py") as result:
-            with open(irdata.target_folder + "/test_oseir.py.txt") as expected:
-                self.assertMultiLineEqual(result.read(), expected.read())
-        with open(irdata.target_folder + "/generated_oseir.cpp") as result:
-            with open(irdata.target_folder + "/test_oseir.cpp.txt") as expected:
-                self.assertMultiLineEqual(result.read(), expected.read())
+        with open(irdata.target_folder + "/test_oseir.py") as result:
+                self.assertEqual(result.read(), self.expected_test_oseir_py)
+        with open(irdata.target_folder + "/test_oseir.cpp") as result:
+                self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):
         self.scanner.config.model_class = "wrong_name"

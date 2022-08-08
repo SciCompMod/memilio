@@ -1,6 +1,6 @@
+import os
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
-from subprocess import check_output
 
 from pyparsing import Optional
 
@@ -22,5 +22,7 @@ class ScannerConfig:
         #self.parameterset           = "SecirParamsBase"
         self.model_class            = "Model"
         self.parameterset           = "Parameters"
-        self.project_path           = check_output(["git", "rev-parse", "--show-toplevel"]).decode()[:-1]
-        self.target_folder          = self.project_path + self.optional["target_folder"]
+        # Get the project path. If this is used outside of Memilio it needs to be changed.
+        project_directory_path      = os.path.dirname(os.path.abspath(__file__))
+        self.project_path           = project_directory_path.split('pycode')[0]
+        self.target_folder          = self.project_path + self.optional.get("target_folder", "")

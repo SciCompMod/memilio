@@ -6,7 +6,7 @@ def include_string(intermed_repr):
         "//Includes from pymio\n"
         "//Includes for the model\n"
         "//Includes from Memilio\n"
-        "//Optional Includes: \"pybind11/stl_bind.h\", \"Eigen/Core\""
+        "//Optional Includes: \"pybind11/stl_bind.h\", \"Eigen/Core\"\n"
     )
     if intermed_repr.simulation_class is not None:
         str += "#include <vector>\n"

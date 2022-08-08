@@ -18,11 +18,11 @@
 * limitations under the License.
 */
 
-#include "templates.h"
-#include "ode_seir/model.h"
-#include "Eigen/Core"
-#include "pybind11/stl_bind.h"
-#include <vector>
+#include "pybind_util.h"
+//Includes from pymio
+//Includes for the model
+//Includes from Memilio
+//Optional Includes: "pybind11/stl_bind.h", "Eigen/Core"
 
 
 namespace py = pybind11;
@@ -38,29 +38,27 @@ std::string pretty_name<mio::oseir::InfectionState>()
 } // namespace pymio
 
 
-PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<${simulation_class}>, mio::MigrationEdge>>);
 
-PYBIND11_MODULE(_simulation_generated_oseir, m)
+PYBIND11_MODULE(_simulation_test_oseir, m)
 {
     pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
-	    .value("InfectionState::Susceptible", mio::oseir::InfectionState::Susceptible)
-	    .value("InfectionState::Exposed", mio::oseir::InfectionState::Exposed)
-	    .value("InfectionState::Infected", mio::oseir::InfectionState::Infected)
-	    .value("InfectionState::Recovered", mio::oseir::InfectionState::Recovered)
-	    .value("InfectionState::Count", mio::oseir::InfectionState::Count);
+	    .value("Susceptible", mio::oseir::InfectionState::Susceptible)
+	    .value("Exposed", mio::oseir::InfectionState::Exposed)
+	    .value("Infected", mio::oseir::InfectionState::Infected)
+	    .value("Recovered", mio::oseir::InfectionState::Recovered)
+	    .value("Count", mio::oseir::InfectionState::Count);
 
 
 
-    None
+    
     pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 
-    None
-
+    
     using Populations = mio::Populations<mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
-    pymio::bind_CompartmentalModel<mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::InfectionProbabilityFromContact, mio::oseir::LatentTime, mio::oseir::InfectiousTime, mio::oseir::ContactPatterns>>(m, "ModelBase");
-    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::InfectionProbabilityFromContact, mio::oseir::LatentTime, mio::oseir::InfectiousTime, mio::oseir::ContactPatterns>>>(m, "Model")
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>>(m, "ModelBase");
+    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::InfectionProbabilityFromContact, mio::oseir::LatentTime, mio::oseir::InfectiousTime, mio::oseir::ContactPatterns>>>(m, "Model")
         .def(py::init<>());
 
 

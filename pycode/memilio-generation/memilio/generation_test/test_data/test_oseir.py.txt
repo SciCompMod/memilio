@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio generated_oseir model.
+Python bindings for MEmilio test_oseir model.
 """
 
-from memilio._simulation_generated_oseir import *
+from memilio._simulation_test_oseir import *

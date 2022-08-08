@@ -20,7 +20,10 @@ setup(
         'dataclasses_json',
     ],
     extras_require={
-        'dev': ['numpy >= 1.21'],
+        'dev': [
+            'numpy >= 1.21',
+            'pyfakefs>=4.2.1',
+        ],
     },
     long_description='',
     test_suite='memilio.generation_test',
