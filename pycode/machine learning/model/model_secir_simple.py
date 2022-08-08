@@ -10,13 +10,16 @@ from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import backend as K
+from tensorflow import keras
+from keras import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
+from keras import backend as K
 
 import seaborn as sns # plot after normalization
 from data_secir_simple import generate_data
+
+
 
 
 def getPartitions(input_width, label_width,
@@ -39,8 +42,19 @@ def getPartitions(input_width, label_width,
             label_idx = np.arange(start_idx , start_idx + label_width, dtype=int)
             labels.append(data.iloc[label_idx,:-1])
         
+    dampings = create_Dampings()
+    i = 0 
+    input_withdamping = []
+    while i < len(inputs):
+         a = inputs[i].values.tolist()
+         b = dampings[i]
+         a.append(b)
+         input_withdamping.append(a)
+         i += 1
 
-    return inputs, labels
+
+
+    return input_withdamping, labels
 
 def _getPartitionIndices(data, input_width, label_width):
     n = len(data)
@@ -58,6 +72,49 @@ def _getPartitionIndices(data, input_width, label_width):
     input_indices = np.sort(input_indices)
     label_indices = np.sort(label_indices)
     return input_indices, label_indices
+
+
+def create_Dampings():
+
+    dampings = pd.read_csv(
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple_dampings.txt'),
+         sep=' ')
+
+    dampings.columns = ['factor', 'day']
+    i = 0 
+    all_dampings = []
+    while i < len(dampings):
+        damping_date = int(dampings.iloc[i]['day'])
+        damping_factor = dampings.iloc[i]['factor']
+        days = 35 
+        damping_list = []
+        damping_list +=  [1] * (int(damping_date+1))
+        damping_list +=  [damping_factor] * (days-damping_date) 
+        all_dampings.append(damping_list) 
+        i +=1
+
+
+
+    return all_dampings
+
+
+def addDampingstoInput(dampings, data):
+    inputs, labels = getPartitions(input_width = 1, label_width = 34, data=data)
+    dampings = create_Dampings()
+    i = 0 
+    input_withdamping = []
+    while i < len(inputs):
+         a = inputs.iloc[i].values.tolist()
+         b = dampings[i]
+         a.append(b)
+         input_withdamping.append(a)
+         i += 1
+
+    return input_withdamping
+
+
+
+
 
 def normalizeData(train_data, val_data, test_data, data):
     train_mean = train_data.mean()
@@ -246,11 +303,11 @@ def network_secir_simple(path, epochs=30, num_runs_traindata=500, save_evaluatio
         generate_data(num_runs_traindata, path)
 
     input = pd.read_csv(
-            os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'traindata_secir_simple.txt'),
+            os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'traindata_secir_simple.txt'),
             sep=' ')
     
     labels = pd.read_csv(
-            os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'labels_secir_simple.txt'),
+            os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'labels_secir_simple.txt'),
             sep=' ')
 
     # split in train and test/valid data (ratio 80/20).
@@ -314,7 +371,7 @@ def ml_network(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_
         generate_data(num_runs_traindata, path)
 
     data = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
         sep=' ')
 
     train_data, valid_data, test_data = splitdata(data, normalize=False)
@@ -361,7 +418,7 @@ def ml_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindat
         generate_data(num_runs_traindata, path)
 
     data = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
         sep=' ')
 
     # normalization is kind of difficult for data nested in lists. So start with normalize all data
@@ -430,7 +487,7 @@ def lstm_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
         generate_data(num_runs_traindata, path)
 
     data = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
         sep=' ')
 
     # normalization is kind of difficult for data nested in lists. So start with normalize all data
@@ -510,7 +567,7 @@ def cnn_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
         generate_data(num_runs_traindata, path)
 
     data = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
         sep=' ')
 
     # normalization is kind of difficult for data nested in lists. So start with normalize all data
@@ -572,7 +629,7 @@ def lstm_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_train
         generate_data(num_runs_traindata, path)
 
     data = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
         sep=' ')
 
     # normalization is kind of difficult for data nested in lists. So start with normalize all data
@@ -657,13 +714,16 @@ def plot_histories(histories):
     plt.show()
     plt.savefig('evaluation_single_shot.pdf')
 
+x = 5
+
+print('x')
 
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data35')
 
     MAX_EPOCHS = 1
 
@@ -673,7 +733,7 @@ if __name__ == "__main__":
 
     ### Plot Data ###
     # data = pd.read_csv(
-    #     os.path.join(os.path.dirname(os.path.realpath(path)), 'data', 'data_secir_simple.txt'),
+    #     os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple.txt'),
     #     sep=' ')
 
     # train_data, val_data, test_data = splitdata(data)

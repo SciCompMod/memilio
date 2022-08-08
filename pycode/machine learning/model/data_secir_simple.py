@@ -36,7 +36,7 @@ def run_secir_simulation():
     # Define random population number in intervall (0,500000)
     populations = [500000 * random.random()]
 
-    days = 100  # number of days to simulate
+    days = 35  # number of days to simulate
 
     # since we defined the number of days, we already know the dimension of our dataset.
     # We aim to save the compartment population for each day.
@@ -107,8 +107,8 @@ def run_secir_simulation():
         (num_groups, num_groups)) * 1
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
-    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
-        Damping(coeffs=np.r_[damping_factor], t=damping_date, level=0, type=0))
+    #model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+     #   Damping(coeffs=np.r_[damping_factor], t=damping_date, level=0, type=0))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
@@ -136,12 +136,16 @@ def generate_data(num_runs, path, save_data=True):
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
     data = []
+    damping_factors = []
+    damping_dates = []
 
     # show progess in terminal for longer runs
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
-        data_run = run_secir_simulation()
+        data_run, damping_factor_run, damping_date_run = run_secir_simulation()
         data.append(data_run)
+        damping_factors.append(damping_factor_run)
+        damping_dates.append(damping_date_run)
         bar.next()
     
     bar.finish()
@@ -152,7 +156,7 @@ def generate_data(num_runs, path, save_data=True):
                         'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead', 'Damping Factor']
 
         dataset = pd.DataFrame(np.concatenate(data), columns=columns)
-
+        dampings = pd.DataFrame([damping_factors, damping_dates]).transpose()
         # short overview over dataset
         print(dataset.describe().transpose())
 
@@ -169,16 +173,28 @@ def generate_data(num_runs, path, save_data=True):
             sep=' ', index=False,
             header=True)
 
+
+        dampings.to_csv(
+            os.path.join(path, 'data_secir_simple_dampings.txt'),
+            sep=' ', index=False,
+            header=True)
+
+
+
+
+
         print("Data saved in " + path)
+
+
 
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data35')
 
     num_runs = 1000
     generate_data(num_runs, path_data)
     
-    
+print('hello') 
