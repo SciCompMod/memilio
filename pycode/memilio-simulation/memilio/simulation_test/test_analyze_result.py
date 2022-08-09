@@ -30,10 +30,9 @@ class Test_AnalyzeResult(unittest.TestCase):
         ts.add_time_point(0.5, np.r_[1.0])
         ts.add_time_point(1.5, np.r_[2.0])
         interpolated = secir.interpolate_simulation_result(ts)
-        self.assertEqual(interpolated.get_num_time_points(), 3)
+        self.assertEqual(interpolated.get_num_time_points(), 2)
         self.assertEqual(interpolated.get_time(0), 0.0)
         self.assertEqual(interpolated.get_time(1), 1.0)
-        self.assertEqual(interpolated.get_time(2), 2.0)
 
     def test_ensemble(self):
         ts = mio.TimeSeries(1)
@@ -41,10 +40,9 @@ class Test_AnalyzeResult(unittest.TestCase):
         ts.add_time_point(0.5, np.r_[1.0])
         ts.add_time_point(1.5, np.r_[2.0])
         interpolated = secir.interpolate_ensemble_results([ts, ts])
-        self.assertEqual(interpolated[1].get_num_time_points(), 3)
+        self.assertEqual(interpolated[1].get_num_time_points(), 2)
         self.assertEqual(interpolated[1].get_time(0), 0.0)
         self.assertEqual(interpolated[1].get_time(1), 1.0)
-        self.assertEqual(interpolated[1].get_time(2), 2.0)
 
     def test_ensemble_graph(self):
         model = secir.SecirModel(1)
@@ -59,7 +57,6 @@ class Test_AnalyzeResult(unittest.TestCase):
         interpolated = secir.interpolate_ensemble_results(r)
         self.assertEqual(interpolated[0][0].get_time(0), 0.0)
         self.assertEqual(interpolated[0][0].get_time(1), 1.0)
-        self.assertEqual(interpolated[0][0].get_time(2), 2.0)
 
     def test_mean(self):
         ts1 = mio.TimeSeries(1)

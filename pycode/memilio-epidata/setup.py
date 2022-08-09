@@ -61,7 +61,8 @@ setup(
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
             'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
-            'getcommutermobility = memilio.epidata.getCommuterMobility:main'
+            'getcommutermobility = memilio.epidata.getCommuterMobility:main',
+            'getvaccinationdata = memilio.epidata.getVaccinationData:main'
         ],
     },
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),

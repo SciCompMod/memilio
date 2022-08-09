@@ -24,17 +24,17 @@
 
 TEST(TestHouseholds, test_add_household_to_world)
 {
-    auto member1 = mio::HouseholdMember();
-    member1.set_age_weight(mio::AbmAgeGroup::Age0to4, 1);
+    auto member1 = mio::abm::HouseholdMember();
+    member1.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
     
-    auto member2 = mio::HouseholdMember();
-    member2.set_age_weight(mio::AbmAgeGroup::Age5to14, 1);
+    auto member2 = mio::abm::HouseholdMember();
+    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
     
-    auto household = mio::Household();
+    auto household = mio::abm::Household();
     household.add_members(member1, 2);
     household.add_members(member2, 2);
     
-    auto world = mio::World();
+    auto world = mio::abm::World();
     
     add_household_to_world(world, household);
     auto persons = world.get_persons();
@@ -43,10 +43,10 @@ TEST(TestHouseholds, test_add_household_to_world)
     EXPECT_EQ(persons.size(),4);
     
     // Test age
-    EXPECT_EQ(persons[0].get_age(),mio::AbmAgeGroup::Age0to4);
-    EXPECT_EQ(persons[1].get_age(),mio::AbmAgeGroup::Age0to4);
-    EXPECT_EQ(persons[2].get_age(),mio::AbmAgeGroup::Age5to14);
-    EXPECT_EQ(persons[3].get_age(),mio::AbmAgeGroup::Age5to14);
+    EXPECT_EQ(persons[0].get_age(),mio::abm::AgeGroup::Age0to4);
+    EXPECT_EQ(persons[1].get_age(),mio::abm::AgeGroup::Age0to4);
+    EXPECT_EQ(persons[2].get_age(),mio::abm::AgeGroup::Age5to14);
+    EXPECT_EQ(persons[3].get_age(),mio::abm::AgeGroup::Age5to14);
     
     // Test location
     EXPECT_EQ(persons[0].get_location_id().index, persons[1].get_location_id().index);
@@ -57,25 +57,25 @@ TEST(TestHouseholds, test_add_household_to_world)
 TEST(TestHouseholds, test_add_household_group_to_world)
 {
     
-    auto member1 = mio::HouseholdMember();
-    member1.set_age_weight(mio::AbmAgeGroup::Age35to59, 1);
+    auto member1 = mio::abm::HouseholdMember();
+    member1.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
     
-    auto member2 = mio::HouseholdMember();
-    member2.set_age_weight(mio::AbmAgeGroup::Age5to14, 1);
+    auto member2 = mio::abm::HouseholdMember();
+    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
 
-    auto household_group = mio::HouseholdGroup();
+    auto household_group = mio::abm::HouseholdGroup();
     
-    auto household1 = mio::Household();
+    auto household1 = mio::abm::Household();
     household1.add_members(member1, 10);
     household1.add_members(member2, 2);
     household_group.add_households(household1, 5);
 
-    auto household2 = mio::Household();
+    auto household2 = mio::abm::Household();
     household2.add_members(member1, 2);
     household2.add_members(member2, 2);
     household_group.add_households(household2, 10);
     
-    auto world = mio::World();
+    auto world = mio::abm::World();
     
     add_household_group_to_world(world, household_group);
     auto persons = world.get_persons();
@@ -88,10 +88,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
     
     for (auto& person : persons) {
-        if (person.get_age() == mio::AbmAgeGroup::Age5to14) {
+        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
             number_of_age5to14_year_olds++;
         }
-        if (person.get_age() == mio::AbmAgeGroup::Age35to59) {
+        if (person.get_age() == mio::abm::AgeGroup::Age35to59) {
             number_of_age35to59_year_olds++;
         }
     }

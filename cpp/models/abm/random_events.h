@@ -25,6 +25,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * select a random transition from a list of possible transitions from the current state to others.
@@ -72,4 +74,5 @@ T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&t
     return current_state;
 }
 
+} // namespace abm
 } // namespace mio

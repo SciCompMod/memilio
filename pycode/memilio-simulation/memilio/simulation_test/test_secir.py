@@ -44,20 +44,20 @@ class Test_secir_integration(unittest.TestCase):
         model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
         model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
-        model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
+        model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
         model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
         model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
         model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
 
-        model.populations[A0, Index_InfectionState(State.Susceptible)] = 7600
-        model.populations[A0, Index_InfectionState(State.Exposed)] = 100
-        model.populations[A0, Index_InfectionState(State.Carrier)] = 50
-        model.populations[A0, Index_InfectionState(State.Infected)] = 50
-        model.populations[A0, Index_InfectionState(State.Hospitalized)] = 20
-        model.populations[A0, Index_InfectionState(State.ICU)] = 10
-        model.populations[A0, Index_InfectionState(State.Recovered)] = 10
-        model.populations[A0, Index_InfectionState(State.Dead)] = 0
+        model.populations[A0, State.Susceptible] = 7600
+        model.populations[A0, State.Exposed] = 100
+        model.populations[A0, State.Carrier] = 50
+        model.populations[A0, State.Infected] = 50
+        model.populations[A0, State.Hospitalized] = 20
+        model.populations[A0, State.ICU] = 10
+        model.populations[A0, State.Recovered] = 10
+        model.populations[A0, State.Dead] = 0
 
         contacts = ContactMatrix(np.r_[0.5])
         contacts.add_damping(

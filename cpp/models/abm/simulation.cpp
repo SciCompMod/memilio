@@ -21,8 +21,10 @@
 
 namespace mio
 {
+namespace abm
+{
 
-AbmSimulation::AbmSimulation(TimePoint t, World&& world)
+Simulation::Simulation(TimePoint t, World&& world)
     : m_world(std::move(world))
     , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
@@ -31,7 +33,7 @@ AbmSimulation::AbmSimulation(TimePoint t, World&& world)
     store_result_at(t);
 }
 
-void AbmSimulation::advance(TimePoint tmax)
+void Simulation::advance(TimePoint tmax)
 {
     auto t = m_t;
     while (t < tmax) {
@@ -42,7 +44,7 @@ void AbmSimulation::advance(TimePoint tmax)
     }
 }
 
-void AbmSimulation::store_result_at(TimePoint t)
+void Simulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
@@ -53,4 +55,5 @@ void AbmSimulation::store_result_at(TimePoint t)
     }
 }
 
+} // namespace abm
 } // namespace mio

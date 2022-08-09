@@ -24,6 +24,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /** 
  * infection state in ABM.
@@ -56,6 +58,7 @@ enum class VaccinationState : std::uint32_t
     Count //last!!
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

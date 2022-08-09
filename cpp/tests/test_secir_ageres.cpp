@@ -65,8 +65,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
         params.get<mio::RelativeCarrierInfectability>()[i]    = 1.;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -143,8 +143,8 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
         params.get<mio::RelativeCarrierInfectability>()[i]    = 1.;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;

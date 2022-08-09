@@ -77,6 +77,7 @@ template <class IterPair>
 class Range
 {
 public:
+    using Iterators              = IterPair;
     using iterator               = typename IterPair::first_type;
     using const_iterator         = typename IterPair::first_type;
     using reverse_iterator       = std::reverse_iterator<iterator>;
