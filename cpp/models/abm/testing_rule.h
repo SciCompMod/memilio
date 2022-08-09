@@ -50,13 +50,13 @@ public:
     {
         return this == &other;
     }
-    
+
     /**
      * add an age group to the set of age groups that are allowed for testing
      * @param age_group age group to be added
      */
     void add_age_group(const AgeGroup age_group);
-    
+
     /**
      * remove an age group from the set of age groups that are allowed for testing
      * @param age_group age group to be removed
@@ -68,7 +68,7 @@ public:
      * @param location_type location type to be added
      */
     void add_location_type(const LocationType location_type);
-    
+
     /**
      * remove a location tpye from the set of location tpyes that are allowed for testing
      * @param location_type location type to be removed
@@ -80,7 +80,7 @@ public:
      * @param infection_state infection state to be added
      */
     void add_infection_state(const InfectionState infection_state);
-    
+
     /**
      * remove an infection state from the set of infection states that are allowed for testing
      * @param infection_state infection state to be removed
@@ -100,13 +100,13 @@ private:
      * @param p person to be checked
      */
     bool has_requested_age(const Person& p) const;
-    
+
     /**
      * check if a location is in the set of locations that are allowed for testing
      * @param l location to be checked
      */
     bool is_requested_location_type(const Location& l) const;
-    
+
     /**
      * check if a person has the required infection state to get tested
      * @param p person to be checked

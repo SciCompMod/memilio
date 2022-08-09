@@ -63,7 +63,8 @@ std::vector<int> last_household_gets_the_rest(int number_of_people, int number_o
  * @param number_of_hh The number of households in this household group.
  * @return householdGroup A Class Household Group.
  */
-mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people, int number_of_hh)
+mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people,
+                                                 int number_of_hh)
 {
 
     // The size of each household is calculated in a vector household_size_list.
@@ -89,10 +90,11 @@ mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember
  * @param number_of_other_familes number_of_persons_in_household random persons.
  * @return A Household group.
  */
-mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child, const mio::abm::HouseholdMember& parent,
-                                             const mio::abm::HouseholdMember& random, int number_of_persons_in_household,
-                                             int number_of_full_familes, int number_of_half_familes,
-                                             int number_of_other_familes)
+mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child,
+                                                  const mio::abm::HouseholdMember& parent,
+                                                  const mio::abm::HouseholdMember& random,
+                                                  int number_of_persons_in_household, int number_of_full_familes,
+                                                  int number_of_half_familes, int number_of_other_familes)
 {
 
     auto private_household_group = mio::abm::HouseholdGroup();
@@ -237,7 +239,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int two_person_half_families  = 1765;
     int two_person_other_families = 166;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                        two_person_half_families, two_person_other_families);
+                                                             two_person_half_families, two_person_other_families);
     add_household_group_to_world(world, twoPersonHouseholds);
 
     // Three person households
@@ -245,7 +247,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int three_person_half_families  = 662;
     int three_person_other_families = 175;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                          three_person_half_families, three_person_other_families);
+                                                               three_person_half_families, three_person_other_families);
     add_household_group_to_world(world, threePersonHouseholds);
 
     // Four person households
@@ -253,7 +255,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int four_person_half_families  = 110;
     int four_person_other_families = 122;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                         four_person_half_families, four_person_other_families);
+                                                              four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
 
     // Five plus person households
@@ -376,31 +378,33 @@ int main()
     mio::abm::GlobalInfectionParameters infection_params;
 
     // Set same parameter for all age groups
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.; 
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>() = 0.02;
+    infection_params.get<mio::abm::IncubationPeriod>()               = 4.;
+    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()  = 0.02;
     infection_params.get<mio::abm::SusceptibleToExposedByInfected>() = 0.02;
-    infection_params.get<mio::abm::CarrierToInfected>() = 0.15;
-    infection_params.get<mio::abm::CarrierToRecovered>() = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>() = 0.2;
-    infection_params.get<mio::abm::InfectedToSevere>() = 0.03;
-    infection_params.get<mio::abm::SevereToRecovered>() = 0.1;
-    infection_params.get<mio::abm::SevereToCritical>() = 0.1;
-    infection_params.get<mio::abm::CriticalToRecovered>() = 0.02;
-    infection_params.get<mio::abm::CriticalToDead>() = 0.06;
-    infection_params.get<mio::abm::RecoveredToSusceptible>() = 0.1;
+    infection_params.get<mio::abm::CarrierToInfected>()              = 0.15;
+    infection_params.get<mio::abm::CarrierToRecovered>()             = 0.15;
+    infection_params.get<mio::abm::InfectedToRecovered>()            = 0.2;
+    infection_params.get<mio::abm::InfectedToSevere>()               = 0.03;
+    infection_params.get<mio::abm::SevereToRecovered>()              = 0.1;
+    infection_params.get<mio::abm::SevereToCritical>()               = 0.1;
+    infection_params.get<mio::abm::CriticalToRecovered>()            = 0.02;
+    infection_params.get<mio::abm::CriticalToDead>()                 = 0.06;
+    infection_params.get<mio::abm::RecoveredToSusceptible>()         = 0.1;
 
     // Set parameters for vaccinated people of all age groups
-    infection_params.get<mio::abm::IncubationPeriod>().slice(mio::abm::VaccinationState::Vaccinated)               = 4.;
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>().slice(mio::abm::VaccinationState::Vaccinated)  = 0.02;
-    infection_params.get<mio::abm::SusceptibleToExposedByInfected>().slice(mio::abm::VaccinationState::Vaccinated) = 0.02;
-    infection_params.get<mio::abm::CarrierToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)             = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)            = 0.15;
-    infection_params.get<mio::abm::InfectedToSevere>().slice(mio::abm::VaccinationState::Vaccinated)               = 0.05;
-    infection_params.get<mio::abm::SevereToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)              = 0.05;
-    infection_params.get<mio::abm::SevereToCritical>().slice(mio::abm::VaccinationState::Vaccinated)               = 0.005;
-    infection_params.get<mio::abm::CriticalToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)            = 0.5;
-    infection_params.get<mio::abm::CriticalToDead>().slice(mio::abm::VaccinationState::Vaccinated)                 = 0.005;
-    infection_params.get<mio::abm::RecoveredToSusceptible>().slice(mio::abm::VaccinationState::Vaccinated)         = 0.05;
+    infection_params.get<mio::abm::IncubationPeriod>().slice(mio::abm::VaccinationState::Vaccinated) = 4.;
+    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>().slice(mio::abm::VaccinationState::Vaccinated) =
+        0.02;
+    infection_params.get<mio::abm::SusceptibleToExposedByInfected>().slice(mio::abm::VaccinationState::Vaccinated) =
+        0.02;
+    infection_params.get<mio::abm::CarrierToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)     = 0.15;
+    infection_params.get<mio::abm::InfectedToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.15;
+    infection_params.get<mio::abm::InfectedToSevere>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.05;
+    infection_params.get<mio::abm::SevereToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)      = 0.05;
+    infection_params.get<mio::abm::SevereToCritical>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.005;
+    infection_params.get<mio::abm::CriticalToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.5;
+    infection_params.get<mio::abm::CriticalToDead>().slice(mio::abm::VaccinationState::Vaccinated)         = 0.005;
+    infection_params.get<mio::abm::RecoveredToSusceptible>().slice(mio::abm::VaccinationState::Vaccinated) = 0.05;
 
     auto world = mio::abm::World(infection_params);
 
@@ -439,20 +443,20 @@ int main()
     // set output "abm.png"
     // set terminal png
     // replot
-    auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
-        }
-    }
-    fclose(f_abm);
+    // auto f_abm = fopen("abm.txt", "w");
+    // fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    // for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
+    //     fprintf(f_abm, "%f ", sim.get_result().get_time(i));
+    //     auto v = sim.get_result().get_value(i);
+    //     for (auto j = 0; j < v.size(); ++j) {
+    //         fprintf(f_abm, "%f", v[j]);
+    //         if (j < v.size() - 1) {
+    //             fprintf(f_abm, " ");
+    //         }
+    //     }
+    //     if (i < sim.get_result().get_num_time_points() - 1) {
+    //         fprintf(f_abm, "\n");
+    //     }
+    // }
+    // fclose(f_abm);
 }

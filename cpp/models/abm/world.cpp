@@ -114,13 +114,11 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                //auslagern in eine Funktion
                 if (run_testing_schemes(*person, *target)) {
                     if (target != &get_location(*person)) {
                         person->migrate_to(get_location(*person), *target);
+                        break;
                     }
-
-                    break;
                 }
             }
         }
@@ -167,11 +165,12 @@ void World::update_testing_scheme_activity_status(const TimePoint t)
 
 bool World::run_testing_schemes(Person& person, const Location& location)
 {
-    return std::any_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
+
+    return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
         if (ts.is_active()) {
             return ts.run_scheme(person, location);
         }
-        return false;
+        return true;
     });
 }
 
