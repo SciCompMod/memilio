@@ -23,11 +23,14 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/span.h"
 
+#include <bits/types/FILE.h>
 #include <cassert>
+#include <cstdio>
 #include <functional>
 #include <numeric>
 #include <random>
 #include <sstream>
+#include <string>
 
 namespace mio
 {
@@ -52,9 +55,14 @@ public:
     }
     result_type operator()()
     {
+        x++;
         return m_rng();
     }
 
+    ~RandomNumberGenerator()
+    {
+        printf("rng: %i \n", x);
+    }
     static std::vector<unsigned int> generate_seeds()
     {
         std::random_device rd;
@@ -66,6 +74,7 @@ public:
     {
         std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
         m_rng.seed(sseq);
+        printf("rng ctor \n");
     }
     std::vector<unsigned int> get_seeds() const
     {
@@ -76,7 +85,12 @@ public:
         m_seeds = seeds;
         std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
         m_rng.seed(sseq);
+        for (auto i : m_seeds) {
+            printf("rng: seed %i \n", i);
+        }
     }
+
+    int x = 0;
 
 private:
     std::vector<unsigned int> m_seeds;

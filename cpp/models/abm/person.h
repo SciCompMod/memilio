@@ -87,7 +87,7 @@ public:
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
     void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc,
-                  const GlobalTestingParameters& global_testing_params);
+                  const GlobalTestingParameters& global_testing_params, int& _exp, int& _inf, int& _loc, int& ___temp);
 
     /** 
      * migrate to a different location.

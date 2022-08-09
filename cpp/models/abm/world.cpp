@@ -24,6 +24,7 @@
 #include "abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
+#include <cstdio>
 
 namespace mio
 {
@@ -46,19 +47,25 @@ Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeG
     return person;
 }
 
+int counter = 0;
+
 void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
+    //printf("begin_step %i:: %i \n", counter, thread_local_rng().x);
     interaction(t, dt);
+    //printf("interaction %i:: %i \n", counter, thread_local_rng().x);
     migration(t, dt);
 }
 
 void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
+    int _inf = 0, _exp = 0, _loc = 0, temp;
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
+        person->interact(dt, m_infection_parameters, loc, m_testing_parameters, _inf, _exp, _loc, temp);
     }
+    printf("interaction %i:: \t%i, \t%i, \t%i \n", counter++, _inf, _exp, _loc);
 }
 
 void World::set_infection_state(Person& person, InfectionState inf_state)

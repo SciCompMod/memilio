@@ -21,6 +21,8 @@
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstddef>
+#include <cstdio>
 
 namespace mio
 {
@@ -59,11 +61,13 @@ Person::Person(Location& location, InfectionProperties infection_properties, Abm
 }
 
 void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc,
-                      const GlobalTestingParameters& global_testing_params)
+                      const GlobalTestingParameters& global_testing_params, int& _exp, int& _inf, int& _loc,
+                      int& ___temp)
 {
     auto infection_state     = m_infection_state;
     auto new_infection_state = infection_state;
 
+    ___temp = thread_local_rng().x;
     if (infection_state == InfectionState::Exposed) {
         if (m_time_until_carrier <= TimeSpan(0)) {
             new_infection_state = InfectionState::Carrier;
@@ -77,13 +81,17 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
                 int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
         }
     }
+    _exp += thread_local_rng().x - ___temp;
+    // printf("exposed %i:: %i \n", counter, thread_local_rng().x);
 
+    ___temp = thread_local_rng().x;
     if (new_infection_state == InfectionState::Infected_Severe ||
         new_infection_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
     }
     else if (new_infection_state == InfectionState::Infected) {
         double rand = UniformDistribution<double>::get_instance()();
+        // printf("%lf \n", rand); //Vielleicht ein PROBLEM
         if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age] * dt.days()) {
             this->get_tested(global_testing_params.get<AntigenTest>());
         }
@@ -91,12 +99,16 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     else {
         m_quarantine = false;
     }
+    _inf += thread_local_rng().x - ___temp;
+    //printf("infected %i:: %i \n", counter, thread_local_rng().x);
 
+    ___temp           = thread_local_rng().x;
     m_infection_state = new_infection_state;
     if (infection_state != new_infection_state) {
         loc.changed_state(*this, infection_state);
     }
-
+    _loc += thread_local_rng().x - ___temp;
+    // printf("changed state %i:: %i \n", counter, thread_local_rng().x);
     m_time_at_location += dt;
 }
 
@@ -162,6 +174,7 @@ bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) c
 bool Person::get_tested(const TestParameters& params)
 {
     double random = UniformDistribution<double>::get_instance()();
+    // printf("%lf \n", random); // PROBLEM
     if (m_infection_state == InfectionState::Carrier || m_infection_state == InfectionState::Infected ||
         m_infection_state == InfectionState::Infected_Severe ||
         m_infection_state == InfectionState::Infected_Critical) {
