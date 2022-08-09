@@ -135,6 +135,26 @@ def run_secir_simulation():
     return data
 
 
+def get_normailzatonData(num_runs):
+    """! Generates a big dataset ordered by features in order to define the values needed for normalization"""
+
+
+    # get the DataFrame 
+    data = pd.DataFrame(columns =['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'])
+
+    for _ in range(0, num_runs):
+        data_run = run_secir_simulation()
+        for i in range (0, len(data_run)):
+            data.loc[len(data)] = data_run[i].tolist()
+
+    # get mean an standarddeviation for each feature 
+    mean = data.mean()
+    std = data.std()
+
+    return mean, std 
+
+
+
 
 def generate_data(num_runs, path, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
@@ -143,6 +163,8 @@ def generate_data(num_runs, path, save_data=True):
    @param path Path, where the datasets are stored.
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
+
+    mean, std = get_normailzatonData(1000)
     data =[]
 
 
@@ -154,8 +176,16 @@ def generate_data(num_runs, path, save_data=True):
     for _ in range(0, num_runs):
         data_run = run_secir_simulation()
 
-        inputs_run = data_run[:n_inputs]
-        labels_run = data_run[n_inputs:]
+        normalized_run = []
+        for i in range(0, len(data_run)):
+            values = (data_run[i]-mean) /std
+            normalized_run.append(values.tolist())
+            
+        normalized_run = np.asarray(normalized_run)
+
+
+        inputs_run = normalized_run[:n_inputs]
+        labels_run = normalized_run[n_inputs:]
 
         data.append(inputs_run.reshape(1,n_inputs, 8).tolist())
         data[_].append(labels_run.tolist())
@@ -187,7 +217,6 @@ def generate_data(num_runs, path, save_data=True):
             os.path.join(path, 'data_secir_simple.txt'),
             sep=' ', index=False,
             header=True)
-
 
 
 
