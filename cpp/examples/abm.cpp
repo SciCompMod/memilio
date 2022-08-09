@@ -286,6 +286,24 @@ void create_assign_locations(mio::abm::World& world)
     auto icu = world.add_location(mio::abm::LocationType::ICU);
     world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
 
+    // Add a testing scheme to world.
+    // Everybody who goes to the School, Work, or Basic shop tests themselves.
+    std::vector<mio::abm::LocationType> test_location_types = {
+        mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::BasicsShop};
+
+    auto testing_rule1                               = mio::abm::TestingRule({}, {}, {});
+    std::vector<mio::abm::TestingRule> testing_rules = {testing_rule1};
+
+    const auto testing_frequency = mio::abm::days(2);
+    const auto start_date        = mio::abm::TimePoint(0);
+    const auto end_date          = mio::abm::TimePoint(0) + mio::abm::days(60);
+    const auto probability       = 0.8;
+    const auto test_type         = mio::abm::PCRTest();
+
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_rules, testing_frequency, start_date, end_date, probability, test_type);
+    world.add_testing_scheme(testing_scheme);
+
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
     // Students have to get tested once a week.
@@ -297,11 +315,10 @@ void create_assign_locations(mio::abm::World& world)
 
     auto school = world.add_location(mio::abm::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    //world.get_individualized_location(school).set_testing_scheme(mio::abm::days(7), 1);
 
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    //world.get_individualized_location(work).set_testing_scheme(mio::abm::days(7), 0.5);
+
     int counter_school = 0;
     int counter_work   = 0;
     int counter_shop   = 0;
