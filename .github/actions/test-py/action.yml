@@ -15,7 +15,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install python3-pip gnupg
+        sudo apt-get -qq -y install python3-pip gnupg clang libclang-dev
         python -m pip install --upgrade pip
     - name: Download Python Wheels
       uses: actions/download-artifact@v2
