@@ -39,8 +39,8 @@ def run_secir_simulation(days):
     # since we defined the number of days, we already know the dimension of our dataset.
     # We aim to save the compartment population for each day.
     # i.e. for days = 35 and len(compartments = 8) -> 35 x  8 array
-    # data = np.zeros((days,len(compartments)))
-    data = []
+    data = np.zeros((days,len(compartments)))
+    dataset = []
 
     start_day = 1
     start_month = 1
@@ -111,14 +111,18 @@ def run_secir_simulation(days):
     model.apply_constraints()
 
     # Run Simulation
-    # data[0] = model.populations.get_compartments()
-    data.append(model.populations.get_compartments())
+    data[0] = model.populations.get_compartments()
+    # dataset.append(model.populations.get_compartments())
     for day in range(1, days):
         result = simulate(0, day, dt, model)
-        # data[day] = result.get_last_value()
-        data.append(result.get_last_value())
+        data[day] = result.get_last_value()[:]
+        # dataset.append(val)
 
-    return data
+    # when directly using a list instead of an array, we get problems wutg references
+    for row in data:
+        dataset.append(row)
+
+    return dataset
 
 def generate_data(num_runs, path, input_width, label_width, normalize_labels=False, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
@@ -157,7 +161,7 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
             data["labels"] = normalize(data["labels"])
 
         # data = splitdata(data["inputs"], data["labels"])
-        
+
         # check if data directory exists. If necessary create it.
         if not os.path.isdir(path): 
             os.mkdir(path)
@@ -210,21 +214,22 @@ def normalize(data):
                     data =  _________________________
                                (max_value − min_value)
                     
-    alternative is tf.linalg.normalize(data["inputs"], ord='euclidean', axis=None, name=None)
+    alternative is tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)
 
     @param data  dataset
 
     """
-    return tf.divide(
-            tf.subtract(
-                data, 
-                tf.reduce_min(data)
-            ), 
-            tf.subtract(
-                tf.reduce_max(data), 
-                tf.reduce_min(data)
-            )
-        )
+    # return tf.divide(
+    #         tf.subtract(
+    #             data, 
+    #             tf.reduce_min(data)
+    #         ), 
+    #         tf.subtract(
+    #             tf.reduce_max(data), 
+    #             tf.reduce_min(data)
+    #         )
+    #     )
+    return tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)[0]
 
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
@@ -236,6 +241,6 @@ if __name__ == "__main__":
     input_width = 5
     label_width = 30
     num_runs = 500
-    generate_data(num_runs, path_data, input_width, label_width)
+    generate_data(num_runs, path_data, input_width, label_width, normalize_labels=True)
     
     
