@@ -52,7 +52,8 @@ public:
      */
     bool operator==(const TestingRule& other) const
     {
-        return this == &other;
+        return ((this->m_ages == other.m_ages) && (this->m_infection_states == other.m_infection_states) &&
+                (this->m_location_types == other.m_location_types));
     }
 
     /**
@@ -127,7 +128,6 @@ private:
 class TestingScheme
 {
 public:
-    
     /**
      * Create a testing scheme.
      * @param testing_rules vector of testing rules that are checked for testing
@@ -146,15 +146,20 @@ public:
      */
     bool operator==(const TestingScheme& other) const
     {
-        return this == &other;
+        return this->m_testing_rules == other.m_testing_rules &&
+               this->m_testing_frequency == other.m_testing_frequency && this->m_start_date == other.m_start_date &&
+               this->m_end_date == other.m_end_date && this->m_probability == other.m_probability &&
+               this->m_test_type.get_default().sensitivity == other.m_test_type.get_default().sensitivity &&
+               this->m_test_type.get_default().specificity == other.m_test_type.get_default().specificity;
+        //To be adjusted and also TestType should be static.
     }
-        
+
     /**
      * add a testing rule to the set of age groups that are checked for testing
      * @param rule testing rule to be added
      */
     void add_testing_rule(const TestingRule rule);
-    
+
     /**
      * remove a testing rule from the set of age groups that are checked for testing
      * @param rule testing rule to be removed
@@ -165,13 +170,13 @@ public:
      * @return activity status of the scheme
      */
     bool is_active() const;
-    
+
     /**
      * checks if the scheme is active at a given time and updates activity status
      * @param t time to be updated at
      */
     void update_activity_status(const TimePoint t);
-    
+
     /**
      * runs the testing scheme and tests a person if necessary
      * @return if the person is allowed to enter the location

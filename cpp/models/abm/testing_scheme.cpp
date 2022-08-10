@@ -37,9 +37,9 @@ TestingRule::TestingRule(const std::vector<AgeGroup> ages, const std::vector<Loc
 
 void TestingRule::add_age_group(const AgeGroup age_group)
 {
-    m_ages.push_back(age_group);
-    auto last = std::unique(m_ages.begin(), m_ages.end());
-    m_ages.erase(last, m_ages.end());
+    if (std::find(m_ages.begin(), m_ages.end(), age_group) == m_ages.end()) {
+        m_ages.push_back(age_group);
+    }
 }
 
 void TestingRule::remove_age_group(const AgeGroup age_group)
@@ -50,9 +50,9 @@ void TestingRule::remove_age_group(const AgeGroup age_group)
 
 void TestingRule::add_location_type(const LocationType location_type)
 {
-    m_location_types.push_back(location_type);
-    auto last = std::unique(m_location_types.begin(), m_location_types.end());
-    m_location_types.erase(last, m_location_types.end());
+    if (std::find(m_location_types.begin(), m_location_types.end(), location_type) == m_location_types.end()) {
+        m_location_types.push_back(location_type);
+    }
 }
 void TestingRule::remove_location_type(const LocationType location_type)
 {
@@ -62,9 +62,9 @@ void TestingRule::remove_location_type(const LocationType location_type)
 
 void TestingRule::add_infection_state(const InfectionState infection_state)
 {
-    m_infection_states.push_back(infection_state);
-    auto last = std::unique(m_infection_states.begin(), m_infection_states.end());
-    m_infection_states.erase(last, m_infection_states.end());
+    if (std::find(m_infection_states.begin(), m_infection_states.end(), infection_state) == m_infection_states.end()) {
+        m_infection_states.push_back(infection_state);
+    }
 }
 
 void TestingRule::remove_infection_state(const InfectionState infection_state)
@@ -117,9 +117,9 @@ TestingScheme::TestingScheme(const std::vector<TestingRule> testing_rules, const
 
 void TestingScheme::add_testing_rule(const TestingRule rule)
 {
-    m_testing_rules.push_back(rule);
-    auto last = std::unique(m_testing_rules.begin(), m_testing_rules.end());
-    m_testing_rules.erase(last, m_testing_rules.end());
+    if (std::find(m_testing_rules.begin(), m_testing_rules.end(), rule) == m_testing_rules.end()) {
+        m_testing_rules.push_back(rule);
+    }
 }
 
 void TestingScheme::remove_testing_rule(const TestingRule rule)

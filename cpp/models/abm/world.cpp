@@ -151,9 +151,9 @@ void World::begin_step(TimePoint /*t*/, TimeSpan dt)
 
 void World::add_testing_scheme(const TestingScheme& testing_scheme)
 {
-    m_testing_schemes.push_back(testing_scheme);
-    auto last = std::unique(m_testing_schemes.begin(), m_testing_schemes.end());
-    m_testing_schemes.erase(last, m_testing_schemes.end());
+    if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), testing_scheme) == m_testing_schemes.end()) {
+        m_testing_schemes.push_back(testing_scheme);
+    }
 }
 
 void World::update_testing_scheme_activity_status(const TimePoint t)

@@ -1513,12 +1513,16 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5));
-    testing_scheme.run_scheme(person1, loc_home);
-    testing_scheme.run_scheme(person2, loc_work);
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), false);
+    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work), true);
 
     ASSERT_EQ(person1.is_in_quarantine(), true);
     ASSERT_EQ(person2.is_in_quarantine(), false);
     ASSERT_EQ(person2.get_time_since_negative_test(), mio::abm::days(0));
+
+    testing_scheme.add_testing_rule(testing_rule1);
+    testing_scheme.remove_testing_rule(testing_rule1);
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), true);
 }
 
 TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
@@ -1556,7 +1560,7 @@ TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
     world.update_testing_scheme_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(4))
+        .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
     ASSERT_EQ(world.run_testing_schemes(person, work), false);
