@@ -660,24 +660,17 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             df_ma[(df_ma['Date'] == "2020-08-11")]['Deaths'].item(),
             df_deaths[(df_deaths['Date'] == "2020-08-11")]['Deaths'].item())
-        # Attention: cases_deaths_ma file and cases_all_germany_ma deaths-column are not identical in the first six days
-        # after first death. This is the case because in all_germany file, zeros before the first death are included
-        # in the calculation of the moving average and in cases_deaths-file first data are just cumulative deaths.
-        self.assertEqual(
+
+        self.assertAlmostEqual(
             df_deaths[df_deaths['Date'] == "2020-04-13"]
             ['Deaths'].item(),
-            1.0)
+            4/7)
         self.assertAlmostEqual(
-            df_ma[(df_ma['Date'] == "2020-04-13")]
-            ['Deaths'].item(),
-            4 / 7)
-        self.assertNotEqual(
-            df_deaths[df_deaths['Date'] == "2020-04-13"]['Deaths'].items(),
-            df_ma[(df_ma['Date'] == "2020-04-13")]['Deaths'].items())
-        self.assertEqual(
-            df_deaths[df_deaths['Date'] == "2020-04-14"]
-            ['Deaths'].item(),
-            1.0)
+            df_deaths[df_deaths['Date'] == "2020-04-13"]['Deaths'].item(),
+            df_ma[(df_ma['Date'] == "2020-04-13")]['Deaths'].item())
+        self.assertAlmostEqual(
+            df_deaths[df_deaths['Date'] == "2020-04-14"]['Deaths'].item(),
+            df_ma[(df_ma['Date'] == "2020-04-14")]['Deaths'].item())
         self.assertAlmostEqual(
             df_ma[(df_ma['Date'] == "2020-04-14")]
             ['Deaths'].item(),

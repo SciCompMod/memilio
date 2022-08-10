@@ -123,18 +123,17 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(dd.GerEng, axis=1, inplace=True)
 
     df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
-    # extract dataframe with relevant dates for computing moving average
-    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
     if (impute_dates == True) or (moving_average > 0):
         df = mdfs.impute_and_reduce_df(
-            df,
-            {dd.EngEng["idCounty"]: geoger.get_county_ids()},
-            [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
-            impute='forward', moving_average=moving_average)
+            df, {dd.EngEng["idCounty"]: geoger.get_county_ids()},
+            [dd.EngEng["ICU"],
+             dd.EngEng["ICU_ventilated"]],
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
 
     # add names etc for empty frames (counties where no ICU beds are available)
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()

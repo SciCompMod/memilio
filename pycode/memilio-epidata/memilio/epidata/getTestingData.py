@@ -231,11 +231,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         df_test[0],
         {},
         [dd.EngEng['positiveRate']],
-        impute='forward', moving_average=moving_average)
-
-    # extract subframe of dates
-    df_test[0] = mdfs.extract_subframe_based_on_dates(
-        df_test[0], start_date, end_date)
+        impute='forward', moving_average=moving_average,
+        min_date=start_date, max_date=end_date)
     
     # store positive rates for the whole country
     filename = 'germany_testpos'
@@ -257,11 +254,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         df_test[1],
         {dd.EngEng["idState"]: [k for k in geoger.get_state_ids()]},
         [dd.EngEng['positiveRate']],
-        impute='forward', moving_average=moving_average)
-
-    # extract subframe of dates
-    df_test[1] = mdfs.extract_subframe_based_on_dates(
-        df_test[1], start_date, end_date)
+        impute='forward', moving_average=moving_average,
+        min_date=start_date, max_date=end_date)
     # store positive rates for the all federal states
     filename = 'germany_states_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)

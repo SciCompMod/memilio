@@ -109,8 +109,8 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=False)
         # test that values at new start days are zero since start_w_firstval=False
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), 0)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), (0+0+3)/3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), (0+0+0)/3)
         # test that the values at first original date are obtained by the value itself plus the value right of it divided by 3
         # (6 + 1) / 3 = 2 + 2 / 3
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col1'].item(), 2 + 1 / 3)
@@ -132,8 +132,8 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=False)
         # test that values at new start days are zero since start_w_firstval=False
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), (0+0+3)/3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), (0+0+0)/3)
 
         # test that the values at first original date are obtained by the value itself plus the value right of it divided by 3
         # (6 + 1) / 3 = 2 + 2 / 3
@@ -148,8 +148,8 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col3'].item(), 2)
 
         # check that new date gets imputed 0 because impute = "zeros"
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col3'].item(), 0)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col1'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col3'].item(), (1+0+0)/3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col1'].item(), (5+0+0)/3)
 
         # test fill missing dates moving average = 4
         # if moving average is an even number it always should calculate with one more earlier date
@@ -158,15 +158,15 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             moving_average=4, min_date='2021-01-06', max_date='2021-01-13',
             start_w_firstval=False)
         # test that the values at first original date arent changed since there is no value left of it
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col1'].item(), 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col3'].item(), (0+4+0+0)/4)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col1'].item(), (3+3+0+0)/4)
         # test that a value is computed by two values left of it, the value itself and the value right of it divided by 4
         # (6 + 1 + 11 + 19) / 4 = 9 + 1 / 4
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-08") & (df['ID'] == 3.0)]['test_col1'].item(), 9 + 1 / 4)
         # (1 + 3 + 1 + 6) = 2 + 3 / 4
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-08") & (df['ID'] == 3.0)]['test_col3'].item(), 2 + 3 / 4)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col3'].item(), 1)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col1'].item(), 5)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col3'].item(), (2*1+2*6)/4)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col1'].item(), (2*5+2*19)/4)
         # test that the first of three missing dates is computed by three times the value left of it plus the penultimate value devided by 4
         # (19 + 19 + 19 + 11) / 4 = 17
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 3.0)]['test_col1'].item(), 17)
@@ -181,9 +181,9 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             start_w_firstval=False)
         # test same tests as in the previous test with moving average = 4
         # 'test_col1' should be same same as in the previous test
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col1'].item(), 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col1'].item(), (3+3+0+0)/4)
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-08") & (df['ID'] == 3.0)]['test_col1'].item(), 9 + 1 / 4)
-        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col1'].item(), 5)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col1'].item(), (2*5+2*19)/4)
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 3.0)]['test_col1'].item(), 17)
         # 'test_col3' should not be changed
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
@@ -358,17 +358,6 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         extracted_df = mdfs.extract_subframe_based_on_dates(
             self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
-
-    def test_extract_subframe_based_on_dates_moving_average(self):
-        test_df = self.date_df.copy()
-        # test extracted dates with moving average
-        extracted_ma_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,10), date(2021,9,13), moving_average=3)
-        extracted_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,9), date(2021,9,14))
-        pd.testing.assert_frame_equal(extracted_df, extracted_ma_df)
-        # test with even moving average
-        extracted_ma_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,10), date(2021,9,13), moving_average=4)
-        extracted_df = mdfs.extract_subframe_based_on_dates(self.date_df, date(2021,9,8), date(2021,9,14))
-        pd.testing.assert_frame_equal(extracted_df, extracted_ma_df)
 
 
     def test_insert_column_by_map(self):

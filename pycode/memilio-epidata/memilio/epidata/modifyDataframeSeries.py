@@ -31,7 +31,8 @@ from memilio.epidata import defaultDict as dd
 
 
 def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', moving_average=0, min_date='', max_date='', start_w_firstval=False):
-    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data
+    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data. 
+    Extracts Dates between min and max date.
 
     @param df_old old pandas dataframe
     @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county oder federal state IDs)
@@ -67,7 +68,23 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         min_date = min(df_old[dd.EngEng['date']])
     if max_date == '':
         max_date = max(df_old[dd.EngEng['date']])
-    idx = pd.date_range(min_date, max_date)
+    
+    # Transform dates to datetime
+    if isinstance(min_date, str)==True:
+        min_date=datetime.strptime(min_date, "%Y-%m-%d")
+    if isinstance(max_date, str)==True:
+        max_date=datetime.strptime(max_date, "%Y-%m-%d")
+
+    start_date = min_date
+    end_date = max_date
+    # shift start and end date for relevant dates to compute moving average.
+    # if moving average is odd, both dates are shifted equaly.
+    # if moving average is even, start date is shifted one day more than end date.
+    if moving_average > 0:
+        end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
+        start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
+    
+    idx = pd.date_range(start_date, end_date)
 
     # create list of all possible groupby columns combinations
     unique_ids = []
@@ -155,6 +172,9 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         df_new = df_new.append(df_local_new)
         # rearrange indices from 0 to N
         df_new.index = (range(len(df_new)))
+    
+    # extract min and max date
+    df_new = extract_subframe_based_on_dates(df_new, min_date, max_date)
 
     return df_new
 
@@ -201,7 +221,7 @@ def split_column_based_on_values(
 
     return new_column_labels, df_joined
 
-def extract_subframe_based_on_dates(df, start_date, end_date, moving_average = 0):
+def extract_subframe_based_on_dates(df, start_date, end_date):
     """! Removes all data with date lower than start date or higher than end date.
 
     Returns the Dataframe with only dates between start date and end date.
@@ -210,15 +230,10 @@ def extract_subframe_based_on_dates(df, start_date, end_date, moving_average = 0
     @param df The dataframe which has to be edited
     @param start_date Date of first date in dataframe
     @param end_date Date of last date in dataframe
-    @param moving_average start_date and end_date are extended by half of moving_average to ensure an accurate calculation.
+    
+    @return a dataframe with the extracted dates
     """
 
-    # shift start and end date for relevant dates to compute moving average.
-    # if moving average is odd, both dates are shifted equaly.
-    # if moving average is even, start date is shifted one day more than end date.
-    if moving_average > 0:
-        end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
-        start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
 
     upperdate = datetime.strftime(end_date, '%Y-%m-%d')
     lowerdate = datetime.strftime(start_date, '%Y-%m-%d')

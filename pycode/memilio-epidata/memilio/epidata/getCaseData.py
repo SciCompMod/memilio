@@ -248,9 +248,6 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
 
     print("Available columns:", df.columns)
 
-    # extract dataframe with relevant dates for computing moving average
-    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date, moving_average)
-
     ######## Data for whole Germany all ages ##########
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse":
@@ -279,7 +276,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbNF_cs.reset_index(),
             {},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -316,7 +314,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbNT_cs.reset_index(),
             {},
             ['Deaths'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -357,7 +356,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbNF_cs.reset_index(),
             {},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -389,7 +389,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbNFst_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -426,7 +427,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbAllSt_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -469,7 +471,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbNFc_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -503,7 +506,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbAllC_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -537,7 +541,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbAllG_cs,
             {dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -580,7 +585,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -616,7 +622,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -649,7 +656,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             gbAllA_cs,
             {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -702,7 +710,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -738,7 +747,8 @@ def get_case_data(split_berlin=dd.defaultDict['split_berlin'],
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'

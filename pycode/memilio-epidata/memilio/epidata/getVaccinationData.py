@@ -556,8 +556,6 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
         gd.write_dataframe(df_data, directory, "RKIVaccFull", "json")
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
-    df_data = mdfs.extract_subframe_based_on_dates(
-        df_data, start_date, end_date, moving_average)
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[
@@ -747,10 +745,6 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
         dd.EngEng['idCounty'],
         dd.EngEng['ageRKI']]
 
-    # extract min and max dates
-    min_date = pd.to_datetime(min(df_data.Date)).date()
-    max_date = pd.to_datetime(max(df_data.Date)).date()
-
     if sanitize_data < 3:
         moving_average_sanit = moving_average
         impute_sanit = 'forward'
@@ -778,7 +772,7 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
              dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
-            min_date=min_date, max_date=max_date)
+            min_date=start_date, max_date=start_date)
 
     df_data_agevacc_county_cs = geoger.merge_df_counties_all(
         df_data_agevacc_county_cs,
@@ -840,7 +834,7 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
                 dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute='forward', moving_average=moving_average,
-            min_date=min_date, max_date=max_date)
+            min_date=start_date, max_date=start_date)
     else:
         print('Sanitizing deactivated.')
 
