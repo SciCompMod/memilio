@@ -27,6 +27,17 @@ namespace mio
 namespace abm
 {
 
+/**
+ * virus type in ABM.
+ * can be used as 0-based index
+ */
+enum class VirusType : std::uint32_t
+{
+    Wildtype = 0,
+    
+    Count //last!!
+};
+
 /** 
  * infection state in ABM.
  * can be used as 0-based index
