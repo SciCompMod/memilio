@@ -13,15 +13,14 @@ setup(
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     install_requires=[
-        'sympy',
-        'matplotlib',
         'libclang',
         'clang',
+        'subprocess',
+        'dataclasses',
         'dataclasses_json',
     ],
     extras_require={
         'dev': [
-            'numpy >= 1.21',
             'pyfakefs>=4.2.1',
         ],
     },

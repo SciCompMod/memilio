@@ -1,0 +1,4 @@
+# dev dependencies, pyfakefs 4.2.0 is broken!
+pyfakefs==4.1.0
+libclang
+clang

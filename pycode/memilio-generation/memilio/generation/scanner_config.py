@@ -2,8 +2,6 @@ import os
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
-from pyparsing import Optional
-
 @dataclass_json
 @dataclass
 class ScannerConfig:
