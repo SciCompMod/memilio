@@ -485,8 +485,7 @@ def extrapolate_age_groups(
 
 # gets rki vaccination monitoring data for all states and extrapolates the values for counties according to their population
 # Missing ratio values for the two different age groups are also estimated
-def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
-                         read_data=dd.defaultDict['read_data'],
+def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'],
                          no_raw=dd.defaultDict['no_raw'],
@@ -494,7 +493,9 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
                          end_date=dd.defaultDict['end_date'],
                          impute_dates=True,
                          moving_average=dd.defaultDict['moving_average'],
-                         make_plot=dd.defaultDict['make_plot']):
+                         make_plot=dd.defaultDict['make_plot'],
+                         sanitize_data=dd.defaultDict['sanitize_data']
+                         ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
@@ -517,6 +518,18 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
 
     - Start and end dates can be provided to define the length of the returned data frames.
 
+    @param read_data [Currently not used] True or False. Defines if data is read from file or downloaded.
+        Here Data is always downloaded from the internet.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. 
+        Here Dates are always imputed so False changes nothing.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict. 
     @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
         vaccination data is not correctly attributed to home locations of 
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
@@ -530,19 +543,7 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
-    @param read_data [Currently not used] True or False. Defines if data is read from file or downloaded.
-        Here Data is always downloaded from the internet.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. 
-        Here Dates are always imputed so False changes nothing.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.   
+        state level.  
     """
     # data for all dates is automatically added
     impute_dates = True
@@ -772,7 +773,7 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
              dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
-            min_date=start_date, max_date=start_date)
+            min_date=start_date, max_date=end_date)
 
     df_data_agevacc_county_cs = geoger.merge_df_counties_all(
         df_data_agevacc_county_cs,
@@ -834,7 +835,7 @@ def get_vaccination_data(sanitize_data=dd.defaultDict['sanitize_data'],
                 dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute='forward', moving_average=moving_average,
-            min_date=start_date, max_date=start_date)
+            min_date=start_date, max_date=end_date)
     else:
         print('Sanitizing deactivated.')
 

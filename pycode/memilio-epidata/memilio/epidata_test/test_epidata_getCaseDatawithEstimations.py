@@ -258,7 +258,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
             out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
-            make_plot=make_plot, moving_average=moving_average,
+            moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
@@ -374,7 +374,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
             out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
-            make_plot=make_plot, moving_average=moving_average,
+            moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
@@ -484,7 +484,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
             out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
-            make_plot=make_plot, moving_average=moving_average,
+            moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
@@ -621,7 +621,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
             out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
-            make_plot=make_plot, moving_average=moving_average,
+            moving_average=moving_average, make_plot=make_plot,
             split_berlin=split_berlin, rep_date=rep_date)
 
         # print is called 9 times, because no file exists

@@ -153,7 +153,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         At the moment they are always imputed.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
     # data for all dates is automatically added

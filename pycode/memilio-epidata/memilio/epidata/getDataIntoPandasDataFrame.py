@@ -162,10 +162,10 @@ def cli(what):
     Depending on what following parser can be added:
     - start_date
     - end_date
-    - plot
-    - split_berlin
-    - moving_average
     - impute_dates
+    - moving_average
+    - make_plot
+    - split_berlin
     - rep_date
     - sanitize_data
 
@@ -178,15 +178,15 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date','end_date','impute_dates','moving_average','make_plot'],
-                "cases": ['Download case data from RKI', 'split_berlin', 'rep_date', 'start_date','end_date','impute_dates','moving_average','make_plot'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'split_berlin', 'rep_date', 'start_date','end_date','impute_dates','moving_average','make_plot'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'sanitize_data', 'start_date','end_date','impute_dates','moving_average','make_plot'],
-                "testing": ['Download testing data', 'start_date','end_date','impute_dates','moving_average','make_plot'],
-                "jh": ['Downloads data from Johns Hopkins University', 'start_date','end_date','impute_dates','moving_average','make_plot'],
-                "sim": ['Download all data needed for simulations', 'rep_date', 'split_berlin', 'sanitize_data', 'start_date','end_date','impute_dates','moving_average','make_plot']}
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -219,6 +219,13 @@ def cli(what):
         help='Defines if raw data will be stored for further use.',
         action='store_true')
 
+    if 'start_date' in what_list:
+        parser.add_argument(
+            '-s', '--start-date',
+            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
+            'Default is 2020-04-24',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+            default=dd.defaultDict['start_date'])
     if 'end_date' in what_list:
         parser.add_argument(
             '-e', '--end-date',
@@ -231,13 +238,13 @@ def cli(what):
             '-i', '--impute-dates',
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
-                            action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
             '-m', '--moving-average', type=int, default=0,
             help='Compute a moving average of N days over the time series')
+    if 'make_plot' in what_list:
+        parser.add_argument('-p', '--make-plot', help='Plots the data.',
+                            action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin',
@@ -250,13 +257,6 @@ def cli(what):
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
-    if 'start_date' in what_list:
-        parser.add_argument(
-            '-s', '--start-date',
-            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
     if 'sanitize_data' in what_list:
         parser.add_argument(
             '-sd', '--sanitize_data', type=int, default=1,

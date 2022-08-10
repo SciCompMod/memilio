@@ -37,8 +37,6 @@ from memilio.epidata import getJHData as gjd
 
 
 def get_case_data_with_estimations(
-        split_berlin=dd.defaultDict['split_berlin'],
-        rep_date=dd.defaultDict['rep_date'],
         read_data=dd.defaultDict['read_data'],
         file_format=dd.defaultDict['file_format'],
         out_folder=dd.defaultDict['out_folder'],
@@ -47,7 +45,9 @@ def get_case_data_with_estimations(
         end_date=dd.defaultDict['end_date'],
         impute_dates=dd.defaultDict['impute_dates'],
         moving_average=dd.defaultDict['moving_average'],
-        make_plot=dd.defaultDict['make_plot']
+        make_plot=dd.defaultDict['make_plot'],
+        split_berlin=dd.defaultDict['split_berlin'],
+        rep_date=dd.defaultDict['rep_date']
         ):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
 WARNING: This file is experimental and has not been tested.
@@ -56,9 +56,7 @@ WARNING: This file is experimental and has not been tested.
     With this fraction every existing case data from RKI is scaled.
     The new columns recovered_estimated and deaths_estimated are added.
 
-    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
     @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
@@ -66,8 +64,10 @@ WARNING: This file is experimental and has not been tested.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
+    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     """
 
     data_path = os.path.join(out_folder, 'Germany/')

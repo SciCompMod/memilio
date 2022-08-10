@@ -41,22 +41,23 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def test_get_call_sub_functions(self, mock_popul, mock_cases,
                                     mock_divi, mock_vaccination):
 
-        [read_data, file_format, out_folder, no_raw, end_date, impute_dates,
-         make_plot, moving_average, split_berlin, start_date] = [False,
-                                                                 "json_timeasstring", self.path,
-                                                                 False, dd.defaultDict['end_date'],
-                                                                 dd.defaultDict['impute_dates'],
-                                                                 dd.defaultDict['make_plot'],
-                                                                 dd.defaultDict['moving_average'],
-                                                                 dd.defaultDict['split_berlin'],
-                                                                 dd.defaultDict['start_date']]
+        [read_data, file_format, out_folder, no_raw, start_date, end_date,
+         impute_dates, moving_average, make_plot, split_berlin, rep_date] = [
+            False, "json_timeasstring", self.path, False,
+            dd.defaultDict['start_date'],
+            dd.defaultDict['end_date'],
+            dd.defaultDict['impute_dates'],
+            dd.defaultDict['moving_average'],
+            dd.defaultDict['make_plot'],
+            dd.defaultDict['split_berlin'],
+            dd.defaultDict['rep_date']]
 
         gsd.get_simulation_data(
             read_data=read_data, file_format=file_format,
-            out_folder=out_folder, no_raw=no_raw, end_date=end_date,
-            impute_dates=impute_dates, make_plot=make_plot,
-            moving_average=moving_average, split_berlin=split_berlin,
-            start_date=start_date)
+            out_folder=out_folder, no_raw=no_raw, start_date=start_date,
+            end_date=end_date, impute_dates=impute_dates,
+            moving_average=moving_average, make_plot=make_plot,
+            split_berlin=split_berlin, rep_date=rep_date)
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],

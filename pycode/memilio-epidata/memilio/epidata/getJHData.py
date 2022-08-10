@@ -54,7 +54,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
        - Germany, SouthKorea, Spain, France, Italy, US, China
    - furthermore, all countries, for which provinces are added, are written to a file
 
-    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
     @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
@@ -62,7 +62,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates [Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
     @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.  Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
    """
 
