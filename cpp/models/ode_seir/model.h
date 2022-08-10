@@ -39,6 +39,7 @@ namespace oseir
     {
         using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
 
+    public:
         Model()
             : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
         {
