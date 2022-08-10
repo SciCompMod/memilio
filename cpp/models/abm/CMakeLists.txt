@@ -7,8 +7,6 @@ add_library(abm
     simulation.h
     person.cpp
     person.h
-    testing_rule.cpp
-    testing_rule.h
     testing_scheme.cpp
     testing_scheme.h
     world.cpp
