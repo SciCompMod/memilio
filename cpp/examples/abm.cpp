@@ -291,7 +291,7 @@ void create_assign_locations(mio::abm::World& world)
     std::vector<mio::abm::LocationType> test_location_types = {
         mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::BasicsShop};
 
-    auto testing_rule1                               = mio::abm::TestingRule({}, {}, {});
+    auto testing_rule1                               = mio::abm::TestingRule({}, test_location_types, {});
     std::vector<mio::abm::TestingRule> testing_rules = {testing_rule1};
 
     const auto testing_frequency = mio::abm::days(2);
@@ -460,20 +460,20 @@ int main()
     // set output "abm.png"
     // set terminal png
     // replot
-    // auto f_abm = fopen("abm.txt", "w");
-    // fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    // for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-    //     fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-    //     auto v = sim.get_result().get_value(i);
-    //     for (auto j = 0; j < v.size(); ++j) {
-    //         fprintf(f_abm, "%f", v[j]);
-    //         if (j < v.size() - 1) {
-    //             fprintf(f_abm, " ");
-    //         }
-    //     }
-    //     if (i < sim.get_result().get_num_time_points() - 1) {
-    //         fprintf(f_abm, "\n");
-    //     }
-    // }
-    // fclose(f_abm);
+    auto f_abm = fopen("abm.txt", "w");
+    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
+        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
+        auto v = sim.get_result().get_value(i);
+        for (auto j = 0; j < v.size(); ++j) {
+            fprintf(f_abm, "%f", v[j]);
+            if (j < v.size() - 1) {
+                fprintf(f_abm, " ");
+            }
+        }
+        if (i < sim.get_result().get_num_time_points() - 1) {
+            fprintf(f_abm, "\n");
+        }
+    }
+    fclose(f_abm);
 }

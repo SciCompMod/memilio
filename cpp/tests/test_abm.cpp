@@ -1554,5 +1554,10 @@ TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
     ASSERT_EQ(world.run_testing_schemes(person, work), true);
     current_time = mio::abm::TimePoint(30);
     world.update_testing_scheme_activity_status(current_time);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(4))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.4));
     ASSERT_EQ(world.run_testing_schemes(person, work), false);
 }
