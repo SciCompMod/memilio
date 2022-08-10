@@ -15,7 +15,6 @@ setup(
     install_requires=[
         'libclang',
         'clang',
-        'subprocess',
         'dataclasses',
         'dataclasses_json',
     ],
