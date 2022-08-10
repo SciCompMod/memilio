@@ -9,9 +9,11 @@ def try_set_libclang_path(path):
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path):
+        print("set path:")
         clang_cmd = ["clang", '-print-file-name=libclang.so']
         clang_cmd_result = subprocess.check_output(clang_cmd)
         path = clang_cmd_result.rstrip()
+        print(path)
     try:
         Config.set_library_file(os.path.abspath(path))
     except Exception as e:
