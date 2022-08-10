@@ -181,7 +181,6 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: generation
-          coverage: ON
 
   build-py-simulation:
     if: github.event.pull_request.draft == false
