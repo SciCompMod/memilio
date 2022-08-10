@@ -41,7 +41,7 @@ class TestOseirGeneration(fake_filesystem_unittest.TestCase):
     def setUp(self):
         config_json =   {
                         "source_file": "/cpp/models/ode_seir/model.cpp",
-                        "path_database": "/build",
+                        "path_database": "/pycode/memilio-generation/memilio/generation_test/test_data",
                         "namespace": "mio::oseir::",
                         "optional": {
                             "libclang_library_path": "",

@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/home/betz_mx/memilio/build/models/ode_seir",
+    "command": "/usr/bin/g++  -DBOOST_ALL_NO_LIB -DSPDLOG_COMPILED_LIB -I/home/betz_mx/memilio/cpp/models/ode_seir/.. -I/home/betz_mx/memilio/cpp/memilio/.. -I/home/betz_mx/memilio/build/memilio -I/usr/include/hdf5/serial -I/home/betz_mx/memilio/build/_deps/spdlog-src/include -I/home/betz_mx/memilio/build/_deps/eigen-src -I/home/betz_mx/memilio/build/boost_1_75_0 -I/home/betz_mx/memilio/build/_deps/jsoncpp-src/src/lib_json/../../include  -g -fPIC   -Wno-unknown-warning -Wno-pragmas -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy -o CMakeFiles/ode_seir.dir/model.cpp.o -c /home/betz_mx/memilio/cpp/models/ode_seir/model.cpp",
+    "file": "/home/betz_mx/memilio/cpp/models/ode_seir/model.cpp"
+  }
+]
