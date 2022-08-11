@@ -29,7 +29,7 @@ class TestOseirGeneration(unittest.TestCase):
 
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
-    print(here)
+    project_path = here.split('/pycode')[0]
     # Load expected results for oseir generation.
     with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
         expected_test_oseir_py = expected.read()
@@ -38,30 +38,31 @@ class TestOseirGeneration(unittest.TestCase):
         expected_test_oseir_cpp = expected.read()
 
     # Create a temporary directory
-    test_dir = tempfile.TemporaryDirectory(dir=here.split('pycode')[0])
+    test_dir = tempfile.TemporaryDirectory(dir=project_path)
 
     # Create compile_commands
     build_path = os.path.join(test_dir.name + '/build')
-    source_path = os.path.join(here + '/../../../../cpp')
+    source_path = os.path.join(project_path + '/cpp')
     clang_cmd = ["cmake", '-S', source_path, '-B', build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'] 
     subprocess.run(clang_cmd)
     print(build_path)
     def setUp(self): 
+        path_database = self.build_path.split('memilio')[-1]
         config_json =   {
                         "source_file": "/cpp/models/ode_seir/model.cpp",
-                        "path_database": self.build_path.split('memilio')[-1],
+                        "path_database": path_database,
                         "namespace": "mio::oseir::",
                         "optional": {
                             "libclang_library_path": "",
                             "python_module_name": "test_oseir",
                             "simulation_name": "",
-                            "age_group": False,
-                            "target_folder": self.test_dir.name.split('memilio')[-1]
+                            "age_group": False
                             }
                         }
 
         conf = ScannerConfig.from_dict(config_json)
-        conf.project_path = self.here.split('pycode')[0]
+        conf.project_path = self.project_path
+        conf.target_folder = os.path.join(self.project_path + path_database)
         print(conf)
         print(os.listdir(self.test_dir.name))
         print(os.listdir(self.build_path))

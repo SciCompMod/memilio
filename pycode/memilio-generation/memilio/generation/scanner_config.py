@@ -22,5 +22,5 @@ class ScannerConfig:
         self.parameterset           = "Parameters"
         # Get the project path. If this is used outside of Memilio it needs to be changed.
         project_directory_path      = os.path.dirname(os.path.abspath(__file__))
-        self.project_path           = project_directory_path.split('pycode')[0].rstrip("/")
+        self.project_path           = project_directory_path.split('/pycode')[0]
         self.target_folder          = self.project_path + self.optional.get("target_folder", "")
