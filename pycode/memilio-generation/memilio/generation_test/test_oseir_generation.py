@@ -49,7 +49,7 @@ class TestOseirGeneration(unittest.TestCase):
     def setUp(self): 
         config_json =   {
                         "source_file": "/cpp/models/ode_seir/model.cpp",
-                        "path_database": self.build_path.split('memilio')[1],
+                        "path_database": self.build_path.split('memilio')[-1],
                         "namespace": "mio::oseir::",
                         "optional": {
                             "libclang_library_path": "",
