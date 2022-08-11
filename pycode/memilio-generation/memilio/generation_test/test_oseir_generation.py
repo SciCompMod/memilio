@@ -30,6 +30,7 @@ class TestOseirGeneration(unittest.TestCase):
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     project_path = here.split('/pycode')[0]
+    
     # Load expected results for oseir generation.
     with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
         expected_test_oseir_py = expected.read()
@@ -45,7 +46,7 @@ class TestOseirGeneration(unittest.TestCase):
     source_path = os.path.join(project_path + '/cpp')
     clang_cmd = ["cmake", '-S', source_path, '-B', build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'] 
     subprocess.run(clang_cmd)
-    print(build_path)
+
     def setUp(self): 
         path_database = self.build_path.split('memilio')[-1]
         config_json =   {
@@ -63,9 +64,6 @@ class TestOseirGeneration(unittest.TestCase):
         conf = ScannerConfig.from_dict(config_json)
         conf.project_path = self.project_path
         conf.target_folder = os.path.join(self.project_path + path_database)
-        print(conf)
-        print(os.listdir(self.test_dir.name))
-        print(os.listdir(self.build_path))
         self.scanner = Scanner(conf)
         
 

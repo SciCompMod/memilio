@@ -27,6 +27,7 @@ def get_base_class(base_type):
 def get_base_class_string(base_type):
     #result = [base_type.spelling.split("<")[0]]
     result = [base_type.spelling]
+    print(base_type.spelling)
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class_string(base_type.get_template_argument_type(i)))
     return result
