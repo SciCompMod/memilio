@@ -20,12 +20,12 @@
 
 from memilio.generation import Scanner, ScannerConfig, Generator
 import unittest
-from pyfakefs import fake_filesystem_unittest
+import subprocess
+import tempfile
 
 import os
 
-class TestOseirGeneration(fake_filesystem_unittest.TestCase):
-    path = '/home/GeneratedFiles'
+class TestOseirGeneration(unittest.TestCase):
 
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
@@ -37,11 +37,19 @@ class TestOseirGeneration(fake_filesystem_unittest.TestCase):
     with open(os.path.join(here + "/test_data/test_oseir.cpp.txt"), 'r') as expected:
         expected_test_oseir_cpp = expected.read()
 
+    # Create a temporary directory
+    test_dir = tempfile.TemporaryDirectory(dir=here.split('pycode')[0])
 
-    def setUp(self):
+    # Create compile_commands
+    build_path = os.path.join(test_dir.name + '/build')
+    source_path = os.path.join(here + '/../../../../cpp')
+    clang_cmd = ["cmake", '-S', source_path, '-B', build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'] 
+    subprocess.run(clang_cmd)
+
+    def setUp(self): 
         config_json =   {
                         "source_file": "/cpp/models/ode_seir/model.cpp",
-                        "path_database": "/pycode/memilio-generation/memilio/generation_test/test_data",
+                        "path_database": self.build_path.split('memilio')[1],
                         "namespace": "mio::oseir::",
                         "optional": {
                             "libclang_library_path": "",
@@ -50,15 +58,14 @@ class TestOseirGeneration(fake_filesystem_unittest.TestCase):
                             "age_group": False
                             }
                         }
+
         conf = ScannerConfig.from_dict(config_json)
         self.scanner = Scanner(conf)
-        self.setUpPyfakefs()
-        os.makedirs(self.path)
-        self.fs.add_real_directory(os.path.join(conf.project_path + '/pycode/memilio-generation/memilio/generation/template'))
+        
 
     def test_clean_oseir(self):
         irdata = self.scanner.extract_results()
-        irdata.target_folder = self.path
+        irdata.target_folder = self.test_dir.name
 
         generator = Generator()
         generator.create_substitutions(irdata)
