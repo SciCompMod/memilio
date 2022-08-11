@@ -55,12 +55,13 @@ class TestOseirGeneration(unittest.TestCase):
                             "libclang_library_path": "",
                             "python_module_name": "test_oseir",
                             "simulation_name": "",
-                            "age_group": False
+                            "age_group": False,
+                            "target_folder": self.test_dir.name.split('memilio')[-1]
                             }
                         }
 
         conf = ScannerConfig.from_dict(config_json)
-
+        conf.project_path = self.here.split('pycode')[0]
         print(conf)
         print(os.listdir(self.test_dir.name))
         print(os.listdir(self.build_path))
@@ -69,7 +70,6 @@ class TestOseirGeneration(unittest.TestCase):
 
     def test_clean_oseir(self):
         irdata = self.scanner.extract_results()
-        irdata.target_folder = self.test_dir.name
 
         generator = Generator()
         generator.create_substitutions(irdata)
