@@ -26,6 +26,7 @@
 #include "abm/parameters.h"
 #include "abm/world.h"
 #include "abm/time.h"
+#include "abm/infection.h"
 
 #include <functional>
 
@@ -256,9 +257,10 @@ public:
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
-    InfectionState m_infection_state;
-    VaccinationState m_vaccination_state;
-    TimeSpan m_time_until_carrier;
+    Infection m_infection;
+    InfectionState m_infection_state; // put into m_infection
+    VaccinationState m_vaccination_state; // change to immunity level
+    TimeSpan m_time_until_carrier; // remove (-> in vector in m_infection)
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

@@ -17,35 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_LOCATION_H
-#define EPI_ABM_LOCATION_H
+#ifndef EPI_ABM_INFECTION_H
+#define EPI_ABM_INFECTION_H
 
 namespace mio
 {
 namespace abm
 {
-
-class Infectivity{
-
-public:
-    /**
-     * create an infectivity curve
-     * @param virus_type specified virus type
-     */
-    Infectivity(VirusType virus_type);
-
-    /**
-     * get infectivity at a given time
-     * @param t time point of the querry
-     * @return infectivity at given time point
-     */
-    double get_infectivity(const TimePoint t) const;
-    
-private:
-    void draw_infection_course();
-    
-    double slope; // have to ask for distribution/parametrization of the infectivity
-}
 
 class Infection{
     
@@ -73,12 +51,19 @@ public:
     
     /**
      * get virus type
+     * @return virus type of the infection
      */
-    const VirusType get_virus_type() const;
+    VirusType get_virus_type() const;
     
     
+    InfectionState get_infection_state(const TimePoint t) const;
+     
 private:
+    /**
+     * determine viral load course and infection course
+     */
     void draw_infection_course();
+        //peak = gauss::get_instance();
     void determine_end_date();
     
     VirusType virus_type;
@@ -87,7 +72,15 @@ private:
     double peak;
     double increase_slope;
     double decline_slope;
-}
+    double infectivity_parameter; // have to ask for distribution/parametrization of the infectivity
+    //vector<pairs> Infection_course
+    //TimePoint   state
+    //start_date+2d         exposed
+    //start_date+4d          carrier
+    //...
+    //start_date+xd           s/dead
+    bool detected = false;
+};
 
 } // namespace abm
 } // namespace mio
