@@ -15,7 +15,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install python3-pip gnupg clang libclang-dev cmake
+        sudo apt-get -qq -y install python3-pip gnupg clang-13 libclang-13-dev cmake
         python -m pip install --upgrade pip
     - name: Download Python Wheels
       uses: actions/download-artifact@v2
