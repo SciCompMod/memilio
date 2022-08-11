@@ -60,6 +60,10 @@ class TestOseirGeneration(unittest.TestCase):
                         }
 
         conf = ScannerConfig.from_dict(config_json)
+
+        print(conf)
+        print(os.listdir(self.test_dir.name))
+        print(os.listdir(self.build_path))
         self.scanner = Scanner(conf)
         
 
