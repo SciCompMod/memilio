@@ -29,7 +29,7 @@ class TestOseirGeneration(unittest.TestCase):
 
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
-
+    print(here)
     # Load expected results for oseir generation.
     with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
         expected_test_oseir_py = expected.read()
@@ -45,7 +45,7 @@ class TestOseirGeneration(unittest.TestCase):
     source_path = os.path.join(here + '/../../../../cpp')
     clang_cmd = ["cmake", '-S', source_path, '-B', build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'] 
     subprocess.run(clang_cmd)
-
+    print(build_path)
     def setUp(self): 
         config_json =   {
                         "source_file": "/cpp/models/ode_seir/model.cpp",
