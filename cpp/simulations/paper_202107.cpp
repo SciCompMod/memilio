@@ -589,14 +589,14 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
     //migration between nodes
     BOOST_OUTCOME_TRY(
         migration_data_commuter,
-        mio::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
+        mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled_2020.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
-                      mio::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (migration_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
+        return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices do not have the correct size.");
     }
 
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,

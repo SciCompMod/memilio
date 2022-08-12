@@ -363,8 +363,8 @@ namespace osecirvvs
             }
             auto max_date = max_date_entry->date;
             if (max_date < date) {
-                log_error("DIVI data does nt contain the specified date.");
-                return failure(StatusCode::OutOfRange, "DIVI data does nt contain the specified date.");
+                log_error("DIVI data does not contain the specified date.");
+                return failure(StatusCode::OutOfRange, "DIVI data does not contain the specified date.");
             }
 
             for (auto&& entry : divi_data) {
