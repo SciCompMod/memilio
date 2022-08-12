@@ -587,9 +587,8 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    BOOST_OUTCOME_TRY(
-        migration_data_commuter,
-        mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled_2020.txt").string()));
+    BOOST_OUTCOME_TRY(migration_data_commuter,
+                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (migration_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
