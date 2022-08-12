@@ -32,11 +32,10 @@ class Scanner:
         #commands = commands[1:]
         for command in commands:
           for argument in command.arguments:
-                if argument != '-Wno-unknown-warning' and argument != "--driver-mode=g++":
+                if argument != '-Wno-unknown-warning' and argument != "--driver-mode=g++" and argument != "-O3":
                     file_args.append(argument)
-        print(file_args)
         file_args = file_args[1:-4]
-        print(file_args)
+
         clang_cmd = ["clang", os.path.join(self.config.project_path + self.config.source_file), '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
@@ -112,11 +111,14 @@ class Scanner:
             intermed_repr.parameterset_wrapper = node.spelling
     
     def check_model_base(self, node, intermed_repr):
-
+        
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
+            print(base.spelling)
             base_type = base.get_definition().type
+            print(base.get_definition().get_num_template_arguments())
+            print(base_type.spelling)
             intermed_repr.model_base = Utility.get_base_class_string(base_type)
     
     def check_base_specifier(self, node, intermed_repr):
