@@ -595,7 +595,9 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
         migration_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices do not have the correct size.");
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Mobility matrices do not have the correct size. You may need to run "
+                            "transformMobilitydata.py from pycode memilio epidata package.");
     }
 
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
@@ -1006,6 +1008,15 @@ int main(int argc, char** argv)
         result_dir = argv[2];
         data_dir   = "";
         printf("Loading graph from \"%s\".\n", save_dir.c_str());
+    }
+    else if (argc == 4) {
+        mode       = RunMode::Save;
+        data_dir   = argv[1];
+        save_dir   = argv[2];
+        result_dir = argv[3];
+        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
+               (int)late, (int)high, (int)long_time, (int)future);
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
     else {
         printf("Usage:\n");
