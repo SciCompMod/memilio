@@ -34,8 +34,9 @@ class Scanner:
           for argument in command.arguments:
                 if argument != '-Wno-unknown-warning' and argument != "--driver-mode=g++":
                     file_args.append(argument)
+        print(file_args)
         file_args = file_args[1:-4]
-
+        print(file_args)
         clang_cmd = ["clang", os.path.join(self.config.project_path + self.config.source_file), '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
