@@ -297,8 +297,11 @@ def transform_npi_data(fine_resolution=2,
         # defines delay in number of days between exceeding
         # incidence threshold and NPI getting active
         npi_activation_delay = 0
+        npi_lifting_delay = 0
         print('Using a delay of NPI activation of ' +
               str(npi_activation_delay) + ' days.')
+        print('Using a delay of NPI lifting of ' +
+              str(npi_lifting_delay) + ' days.')              
 
         try:
             df_npis_old = pd.read_csv(
@@ -712,7 +715,7 @@ def transform_npi_data(fine_resolution=2,
     counters = np.zeros(5)  # time counter for output only
     countyidx = 0
     # unique_geo_entities:
-    for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+    for countyID in [1001]:#[5315, 1001, 9162, 16071, 11000, 1060, 5566]:
         cid = 0
         countyidx += 1
 
@@ -722,6 +725,7 @@ def transform_npi_data(fine_resolution=2,
             )
             pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
                                           == countyID, dd.EngEng['population']].values[0]
+            # consider difference between current day and day-7 to compute incidence
             incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
                 periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
             df_infec_local['Incidence'] = incidence_local / pop_local * 100000
@@ -814,15 +818,36 @@ def transform_npi_data(fine_resolution=2,
             for level, npi_indices in incidence_thresholds_to_npis.items():
                 if level[0] >= 0:  # level[0] = incidvalthrsh
                     local_incid = df_infec_local['Incidence'].copy()
+
+                    if npi_lifting_delay > 0:
+                        # take maximum over last 'npi_lifting_delay' days to
+                        # lift NPI only after incidence is below threshold for
+                        # 'npi_lifting_delay' number of days
+                        local_incid_max = local_incid.rolling(npi_lifting_delay).max().fillna(local_incid)
+
+                        # compare transformed incidence against threshold
+                        # (level[0] = incidvalthrsh)
+                        int_active = (local_incid_max >= level[0]).astype(int)
+                    else:
+                        int_active = (local_incid >= level[0]).astype(int)
+
                     if npi_activation_delay > 0:
-                        # shift values to npi_activation_delay days later
-                        local_incid.iloc[npi_activation_delay:
-                                         ] = local_incid.iloc[0:-npi_activation_delay].values
-                        # take constant value of day 0 for first delay days
-                        local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
-                    # compare incidence against threshold
-                    int_active = (local_incid >= level[0]).astype(
-                        int)  # level[0] = incidvalthrsh
+                        # take minimum over last 'npi_activation_delay' days to
+                        # enforce NPI only after incidence is over threshold for
+                        # 'npi_activation_delay' number of days
+                        local_incid_min = local_incid.rolling(npi_activation_delay).min().fillna(local_incid)
+
+                        int_potential_begin_list = np.where((local_incid_min >= level[0]).astype(int))[0]
+
+                        # correct start date for first implementation of NPI
+                        int_active[range((int_potential_begin_list[0]-npi_lifting_delay+1),int_potential_begin_list[0])] = 0
+                        # correct start dates for further implementations
+                        # and account for oscilating incidence which does
+                        # not directly yield lifting of the implementation
+                        for i in range(0, len(int_potential_begin_list)-1):
+                            if int_potential_begin_list[i+1] - int_potential_begin_list[i] > npi_lifting_delay:
+                                int_active[range((int_potential_begin_list[i+1]-npi_lifting_delay+1),int_potential_begin_list[i+1])] = 0
+
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
                     # (i.e., mentioned NPI is not active)
@@ -839,6 +864,7 @@ def transform_npi_data(fine_resolution=2,
             # TODO
             levels_exclusion = list(reversed(incidence_thresholds_to_npis.keys()))[
                 0:-1]  # level<0 means non-incidence dependent and always active
+            print('\n')
             for level in levels_exclusion:
                 level_lower = [lev for lev in levels_exclusion
                                if lev[0] < level[0]]
@@ -874,10 +900,15 @@ def transform_npi_data(fine_resolution=2,
                                     # where NPI code_cols[scidx] + level[1]
                                     # is active
                                     if df_local_new.loc[indicator_code_active_idx, subcode_excl + level_other[1]].any():
-                                        print('Resetting potential NPI')
+                                        print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
+                                        print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])                                        
+                                        print('\n')
                                         # df_npis_old[df_npis_old.ID_County==5315].iloc[[14,34],indicator_code_active_idx]
-                                    df_local_new.loc[indicator_code_active_idx,
-                                                     subcode_excl + level_other[1]] = 0
+                                        df_local_new.loc[indicator_code_active_idx,
+                                                        subcode_excl + level_other[1]] = 0
+                                        x=15
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
