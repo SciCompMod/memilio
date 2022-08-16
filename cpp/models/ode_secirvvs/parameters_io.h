@@ -494,23 +494,27 @@ namespace osecirvvs
                     auto num_groups = model[region].parameters.get_num_groups();
                     for (auto i = AgeGroup(0); i < num_groups; i++) {
 
-                        double S_v  = std::min(model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
-                                                  num_rec[region][size_t(i)],
-                                              num_population[region][size_t(i)]);
-                        double S_pv = std::max(model[region].parameters.template get<DailyFirstVaccination>()[{i, SimulationDay(0)}] -
-                                                   model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}],
-                                               0.0); // use std::max with 0
-                        double S;
-                        if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
-                            log_warning(
-                                "Number of vaccinated persons greater than population in county {}, age group {}.",
-                                region, size_t(i));
-                            S   = 0.0;
-                            S_v = num_population[region][size_t(i)] - S_pv;
-                        }
-                        else {
-                            S = num_population[region][size_t(i)] - S_pv - S_v;
-                        }
+                        // double S_v  = std::min(model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
+                        //                           num_rec[region][size_t(i)],
+                        //                       num_population[region][size_t(i)]);
+                        // double S_pv = std::max(model[region].parameters.template get<DailyFirstVaccination>()[{i, SimulationDay(0)}] -
+                        //                            model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}],
+                        //                        0.0); // use std::max with 0
+                        // double S;
+                        // if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
+                        //     log_warning(
+                        //         "Number of vaccinated persons greater than population in county {}, age group {}.",
+                        //         region, size_t(i));
+                        //     S   = 0.0;
+                        //     S_v = num_population[region][size_t(i)] - S_pv;
+                        // }
+                        // else {
+                        //     S = num_population[region][size_t(i)] - S_pv - S_v;
+                        // }
+
+                        double S = model[region].populations[{i, InfectionState::SusceptibleNaive}];
+                        double S_v = model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}];
+                        double S_pv = model[region].populations[{i, InfectionState::Recovered}];
 
                         double denom_E  = 1 / (S + S_pv * model[region].parameters.template get<ExposedFactorPartialImmunity>()[i] +
                                               S_v * model[region].parameters.template get<ExposedFactorImprovedImmunity>()[i]);

@@ -103,6 +103,9 @@ public:
             size_t CDV2i = this->populations.get_flat_index({i, InfectionState::CarrierImprovedImmunityConfirmed});
             size_t IDV2i = this->populations.get_flat_index({i, InfectionState::InfectedImprovedImmunityConfirmed});
 
+            size_t TImm1 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunity1});
+            size_t TImm2 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunity2});
+
             size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
             size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
 
@@ -113,6 +116,9 @@ public:
 
             dydt[SVi] = 0;
             dydt[EVi] = 0;
+
+            dydt[TImm1] = 0;
+            dydt[TImm2] = 0;
 
             dydt[Ri]   = 0;
             dydt[EV2i] = 0;
@@ -192,17 +198,23 @@ public:
                                              (risk_from_carrier * (pop[Cj] + pop[CVj] + pop[CV2j]) +
                                               risk_from_symptomatic * (pop[Ij] + pop[IVj] + pop[IV2j]));
 
+                double dummy_partial_imm  = y[Si] * params.get< RateOfDailyPartialVaccinations>()[i] / params.get<DaysUntilEffectivePartialImmunity>()[i];
+                double dummy_improved_imm = y[SVi]  * params.get<RateOfDailyImprovedVaccinations>()[i] /  params.get<DaysUntilEffectivePartialImmunity>()[i];
+
                 double dummy_S = y[Si] * ext_inf_force_dummy;
 
                 double dummy_SV = y[SVi] * exp_fac_part_immune * ext_inf_force_dummy;
 
                 double dummy_R = y[Ri] * exp_fac_impr_immune * ext_inf_force_dummy;
 
-                dydt[Si] -= dummy_S;
+                dydt[Si] -= dummy_S + dummy_partial_imm;
                 dydt[Ei] += dummy_S;
 
-                dydt[SVi] -= dummy_SV;
+                dydt[SVi] -= dummy_SV + dummy_improved_imm;
                 dydt[EVi] += dummy_SV;
+
+                dydt[TImm1] += dummy_partial_imm;
+                dydt[TImm2] += dummy_improved_imm;
 
                 dydt[Ri] -= dummy_R;
                 dydt[EV2i] += dummy_R;
@@ -380,7 +392,7 @@ public:
                     y[IV2i];
 
             // recovered and deaths from all paths
-            dydt[Ri] +=
+            dydt[TImm1] +=
                 params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
                 params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[CDi] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
@@ -388,7 +400,7 @@ public:
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
                 (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
 
-            dydt[Ri] +=
+            dydt[TImm2] +=
                 (1 -
                  (inf_fac_part_immune / exp_fac_part_immune) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
                     (params.get<InfectiousTimeAsymptomatic>()[i] * inf_time_factor_immune) * y[CVi] +
@@ -404,7 +416,7 @@ public:
                 (1 - (death_fac_part_immune / icu_fac_part_immune) * params.get<DeathsPerICU>()[i]) /
                     params.get<ICUToHomeTime>()[i] * y[UVi];
 
-            dydt[Ri] +=
+            dydt[TImm2] +=
                 (1 -
                  (inf_fac_impr_immune / exp_fac_impr_immune) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
                     (params.get<InfectiousTimeAsymptomatic>()[i] * inf_time_factor_immune) * y[CV2i] +
@@ -419,6 +431,11 @@ public:
                     params.get<HospitalizedToHomeTime>()[i] * y[HV2i] +
                 (1 - (death_fac_impr_immune / icu_fac_impr_immune) * params.get<DeathsPerICU>()[i]) /
                     params.get<ICUToHomeTime>()[i] * y[UV2i];
+
+            double dummy_TImm1 = 1 / params.get<ImmunityInterval1>()[i];
+            double dummy_TImm2 = 1 / params.get<ImmunityInterval2>()[i];
+            dydt[SVi] = dummy_TImm1 * y[TImm1];
+            dydt[Ri]  = dummy_TImm2 * y[TImm2];
 
             dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui] +
                        death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i] /
@@ -598,7 +615,7 @@ public:
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
+                // this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_b161(t);
             }
 

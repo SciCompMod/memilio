@@ -196,6 +196,38 @@ struct SerialInterval {
 };
 
 /**
+ * @brief the time people stays immune after infection or vaccination located in S
+         in the SECIR model in day unit
+ */
+struct ImmunityInterval1 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ImmunityInterval1";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S_pv or R
+        in the SECIR model in day unit
+ */
+struct ImmunityInterval2 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ImmunityInterval2";
+    }
+};
+
+/**
  * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
  *        in day unit
  */
@@ -456,6 +488,22 @@ struct DailyFirstVaccination {
 };
 
 /**
+* @brief rate of first vaccinations up to the given day.
+*/
+struct RateOfDailyPartialVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyPartialVaccinations";
+    }
+};
+
+
+/**
 * @brief Total number of full vaccinations up to the given day.
 */
 struct DailyFullVaccination {
@@ -467,6 +515,21 @@ struct DailyFullVaccination {
     static std::string name()
     {
         return "DailyFullVaccination";
+    }
+};
+
+/**
+* @brief rate of full vaccinations up to the given day.
+*/
+struct RateOfDailyImprovedVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyImprovedVaccinations";
     }
 };
 
@@ -609,6 +672,7 @@ struct BaseInfectiousnessB161 {
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
                  DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval,
+                 ImmunityInterval1, ImmunityInterval2, RateOfDailyPartialVaccinations, RateOfDailyImprovedVaccinations,
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
@@ -725,6 +789,18 @@ public:
                 log_warning("Constraint check: Parameter InfectiousTimeMild changed from {:.4f} to {:.4f}",
                             this->get<InfectiousTimeMild>()[i], 1.0);
                 this->get<InfectiousTimeMild>()[i] = 1.0;
+            }
+
+            if (this->get<ImmunityInterval1>()[i] < 1.0) {
+                log_warning("Constraint check: Parameter ImmunityInterval1 changed from {:.4f} to {:.4f}",
+                            this->get<ImmunityInterval1>()[i], 1.0);
+                this->get<ImmunityInterval1>()[i] = 1.0;
+            }
+
+            if (this->get<ImmunityInterval2>()[i] < 1.0) {
+                log_warning("Constraint check: Parameter ImmunityInterval2 changed from {:.4f} to {:.4f}",
+                            this->get<ImmunityInterval2>()[i], 1.0);
+                this->get<ImmunityInterval2>()[i] = 1.0;
             }
 
             if (this->get<HospitalizedToHomeTime>()[i] < 1.0) {
@@ -845,6 +921,16 @@ public:
             if (this->get<InfectiousTimeMild>()[i] < 1.0) {
                 log_error("Constraint check: Parameter InfectiousTimeMild {:.4f} smaller {:.4f}",
                           this->get<InfectiousTimeMild>()[i], 1.0);
+            }
+
+            if (this->get<ImmunityInterval1>()[i] < 1.0) {
+                log_error("Constraint check: Parameter ImmunityInterval1 {:.4f} smaller {:.4f}",
+                          this->get<ImmunityInterval1>()[i], 1.0);
+            }
+
+            if (this->get<ImmunityInterval2>()[i] < 1.0) {
+                log_error("Constraint check: Parameter ImmunityInterval2 {:.4f} smaller {:.4f}",
+                          this->get<ImmunityInterval2>()[i], 1.0);
             }
 
             if (this->get<HospitalizedToHomeTime>()[i] < 1.0) {
