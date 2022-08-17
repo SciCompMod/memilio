@@ -519,21 +519,29 @@ public:
     {
     }
 
-    void apply_b161(double t)
+    void apply_variant(double t)
     {
-
+        // TODO: Wachtstumsrate anpassen/ evtl als Parameter
         auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
+        auto variant_day = get_day_in_year(Date(2021, 6, 6));
+        auto variant_growth = (start_day - variant_day) * 0.1666667;
         // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
+        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);
         size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
+                    this->get_model().parameters.template get<BaseInfectiousness>()[(AgeGroup)i] +
+                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessNewVariant>()[(AgeGroup)i];
             this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
                 new_transmission;
+
+            double new_severtiy = 
+                (1 - share_new_variant) *
+                    this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
+                share_new_variant * this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
+            this->get_model().parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)i] =
+                new_severtiy;
         }
     }
 
@@ -611,12 +619,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t);
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
                 // this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                this->apply_variant(t);
             }
 
             if (t > 0) {

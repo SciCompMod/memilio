@@ -22,6 +22,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
+#include "ode_secirvvs/parameters.h"
 
 namespace mio
 {
@@ -143,20 +144,27 @@ namespace osecirvvs
         auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
         shared_dynamic_npis.draw_sample();
 
-        double delta_fac;
+        double variant_fac;
         if (variant_high) {
-            delta_fac = 1.6;
+            variant_fac = 1.6;
         }
         else {
-            delta_fac = 1.4;
+            variant_fac = 1.4;
         }
 
         //infectiousness of virus variants is not sampled independently but depend on base infectiousness
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-            shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
+            // transmission
+            shared_params_model.parameters.template get<BaseInfectiousness>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
-            shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
+            shared_params_model.parameters.template get<BaseInfectiousnessNewVariant>()[i] =
+                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * variant_fac;
+            
+            // severity            
+            shared_params_model.parameters.template get<BaseSeverity>()[i] =
+                shared_params_model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
+            shared_params_model.parameters.template get<BaseSeverityNewVariant>()[i] =
+                shared_params_model.parameters.template get<HospitalizedCasesPerInfectious>()[i] * variant_fac;
         }
 
         for (auto& params_node : graph.nodes()) {

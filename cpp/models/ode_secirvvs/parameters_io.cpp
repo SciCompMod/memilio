@@ -35,6 +35,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
+#include "memilio/io/mobility_io.h"
 
 #include <boost/filesystem.hpp>
 
@@ -381,6 +382,36 @@ namespace osecirvvs
             return success();
         }
 
+
+        IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const int& num_age_groups)
+        {
+            std::vector<std::vector<double>>ans(num_age_groups,std::vector<double>(3,0.0));
+            std::fstream immunity_file;
+            immunity_file.open(path,std::ios::in);
+            std::cout << "worked reading" << std::endl;
+            if(immunity_file.fail()) { // checks to see if file opended  
+                return mio::failure(mio::StatusCode::InvalidValue,
+                            "Failed to open immunity_population.txt.");
+            } 
+            if (immunity_file.is_open()) {
+                // std::vector<double> tp;
+                std::string tp;
+                int linenumber = 0;
+                while (linenumber < num_age_groups) {
+                    getline(immunity_file, tp);
+                    // delete /r at the end by delete last entry.
+                    tp.erase(tp.size() - 1);
+                    auto line = split(tp, ' ');
+                    ans[linenumber][0] = std::stod(line[0]);
+                    ans[linenumber][1] = std::stod(line[1]);
+                    ans[linenumber][2] = std::stod(line[2]);
+                    linenumber++;
+                }
+                immunity_file.close(); //close the file object.
+            }
+            return ans;
+        }
+
         IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                         const std::vector<int>& vregion)
         {
@@ -388,6 +419,7 @@ namespace osecirvvs
             return read_population_data(population_data, vregion);
         }
 
+        // TODO: Num_population int statt double ? Evtl sind es interpolierte Daten
         IOResult<std::vector<std::vector<double>>>
         read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion)
         {

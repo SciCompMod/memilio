@@ -160,9 +160,9 @@ namespace osecirvvs
                 }
                 //virus variants
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousnessB161>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousnessNewVariant>()[i]; });
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousnessB117>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousness>()[i]; });
             }
             // group independent params
             param_percentil(

@@ -642,7 +642,7 @@ struct InfectiousTimeFactorImmune {
 /**
  * @brief Infectiousness of variant B117.
  */
-struct BaseInfectiousnessB117 {
+struct BaseInfectiousness {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -650,14 +650,14 @@ struct BaseInfectiousnessB117 {
     }
     static std::string name()
     {
-        return "BaseInfectiousnessB117";
+        return "BaseInfectiousness";
     }
 };
 
 /**
  * @brief Infectiousness of variant B161.
  */
-struct BaseInfectiousnessB161 {
+struct BaseInfectiousnessNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -665,7 +665,31 @@ struct BaseInfectiousnessB161 {
     }
     static std::string name()
     {
-        return "BaseInfectiousnessB161";
+        return "BaseInfectiousnessNewVariant";
+    }
+};
+
+struct BaseSeverity {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseSeverity";
+    }
+};
+
+struct BaseSeverityNewVariant {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseSeverityNewVariant";
     }
 };
 
@@ -680,7 +704,8 @@ using ParametersBase =
                  DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
                  ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity,
                  InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity,
-                 InfectiousTimeFactorImmune, BaseInfectiousnessB117, BaseInfectiousnessB161>;
+                 InfectiousTimeFactorImmune, BaseInfectiousness, BaseInfectiousnessNewVariant, BaseSeverity,
+                 BaseSeverityNewVariant>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
