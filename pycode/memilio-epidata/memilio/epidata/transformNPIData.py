@@ -919,7 +919,6 @@ def transform_npi_data(fine_resolution=2,
             # (incidence_thresholds_to_npis.keys() has to be sorted !)
             levels_exclusion = list(reversed(incidence_thresholds_to_npis.keys()))[
                 0:-1]  # level<0 means non-incidence dependent and always active
-            print('\n')
             for level in levels_exclusion:
                 level_lower = [lev for lev in levels_exclusion
                                if lev[0] < level[0]]
@@ -959,8 +958,8 @@ def transform_npi_data(fine_resolution=2,
                                         # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
                                         # print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
                                         # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
+                                        # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
                                         # print('\n')
-                                        # df_npis_old[df_npis_old.ID_County==5315].iloc[[14,34],indicator_code_active_idx]
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
 
@@ -981,8 +980,9 @@ def transform_npi_data(fine_resolution=2,
         ### ###
 
         start_time = time.perf_counter()
-        df_npis = df_npis.append(df_local_new,
-                                 ignore_index=True).copy()
+
+        df_npis = pd.concat([df_npis, df_local_new], ignore_index=True)   
+
         counters[cid] += time.perf_counter()-start_time
         cid += 1
 
@@ -1014,7 +1014,7 @@ def transform_npi_data(fine_resolution=2,
         pass
 
     #### start validation ####
-    if fine_resolution == 2:
+    if fine_resolution == 2 and (npi_activation_delay + npi_lifting_delay == 0):
         start_date_validation = datetime(2020, 3, 1)
         end_date_validation = datetime(2022, 2, 15)
 
@@ -1031,8 +1031,7 @@ def transform_npi_data(fine_resolution=2,
                         fine_resolution)
                     if (a != b):
                         print('Error in NPI activation computation')
-                    else:
-                        print(a, b, a == b)
+                        print(a, b, a - b)
 
     elif fine_resolution == 1:
         start_date_validation = datetime(2020, 3, 1)
@@ -1048,7 +1047,6 @@ def transform_npi_data(fine_resolution=2,
                                               end_date_validation, fine_resolution)
                 if (a != b):
                     print('Error in NPI activation computation')
-                else:
                     print(a, b, a == b)
     #### end validation ####
 
