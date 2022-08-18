@@ -305,7 +305,7 @@ def transform_npi_data(fine_resolution=2,
         print('Using a delay of NPI activation of ' +
               str(npi_activation_delay) + ' days.')
         print('Using a delay of NPI lifting of ' +
-              str(npi_lifting_delay) + ' days.')              
+              str(npi_lifting_delay) + ' days.')
 
         try:
             df_npis_old = pd.read_csv(
@@ -325,7 +325,7 @@ def transform_npi_data(fine_resolution=2,
                       'M24_030', 'M24_040', 'M24_050', 'M24_060']
         for tcode in test_codes:
             for i in [''] + ["_" + str(i) for i in range(1, 6)]:
-                if(df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
+                if (df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
                     print(tcode+i + " used.")
         # end check
 
@@ -823,22 +823,23 @@ def transform_npi_data(fine_resolution=2,
                 if level[0] >= 0:  # level[0] = incidvalthrsh
                     local_incid = df_infec_local['Incidence'].copy()
 
-                    # If npi_lifting_delay=0, then local_incid equals 
+                    # If npi_lifting_delay=0, then local_incid equals
                     # local_incid.rolling(npi_lifting_delay+1)
                     # take maximum over last 'npi_lifting_delay+1' days to
                     # lift NPI only after incidence is below threshold for
-                    # 'npi_lifting_delay' number of days 
-                    # Example why we use npi_lifting_delay+1: 
+                    # 'npi_lifting_delay' number of days
+                    # Example why we use npi_lifting_delay+1:
                     #   Incidences [4, 2, 2, 2], npi_lifting_delay = 2,
                     #   Consideration: threshold: 3
                     #   pd.Series([4, 2, 2, 2]).rolling(2).max().nan(...)
                     #       = [4, 4, 2, 2, 2]
-                    #   would then lift NPIs on day 3 while incidence is 
+                    #   would then lift NPIs on day 3 while incidence is
                     #   below 4 for two days only ON day 3, so NPI would
-                    #   be lifted on day 4. 
+                    #   be lifted on day 4.
                     # Therefore, use 'npi_lifting_delay+1', to lift AFTER
                     # npi_lifting_delay many days and not on this day
-                    local_incid_max = local_incid.rolling(npi_lifting_delay+1).max().fillna(local_incid)
+                    local_incid_max = local_incid.rolling(
+                        npi_lifting_delay+1).max().fillna(local_incid)
 
                     # compare transformed incidence against threshold
                     # (level[0] = incidvalthrsh)
@@ -847,57 +848,61 @@ def transform_npi_data(fine_resolution=2,
                     # take minimum over last 'npi_activation_delay' days to
                     # enforce NPI only after incidence is over threshold for
                     # 'npi_activation_delay' number of days
-                    local_incid_min = local_incid.rolling(npi_activation_delay+1).min().fillna(local_incid)
+                    local_incid_min = local_incid.rolling(
+                        npi_activation_delay+1).min().fillna(local_incid)
 
-                    # Correct start dates of NPIs               
+                    # Correct start dates of NPIs
                     # Example:
                     # inc=pd.Series([4,2,4,2,2,4,4,2,4,2,2,2,2])
-                    # Threshold (i.e., level[0]): 3, NPI activation delay: 1, 
+                    # Threshold (i.e., level[0]): 3, NPI activation delay: 1,
                     # NPI lifting delay: 3.
                     # NPI should then start on 7th day and be lifted on 12th day
                     #
                     # We have
                     # [1,0,1,1,1,1,1,1,1,1,1,1,0] for inc.rolling(3+1).max() >= 3
-                    # which is 'int_active' and indicates correct end date but 
+                    # which is 'int_active' and indicates correct end date but
                     # wrong start date.
                     # I.e., NPI is lifted after three days below treshold 3 but
-                    # would have started on day 1 where the threshold 3 is only 
+                    # would have started on day 1 where the threshold 3 is only
                     # exceeded for the first time and not yet for one full day.
                     # To be more precise, activation_delay=N means that the NPI
-                    # starts AFTER N days where incidence is exceeded and not 
+                    # starts AFTER N days where incidence is exceeded and not
                     # ON the Nth day.
                     # We also have
                     # [1,0,0,0,0,0,1,0,0,0,0,0,0] for inc.rolling(1+1).min() >= 3
                     # and
                     # int_potential_begin_list = [0,6]
                     # We then set the empty set of int_active[0:0] to zero
-                    # In the for loop: 
+                    # In the for loop:
                     # Then, since 6 - 0 > npi_lifting_delay + 1 = 4
-                    # int_active[2,3,4,5] = 0 
+                    # int_active[2,3,4,5] = 0
                     #
-                    # Note that in case of the example 
+                    # Note that in case of the example
                     # inc=pd.Series([4,4,4,2,2,4,4,2,4,2,2,2,2])
                     # int_potential_begin_list = [0,1,2,6]
                     # and NPI would correctly start on day 2 and would not have
                     # been deactivated/lifted while incidence goes below 3 for
                     # days 4 and 5.
                     #
-                    # Note 2: There may be some negligible unwanted effects in 
+                    # Note 2: There may be some negligible unwanted effects in
                     # activation/deactivation for the first days of the full
-                    # time series since we cannot compute min(), max() 
+                    # time series since we cannot compute min(), max()
                     # over the last days there (see also use of fillna(...))
-                    int_potential_begin_list = np.where((local_incid_min >= level[0]).astype(int))[0]
+                    int_potential_begin_list = np.where(
+                        (local_incid_min >= level[0]).astype(int))[0]
                     # Correct start date for first implementation of NPI
-                    # (take npi_lifting_delay is needed here instead of 
-                    # npi_activation_delay since int_active is computed via 
+                    # (take npi_lifting_delay is needed here instead of
+                    # npi_activation_delay since int_active is computed via
                     # maximum over npi_lifting_delay+1 many days)
-                    int_active[range(max((int_potential_begin_list[0]-npi_lifting_delay-1),0), int_potential_begin_list[0])] = 0
+                    int_active[range(max(
+                        (int_potential_begin_list[0]-npi_lifting_delay-1), 0), int_potential_begin_list[0])] = 0
                     # Correct start dates for further implementations
                     # and account for oscilating incidence which does
                     # not directly yield lifting of the implementation
                     for i in range(0, len(int_potential_begin_list)-1):
                         if int_potential_begin_list[i+1] - int_potential_begin_list[i] > npi_lifting_delay + 1:
-                            int_active[range((int_potential_begin_list[i+1]-npi_lifting_delay-1),int_potential_begin_list[i+1])] = 0
+                            int_active[range(
+                                (int_potential_begin_list[i+1]-npi_lifting_delay-1), int_potential_begin_list[i+1])] = 0
 
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
@@ -953,11 +958,11 @@ def transform_npi_data(fine_resolution=2,
                                         # print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
                                         # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
                                         # print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
-                                        # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])                                        
+                                        # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
                                         # print('\n')
                                         # df_npis_old[df_npis_old.ID_County==5315].iloc[[14,34],indicator_code_active_idx]
                                         df_local_new.loc[indicator_code_active_idx,
-                                                        subcode_excl + level_other[1]] = 0
+                                                         subcode_excl + level_other[1]] = 0
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
@@ -1024,7 +1029,7 @@ def transform_npi_data(fine_resolution=2,
                         npiCode + subcode, start_npi_cols, npi_incid_start,
                         start_date_validation, end_date_validation,
                         fine_resolution)
-                    if(a != b):
+                    if (a != b):
                         print('Error in NPI activation computation')
                     else:
                         print(a, b, a == b)
@@ -1041,7 +1046,7 @@ def transform_npi_data(fine_resolution=2,
                                               df_infec_rki, countyID, npiCode, start_npi_cols,
                                               npi_incid_start, start_date_validation,
                                               end_date_validation, fine_resolution)
-                if(a != b):
+                if (a != b):
                     print('Error in NPI activation computation')
                 else:
                     print(a, b, a == b)
