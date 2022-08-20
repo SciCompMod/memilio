@@ -25,8 +25,9 @@ namespace mio
 namespace abm
 {
 
-class Infection{
-    
+class Infection
+{
+
 public:
     /**
      * create an infection for a single person.
@@ -34,38 +35,37 @@ public:
      * @param virus_type virus type of the infection
      */
     Infection(TimePoint start_date, VirusType virus_type);
-    
+
     /**
      * get viral load at a given time
      * @param t time point of the querry
      * @return viral load at given time point
      */
     double get_viral_load(const TimePoint t) const;
-    
+
     /**
      * get infectivity at a given time
      * @param t time point of the querry
      * @return infectivity at given time point
      */
     double get_infectivity(const TimePoint t) const;
-    
+
     /**
      * get virus type
      * @return virus type of the infection
      */
     VirusType get_virus_type() const;
-    
-    
+
     InfectionState get_infection_state(const TimePoint t) const;
-     
+
 private:
     /**
      * determine viral load course and infection course
      */
     void draw_infection_course();
-        //peak = gauss::get_instance();
+    //peak = gauss::get_instance();
     void determine_end_date();
-    
+
     VirusType virus_type;
     TimePoint start_date;
     TimePoint end_date;
@@ -73,6 +73,7 @@ private:
     double increase_slope;
     double decline_slope;
     double infectivity_parameter; // have to ask for distribution/parametrization of the infectivity
+    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> infection_course;
     //vector<pairs> Infection_course
     //TimePoint   state
     //start_date+2d         exposed
