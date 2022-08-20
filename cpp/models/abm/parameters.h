@@ -270,11 +270,6 @@ struct PCRTest : public GenericTest {
 };
 
 /**
- * parameters of the testing that are the same everywhere in the world.
- */
-using GlobalTestingParameters = ParameterSet<AntigenTest, PCRTest>;
-
-/**
  * parameters that govern the migration between locations.
  */
 struct LockdownDate {

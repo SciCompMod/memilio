@@ -1421,33 +1421,34 @@ TEST(TestDiscreteDistribution, generate)
     }
 }
 
-TEST(TestTestingRule, addremoveandevaluateTestRule)
+TEST(TestTestingCriteria, addremoveandevaluateTestCriteria)
 {
-    auto world   = mio::abm::World();
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
-                                    world.get_global_infection_parameters());
-    auto& home   = world.get_individualized_location(home_id);
-    auto& work   = world.get_individualized_location(work_id);
-    person.set_assigned_location(home);
-    person.set_assigned_location(work);
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
 
-    auto testing_rule = mio::abm::TestingRule({}, {}, {});
-    testing_rule.add_infection_state(mio::abm::InfectionState::Infected);
-    testing_rule.add_infection_state(mio::abm::InfectionState::Carrier);
-    testing_rule.add_location_type(mio::abm::LocationType::Home);
-    testing_rule.add_location_type(mio::abm::LocationType::Work);
+    auto testing_criteria = mio::abm::TestingCriteria({}, {}, {});
+    ASSERT_EQ(testing_criteria.evaluate(person, work), true);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Carrier);
+    testing_criteria.add_location_type(mio::abm::LocationType::Home);
+    testing_criteria.add_location_type(mio::abm::LocationType::Work);
 
-    ASSERT_EQ(testing_rule.evaluate(person, work), true);
-    ASSERT_EQ(testing_rule.evaluate(person, home), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, work), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
-    testing_rule.remove_infection_state(mio::abm::InfectionState::Infected);
-    ASSERT_EQ(testing_rule.evaluate(person, home), false);
+    testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
+    ASSERT_EQ(testing_criteria.evaluate(person, home),
+              false); // now it isn't empty and get's evaluated against age group
+    testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
-    testing_rule.add_infection_state(mio::abm::InfectionState::Infected);
-    testing_rule.remove_location_type(mio::abm::LocationType::Home);
-    ASSERT_EQ(testing_rule.evaluate(person, home), false);
+    testing_criteria.remove_infection_state(mio::abm::InfectionState::Infected);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), false);
+
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.remove_location_type(mio::abm::LocationType::Home);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), false);
 }
 
 TEST(TestTestingScheme, init)
@@ -1457,8 +1458,8 @@ TEST(TestTestingScheme, init)
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
                                                                     mio::abm::LocationType::Work};
 
-    auto testing_rule1 = mio::abm::TestingRule({}, test_location_types1, test_infection_states1);
-    std::vector<mio::abm::TestingRule> testing_rules = {testing_rule1};
+    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
+    std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
     const auto testing_frequency = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(0);
@@ -1467,7 +1468,7 @@ TEST(TestTestingScheme, init)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_rules, testing_frequency, start_date, end_date, probability, test_type);
+        mio::abm::TestingScheme(testing_criterias, testing_frequency, start_date, end_date, probability, test_type);
 
     ASSERT_EQ(testing_scheme.is_active(), false);
     testing_scheme.update_activity_status(mio::abm::TimePoint(10));
@@ -1483,8 +1484,8 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
                                                                     mio::abm::LocationType::Work};
 
-    auto testing_rule1 = mio::abm::TestingRule({}, test_location_types1, test_infection_states1);
-    std::vector<mio::abm::TestingRule> testing_rules = {testing_rule1};
+    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
+    std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
     const auto testing_frequency = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(0);
@@ -1493,15 +1494,15 @@ TEST(TestTestingScheme, runScheme)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_rules, testing_frequency, start_date, end_date, probability, test_type);
+        mio::abm::TestingScheme(testing_criterias, testing_frequency, start_date, end_date, probability, test_type);
 
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered_Carrier};
     std::vector<mio::abm::LocationType> test_location_types2     = {mio::abm::LocationType::Home};
-    auto testing_rule2 = mio::abm::TestingRule({}, test_location_types2, test_infection_states2);
-    testing_scheme.add_testing_rule(testing_rule2);
+    auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
+    testing_scheme.add_testing_criteria(testing_criteria2);
 
     auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc_work = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
     auto person2 =
         mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age15to34, {});
@@ -1520,12 +1521,12 @@ TEST(TestTestingScheme, runScheme)
     ASSERT_EQ(person2.is_in_quarantine(), false);
     ASSERT_EQ(person2.get_time_since_negative_test(), mio::abm::days(0));
 
-    testing_scheme.add_testing_rule(testing_rule1);
-    testing_scheme.remove_testing_rule(testing_rule1);
+    testing_scheme.add_testing_criteria(testing_criteria1);
+    testing_scheme.remove_testing_criteria(testing_criteria1);
     ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), true);
 }
 
-TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
+TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
 
     auto world   = mio::abm::World();
@@ -1538,11 +1539,11 @@ TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
-    auto testing_rule = mio::abm::TestingRule({}, {}, {});
-    testing_rule.add_infection_state(mio::abm::InfectionState::Infected);
-    testing_rule.add_infection_state(mio::abm::InfectionState::Carrier);
-    testing_rule.add_location_type(mio::abm::LocationType::Home);
-    testing_rule.add_location_type(mio::abm::LocationType::Work);
+    auto testing_criteria = mio::abm::TestingCriteria({}, {}, {});
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Carrier);
+    testing_criteria.add_location_type(mio::abm::LocationType::Home);
+    testing_criteria.add_location_type(mio::abm::LocationType::Work);
 
     const auto testing_frequency = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(20);
@@ -1551,17 +1552,17 @@ TEST(TestWorldTestingRule, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme({testing_rule}, testing_frequency, start_date, end_date, probability, test_type);
+        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, probability, test_type);
 
-    world.add_testing_scheme(testing_scheme);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme);
     auto current_time = mio::abm::TimePoint(0);
-    ASSERT_EQ(world.run_testing_schemes(person, work), true);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), true);
     current_time = mio::abm::TimePoint(30);
-    world.update_testing_scheme_activity_status(current_time);
+    world.get_testing_strategy().update_testing_scheme_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.run_testing_schemes(person, work), false);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), false);
 }

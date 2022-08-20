@@ -291,8 +291,8 @@ void create_assign_locations(mio::abm::World& world)
     std::vector<mio::abm::LocationType> test_location_types = {
         mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::BasicsShop};
 
-    auto testing_rule1                               = mio::abm::TestingRule({}, test_location_types, {});
-    std::vector<mio::abm::TestingRule> testing_rules = {testing_rule1};
+    auto testing_criteria1                                  = mio::abm::TestingCriteria({}, test_location_types, {});
+    std::vector<mio::abm::TestingCriteria> testing_criteria = {testing_criteria1};
 
     const auto testing_frequency = mio::abm::days(2);
     const auto start_date        = mio::abm::TimePoint(0);
@@ -301,9 +301,8 @@ void create_assign_locations(mio::abm::World& world)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_rules, testing_frequency, start_date, end_date, probability, test_type);
-    world.add_testing_scheme(testing_scheme);
-
+        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, probability, test_type);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme);
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
     // Students have to get tested once a week.

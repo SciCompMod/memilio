@@ -26,7 +26,7 @@
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/trip_list.h"
-#include "abm/testing_scheme.h"
+#include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -58,7 +58,6 @@ public:
         : m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(params)
         , m_migration_parameters()
-        , m_testing_parameters()
         , m_trip_list()
         , m_use_migration_rules(true)
     {
@@ -164,13 +163,6 @@ public:
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
-    /** 
-     * get global testing parameters
-     */
-    GlobalTestingParameters& get_global_testing_parameters();
-
-    const GlobalTestingParameters& get_global_testing_parameters() const;
-
     /**
      * get migration data
      */
@@ -185,24 +177,12 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
-    /**
-     * adds a testing scheme to the set of all testing schemes for the simulation
-     * @param testing_scheme testing scheme to be added
+    /** 
+     * get testing strategy
      */
-    void add_testing_scheme(const TestingScheme& testing_scheme);
-    
-    /**
-     * updates activity status of all testing scheme at a given time point
-     * @param t time point to be updated for
-     */
-    void update_testing_scheme_activity_status(const TimePoint t);
-    
-    /**
-     * runs all testing schemes for a given person and a given location
-     * @param person person to be checked
-     * @param location location to be checked
-     */
-    bool run_testing_schemes(Person& person, const Location& location);
+    TestingStrategy& get_testing_strategy();
+
+    const TestingStrategy& get_testing_strategy() const;
 
 private:
     void interaction(TimePoint t, TimeSpan dt);
@@ -210,10 +190,9 @@ private:
 
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
-    std::vector<TestingScheme> m_testing_schemes;
+    TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
-    GlobalTestingParameters m_testing_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
 };

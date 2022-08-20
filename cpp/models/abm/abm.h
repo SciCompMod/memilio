@@ -32,6 +32,6 @@
 #include "abm/location_type.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/migration_rules.h"
-#include "abm/testing_scheme.h"
+#include "abm/testing_strategy.h"
 
 #endif

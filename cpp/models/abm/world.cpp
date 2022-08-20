@@ -52,6 +52,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
     interaction(t, dt);
+    m_testing_strategy.update_testing_scheme_activity_status(t);
     migration(t, dt);
 }
 
@@ -101,8 +102,6 @@ void World::migration(TimePoint t, TimeSpan dt)
             std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
     }
 
-    update_testing_scheme_activity_status(t);
-
     for (auto&& person : m_persons) {
         for (auto rule : rules) {
             //check if transition rule can be applied
@@ -114,7 +113,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                if (run_testing_schemes(*person, *target)) {
+                if (m_testing_strategy.run_strategy(*person, *target)) {
                     if (target != &get_location(*person)) {
                         person->migrate_to(get_location(*person), *target);
                         break;
@@ -131,7 +130,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (run_testing_schemes(*person, target)) {
+                if (m_testing_strategy.run_strategy(*person, target)) {
                     person->migrate_to(get_location(*person), target);
                 }
             }
@@ -147,31 +146,6 @@ void World::begin_step(TimePoint /*t*/, TimeSpan dt)
             location.begin_step(dt, m_infection_parameters);
         }
     }
-}
-
-void World::add_testing_scheme(const TestingScheme& testing_scheme)
-{
-    if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), testing_scheme) == m_testing_schemes.end()) {
-        m_testing_schemes.push_back(testing_scheme);
-    }
-}
-
-void World::update_testing_scheme_activity_status(const TimePoint t)
-{
-    for (auto& ts : m_testing_schemes) {
-        ts.update_activity_status(t);
-    }
-}
-
-bool World::run_testing_schemes(Person& person, const Location& location)
-{
-
-    return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
-        if (ts.is_active()) {
-            return ts.run_scheme(person, location);
-        }
-        return true;
-    });
 }
 
 auto World::get_locations() const -> Range<
@@ -240,16 +214,6 @@ const GlobalInfectionParameters& World::get_global_infection_parameters() const
     return m_infection_parameters;
 }
 
-GlobalTestingParameters& World::get_global_testing_parameters()
-{
-    return m_testing_parameters;
-}
-
-const GlobalTestingParameters& World::get_global_testing_parameters() const
-{
-    return m_testing_parameters;
-}
-
 TripList& World::get_trip_list()
 {
     return m_trip_list;
@@ -268,6 +232,16 @@ void World::use_migration_rules(bool param)
 bool World::use_migration_rules() const
 {
     return m_use_migration_rules;
+}
+
+TestingStrategy& World::get_testing_strategy()
+{
+    return m_testing_strategy;
+}
+
+const TestingStrategy& World::get_testing_strategy() const
+{
+    return m_testing_strategy;
 }
 
 } // namespace abm
