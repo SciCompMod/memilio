@@ -22,6 +22,7 @@
 
 #include "pybind11/detail/common.h"
 #include "pybind_util.h"
+#include "utils/index.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/custom_index_array.h"
 
@@ -31,6 +32,8 @@
 
 #include "boost/optional.hpp"
 #include <type_traits>
+#include <stdexcept>
+
 
 namespace pymio
 {
@@ -38,16 +41,23 @@ namespace pymio
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
 template <class C>
-void bind_single_tag_template_members(pybind11::class_<C>&)
+void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>&)
 {
 }
 template <class C, class T, class... Ts>
-void bind_single_tag_template_members(pybind11::class_<C>& c)
+void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>& c)
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
 
-    bind_single_tag_template_members<C, Ts...>(c); //next Tag
+    try {
+        bind_Index<T>(m, ("Index_" + tname).c_str());
+    } 
+    catch(std::runtime_error &e) {
+        pybind11::print("Catched exception: ");
+        pybind11::print(e.what());
+    }
+    bind_single_tag_template_members<C, Ts...>(m, c); //next Tag
 }
 
 // Represents a python index slice, i.e. start:stop:step
@@ -130,18 +140,25 @@ void assign_scalar(C& self, const pybind11::object& indices, const T& value)
 
 // Bind members that are different for arrays with single or multi index.
 template <class C, class Tag>
-void bind_single_or_multi_index_members_CustomIndexArray(pybind11::class_<C>& c)
+void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m, pybind11::class_<C>& c, std::string const& name)
 {
     c.def("size", [](const C& self) {
         return self.size(); //just a single index, no tuple
     });
 }
 template <class C, class... Tags>
-std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::class_<C>& c)
+std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m, pybind11::class_<C>& c, std::string const& name)
 {
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
+    try{
+        bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
+    } 
+    catch(std::runtime_error &e) {
+        pybind11::print("Catched exception: ");
+        pybind11::print(e.what());
+    }
 }
 
 template <class Type, class... Tags>
@@ -190,8 +207,10 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
         //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
         //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
 
-    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(c);
-    bind_single_tag_template_members<C, Tags...>(c);
+    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(m, c, name);
+    bind_single_tag_template_members<C, Tags...>(m, c);
+
+
 }
 
 } // namespace pymio
