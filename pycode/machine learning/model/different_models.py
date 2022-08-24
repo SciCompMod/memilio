@@ -11,7 +11,7 @@ def multilayer_multi_input():
                 tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(units=32, activation='relu'),
                 tf.keras.layers.Dense(units=32, activation='relu'),
-                tf.keras.layers.Dense(units=8),
+                tf.keras.layers.Dense(units=6),
                 tf.keras.layers.Reshape([1, -1]),])
     return model
 
@@ -35,7 +35,7 @@ def single_output():
 def cnn_multi_output():
     CONV_WIDTH = 3
     label_width = 30
-    num_outputs = 8
+    num_outputs = 6
     model = tf.keras.Sequential([
         # Shape [batch, time, features] => [batch, CONV_WIDTH, features]
         tf.keras.layers.Lambda(lambda x: x[:, -CONV_WIDTH:, :]),
@@ -51,7 +51,7 @@ def cnn_multi_output():
 
 def lstm_multi_output():
     label_width = 30
-    num_outputs = 8
+    num_outputs = 6
     model = tf.keras.Sequential([
         # Shape [batch, time, features] => [batch, lstm_units].
         # Adding more `lstm_units` just overfits more quickly.

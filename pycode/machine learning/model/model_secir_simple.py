@@ -20,42 +20,6 @@ import seaborn as sns # plot after normalization
 from data_secir_simple import generate_data, splitdata
 from different_models import *
 
-def create_Dampings():
-
-    dampings = pd.read_csv(
-        os.path.join(os.path.dirname(os.path.realpath(path)), 'data35', 'data_secir_simple_dampings.txt'),
-         sep=' ')
-
-    dampings.columns = ['factor', 'day']
-    i = 0 
-    all_dampings = []
-    while i < len(dampings):
-        damping_date = int(dampings.iloc[i]['day'])
-        damping_factor = dampings.iloc[i]['factor']
-        days = 35 
-        damping_list = []
-        damping_list +=  [1] * (int(damping_date+1))
-        damping_list +=  [damping_factor] * (days-damping_date) 
-        all_dampings.append(damping_list) 
-        i +=1
-
-
-
-    return all_dampings
-
-def addDampingstoInput(dampings, data):
-    inputs, labels = getPartitions(input_width = 1, label_width = 34, data=data)
-    dampings = create_Dampings()
-    i = 0 
-    input_withdamping = []
-    while i < len(inputs):
-         a = inputs.iloc[i].values.tolist()
-         b = dampings[i]
-         a.append(b)
-         input_withdamping.append(a)
-         i += 1
-
-    return input_withdamping
 
 def plotCol(inputs, labels, model=None, plot_col='Susceptible', max_subplots=3):
 
@@ -93,12 +57,15 @@ def plotCol(inputs, labels, model=None, plot_col='Susceptible', max_subplots=3):
     plt.show()
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
-def network_fit(path, model,  MAX_EPOCHS=30, early_stop=4, save_evaluation_pdf=False):
+def network_fit(path, model,  MAX_EPOCHS=30, early_stop=500, save_evaluation_pdf=False):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path)
 
+   
     file = open(os.path.join(path, 'data_secir_simple.pickle'),'rb')
+
+
     data = pickle.load(file)
     data_splitted = splitdata(data["inputs"], data["labels"])
 
@@ -108,6 +75,8 @@ def network_fit(path, model,  MAX_EPOCHS=30, early_stop=4, save_evaluation_pdf=F
     valid_labels = data_splitted["valid_labels"]
     test_inputs  = data_splitted["test_inputs"]
     test_labels  = data_splitted["test_labels"]
+
+
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                     patience=early_stop,
@@ -121,7 +90,8 @@ def network_fit(path, model,  MAX_EPOCHS=30, early_stop=4, save_evaluation_pdf=F
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
 
-    plotCol(test_inputs, test_labels, model=model, plot_col='Susceptible', max_subplots=3)
+    #plotCol(test_inputs, test_labels, model=model, plot_col='Susceptible', max_subplots=3)
+    plot_losses(history)
     return history
     
 # simple benchmarking
@@ -159,14 +129,28 @@ def plot_histories(histories):
     plt.show()
     plt.savefig('evaluation_single_shot.pdf')
 
+
+def plot_losses(history):
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.show()
+    plt.savefig('losses plot.pdf')
+
+
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
+    
+
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
 
-    MAX_EPOCHS = 50
+    MAX_EPOCHS = 200
 
     ### Models ###
     # single input
@@ -178,7 +162,9 @@ if __name__ == "__main__":
 
     # # Multi output 
     cnn_output = network_fit(path_data, model=cnn_multi_output(), MAX_EPOCHS=MAX_EPOCHS)
-    # lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), MAX_EPOCHS=MAX_EPOCHS)
+
+
+    #lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), MAX_EPOCHS=MAX_EPOCHS)
     
     # histories = [ lstm_hist, ml_hist]
     # plot_histories(histories)

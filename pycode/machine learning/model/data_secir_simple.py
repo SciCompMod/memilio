@@ -55,8 +55,8 @@ def run_secir_simulation(days):
 
 
     # Define random values for damping coef and start date
-    # damping_factor = 1
-    # damping_date = ceil(random.random() * days) # scale with days since random is in Interval (0,1)
+    #damping_factor = random.randrange(0, 0.7) # realistic damping values
+    #damping_date = ceil(random.random() * days) # scale with days since random is in Interval (0,1)
 
     # save damping factor in vector. -1 for index correction
     # data[damping_date-1:,-1] = damping_factor
@@ -85,6 +85,7 @@ def run_secir_simulation(days):
     model.populations.set_difference_from_total(
         (A0, Index_InfectionState(State.Susceptible)), populations[0])
 
+
     # Compartment transition propabilities
     model.parameters.RelativeCarrierInfectability[A0] = 0.67
     model.parameters.InfectionProbabilityFromContact[A0] = 1.0
@@ -104,7 +105,7 @@ def run_secir_simulation(days):
         (num_groups, num_groups)) * 1
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
-    # model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+    #model.parameters.ContactPatterns.cont_freq_mat.add_damping(
     #     Damping(coeffs=np.r_[damping_factor], t=damping_date, level=0, type=0))
 
     # Apply mathematical constraints to parameters
@@ -143,6 +144,15 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
         data_run = run_secir_simulation(days)
+
+         # drop columns susceptible und recovered 
+        compartments = ['Susceptible', 'Exposed', 'Carrier',
+                     'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
+        df_data = pd.DataFrame(data = data_run, columns = compartments )
+        df_data.drop(['Susceptible', 'Recovered'], axis = 1, inplace = True)
+        
+        data_run = df_data.values         #update data_run 
+
         data["inputs"].append(data_run[:input_width])
         data["labels"].append(data_run[input_width:])
         bar.next()
@@ -158,9 +168,9 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
         # normalize data 
         data["inputs"] = normalize(data["inputs"])
         if normalize_labels:
-            data["labels"] = normalize(data["labels"])
+           data["labels"] = normalize(data["labels"])
 
-        # data = splitdata(data["inputs"], data["labels"])
+        #data = splitdata(data["inputs"], data["labels"])
 
         # check if data directory exists. If necessary create it.
         if not os.path.isdir(path): 
@@ -235,12 +245,13 @@ if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
+
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
 
     input_width = 5
-    label_width = 30
-    num_runs = 500
+    label_width = 30 #30
+    num_runs = 1000
     generate_data(num_runs, path_data, input_width, label_width, normalize_labels=True)
     
-    
+
