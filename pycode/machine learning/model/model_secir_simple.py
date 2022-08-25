@@ -21,14 +21,14 @@ from data_secir_simple import generate_data, splitdata
 from different_models import *
 
 
-def plotCol(inputs, labels, model=None, plot_col='Susceptible', max_subplots=3):
+def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
     input_width = inputs.shape[1]
     label_width = labels.shape[1]
     
     plt.figure(figsize=(12, 8))
-    cols = np.array(['Susceptible', 'Exposed', 'Carrier',
-                        'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])  
+    cols = np.array(['Exposed', 'Carrier',
+                        'Infected', 'Hospitalized', 'ICU', 'Dead'])  
     plot_col_index = np.where(cols == plot_col)[0][0]
     max_n = min(max_subplots, inputs.shape[0])
 
@@ -57,7 +57,7 @@ def plotCol(inputs, labels, model=None, plot_col='Susceptible', max_subplots=3):
     plt.show()
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
-def network_fit(path, model,  MAX_EPOCHS=30, early_stop=500, save_evaluation_pdf=False):
+def network_fit(path, model,  max_epochs=30, early_stop=500, save_evaluation_pdf=False):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path)
@@ -83,14 +83,14 @@ def network_fit(path, model,  MAX_EPOCHS=30, early_stop=500, save_evaluation_pdf
                                                     mode='min')
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                optimizer=tf.keras.optimizers.Adam(),
+                optimizer=tf.keras.optimizers.NAdam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
 
-    #plotCol(test_inputs, test_labels, model=model, plot_col='Susceptible', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model, plot_col='Infected', max_subplots=3)
     plot_losses(history)
     return history
     
@@ -150,21 +150,21 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
 
-    MAX_EPOCHS = 200
+    max_epochs = 200
 
     ### Models ###
     # single input
-    # hist = network_fit(path_data, model=single_output(), MAX_EPOCHS=MAX_EPOCHS)
+    # hist = network_fit(path_data, model=single_output(), max_epochs=max_epochs)
 
     # # multi input
-    # lstm_hist = network_fit(path_data, model=lstm_network_multi_input(), MAX_EPOCHS=MAX_EPOCHS)
-    # ml_hist = network_fit(path_data, model=multilayer_multi_input(), MAX_EPOCHS=MAX_EPOCHS)
+    # lstm_hist = network_fit(path_data, model=lstm_network_multi_input(), max_epochs=max_epochs)
+    # ml_hist = network_fit(path_data, model=multilayer_multi_input(), max_epochs=max_epochs)
 
     # # Multi output 
-    cnn_output = network_fit(path_data, model=cnn_multi_output(), MAX_EPOCHS=MAX_EPOCHS)
+    # cnn_output = network_fit(path_data, model=cnn_multi_output(), max_epochs=max_epochs)
 
 
-    #lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), MAX_EPOCHS=MAX_EPOCHS)
+    lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), max_epochs=max_epochs)
     
     # histories = [ lstm_hist, ml_hist]
     # plot_histories(histories)

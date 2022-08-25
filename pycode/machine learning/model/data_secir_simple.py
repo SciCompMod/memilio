@@ -33,8 +33,7 @@ def run_secir_simulation(days):
     compartments = ['Susceptible', 'Exposed', 'Carrier',
                     'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
 
-    # Define random population number in intervall (0,500000)
-    populations = [500000 * random.random()]
+    populations = [50_000]
 
     # since we defined the number of days, we already know the dimension of our dataset.
     # We aim to save the compartment population for each day.
@@ -75,19 +74,19 @@ def run_secir_simulation(days):
     model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
     # Initial number of people in each compartment with random numbers 
-    model.populations[A0, Index_InfectionState(State.Exposed)] = 250 * random.random()
-    model.populations[A0, Index_InfectionState(State.Carrier)] = 120 * random.random()
-    model.populations[A0, Index_InfectionState(State.Infected)] = 120 * random.random()
-    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 50 * random.random()
-    model.populations[A0, Index_InfectionState(State.ICU)] = 30 * random.random()
-    model.populations[A0, Index_InfectionState(State.Recovered)] = 30 * random.random()
+    model.populations[A0, Index_InfectionState(State.Exposed)] = 60 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Carrier)] = 55 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Infected)] = 50 * random.uniform(0.2, 1) # 0.1% infected
+    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 12 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.ICU)] = 3 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Recovered)] = 50 * random.random()
     model.populations[A0, Index_InfectionState(State.Dead)] = 0
     model.populations.set_difference_from_total(
         (A0, Index_InfectionState(State.Susceptible)), populations[0])
 
 
     # Compartment transition propabilities
-    model.parameters.RelativeCarrierInfectability[A0] = 0.67
+    model.parameters.RelativeCarrierInfectability[A0] = 0.5
     model.parameters.InfectionProbabilityFromContact[A0] = 1.0
     model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
     model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
@@ -250,8 +249,8 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
 
     input_width = 5
-    label_width = 30 #30
-    num_runs = 1000
+    label_width = 30
+    num_runs = 5000
     generate_data(num_runs, path_data, input_width, label_width, normalize_labels=True)
     
 

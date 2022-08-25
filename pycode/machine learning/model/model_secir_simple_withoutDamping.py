@@ -263,7 +263,7 @@ def network_secir_simple(path, epochs=30, num_runs_traindata=500, save_evaluatio
 
 # create and train an neural network based on the secir simple example. 
 # if no dataset is already create, we build one with default 500 runs
-def ml_network(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
+def ml_network(path,  max_epochs=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
 
     input_width = 1
     label_width = 1
@@ -302,7 +302,7 @@ def ml_network(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_
                 optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
     
@@ -310,7 +310,7 @@ def ml_network(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_
 
     return history
 
-def ml_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
+def ml_network_multi_input(path,  max_epochs=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
 
     input_width = 5
     label_width = 1
@@ -370,7 +370,7 @@ def ml_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindat
                 optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
     
@@ -379,7 +379,7 @@ def ml_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindat
 
     return history
 
-def lstm_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
+def lstm_network_multi_input(path,  max_epochs=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
 
     input_width = 4
     label_width = 1
@@ -450,7 +450,7 @@ def lstm_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
                 optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
     
@@ -458,7 +458,7 @@ def lstm_network_multi_input(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
 
     return history
 
-def cnn_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
+def cnn_network_multi_output(path,  max_epochs=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
 
     input_width = 5
     label_width = 20
@@ -512,7 +512,7 @@ def cnn_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
                 optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
     
@@ -520,7 +520,7 @@ def cnn_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traind
 
     return history
 
-def lstm_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
+def lstm_network_multi_output(path,  max_epochs=30, early_stop=4, num_runs_traindata=500, save_evaluation_pdf=False):
 
     input_width = 5
     label_width = 20
@@ -572,7 +572,7 @@ def lstm_network_multi_output(path,  MAX_EPOCHS=30, early_stop=4, num_runs_train
                 optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
-    history = model.fit(train_inputs, train_labels, epochs=MAX_EPOCHS,
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
     
@@ -626,7 +626,7 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data_simple')
 
-    MAX_EPOCHS = 1
+    max_epochs = 1
 
     ### Data Generation ###
     num_runs = 100
@@ -644,15 +644,15 @@ if __name__ == "__main__":
 
     ### Models ###
     # single input
-    # ml_network(path_data, MAX_EPOCHS=MAX_EPOCHS)
+    # ml_network(path_data, max_epochs=max_epochs)
 
     # # multi input
-    # lstm_hist = lstm_network_multi_input(path_data, MAX_EPOCHS=MAX_EPOCHS)
-    # # ml_hist = ml_network_multi_input(path_data, MAX_EPOCHS=MAX_EPOCHS)
+    # lstm_hist = lstm_network_multi_input(path_data, max_epochs=max_epochs)
+    # # ml_hist = ml_network_multi_input(path_data, max_epochs=max_epochs)
 
     # # Multi output
-    # # cnn_output = cnn_network_multi_output(path_data, MAX_EPOCHS=MAX_EPOCHS)
-    # # lstm_hist_multi = lstm_network_multi_output(path_data, MAX_EPOCHS=MAX_EPOCHS)
+    # # cnn_output = cnn_network_multi_output(path_data, max_epochs=max_epochs)
+    # # lstm_hist_multi = lstm_network_multi_output(path_data, max_epochs=max_epochs)
     
     # histories = [ lstm_hist, ml_hist]
     # plot_histories(histories)
