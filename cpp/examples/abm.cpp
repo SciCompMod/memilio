@@ -151,7 +151,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
      * Community Households are: Refugee, Disabled, Retirement and Others. We have an explicit age distribution, amount of households and amount of people for them but not the exact amount of people in each household.
      * The private Households are divided with respect to the amount of people living in each household. For a one person household we have the exact age distribution. For the rest we have data about which kind of family lives in them. The different kinds of families are: A family with two parents and the rest are children, a family with one parent and the rest are children and  "other" families with no exact data about their age.
     */
-
+    /*
     // Refugee
     auto refugee = mio::abm::HouseholdMember();
     refugee.set_age_weight(mio::abm::AgeGroup::Age0to4, 25);
@@ -209,7 +209,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
 
     add_household_group_to_world(world, otherGroup);
-
+*/
     // One Person Household (we have exact age data about this)
     auto one_person_household_member = mio::abm::HouseholdMember();
     one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age15to34, 4364);
@@ -265,7 +265,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
                                                          four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
-
+    /*
     // Five plus person households
     int fiveplus_person_full_families  = 1245;
     int fiveplus_person_half_families  = 80;
@@ -273,7 +273,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto fivePlusPersonHouseholds =
         make_homes_with_families(child, parent, random, 5, fiveplus_person_full_families, fiveplus_person_half_families,
                                  fiveplus_person_other_families);
-    add_household_group_to_world(world, fivePlusPersonHouseholds);
+    add_household_group_to_world(world, fivePlusPersonHouseholds);*/
 }
 
 /**
@@ -390,7 +390,7 @@ int main()
     //mio::abm::set_log_level(mio::abm::LogLevel::warn);
 
     // Set seeds of previous run for debugging:
-    // mio::thread_local_rng().seed({});
+    mio::thread_local_rng().seed({162486831, 289055258, 4171428088, 1679181017, 2899811504, 1730785156});
 
     // Print seeds to be able to use them again for debugging:
     // printf("Seeds: ");
@@ -500,9 +500,9 @@ int main()
                                                               mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //35-59
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::AgeGroup::Age5to14,
+    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::AgeGroup::Age35to59,
                                                                      mio::abm::VaccinationState::Unvaccinated}]  = 0.11;
-    infection_params.get<mio::abm::SusceptibleToExposedByInfected>()[{mio::abm::AgeGroup::Age5to14,
+    infection_params.get<mio::abm::SusceptibleToExposedByInfected>()[{mio::abm::AgeGroup::Age35to59,
                                                                       mio::abm::VaccinationState::Unvaccinated}] = 0.11;
     infection_params
         .get<mio::abm::CarrierToInfected>()[{mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
