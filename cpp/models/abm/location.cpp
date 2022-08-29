@@ -205,66 +205,15 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 
 LocationCapacity Location::get_default_capacity()
 {
-    /*
-    if (m_type == LocationType::Home) {
-        m_capacity.persons = 4;
-        m_capacity.volume  = 264;
-    }
-    else if (m_type == LocationType::School) {
-        m_capacity.persons = 600;
-        m_capacity.volume  = 3600;
-    }
-    else if (m_type == LocationType::Work) {
-        m_capacity.persons = 100;
-        m_capacity.volume  = 3000;
-    }
-    else if (m_type == LocationType::SocialEvent) {
-        m_capacity.persons = 100;
-        m_capacity.volume  = 375;
-    }
-    else if (m_type == LocationType::BasicsShop) {
-        m_capacity.persons = 240;
-        m_capacity.volume  = 7200;
-    }
-    else if (m_type == LocationType::Hospital) {
-        m_capacity.persons = 584;
-        m_capacity.volume  = 26242;
-    }
-    else if (m_type == LocationType::ICU) {
-        m_capacity.persons = 30;
-        m_capacity.volume  = 1350;
-    }
-    else if (m_type == LocationType::Car) {
-        m_capacity.persons = 5;
-        m_capacity.volume  = 4;
-    }
-    else if (m_type == LocationType::PublicTransport) {
-        m_capacity.persons = 150;
-        m_capacity.volume  = 75;
-    }
-    else {*/
     m_capacity.persons = 1;
     m_capacity.volume  = 1;
-    //}
     return m_capacity;
 }
 
-/*int Location::get_capacity()
-{
-    if (use_volume) {
-        if (m_capacity.volume > 0) {
-            return m_capacity.volume;
-        }
-        else {
-            mio::log_warning("Volume capacity not set but called. Using capacity in person number.");
-            return m_capacity.persons;
-        }
-    }
-    else {
-        return m_capacity.persons;
-    }
-}*/
-
+/*
+For the dependency of the transmission risk on the occupancy we use a linear approximation
+so that the risk of getting the virus is halved if the number of people at the location is half as big as the capactity in persons.
+*/
 double Location::compute_relative_transmission_risk(bool consider_capacity)
 {
     if (consider_capacity) {
