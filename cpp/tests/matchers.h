@@ -72,7 +72,10 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
-    mio::unused(result_listener);
+    if (arg.rows() != other.rows() || arg.cols() != other.cols()) {
+        *result_listener << "different dimensions";
+        return false;
+    }
     return ((arg - other).array().abs() <= (atol + rtol * other.array().abs())).all();
 }
 
@@ -137,8 +140,27 @@ const IOResultPrintWrap<T>& print_wrap(const mio::IOResult<T>& r)
  */
 MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
 {
-    mio::unused(result_listener);
-    return bool(arg);
+    if (arg) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
+}
+
+/**
+ * gmock matcher for IOResult.
+ * The matcher succeeds if the IOResult represents failure with the specified status code.
+ * @return matcher that checks an IOResult
+ */
+MATCHER_P(IsFailure, status_code, std::string(negation ? "isn't" : "is") + " failure. ")
+{
+    if (arg.error().code() == status_code) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
 }
 
 /**

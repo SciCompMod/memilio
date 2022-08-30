@@ -22,11 +22,13 @@
 * limitations under the License.
 */
 
-#include "secir/parameter_studies.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/epidemiology/regions.h"
-#include "secir/secir_parameters_io.h"
-#include "secir/secir_result_io.h"
+#include "memilio/io/epi_data.h"
+#include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "secir/secir_parameters_io.h"
+#include "secir/parameter_space.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -657,7 +659,8 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
+                                       (result_dir_run / "Result.h5").string()));
     BOOST_OUTCOME_TRY(
         mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
     return mio::success();
@@ -678,10 +681,11 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
+    auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
     for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0},
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0}, num_groups,
                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids,
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids, num_groups,
                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
     }
 
@@ -706,15 +710,15 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
 
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
     }
 
     //save percentiles of results
@@ -725,11 +729,16 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
         auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
 
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
     }
 
     //save percentiles of parameters
@@ -810,22 +819,26 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_result = mio::IOResult<void>(mio::success());
     auto run_idx            = size_t(0);
-    parameter_study.run([&](auto results_graph) {
-        ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
+    parameter_study.run(
+        [](auto&& graph) {
+            return draw_sample(graph);
+        },
+        [&](auto results_graph) {
+            ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
-        ensemble_params.emplace_back();
-        ensemble_params.back().reserve(results_graph.nodes().size());
-        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                       std::back_inserter(ensemble_params.back()), [](auto&& node) {
-                           return node.property.get_simulation().get_model();
-                       });
+            ensemble_params.emplace_back();
+            ensemble_params.back().reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                           std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                               return node.property.get_simulation().get_model();
+                           });
 
-        if (save_result_result) {
-            save_result_result =
-                save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
-        }
-        ++run_idx;
-    });
+            if (save_result_result) {
+                save_result_result =
+                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            }
+            ++run_idx;
+        });
     BOOST_OUTCOME_TRY(save_result_result);
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
@@ -863,10 +876,10 @@ int main(int argc, char** argv)
     }
     else {
         printf("Usage:\n");
-        printf("paper1 <data_dir> <save_dir> <result_dir>\n");
+        printf("paper_202011 <data_dir> <save_dir> <result_dir>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
-        printf("paper1 <load_dir> <result_dir>\n");
+        printf("paper_202011 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }

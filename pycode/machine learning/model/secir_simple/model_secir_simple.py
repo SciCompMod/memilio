@@ -183,7 +183,7 @@ if __name__ == "__main__":
     
 
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(os.path.dirname(os.path.realpath(path)))), 'data')
 
     max_epochs = 500
 

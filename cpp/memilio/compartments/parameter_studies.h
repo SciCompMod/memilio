@@ -20,8 +20,6 @@
 #ifndef PARAMETER_STUDIES_H
 #define PARAMETER_STUDIES_H
 
-#include "secir/secir.h"
-#include "secir/parameter_space.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/compartments/simulation.h"
@@ -89,33 +87,18 @@ public:
         m_graph.add_node(0, model);
     }
 
-    /**
-     * @brief create study for single compartment model with normal distributions.
-     * Sets all parameters to normal distribution with specified relative deviation.
-     * @param params SecirParams object 
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param dev_rel relative deviation of parameters distributions
-     * @param num_runs number of runs in ensemble run
-     */
-    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, double dev_rel, size_t num_runs)
-        : ParameterStudy(model, t0, tmax, num_runs)
-    {
-        set_params_distributions_normal(m_graph.nodes()[0].property, t0, tmax, dev_rel);
-    }
-
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
      * @param result_processing_function Processing function for simulation results, e.g., output function.
      *                                   Receives the result after each run is completed.
      */
-    template<class HandleSimulationResultFunction>
-    void run(HandleSimulationResultFunction result_processing_function)
+    template <class SampleGraphFunction, class HandleSimulationResultFunction>
+    void run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
-            auto sim = create_sampled_simulation();
+            auto sim = create_sampled_simulation(sample_graph);
             sim.advance(m_tmax);
 
             result_processing_function(std::move(sim).get_graph());
@@ -124,15 +107,16 @@ public:
 
     /*
      * @brief Carry out all simulations in the parameter study.
-     * Convinience function for a few number of runs, but uses a lot of memory.
+     * Convenience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
-    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run()
+    template <class SampleGraphFunction>
+    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run(SampleGraphFunction sample_graph)
     {
         std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
-        run([&ensemble_result](auto&& r) {
+        run(sample_graph, [&ensemble_result](auto&& r) {
             ensemble_result.emplace_back(std::move(r));
         });
 
@@ -219,47 +203,18 @@ public:
 
 private:
     //sample parameters and create simulation
-    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> create_sampled_simulation()
+    template <class SampleGraphFunction>
+    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>>
+    create_sampled_simulation(SampleGraphFunction sample_graph)
     {
         mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge> sim_graph;
 
-        //sample global parameters
-        auto& shared_params_model = m_graph.nodes()[0].property;
-        draw_sample_infection(shared_params_model);
-        auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
-        shared_contacts.draw_sample_dampings();
-        auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
-        shared_dynamic_npis.draw_sample();
-
-        for (auto& params_node : m_graph.nodes()) {
-            auto& node_model = params_node.property;
-
-            //sample local parameters
-            draw_sample_demographics(params_node.property);
-
-            //copy global parameters
-            //save demographic parameters so they aren't overwritten
-            auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
-            auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
-            auto local_holidays = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
-            node_model.parameters = shared_params_model.parameters;
-            node_model.parameters.template get<ICUCapacity>() = local_icu_capacity;
-            node_model.parameters.template get<TestAndTraceCapacity>() = local_tnt_capacity;
-            node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-
-            node_model.parameters.template get<ContactPatterns>().make_matrix();
-            node_model.apply_constraints();
-
-            sim_graph.add_node(params_node.id, node_model, m_t0, m_dt_integration);
+        auto sampled_graph = sample_graph(m_graph);
+        for (auto&& node : sampled_graph.nodes()) {
+            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
         }
-
-        for (auto& edge : m_graph.edges()) {
-            auto edge_params = edge.property;
-            apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
-                return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
-            });
-            edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+        for (auto&& edge : sampled_graph.edges()) {
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));

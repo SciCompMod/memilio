@@ -18,8 +18,10 @@
 * limitations under the License.
 */
 #include "memilio/mobility/mobility.h"
-#include "secir/secir_parameters_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/compartments/parameter_studies.h"
+#include "secir/parameter_space.h"
+#include "secir/secir_parameters_io.h"
 #include <data_dir.h>
 #include <iostream>
 
