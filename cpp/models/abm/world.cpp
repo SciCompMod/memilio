@@ -41,12 +41,23 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
 {
-    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
-                                                 VaccinationState::Unvaccinated, person_id));
-    auto& person = *m_persons.back();
-    get_location(person).add_person(person);
-    return person;
+    uint32_t person_id       = static_cast<uint32_t>(m_persons.size());
+    double vaccination_level = 0.;
+    double vaccination_state = mio::UniformDistribution<double>::get_instance()();
+    if (vaccination_state <= vaccination_level) {
+        m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
+                                                     VaccinationState::Vaccinated, person_id));
+        auto& person = *m_persons.back();
+        get_location(person).add_person(person);
+        return person;
+    }
+    else {
+        m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
+                                                     VaccinationState::Unvaccinated, person_id));
+        auto& person = *m_persons.back();
+        get_location(person).add_person(person);
+        return person;
+    }
 }
 
 void World::evolve(TimePoint t, TimeSpan dt)
