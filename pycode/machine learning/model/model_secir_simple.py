@@ -19,9 +19,10 @@ from keras import backend as K
 import seaborn as sns # plot after normalization
 from data_secir_simple import generate_data, splitdata
 from different_models import *
+from sklearn.metrics import mean_absolute_percentage_error
 
 
-def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
+def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
 
     input_width = inputs.shape[1]
     label_width = labels.shape[1]
@@ -67,6 +68,9 @@ def network_fit(path, model,  max_epochs=30, early_stop=500, save_evaluation_pdf
 
 
     data = pickle.load(file)
+
+
+
     data_splitted = splitdata(data["inputs"], data["labels"])
 
     train_inputs = data_splitted["train_inputs"]
@@ -82,16 +86,26 @@ def network_fit(path, model,  max_epochs=30, early_stop=500, save_evaluation_pdf
                                                     patience=early_stop,
                                                     mode='min')
 
-    model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                optimizer=tf.keras.optimizers.NAdam(),
+    
+    model.compile(#loss=tf.keras.losses.MeanAbsolutePercentageError(),
+                loss=tf.keras.losses.MeanSquaredError(),
+                optimizer=tf.keras.optimizers.Adam(),
                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                #metrics=[tf.keras.metrics.MeanAbsolutePercentageError()])
+
+
 
     history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                       validation_data=(valid_inputs, valid_labels),
                       callbacks=[early_stopping])
-
-    plotCol(test_inputs, test_labels, model=model, plot_col='Infected', max_subplots=3)
+    
     plot_losses(history)
+    plotCol(test_inputs, test_labels, model=model, plot_col='Infected', max_subplots=6)
+    plotCol(test_inputs, test_labels, model=model, plot_col='Exposed', max_subplots=6)
+    plotCol(test_inputs, test_labels, model=model, plot_col='Dead', max_subplots=6)
+    #plot_losses(history)
+    df = get_test_statistic(test_inputs, test_labels, model)
+    print(df)
     return history
     
 # simple benchmarking
@@ -141,6 +155,27 @@ def plot_losses(history):
     plt.savefig('losses plot.pdf')
 
 
+def get_test_statistic(test_inputs, test_labels, model): 
+        pred = model(test_inputs)
+        pred = pred.numpy()
+        test_labels = np.array(test_labels)
+
+        diff = pred - test_labels
+        anteil = (abs(diff))/abs(test_labels)
+
+        anteil_6 = anteil.transpose(2,0,1).reshape(6,-1)
+        df = pd.DataFrame(data = anteil_6)
+        df = df.transpose()
+
+        mean_percentage = pd.DataFrame(data = (df.mean().values)*100 , index = ['Exposed', 'Carrier',
+                   'Infected', 'Hospitalized', 'ICU', 'Dead'], columns = ['Percentage Error'])
+
+
+    
+
+        return mean_percentage
+
+
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
@@ -150,7 +185,7 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data')
 
-    max_epochs = 200
+    max_epochs = 500
 
     ### Models ###
     # single input
@@ -161,10 +196,10 @@ if __name__ == "__main__":
     # ml_hist = network_fit(path_data, model=multilayer_multi_input(), max_epochs=max_epochs)
 
     # # Multi output 
-    # cnn_output = network_fit(path_data, model=cnn_multi_output(), max_epochs=max_epochs)
+    cnn_output = network_fit(path_data, model=cnn_multi_output(), max_epochs=max_epochs)
 
 
-    lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), max_epochs=max_epochs)
+    #lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), max_epochs=max_epochs)
     
     # histories = [ lstm_hist, ml_hist]
     # plot_histories(histories)
