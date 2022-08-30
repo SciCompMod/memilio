@@ -232,7 +232,7 @@ if __name__ == "__main__":
     # In the actual state it might be enough to save the regular one and the damping
 
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(path)), 'data_simple')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(os.path.dirname(os.path.realpath(path)))), 'data')
 
     num_runs = 100
     generate_data(num_runs, path_data)
