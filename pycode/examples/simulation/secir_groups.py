@@ -84,20 +84,15 @@ def run_secir_groups_simulation(show_plot = True):
         model.parameters.ICUToDeathTime[AgeGroup(i)] = 5.  # 3.5-7 (=R5^(-1))
 
         # Initial number of peaople in each compartment
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Exposed)] = 100
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Carrier)] = 50
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Infected)] = 50
-        model.populations[AgeGroup(i), Index_InfectionState(
-            State.Hospitalized)] = 20
-        model.populations[AgeGroup(i), Index_InfectionState(State.ICU)] = 10
-        model.populations[AgeGroup(
-            i), Index_InfectionState(State.Recovered)] = 10
-        model.populations[AgeGroup(i), Index_InfectionState(State.Dead)] = 0
+        model.populations[AgeGroup(i), State.Exposed] = 100
+        model.populations[AgeGroup(i), State.Carrier] = 50
+        model.populations[AgeGroup(i), State.Infected] = 50
+        model.populations[AgeGroup(i), State.Hospitalized] = 20
+        model.populations[AgeGroup(i), State.ICU] = 10
+        model.populations[AgeGroup(i), State.Recovered] = 10
+        model.populations[AgeGroup(i), State.Dead] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
-            (AgeGroup(i), Index_InfectionState(State.Susceptible)), populations[i])
+            (AgeGroup(i), State.Susceptible), populations[i])
 
         # Compartment transition propabilities
 
