@@ -5,7 +5,7 @@ from math import ceil
 import random
 import os
 import pickle
-from progress.bar import Bar # pip install progess
+from progress.bar import Bar  # pip install progess
 from sklearn.model_selection import train_test_split
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import MinMaxScaler
@@ -14,21 +14,21 @@ import matplotlib.pyplot as plt
 from tensorflow import keras
 from keras import Sequential
 from keras.layers import Dense
-from keras.optimizers import Adam
 from keras import backend as K
-import seaborn as sns # plot after normalization
+import seaborn as sns  # plot after normalization
 from data_secir_simple import generate_data, splitdata
 from different_models import *
+from tensorflow import keras
 
 
 def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
     input_width = inputs.shape[1]
     label_width = labels.shape[1]
-    
+
     plt.figure(figsize=(12, 8))
     cols = np.array(['Exposed', 'Carrier',
-                        'Infected', 'Hospitalized', 'ICU', 'Dead'])  
+                     'Infected', 'Hospitalized', 'ICU', 'Dead'])
     plot_col_index = np.where(cols == plot_col)[0][0]
     max_n = min(max_subplots, inputs.shape[0])
 
@@ -39,32 +39,31 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
         input_array = inputs[n].numpy()
         label_array = labels[n].numpy()
-        plt.plot(np.arange(0,input_width), input_array[:, plot_col_index],
-                label='Inputs', marker='.', zorder=-10)
-        plt.scatter(np.arange(input_width,input_width+label_width), label_array[:,plot_col_index],
+        plt.plot(np.arange(0, input_width), input_array[:, plot_col_index],
+                 label='Inputs', marker='.', zorder=-10)
+        plt.scatter(np.arange(input_width, input_width+label_width), label_array[:, plot_col_index],
                     edgecolors='k', label='Labels', c='#2ca02c', s=64)
-        
+
         if model is not None:
             input_series = tf.expand_dims(inputs[n], axis=0)
             pred = model(input_series)
             pred = pred.numpy()
-            plt.scatter(np.arange(input_width,input_width+pred.shape[-2]), 
-                                pred[0,:,plot_col_index],
-                                marker='X', edgecolors='k', label='Predictions',
-                                c='#ff7f0e', s=64)
+            plt.scatter(np.arange(input_width, input_width+pred.shape[-2]),
+                        pred[0, :, plot_col_index],
+                        marker='X', edgecolors='k', label='Predictions',
+                        c='#ff7f0e', s=64)
 
     plt.xlabel('days')
     plt.show()
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
+
 
 def network_fit(path, model,  max_epochs=30, early_stop=500, save_evaluation_pdf=False):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
         ValueError("no dataset found in path: " + path)
 
-   
-    file = open(os.path.join(path, 'data_secir_simple.pickle'),'rb')
-
+    file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
 
     data = pickle.load(file)
     data_splitted = splitdata(data["inputs"], data["labels"])
@@ -73,28 +72,33 @@ def network_fit(path, model,  max_epochs=30, early_stop=500, save_evaluation_pdf
     train_labels = data_splitted["train_labels"]
     valid_inputs = data_splitted["valid_inputs"]
     valid_labels = data_splitted["valid_labels"]
-    test_inputs  = data_splitted["test_inputs"]
-    test_labels  = data_splitted["test_labels"]
-
-
+    test_inputs = data_splitted["test_inputs"]
+    test_labels = data_splitted["test_labels"]
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=early_stop,
-                                                    mode='min')
+                                                      patience=early_stop,
+                                                      mode='min')
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                optimizer=tf.keras.optimizers.NAdam(),
-                metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                  optimizer=tf.keras.optimizers.Nadam(),
+                  metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
     history = model.fit(train_inputs, train_labels, epochs=max_epochs,
-                      validation_data=(valid_inputs, valid_labels),
-                      callbacks=[early_stopping])
+                        validation_data=(valid_inputs, valid_labels),
+                        callbacks=[early_stopping])
 
-    plotCol(test_inputs, test_labels, model=model, plot_col='Infected', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Infected', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Exposed', max_subplots=3)
+    # plotCol(test_inputs, test_labels, model=model,
+    #         plot_col='Dead', max_subplots=3)
     plot_losses(history)
     return history
-    
+
 # simple benchmarking
+
+
 def timereps(reps, model, input):
     from time import time
     start = time()
@@ -106,6 +110,8 @@ def timereps(reps, model, input):
     return (end - start) / reps
 
 # Plot Performance
+
+
 def plot_histories(histories):
     model_names = ["LSTM", "Dense"]
     count_names = 0
@@ -125,7 +131,7 @@ def plot_histories(histories):
         plt.ylabel(f'MAE')
         _ = plt.legend()
         count_names = count_names + 1
-    
+
     plt.show()
     plt.savefig('evaluation_single_shot.pdf')
 
@@ -145,10 +151,9 @@ if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
-    
-
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(os.path.dirname(os.path.realpath(path)))), 'data')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(
+        os.path.dirname(os.path.realpath(path)))), 'data')
 
     max_epochs = 200
 
@@ -160,11 +165,11 @@ if __name__ == "__main__":
     # lstm_hist = network_fit(path_data, model=lstm_network_multi_input(), max_epochs=max_epochs)
     # ml_hist = network_fit(path_data, model=multilayer_multi_input(), max_epochs=max_epochs)
 
-    # # Multi output 
+    # # Multi output
     # cnn_output = network_fit(path_data, model=cnn_multi_output(), max_epochs=max_epochs)
 
+    lstm_hist_multi = network_fit(
+        path_data, model=lstm_multi_output(), max_epochs=max_epochs)
 
-    lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), max_epochs=max_epochs)
-    
     # histories = [ lstm_hist, ml_hist]
     # plot_histories(histories)
