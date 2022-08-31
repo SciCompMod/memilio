@@ -79,7 +79,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param sanitize_data Value in {0,1,2,3}. Redistributes cases of every county either based on regions ratios or on thresholds and population
+    @param sanitize_data Value in {0,1,2,3}. Redistributes cases of every county either based on regions' ratios or on thresholds and population.
     """
 
     arg_dict_all = {

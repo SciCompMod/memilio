@@ -78,9 +78,9 @@ WARNING: This file is experimental and has not been tested.
 
         # get case data
         gcd.get_case_data(
-            split_berlin, rep_date, read_data, file_format, out_folder, no_raw,
-            start_date, end_date, impute_dates, moving_average,
-            make_plot_cases)
+            read_data, file_format, out_folder, no_raw, start_date, end_date,
+            impute_dates, moving_average, make_plot_cases, split_berlin,
+            rep_date)
 
         # get data from John Hopkins University
         gjd.get_jh_data(read_data, file_format, out_folder, no_raw,

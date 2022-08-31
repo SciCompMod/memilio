@@ -577,10 +577,12 @@ def main():
                   'rel_tol': rel_tol,
                   'path': path}
 
+    arg_dict_commuter = {**arg_dict, "setup_dict": setup_dict}
+
     get_neighbors_mobility(1001, abs_tol=0, rel_tol=0, tol_comb='or',
                            merge_eisenach=True, out_folder=dd.defaultDict['out_folder'])
 
-    mat_commuter_migration = get_commuter_data(setup_dict, **arg_dict)
+    get_commuter_data(**arg_dict_commuter)
 
 
 if __name__ == "__main__":
