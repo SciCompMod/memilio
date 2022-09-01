@@ -197,8 +197,8 @@ public:
      * Create a testing strategy.
      * @param testing_schemes vector of testing schemes that are checked for testing
      */
-    TestingStrategy();
-    TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
+    TestingStrategy() = default;
+    explicit TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
     /**
      * Compares two testing strategies for equality.
      * Compare references. Still possible to clone strategies.
@@ -229,7 +229,7 @@ public:
     bool run_strategy(Person& person, const Location& location) const;
 
 private:
-    std::vector<TestingScheme> m_testing_schemes = {};
+    std::vector<TestingScheme> m_testing_schemes;
 };
 
 } // namespace abm

@@ -158,10 +158,6 @@ TestingStrategy::TestingStrategy(const std::vector<TestingScheme>& testing_schem
 {
 }
 
-TestingStrategy::TestingStrategy()
-{
-}
-
 void TestingStrategy::add_testing_scheme(const TestingScheme& scheme)
 {
     if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), scheme) == m_testing_schemes.end()) {
