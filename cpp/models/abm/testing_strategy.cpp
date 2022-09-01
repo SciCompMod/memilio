@@ -158,14 +158,18 @@ TestingStrategy::TestingStrategy(const std::vector<TestingScheme>& testing_schem
 {
 }
 
-void TestingStrategy::add_testing_scheme(const TestingScheme scheme)
+TestingStrategy::TestingStrategy()
+{
+}
+
+void TestingStrategy::add_testing_scheme(const TestingScheme& scheme)
 {
     if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), scheme) == m_testing_schemes.end()) {
         m_testing_schemes.push_back(scheme);
     }
 }
 
-void TestingStrategy::remove_testing_scheme(const TestingScheme scheme)
+void TestingStrategy::remove_testing_scheme(const TestingScheme& scheme)
 {
     auto last = std::remove(m_testing_schemes.begin(), m_testing_schemes.end(), scheme);
     m_testing_schemes.erase(last, m_testing_schemes.end());

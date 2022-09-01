@@ -152,14 +152,14 @@ public:
     }
 
     /**
-     * add a testing rule to the set of age groups that are checked for testing
-     * @param rule testing rule to be added
+     * add a testing criteria to the set of age groups that are checked for testing
+     * @param criteria testing criteria to be added
      */
     void add_testing_criteria(const TestingCriteria criteria);
 
     /**
-     * remove a testing rule from the set of age groups that are checked for testing
-     * @param rule testing rule to be removed
+     * remove a testing criteria from the set of age groups that are checked for testing
+     * @param criteria testing criteria to be removed
      */
     void remove_testing_criteria(const TestingCriteria criteria);
 
@@ -211,12 +211,12 @@ public:
      * add a testing scheme to the set of schemes that are checked for testing
      * @param scheme testing scheme to be added
      */
-    void add_testing_scheme(const TestingScheme scheme);
+    void add_testing_scheme(const TestingScheme& scheme);
     /**
      * remove a testing scheme from the set of schemes that are checked for testing
      * @param scheme testing scheme to be removed
      */
-    void remove_testing_scheme(const TestingScheme scheme);
+    void remove_testing_scheme(const TestingScheme& scheme);
     /**
      * checks if the given time point t is within the interval of start and end date of each testing scheme and then changes the activity status for each testing scheme accordingly
      * @param t time point to check the activity status of each testing scheme
