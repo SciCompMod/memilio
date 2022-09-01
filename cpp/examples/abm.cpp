@@ -278,7 +278,6 @@ void create_assign_locations(mio::abm::World& world)
     // People have to get tested in the 2 days before the event
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-    //world.get_individualized_location(event).set_testing_scheme(mio::abm::days(2), 1);
 
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);

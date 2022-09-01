@@ -191,25 +191,13 @@ struct DetectInfection {
     }
 };
 
-struct TestWhileInfected {
-    using Type = CustomIndexArray<double, AgeGroup>;
-    static Type get_default()
-    {
-        return Type({AgeGroup::Count}, 0.005);
-    }
-    static std::string name()
-    {
-        return "TestWhileInfected";
-    }
-};
-
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, TestWhileInfected>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
 
 struct MaximumContacts {
     using Type = double;
