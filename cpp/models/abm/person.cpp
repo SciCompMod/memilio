@@ -177,6 +177,7 @@ bool Person::get_tested(const TestParameters& params)
             return false;
         }
         else {
+            m_quarantine = true;
             return true;
         }
     }

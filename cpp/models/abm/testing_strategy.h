@@ -43,6 +43,7 @@ public:
      * @param infection_states vector of infection states that are either allowed or required to be tested
      * An empty vector of ages/location types/infection states means that no condition on the corresponding property is set!
      */
+    TestingCriteria() = default;
     TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<LocationType>& location_types,
                     const std::vector<InfectionState>& infection_states);
 
@@ -50,10 +51,21 @@ public:
      * Compares two testing criteria for equality.
      * Compare references. Still possible to clone criteria.
      */
-    bool operator==(const TestingCriteria& other) const
+    bool operator==(TestingCriteria other) const
     {
-        return ((this->m_ages == other.m_ages) && (this->m_infection_states == other.m_infection_states) &&
-                (this->m_location_types == other.m_location_types));
+        auto to_compare_ages             = this->m_ages;
+        auto to_compare_infection_states = this->m_infection_states;
+        auto to_compare_location_types   = this->m_location_types;
+
+        std::sort(to_compare_ages.begin(), to_compare_ages.end());
+        std::sort(other.m_ages.begin(), other.m_ages.end());
+        std::sort(to_compare_infection_states.begin(), to_compare_infection_states.end());
+        std::sort(other.m_infection_states.begin(), other.m_infection_states.end());
+        std::sort(to_compare_location_types.begin(), to_compare_location_types.end());
+        std::sort(other.m_location_types.begin(), other.m_location_types.end());
+
+        return to_compare_ages == other.m_ages && to_compare_location_types == other.m_location_types &&
+               to_compare_infection_states == other.m_infection_states;
     }
 
     /**
@@ -138,7 +150,6 @@ public:
 
     /**
      * Compares two testing schemes for equality.
-     * Compare references. Still possible to clone schemes.
      */
     bool operator==(const TestingScheme& other) const
     {

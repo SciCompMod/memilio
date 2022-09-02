@@ -237,7 +237,7 @@ struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static constexpr Type get_default()
     {
-        return Type{0.9, 0.99};
+        return Type{0.8, 0.88};
     }
     static std::string name()
     {
