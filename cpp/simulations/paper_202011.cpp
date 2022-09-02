@@ -681,7 +681,7 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
-    auto num_groups = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
+    auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
     for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
         BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0}, num_groups,
                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
@@ -729,11 +729,16 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
         auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
 
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
     }
 
     //save percentiles of parameters
@@ -871,10 +876,10 @@ int main(int argc, char** argv)
     }
     else {
         printf("Usage:\n");
-        printf("paper1 <data_dir> <save_dir> <result_dir>\n");
+        printf("paper_202011 <data_dir> <save_dir> <result_dir>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
-        printf("paper1 <load_dir> <result_dir>\n");
+        printf("paper_202011 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }

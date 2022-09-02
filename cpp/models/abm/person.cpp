@@ -33,6 +33,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
     , m_vaccination_state(vaccination_state)
+    , m_time_until_carrier(std::numeric_limits<int>::max())
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps

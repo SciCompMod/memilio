@@ -149,7 +149,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       t_inf_hosp_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToHomeTime>(), t_hosp_rec_min,
                                       t_hosp_rec_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min, t_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min,
+                                      t_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 
@@ -197,12 +198,12 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     }
     const double reduc_mild_rec_time = temp_reduc_mild_rec_time;
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(), transmission_risk_min,
-                                      transmission_risk_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
+                                      transmission_risk_min, transmission_risk_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeCarrierInfectability>(), carr_infec_min,
                                       carr_infec_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
-                                      beta_low_incidenc_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(),
+                                      beta_low_incidenc_min, beta_low_incidenc_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSympomatic>(),
                                       beta_high_incidence_min, beta_high_incidence_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
@@ -213,16 +214,18 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       prob_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min,
+                                      reduc_vacc_exp_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorImprovedImmunity>(), reduc_immune_exp_min,
                                       reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorImprovedImmunity>(), reduc_immune_inf_min,
-                                      reduc_immune_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartialImmunity>(), reduc_vacc_hosp_min,
-                                      reduc_vacc_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorImprovedImmunity>(), reduc_immune_hosp_min,
-                                      reduc_immune_hosp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(), reduc_vacc_inf_min,
+                                      reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorImprovedImmunity>(),
+                                      reduc_immune_inf_min, reduc_immune_inf_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartialImmunity>(),
+                                      reduc_vacc_hosp_min, reduc_vacc_hosp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorImprovedImmunity>(),
+                                      reduc_immune_hosp_min, reduc_immune_hosp_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
                                       reduc_mild_rec_time);
 
@@ -501,8 +504,8 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedNaive}]     = nb_inf_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::HospitalizedNaive}] = nb_hosp_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ICUNaive}]          = nb_icu_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Recovered}]    = nb_rec_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]         = nb_dead_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Recovered}]         = nb_rec_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]              = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
                 {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, nb_total_t0);
         }
@@ -527,7 +530,7 @@ mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Dat
 
     BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<mio::osecirvvs::Model> counties(county_ids.size(),
-                                                  mio::osecirvvs::Model((int)size_t(params.get_num_groups())));
+                                                mio::osecirvvs::Model((int)size_t(params.get_num_groups())));
     for (auto& county : counties) {
         county.parameters = params;
     }
@@ -559,7 +562,8 @@ mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Dat
 
         //uncertainty in populations
         for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = mio::Index<mio::osecirvvs::InfectionState>(0); j < mio::osecirvvs::InfectionState::Count; ++j) {
+            for (auto j = mio::Index<mio::osecirvvs::InfectionState>(0); j < mio::osecirvvs::InfectionState::Count;
+                 ++j) {
                 auto& compartment_value = counties[county_idx].populations[{i, j}];
                 assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
                                             1.1 * double(compartment_value));
@@ -583,16 +587,17 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    BOOST_OUTCOME_TRY(
-        migration_data_commuter,
-        mio::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
+    BOOST_OUTCOME_TRY(migration_data_commuter,
+                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
-                      mio::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (migration_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         migration_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Mobility matrices do not have the correct size. You may need to run "
+                            "transformMobilitydata.py from pycode memilio epidata package.");
     }
 
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
@@ -1004,17 +1009,26 @@ int main(int argc, char** argv)
         data_dir   = "";
         printf("Loading graph from \"%s\".\n", save_dir.c_str());
     }
+    else if (argc == 4) {
+        mode       = RunMode::Save;
+        data_dir   = argv[1];
+        save_dir   = argv[2];
+        result_dir = argv[3];
+        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
+               (int)late, (int)high, (int)long_time, (int)future);
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+    }
     else {
         printf("Usage:\n");
-        printf("paper1 <data_dir> <save_dir> <result_dir>\n");
+        printf("paper_202107 <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
-        printf("paper1 <load_dir> <result_dir>\n");
+        printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
+        printf("paper_202107 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }
 
-    result_dir += "_rev2";
     if (future) {
         result_dir += "_future";
     }

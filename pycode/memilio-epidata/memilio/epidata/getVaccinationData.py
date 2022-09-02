@@ -26,7 +26,7 @@ import numpy as np
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getPopulationData as gpd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
@@ -494,9 +494,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          no_raw=dd.defaultDict['no_raw'],
                          start_date=dd.defaultDict['start_date'],
                          end_date=dd.defaultDict['end_date'],
-                         make_plot=dd.defaultDict['make_plot'],
+                         impute_dates=True,
                          moving_average=dd.defaultDict['moving_average'],
-                         sanitize_data=1):
+                         make_plot=dd.defaultDict['make_plot'],
+                         sanitize_data=dd.defaultDict['sanitize_data']
+                         ):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
@@ -519,13 +521,18 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     - Start and end dates can be provided to define the length of the returned data frames.
 
-    @param read_data False [Default]. Data is always downloaded from the internet.
+    @param read_data [Currently not used] True or False. Defines if data is read from file or downloaded.
+        Here Data is always downloaded from the internet.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-    @param no_raw True or False [Default]. Defines if raw data is saved or not.
-    @param start_date [Default = '', taken from read data] Start date of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. 
+        Here Dates are always imputed so False changes nothing.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict. 
     @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
         vaccination data is not correctly attributed to home locations of 
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
@@ -539,8 +546,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
-    @param moving_average 0 [Default] or Number>0. Defines the number of days for which a centered moving average is computed.
+        state level.  
     """
     # data for all dates is automatically added
     impute_dates = True
@@ -743,10 +749,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         dd.EngEng['idCounty'],
         dd.EngEng['ageRKI']]
 
-    # extract min and max dates
-    min_date = pd.to_datetime(min(df_data.Date)).date()
-    max_date = pd.to_datetime(max(df_data.Date)).date()
-
     if sanitize_data < 3:
         moving_average_sanit = moving_average
         impute_sanit = 'forward'
@@ -760,7 +762,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         moving_average_sanit = 0
         impute_sanit = 'zeros'
 
-    vacc_column_names, df_data_joined = modifyDataframeSeries.split_column_based_on_values(
+    vacc_column_names, df_data_joined = mdfs.split_column_based_on_values(
         df_data, "Impfschutz", "Number", groupby_list, vacc_column_names,
         compute_cumsum)
 
@@ -768,13 +770,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # transform and write data frame resolved per county and age (with age
     # classes as provided in vaccination tables: 05-11, 12-17, 18-59, 60+)
 
-    df_data_agevacc_county_cs = modifyDataframeSeries.impute_and_reduce_df(
+    df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_joined,
             {dd.EngEng['idCounty']: df_data_joined[dd.EngEng['idCounty']].unique(),
              dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
-            min_date=min_date, max_date=max_date)
+            min_date=start_date, max_date=end_date)
 
     df_data_agevacc_county_cs = geoger.merge_df_counties_all(
         df_data_agevacc_county_cs,
@@ -830,13 +832,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(df_data_agevacc_county_cs, unique_age_groups_old,
             vacc_column_names, population_old_ages, neighbors_mobility)
         # compute the moving average
-        df_data_agevacc_county_cs = modifyDataframeSeries.impute_and_reduce_df(
+        df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_agevacc_county_cs,
             {dd.EngEng['idCounty']: df_data_agevacc_county_cs[dd.EngEng['idCounty']].unique(),
                 dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute='forward', moving_average=moving_average,
-            min_date=min_date, max_date=max_date)
+            min_date=start_date, max_date=end_date)
     else:
         print('Sanitizing deactivated.')
 
