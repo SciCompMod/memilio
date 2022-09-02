@@ -33,8 +33,9 @@ namespace abm
  */
 enum class VirusType : std::uint32_t
 {
-    Wildtype = 0,
-    
+    NoVirus  = 0,
+    Wildtype = 1,
+
     Count //last!!
 };
 

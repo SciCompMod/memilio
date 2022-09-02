@@ -25,6 +25,53 @@ namespace mio
 namespace abm
 {
 
+class Virus
+{
+public:
+    Virus(double infectivity, double mortality, double recovery)
+        : m_infectivity(infectivity)
+        , m_mortality(mortality)
+        , m_recovery(recovery)
+    {
+    }
+
+    double get_infectivity() const
+    {
+        return m_infectivity;
+    }
+
+    double get_mortality() const
+    {
+        return m_mortality;
+    }
+
+    double get_recovery() const
+    {
+        return m_recovery;
+    }
+
+private:
+    double m_infectivity;
+    double m_mortality;
+    double m_recovery;
+};
+
+class ViralLoad
+{
+public:
+    ViralLoad(double peak, double increase, double decrease)
+        : m_peak(peak)
+        , m_increase_slope(increase)
+        , m_decline_slope(decrease)
+    {
+    }
+
+private:
+    double m_peak;
+    double m_increase_slope;
+    double m_decline_slope;
+}
+
 class Infection
 {
 
@@ -34,7 +81,7 @@ public:
      * @param start_date starting date of the infection
      * @param virus_type virus type of the infection
      */
-    Infection(TimePoint start_date, VirusType virus_type);
+    Infection(TimePoint start_date, Virus virus);
 
     /**
      * get viral load at a given time
@@ -66,21 +113,13 @@ private:
     //peak = gauss::get_instance();
     void determine_end_date();
 
-    VirusType virus_type;
-    TimePoint start_date;
-    TimePoint end_date;
-    double peak;
-    double increase_slope;
-    double decline_slope;
-    double infectivity_parameter; // have to ask for distribution/parametrization of the infectivity
-    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> infection_course;
-    //vector<pairs> Infection_course
-    //TimePoint   state
-    //start_date+2d         exposed
-    //start_date+4d          carrier
-    //...
-    //start_date+xd           s/dead
-    bool detected = false;
+    Virus m_virus;
+    double m_infectivity_parameter; // have to ask for distribution/parametrization of the infectivity
+    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course;
+
+    TimePoint m_start_date;
+    TimePoint m_end_date;
+    bool m_detected = false;
 };
 
 } // namespace abm

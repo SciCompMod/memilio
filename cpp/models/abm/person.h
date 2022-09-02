@@ -109,12 +109,12 @@ public:
     void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
-     * Get the current infection state of the person.
+     * Get the current infection of the person.
      * @returns the current infection state of the person
      */
-    InfectionState get_infection_state() const
+    Infection get_infection() const
     {
-        return m_infection_state;
+        return m_infection;
     }
 
     /**
@@ -258,7 +258,6 @@ private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     Infection m_infection;
-    InfectionState m_infection_state; // put into m_infection
     VaccinationState m_vaccination_state; // change to immunity level
     TimeSpan m_time_until_carrier; // remove (-> in vector in m_infection)
     bool m_quarantine;
