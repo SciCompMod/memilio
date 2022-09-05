@@ -198,8 +198,10 @@ public:
                                              (risk_from_carrier * (pop[Cj] + pop[CVj] + pop[CV2j]) +
                                               risk_from_symptomatic * (pop[Ij] + pop[IVj] + pop[IV2j]));
 
-                double dummy_partial_imm  = y[Si] * params.get< RateOfDailyPartialVaccinations>()[i] / params.get<DaysUntilEffectivePartialImmunity>()[i];
-                double dummy_improved_imm = y[SVi]  * params.get<RateOfDailyImprovedVaccinations>()[i] /  params.get<DaysUntilEffectivePartialImmunity>()[i];
+                double dummy_partial_imm = y[Si] * params.get<RateOfDailyPartialVaccinations>()[i] /
+                                           params.get<DaysUntilEffectivePartialImmunity>()[i];
+                double dummy_improved_imm = y[SVi] * params.get<RateOfDailyImprovedVaccinations>()[i] /
+                                            params.get<DaysUntilEffectivePartialImmunity>()[i];
 
                 double dummy_S = y[Si] * ext_inf_force_dummy;
 
@@ -218,6 +220,12 @@ public:
 
                 dydt[Ri] -= dummy_R;
                 dydt[EV2i] += dummy_R;
+
+                // waning immunity
+                dydt[Si] += 1 / params.get<WainingPartialImmunity>()[i] * y[SVi];
+                dydt[SVi] -= 1 / params.get<WainingPartialImmunity>()[i] * y[SVi];
+                dydt[SVi] += 1 / params.get<WainingImprovedImmunity>()[i] * y[Ri];
+                dydt[Ri] -= 1 / params.get<WainingImprovedImmunity>()[i] * y[Ri];
             }
 
             // ICU capacity shortage is close
@@ -434,8 +442,8 @@ public:
 
             double dummy_TImm1 = 1 / params.get<ImmunityInterval1>()[i];
             double dummy_TImm2 = 1 / params.get<ImmunityInterval2>()[i];
-            dydt[SVi] = dummy_TImm1 * y[TImm1];
-            dydt[Ri]  = dummy_TImm2 * y[TImm2];
+            dydt[SVi]          = dummy_TImm1 * y[TImm1];
+            dydt[Ri]           = dummy_TImm2 * y[TImm2];
 
             dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui] +
                        death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i] /
@@ -523,25 +531,27 @@ public:
     {
         // TODO: Wachtstumsrate anpassen/ evtl als Parameter
         auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto variant_day = get_day_in_year(Date(2021, 6, 6));
-        auto variant_growth = (start_day - variant_day) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousness>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessNewVariant>()[(AgeGroup)i];
-            this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
-                new_transmission;
+        auto variant_day = get_day_in_year(Date(2022, 11, 1));
+        if (start_day + t > variant_day) {
+            auto variant_growth = (start_day - variant_day) * 0.1666667;
+            // 2 equal to the share of the delta variant on June 6
+            double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);
+            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; ++i) {
+                double new_transmission =
+                    (1 - share_new_variant) *
+                        this->get_model().parameters.template get<BaseInfectiousness>()[(AgeGroup)i] +
+                    share_new_variant *
+                        this->get_model().parameters.template get<BaseInfectiousnessNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
+                    new_transmission;
 
-            double new_severtiy = 
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
-            this->get_model().parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)i] =
-                new_severtiy;
+                double new_severtiy =
+                    (1 - share_new_variant) * this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
+                    share_new_variant *
+                        this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)i] = new_severtiy;
+            }
         }
     }
 
@@ -562,12 +572,12 @@ public:
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
+                first_vacc = params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}];
                 full_vacc  = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                first_vacc = params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
+                             params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
                 full_vacc = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
                             params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
             }

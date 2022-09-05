@@ -54,14 +54,14 @@ template <class... Categories>
 class Populations : public CustomIndexArray<UncertainValue, Categories...>
 {
 public:
-    using Base = CustomIndexArray<UncertainValue, Categories...>;
+    using Base  = CustomIndexArray<UncertainValue, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts,
-              typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
+    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
-    {}
+    {
+    }
 
     /**
      * @brief get_num_compartments returns the number of compartments
@@ -119,7 +119,6 @@ public:
         return std::accumulate(s.begin(), s.end(), 0.);
     }
 
-
     /**
      * @brief set_group_total sets the total population for a given group
      *
@@ -135,7 +134,7 @@ public:
     void set_group_total(mio::Index<T> group_idx, ScalarType value)
     {
         ScalarType current_population = get_group_total(group_idx);
-        auto s = this->template slice<T>({(size_t)group_idx, 1});
+        auto s                        = this->template slice<T>({(size_t)group_idx, 1});
 
         if (fabs(current_population) < 1e-12) {
             for (auto& v : s) {
@@ -149,7 +148,6 @@ public:
         }
     }
 
-
     /**
      * @brief get_total returns the total population of all compartments
      * @return total population
@@ -158,7 +156,6 @@ public:
     {
         return this->array().template cast<ScalarType>().sum();
     }
-
 
     /**
      * @brief set_difference_from_group_total sets the total population for a given group from a difference
@@ -174,7 +171,7 @@ public:
     void set_difference_from_group_total(Index const& midx, ScalarType total_group_population)
 
     {
-        auto group_idx = mio::get<T>(midx);
+        auto group_idx                = mio::get<T>(midx);
         ScalarType current_population = get_group_total(group_idx);
         size_t idx                    = this->get_flat_index(midx);
         current_population -= this->array()[idx];
@@ -234,7 +231,8 @@ public:
     {
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i], 0);
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
+                            0);
                 this->array()[i] = 0;
             }
         }
@@ -256,13 +254,12 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<Populations> deserialize(IOContext& io)
     {
         return Base::deserialize(io, Tag<Populations>{});
     }
 };
-
 
 } // namespace mio
 

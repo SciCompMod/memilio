@@ -124,23 +124,23 @@ void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters,
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity>(), 20, 50, set_invalid_initial_value);
     assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 100, 200,
                                 set_invalid_initial_value);
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    parameters.get<mio::osecirvvs::DailyPartialVaccination>().array().setConstant(5);
     parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
 }
 
 void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, bool set_invalid_initial_value)
 {
-    auto& contacts = parameters.get<mio::osecirvvs::ContactPatterns>();
+    auto& contacts       = parameters.get<mio::osecirvvs::ContactPatterns>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
-    auto& npis = parameters.get<mio::osecirvvs::DynamicNPIsInfected>();
+    auto& npis      = parameters.get<mio::osecirvvs::DynamicNPIsInfected>();
     auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
-    auto npi_value = mio::UncertainValue(0.5);
+    auto npi_value  = mio::UncertainValue(0.5);
     assign_uniform_distribution(npi_value, 0.25, 0.75, set_invalid_initial_value);
     npis.set_threshold(10.0, {mio::DampingSampling(npi_value, mio::DampingLevel(0), mio::DampingType(0),
                                                    mio::SimulationTime(0), {0}, npi_groups)});
@@ -187,12 +187,15 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
                                       set_invalid_initial_value);
 
     //probabilities
-    double fac_variant                   = 1.4;
-    const double transmission_risk_min[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
-                                            0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
+    double fac_variant_transmission      = 1.4;
+    double fac_variant_severity          = 1.4;
+    const double transmission_risk_min[] = {0.02 * fac_variant_transmission, 0.05 * fac_variant_transmission,
+                                            0.05 * fac_variant_transmission, 0.05 * fac_variant_transmission,
+                                            0.08 * fac_variant_transmission, 0.1 * fac_variant_transmission};
 
-    const double transmission_risk_max[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
-                                            0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
+    const double transmission_risk_max[] = {0.04 * fac_variant_transmission, 0.07 * fac_variant_transmission,
+                                            0.07 * fac_variant_transmission, 0.07 * fac_variant_transmission,
+                                            0.10 * fac_variant_transmission, 0.15 * fac_variant_transmission};
     const double carr_infec_min          = 0.5;
     const double carr_infec_max          = 0.5;
     const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
@@ -225,10 +228,14 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
                                       transmission_risk_min, transmission_risk_max, set_invalid_initial_value);
-    params.get<mio::osecirvvs::BaseInfectiousnessB117>().array() =
+    params.get<mio::osecirvvs::BaseInfectiousness>().array() =
         params.get<mio::osecirvvs::InfectionProbabilityFromContact>().array().cast<double>();
-    params.get<mio::osecirvvs::BaseInfectiousnessB161>().array() =
-        params.get<mio::osecirvvs::InfectionProbabilityFromContact>().array().cast<double>() * fac_variant;
+    params.get<mio::osecirvvs::BaseInfectiousnessNewVariant>().array() =
+        params.get<mio::osecirvvs::InfectionProbabilityFromContact>().array().cast<double>() * fac_variant_transmission;
+    params.get<mio::osecirvvs::BaseSeverity>().array() =
+        params.get<mio::osecirvvs::HospitalizedCasesPerInfectious>().array().cast<double>();
+    params.get<mio::osecirvvs::BaseSeverityNewVariant>().array() =
+        params.get<mio::osecirvvs::HospitalizedCasesPerInfectious>().array().cast<double>() * fac_variant_severity;
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeCarrierInfectability>(), carr_infec_min,
                                       carr_infec_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(),
@@ -287,8 +294,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
 
     auto num_age_groups = 6;
     //create model with invalid initials so the test fails if no sampling is done
-    graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/true));
-    graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/true));
+    graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/ true));
+    graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/ true));
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_age_groups, num_age_groups));
 
     auto sampled_graph = mio::osecirvvs::draw_sample(graph, true);
@@ -297,8 +304,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
     ASSERT_EQ(sampled_graph.edges().size(), graph.edges().size());
 
     // spot check for sampling
-    auto& parameters0 = sampled_graph.nodes()[0].property.parameters;
-    auto& populations0 = sampled_graph.nodes()[0].property.populations;
+    auto& parameters0         = sampled_graph.nodes()[0].property.parameters;
+    auto& populations0        = sampled_graph.nodes()[0].property.populations;
     auto& param_icu_home_time = parameters0.get<mio::osecirvvs::ICUToHomeTime>()[mio::AgeGroup(1)];
     ASSERT_GE(double(param_icu_home_time), 5.0);
     ASSERT_LE(double(param_icu_home_time), 9.0);
@@ -314,7 +321,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 
     // special cases
     ASSERT_NEAR(populations0.get_total(), 1000 * num_age_groups, 1e-2);
-    ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessB161>().array(),
+    ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessNewVariant>().array(),
                  parameters0.get<mio::osecirvvs::InfectionProbabilityFromContact>().array() * 1.6) //using high variant
                     .all());
 
@@ -337,7 +344,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
 TEST(TestOdeSECIRVVS, read_data)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
-    auto model = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    auto model          = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
 
     auto read_result = mio::osecirvvs::read_input_data_county(
         model, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
@@ -360,7 +367,8 @@ TEST(TestOdeSECIRVVS, read_data)
          0.00355815, 4.67857, 0.0143617, 0.0652351, 2049.15, 0, 0)
             .finished();
 
-    ASSERT_THAT(print_wrap(model[0].populations.array().cast<double>()), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
+    ASSERT_THAT(print_wrap(model[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, export_data)
@@ -370,7 +378,7 @@ TEST(TestOdeSECIRVVS, export_data)
     ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
 
     auto num_age_groups = 6; //reading data requires RKI data age groups
-    auto model = make_model(num_age_groups);
+    auto model          = make_model(num_age_groups);
 
     ASSERT_THAT(mio::osecirvvs::export_input_data_county_timeseries(
                     std::vector<mio::osecirvvs::Model>{model}, TEST_DATA_DIR, tmp_results_dir, {0}, {2020, 12, 01},
@@ -434,7 +442,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     auto percentile_params = mio::osecirvvs::ensemble_params_percentile(sampled_nodes, 0.6)[0].parameters;
 
     //spot check parameters
-    auto p = double(percentile_params.get<mio::osecirvvs::InfectiousTimeFactorImmune>()[mio::AgeGroup(2)]);
+    auto p       = double(percentile_params.get<mio::osecirvvs::InfectiousTimeFactorImmune>()[mio::AgeGroup(2)]);
     auto samples = std::vector<double>();
     std::transform(sampled_nodes.begin(), sampled_nodes.end(), std::back_inserter(samples),
                    [](const std::vector<mio::osecirvvs::Model>& nodes) {
@@ -444,7 +452,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     std::nth_element(samples.begin(), samples.begin() + 6, samples.end());
     ASSERT_THAT(p, samples[6]);
 
-    p = double(percentile_params.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(2)]);
+    p       = double(percentile_params.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(2)]);
     samples = std::vector<double>();
     std::transform(sampled_nodes.begin(), sampled_nodes.end(), std::back_inserter(samples),
                    [](const std::vector<mio::osecirvvs::Model>& nodes) {
@@ -457,8 +465,8 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
 TEST(TestOdeSECIRVVS, get_infections_relative)
 {
     auto model = make_model(2);
-    auto sim = mio::osecirvvs::Simulation<>(model);
-    auto y = sim.get_result()[0];
+    auto sim   = mio::osecirvvs::Simulation<>(model);
+    auto y     = sim.get_result()[0];
 
     auto relative_infections = get_infections_relative(sim, 0.0, y);
 
@@ -468,69 +476,75 @@ TEST(TestOdeSECIRVVS, get_infections_relative)
 TEST(TestOdeSECIRVVS, get_migration_factors)
 {
     auto num_age_groups = 2;
-    auto model = make_model(num_age_groups);
-    auto sim = mio::osecirvvs::Simulation<>(model);
-    auto y = sim.get_result()[0];
+    auto model          = make_model(num_age_groups);
+    auto sim            = mio::osecirvvs::Simulation<>(model);
+    auto y              = sim.get_result()[0];
 
     auto migration_factors = get_migration_factors(sim, 0.0, y);
 
-    auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 
-                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+    auto expected_values = (Eigen::VectorXd(Eigen::Index(mio::osecirvvs::InfectionState::Count) * num_age_groups) << 1,
+                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 0.1, 0.1, 0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
                                .finished();
     ASSERT_THAT(print_wrap(migration_factors), MatrixNear(print_wrap(expected_values), 1e-5, 1e-5));
 }
 
 TEST(TestOdeSECIRVVS, test_commuters)
 {
-    auto model = make_model(2);
-    auto migration_factor = 0.1;
-    auto non_detection_factor = 0.3;
+    auto model                                      = make_model(2);
+    auto migration_factor                           = 0.1;
+    auto non_detection_factor                       = 0.3;
     model.parameters.get_start_commuter_detection() = 0.0;
-    model.parameters.get_end_commuter_detection() = 20.0;
-    model.parameters.get_commuter_nondetection() = non_detection_factor;
-    auto sim = mio::osecirvvs::Simulation<>(model);
-    auto before_testing = sim.get_result().get_last_value().eval();
-    auto migrated = (sim.get_result().get_last_value() * migration_factor).eval();
-    auto migrated_tested = migrated.eval();
+    model.parameters.get_end_commuter_detection()   = 20.0;
+    model.parameters.get_commuter_nondetection()    = non_detection_factor;
+    auto sim                                        = mio::osecirvvs::Simulation<>(model);
+    auto before_testing                             = sim.get_result().get_last_value().eval();
+    auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
+    auto migrated_tested                            = migrated.eval();
 
     test_commuters(sim, migrated_tested, 0.0);
 
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)] * non_detection_factor,
-                1e-5);
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)] * non_detection_factor, 1e-5);
     ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaiveConfirmed)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)] * (1 - non_detection_factor),
                 1e-5);
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result()
+                    .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)] *
+                    (1 - non_detection_factor),
                 1e-5);
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result()
+                    .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)] *
+                    (1 - non_detection_factor),
                 1e-5);
 
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)] * non_detection_factor,
-                1e-5);
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)] * non_detection_factor, 1e-5);
     ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaiveConfirmed)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)] * (1 - non_detection_factor),
                 1e-5);
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result()
+                    .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)] *
+                    (1 - non_detection_factor),
                 1e-5);
     ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)],
                 migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result()
+                    .get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)] *
+                    (1 - non_detection_factor),
                 1e-5);
 }

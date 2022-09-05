@@ -472,10 +472,70 @@ struct DaysUntilEffectiveImprovedImmunity {
     }
 };
 
+/** 
+ * @brief Time in days to describe waining immunity to get person from S_pv -> S
+ */
+struct WainingPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WainingPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waining immunity to get person from R -> S_pv
+ */
+struct WainingImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WainingImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Number of people in Timm1 due to vaccination
+ */
+struct VaccinationTemporaryImm1 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm1";
+    }
+};
+
+/**
+ * @brief Number of people in Timm2 due to vaccination
+ */
+struct VaccinationTemporaryImm2 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm2";
+    }
+};
+
 /**
 * @brief Total number of first vaccinations up to the given day.
 */
-struct DailyFirstVaccination {
+struct DailyPartialVaccination {
     using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -483,7 +543,7 @@ struct DailyFirstVaccination {
     }
     static std::string name()
     {
-        return "DailyFirstVaccination";
+        return "DailyPartialVaccination";
     }
 };
 
@@ -501,7 +561,6 @@ struct RateOfDailyPartialVaccinations {
         return "RateOfDailyPartialVaccinations";
     }
 };
-
 
 /**
 * @brief Total number of full vaccinations up to the given day.
@@ -694,18 +753,19 @@ struct BaseSeverityNewVariant {
 };
 
 using ParametersBase =
-    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
-                 DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval,
-                 ImmunityInterval1, ImmunityInterval2, RateOfDailyPartialVaccinations, RateOfDailyImprovedVaccinations,
+    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
+                 IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, ImmunityInterval1,
+                 ImmunityInterval2, RateOfDailyPartialVaccinations, RateOfDailyImprovedVaccinations,
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerICU, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
-                 ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity,
-                 InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity,
-                 InfectiousTimeFactorImmune, BaseInfectiousness, BaseInfectiousnessNewVariant, BaseSeverity,
-                 BaseSeverityNewVariant>;
+                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, VaccinationTemporaryImm1,
+                 VaccinationTemporaryImm2, DailyPartialVaccination, ExposedFactorPartialImmunity,
+                 ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity, InfectedFactorImprovedImmunity,
+                 HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity, InfectiousTimeFactorImmune,
+                 BaseInfectiousness, BaseInfectiousnessNewVariant, BaseSeverity, BaseSeverityNewVariant,
+                 WainingPartialImmunity, WainingImprovedImmunity>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
@@ -765,7 +825,7 @@ public:
     /**
      * Time in simulation after which no dynamic NPIs are applied.
      */
-    double& get_end_dynamic_npis() 
+    double& get_end_dynamic_npis()
     {
         return m_end_dynamic_npis;
     }

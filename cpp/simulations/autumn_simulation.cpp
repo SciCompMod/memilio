@@ -144,7 +144,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double t_imm_min        = {30};
     const double t_imm_max        = {30};
 
-
     array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ImmunityInterval1>(), t_imm_min, t_imm_max);
@@ -158,8 +157,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       t_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
-
-    
 
     //probabilities
     const double transmission_risk_min[] = {0.25, 0.225, 0.325, 0.35, 0.325, 0.28};
@@ -884,7 +881,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 {
     mio::Date temp_date;
     temp_date = mio::Date(2021, 6, 1);
-    
+
     const auto start_date   = temp_date;
     const auto num_days_sim = 2.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
@@ -962,6 +959,29 @@ int main(int argc, char** argv)
     bool high      = false;
     bool long_time = false;
 
+    int szenario = 1;
+    // int no_vac_campaign       = 1;
+    // int vaccine_effectiveness = 1;
+
+    std::string szenario_info;
+    if (szenario == 0) {
+        szenario_info = "Omikron (BA5) or a very similar variant stays (none Immune escape variant, disease severity "
+                        "remains the same as with omicron).";
+    }
+    else if (szenario == 1) {
+        szenario_info = "New variant with Immune escape but same disease severity";
+    }
+    else if (szenario == 2) {
+        szenario_info = "New variant with Immune escape and disease severity as delta";
+    }
+    else {
+        printf("Input for szenario not definied, must been between 1-3");
+    }
+
+    printf("Szenario : %s", szenario_info.c_str());
+
+    // bool vac_protection_severve_infection = false;
+
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
@@ -997,8 +1017,8 @@ int main(int argc, char** argv)
         else {
             long_time = false;
         }
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d\n", (int)masks,
-               (int)late, (int)high, (int)long_time);
+        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d\n", (int)masks, (int)late,
+               (int)high, (int)long_time);
 
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
