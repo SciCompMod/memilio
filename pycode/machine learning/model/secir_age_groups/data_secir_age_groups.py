@@ -22,7 +22,7 @@ from datetime import datetime, date
 import seaborn as sns  # plot after normalization
 
 
-def run_secir_groups_simulation(days, damping_data, populations):
+def run_secir_groups_simulation(days, contact_matrix, populations):
     """
     Runs the c++ secir model using mulitple age groups
     and plots the results
@@ -113,33 +113,16 @@ def run_secir_groups_simulation(days, damping_data, populations):
 
     # set contact rates and emulate some mitigations
     # set contact frequency matrix
-    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.loadtxt(baseline_contact_matrix0) \
-        + np.loadtxt(baseline_contact_matrix1) + \
-        np.loadtxt(baseline_contact_matrix2) + \
-        np.loadtxt(baseline_contact_matrix3)
-    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
-        (num_groups, num_groups)) * 0
+    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = contact_matrix
+    # model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
+    #     (num_groups, num_groups)) * 0
 
-    # add one random damping matrix and date
-    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-        coeffs=np.array(damping_data[0]), t=damping_data[1], level=0, type=0))
+    # # add one random damping matrix and date
+    # model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+    #     coeffs=np.array(damping_data[0]), t=damping_data[1], level=0, type=0))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
-
-    # Run Simulation
-    result = simulate(0, days, dt, model)
-    # print(result.get_last_value())
-
-    num_time_points = result.get_num_time_points()
-    result_array = result.as_ndarray()
-    t = result_array[0, :]
-    group_data = np.transpose(result_array[1:, :])
-
-    # sum over all groups
-    data = np.zeros((num_time_points, num_compartments))
-    for i in range(num_groups):
-        data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
 
     # Run Simulation
     data = np.zeros((days, len(compartments) * num_groups))
@@ -167,7 +150,7 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
     data = {
         "inputs": [],
         "labels": [],
-        "dampings": []
+        "contact_matrix": []
     }
 
     days = input_width + label_width
@@ -195,10 +178,9 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
                 damp = round(random.random(), 4)
                 damping_matrix[idx][i] = damp
                 damping_matrix[i][idx] = damp
-        data["dampings"].append(damping_matrix)
-        damping_date = float(random.randint(10, days))
+        data["contact_matrix"].append(damping_matrix)
         data_run = run_secir_groups_simulation(
-            days, [damping_matrix, damping_date],
+            days, damping_matrix,
             population[random.randint(0, len(population) - 1)])
 
         # # drop columns susceptible und recovered
@@ -210,10 +192,6 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
         # data_run = df_data.values  # update data_run
 
         inputs = data_run[:input_width]
-        # add damping date to input
-        for i in range(input_width):
-            inputs[i] = np.append(inputs[i], damping_date)
-
         data["inputs"].append(inputs)
         data["labels"].append(data_run[input_width:])
         bar.next()
@@ -308,11 +286,16 @@ def splitdata(inputs, labels, split_train=0.7,
     return data
 
 
-def splitdampings(damping, split_train=0.7,
-                  split_valid=0.2, split_test=0.1):
+def flat_input(input):
+    dim = tf.reduce_prod(tf.shape(input)[1:])
+    return tf.reshape(input, [-1, dim])
+
+
+def split_contact_matrices(contact_matrices, split_train=0.7,
+                           split_valid=0.2, split_test=0.1):
     """! Split dampings in train, valid and test
 
-   @param damping damping matrices
+   @param contact_matrices contact matrices
    @param labels label dataset
    @param split_train ratio of train datasets
    @param split_valid ratio of validation datasets
@@ -322,7 +305,7 @@ def splitdampings(damping, split_train=0.7,
     if split_train + split_valid + split_test != 1:
         ValueError("summed Split ratios not equal 1! Please adjust the values")
 
-    n = damping.shape[0]
+    n = contact_matrices.shape[0]
     n_train = int(n * split_train)
     n_valid = int(n * split_valid)
     n_test = int(n * split_test)
@@ -330,12 +313,12 @@ def splitdampings(damping, split_train=0.7,
     if n_train + n_valid + n_test != n:
         n_test = n - n_train - n_valid
 
-    damping_train, damping_valid, damping_test = tf.split(
-        damping, [n_train, n_valid, n_test], 0)
+    contact_matrices_train, contact_matrices_valid, contact_matrices_test = tf.split(
+        contact_matrices, [n_train, n_valid, n_test], 0)
     data = {
-        "train_damping": damping_train,
-        "valid_damping": damping_valid,
-        "test_damping": damping_test
+        "train": contact_matrices_train,
+        "valid": contact_matrices_valid,
+        "test": contact_matrices_test
     }
 
     return data

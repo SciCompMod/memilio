@@ -16,7 +16,7 @@ from keras import Sequential
 from keras.layers import Dense
 from keras import backend as K
 import seaborn as sns  # plot after normalization
-from data_secir_age_groups import splitdata, splitdampings
+from data_secir_age_groups import splitdata, split_contact_matrices, flat_input
 from different_models import *
 from tensorflow import keras
 
@@ -27,8 +27,8 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
     label_width = labels.shape[1]
 
     plt.figure(figsize=(12, 8))
-    cols = np.array(['Exposed', 'Carrier',
-                     'Infected', 'Hospitalized', 'ICU', 'Dead'])
+    cols = np.array(['Susceptible', 'Exposed', 'Carrier',
+                     'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])
     plot_col_index = np.where(cols == plot_col)[0][0]
     max_n = min(max_subplots, inputs.shape[0])
 
@@ -58,7 +58,7 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
 
-def network_fit(path, max_epochs=30, early_stop=500, n_batch_size=512):
+def network_fit(path, max_epochs=30, early_stop=500):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_age_groups.pickle')):
         ValueError("no dataset found in path: " + path)
@@ -68,43 +68,45 @@ def network_fit(path, max_epochs=30, early_stop=500, n_batch_size=512):
     data = pickle.load(file)
     data_splitted = splitdata(data["inputs"], data["labels"])
 
-    train_inputs = data_splitted["train_inputs"]
-    train_labels = data_splitted["train_labels"]
-    valid_inputs = data_splitted["valid_inputs"]
-    valid_labels = data_splitted["valid_labels"]
-    test_inputs = data_splitted["test_inputs"]
-    test_labels = data_splitted["test_labels"]
+    train_inputs_compartments = flat_input(data_splitted["train_inputs"])
+    train_labels = flat_input(data_splitted["train_labels"])
+    valid_inputs_compartments = flat_input(data_splitted["valid_inputs"])
+    valid_labels = flat_input(data_splitted["valid_labels"])
+    test_inputs_compartments = flat_input(data_splitted["test_inputs"])
+    test_labels = flat_input(data_splitted["test_labels"])
 
-    dampings = tf.stack(data["dampings"])  # data["dampings"]
-    damping_data = splitdampings(dampings)
+    contact_matrices = split_contact_matrices(tf.stack(data["contact_matrix"]))
+    contact_matrices_train = flat_input(contact_matrices['train'])
+    contact_matrices_valid = flat_input(contact_matrices['valid'])
+    contact_matrices_test = flat_input(contact_matrices['test'])
 
-    model = define_combined_model(test_labels[0].shape[1])  # , len(dampings))
+    train_inputs = tf.concat(
+        [train_inputs_compartments, contact_matrices_train], axis=1, name='concat')
+    valid_inputs = tf.concat(
+        [valid_inputs_compartments, contact_matrices_valid], axis=1, name='concat')
+    test_inputs = tf.concat(
+        [test_inputs_compartments, contact_matrices_test], axis=1, name='concat')
+
+    model = define_mlp_model()  # , len(dampings))
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
                                                       mode='min')
 
-    mc = ModelCheckpoint("model_secir_age_group" + '.h5', monitor=['mse'],
-                         mode='min', save_best_only=True)
+    # mc = ModelCheckpoint("model_secir_age_group" + '.h5', monitor=['mse'],
+    #                      mode='min', save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
                   optimizer=tf.keras.optimizers.Nadam(),
                   metrics=['mse', 'mae'])
 
-    history = model.fit(x=[train_inputs] + [damping_data['train_damping']], y=train_labels, epochs=max_epochs,
-                        # validation_data=( [valid_inputs] + dampings, valid_labels),
-                        batch_size=n_batch_size,
-                        callbacks=[early_stopping, mc])
+    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
+                        validation_data=(
+                            valid_inputs, valid_labels),
+                        callbacks=[early_stopping])
 
-    # history = model.fit(x=[data["trainX_mlp"]] + data["trainX_cnn"], y=data["scaleTrainY"],
-    #                     epochs=n_epochs, batch_size=n_batch_size, verbose=verbose, callbacks=[mc])
-
-    # plotCol(test_inputs, test_labels, model=model,
-    #         plot_col='Infected', max_subplots=3)
-    # plotCol(test_inputs, test_labels, model=model,
-    #         plot_col='Exposed', max_subplots=3)
-    # plotCol(test_inputs, test_labels, model=model,
-    #         plot_col='Dead', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Dead', max_subplots=3)
     plot_losses(history)
     return history
 
@@ -169,19 +171,4 @@ if __name__ == "__main__":
 
     max_epochs = 200
 
-    ### Models ###
-    # single input
-    # hist = network_fit(path_data, model=single_output(), max_epochs=max_epochs)
-
-    # # multi input
-    # lstm_hist = network_fit(path_data, model=lstm_network_multi_input(), max_epochs=max_epochs)
-    # ml_hist = network_fit(path_data, model=multilayer_multi_input(), max_epochs=max_epochs)
-
-    # # Multi output
-    # cnn_output = network_fit(path_data, model=cnn_multi_output(), max_epochs=max_epochs)
-
-    lstm_hist_multi = network_fit(
-        path_data, max_epochs=max_epochs)
-
-    # histories = [ lstm_hist, ml_hist]
-    # plot_histories(histories)
+    network_fit(path_data, max_epochs=max_epochs)
