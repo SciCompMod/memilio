@@ -458,7 +458,7 @@ struct DaysUntilEffectivePartialImmunity {
 };
 
 /**
- * @brief Time in days until second vaccine dose takes full effect.
+ * @brief Time in days until improved vaccine dose takes full effect.
  */
 struct DaysUntilEffectiveImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -469,6 +469,21 @@ struct DaysUntilEffectiveImprovedImmunity {
     static std::string name()
     {
         return "DaysUntilEffectiveImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ */
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
     }
 };
 
@@ -589,6 +604,21 @@ struct RateOfDailyImprovedVaccinations {
     static std::string name()
     {
         return "RateOfDailyImprovedVaccinations";
+    }
+};
+
+/**
+* @brief rate of booster vaccinations for persons already located in R.
+*/
+struct RateOfDailyBoosterVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyBoosterVaccinations";
     }
 };
 
@@ -740,6 +770,21 @@ struct BaseSeverity {
     }
 };
 
+/**
+ * @brief Szenario regarding new Variant. Different szenarios are explained in the simulation file.
+ */
+struct SzenarioNewVariant {
+    using Type = int;
+    static Type get_default(AgeGroup)
+    {
+        return 1;
+    }
+    static std::string name()
+    {
+        return "SzenarioNewVariant";
+    }
+};
+
 struct BaseSeverityNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -756,16 +801,17 @@ using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
                  IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, ImmunityInterval1,
                  ImmunityInterval2, RateOfDailyPartialVaccinations, RateOfDailyImprovedVaccinations,
-                 HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
-                 InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
-                 RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
-                 ICUCasesPerHospitalized, DeathsPerICU, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, VaccinationTemporaryImm1,
+                 RateOfDailyBoosterVaccinations, HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime,
+                 ICUToHomeTime, ICUToDeathTime, InfectionProbabilityFromContact, RelativeCarrierInfectability,
+                 AsymptoticCasesPerInfectious, RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic,
+                 HospitalizedCasesPerInfectious, ICUCasesPerHospitalized, DeathsPerICU, VaccinationGap,
+                 DaysUntilEffectivePartialImmunity, DaysUntilEffectiveImprovedImmunity,
+                 DaysUntilEffectiveBoosterImmunity, DailyFullVaccination, VaccinationTemporaryImm1,
                  VaccinationTemporaryImm2, DailyPartialVaccination, ExposedFactorPartialImmunity,
                  ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity, InfectedFactorImprovedImmunity,
                  HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity, InfectiousTimeFactorImmune,
-                 BaseInfectiousness, BaseInfectiousnessNewVariant, BaseSeverity, BaseSeverityNewVariant,
-                 WainingPartialImmunity, WainingImprovedImmunity>;
+                 BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant, BaseSeverity,
+                 BaseSeverityNewVariant, WainingPartialImmunity, WainingImprovedImmunity>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.

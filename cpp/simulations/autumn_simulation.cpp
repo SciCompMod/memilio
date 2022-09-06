@@ -27,6 +27,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
@@ -123,7 +124,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, bool long_time)
+mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int vacc_effectiveness_szenario)
 {
     //times
     const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
@@ -181,27 +182,24 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double prob_icu_dead_min[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[] = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    const double reduc_vacc_exp_min    = 0.75;
-    const double reduc_vacc_exp_max    = 0.85;
-    const double reduc_immune_exp_min  = 0.281;
-    const double reduc_immune_exp_max  = 0.381;
-    const double reduc_vacc_inf_min    = 0.6;
-    const double reduc_vacc_inf_max    = 0.7;
-    const double reduc_immune_inf_min  = 0.193;
-    const double reduc_immune_inf_max  = 0.293;
-    const double reduc_vacc_hosp_min   = 0.05;
-    const double reduc_vacc_hosp_max   = 0.15;
-    const double reduc_immune_hosp_min = 0.041;
-    const double reduc_immune_hosp_max = 0.141;
-
-    double temp_reduc_mild_rec_time;
-    if (long_time) {
-        temp_reduc_mild_rec_time = 1.0;
+    double vacc_fac{1.};
+    if (vacc_effectiveness_szenario == 1) {
+        vacc_fac = 0.5;
     }
-    else {
-        temp_reduc_mild_rec_time = 0.5;
-    }
-    const double reduc_mild_rec_time = temp_reduc_mild_rec_time;
+    const double reduc_vacc_exp_min       = vacc_fac * 0.75;
+    const double reduc_vacc_exp_max       = vacc_fac * 0.85;
+    const double reduc_immune_exp_min     = vacc_fac * 0.281;
+    const double reduc_immune_exp_max     = vacc_fac * 0.381;
+    const double reduc_vacc_inf_min       = vacc_fac * 0.6;
+    const double reduc_vacc_inf_max       = vacc_fac * 0.7;
+    const double reduc_immune_inf_min     = vacc_fac * 0.193;
+    const double reduc_immune_inf_max     = vacc_fac * 0.293;
+    const double reduc_vacc_hosp_min      = vacc_fac * 0.05;
+    const double reduc_vacc_hosp_max      = vacc_fac * 0.15;
+    const double reduc_immune_hosp_min    = vacc_fac * 0.041;
+    const double reduc_immune_hosp_max    = vacc_fac * 0.141;
+    const double temp_reduc_mild_rec_time = vacc_fac * 0.5;
+    const double reduc_mild_rec_time      = vacc_fac * temp_reduc_mild_rec_time;
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
                                       transmission_risk_min, transmission_risk_max);
@@ -279,213 +277,217 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecirvvs::Parameters& params, bool late,
-                             bool masks, bool test)
+mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecirvvs::Parameters& params)
 {
-    auto& contacts         = params.get<mio::osecirvvs::ContactPatterns>();
-    auto& contact_dampings = contacts.get_dampings();
+    auto& contacts = params.get<mio::osecirvvs::ContactPatterns>();
 
-    if (test) {
-        params.get_commuter_nondetection() = 0.85;
-    }
-    else {
-        params.get_commuter_nondetection() = 1.0;
-    }
+    mio::unused(start_date);
+    mio::unused(end_date);
+    mio::unused(params);
+    mio::unused(contacts);
+    // auto& contact_dampings = contacts.get_dampings();
 
-    //weights for age groups affected by an NPI
-    auto group_weights_all     = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
-    auto group_weights_seniors = Eigen::VectorXd::NullaryExpr(size_t(params.get_num_groups()), [](auto&& i) {
-        return i == 5 ? 1.0 : i == 4 ? 0.5 : 0.0; //65-80 only partially
-    });
+    // if (test) {
+    //     params.get_commuter_nondetection() = 0.85;
+    // }
+    // else {
+    //     params.get_commuter_nondetection() = 1.0;
+    // }
 
-    //helper functions that create dampings for specific NPIs
-    auto contacts_at_home = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::Home)), t, {size_t(ContactLocation::Home)},
-                                    group_weights_all);
-    };
-    auto school_closure = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::SchoolClosure)), t,
-                                    {size_t(ContactLocation::School)}, group_weights_all);
-    };
-    auto home_office = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
-                                    group_weights_all);
-    };
-    auto social_events = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
-                                    {size_t(ContactLocation::Other)}, group_weights_all);
-    };
-    auto social_events_work = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
-                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
-                                    {size_t(ContactLocation::Work)}, group_weights_all);
-    };
-    auto physical_distancing_home = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Home)}, group_weights_all);
-    };
-    auto physical_distancing_school = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::School)}, group_weights_all);
-    };
-    auto physical_distancing_work = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Work)}, group_weights_all);
-    };
-    auto physical_distancing_other = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Other)}, group_weights_all);
-    };
-    auto senior_awareness = [=](auto t, auto min, auto max) {
-        auto v = mio::UncertainValue();
-        assign_uniform_distribution(v, min, max);
-        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
-                                    mio::DampingType(int(Intervention::SeniorAwareness)), t,
-                                    {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
-                                    group_weights_seniors);
-    };
+    // //weights for age groups affected by an NPI
+    // auto group_weights_all     = Eigen::VectorXd::Constant(size_t(params.get_num_groups()), 1.0);
+    // auto group_weights_seniors = Eigen::VectorXd::NullaryExpr(size_t(params.get_num_groups()), [](auto&& i) {
+    //     return i == 5 ? 1.0 : i == 4 ? 0.5 : 0.0; //65-80 only partially
+    // });
 
-    //OPEN SCENARIO SPRING
-    auto start_year = mio::Date(2021, 1, 1);
-    double narrow   = 0.05;
-    if (start_year < end_date) {
-        auto static_open_scenario_spring = mio::SimulationTime(mio::get_offset_in_days(start_year, start_date));
-        contact_dampings.push_back(contacts_at_home(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(school_closure(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(home_office(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(social_events(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(social_events_work(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(physical_distancing_home(static_open_scenario_spring, 0.0, 0.0));
-        contact_dampings.push_back(physical_distancing_school(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
-        contact_dampings.push_back(physical_distancing_work(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
-        contact_dampings.push_back(physical_distancing_other(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
-        contact_dampings.push_back(senior_awareness(static_open_scenario_spring, 0.0, 0.0));
-    }
+    // //helper functions that create dampings for specific NPIs
+    // auto contacts_at_home = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+    //                                 mio::DampingType(int(Intervention::Home)), t, {size_t(ContactLocation::Home)},
+    //                                 group_weights_all);
+    // };
+    // auto school_closure = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+    //                                 mio::DampingType(int(Intervention::SchoolClosure)), t,
+    //                                 {size_t(ContactLocation::School)}, group_weights_all);
+    // };
+    // auto home_office = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+    //                                 mio::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
+    //                                 group_weights_all);
+    // };
+    // auto social_events = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+    //                                 mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+    //                                 {size_t(ContactLocation::Other)}, group_weights_all);
+    // };
+    // auto social_events_work = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+    //                                 mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+    //                                 {size_t(ContactLocation::Work)}, group_weights_all);
+    // };
+    // auto physical_distancing_home = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+    //                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+    //                                 {size_t(ContactLocation::Home)}, group_weights_all);
+    // };
+    // auto physical_distancing_school = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+    //                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+    //                                 {size_t(ContactLocation::School)}, group_weights_all);
+    // };
+    // auto physical_distancing_work = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+    //                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+    //                                 {size_t(ContactLocation::Work)}, group_weights_all);
+    // };
+    // auto physical_distancing_other = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+    //                                 mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+    //                                 {size_t(ContactLocation::Other)}, group_weights_all);
+    // };
+    // auto senior_awareness = [=](auto t, auto min, auto max) {
+    //     auto v = mio::UncertainValue();
+    //     assign_uniform_distribution(v, min, max);
+    //     return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
+    //                                 mio::DampingType(int(Intervention::SeniorAwareness)), t,
+    //                                 {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
+    //                                 group_weights_seniors);
+    // };
 
-    //OPEN SCENARIO
-    int month_open;
-    if (late) {
-        month_open = 8;
-    }
-    else {
-        month_open = 7;
-    }
-    double masks_low, masks_high, masks_low_school, masks_high_school, masks_narrow;
-    if (masks) {
-        masks_low_school  = 0.2;
-        masks_high_school = 0.4;
-        masks_low         = 0.2;
-        masks_high        = 0.4;
-        masks_narrow      = narrow;
-    }
-    else {
+    // //OPEN SCENARIO SPRING
+    // auto start_year = mio::Date(2022, 1, 1);
+    // double narrow   = 0.05;
+    // if (start_year < end_date) {
+    //     auto static_open_scenario_spring = mio::SimulationTime(mio::get_offset_in_days(start_year, start_date));
+    //     contact_dampings.push_back(contacts_at_home(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(school_closure(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(home_office(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(social_events(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(social_events_work(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(physical_distancing_home(static_open_scenario_spring, 0.0, 0.0));
+    //     contact_dampings.push_back(physical_distancing_school(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
+    //     contact_dampings.push_back(physical_distancing_work(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
+    //     contact_dampings.push_back(physical_distancing_other(static_open_scenario_spring, 0.2 + narrow, 0.4 - narrow));
+    //     contact_dampings.push_back(senior_awareness(static_open_scenario_spring, 0.0, 0.0));
+    // }
 
-        masks_low_school  = 0.0;
-        masks_high_school = 0.0;
-        masks_low         = 0.0;
-        masks_high        = 0.0;
-        masks_narrow      = 0.0;
-    }
-    auto start_open = mio::Date(2021, month_open, 1);
-    if (start_open < end_date) {
-        auto start_summer = mio::SimulationTime(mio::get_offset_in_days(start_open, start_date));
-        contact_dampings.push_back(contacts_at_home(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(school_closure(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(home_office(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(social_events(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(social_events_work(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(physical_distancing_home(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(physical_distancing_school(start_summer, masks_low_school + masks_narrow,
-                                                              masks_high_school - masks_narrow));
-        contact_dampings.push_back(
-            physical_distancing_work(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
-        contact_dampings.push_back(
-            physical_distancing_other(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
-        contact_dampings.push_back(senior_awareness(start_summer, 0.0, 0.0));
-    }
+    // //OPEN SCENARIO
+    // int month_open;
+    // if (late) {
+    //     month_open = 8;
+    // }
+    // else {
+    //     month_open = 7;
+    // }
+    // double masks_low, masks_high, masks_low_school, masks_high_school, masks_narrow;
+    // if (masks) {
+    //     masks_low_school  = 0.2;
+    //     masks_high_school = 0.4;
+    //     masks_low         = 0.2;
+    //     masks_high        = 0.4;
+    //     masks_narrow      = narrow;
+    // }
+    // else {
 
-    auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 10, 1), start_date));
-    contact_dampings.push_back(contacts_at_home(start_autumn, 0.0, 0.0));
-    contact_dampings.push_back(school_closure(start_autumn, 0.3 + narrow, 0.5 - narrow));
-    // contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow)); // S3F only
-    contact_dampings.push_back(social_events(start_autumn, 0.3 + narrow, 0.5 - narrow));
-    contact_dampings.push_back(social_events_work(start_autumn, 0.0, 0.0));
+    //     masks_low_school  = 0.0;
+    //     masks_high_school = 0.0;
+    //     masks_low         = 0.0;
+    //     masks_high        = 0.0;
+    //     masks_narrow      = 0.0;
+    // }
+    // auto start_open = mio::Date(2022, month_open, 1);
+    // if (start_open < end_date) {
+    //     auto start_summer = mio::SimulationTime(mio::get_offset_in_days(start_open, start_date));
+    //     contact_dampings.push_back(contacts_at_home(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(school_closure(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(home_office(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(social_events(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(social_events_work(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(physical_distancing_home(start_summer, 0.0, 0.0));
+    //     contact_dampings.push_back(physical_distancing_school(start_summer, masks_low_school + masks_narrow,
+    //                                                           masks_high_school - masks_narrow));
+    //     contact_dampings.push_back(
+    //         physical_distancing_work(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
+    //     contact_dampings.push_back(
+    //         physical_distancing_other(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
+    //     contact_dampings.push_back(senior_awareness(start_summer, 0.0, 0.0));
+    // }
 
-    contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S2F
+    // auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2022, 10, 1), start_date));
+    // contact_dampings.push_back(contacts_at_home(start_autumn, 0.0, 0.0));
+    // contact_dampings.push_back(school_closure(start_autumn, 0.3 + narrow, 0.5 - narrow));
+    // // contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow)); // S3F only
+    // contact_dampings.push_back(social_events(start_autumn, 0.3 + narrow, 0.5 - narrow));
+    // contact_dampings.push_back(social_events_work(start_autumn, 0.0, 0.0));
 
-    //contact_dampings.push_back(school_closure(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
-    //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
-    //contact_dampings.push_back(social_events(start_autumn,  0.0 + narrow, 0.2 - narrow)); // S1F
+    // contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S2F
 
-    narrow = 0.0;
-    //local dynamic NPIs
-    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfected>();
-    auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+    // //contact_dampings.push_back(school_closure(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
+    // //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
+    // //contact_dampings.push_back(social_events(start_autumn,  0.0 + narrow, 0.2 - narrow)); // S1F
 
-    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
-    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.2 + narrow,
-                                                  0.4 - narrow)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
-    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+    // narrow = 0.0;
+    // //local dynamic NPIs
+    // auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfected>();
+    // auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
 
-    auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling>();
-    dynamic_npi_dampings2.push_back(contacts_at_home(mio::SimulationTime(0), 0.5 + narrow, 0.7 - narrow));
-    dynamic_npi_dampings2.push_back(school_closure(mio::SimulationTime(0), 0.4 + narrow,
-                                                   0.6 - narrow)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings2.push_back(home_office(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(social_events(mio::SimulationTime(0), 0.7 + narrow, 0.9 - narrow));
-    dynamic_npi_dampings2.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings2.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+    // dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
+    // dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.2 + narrow,
+    //                                               0.4 - narrow)); //0.25 - 0.25 in autumn
+    // dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
+    // dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
+    // dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0, 0.0));
+    // dynamic_npi_dampings.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
 
-    dynamic_npis.set_interval(mio::SimulationTime(1.0));
-    dynamic_npis.set_duration(mio::SimulationTime(14.0));
-    dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
-    dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
+    // auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling>();
+    // dynamic_npi_dampings2.push_back(contacts_at_home(mio::SimulationTime(0), 0.5 + narrow, 0.7 - narrow));
+    // dynamic_npi_dampings2.push_back(school_closure(mio::SimulationTime(0), 0.4 + narrow,
+    //                                                0.6 - narrow)); //0.25 - 0.25 in autumn
+    // dynamic_npi_dampings2.push_back(home_office(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings2.push_back(social_events(mio::SimulationTime(0), 0.7 + narrow, 0.9 - narrow));
+    // dynamic_npi_dampings2.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
+    // dynamic_npi_dampings2.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
+    // dynamic_npi_dampings2.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings2.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings2.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    // dynamic_npi_dampings2.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
 
-    //school holidays (holiday periods are set per node, see set_nodes)
-    auto school_holiday_value = mio::UncertainValue();
-    assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
-    contacts.get_school_holiday_damping() =
-        mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
-                             mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
-                             {size_t(ContactLocation::School)}, group_weights_all);
+    // dynamic_npis.set_interval(mio::SimulationTime(1.0));
+    // dynamic_npis.set_duration(mio::SimulationTime(14.0));
+    // dynamic_npis.set_base_value(100'000);
+    // dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
+    // dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
+
+    // //school holidays (holiday periods are set per node, see set_nodes)
+    // auto school_holiday_value = mio::UncertainValue();
+    // assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
+    // contacts.get_school_holiday_damping() =
+    //     mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
+    //                          mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
+    //                          {size_t(ContactLocation::School)}, group_weights_all);
 
     return mio::success();
 }
@@ -672,19 +674,23 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
-create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
-             bool long_time)
+create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, int variant_szenario,
+             int vacc_campaign_szenario, int vacc_effectiveness_szenario)
 {
-    const auto summer_date = late ? mio::Date(2021, 8, 1) : mio::Date(2021, 7, 1);
+    const auto summer_date = mio::Date(2022, 7, 1);
+
+    mio::unused(vacc_campaign_szenario);
+    mio::unused(vacc_effectiveness_szenario);
 
     //global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
-    params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
-    params.get_end_dynamic_npis()          = mio::get_offset_in_days(start_date, summer_date);
-    BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
+    params.get<mio::osecirvvs::StartDay>()           = mio::get_day_in_year(start_date);
+    params.get<mio::osecirvvs::SzenarioNewVariant>() = variant_szenario;
+    params.get_end_dynamic_npis()                    = mio::get_offset_in_days(start_date, summer_date);
+    BOOST_OUTCOME_TRY(set_covid_parameters(params, vacc_effectiveness_szenario));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));
+    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
     //graph of counties with populations and local parameters
     //and migration between counties
@@ -877,20 +883,21 @@ enum class RunMode
  * @returns any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
-                        bool late, bool masks, bool test, bool high, bool long_time)
+                        int variant_szenario, int vacc_campaign_szenario, int vacc_effectiveness_szenario)
 {
     mio::Date temp_date;
-    temp_date = mio::Date(2021, 6, 1);
+    temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 2.0;
+    const auto num_days_sim = 15.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
+        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, variant_szenario,
+                                                vacc_campaign_szenario, vacc_effectiveness_szenario));
         BOOST_OUTCOME_TRY(save_graph(created, save_dir));
         params_graph = created;
     }
@@ -915,7 +922,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto run_idx            = size_t(0);
     parameter_study.run(
         [&](auto&& graph) {
-            return draw_sample(graph, high);
+            return draw_sample(graph);
         },
         [&](auto results_graph) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
@@ -951,74 +958,24 @@ int main(int argc, char** argv)
 
     mio::set_log_level(mio::LogLevel::warn);
 
-    printf("Build work");
-
-    bool late      = false;
-    bool masks     = true;
-    bool test      = true;
-    bool high      = false;
-    bool long_time = false;
-
-    int szenario = 1;
-    // int no_vac_campaign       = 1;
-    // int vaccine_effectiveness = 1;
-
-    std::string szenario_info;
-    if (szenario == 0) {
-        szenario_info = "Omikron (BA5) or a very similar variant stays (none Immune escape variant, disease severity "
-                        "remains the same as with omicron).";
-    }
-    else if (szenario == 1) {
-        szenario_info = "New variant with Immune escape but same disease severity";
-    }
-    else if (szenario == 2) {
-        szenario_info = "New variant with Immune escape and disease severity as delta";
-    }
-    else {
-        printf("Input for szenario not definied, must been between 1-3");
-    }
-
-    printf("Szenario : %s", szenario_info.c_str());
-
-    // bool vac_protection_severve_infection = false;
-
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 8) {
-        mode       = RunMode::Save;
-        data_dir   = argv[1];
-        save_dir   = argv[2];
-        result_dir = argv[3];
-        if (atoi(argv[4]) == 1) {
-            high = true;
-        }
-        else {
-            high = false;
-        }
-        if (atoi(argv[5]) == 1) {
-            late = true;
-        }
-        else {
-            late = false;
-        }
-        if (atoi(argv[6]) == 1) {
-            masks = true;
-            test  = true;
-        }
-        else {
-            masks = false;
-            test  = false;
-        }
-        if (atoi(argv[7]) == 1) {
-            long_time = true;
-        }
-        else {
-            long_time = false;
-        }
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d\n", (int)masks, (int)late,
-               (int)high, (int)long_time);
+    int variant_szenario            = 1;
+    int vacc_campaign_szenario      = 1;
+    int vacc_effectiveness_szenario = 1;
+    if (argc == 6) {
+        mode                        = RunMode::Save;
+        data_dir                    = argv[1];
+        save_dir                    = argv[2];
+        result_dir                  = argv[3];
+        variant_szenario            = atoi(argv[4]);
+        vacc_campaign_szenario      = atoi(argv[5]);
+        vacc_effectiveness_szenario = atoi(argv[6]);
+
+        printf("Szenario: %d, Vaccination campaign szenario: %d, Vaccination effectiveness szenario: %d\n",
+               variant_szenario, vacc_campaign_szenario, vacc_effectiveness_szenario);
 
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
@@ -1046,22 +1003,26 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    result_dir += "_rev2";
-    if (long_time) {
-        result_dir += "_long";
+    std::string szenario_info;
+    if (variant_szenario == 0) {
+        szenario_info = "Omikron (BA5) or a very similar variant stays (none Immune escape variant, disease severity "
+                        "remains the same as with omicron).";
     }
-    if (high) {
-        result_dir += "_high";
+    else if (variant_szenario == 1) {
+        szenario_info = "New variant with Immune escape but same disease severity";
     }
-    if (late) {
-        result_dir += "_late";
+    else if (variant_szenario == 2) {
+        szenario_info = "New variant with Immune escape and disease severity as delta";
     }
-    if (masks) {
-        result_dir += "_mask";
+    else {
+        printf("Input for szenario not definied, has to be between 1-3!");
     }
-    if (test) {
-        result_dir += "_test";
-    }
+
+    printf("Szenario : %s\n", szenario_info.c_str());
+
+    result_dir += "_szenario_" + std::to_string(variant_szenario) + "_vacc_camp_" +
+                  std::to_string(vacc_campaign_szenario) + "_vacc_eff_ " + std::to_string(vacc_effectiveness_szenario);
+
     boost::filesystem::path dir(result_dir);
     bool created = boost::filesystem::create_directories(dir);
 
@@ -1078,7 +1039,8 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    auto result = run(mode, data_dir, save_dir, result_dir, late, masks, test, high, long_time);
+    auto result = run(mode, data_dir, save_dir, result_dir, variant_szenario, vacc_campaign_szenario,
+                      vacc_effectiveness_szenario);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

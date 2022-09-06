@@ -52,13 +52,23 @@ void draw_sample_demographics(Model& model)
         model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
         double diff                                              = model.populations.get_group_total(i) - group_total;
         if (diff > 0) {
-            model.populations[{i, InfectionState::Recovered}] =
-                model.populations[{i, InfectionState::Recovered}] - diff - 1e-10;
-            if (model.populations[{i, InfectionState::Recovered}] < 0.0) {
-                // for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
-                //     std::cout << " Compartment  " << inf_state << " hat Wert "
-                //               << model.populations[{i, inf_state}].draw_sample() << std::endl;
-                // }
+            if (model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1e-10 > 0) {
+                model.populations[{i, InfectionState::TemporaryImmunity2}] =
+                    model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1e-10;
+            }
+            else {
+                model.populations[{i, InfectionState::Recovered}] =
+                    model.populations[{i, InfectionState::Recovered}] - diff - 1e-10;
+            }
+            if (model.populations[{i, InfectionState::Recovered}] < 0.0 ||
+                model.populations[{i, InfectionState::TemporaryImmunity2}] < 0.0) {
+                std::cout << " Recovered anzahl =   " << model.populations[{i, InfectionState::Recovered}] << std::endl;
+                std::cout << " Timm2 anzahl =   " << model.populations[{i, InfectionState::TemporaryImmunity2}]
+                          << std::endl;
+                for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
+                    std::cout << " Compartment  " << inf_state << " hat Wert "
+                              << model.populations[{i, inf_state}].draw_sample() << std::endl;
+                }
                 log_error("Negative Compartment after sampling.");
             }
             // std::cout << " get_group_total =   " << model.populations.get_group_total(i) << std::endl;
@@ -145,7 +155,7 @@ void draw_sample(Model& model)
     model.apply_constraints();
 }
 
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
+Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph)
 {
     Graph<Model, MigrationParameters> sampled_graph;
 
@@ -157,13 +167,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
     shared_dynamic_npis.draw_sample();
 
-    double variant_fac;
-    if (variant_high) {
-        variant_fac = 1.6;
-    }
-    else {
-        variant_fac = 1.4;
-    }
+    double variant_fac{1};
 
     //infectiousness of virus variants is not sampled independently but depend on base infectiousness
     for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {

@@ -201,7 +201,10 @@ public:
                 double dummy_partial_imm = y[Si] * params.get<RateOfDailyPartialVaccinations>()[i] /
                                            params.get<DaysUntilEffectivePartialImmunity>()[i];
                 double dummy_improved_imm = y[SVi] * params.get<RateOfDailyImprovedVaccinations>()[i] /
-                                            params.get<DaysUntilEffectivePartialImmunity>()[i];
+                                            params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+
+                double dummy_booster_imm = y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
+                                           params.get<DaysUntilEffectiveBoosterImmunity>()[i];
 
                 double dummy_S = y[Si] * ext_inf_force_dummy;
 
@@ -209,16 +212,16 @@ public:
 
                 double dummy_R = y[Ri] * exp_fac_impr_immune * ext_inf_force_dummy;
 
-                dydt[Si] -= dummy_S + dummy_partial_imm;
+                dydt[Si] -= dummy_S - dummy_partial_imm;
                 dydt[Ei] += dummy_S;
 
-                dydt[SVi] -= dummy_SV + dummy_improved_imm;
+                dydt[SVi] -= dummy_SV - dummy_improved_imm;
                 dydt[EVi] += dummy_SV;
 
                 dydt[TImm1] += dummy_partial_imm;
-                dydt[TImm2] += dummy_improved_imm;
+                dydt[TImm2] += dummy_improved_imm + dummy_booster_imm;
 
-                dydt[Ri] -= dummy_R;
+                dydt[Ri] -= dummy_R - dummy_booster_imm;
                 dydt[EV2i] += dummy_R;
 
                 // waning immunity
@@ -530,9 +533,12 @@ public:
     void apply_variant(double t)
     {
         // TODO: Wachtstumsrate anpassen/ evtl als Parameter
-        auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto variant_day = get_day_in_year(Date(2022, 11, 1));
-        if (start_day + t > variant_day) {
+        auto start_day            = this->get_model().parameters.template get<StartDay>();
+        auto variant_day          = get_day_in_year(Date(2022, 11, 1));
+        auto szenario_new_variant = this->get_model().parameters.template get<SzenarioNewVariant>();
+
+        // szenario 1 means no new variant -> BA.5 or similar variant stays
+        if (start_day + t > variant_day || szenario_new_variant > 1) {
             auto variant_growth = (start_day - variant_day) * 0.1666667;
             // 2 equal to the share of the delta variant on June 6
             double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);
@@ -546,11 +552,16 @@ public:
                 this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
                     new_transmission;
 
-                double new_severtiy =
-                    (1 - share_new_variant) * this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
-                    share_new_variant *
-                        this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
-                this->get_model().parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)i] = new_severtiy;
+                // szenarion > 2 (i.e. szenario 3) means same severity as delta.
+                if (szenario_new_variant > 2) {
+                    double new_severtiy =
+                        (1 - share_new_variant) *
+                            this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
+                        share_new_variant *
+                            this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
+                    this->get_model().parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)i] =
+                        new_severtiy;
+                }
             }
         }
     }
