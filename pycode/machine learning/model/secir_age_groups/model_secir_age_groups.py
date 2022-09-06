@@ -23,8 +23,9 @@ from tensorflow import keras
 
 def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
-    input_width = inputs.shape[1]
-    label_width = labels.shape[1]
+    # 36 damping entries  and 48 age dependent compartments
+    input_width = int((inputs.shape[1] - 36) / 48)
+    label_width = int(labels.shape[1] / 48)
 
     plt.figure(figsize=(12, 8))
     cols = np.array(['Susceptible', 'Exposed', 'Carrier',
@@ -39,17 +40,17 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
         input_array = inputs[n].numpy()
         label_array = labels[n].numpy()
-        plt.plot(np.arange(0, input_width), input_array[:, plot_col_index],
+        plt.plot(np.arange(0, input_width), input_array[plot_col_index:inputs.shape[1] - 36:48],
                  label='Inputs', marker='.', zorder=-10)
-        plt.scatter(np.arange(input_width, input_width+label_width), label_array[:, plot_col_index],
+        plt.scatter(np.arange(input_width, input_width+label_width), label_array[plot_col_index:-1:48],
                     edgecolors='k', label='Labels', c='#2ca02c', s=64)
 
         if model is not None:
             input_series = tf.expand_dims(inputs[n], axis=0)
             pred = model(input_series)
-            pred = pred.numpy()
-            plt.scatter(np.arange(input_width, input_width+pred.shape[-2]),
-                        pred[0, :, plot_col_index],
+            pred = pred[0].numpy()
+            plt.scatter(np.arange(input_width, input_width+label_width),
+                        pred[plot_col_index:-1:48],
                         marker='X', edgecolors='k', label='Predictions',
                         c='#ff7f0e', s=64)
 
@@ -58,7 +59,7 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
 
-def network_fit(path, max_epochs=30, early_stop=500):
+def network_fit(path, model, max_epochs=30, early_stop=500):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_age_groups.pickle')):
         ValueError("no dataset found in path: " + path)
@@ -87,8 +88,6 @@ def network_fit(path, max_epochs=30, early_stop=500):
     test_inputs = tf.concat(
         [test_inputs_compartments, contact_matrices_test], axis=1, name='concat')
 
-    model = define_mlp_model()  # , len(dampings))
-
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
                                                       mode='min')
@@ -106,7 +105,7 @@ def network_fit(path, max_epochs=30, early_stop=500):
                         callbacks=[early_stopping])
 
     plotCol(test_inputs, test_labels, model=model,
-            plot_col='Dead', max_subplots=3)
+            plot_col='Susceptible', max_subplots=3)
     plot_losses(history)
     return history
 
@@ -169,6 +168,6 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
 
-    max_epochs = 200
+    max_epochs = 500
 
-    network_fit(path_data, max_epochs=max_epochs)
+    network_fit(path_data, mlp_model(), max_epochs=max_epochs)

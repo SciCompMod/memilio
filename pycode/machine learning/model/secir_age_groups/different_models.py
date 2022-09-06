@@ -12,7 +12,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 
 
-def define_mlp_model():
+def mlp_model():
 
     # using Sequential, cause every layer got exactly on i/o-tensor
     model = Sequential()
