@@ -9,16 +9,16 @@ from datetime import date
 from math import ceil
 import random
 import os
-from progress.bar import Bar  # pip install progess
+from progress.bar import Bar # pip install progess
 from sklearn.model_selection import train_test_split
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import memilio.simulation as mio
+from sklearn.preprocessing import FunctionTransformer
 
-import seaborn as sns  # plot after normalization
-
+import seaborn as sns # plot after normalization
 
 def run_secir_simulation(days):
     """! Slightly modified example of Secir Simple.
@@ -39,7 +39,7 @@ def run_secir_simulation(days):
     # since we defined the number of days, we already know the dimension of our dataset.
     # We aim to save the compartment population for each day.
     # i.e. for days = 35 and len(compartments = 8) -> 35 x  8 array
-    data = np.zeros((days, len(compartments)))
+    data = np.zeros((days,len(compartments)))
     dataset = []
 
     start_day = 1
@@ -53,9 +53,10 @@ def run_secir_simulation(days):
 
     A0 = AgeGroup(0)
 
+
     # Define random values for damping coef and start date
-    # damping_factor = random.randrange(0, 0.7) # realistic damping values
-    # damping_date = ceil(random.random() * days) # scale with days since random is in Interval (0,1)
+    #damping_factor = random.randrange(0, 0.7) # realistic damping values
+    #damping_date = ceil(random.random() * days) # scale with days since random is in Interval (0,1)
 
     # save damping factor in vector. -1 for index correction
     # data[damping_date-1:,-1] = damping_factor
@@ -73,22 +74,17 @@ def run_secir_simulation(days):
     model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
     model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
-    # Initial number of people in each compartment with random numbers
-    model.populations[A0, Index_InfectionState(
-        State.Exposed)] = 60 * random.uniform(0.2, 1)
-    model.populations[A0, Index_InfectionState(
-        State.Carrier)] = 55 * random.uniform(0.2, 1)
-    model.populations[A0, Index_InfectionState(
-        State.Infected)] = 50 * random.uniform(0.2, 1)  # 0.1% infected
-    model.populations[A0, Index_InfectionState(
-        State.Hospitalized)] = 12 * random.uniform(0.2, 1)
-    model.populations[A0, Index_InfectionState(
-        State.ICU)] = 3 * random.uniform(0.2, 1)
-    model.populations[A0, Index_InfectionState(
-        State.Recovered)] = 50 * random.random()
+    # Initial number of people in each compartment with random numbers 
+    model.populations[A0, Index_InfectionState(State.Exposed)] = 60 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Carrier)] = 55 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Infected)] = 50 * random.uniform(0.2, 1) # 0.1% infected
+    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 12 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.ICU)] = 3 * random.uniform(0.2, 1)
+    model.populations[A0, Index_InfectionState(State.Recovered)] = 50 * random.random()
     model.populations[A0, Index_InfectionState(State.Dead)] = 0
     model.populations.set_difference_from_total(
         (A0, Index_InfectionState(State.Susceptible)), populations[0])
+
 
     # Compartment transition propabilities
     model.parameters.RelativeCarrierInfectability[A0] = 0.5
@@ -109,7 +105,7 @@ def run_secir_simulation(days):
         (num_groups, num_groups)) * 1
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
-    # model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+    #model.parameters.ContactPatterns.cont_freq_mat.add_damping(
     #     Damping(coeffs=np.r_[damping_factor], t=damping_date, level=0, type=0))
 
     # Apply mathematical constraints to parameters
@@ -129,7 +125,6 @@ def run_secir_simulation(days):
 
     return dataset
 
-
 def generate_data(num_runs, path, input_width, label_width, normalize_labels=False, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
 
@@ -138,8 +133,8 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
    @param save_data Option to deactivate the save of the dataset. Per default true.
    """
     data = {
-        "inputs": [],
-        "labels": []
+        "inputs" : [],
+        "labels" : []
     }
 
     days = input_width + label_width
@@ -150,44 +145,57 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
     for _ in range(0, num_runs):
         data_run = run_secir_simulation(days)
 
-        # drop columns susceptible und recovered
+         # drop columns susceptible und recovered 
         compartments = ['Susceptible', 'Exposed', 'Carrier',
-                        'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
-        df_data = pd.DataFrame(data=data_run, columns=compartments)
-        df_data.drop(['Susceptible', 'Recovered'], axis=1, inplace=True)
+                     'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
+        df_data = pd.DataFrame(data = data_run, columns = compartments )
+        df_data.drop(['Susceptible', 'Recovered'], axis = 1, inplace = True)
 
-        data_run = df_data.values  # update data_run
+        data_run = df_data.values         #update data_run 
 
         data["inputs"].append(data_run[:input_width])
-        # data["labels"].append(data_run[input_width:])
+        #data["labels"].append(data_run[input_width:])
         data['labels'].append((df_data.iloc[input_width:]).values)
         bar.next()
 
+    
     bar.finish()
 
     if save_data:
+        
+        transformer = FunctionTransformer(np.log1p, validate=True)
+        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(6, -1)
+        scaled_inputs = transformer.transform(inputs)
+        scaled_inputs = scaled_inputs.transpose().reshape(num_runs,input_width,6)
+        scaled_inputs_list = scaled_inputs.tolist()
+
+        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(6, -1)
+        scaled_labels = transformer.transform(labels)
+        scaled_labels = scaled_labels.transpose().reshape(num_runs,label_width,6)
+        scaled_labels_list = scaled_labels.tolist()
 
         # cast dfs to tensors
-        data["inputs"] = tf.stack(data["inputs"])
-        data["labels"] = tf.stack(data["labels"])
 
-        # normalize data
+        data['inputs'] = tf.stack(scaled_inputs_list)
+        data['labels'] = tf.stack(scaled_labels_list)
+ 
+
+        # normalize data 
         #data["inputs"] = normalize(data["inputs"])
-        # if normalize_labels:
+        #if normalize_labels:
         #   data["labels"] = normalize(data["labels"])
 
         #data = splitdata(data["inputs"], data["labels"])
 
         # check if data directory exists. If necessary create it.
-        if not os.path.isdir(path):
+        if not os.path.isdir(path): 
             os.mkdir(path)
 
         # save dict to json file
         with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
             pickle.dump(data, f)
 
-
-def splitdata(inputs, labels, split_train=0.7,
+def splitdata(inputs, labels, split_train=0.7, 
               split_valid=0.2, split_test=0.1):
     """! Split data in train, valid and test
 
@@ -211,29 +219,26 @@ def splitdata(inputs, labels, split_train=0.7,
     if n_train + n_valid + n_test != n:
         n_test = n - n_train - n_valid
 
-    inputs_train, inputs_valid, inputs_test = tf.split(
-        inputs, [n_train, n_valid, n_test], 0)
-    labels_train, labels_valid, labels_test = tf.split(
-        labels, [n_train, n_valid, n_test], 0)
+    inputs_train, inputs_valid, inputs_test = tf.split(inputs, [n_train, n_valid, n_test], 0)
+    labels_train, labels_valid, labels_test = tf.split(labels, [n_train, n_valid, n_test], 0)
 
     data = {
-        "train_inputs": inputs_train,
-        "train_labels": labels_train,
-        "valid_inputs": inputs_valid,
-        "valid_labels": labels_valid,
-        "test_inputs": inputs_test,
-        "test_labels": labels_test
+        "train_inputs" : inputs_train,
+        "train_labels" :labels_train,
+        "valid_inputs" : inputs_valid,
+        "valid_labels" :labels_valid,
+        "test_inputs" : inputs_test,
+        "test_labels" :labels_test
     }
 
     return data
-
 
 def normalize(data):
     """! # normalize input data with:
                                (value     − min_value)
                     data =  _________________________
                                (max_value − min_value)
-
+                    
     alternative is tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)
 
     @param data  dataset
@@ -241,27 +246,27 @@ def normalize(data):
     """
     # return tf.divide(
     #         tf.subtract(
-    #             data,
+    #             data, 
     #             tf.reduce_min(data)
-    #         ),
+    #         ), 
     #         tf.subtract(
-    #             tf.reduce_max(data),
+    #             tf.reduce_max(data), 
     #             tf.reduce_min(data)
     #         )
     #     )
     return tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)[0]
 
-
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
+
     path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+    path_data = os.path.join(os.path.dirname(os.path.realpath(os.path.dirname(os.path.realpath(path)))), 'data')
 
     input_width = 5
     label_width = 30
     num_runs = 1000
-    generate_data(num_runs, path_data, input_width,
-                  label_width, normalize_labels=False)
+    generate_data(num_runs, path_data, input_width, label_width, normalize_labels=False)
+    
+
