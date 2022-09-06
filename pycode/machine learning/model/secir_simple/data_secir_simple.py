@@ -156,10 +156,11 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
         df_data = pd.DataFrame(data=data_run, columns=compartments)
         df_data.drop(['Susceptible', 'Recovered'], axis=1, inplace=True)
 
-        # data_run = df_data.values  # update data_run
+        data_run = df_data.values  # update data_run
 
         data["inputs"].append(data_run[:input_width])
-        data["labels"].append(df_data.to_numpy()[input_width:])
+        # data["labels"].append(data_run[input_width:])
+        data['labels'].append((df_data.iloc[input_width:]).values)
         bar.next()
 
     bar.finish()
@@ -171,9 +172,9 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
         data["labels"] = tf.stack(data["labels"])
 
         # normalize data
-        data["inputs"] = normalize(data["inputs"])
-        if normalize_labels:
-            data["labels"] = normalize(data["labels"])
+        #data["inputs"] = normalize(data["inputs"])
+        # if normalize_labels:
+        #   data["labels"] = normalize(data["labels"])
 
         #data = splitdata(data["inputs"], data["labels"])
 
@@ -261,6 +262,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 500
+    num_runs = 1000
     generate_data(num_runs, path_data, input_width,
-                  label_width, normalize_labels=True)
+                  label_width, normalize_labels=False)
