@@ -531,7 +531,8 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
  */
 mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Date start_date, mio::Date end_date,
                               const fs::path& data_dir,
-                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
+                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
+                              int vacc_campaign_szenario)
 {
     namespace de = mio::regions::de;
 
@@ -543,9 +544,10 @@ mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Dat
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(mio::osecirvvs::read_input_data_county(
-        counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
-        (data_dir / "pydata" / "Germany").string(), mio::get_offset_in_days(end_date, start_date)));
+    BOOST_OUTCOME_TRY(
+        mio::osecirvvs::read_input_data_county(counties, start_date, county_ids, scaling_factor_infected,
+                                               scaling_factor_icu, (data_dir / "pydata" / "Germany").string(),
+                                               mio::get_offset_in_days(end_date, start_date), vacc_campaign_szenario));
     //set_synthetic_population_data(counties);
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
@@ -679,9 +681,6 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
 {
     const auto summer_date = mio::Date(2022, 7, 1);
 
-    mio::unused(vacc_campaign_szenario);
-    mio::unused(vacc_effectiveness_szenario);
-
     //global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
@@ -695,7 +694,7 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
     //graph of counties with populations and local parameters
     //and migration between counties
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
-    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
+    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph, vacc_campaign_szenario));
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
     return mio::success(params_graph);

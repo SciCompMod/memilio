@@ -62,14 +62,7 @@ void draw_sample_demographics(Model& model)
             }
             if (model.populations[{i, InfectionState::Recovered}] < 0.0 ||
                 model.populations[{i, InfectionState::TemporaryImmunity2}] < 0.0) {
-                std::cout << " Recovered anzahl =   " << model.populations[{i, InfectionState::Recovered}] << std::endl;
-                std::cout << " Timm2 anzahl =   " << model.populations[{i, InfectionState::TemporaryImmunity2}]
-                          << std::endl;
-                for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
-                    std::cout << " Compartment  " << inf_state << " hat Wert "
-                              << model.populations[{i, inf_state}].draw_sample() << std::endl;
-                }
-                log_error("Negative Compartment after sampling.");
+                log_error("Negative compartment after sampling.");
             }
             // std::cout << " get_group_total =   " << model.populations.get_group_total(i) << std::endl;
             // std::cout << " difference =   " << group_total - model.populations.get_group_total(i) << std::endl;

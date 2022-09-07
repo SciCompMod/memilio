@@ -546,6 +546,10 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedImmunity>()[AgeGroup(0)];
     auto vaccination_distance = (int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
+    // calculating the current rate of vaccinations based on the last (num_days_vacc_rate) days of simulation.
+    // scaling by the number of population is done later, when population is set
+    const int num_days_vacc_rate = 30;
+
     // iterate over regions (e.g., counties)
     for (size_t i = 0; i < model.size(); ++i) {
         // iterate over age groups in region
@@ -606,6 +610,28 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                                               model[region_idx].parameters.template get<ImmunityInterval2>()[{age}])) {
                 model[region_idx].parameters.template get<VaccinationTemporaryImm2>()[{age}] -=
                     vacc_data_entry.num_vaccinations_refreshed - vacc_data_entry.num_vaccinations_refreshed_2;
+            }
+
+            if (date_df == offset_date_by_days(date, -num_days_vacc_rate)) {
+                model[region_idx].parameters.template get<RateOfDailyBoosterVaccinations>()[{age}] -=
+                    vacc_data_entry.num_vaccinations_refreshed_2 / num_days_vacc_rate;
+                model[region_idx].parameters.template get<RateOfDailyImprovedVaccinations>()[{age}] -=
+                    vacc_data_entry.num_vaccinations_refreshed / num_days_vacc_rate;
+                model[region_idx].parameters.template get<RateOfDailyPartialVaccinations>()[{age}] -=
+                    (vacc_data_entry.num_first_vaccinations_completed +
+                     vacc_data_entry.num_second_vaccinations_completed) /
+                    num_days_vacc_rate;
+            }
+
+            if (date_df == date) {
+                model[region_idx].parameters.template get<RateOfDailyBoosterVaccinations>()[{age}] +=
+                    vacc_data_entry.num_vaccinations_refreshed_2 / num_days_vacc_rate;
+                model[region_idx].parameters.template get<RateOfDailyImprovedVaccinations>()[{age}] +=
+                    vacc_data_entry.num_vaccinations_refreshed / num_days_vacc_rate;
+                model[region_idx].parameters.template get<RateOfDailyPartialVaccinations>()[{age}] +=
+                    (vacc_data_entry.num_first_vaccinations_completed +
+                     vacc_data_entry.num_second_vaccinations_completed) /
+                    num_days_vacc_rate;
             }
 
             for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
@@ -686,31 +712,6 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
             }
         }
     }
-
-    // // Calc the number of vaccinated people in Timm1 und Timm2
-    // for (size_t i = 0; i < model.size(); ++i) {
-    //     // iterate over age groups in region
-    //     for (auto g = AgeGroup(0); g < num_groups; ++g) {
-
-    //         // model[i].parameters.template get<VaccinationTemporaryImm1>().resize(SimulationDay(num_days + 1));
-    //         model[i].parameters.template get<VaccinationTemporaryImm1>()[{g}] =
-    //             model[i].parameters.template get<DailyPartialVaccination>()[{g, SimulationDay(num_days)}] -
-    //             model[i].parameters.template get<DailyPartialVaccination>()[{
-    //                 g, SimulationDay(num_days - model[i].parameters.template get<ImmunityInterval1>()[{g}])}];
-
-    //         std::cout << "No of partial vacc " << model[i].parameters.template get<VaccinationTemporaryImm1>()[{g}]
-    //                   << std::endl;
-
-    //         model[i].parameters.template get<VaccinationTemporaryImm2>()[{g}] =
-    //             model[i].parameters.template get<DailyFullVaccination>()[{g, SimulationDay(num_days)}] -
-    //             model[i].parameters.template get<DailyFullVaccination>()[{
-    //                 g, SimulationDay(num_days - model[i].parameters.template get<ImmunityInterval2>()[{g}])}];
-
-    //         std::cout << "No of full vacc " << model[i].parameters.template get<VaccinationTemporaryImm2>()[{g}]
-    //                   << std::endl;
-    //     }
-    // }
-    //
 
     return success();
 }
