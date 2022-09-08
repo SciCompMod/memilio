@@ -21,16 +21,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#include "secir/parameter_studies.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mio_mpi.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/io/io.h"
+#include "memilio/io/json_serializer.h"
+#include "memilio/io/mobility_io.h"
 #include "memilio/epidemiology/regions.h"
+#include "secir/parameter_studies.h"
 #include "secir/secir_parameters_io.h"
 #include "secir/secir_result_io.h"
-#include "memilio/io/mobility_io.h"
 #include "boost/filesystem.hpp"
-#ifdef MEMILIO_HAS_MPI
-#include "mpi.h"
-#endif
+#include "json/value.h"
+
 #include <cstdio>
 #include <iomanip>
 
@@ -643,6 +646,8 @@ auto make_graph_no_edges(const std::vector<mio::SecirModel>& params, const std::
     return graph;
 }
 
+#include <limits>
+
 /**
  * Save the result of a single parameter study run.
  * Creates a new subdirectory for this run.
@@ -746,20 +751,112 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
             return make_graph_no_edges(params, county_ids);
         };
         BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
+            mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitValues));
         BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
+            mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitValues));
         BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
+            mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitValues));
         BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
+            mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitValues));
         BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
+            mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitValues));
     }
     return mio::success();
 }
 
 #ifdef MEMILIO_HAS_MPI
+inline void adhoc_byte_serializer(const std::vector<std::vector<mio::SecirModel>>& ensemble_params,
+                                  std::vector<char>& bytes, std::vector<size_t>& offsets)
+{
+    offsets = {0};
+    for (auto& run_params : ensemble_params) {
+        for (auto& node_params : run_params) {
+            // read params as json and convert to string
+            auto json = mio::serialize_json(node_params).value();
+
+            std::stringstream ss;
+            auto writer = Json::StreamWriterBuilder{}.newStreamWriter();
+            writer->write(json, &ss);
+            auto string = ss.str();
+            // remember offsets
+            offsets.push_back(string.size() + offsets.back());
+            // copy/append string to bytes
+            std::copy(string.begin(), string.end(), std::back_inserter(bytes));
+        }
+    }
+}
+
+inline void adhoc_byte_deserializer(const std::vector<char>& bytes, const std::vector<size_t>& offsets,
+                                    std::vector<std::vector<mio::SecirModel>>& ensemble_params)
+{
+    Json::Value js;
+    std::string errors;
+    auto parser = Json::CharReaderBuilder{}.newCharReader();
+    // determine number of runs via number of ensemble params per run
+    size_t num_nodes = ensemble_params.front().size();
+    size_t num_runs  = (offsets.size() - 1) / num_nodes;
+    ensemble_params.resize(ensemble_params.size() + num_runs); // mind leading 0
+    for (size_t i = 0; i < num_runs; i++) {
+        auto& run_params = ensemble_params[ensemble_params.size() - num_runs + i];
+        run_params.reserve(num_nodes);
+        for (size_t j = 0; j < num_nodes; j++) {
+            size_t n         = num_nodes * i + j; // unwrap offsets
+            const auto begin = bytes.data() + offsets[n], end = bytes.data() + offsets[n + 1];
+            parser->parse(begin, end, &js, &errors);
+            // TODO: could check whether deserialize was successfull
+            run_params.push_back(mio::deserialize_json(js, mio::Tag<mio::SecirModel>{}).value());
+        }
+    }
+}
+
+/**
+ * @brief Gather the parameters of a parallel ensemble run on a single rank.
+ *
+ * @param ensemble_params [INOUT] Local results. On the root rank this will accumulate all local results.
+ * @param root Rank on comm that should gather all local results.
+ * @param comm Communicator to gather results on.
+ * @param tag Tag to use for communication. Uses tag, tag+1 and tag+2.
+ */
+void gather_results(std::vector<std::vector<mio::SecirModel>>& ensemble_params, const int& root = 0,
+                    const MPI_Comm& comm = MPI_COMM_WORLD, const std::array<int, 3> tags = {8, 9, 10})
+{
+    // Note: this functions assumes ensamble_params[run_id] has the same size for all run_ids and ranks.
+    int my_rank, my_size;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &my_size);
+    if (my_size == 1)
+        return; // no gathering needed with a single rank
+
+    // TODO: replace adhoc_byte_serializer after implementing a generic byte serializer
+    std::vector<char> bytes;
+    std::vector<size_t> bytes_offsets;
+    if (my_rank != root) {
+        // send params to root
+        MPI_Request requests[3];
+        adhoc_byte_serializer(ensemble_params, bytes, bytes_offsets);
+        size_t bytes_offsets_size = bytes_offsets.size();
+        MPI_Isend(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, root, tags[0], comm, requests);
+        MPI_Isend(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, root, tags[1], comm, requests + 1);
+        MPI_Isend(bytes.data(), bytes.size(), MPI_CHAR, root, tags[2], comm, requests + 2);
+        MPI_Waitall(3, requests, MPI_STATUSES_IGNORE);
+    }
+    else {
+        // recieve ranks in any order
+        for (int rank = 1; rank < my_size; rank++) {
+            MPI_Status status;
+            size_t bytes_offsets_size;
+
+            MPI_Recv(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, MPI_ANY_SOURCE, tags[0], comm, &status);
+            bytes_offsets.resize(bytes_offsets_size);
+            MPI_Recv(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, status.MPI_SOURCE, tags[1], comm,
+                     MPI_STATUS_IGNORE);
+            bytes.resize(bytes_offsets.back()); // last offset == total size
+            MPI_Recv(bytes.data(), bytes_offsets.back(), MPI_CHAR, status.MPI_SOURCE, tags[2], comm, MPI_STATUS_IGNORE);
+
+            adhoc_byte_deserializer(bytes, bytes_offsets, ensemble_params);
+        }
+    }
+}
 /**
  * @brief Gather the results of a parallel ensemble run on a single rank.
  *
@@ -787,12 +884,24 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
 
     // assert that each TimeSeries has the same dimensions
     // this should be true after interpolate_simulation_result()
-    for (auto& run_result : ensemble_results) {
-        for (auto& node_result : run_result) {
-            assert(num_rows == node_result.get_num_rows());
-            assert(num_timepoints == node_result.get_num_time_points());
+    assert([&] {
+        bool b = true;
+        for (auto& run_result : ensemble_results) {
+            for (auto& node_result : run_result) {
+                b &= (num_rows == node_result.get_num_rows());
+            }
         }
-    }
+        return b;
+    }());
+    assert([&] {
+        bool b = true;
+        for (auto& run_result : ensemble_results) {
+            for (auto& node_result : run_result) {
+                b &= (num_timepoints == node_result.get_num_time_points());
+            }
+        }
+        return b;
+    }());
 
     std::vector<double> buffer(ts_size * num_ts);
     // send all local ensemble_results to root, using buffer
@@ -811,7 +920,7 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
         ensemble_results.reserve(ensemble_results.size() * my_size);
         // create buffer of TimeSeries with correct data size
         std::vector<mio::TimeSeries<double>> ts_copy_buffer(ensemble_results[0]);
-        for (int rank_itr = 0; rank_itr < my_size - 1; rank_itr++) {
+        for (int rank = 0; rank < my_size - 1; rank++) {
             auto itr = buffer.begin();
             // recieve local results in any order
             MPI_Recv(buffer.data(), buffer.size(), MPI_DOUBLE, MPI_ANY_SOURCE, tag, comm, MPI_STATUS_IGNORE);
@@ -826,7 +935,7 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
         }
     }
 }
-#endif
+#endif // MEMILIO_HAS_MPI
 
 /**
  * Different modes for running the parameter study.
@@ -836,6 +945,19 @@ enum class RunMode
     Load,
     Save,
 };
+
+template <class Graph>
+void write_sim_graph(std::ostream&& out, Graph& g)
+{
+    for (auto& v : g.nodes()) { // v == Node<SecirSimulation>
+        auto s = mio::serialize_json(v.property.get_simulation().get_model()).value();
+        out << "Node :: " << v.id << "\n" << s << "\n";
+    } // not printed : m_last_state, m_t0
+    for (auto& e : g.edges()) {
+        auto s = mio::serialize_json(e.property.get_parameters()).value();
+        out << "Edge :: " << e.start_node_idx << "->" << e.end_node_idx << "\n" << s << "\n";
+    } // not printed : m_migrated, m_return_times, m_return_migrated, m_t_last_dynamic_npi_check, m_dynamic_npi
+}
 
 /**
  * Run the parameter study.
@@ -852,31 +974,49 @@ enum class RunMode
  */
 #ifdef MEMILIO_HAS_MPI
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
-                        int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+                        const int& num_runs, const size_t& run_id, const int& root = 0,
+                        const MPI_Comm& comm = MPI_COMM_WORLD)
 #else
-mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
-#endif
+mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
+                        const int num_runs)
+#endif // MEMILIO_HAS_MPI
 {
     const auto start_date   = mio::Date(2020, 12, 12);
     const auto num_days_sim = 20.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
 
 #ifdef MEMILIO_HAS_MPI
     int my_rank;
     MPI_Comm_rank(comm, &my_rank);
     // shift run index so that results are saved in different directories for each run
-    auto run_idx = size_t(num_runs * my_rank);
+    auto run_idx = run_id;
 #else
     auto run_idx = size_t(0);
-#endif
+#endif // MEMILIO_HAS_MPI
 
     //create or load graph
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
-        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
-        params_graph = created;
+#ifdef MEMILIO_HAS_MPI
+        if (my_rank == root) {
+#endif // MEMILIO_HAS_MPI
+            BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
+            BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+            params_graph = created;
+#ifdef MEMILIO_HAS_MPI
+            char success = 1;
+            MPI_Bcast(&success, 1, MPI_CHAR, root, comm);
+        }
+        else {
+            char success;
+            MPI_Bcast(&success, 1, MPI_CHAR, root, comm);
+            if (!success) {
+                return mio::failure(mio::IOStatus());
+            }
+            BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+            params_graph = loaded;
+        }
+#endif // MEMILIO_HAS_MPI
     }
     else {
         BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
@@ -887,7 +1027,6 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
         return n.id;
     });
-
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
@@ -895,8 +1034,19 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::SecirModel>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto save_result_result = mio::IOResult<void>(mio::success());
+    auto save_result_result   = mio::IOResult<void>(mio::success());
+    auto result_dir_sim_graph = result_dir / "parameters_graph";
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_sim_graph.string()));
     parameter_study.run([&](auto results_graph) {
+#ifdef MEMILIO_HAS_MPI
+        // TODO: consider alternatives for the following call - it fixes having different results when changing the number of ranks (but with the same seed)
+        // (e.g. if a run req. 500 random numbers, but 600 numbers are cached per run, then
+        //  each run after the first would be offset by (additively) 100 numbers, compared to a fully parallel run.
+        //  the skip() call would move the cache to the beginning of the next 600 numbers to fix this)
+        mio::thread_local_rng().skip();
+#endif // MEMILIO_HAS_MPI
+        write_sim_graph(std::ofstream((result_dir_sim_graph / ("Run" + std::to_string(run_idx))).string()),
+                        results_graph);
         ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
         ensemble_params.emplace_back();
@@ -912,33 +1062,48 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         }
         ++run_idx;
     });
+    // check whether save_result was successfull,
     BOOST_OUTCOME_TRY(save_result_result);
 
 #ifdef MEMILIO_HAS_MPI
     gather_results(ensemble_results, root, comm);
+    gather_results(ensemble_params, root, comm);
     if (my_rank == root) {
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
     }
 #else
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
-#endif
+#endif // MEMILIO_HAS_MPI
     return mio::success();
+}
+
+/**
+ * @brief splits runs across ranks (biased towards first ranks on uneven splits), and returns a run id.
+ * 
+ * @param num_runs the total number of runs, replaced by the number for the given rank.
+ * @param rank the calling rank
+ * @param size total size of the communicator
+ * @return unique run id, starting at 0 and inreasing by the returned num_rums with the rank.
+ */
+int split_runs(int& num_runs, const int rank, const int size)
+{
+    int local_num_runs = num_runs / size; // int division
+    const int residual = num_runs - local_num_runs * size;
+    if (rank < residual) {
+        num_runs = ++local_num_runs;
+        return local_num_runs * rank;
+    }
+    else {
+        num_runs = local_num_runs;
+        return local_num_runs * rank + residual;
+    }
 }
 
 int main(int argc, char** argv)
 {
-#ifdef MEMILIO_HAS_MPI
-    MPI_Init(&argc, &argv);
-    MPI_Comm comm = MPI_COMM_WORLD;
+    int num_runs      = 5;
+    short return_code = 0;
 
-    int my_rank, my_size;
-    MPI_Comm_rank(comm, &my_rank);
-    MPI_Comm_size(comm, &my_size);
-
-    // currently, 14899 random numbers are generated on SAVE, and 14898 on LOAD
-    const size_t rng_cache_size = 20000;
-    mio::initialize_rng_cache(rng_cache_size);
-#endif
     //TODO: proper command line interface to set:
     //- number of runs
     //- start and end date (may be incompatible with runmode::load)
@@ -973,18 +1138,52 @@ int main(int argc, char** argv)
         printf("\tStore the results in <result_dir>\n");
         printf("paper1 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
-
-#ifdef MEMILIO_HAS_MPI
-        MPI_Finalize();
-#endif
         return 0;
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
 // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
 #ifdef MEMILIO_HAS_MPI
-    if (my_rank == 0)
-#endif
+    MPI_Init(&argc, &argv);
+    int world_rank, world_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+    int run_id = split_runs(num_runs, world_rank, world_size);
+
+    // create a subcommunicator of ranks with at least 1 run
+    MPI_Comm comm;
+    MPI_Comm_split(MPI_COMM_WORLD, num_runs > 0, world_rank, &comm);
+
+    // continue only with ranks with positive num_runs
+    if (num_runs == 0) {
+        mio::log_info("Rank {} will idle.", world_rank);
+        MPI_Bcast(&return_code, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Finalize();
+        return return_code;
+    }
+
+    // from now on use subcomm for all computations
+    int my_rank, my_size, my_root;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &my_size);
+    // use last rank as root, since it (potentially) has less runs to compute
+    my_root = my_size - 1;
+
+    if (my_size < world_size && my_rank == my_root) {
+        mio::log_warning("Too many ranks ({}) for the number of runs ({}). Some ranks will idle.", world_size, my_size);
+    }
+
+    // currently, 14899 random numbers are generated on SAVE, and 14898 on LOAD
+    const size_t rng_cache_size = 20000;
+    mio::initialize_rng_cache(num_runs * rng_cache_size,
+                              {432594781, 856020163, 1893783597, 1080248813, 3012324386, 794391132}, 0, comm);
+    mio::thread_local_rng().chunk_size(rng_cache_size);
+    (void)mio::write_json(((fs::path)result_dir / ("RNG_" + std::to_string(my_rank))).string(),
+                          mio::thread_local_rng());
+
+    if (my_rank == my_root)
+#endif // MEMILIO_HAS_MPI
     {
         printf("Seeds: ");
         for (auto s : mio::thread_local_rng().get_seeds()) {
@@ -993,18 +1192,23 @@ int main(int argc, char** argv)
         printf("\n");
     }
 
-    auto result = run(mode, data_dir, save_dir, result_dir);
+#ifdef MEMILIO_HAS_MPI
+    auto result = run(mode, data_dir, save_dir, result_dir, num_runs, run_id, my_root, comm);
+    if (!result && my_rank == my_root) {
+        // signal other ranks that loading failed
+        char success = 0;
+        MPI_Bcast(&success, 1, MPI_CHAR, my_root, comm);
+    }
+#else
+    auto result = run(mode, data_dir, save_dir, result_dir, num_runs);
+#endif // MEMILIO_HAS_MPI
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
-
-#ifdef MEMILIO_HAS_MPI
-        MPI_Finalize();
-#endif
-        return -1;
+        return_code = -1;
     }
-
 #ifdef MEMILIO_HAS_MPI
+    MPI_Bcast(&return_code, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Finalize();
-#endif
-    return 0;
+#endif // MEMILIO_HAS_MPI
+    return return_code;
 }
