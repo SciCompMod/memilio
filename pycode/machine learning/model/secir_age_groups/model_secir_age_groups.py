@@ -25,11 +25,15 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
     # 36 damping entries  and 48 age dependent compartments
     input_width = int((inputs.shape[1] - 36) / 48)
-    label_width = int(labels.shape[1] / 48)
+    #label_width = int(labels.shape[1] / 48)
+    label_width = int(labels.shape[1] / 36)
 
     plt.figure(figsize=(12, 8))
-    cols = np.array(['Susceptible', 'Exposed', 'Carrier',
-                     'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])
+    # cols = np.array(['Susceptible', 'Exposed', 'Carrier',
+    #                'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])
+    cols = np.array(['Exposed', 'Carrier',
+                     'Infected', 'Hospitalized', 'ICU', 'Dead'])
+
     plot_col_index = np.where(cols == plot_col)[0][0]
     max_n = min(max_subplots, inputs.shape[0])
 
@@ -40,17 +44,23 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
         input_array = inputs[n].numpy()
         label_array = labels[n].numpy()
-        plt.plot(np.arange(0, input_width), input_array[plot_col_index:inputs.shape[1] - 36:48],
-                 label='Inputs', marker='.', zorder=-10)
-        plt.scatter(np.arange(input_width, input_width+label_width), label_array[plot_col_index:-1:48],
-                    edgecolors='k', label='Labels', c='#2ca02c', s=64)
+        plt.plot(
+            np.arange(0, input_width),
+            input_array[plot_col_index: inputs.shape[1] - 36: 48],
+            label='Inputs', marker='.', zorder=-10)
+        plt.scatter(
+            np.arange(input_width, input_width + label_width),
+            #label_array[plot_col_index: -1: 48],
+            label_array[plot_col_index: -1: 36],
+            edgecolors='k', label='Labels', c='#2ca02c', s=64)
 
         if model is not None:
             input_series = tf.expand_dims(inputs[n], axis=0)
             pred = model(input_series)
             pred = pred[0].numpy()
             plt.scatter(np.arange(input_width, input_width+label_width),
-                        pred[plot_col_index:-1:48],
+                        # pred[plot_col_index:-1:48],
+                        pred[plot_col_index:-1:36],
                         marker='X', edgecolors='k', label='Predictions',
                         c='#ff7f0e', s=64)
 
@@ -59,7 +69,7 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
 
-def network_fit(path, model, max_epochs=30, early_stop=500):
+def network_fit(path, model, max_epochs=30, early_stop=3000):
 
     if not os.path.isfile(os.path.join(path, 'data_secir_age_groups.pickle')):
         ValueError("no dataset found in path: " + path)
@@ -82,11 +92,27 @@ def network_fit(path, model, max_epochs=30, early_stop=500):
     contact_matrices_test = flat_input(contact_matrices['test'])
 
     train_inputs = tf.concat(
-        [train_inputs_compartments, contact_matrices_train], axis=1, name='concat')
+        [tf.cast(train_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_train, tf.float32)],
+        axis=1, name='concat')
     valid_inputs = tf.concat(
-        [valid_inputs_compartments, contact_matrices_valid], axis=1, name='concat')
+        [tf.cast(valid_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_valid, tf.float32)],
+        axis=1, name='concat')
     test_inputs = tf.concat(
-        [test_inputs_compartments, contact_matrices_test], axis=1, name='concat')
+        [tf.cast(test_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_test, tf.float32)],
+        axis=1, name='concat')
+
+    # train_inputs = tf.concat(
+    #     [train_inputs_compartments, contact_matrices_train],
+    #     axis=1, name='concat')
+    # valid_inputs = tf.concat(
+    #     [valid_inputs_compartments, contact_matrices_valid],
+    #     axis=1, name='concat')
+    # test_inputs = tf.concat(
+    #     [test_inputs_compartments, contact_matrices_test],
+    #     axis=1, name='concat')
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
@@ -95,21 +121,46 @@ def network_fit(path, model, max_epochs=30, early_stop=500):
     # mc = ModelCheckpoint("model_secir_age_group" + '.h5', monitor=['mse'],
     #                      mode='min', save_best_only=True)
 
-    model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                  optimizer=tf.keras.optimizers.Nadam(),
-                  metrics=['mse', 'mae'])
+    model.compile(  # loss=tf.keras.losses.MeanSquaredError(),
+        loss=tf.keras.losses.MeanAbsolutePercentageError(),
+        optimizer=tf.keras.optimizers.Adam(),
+        metrics=['mse', 'mae'])
 
     history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                         validation_data=(
                             valid_inputs, valid_labels),
                         callbacks=[early_stopping])
 
-    plotCol(test_inputs, test_labels, model=model,
-            plot_col='Susceptible', max_subplots=3)
     plot_losses(history)
+    # plotCol(test_inputs, test_labels, model=model,
+    # lot_col='Susceptible', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Dead', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Hospitalized', max_subplots=3)
+    plotCol(test_inputs, test_labels, model=model,
+            plot_col='Infected', max_subplots=3)
+    test_statistic(model, test_inputs, test_labels)
+
     return history
 
 # simple benchmarking
+
+
+def test_statistic(model, test_inputs, test_labels):
+    pred = model(test_inputs)
+    pred = pred.numpy()
+    test_labels = np.array(test_labels)
+
+    diff = pred - test_labels
+    anteil = (abs(diff))/abs(test_labels)
+
+    anteil_6 = anteil.transpose(1, 0)
+    df = pd.DataFrame(data=anteil_6)
+    df = df.transpose()
+
+    mean_percentage = pd.DataFrame(data=(df.mean().values)*100)
+    print('Mean percentage error: ', mean_percentage.mean())
 
 
 def timereps(reps, model, input):
@@ -160,13 +211,14 @@ def plot_losses(history):
     plt.savefig('losses plot.pdf')
 
 
+print('x')
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_groups')
 
     max_epochs = 500
 
