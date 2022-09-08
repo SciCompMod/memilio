@@ -53,7 +53,7 @@ def merge_eisenach(map_data : gpd.GeoDataFrame):
     # remove Eisenach and return
     return map_data.drop(map_data[eisenach].index.values[0])
 
-def get_county_data(file, date, column, filters='', file_format='json'):
+def get_county_data(file, date, column, filters='', output='sum', file_format='json'):
     """ Reads county data from a json or hdf5 file. County data can be time
     series data where a particular date is extracted or single time data which
     is used rightaway. If the file contains multiple features per county, a 
@@ -65,7 +65,12 @@ def get_county_data(file, date, column, filters='', file_format='json'):
         no date information is in the input table.
     @param column Column with values that will be plotted.
     @param filters Dictionary with columns and values for filtering rows.
-        If a column get assigned an empty string then all values are summed up.
+        If a column get assigned an empty string then all values are taken.
+    @param output [Either 'sum' or 'matrix'] If 'sum' is chosen all selected 
+        values for one county will be summed up and only 'column' is returned
+        for each county. If 'matrix' is chosen, then also the filter columns
+        will be returned with the corresponding entries for each selected 
+        criterion or value.
     @param file_format File format; either json or h5.
     """
     input_file = os.path.join(os.getcwd(), file)
@@ -84,15 +89,25 @@ def get_county_data(file, date, column, filters='', file_format='json'):
     if 'Date' in df.columns:
         if df['Date'].nunique() > 1:
             df = df[df['Date'] == date_str]
-    filter = df.index > -1
-    for col, val in filters.items():
-        filter = filter & (df[col].isin(val))
+    dffilter = df.index > -1
+    if filters != '':
+        for col, val in filters.items():
+            dffilter = dffilter & (df[col].isin(val))
 
-    
+    if output == 'sum':
+        return df[dffilter].groupby(['ID_County']).agg({column : sum}).reset_index()
+    elif output == 'matrix':
+        if filters != '':
+            return df[dffilter].loc[:,['ID_County'] +  list(filters.keys()) + [column]]
+        else:
+            return df
+    else:
+        print('Error')
+        # raise gd.DataError("Chose output form.")
 
-    return df[filter].reset_index(drop=True)[['ID_County', column]]
+    return pd.DataFrame()
 
-get_county_data('tools/data/raw/all_county_agevacc_vacc_all_dates', dt.date(2022, 1, 1), 'Vacc_partially', {'Age_RKI' : ['05-11']})
+get_county_data('tools/data/raw/all_county_agevacc_vacc_all_dates', dt.date(2022, 1, 1), 'Vacc_partially', {'Age_RKI' : ['05-11','12-17']})
 
 def plot(
     date : dt.date,
