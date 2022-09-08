@@ -49,11 +49,11 @@ def merge_eisenach(map_data : gpd.GeoDataFrame):
     """ 
     wartburg = map_data.ARS == '16063'
     eisenach = map_data.ARS == '16056'
-    map_data.at[wartburg, 'geometry'] = [map_data[wartburg].geometry.values[0].union(map_data[eisenach].geometry.values[0])]
+    map_data.loc[wartburg, 'geometry'] = [map_data[wartburg].geometry.values[0].union(map_data[eisenach].geometry.values[0])]
     # remove Eisenach and return
     return map_data.drop(map_data[eisenach].index.values[0])
 
-def get_county_data(file, date, column, filters='', output='sum', file_format='json'):
+def get_county_data(file, date, column, filters=None, output='sum', file_format='json'):
     """ Reads county data from a json or hdf5 file. County data can be time
     series data where a particular date is extracted or single time data which
     is used rightaway. If the file contains multiple features per county, a 
@@ -65,7 +65,7 @@ def get_county_data(file, date, column, filters='', output='sum', file_format='j
         no date information is in the input table.
     @param column Column with values that will be plotted.
     @param filters Dictionary with columns and values for filtering rows.
-        If a column get assigned an empty string then all values are taken.
+        If a column or all filters are None then all values are taken.
     @param output [Either 'sum' or 'matrix'] If 'sum' is chosen all selected 
         values for one county will be summed up and only 'column' is returned
         for each county. If 'matrix' is chosen, then also the filter columns
@@ -73,7 +73,7 @@ def get_county_data(file, date, column, filters='', output='sum', file_format='j
         criterion or value.
     @param file_format File format; either json or h5.
     """
-    input_file = os.path.join(os.getcwd(), file)
+    input_file = os.path.join(os.getcwd(), file[1])
     if file_format == 'json':
         df = pd.read_json(input_file + '.' + file_format)
     elif file_format == 'h5':
@@ -89,15 +89,17 @@ def get_county_data(file, date, column, filters='', output='sum', file_format='j
     if 'Date' in df.columns:
         if df['Date'].nunique() > 1:
             df = df[df['Date'] == date_str]
-    dffilter = df.index > -1
-    if filters != '':
-        for col, val in filters.items():
-            dffilter = dffilter & (df[col].isin(val))
+    dffilter = pd.Series([True for i in range(len(df))], index = df.index)
+    if filters != None:
+        for col, vals in filters.items():
+            if vals == None:
+                vals = df[col].unique()
+            dffilter = dffilter & (df[col].isin(vals))
 
     if output == 'sum':
         return df[dffilter].groupby(['ID_County']).agg({column : sum}).reset_index()
     elif output == 'matrix':
-        if filters != '':
+        if filters != None:
             return df[dffilter].loc[:,['ID_County'] +  list(filters.keys()) + [column]]
         else:
             return df
@@ -107,119 +109,67 @@ def get_county_data(file, date, column, filters='', output='sum', file_format='j
 
     return pd.DataFrame()
 
-get_county_data('tools/data/raw/all_county_agevacc_vacc_all_dates', dt.date(2022, 1, 1), 'Vacc_partially', {'Age_RKI' : ['05-11','12-17']})
-
 def plot(
+    files : list,
     date : dt.date,
-    filter_state : int = None, # 1-16: id of state, None: all states
-    filter_agegroup : int = None, # 0: 0-14, 1: 15-59, 2: 60+, None: all groups
-    filter_vacc_state : int = 1, # 0: partial, 1: full, 2: booster 
+    column : str = '',
+    filters = None,
+    relative = True
 ):
 
 
-    #load and filter RKI data
-    
+    df = []
+    for file in files.items():
+        df.append(get_county_data(file, date=date, column=column, filters=filters))
+        df[-1].rename(columns={column : 'Count'}, inplace=True)
 
-    rki_filter = rki_data.Date == date_str
-    if not filter_agegroup is None:
-        if filter_agegroup == 0:
-            age_strs = ['5-11','12-17']#['0-4', '5-14']
-        elif filter_agegroup == 1:
-            age_strs = ['18-59']#['15-34', '35-59']
-        else:
-            age_strs = ['60+']#['60-79', '80-99']
-        rki_filter = rki_filter & (rki_data.Age_RKI.isin(age_strs))
-    rki_data = rki_data[rki_filter]
-    if filter_vacc_state == 0:
-        col_name = 'Vacc_partially'
-    elif filter_vacc_state == 1:
-        col_name = 'Vacc_completed'
-    else:
-        col_name = 'Vacc_refreshed'
-    rki_data['Count'] = rki_data[col_name]
+    # read and filter population data
+    if relative:
+        pop_data = pd.read_json(os.path.join(os.getcwd(), 'tools/data/county_current_population_dim401.json'))
+        if 'Age_RKI' in filters.keys() and filters['Age_RKI'] != None:
+            print('Error. Functionality needs to be implemented.')
+        # TODO: 
+        # Use create_intervals_mapping() (extract first) and 
+        # functionality from get_vaccination_data()
 
-    #load and filter sanitized data
-    new_data = pd.read_json('data/sanitized/all_county_agevacc_vacc_all_dates.json')
-    new_filter = new_data.Date == date_str
-    if not filter_agegroup is None:
-        if filter_agegroup == 0:
-            age_strs = ['5-11','12-17']#['0-4', '5-14']
-        elif filter_agegroup == 1:
-            age_strs = ['18-59']#['15-34', '35-59']
-        else:
-            age_strs = ['60+']#['60-79', '80-99']
-        new_filter = new_filter & (new_data.Age_RKI.isin(age_strs))
-    new_data = new_data[new_filter]
-    if filter_vacc_state == 0:
-        col_name = 'Vacc_partially'
-    elif filter_vacc_state == 1:
-        col_name = 'Vacc_completed'
-    else:
-        col_name = 'Vacc_refreshed'
-    new_data['Count'] = new_data[col_name]
-
-    #read and filter pop data
-    pop_data = pd.read_json('data/county_current_population_dim401.json')
-    pop_filter = pd.Series([True for i in range(len(pop_data))])
-    if not filter_agegroup is None:
-        if filter_agegroup == 0:
-            age_strs = {'<3 years' : 1, '3-5 years' : 1, '6-14 years' : 1, '15-17 years' : 1}
-        elif filter_agegroup == 1:
-            age_strs = {'18-24 years' : 1, '25-29 years' : 1, '30-39 years' : 1, '40-49 years' : 1, '50-64 years' : 2/3 }
-        else:
-            age_strs = {'50-64 years' : 1/3, '65-74 years' : 1, '>74 years' : 1}
-        pop_data['Count'] = pop_data.apply(lambda e: sum([f * e[g] for (g, f) in age_strs.items()]), axis = 1)
-    else:
-        pop_data['Count'] = pop_data['Population']
-    if not pop_filter is None:
-        pop_data = pop_data[pop_filter]
-    # merge Eisenach
-    pop_data.loc[pop_data.ID_County==16063, 'Population':] += pop_data.loc[pop_data.ID_County==16056, 'Population':].values
-    pop_data = pop_data[pop_data.ID_County != 16056]
+        # merge Eisenach
+        # TODO: change back to .values addition for more age groups!
+        pop_data = pop_data[['ID_County', 'Population']]
+        pop_data.loc[pop_data['ID_County']==16063, 'Population'] += pop_data.loc[pop_data.ID_County==16056, 'Population'] 
+        pop_data = pop_data[pop_data.ID_County != 16056]
     
     #read and filter map data
     try:
-        map_data = gpd.read_file("shapes/vg2500_01-01.utm32s.shape/vg2500/vg2500_krs.shp")
+        map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/shapes/vg2500_01-01.utm32s.shape/vg2500/vg2500_krs.shp'))
     except FileNotFoundError:
         print_manual_download('Georeferenzierung: UTM32s, Format: shape (ZIP, 3 MB)', 'https://gdz.bkg.bund.de/index.php/default/digitale-geodaten/verwaltungsgebiete/verwaltungsgebiete-1-2-500-000-stand-01-01-vg2500.html')
     
     map_data = merge_eisenach(map_data)
     
-    map_filter = pd.Series([True for i in range(len(map_data))], index = map_data.index)
-    if not filter_state is None:
-        map_filter = map_filter & (map_data.ARS.str.startswith('{:02}'.format(filter_state)))
+    map_filter = pd.Series([False for i in range(len(map_data))], index = map_data.index)
+    if 'ID_State' in filters.keys() and filters['ID_State'] != None:
+        for state in filters['ID_State']:
+            map_filter = map_filter | (map_data.ARS.str.startswith('{:02}'.format(state)))
     map_data = map_data[map_filter]
 
-    print('rki data:')
-    print(rki_data)
-    print('new data:')
-    print(new_data)
-    print('pop data:')
-    print(pop_data)
-    print('map_data:')
-    print(map_data)
+    def get_plot_data(e):
+        if relative:
+            pop = pop_data.loc[pop_data['ID_County']==int(e.ARS), 'Population'].values[0]
+        local_out = []
+        for i in range(len(files.items())):
+            local_abs = df[i].loc[df[i]['ID_County']==int(e.ARS), 'Count'].sum()
+            if not relative:
+                local_out.append(local_abs)
+            else:
+                local_out.append(local_abs / pop)
 
-    #add vaccination rates to map
-    def get_county(df, id):
-        df = df[df.ID_County == id]
-        if not df.empty:
-            return df.Count.sum()
-        else:
-            print('Value for County {} not found'.format(id))
-            return None
-    def get_vacc_rates(e):
-        pop = get_county(pop_data, int(e.ARS))
-        abs_new = get_county(new_data, int(e.ARS))
-        abs_rki = get_county(rki_data, int(e.ARS))
-        rel_new = abs_new / pop if (abs_new is not None and pop is not None) else None
-        rel_rki = abs_rki / pop if (abs_rki is not None and pop is not None) else None
-        return (rel_rki, rel_new)
-    map_data[['VaccRateRKI', 'VaccRateNew']] = map_data.apply(get_vacc_rates, axis=1, result_type='expand')
+        return local_out
+    map_data[list(files.keys())] = map_data.apply(get_plot_data, axis=1, result_type='expand')
 
-    #calc min and max and map to non-uniform scale
-    map_data_vacc_columns = map_data[['VaccRateRKI', 'VaccRateNew']]
-    min_value = min(map_data_vacc_columns.min().values)
-    max_value = max(map_data_vacc_columns.max().values)
+    # calc min and max and map to non-uniform scale
+    map_data_columns = map_data[list(files.keys())]
+    min_value = min(map_data_columns.min().values)
+    max_value = max(map_data_columns.max().values)
     s = 0.7
     
     def normalize_lin(x, src, dest):
@@ -264,7 +214,7 @@ def plot(
 
     color_norm = pclrs.FuncNorm((np.vectorize(normalize_sine), np.vectorize(normalize_sine_inv)), vmin = min_value, vmax = max_value)
 
-    #file name extensions for filters
+    # file name extensions for filters
     part_filename_age = 'allages'
     if not filter_agegroup is None:
         part_filename_age = 'age{0}'.format(filter_agegroup)    
@@ -298,7 +248,11 @@ def plot(
     # plt.show()
 
 if __name__ == '__main__':
-    for vacc in [1]:
+
+    files_vacc = {'Reported data' : 'tools/data/raw/all_county_agevacc_vacc_all_dates', 'Sanitized data' : 'tools/data/sanitized/all_county_agevacc_vacc_all_dates'}
+    age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
+
+    for vacc in ['Vacc_partially']:
         for state in [None]: #[None, 9]:
-            for age in [1,2]:
-                plot(dt.date(2021, 11, 18), filter_vacc_state=vacc, filter_state=state, filter_agegroup=age)
+            # plot(files_vacc, dt.date(2021, 11, 18), column = vacc, filters={'ID_State' : [1], 'Age_RKI' : ['05-11','12-17']})
+            plot(files_vacc, dt.date(2021, 11, 18), column = vacc, filters={'ID_State' : [1], 'Age_RKI' : None})
