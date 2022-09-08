@@ -18,6 +18,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import memilio.simulation as mio
 from datetime import datetime, date
+from sklearn.preprocessing import FunctionTransformer
 
 import seaborn as sns  # plot after normalization
 
@@ -140,7 +141,8 @@ def run_secir_groups_simulation(days, contact_matrix, populations):
     return dataset
 
 
-def generate_data(num_runs, path, input_width, label_width, normalize_labels=False, save_data=True):
+def generate_data(num_runs, path, input_width, label_width,
+                  normalize_labels=False, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
 
    @param num_runs Number of times, the function run_secir_simulation is called.
@@ -183,26 +185,40 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
             days, damping_matrix,
             population[random.randint(0, len(population) - 1)])
 
-        # # drop columns susceptible und recovered
-        # compartments = ['Susceptible', 'Exposed', 'Carrier',
-        #                 'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
-        # df_data = pd.DataFrame(data=data_run, columns=compartments)
-        # df_data.drop(['Susceptible', 'Recovered'], axis=1, inplace=True)
+        # drop columns susceptible und recovered
 
-        # data_run = df_data.values  # update data_run
+        unwanted = [0, 6, 8, 14, 16, 22, 24, 30, 32, 38, 40, 46]
+        labels = data_run[input_width:]
+        transposed = np.array(labels).transpose().tolist()
+        for ele in sorted(unwanted, reverse=True):
+            del transposed[ele]
+        labels_ = np.array(transposed).transpose().tolist()
 
         inputs = data_run[:input_width]
         data["inputs"].append(inputs)
-        data["labels"].append(data_run[input_width:])
+        # data["labels"].append(data_run[input_width:])
+        data['labels'].append(labels_)
         bar.next()
 
     bar.finish()
 
     if save_data:
 
+        transformer = FunctionTransformer(np.log1p, validate=True)
+        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(48, -1)
+        scaled_inputs = transformer.transform(inputs)
+        scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 48)
+        scaled_inputs_list = scaled_inputs.tolist()
+
+        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(36, -1)
+        scaled_labels = transformer.transform(labels)
+        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 36)
+        scaled_labels_list = scaled_labels.tolist()
+
         # cast dfs to tensors
-        data["inputs"] = tf.stack(data["inputs"])
-        data["labels"] = tf.stack(data["labels"])
+        data['inputs'] = tf.stack(scaled_inputs_list)
+        data['labels'] = tf.stack(scaled_labels_list)
+
         # data["dampings"] = tf.stack(data["dampings"])
 
         # normalize data
@@ -222,6 +238,7 @@ def generate_data(num_runs, path, input_width, label_width, normalize_labels=Fal
 
 
 def get_population(path="data\pydata\Germany\county_population_dim401.json"):
+
     with open(path) as f:
         data = json.load(f)
     population = []
@@ -231,11 +248,14 @@ def get_population(path="data\pydata\Germany\county_population_dim401.json"):
             data_entry['<3 years'] + data_entry['3-5 years'] / 2)
         population_county.append(data_entry['6-14 years'])
         population_county.append(
-            data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years']/2)
+            data_entry['15-17 years'] + data_entry['18-24 years'] +
+            data_entry['25-29 years'] + data_entry['30-39 years'] / 2)
         population_county.append(
-            data_entry['30-39 years']/2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2/3)
+            data_entry['30-39 years'] / 2 + data_entry['40-49 years'] +
+            data_entry['50-64 years'] * 2 / 3)
         population_county.append(
-            data_entry['65-74 years'] + data_entry['>74 years'] * 0.2 + data_entry['50-64 years'] * 1/3)
+            data_entry['65-74 years'] + data_entry['>74 years'] * 0.2 +
+            data_entry['50-64 years'] * 1 / 3)
         population_county.append(
             data_entry['>74 years'] * 0.8)
 
@@ -355,7 +375,7 @@ if __name__ == "__main__":
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_groups')
 
     input_width = 5
     label_width = 30
