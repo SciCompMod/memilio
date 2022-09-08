@@ -38,6 +38,7 @@ set(TESTSOURCES
   test_compartmentsimulation.cpp
   test_mobility_io.cpp
   test_transform_iterator.cpp
+  test_rng.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
