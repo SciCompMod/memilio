@@ -61,11 +61,7 @@ void draw_sample(Model& model);
     * @param variant_high If true, use high value for infectiousness of variant.
     * @return Graph with nodes and edges from the input graph sampled.
     */
-<<<<<<< HEAD
 Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph);
-=======
-Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high);
->>>>>>> 117f7e8c1521736c155b1ec18bf7f75146e7cf87
 
 } // namespace osecirvvs
 } // namespace mio
