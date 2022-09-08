@@ -21,9 +21,9 @@ def mlp_model():
               kernel_initializer='he_uniform', activation='relu'))
     # hidden layer
     model.add(Dense(512,
-              kernel_initializer='he_uniform', activation='relu'))
+                    kernel_initializer='he_uniform', activation='relu'))
     model.add(Dense(512,
               kernel_initializer='he_uniform', activation='relu'))
-    model.add(Dense(1440,
-              kernel_initializer='he_uniform', activation='relu'))
+    model.add(Dense(1080,  # 1440
+              kernel_initializer='he_uniform', activation='linear'))
     return model
