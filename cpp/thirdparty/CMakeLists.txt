@@ -123,3 +123,13 @@ else()
         Set CMake variable MEMILIO_USE_BUNDLED_JSONCPP to ON or install JsonCpp and set the jsoncpp_DIR cmake variable 
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
+
+
+if(MEMILIO_ENABLE_MPI)
+    find_package(MPI REQUIRED)
+    if(MPI_CXX_FOUND)
+        set(MEMILIO_HAS_MPI ON)
+    else()
+        message(FATAL_ERROR "Could not find MPI_CXX in MPI installation.")
+    endif()
+endif()
