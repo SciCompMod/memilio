@@ -127,11 +127,11 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int vacc_effectiveness_szenario)
 {
     //times
-    const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
+    const double tinc             = 3.1; // R_2^(-1)+R_3^(-1)
     const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; // R_2^(-1)+0.5*R_3^(-1)
     const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
-    const double t_inf_rec_min    = 5.6; // R4^(-1) = T_I^R
-    const double t_inf_rec_max    = 8.4;
+    const double t_inf_rec_min    = 6.37; // R4^(-1) = T_I^R
+    const double t_inf_rec_max    = 7.37;
     const double t_inf_hosp_min[] = {9, 9, 9, 5, 5, 5}; // R6^(-1) = T_I^H
     const double t_inf_hosp_max[] = {12, 12, 12, 7, 7, 7};
     const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; // R5^(-1) = T_H^R
@@ -165,20 +165,20 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     const double transmission_risk_max[] = {0.3, 0.275, 0.375, 0.4, 0.375, 0.34};
 
     // noch offen
-    const double carr_infec_min          = 0.5;
-    const double carr_infec_max          = 0.5;
+    const double carr_infec_min          = 0.62;
+    const double carr_infec_max          = 0.83;
     const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
     const double beta_low_incidenc_max   = 0.2;
     const double beta_high_incidence_min = 0.4;
     const double beta_high_incidence_max = 0.5;
 
-    const double prob_car_rec_min[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
-    const double prob_car_rec_max[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double prob_inf_hosp_min[] = {0.044, 0.0075, 0.0005, 0.0125, 0.075, 0.241};
-    const double prob_inf_hosp_max[] = {0.064, 0.0025, 0.0015, 0.0135, 0.077, 0.261};
+    const double prob_car_rec_min[]  = {0.3, 0.35, 0.3, 0.25, 0.2, 0.17}; //{0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
+    const double prob_car_rec_max[]  = {0.35, 0.4, 0.35, 0.3, 0.25, 0.22};
+    const double prob_inf_hosp_min[] = {0.05, 0.001, 0.0005, 0.008, 0.071, 0.246};
+    const double prob_inf_hosp_max[] = {0.059, 0.01, 0.0015, 0.018, 0.081, 0.256};
 
-    const double prob_hosp_icu_min[] = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35}; // theta
-    const double prob_hosp_icu_max[] = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double prob_hosp_icu_min[] = {0.034, 0.029, 0.028, 0.063, 0.101, 0.101}; // theta
+    const double prob_hosp_icu_max[] = {0.044, 0.039, 0.038, 0.073, 0.111, 0.111};
     const double prob_icu_dead_min[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[] = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
@@ -890,7 +890,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto start_date   = temp_date;
     const auto num_days_sim = 15.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 3;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
