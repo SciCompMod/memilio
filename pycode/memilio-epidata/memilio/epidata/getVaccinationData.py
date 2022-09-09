@@ -380,7 +380,7 @@ def sanitizing_extrapolation_mobility(
     return df
 
 
-def extrapolate_age_groups(
+def extrapolate_age_groups_vaccinations(
         df_data, population_all_ages, unique_age_groups_old,
         unique_age_groups_new, column_names, age_old_to_all_ages_indices,
         min_all_ages, all_ages_to_age_new_share):
@@ -909,7 +909,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # provided in RKI infection tables: 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
 
     if extrapolate_agegroups:
-        df_data_ageinf_county_cs = extrapolate_age_groups(
+        df_data_ageinf_county_cs = extrapolate_age_groups_vaccinations(
             df_data_agevacc_county_cs, population_all_ages,
             unique_age_groups_old, unique_age_groups_new, vacc_column_names,
             age_old_to_all_ages_indices, min_all_ages,

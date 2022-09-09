@@ -292,7 +292,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             returndata[returndata['Age_RKI'] == '11+'].reset_index(drop=True),
             test_4.reset_index(drop=True), check_dtype=False)
 
-    def test_extrapolate_age_groups(self):
+    def test_extrapolate_age_groups_vaccinations(self):
         unique_age_groups_old = ['00-04', '05-11', '12-17', '18+']
         unique_age_groups_new = ['00-05', '06-16', '17-19', '20+']
         column_names = ['vacc_1', 'vacc_2']
@@ -380,7 +380,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         test_4 = pd.DataFrame({'vacc_1': [0, 9*20000/20400, 8*35000/35800, 4*100000/100900, 0, 17*20000/22000],
                               'vacc_2': [2*30000/31600, 2*20000/20400, 4*35000/35800, 1*100000/100900, 0, 0]})
 
-        returndata = gvd.extrapolate_age_groups(
+        returndata = gvd.extrapolate_age_groups_vaccinations(
             df_data.copy(), population_all_ages, unique_age_groups_old,
             unique_age_groups_new, column_names, age_old_to_all_ages_indices,
             min_all_ages, all_ages_to_age_new_share)
