@@ -5,7 +5,7 @@
 * 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Wadim Koslow, Martin Kühn
+* Authors: Daniel Abele, Wadim Koslow, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -1047,8 +1047,8 @@ int main(int argc, char** argv)
     if (test) {
         result_dir += "_test";
     }
-    boost::filesystem::path dir(result_dir);
-    bool created = boost::filesystem::create_directories(dir);
+    fs::path dir(result_dir);
+    bool created = fs::create_directories(dir);
 
     if (created) {
         mio::log_info("Directory '{:s}' was created.", dir.string());

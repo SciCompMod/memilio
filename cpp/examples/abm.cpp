@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,7 +19,12 @@
 */
 #include "abm/abm.h"
 #include "abm/household.h"
+#include "memilio/data/analyze_result.h"
+#include "boost/filesystem.hpp"
 #include <cstdio>
+
+namespace fs = boost::filesystem;
+
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -63,7 +68,8 @@ std::vector<int> last_household_gets_the_rest(int number_of_people, int number_o
  * @param number_of_hh The number of households in this household group.
  * @return householdGroup A Class Household Group.
  */
-mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people, int number_of_hh)
+mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people,
+                                                 int number_of_hh)
 {
 
     // The size of each household is calculated in a vector household_size_list.
@@ -89,10 +95,11 @@ mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember
  * @param number_of_other_familes number_of_persons_in_household random persons.
  * @return A Household group.
  */
-mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child, const mio::abm::HouseholdMember& parent,
-                                             const mio::abm::HouseholdMember& random, int number_of_persons_in_household,
-                                             int number_of_full_familes, int number_of_half_familes,
-                                             int number_of_other_familes)
+mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child,
+                                                  const mio::abm::HouseholdMember& parent,
+                                                  const mio::abm::HouseholdMember& random,
+                                                  int number_of_persons_in_household, int number_of_full_familes,
+                                                  int number_of_half_familes, int number_of_other_familes)
 {
 
     auto private_household_group = mio::abm::HouseholdGroup();
@@ -355,6 +362,75 @@ void assign_infection_state(mio::abm::World& world, double exposed_pct, double i
     }
 }
 
+/**
+ * Save the result of a single parameter study run.
+ * Creates a new subdirectory for this run.
+ * @param result result of the simulation run.
+ * @param result_dir top level directory for all results of the parameter study.
+ * @param run_idx index of the run.
+ * @return any io errors that occur during writing of the files.
+ */
+mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
+                                const fs::path& result_dir, size_t run_idx)
+{
+    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
+    // TODO!
+    BOOST_OUTCOME_TRY(mio::save_result(result, (result_dir_run / "Result.h5").string()));
+    return mio::success();
+}
+
+/**
+ * Save the results of a parameter study.
+ * Stores different percentiles and sums of the results and parameters. 
+ * @param ensemble_results result of each simulation run.
+ * @param result_dir top level directory for all results of the parameter study.
+ * @return any io errors that occur during writing of the files.
+ */
+mio::IOResult<void> save_results(const std::vector<mio::TimeSeries<double>>& ensemble_results, const fs::path& result_dir)
+{
+    // save results for one node
+    for (size_t i = 0; i < ensemble_results.size(); ++i) {
+        // TODO!
+        BOOST_OUTCOME_TRY((mio::save_result(ensemble_results[i], num_groups,
+                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string())));
+    }
+
+    //make directories for percentiles
+    auto result_dir_p05 = result_dir / "p05";
+    auto result_dir_p25 = result_dir / "p25";
+    auto result_dir_p50 = result_dir / "p50";
+    auto result_dir_p75 = result_dir / "p75";
+    auto result_dir_p95 = result_dir / "p95";
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p05.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p25.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p50.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p75.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p95.string()));
+
+    //save percentiles of results: only one node
+    {
+        auto ensemble_results_sum_p05 = mio::ensemble_percentile(ensemble_results, 0.05);
+        auto ensemble_results_sum_p25 = mio::ensemble_percentile(ensemble_results, 0.25);
+        auto ensemble_results_sum_p50 = mio::ensemble_percentile(ensemble_results, 0.50);
+        auto ensemble_results_sum_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
+        auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
+
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
+    }
+
+    return mio::success();
+}
+
 int main()
 {
     //mio::set_log_level(mio::LogLevel::warn);
@@ -376,83 +452,112 @@ int main()
     mio::abm::GlobalInfectionParameters infection_params;
 
     // Set same parameter for all age groups
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.; 
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>() = 0.02;
+    infection_params.get<mio::abm::IncubationPeriod>()               = 4.;
+    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()  = 0.02;
     infection_params.get<mio::abm::SusceptibleToExposedByInfected>() = 0.02;
-    infection_params.get<mio::abm::CarrierToInfected>() = 0.15;
-    infection_params.get<mio::abm::CarrierToRecovered>() = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>() = 0.2;
-    infection_params.get<mio::abm::InfectedToSevere>() = 0.03;
-    infection_params.get<mio::abm::SevereToRecovered>() = 0.1;
-    infection_params.get<mio::abm::SevereToCritical>() = 0.1;
-    infection_params.get<mio::abm::CriticalToRecovered>() = 0.02;
-    infection_params.get<mio::abm::CriticalToDead>() = 0.06;
-    infection_params.get<mio::abm::RecoveredToSusceptible>() = 0.1;
+    infection_params.get<mio::abm::CarrierToInfected>()              = 0.15;
+    infection_params.get<mio::abm::CarrierToRecovered>()             = 0.15;
+    infection_params.get<mio::abm::InfectedToRecovered>()            = 0.2;
+    infection_params.get<mio::abm::InfectedToSevere>()               = 0.03;
+    infection_params.get<mio::abm::SevereToRecovered>()              = 0.1;
+    infection_params.get<mio::abm::SevereToCritical>()               = 0.1;
+    infection_params.get<mio::abm::CriticalToRecovered>()            = 0.02;
+    infection_params.get<mio::abm::CriticalToDead>()                 = 0.06;
+    infection_params.get<mio::abm::RecoveredToSusceptible>()         = 0.1;
 
     // Set parameters for vaccinated people of all age groups
-    infection_params.get<mio::abm::IncubationPeriod>().slice(mio::abm::VaccinationState::Vaccinated)               = 4.;
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>().slice(mio::abm::VaccinationState::Vaccinated)  = 0.02;
-    infection_params.get<mio::abm::SusceptibleToExposedByInfected>().slice(mio::abm::VaccinationState::Vaccinated) = 0.02;
-    infection_params.get<mio::abm::CarrierToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)             = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)            = 0.15;
-    infection_params.get<mio::abm::InfectedToSevere>().slice(mio::abm::VaccinationState::Vaccinated)               = 0.05;
-    infection_params.get<mio::abm::SevereToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)              = 0.05;
-    infection_params.get<mio::abm::SevereToCritical>().slice(mio::abm::VaccinationState::Vaccinated)               = 0.005;
-    infection_params.get<mio::abm::CriticalToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)            = 0.5;
-    infection_params.get<mio::abm::CriticalToDead>().slice(mio::abm::VaccinationState::Vaccinated)                 = 0.005;
-    infection_params.get<mio::abm::RecoveredToSusceptible>().slice(mio::abm::VaccinationState::Vaccinated)         = 0.05;
+    infection_params.get<mio::abm::IncubationPeriod>().slice(mio::abm::VaccinationState::Vaccinated) = 4.;
+    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>().slice(mio::abm::VaccinationState::Vaccinated) =
+        0.02;
+    infection_params.get<mio::abm::SusceptibleToExposedByInfected>().slice(mio::abm::VaccinationState::Vaccinated) =
+        0.02;
+    infection_params.get<mio::abm::CarrierToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)     = 0.15;
+    infection_params.get<mio::abm::InfectedToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.15;
+    infection_params.get<mio::abm::InfectedToSevere>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.05;
+    infection_params.get<mio::abm::SevereToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)      = 0.05;
+    infection_params.get<mio::abm::SevereToCritical>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.005;
+    infection_params.get<mio::abm::CriticalToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.5;
+    infection_params.get<mio::abm::CriticalToDead>().slice(mio::abm::VaccinationState::Vaccinated)         = 0.005;
+    infection_params.get<mio::abm::RecoveredToSusceptible>().slice(mio::abm::VaccinationState::Vaccinated) = 0.05;
 
-    auto world = mio::abm::World(infection_params);
+    auto t0       = mio::abm::TimePoint(0);
+    auto t_npi    = mio::abm::TimePoint(0) + mio::abm::days(20);
+    auto tmax     = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto num_runs = 1;
 
-    // Create the world object from statistical data.
-    create_world_from_statistical_data(world);
+    auto ensemble_results = std::vector<mio::TimeSeries<double>>{};
+    ensemble_results.reserve(size_t(num_runs));
 
-    // Assign an infection state to each person.
-    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    std::string result_dir = "results";
 
-    // Add locations and assign locations to the people.
-    create_assign_locations(world);
+    fs::path dir(result_dir);
+    bool created = fs::create_directories(dir);
 
-    auto t0         = mio::abm::TimePoint(0);
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60);
+    if (created) {
+        mio::log_info("Directory '{:s}' was created.", dir.string());
+    }
+    printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    // During the lockdown, 60% of people work from home and schools are closed for 90% of students.
-    // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
-    mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
-    mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+    // TODO: In a future version it should be considered if this loop etc
+    // could be replace by a adequate parameter_studies object. See cpp/simulations.
+    for (auto run_idx = 0; run_idx < num_runs; ++run_idx) {
 
-    auto sim = mio::abm::Simulation(t0, std::move(world));
+        auto world = mio::abm::World(infection_params);
 
-    sim.advance(tmax);
+        // Create the world object from statistical data.
+        create_world_from_statistical_data(world);
 
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:10 with lines title "dead"
-    // set xlabel "days"
-    // set ylabel "number of people"
-    // set title "ABM Example"
-    // set output "abm.png"
-    // set terminal png
-    // replot
-    auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
+        // Assign an infection state to each person.
+        assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+
+        // Add locations and assign locations to the people.
+        create_assign_locations(world);
+
+        // We simulate a lockdown as strict NPI, 25 % of people work from home and
+        // schools are closed for 90% of students and social events are very rare.
+        mio::abm::set_home_office(t_npi, 0.25, world.get_migration_parameters());
+        mio::abm::set_school_closure(t_npi, 0.9, world.get_migration_parameters());
+        mio::abm::close_social_events(t_npi, 0.9, world.get_migration_parameters());
+
+        auto sim = mio::abm::Simulation(t0, std::move(world));
+
+        sim.advance(tmax);
+
+        ensemble_results.push_back(mio::interpolate_simulation_result(sim.get_result()));
+        std::cout << "run " << run_idx << " complete." << std::endl;    
+
+        // TODO: Command line output to be removed in a future version.
+        // The results are saved in a table with 9 rows.
+        // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
+        // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
+        // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
+        // E.g. the following gnuplot skrips plots detected infections and deaths.
+        // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:10 with lines title "dead"
+        // set xlabel "days"
+        // set ylabel "number of people"
+        // set title "ABM Example"
+        // set output "abm.png"
+        // set terminal png
+        // replot
+        if (num_runs < 3) {
+            auto f_abm = fopen("abm.txt", "w");
+            fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+            for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
+                fprintf(f_abm, "%f ", sim.get_result().get_time(i));
+                auto v = sim.get_result().get_value(i);
+                for (auto j = 0; j < v.size(); ++j) {
+                    fprintf(f_abm, "%f", v[j]);
+                    if (j < v.size() - 1) {
+                        fprintf(f_abm, " ");
+                    }
+                }
+                if (i < sim.get_result().get_num_time_points() - 1) {
+                    fprintf(f_abm, "\n");
+                }
             }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
+            fclose(f_abm);
         }
     }
-    fclose(f_abm);
+
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, result_dir));
 }
