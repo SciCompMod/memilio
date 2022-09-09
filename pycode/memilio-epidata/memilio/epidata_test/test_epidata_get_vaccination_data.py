@@ -26,7 +26,7 @@ import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import modifyDataframeSeries as md
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -216,14 +216,14 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             [[1, 3]],
             [[1, 3]]]
 
-        map_bounds1 = md.create_intervals_mapping(
+        map_bounds1 = mdfs.create_intervals_mapping(
             from_lower_bounds1, to_lower_bounds1)
-        map_bounds2 = md.create_intervals_mapping(
+        map_bounds2 = mdfs.create_intervals_mapping(
             from_lower_bounds2, to_lower_bounds2)
-        map_bounds3 = md.create_intervals_mapping(
+        map_bounds3 = mdfs.create_intervals_mapping(
             from_lower_bounds3, to_lower_bounds3)
         with self.assertRaises(ValueError):
-            md.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
+            mdfs.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
 
         for test_map, calculated_map in zip(test_map1, map_bounds1):
             for test_val, calculated_val in zip(test_map, calculated_map):

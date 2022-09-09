@@ -30,7 +30,6 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
-from memilio.epidata import modifyDataframeSeries as md
 
 # Downloads vaccination data from RKI
 
@@ -632,13 +631,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         index_shift = [0]
 
     # compute share of all_ages intervals from population intervals
-    population_to_all_ages_share = md.create_intervals_mapping(
+    population_to_all_ages_share = mdfs.create_intervals_mapping(
         min_age_pop, min_all_ages)
 
     # compute mappings from all ages to old and new intervals
-    all_ages_to_age_old_share = md.create_intervals_mapping(
+    all_ages_to_age_old_share = mdfs.create_intervals_mapping(
         min_all_ages, index_shift + min_age_old)
-    all_ages_to_age_new_share = md.create_intervals_mapping(
+    all_ages_to_age_new_share = mdfs.create_intervals_mapping(
         min_all_ages, min_age_new)
 
     # get interval indices from all age groups that correspond to old age group
