@@ -323,3 +323,61 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
         # to the new interval
         from_to_mapping[from_idx].append([remaining_share, to_idx])
     return from_to_mapping
+
+
+def fit_age_group_intervals(
+        from_age_groups, population, to_age_groups, max_age=100):
+    """! Creates a mapping from given intervals to new desired intervals
+
+    @param from_age_groups age groups given by current data
+    @param population population for the current age groups
+    @param to_age_groups desired age group distribution
+    @return mapping from intervals to intervals
+
+        We assume the population to be equally distributed
+        Given from_age_groups = [ 1-10, 11-60, 61-99], 
+        population =  [4,10,8] and 
+        to_age_groups = [1-5, 6-10, 11-50, 51-99]
+        So the output should be the population distributed into to_age_groups, i.e.
+        [2,2,8,10]
+    """
+    # get minimum ages of each group
+    from_age_min = []
+    for age in from_age_groups:
+        age = age.split()[0]  # remove " years" from string
+        if '-' in age:
+            from_age_min.append(int(age.split('-')[0]))
+        elif '>' in age:
+            from_age_min.append(int(age.split('>')[1])+1)
+        elif '<' in age:
+            from_age_min.append(0)
+        else:
+            print("Undefined entry for one age group in from_age_groups")
+    if 100 not in from_age_min:
+        from_age_min.append(max_age)
+
+    to_age_min = []
+    for age in to_age_groups:
+        if "year" in age:
+            age = age.split()[0]  # remove " years" from string
+        if '-' in age:
+            to_age_min.append(int(age.split('-')[0]))
+        elif '>' in age:
+            to_age_min.append(int(age.split('>')[1])+1)
+        elif '<' in age:
+            to_age_min.append(0)
+        else:
+            print("Undefined entry for one age group in to_age_groups")
+    if 100 not in to_age_min:
+        to_age_min.append(max_age)
+
+    # get distribution to new ages.
+    age_shares = create_intervals_mapping(from_age_min, to_age_min)
+    ans = np.zeros(len(to_age_groups))
+    population_indx = 0
+    for age_entry_from in age_shares:
+        for share_new in age_entry_from:
+            ans[share_new[1]] += share_new[0] * population[population_indx]
+        population_indx += 1
+
+    return ans

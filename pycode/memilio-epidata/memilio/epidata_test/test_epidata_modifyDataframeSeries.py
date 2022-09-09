@@ -25,37 +25,38 @@ from pyfakefs import fake_filesystem_unittest
 from datetime import date
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
     test_df1 = pd.DataFrame(
         {
-         'Date':
-         ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
-          '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
-          '2021-01-09', '2021-01-09', '2021-01-10', '2021-01-10',
-          '2021-01-10'],
-         'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
-         'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
-         'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
-         'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+            'Date':
+            ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
+             '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
+             '2021-01-09', '2021-01-09', '2021-01-10', '2021-01-10',
+             '2021-01-10'],
+            'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
+            'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
+            'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
+            'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
     test_df2 = pd.DataFrame(
         {
-         'Date':
-         ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
-          '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
-          '2021-01-09', '2021-01-09', '2021-01-13', '2021-01-13',
-          '2021-01-13'],
-         'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
-         'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
-         'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
-         'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+            'Date':
+            ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
+             '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
+             '2021-01-09', '2021-01-09', '2021-01-13', '2021-01-13',
+             '2021-01-13'],
+            'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
+            'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
+            'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
+            'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
     df_dates = pd.DataFrame({
-        'Date':[
+        'Date': [
             '2022-01-01', '2022-01-01', '2022-01-03', '2022-01-03',
             '2022-01-04', '2022-01-06'],
         'col_int': [1, 10, 3, 3, 4, 6],
         'col_str': ['a', 'a', 'b', 'c', 'd', 'e']})
     df_dates_unsorted = pd.DataFrame({
-        'Date':[
+        'Date': [
             '2022-01-06', '2022-01-03', '2022-01-01', '2022-01-06',
             '2022-01-03', '2022-01-04'],
         'col_int': [60, 3, 1, 6, 3, 4],
@@ -64,34 +65,37 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         'Date': ['2022-01-03', '2022-01-03', '2022-01-04'],
         'col_int': [3, 3, 4], 'col_str': ['b', 'c', 'd']})
     int_map = [(10*i, i) for i in range(10)]
-    str_map = [('A','a'), ('X','x'), ('T','t'), ('B','b')]
+    str_map = [('A', 'a'), ('X', 'x'), ('T', 't'), ('B', 'b')]
     df_str_map_col = pd.Series(
-        data = ['A', 'X', 'T', 'A', 'B', 'A', 'X', 'T', 'A', 'B', 'A', 'X', 'T',
-                'A', 'B'],
-        name = 'inserted_col')
+        data=['A', 'X', 'T', 'A', 'B', 'A', 'X', 'T', 'A', 'B', 'A', 'X', 'T',
+              'A', 'B'],
+        name='inserted_col')
 
-    date_df = pd.DataFrame(
-        {
+    date_df = pd.DataFrame({
         'Date':
-        ['2021-09-08', '2021-09-08', '2021-09-09', '2021-09-09', '2021-09-10',
-         '2021-09-10', '2021-09-11', '2021-09-11', '2021-09-12', '2021-09-12',
-         '2021-09-13', '2021-09-13', '2021-09-14', '2021-09-14', '2021-09-14',
+        ['2021-09-08', '2021-09-08', '2021-09-09',
+         '2021-09-09', '2021-09-10', '2021-09-10',
+         '2021-09-11', '2021-09-11', '2021-09-12',
+         '2021-09-12', '2021-09-13', '2021-09-13',
+         '2021-09-14', '2021-09-14', '2021-09-14',
          '2021-09-15'],
         'test_col1':
-        [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
+        [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79,
+         16, 11, 27, 5, 15],
         'test_col2':
-        [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
+        [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7,
+         13, 2, 9],
         'test_col_str':
-        ['SH', 'H', 'N', 'B', 'NW', 'H', 'RP', 'BW', 'B', 'S', 'B', 'B',
-         'MV', 'S', 'S', 'T']})
+        ['SH', 'H', 'N', 'B', 'NW', 'H', 'RP', 'BW', 'B',
+         'S', 'B', 'B', 'MV', 'S', 'S', 'T']})
     test_date_df1 = pd.DataFrame({
         'Date': ['2021-09-12', '2021-09-12', '2021-09-13', '2021-09-13', '2021-09-14', '2021-09-14', '2021-09-14'],
-        'test_col1': [208, 33, 79, 16, 11, 27, 5], 
+        'test_col1': [208, 33, 79, 16, 11, 27, 5],
         'test_col2': [111, 15, 53, 8, 7, 13, 2],
         'test_col_str': ['B', 'S', 'B', 'B', 'MV', 'S', 'S']})
     test_date_df2 = pd.DataFrame({
         'Date': ['2021-09-09', '2021-09-09'],
-        'test_col1': [111, 7], 
+        'test_col1': [111, 7],
         'test_col2': [63, 5],
         'test_col_str': ['N', 'B']})
 
@@ -389,13 +393,19 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
-        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
+        new_col_labels = ['Vacc_partially', 'Vacc_completed',
+                          'Vacc_refreshed', 'Vacc_refreshed_2']
         test_labels = new_col_labels.copy()
         returned_column_labels, df_split = mdfs.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
+            df_to_split,
+            column_ident,
+            column_vals_name,
+            groupby_list,
+            new_col_labels,
+            compute_cumsum=False)
 
         self.assertEqual(test_labels, returned_column_labels)
-        pd.testing.assert_frame_equal(df_split[test_labels],test_df)
+        pd.testing.assert_frame_equal(df_split[test_labels], test_df)
         new_column_names = [
             'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe',
             'Vacc_partially', 'Vacc_completed', 'Vacc_refreshed',
@@ -441,30 +451,43 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_completed_2']
 
-        self.assertNotEqual(test_labels_length_wrong, returned_column_labels_length_wrong)
-        pd.testing.assert_frame_equal(df_split_length_wrong[col_labels],test_df_length_wrong)
+        self.assertNotEqual(test_labels_length_wrong,
+                            returned_column_labels_length_wrong)
+        pd.testing.assert_frame_equal(
+            df_split_length_wrong[col_labels],
+            test_df_length_wrong)
 
         for i in range(0, len(new_column_names_length_wrong)):
-            self.assertIn(df_split_length_wrong.columns[i], new_column_names_length_wrong)
-            self.assertIn(new_column_names_length_wrong[i], df_split_length_wrong.columns)
+            self.assertIn(
+                df_split_length_wrong.columns[i],
+                new_column_names_length_wrong)
+            self.assertIn(
+                new_column_names_length_wrong[i],
+                df_split_length_wrong.columns)
 
     def test_split_column_based_on_values_compute_cumsum(self):
-        df_to_split = pd.DataFrame({'Date': 
-            3*(['2022-05-11' for i in range(0, 16)] +
-            ['2022-05-12' for i in range(0, 16)] +
-            ['2022-05-13' for i in range(0, 16)]),
-            'ID_County': 9*sorted(8*[1000+i for i in range (0,2)]),
-            'Age_RKI': 48*['18+'] + 48*['12-17']+48*['0-11'],
-            'Impfschutz':36*[1,2,3,4],
-            'Anzahl':[i for i in range(0,144)]
-            })
+        df_to_split = pd.DataFrame(
+            {'Date': 3 *
+             (['2022-05-11' for i in range(0, 16)] +
+              ['2022-05-12' for i in range(0, 16)] +
+              ['2022-05-13' for i in range(0, 16)]),
+             'ID_County': 9 * sorted(8 * [1000 + i for i in range(0, 2)]),
+             'Age_RKI': 48 * ['18+'] + 48 * ['12-17'] + 48 * ['0-11'],
+             'Impfschutz': 36 * [1, 2, 3, 4],
+             'Anzahl': [i for i in range(0, 144)]})
         groupby_list = ['Date', 'ID_County', 'Age_RKI']
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
-        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
+        new_col_labels = ['Vacc_partially', 'Vacc_completed',
+                          'Vacc_refreshed', 'Vacc_refreshed_2']
         test_labels = new_col_labels.copy()
         returned_column_labels, df_split = mdfs.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=True)
+            df_to_split,
+            column_ident,
+            column_vals_name,
+            groupby_list,
+            new_col_labels,
+            compute_cumsum=True)
         # test returned labels
         self.assertEqual(test_labels, returned_column_labels)
         # test if cumulative sum is correct
@@ -472,13 +495,35 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         df_county2 = df_split[df_split.ID_County == 1001]
         # second dataframe should have + 16 at first date, then cumulativ sum
         for column in returned_column_labels:
-            self.assertEqual(list(df_county1[column].values + np.array(3*[16]+ 3*[32]+ 3*[48])), list(df_county2[column].values))
+            self.assertEqual(
+                list(
+                    df_county1[column].values + np.array(
+                        3 * [16] + 3 * [32] + 3 * [48])),
+                list(df_county2[column].values))
         # test return for county 1000 in age group 18+
-        return_1 = pd.DataFrame({'Vacc_partially':[4,40,108],'Vacc_completed':[6,44,114], 'Vacc_refreshed':[8,48,120], 'Vacc_refreshed_2':[10,52,126]})
-        pd.testing.assert_frame_equal(df_county1[df_county1.Age_RKI=='18+'][returned_column_labels].reset_index(drop=True), return_1)
+        return_1 = pd.DataFrame(
+            {'Vacc_partially': [4, 40, 108],
+             'Vacc_completed': [6, 44, 114],
+             'Vacc_refreshed': [8, 48, 120],
+             'Vacc_refreshed_2': [10, 52, 126]})
+        pd.testing.assert_frame_equal(
+            df_county1
+            [df_county1.Age_RKI == '18+']
+            [returned_column_labels].reset_index(
+                drop=True),
+            return_1)
         # test return for county 1001 in age group 0-11
-        return_2 = pd.DataFrame({'Vacc_partially':[212,456,732],'Vacc_completed':[214,460,738], 'Vacc_refreshed':[216,464,744], 'Vacc_refreshed_2':[218,468,750]})
-        pd.testing.assert_frame_equal(df_county2[df_county2.Age_RKI=='0-11'][returned_column_labels].reset_index(drop=True), return_2)
+        return_2 = pd.DataFrame(
+            {'Vacc_partially': [212, 456, 732],
+             'Vacc_completed': [214, 460, 738],
+             'Vacc_refreshed': [216, 464, 744],
+             'Vacc_refreshed_2': [218, 468, 750]})
+        pd.testing.assert_frame_equal(
+            df_county2
+            [df_county2.Age_RKI == '0-11']
+            [returned_column_labels].reset_index(
+                drop=True),
+            return_2)
 
     def test_extract_subframe_based_on_dates(self):
         test_df = self.df_dates.copy()
@@ -498,16 +543,15 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
 
-
     def test_insert_column_by_map(self):
         old_cols = self.test_df1.columns.to_list()
 
-        #test with integer mapping
+        # test with integer mapping
         df = mdfs.insert_column_by_map(
             self.test_df1, 'test_col3', 'inserted_col', self.int_map)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
-            'inserted_col', 'ID']
+                    'inserted_col', 'ID']
         self.assertEqual(new_cols, exp_cols)
         pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
         exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col')
@@ -518,7 +562,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             self.test_df1, 'test_col2', 'inserted_col', self.str_map)
         new_cols = df.columns.to_list()
         exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
-            'test_col3', 'ID']
+                    'test_col3', 'ID']
         self.assertEqual(new_cols, exp_cols)
         pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
         pd.testing.assert_series_equal(df['inserted_col'], self.df_str_map_col)
@@ -529,13 +573,119 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             self.date_df, date(2021, 9, 9),
             date(2021, 9, 9))
         pd.testing.assert_frame_equal(self.test_date_df2, extracted_df)
-    
+
     def test_extract_subframe_based_on_dates_multiple_dates(self):
         # test if only dates from 2021-09-12 to 2021-09-14 are returned
         extracted_df = mdfs.extract_subframe_based_on_dates(
             self.date_df, date(2021, 9, 12),
             date(2021, 9, 14))
         pd.testing.assert_frame_equal(self.test_date_df1, extracted_df)
+
+    def test_interval_mapping(self):
+        # testing refinement
+        from_lower_bounds1 = [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100]
+        to_lower_bounds1 = [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65,
+                            74, 80, 100]
+        # testing if the lists of bounds are not contained in one another
+        from_lower_bounds2 = [0, 10, 20, 70, 100]
+        to_lower_bounds2 = [0, 5, 15, 20, 50, 60, 70, 85, 90, 100]
+        # testing with different boundaries
+        from_lower_bounds3 = [5, 20, 30, 80, 85, 90]
+        to_lower_bounds3 = [0, 15, 20, 60, 100]
+        # testing error handling for invalid combination of boundaries
+        from_lower_bounds4 = [0, 10, 100]
+        to_lower_bounds4 = [10, 20, 90]
+
+        test_map1 = [
+            [[1, 0]],
+            [[2 / 3, 1], [1 / 3, 2]],
+            [[2 / 3, 3], [1 / 3, 4]],
+            [[1, 5]],
+            [[1, 6]],
+            [[1, 7]],
+            [[0.5, 8], [0.5, 9]],
+            [[1, 10]],
+            [[2/3, 11], [1/3, 12]],
+            [[1, 13]],
+            [[6/26, 14], [20/26, 15]]]
+
+        test_map2 = [
+            [[1 / 2, 0], [1 / 2, 1]],
+            [[0.5, 1], [0.5, 2]],
+            [[0.6, 3], [0.2, 4], [0.2, 5]],
+            [[1/2, 6], [1/6, 7], [1/3, 8]]]
+
+        test_map3 = [
+            [[2/3, 0], [1/3, 1]],
+            [[1, 2]],
+            [[3/5, 2], [2/5, 3]],
+            [[1, 3]],
+            [[1, 3]]]
+
+        map_bounds1 = mdfs.create_intervals_mapping(
+            from_lower_bounds1, to_lower_bounds1)
+        map_bounds2 = mdfs.create_intervals_mapping(
+            from_lower_bounds2, to_lower_bounds2)
+        map_bounds3 = mdfs.create_intervals_mapping(
+            from_lower_bounds3, to_lower_bounds3)
+        with self.assertRaises(ValueError):
+            mdfs.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
+
+        for test_map, calculated_map in zip(test_map1, map_bounds1):
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
+
+        for test_map, calculated_map in zip(test_map2, map_bounds2):
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
+
+        for test_map, calculated_map in zip(test_map3, map_bounds3):
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
+
+    def test_fit_age_group_intervals(self):
+        # testing refinement
+        from_age_1 = ["1-10 years", "11-60 years", "61-99 years"]
+        population_1 = [4, 10, 8]
+        to_age_1 = ["1-5", "6-10", "11-50", "51-99"]
+
+        from_age_2 = ["1-10", "11-60", "61-80", ">80 years"]
+        population_2 = [4, 5, 8, 5]
+        to_age_2 = ["1-99"]
+
+        from_age_3 = ["1-99 years"]
+        population_3 = [0]
+        to_age_3 = ["1-99"]
+
+        from_age_4 = ["0-9", "10-99", ">100"]
+        population_4 = [4, 10, 8]
+        to_age_4 = ["0-9", "10-19", "20-89"]
+
+        test_fit1 = np.array([2., 2., 8., 10.])
+
+        test_fit2 = np.array([22.])
+
+        test_fit3 = np.array([0.])
+
+        fit1 = mdfs.fit_age_group_intervals(
+            from_age_1, population_1, to_age_1)
+        fit2 = mdfs.fit_age_group_intervals(
+            from_age_2, population_2, to_age_2)
+        fit3 = mdfs.fit_age_group_intervals(
+            from_age_3, population_3, to_age_3)
+        with self.assertRaises(IndexError):
+            mdfs.fit_age_group_intervals(from_age_4, population_4, to_age_4)
+
+        for i in range(0, len(test_fit1)):
+            self.assertAlmostEqual(test_fit1[i], fit1[i])
+        for i in range(0, len(test_fit2)):
+            self.assertAlmostEqual(test_fit2[i], fit2[i])
+        for i in range(0, len(test_fit3)):
+            self.assertAlmostEqual(test_fit3[i], fit3[i])
+
 
 if __name__ == '__main__':
     unittest.main()
