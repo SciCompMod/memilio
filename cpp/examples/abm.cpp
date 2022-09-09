@@ -279,29 +279,25 @@ void create_assign_locations(mio::abm::World& world)
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
 
+    std::vector<mio::abm::LocationType> test_at_social_event = {mio::abm::LocationType::SocialEvent};
+    auto testing_criteria = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_social_event, {})};
+    auto testing_min_time = mio::abm::days(2);
+    auto start_date       = mio::abm::TimePoint(0);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto probability      = 1;
+    auto test_type        = mio::abm::AntigenTest();
+    
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type, probability);
+    
+    world.get_testing_strategy().add_testing_scheme(testing_scheme);
+    
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
     world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
 
-    // Add a testing scheme to world.
-    // Everybody who goes to the School, Work, or Basic shop tests themselves.
-    std::vector<mio::abm::LocationType> test_location_types = {
-        mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::BasicsShop};
-
-    auto testing_criteria1                                  = mio::abm::TestingCriteria({}, test_location_types, {});
-    std::vector<mio::abm::TestingCriteria> testing_criteria = {testing_criteria1};
-
-    const auto testing_frequency = mio::abm::days(2);
-    const auto start_date        = mio::abm::TimePoint(0);
-    const auto end_date          = mio::abm::TimePoint(0) + mio::abm::days(60);
-    const auto probability       = 0.8;
-    const auto test_type         = mio::abm::PCRTest();
-
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, probability, test_type);
-    world.get_testing_strategy().add_testing_scheme(testing_scheme);
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
     // Students have to get tested once a week.
@@ -356,6 +352,25 @@ void create_assign_locations(mio::abm::World& world)
             world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
         }
     }
+    
+    // add the testing schemes for school and work
+    auto test_at_school = std::vector<mio::abm::LocationType> {mio::abm::LocationType::School};
+    auto testing_criteria_school = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_school, {})};
+    
+    testing_min_time             = mio::abm::days(7);
+    probability                  = 1;
+    auto testing_scheme_school =
+        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date, end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
+    
+    auto test_at_work = std::vector<mio::abm::LocationType> {mio::abm::LocationType::Work};
+    auto testing_criteria_work = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_work, {})};
+    
+    testing_min_time            = mio::abm::days(1);
+    probability                 = 0.5;
+    auto testing_scheme_work =
+        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
 /**

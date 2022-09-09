@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf
+* Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -33,6 +33,23 @@ TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::v
     , m_location_types(location_types)
     , m_infection_states(infection_states)
 {
+}
+
+bool TestingCriteria::operator==(TestingCriteria other) const
+{
+    auto to_compare_ages             = this->m_ages;
+    auto to_compare_infection_states = this->m_infection_states;
+    auto to_compare_location_types   = this->m_location_types;
+
+    std::sort(to_compare_ages.begin(), to_compare_ages.end());
+    std::sort(other.m_ages.begin(), other.m_ages.end());
+    std::sort(to_compare_infection_states.begin(), to_compare_infection_states.end());
+    std::sort(other.m_infection_states.begin(), other.m_infection_states.end());
+    std::sort(to_compare_location_types.begin(), to_compare_location_types.end());
+    std::sort(other.m_location_types.begin(), other.m_location_types.end());
+
+    return to_compare_ages == other.m_ages && to_compare_location_types == other.m_location_types &&
+           to_compare_infection_states == other.m_infection_states;
 }
 
 void TestingCriteria::add_age_group(const AgeGroup age_group)
@@ -105,14 +122,25 @@ bool TestingCriteria::has_requested_infection_state(const Person& p) const
 
 TestingScheme::TestingScheme(const std::vector<TestingCriteria>& testing_criteria,
                              TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
-                             double probability, const GenericTest& test_type)
+                             const GenericTest& test_type, double probability)
     : m_testing_criteria(testing_criteria)
     , m_minimal_time_since_last_test(minimal_time_since_last_test)
-    , m_probability(probability)
     , m_start_date(start_date)
     , m_end_date(end_date)
     , m_test_type(test_type)
+    , m_probability(probability)
 {
+}
+
+bool TestingScheme::operator==(const TestingScheme& other) const
+{
+    return this->m_testing_criteria == other.m_testing_criteria &&
+           this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
+           this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
+           this->m_test_type.get_default().sensitivity == other.m_test_type.get_default().sensitivity &&
+           this->m_test_type.get_default().specificity == other.m_test_type.get_default().specificity &&
+           this->m_probability == other.m_probability;
+    //To be adjusted and also TestType should be static.
 }
 
 void TestingScheme::add_testing_criteria(const TestingCriteria criteria)
@@ -171,6 +199,13 @@ void TestingStrategy::remove_testing_scheme(const TestingScheme& scheme)
     m_testing_schemes.erase(last, m_testing_schemes.end());
 }
 
+void TestingStrategy::update_activity_status(const TimePoint t)
+{
+    for (auto& ts : m_testing_schemes) {
+        ts.update_activity_status(t);
+    }
+}
+
 bool TestingStrategy::run_strategy(Person& person, const Location& location) const
 {
     return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
@@ -179,13 +214,6 @@ bool TestingStrategy::run_strategy(Person& person, const Location& location) con
         }
         return true;
     });
-}
-
-void TestingStrategy::update_testing_scheme_activity_status(const TimePoint t)
-{
-    for (auto& ts : m_testing_schemes) {
-        ts.update_activity_status(t);
-    }
 }
 
 } // namespace abm

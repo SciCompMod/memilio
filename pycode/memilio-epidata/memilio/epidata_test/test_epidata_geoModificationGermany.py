@@ -390,7 +390,6 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             if(name not in county_table.columns.tolist()):
                 self.assertFalse("headers have changed.")
 
-    @unittest.skip("Link doesn't work for CI. Needs to be fixed.")
     @patch('builtins.print')
     def test_get_nuts3_county_id_map(self, mock_print):
         # merge_berlin = True, merge_eisenach = False
@@ -548,7 +547,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, self.eisenach_merged_df)
         # the test dataframe should be unchanged as it is the input of the function
         pd.testing.assert_frame_equal(
-            test_df, pd.DataFrame(self.eisenach_unmerged_data), check_dtype = False)
+            test_df, pd.DataFrame(self.eisenach_unmerged_data))
 
 
 if __name__ == '__main__':

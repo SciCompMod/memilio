@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -1492,14 +1492,14 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
-    const auto testing_frequency = mio::abm::days(1);
+    const auto testing_min_time = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(0);
     const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
     const auto probability       = 0.8;
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_criterias, testing_frequency, start_date, end_date, probability, test_type);
+        mio::abm::TestingScheme(testing_criterias, testing_min_time, start_date, end_date, test_type, probability);
 
     ASSERT_EQ(testing_scheme.is_active(), false);
     testing_scheme.update_activity_status(mio::abm::TimePoint(10));
@@ -1562,14 +1562,14 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto test_type         = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, probability, test_type);
+        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
     auto current_time = mio::abm::TimePoint(0);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
-    world.get_testing_strategy().update_testing_scheme_activity_status(current_time);
+    world.get_testing_strategy().update_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))

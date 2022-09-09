@@ -52,7 +52,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
     interaction(t, dt);
-    m_testing_strategy.update_testing_scheme_activity_status(t);
+    m_testing_strategy.update_activity_status(t);
     migration(t, dt);
 }
 

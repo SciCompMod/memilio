@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf
+* Authors: Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -48,25 +48,9 @@ public:
                     const std::vector<InfectionState>& infection_states);
 
     /**
-     * Compares two testing criteria for equality.
-     * Compare references. Still possible to clone criteria.
+     * Compares two testing criteria for functional equality.
      */
-    bool operator==(TestingCriteria other) const
-    {
-        auto to_compare_ages             = this->m_ages;
-        auto to_compare_infection_states = this->m_infection_states;
-        auto to_compare_location_types   = this->m_location_types;
-
-        std::sort(to_compare_ages.begin(), to_compare_ages.end());
-        std::sort(other.m_ages.begin(), other.m_ages.end());
-        std::sort(to_compare_infection_states.begin(), to_compare_infection_states.end());
-        std::sort(other.m_infection_states.begin(), other.m_infection_states.end());
-        std::sort(to_compare_location_types.begin(), to_compare_location_types.end());
-        std::sort(other.m_location_types.begin(), other.m_location_types.end());
-
-        return to_compare_ages == other.m_ages && to_compare_location_types == other.m_location_types &&
-               to_compare_infection_states == other.m_infection_states;
-    }
+    bool operator==(TestingCriteria other) const;
 
     /**
       * add an age group to the set of age groups that are either allowed or required to be tested
@@ -146,22 +130,13 @@ public:
      * @param test_type the type of test to be performed
      */
     TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, double probability, const GenericTest& test_type);
+                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, double probability);
 
     /**
-     * Compares two testing schemes for equality.
+     * Compares two testing schemes for functional equality.
      */
-    bool operator==(const TestingScheme& other) const
-    {
-        return this->m_testing_criteria == other.m_testing_criteria &&
-               this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
-               this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
-               this->m_probability == other.m_probability &&
-               this->m_test_type.get_default().sensitivity == other.m_test_type.get_default().sensitivity &&
-               this->m_test_type.get_default().specificity == other.m_test_type.get_default().specificity;
-        //To be adjusted and also TestType should be static.
-    }
-
+    bool operator==(const TestingScheme& other) const;
+    
     /**
      * add a testing criteria to the set of age groups that are checked for testing
      * @param criteria testing criteria to be added
@@ -194,10 +169,10 @@ public:
 private:
     std::vector<TestingCriteria> m_testing_criteria;
     TimeSpan m_minimal_time_since_last_test;
-    double m_probability;
     TimePoint m_start_date;
     TimePoint m_end_date;
     GenericTest m_test_type;
+    double m_probability;
     bool m_is_active = false;
 };
 
@@ -210,29 +185,25 @@ public:
      */
     TestingStrategy() = default;
     explicit TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
-    /**
-     * Compares two testing strategies for equality.
-     * Compare references. Still possible to clone strategies.
-     */
-    bool operator==(const TestingStrategy& other) const
-    {
-        return this->m_testing_schemes == other.m_testing_schemes;
-    }
+    
     /**
      * add a testing scheme to the set of schemes that are checked for testing
      * @param scheme testing scheme to be added
      */
     void add_testing_scheme(const TestingScheme& scheme);
+    
     /**
      * remove a testing scheme from the set of schemes that are checked for testing
      * @param scheme testing scheme to be removed
      */
     void remove_testing_scheme(const TestingScheme& scheme);
+    
     /**
      * checks if the given time point t is within the interval of start and end date of each testing scheme and then changes the activity status for each testing scheme accordingly
      * @param t time point to check the activity status of each testing scheme
      */
-    void update_testing_scheme_activity_status(const TimePoint t);
+    void update_activity_status(const TimePoint t);
+    
     /**
      * run the testing strategy and tests a person if necessary
      * @return if the person is allowed to enter the location

@@ -161,10 +161,12 @@ bool Person::get_tested(const TestParameters& params)
     if (m_infection_state == InfectionState::Carrier || m_infection_state == InfectionState::Infected ||
         m_infection_state == InfectionState::Infected_Severe ||
         m_infection_state == InfectionState::Infected_Critical) {
+        // true positive
         if (random < params.sensitivity) {
             m_quarantine = true;
             return true;
         }
+        // false negative
         else {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
@@ -172,11 +174,13 @@ bool Person::get_tested(const TestParameters& params)
         }
     }
     else {
+        // true negative
         if (random < params.specificity) {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
             return false;
         }
+        // false positive
         else {
             m_quarantine = true;
             return true;
