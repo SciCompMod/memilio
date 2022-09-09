@@ -30,7 +30,9 @@ from datetime import datetime, timedelta
 from memilio.epidata import defaultDict as dd
 
 
-def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', moving_average=0, min_date='', max_date='', start_w_firstval=False):
+def impute_and_reduce_df(
+        df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
+        min_date='', max_date='', start_w_firstval=False):
     """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data. 
     Extracts Dates between min and max date.
 
@@ -68,12 +70,12 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         min_date = min(df_old[dd.EngEng['date']])
     if max_date == '':
         max_date = max(df_old[dd.EngEng['date']])
-    
+
     # Transform dates to datetime
-    if isinstance(min_date, str)==True:
-        min_date=datetime.strptime(min_date, "%Y-%m-%d")
-    if isinstance(max_date, str)==True:
-        max_date=datetime.strptime(max_date, "%Y-%m-%d")
+    if isinstance(min_date, str) == True:
+        min_date = datetime.strptime(min_date, "%Y-%m-%d")
+    if isinstance(max_date, str) == True:
+        max_date = datetime.strptime(max_date, "%Y-%m-%d")
 
     start_date = min_date
     end_date = max_date
@@ -83,7 +85,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
     if moving_average > 0:
         end_date = end_date + timedelta(int(np.floor((moving_average-1)/2)))
         start_date = start_date - timedelta(int(np.ceil((moving_average-1)/2)))
-    
+
     idx = pd.date_range(start_date, end_date)
 
     # create list of all possible groupby columns combinations
@@ -128,10 +130,10 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
                 # fill values of missing dates based on last entry
                 df_local_new.fillna(method='ffill', inplace=True)
                 # fill value of the first date, if it doesn't exist yet
-                # has to be conducted in second step to not impute 'value' 
+                # has to be conducted in second step to not impute 'value'
                 # at first missing value if start is present
                 df_local_new.fillna(values, limit=1, inplace=True)
-                # fill remaining values (between first date and first 
+                # fill remaining values (between first date and first
                 # reported date of the df_local)
                 df_local_new.fillna(method='ffill', inplace=True)
 
@@ -140,7 +142,8 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
                 for avg in mod_cols:
                     # compute moving average in new column
                     df_local_new['MA' + avg] = df_local_new[avg].rolling(
-                        window=moving_average, min_periods=moving_average, center=True).mean().fillna(df_local_new[avg])
+                        window=moving_average, min_periods=moving_average,
+                        center=True).mean().fillna(df_local_new[avg])
                     df_local_new['MA' + avg] = df_local_new['MA' +
                                                             avg].fillna(df_local_new[avg])
                     # overwrite daily values by moving averages
@@ -150,9 +153,9 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
 
         else:
             # Decide whether to activate the following warning or not.
-            # It can happen that certain local entities do not have certain data 
-            # at all (e.g., many counties do not have had any kind of 
-            # refreshing vaccinations so far.) Then, the following warning 
+            # It can happen that certain local entities do not have certain data
+            # at all (e.g., many counties do not have had any kind of
+            # refreshing vaccinations so far.) Then, the following warning
             # is misleading.
             # print('Warning: Tuple ' + str(ids) + ' not found in local data frame. Imputing zeros.')
             # create zero values for non-existent time series
@@ -172,14 +175,16 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         df_new = df_new.append(df_local_new)
         # rearrange indices from 0 to N
         df_new.index = (range(len(df_new)))
-    
+
     # extract min and max date
     df_new = extract_subframe_based_on_dates(df_new, min_date, max_date)
 
     return df_new
 
+
 def split_column_based_on_values(
-        df_to_split, column_to_split, column_vals_name, groupby_list, new_column_labels, compute_cumsum):
+        df_to_split, column_to_split, column_vals_name, groupby_list,
+        new_column_labels, compute_cumsum):
     """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
@@ -197,7 +202,7 @@ def split_column_based_on_values(
     i = 2
     while len(column_identifiers) > len(new_column_labels):
         new_column_labels.append(new_column_labels[-1]+'_'+str(i))
-        i+=1
+        i += 1
 
     # create empty copy of the df_to_split
     df_joined = pd.DataFrame(
@@ -212,14 +217,16 @@ def split_column_based_on_values(
         if compute_cumsum:
             # compute cummulative sum over level index of ID_County and level
             # index of Age_RKI
-            df_reduced = df_reduced.groupby(level=[groupby_list.index(
-                dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum()
+            df_reduced = df_reduced.groupby(
+                level=[groupby_list.index(dd.EngEng['idCounty']),
+                       groupby_list.index(dd.EngEng['ageRKI'])]).cumsum()
         # joins new generated column to dataframe
         df_joined = df_reduced.reset_index().join(
             df_joined.set_index(groupby_list),
             on=groupby_list, how='outer')
 
     return new_column_labels, df_joined
+
 
 def extract_subframe_based_on_dates(df, start_date, end_date):
     """! Removes all data with date lower than start date or higher than end date.
@@ -230,10 +237,9 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
     @param df The dataframe which has to be edited
     @param start_date Date of first date in dataframe
     @param end_date Date of last date in dataframe
-    
+
     @return a dataframe with the extracted dates
     """
-
 
     upperdate = datetime.strftime(end_date, '%Y-%m-%d')
     lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
@@ -246,6 +252,7 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
     df_new.reset_index(drop=True, inplace=True)
 
     return df_new
+
 
 def insert_column_by_map(df, col_to_map, new_col_name, map):
     """! Adds a column to a given dataframe based on a mapping of values of a given column
@@ -261,7 +268,58 @@ def insert_column_by_map(df, col_to_map, new_col_name, map):
     """
     df_new = df.copy()
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
-    df_new.insert(loc=loc_new_col, column=new_col_name, value=df_new[col_to_map])
+    df_new.insert(loc=loc_new_col, column=new_col_name,
+                  value=df_new[col_to_map])
     for item in map:
         df_new.loc[df_new[col_to_map] == item[1], [new_col_name]] = item[0]
     return df_new
+
+
+def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
+    """! Creates a mapping from given intervals to new desired intervals
+
+    @param from_lower_bounds lower bounds of original intervals
+    @param to_lower_bounds desired lower bounds of new intervals
+    @return mapping from intervals to intervals
+        The mapping is given as a list of tupels for every original interval.
+        The list contains a tuple for every new interval intersecting the 
+        original interval. Each tuple defines the share of the original interval
+        that is mapped to the new interval and the index of the new interval. We
+        assume that the range of the intervals mapped from is contained in the 
+        range of the intervals mapped to.
+        For example for from_lower_bounds = [5,20,30,80,85,90] and 
+        to_lower_bounds=[0,15,20,60,100] given the mapping would be
+        [[[2/3,0], [1/3,1]],
+         [[1,2]],
+         [[3/5,2], [2/5,3]],
+         [[1,3]],
+         [[1,3]]]
+    """
+    if (from_lower_bounds[0] < to_lower_bounds[0] or
+            from_lower_bounds[-1] > to_lower_bounds[-1]):
+        raise ValueError("Range of intervals mapped from exeeds range of" +
+                         "intervals mapped to.")
+    # compute the shares of the original intervals mapped to the new intervals
+    from_to_mapping = [[] for i in range(0, len(from_lower_bounds)-1)]
+    to_idx = 0  # iterator over new intervals
+    # iterate over original intervals
+    for from_idx in range(0, len(from_lower_bounds) - 1):
+        remaining_share = 1  # share of original interval to be distributed
+        # position up to which the distribution is already computed
+        pos = from_lower_bounds[from_idx]
+        len_orig_interval = from_lower_bounds[from_idx+1] - pos
+        # find first new interval intersecting the original interval
+        while pos >= to_lower_bounds[to_idx+1]:
+            to_idx += 1
+        while from_lower_bounds[from_idx+1] > to_lower_bounds[to_idx+1]:
+            # compute share of original interval that is send to new interval
+            share = (to_lower_bounds[to_idx+1] - pos) / len_orig_interval
+            from_to_mapping[from_idx].append([share, to_idx])
+            remaining_share -= share
+            pos = to_lower_bounds[to_idx+1]
+            to_idx += 1
+        # if upper bound of the new interval is not smaller than upper bound of
+        # the original interval assign remaining share of the original interval
+        # to the new interval
+        from_to_mapping[from_idx].append([remaining_share, to_idx])
+    return from_to_mapping
