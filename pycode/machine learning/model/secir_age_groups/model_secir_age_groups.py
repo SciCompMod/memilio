@@ -21,10 +21,58 @@ from different_models import *
 from tensorflow import keras
 
 
+# def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
+
+# # 36 damping entries  and 48 age dependent compartments
+# input_width = int((inputs.shape[1] - 36) / 48)
+# #label_width = int(labels.shape[1] / 48)
+# label_width = int(labels.shape[1] / 36)
+
+# plt.figure(figsize=(12, 8))
+# # cols = np.array(['Susceptible', 'Exposed', 'Carrier',
+# #                'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead'])
+# cols = np.array(['Exposed', 'Carrier',
+#                  'Infected', 'Hospitalized', 'ICU', 'Dead'])
+
+# plot_col_index = np.where(cols == plot_col)[0][0]
+# max_n = min(max_subplots, inputs.shape[0])
+
+# # predictions = model(inputs) # for just one input: input_series = tf.expand_dims(inputs[n], axis=0) -> model(input_series)
+# for n in range(max_n):
+#     plt.subplot(max_n, 1, n+1)
+#     plt.ylabel(f'{plot_col}')
+
+#     input_array = inputs[n].numpy()
+#     label_array = labels[n].numpy()
+#     plt.plot(
+#         np.arange(0, input_width),
+#         input_array[plot_col_index: inputs.shape[1] - 36: 48],
+#         label='Inputs', marker='.', zorder=-10)
+#     plt.scatter(
+#         np.arange(input_width, input_width + label_width),
+#         #label_array[plot_col_index: -1: 48],
+#         label_array[plot_col_index: -1: 36],
+#         edgecolors='k', label='Labels', c='#2ca02c', s=64)
+
+#     if model is not None:
+#         input_series = tf.expand_dims(inputs[n], axis=0)
+#         pred = model(input_series)
+#         pred = pred[0].numpy()
+#         plt.scatter(np.arange(input_width, input_width+label_width),
+#                     # pred[plot_col_index:-1:48],
+#                     pred[plot_col_index:-1:36],
+#                     marker='X', edgecolors='k', label='Predictions',
+#                     c='#ff7f0e', s=64)
+
+# plt.xlabel('days')
+# plt.show()
+# plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
+
+
 def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
     # 36 damping entries  and 48 age dependent compartments
-    input_width = int((inputs.shape[1] - 36) / 48)
+    input_width = int((inputs.shape[1] - 72) / 48)
     #label_width = int(labels.shape[1] / 48)
     label_width = int(labels.shape[1] / 36)
 
@@ -46,7 +94,7 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
         label_array = labels[n].numpy()
         plt.plot(
             np.arange(0, input_width),
-            input_array[plot_col_index: inputs.shape[1] - 36: 48],
+            input_array[plot_col_index: inputs.shape[1] - 72: 48],
             label='Inputs', marker='.', zorder=-10)
         plt.scatter(
             np.arange(input_width, input_width + label_width),
@@ -135,11 +183,11 @@ def network_fit(path, model, max_epochs=30, early_stop=3000):
     # plotCol(test_inputs, test_labels, model=model,
     # lot_col='Susceptible', max_subplots=3)
     plotCol(test_inputs, test_labels, model=model,
-            plot_col='Dead', max_subplots=3)
+            plot_col='Dead', max_subplots=6)
     plotCol(test_inputs, test_labels, model=model,
-            plot_col='Hospitalized', max_subplots=3)
+            plot_col='Hospitalized', max_subplots=6)
     plotCol(test_inputs, test_labels, model=model,
-            plot_col='Infected', max_subplots=3)
+            plot_col='Infected', max_subplots=6)
     test_statistic(model, test_inputs, test_labels)
 
     return history
@@ -211,7 +259,6 @@ def plot_losses(history):
     plt.savefig('losses plot.pdf')
 
 
-print('x')
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping

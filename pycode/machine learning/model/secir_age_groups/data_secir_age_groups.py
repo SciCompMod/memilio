@@ -23,7 +23,8 @@ from sklearn.preprocessing import FunctionTransformer
 import seaborn as sns  # plot after normalization
 
 
-def run_secir_groups_simulation(days, contact_matrix, populations):
+def run_secir_groups_simulation(
+        days, contact_matrix, damping_data, populations):
     """
     Runs the c++ secir model using mulitple age groups
     and plots the results
@@ -119,8 +120,8 @@ def run_secir_groups_simulation(days, contact_matrix, populations):
     #     (num_groups, num_groups)) * 0
 
     # # add one random damping matrix and date
-    # model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-    #     coeffs=np.array(damping_data[0]), t=damping_data[1], level=0, type=0))
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+        coeffs=np.array(damping_data), t=5, level=0, type=0))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
@@ -173,6 +174,16 @@ def generate_data(num_runs, path, input_width, label_width,
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
+
+    for _ in range(num_runs):
+        baseline_matrix = np.zeros((6, 6))  # no of groups = 6
+        for idx in range(6):
+            for i in range(idx+1):
+                damp = round(random.random(), 4)
+                baseline_matrix[idx][i] = damp
+                baseline_matrix[i][idx] = damp
+        # data["contact_matrix"].append(baseline_matrix)
+
     for _ in range(num_runs):
         damping_matrix = np.zeros((6, 6))  # no of groups = 6
         for idx in range(6):
@@ -180,9 +191,10 @@ def generate_data(num_runs, path, input_width, label_width,
                 damp = round(random.random(), 4)
                 damping_matrix[idx][i] = damp
                 damping_matrix[i][idx] = damp
-        data["contact_matrix"].append(damping_matrix)
+        data["contact_matrix"].append([baseline_matrix, damping_matrix])
+
         data_run = run_secir_groups_simulation(
-            days, damping_matrix,
+            days, baseline_matrix,  damping_matrix,
             population[random.randint(0, len(population) - 1)])
 
         # drop columns susceptible und recovered
@@ -369,6 +381,7 @@ def normalize(data):
     return tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)[0]
 
 
+print('x')
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
