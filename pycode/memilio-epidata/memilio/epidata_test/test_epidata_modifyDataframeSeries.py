@@ -647,22 +647,29 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
                 self.assertAlmostEqual(test_val[0], calculated_val[0])
 
     def test_fit_age_group_intervals(self):
-        # testing refinement
-        from_age_1 = ["1-10 years", "11-60 years", "61-99 years"]
-        population_1 = [4, 10, 8]
+        age_in_1 = []
+        age_in_1.append(["1-10 years", "11-60 years", "61-99 years"])
+        age_in_1.append([4, 10, 8])
+        df_age_in_1 = pd.DataFrame(age_in_1)
         to_age_1 = ["1-5", "6-10", "11-50", "51-99"]
 
-        from_age_2 = ["1-10", "11-60", "61-80", ">80 years"]
-        population_2 = [4, 5, 8, 5]
+        age_in_2 = []
+        age_in_2.append(["1-10", "11-60", "61-80", ">80 years"])
+        age_in_2.append([4, 5, 8, 5])
+        df_age_in_2 = pd.DataFrame(age_in_2)
         to_age_2 = ["1-99"]
 
-        from_age_3 = ["1-99 years"]
-        population_3 = [0]
-        to_age_3 = ["1-99"]
+        age_in_3 = []
+        age_in_3.append(["0-9", "10-85", ">85"])
+        age_in_3.append([0, 0, 0])
+        df_age_in_3 = pd.DataFrame(age_in_3)
+        to_age_3 = ["0-99"]
 
-        from_age_4 = ["0-9", "10-99", ">100"]
-        population_4 = [4, 10, 8]
-        to_age_4 = ["0-9", "10-19", "20-89"]
+        age_in_4 = []
+        age_in_4.append(["1-99 years"])
+        age_in_4.append([4])
+        df_age_in_4 = pd.DataFrame(age_in_4)
+        to_age_4 = ["5-9", "10-19", "20-89"]
 
         test_fit1 = np.array([2., 2., 8., 10.])
 
@@ -670,14 +677,48 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
         test_fit3 = np.array([0.])
 
+        # tests with equal distribution
         fit1 = mdfs.fit_age_group_intervals(
-            from_age_1, population_1, to_age_1)
+            df_age_in_1, to_age_1)
         fit2 = mdfs.fit_age_group_intervals(
-            from_age_2, population_2, to_age_2)
+            df_age_in_2, to_age_2)
         fit3 = mdfs.fit_age_group_intervals(
-            from_age_3, population_3, to_age_3)
-        with self.assertRaises(IndexError):
-            mdfs.fit_age_group_intervals(from_age_4, population_4, to_age_4)
+            df_age_in_3, to_age_3)
+        with self.assertRaises(ValueError):
+            mdfs.fit_age_group_intervals(df_age_in_4, to_age_4)
+
+        for i in range(0, len(test_fit1)):
+            self.assertAlmostEqual(test_fit1[i], fit1[i])
+        for i in range(0, len(test_fit2)):
+            self.assertAlmostEqual(test_fit2[i], fit2[i])
+        for i in range(0, len(test_fit3)):
+            self.assertAlmostEqual(test_fit3[i], fit3[i])
+
+        # tests with distribution from population data
+        # define population for distribution
+        population_1 = []
+        population_1.append(["1-5", "6-7", "8-10", "11-60", "61-99"])
+        population_1.append([40, 5, 5, 25, 25])
+        df_population_1 = pd.DataFrame(population_1)
+        test_fit1 = np.array([3.2,  0.8,  8., 10.])
+
+        population_2 = []
+        population_2.append(["1-5", "6-7", "8-10", "11-60", "61-99"])
+        population_2.append([30, 50, 20, 5, 5])
+        df_population_2 = pd.DataFrame(population_2)
+        test_fit2 = np.array([22.])
+
+        population_3 = []
+        population_3.append(["0-5", "6-7", "8-10", "11-60", "61-99"])
+        population_3.append([2, 3, 4, 5, 6])
+        df_population_3 = pd.DataFrame(population_3)
+
+        fit1 = mdfs.fit_age_group_intervals(
+            df_age_in_1, to_age_1, df_population_1)
+        fit2 = mdfs.fit_age_group_intervals(
+            df_age_in_2, to_age_2, df_population_2)
+        fit3 = mdfs.fit_age_group_intervals(
+            df_age_in_3, to_age_3, df_population_3)
 
         for i in range(0, len(test_fit1)):
             self.assertAlmostEqual(test_fit1[i], fit1[i])

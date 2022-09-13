@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file modifyDataframeSeries.py
-@brief Tools modify data frame series like imputing zeros for unknown dates, 
+@brief Tools modify data frame series like imputing zeros for unknown dates,
     copying previous values, and/or computing moving averages
 """
 import pandas as pd
@@ -33,7 +33,7 @@ from memilio.epidata import defaultDict as dd
 def impute_and_reduce_df(
         df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
         min_date='', max_date='', start_w_firstval=False):
-    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data. 
+    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data.
     Extracts Dates between min and max date.
 
     @param df_old old pandas dataframe
@@ -189,7 +189,7 @@ def split_column_based_on_values(
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
     @param df_to_split global pandas dataframe
-    @param column_to_split identifier of the column for which separate values will define separate dataframes 
+    @param column_to_split identifier of the column for which separate values will define separate dataframes
     @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
     @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
     @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
@@ -282,12 +282,12 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     @param to_lower_bounds desired lower bounds of new intervals
     @return mapping from intervals to intervals
         The mapping is given as a list of tupels for every original interval.
-        The list contains a tuple for every new interval intersecting the 
+        The list contains a tuple for every new interval intersecting the
         original interval. Each tuple defines the share of the original interval
         that is mapped to the new interval and the index of the new interval. We
-        assume that the range of the intervals mapped from is contained in the 
+        assume that the range of the intervals mapped from is contained in the
         range of the intervals mapped to.
-        For example for from_lower_bounds = [5,20,30,80,85,90] and 
+        For example for from_lower_bounds = [5,20,30,80,85,90] and
         to_lower_bounds=[0,15,20,60,100] given the mapping would be
         [[[2/3,0], [1/3,1]],
          [[1,2]],
@@ -326,58 +326,116 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
 
 def fit_age_group_intervals(
-        from_age_groups, population, to_age_groups, max_age=100):
+        df_age_in, age_out, df_population=None, max_age=100):
     """! Creates a mapping from given intervals to new desired intervals
 
-    @param from_age_groups age groups given by current data
-    @param population population for the current age groups
-    @param to_age_groups desired age group distribution
-    @return mapping from intervals to intervals
+    @param df_age_in df with 2 rows. first row containts age distribution and second a population
+    @param age_out desired age group distribution
+    @param df_population population data with arbitrary age groups and same structure as df_age_in
+    @return population in new age group age_out
 
-        We assume the population to be equally distributed
-        Given from_age_groups = [ 1-10, 11-60, 61-99], 
-        population =  [4,10,8] and 
-        to_age_groups = [1-5, 6-10, 11-50, 51-99]
-        So the output should be the population distributed into to_age_groups, i.e.
-        [2,2,8,10]
+        When df_population is set, we use this for the distribution.
+        Otherwiese, we assume the population to be equally distributed.
+        Given df_age_in = 
+        [ 1-10, 11-60, 61-99],
+        [4,     10,     8]
+        age_out = [1-5, 6-10, 11-50, 51-99]
+        So the output should be:
+        [2.,  2.,  8., 10.]
+
+        If we also add an population, like 
+        population = ["1-5", "6-7", "8-10", "11-60", "61-99"],
+                     [ 40,     5,    5,      25,       25])
+        So the population is no longer equally distributed. So the output is:
+        [3.2,  0.8,  8., 10.]
     """
     # get minimum ages of each group
-    from_age_min = []
-    for age in from_age_groups:
+    age_in_min = []
+    max_entry = 0
+    for age in df_age_in.iloc[0]:
         age = age.split()[0]  # remove " years" from string
         if '-' in age:
-            from_age_min.append(int(age.split('-')[0]))
+            age_in_min.append(int(age.split('-')[0]))
+            max_entry = np.maximum(max_entry, int(age.split('-')[1]))
         elif '>' in age:
-            from_age_min.append(int(age.split('>')[1])+1)
+            age_in_min.append(int(age.split('>')[1])+1)
+            max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
         elif '<' in age:
-            from_age_min.append(0)
+            age_in_min.append(0)
         else:
-            print("Undefined entry for one age group in from_age_groups")
-    if 100 not in from_age_min:
-        from_age_min.append(max_age)
+            print("Undefined entry for one age group in df_age_in")
+    if max_entry < max_age:
+        age_in_min.append(max_age)
 
-    to_age_min = []
-    for age in to_age_groups:
+    age_out_min = []
+    max_entry = 0
+    for age in age_out:
         if "year" in age:
             age = age.split()[0]  # remove " years" from string
         if '-' in age:
-            to_age_min.append(int(age.split('-')[0]))
+            age_out_min.append(int(age.split('-')[0]))
+            max_entry = np.maximum(max_entry, int(age.split('-')[1]))
         elif '>' in age:
-            to_age_min.append(int(age.split('>')[1])+1)
+            age_out_min.append(int(age.split('>')[1])+1)
+            max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
         elif '<' in age:
-            to_age_min.append(0)
+            age_out_min.append(0)
         else:
-            print("Undefined entry for one age group in to_age_groups")
-    if 100 not in to_age_min:
-        to_age_min.append(max_age)
+            print("Undefined entry for one age group in age_out")
+    if max_entry < max_age:
+        age_out_min.append(max_age)
 
-    # get distribution to new ages.
-    age_shares = create_intervals_mapping(from_age_min, to_age_min)
-    ans = np.zeros(len(to_age_groups))
-    population_indx = 0
-    for age_entry_from in age_shares:
-        for share_new in age_entry_from:
-            ans[share_new[1]] += share_new[0] * population[population_indx]
-        population_indx += 1
+    # when no df_population is given, we assume the data is equally distributed
+    if df_population is None:
+        population = df_age_in.iloc[1].to_numpy()
+        age_shares = create_intervals_mapping(age_in_min, age_out_min)
+        ans = np.zeros(len(age_out))
+        population_indx = 0
+        for age_entry_from in age_shares:
+            for share_new in age_entry_from:
+                ans[share_new[1]] += share_new[0] * population[population_indx]
+            population_indx += 1
+    else:
+        age_pop_min = []
+        max_entry = 0
+        for age in df_population.iloc[0]:
+            if "year" in age:
+                age = age.split()[0]  # remove " years" from string
+            if '-' in age:
+                age_pop_min.append(int(age.split('-')[0]))
+                max_entry = np.maximum(max_entry, int(age.split('-')[1]))
+            elif '>' in age:
+                age_pop_min.append(int(age.split('>')[1])+1)
+                max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
+            elif '<' in age:
+                age_pop_min.append(0)
+            else:
+                print("Undefined entry for one age group in population data")
+        if max_entry < max_age:
+            age_pop_min.append(max_age)
+
+        # get weights from population file
+        pop_data = df_population.iloc[1].to_numpy()
+        new_pop = np.zeros(df_population.iloc[1].shape[0])
+        age_shares_pop = create_intervals_mapping(age_in_min, age_pop_min)
+        population_indx = 0
+        for age_share in age_shares_pop:
+            sum_pop = sum(df_population.iloc[1].to_numpy()[
+                          age_share[0][1]:age_share[-1][1]+1])
+            for age in age_share:
+                new_pop[age[1]] += pop_data[age[1]
+                                            ] / sum_pop * df_age_in.iloc[1][population_indx]
+
+            population_indx += 1
+
+        # population is now stored in new_pop for the population age groups
+        # now, we need to distribute them to the aim age group
+        age_shares = create_intervals_mapping(age_pop_min, age_out_min)
+        ans = np.zeros(len(age_out))
+        population_indx = 0
+        for age_entry_from in age_shares:
+            for share_new in age_entry_from:
+                ans[share_new[1]] += share_new[0] * new_pop[population_indx]
+            population_indx += 1
 
     return ans
