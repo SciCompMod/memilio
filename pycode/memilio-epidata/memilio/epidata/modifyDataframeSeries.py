@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file modifyDataframeSeries.py
-@brief Tools modify data frame series like imputing zeros for unknown dates,
+@brief Tools for modifying data frame series like imputing zeros for unknown dates,
     copying previous values, and/or computing moving averages
 """
 import pandas as pd
@@ -327,27 +327,28 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
 def fit_age_group_intervals(
         df_age_in, age_out, df_population=None, max_age=100):
-    """! Creates a mapping from given intervals to new desired intervals
+    """! Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y". Boundary age groups can be provided with "<x" or ">y". Minimum and maximum are then taken as 0 and 99, respectively.
 
-    @param df_age_in df with 2 rows. first row containts age distribution and second a population
-    @param age_out desired age group distribution
-    @param df_population population data with arbitrary age groups and same structure as df_age_in
-    @return population in new age group age_out
+    @param df_age_in Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
+    @param age_out Desired age group distribution in list of strings. 
+    @param df_population Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in.
+    @return Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
 
-        When df_population is set, we use this for the distribution.
-        Otherwiese, we assume the population to be equally distributed.
-        Given df_age_in = 
-        [ 1-10, 11-60, 61-99],
-        [4,     10,     8]
-        age_out = [1-5, 6-10, 11-50, 51-99]
-        So the output should be:
-        [2.,  2.,  8., 10.]
+        If df_population is set, we can use this data set to best interpolate
+        @df_age_in to the desired age stratification of @age_out.
+        Where this data is not finely enough resolved or if this data set is not
+        provided, we assume the population to be equally distributed.
+        Ex.
+        df_age_in = ["1-10": 4, "11-60": 10, "61-99": 8]
+        age_out = ["1-5", "6-10", "11-50", "51-99"]
+        returns
+        ["1-5": 2, "6-10": 2, "11-50": 8, "51-99": 10]
+        if no population data is provided.
 
-        If we also add an population, like 
-        population = ["1-5", "6-7", "8-10", "11-60", "61-99"],
-                     [ 40,     5,    5,      25,       25])
-        So the population is no longer equally distributed. So the output is:
-        [3.2,  0.8,  8., 10.]
+        If we also provide the population data
+        population = ["1-5": 40, "6-7": 5, "8-10": 5, "11-60": 25, "61-99": 25],
+        The output is:
+        ["1-5": 3.2, "6-10": 0.8, "11-50": 8., "51:99": 10.]
     """
     # get minimum ages of each group
     age_in_min = []
