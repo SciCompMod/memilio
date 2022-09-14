@@ -21,18 +21,29 @@ def pretty_name_string(intermed_repr):
     )
 
     for key in intermed_repr.population_groups:
-
-        str += (
-            "template <>\n"
-            "std::string pretty_name<{namespace}{enum_class}>()\n"
-            "{{\n"
-            "   return \"{enum_class}\";\n"
-            "}}\n"
-            "\n"
-        ).format(
-            namespace = intermed_repr.namespace,
-            enum_class = key
-        )
+        if key == "AgeGroup":
+            str += (
+                "template <>\n"
+                "std::string pretty_name<mio::{enum_class}>()\n"
+                "{{\n"
+                "   return \"{enum_class}\";\n"
+                "}}\n"
+                "\n"
+            ).format(
+                enum_class = key
+            )
+        else:
+            str += (
+                "template <>\n"
+                "std::string pretty_name<{namespace}{enum_class}>()\n"
+                "{{\n"
+                "   return \"{enum_class}\";\n"
+                "}}\n"
+                "\n"
+            ).format(
+                namespace = intermed_repr.namespace,
+                enum_class = key
+            )
 
     return str + "} // namespace pymio\n"
 
@@ -46,7 +57,7 @@ def enum_populations(intermed_repr):
                 enum_class=key
             )
 
-        for value in values:
+        for value in values[:-1]:
             str += (
                 "    .value(\"{comp_class}\", {namespace}{enum_class}::{comp_class})\n\t"
             ).format(
@@ -83,9 +94,7 @@ def parameterset_indexing(intermed_repr):
     if not intermed_repr.parameterset_wrapper:
         return ""
     return (
-        "pymio::bind_CustomIndexArray<mio::UncertainValue, {namespace}AgeGroup>(m, \"AgeGroupArray\");\n"
-    ).format(
-        namespace = intermed_repr.namespace,
+        "pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, \"AgeGroupArray\");\n"
     )
 
 def parameterset_wrapper(intermed_repr):
@@ -93,9 +102,9 @@ def parameterset_wrapper(intermed_repr):
         return ""
     return (
         "py::class_<{namespace}{parameterset_wrapper}, {namespace}{parameterset}>(m, \"{parameterset_wrapper}\")\n"
-        "\t.def(py::init<{namespace}AgeGroup>())\n"
-        "\t.def(\"check_constraints\", &{namespace}SecirParams::check_constraints)\n"
-        "\t.def(\"apply_constraints\", &{namespace}SecirParams::apply_constraints);\n"
+        "\t.def(py::init<mio::AgeGroup>())\n"
+        "\t.def(\"check_constraints\", &{namespace}{parameterset_wrapper}::check_constraints)\n"
+        "\t.def(\"apply_constraints\", &{namespace}{parameterset_wrapper}::apply_constraints);\n"
     ).format(
         namespace = intermed_repr.namespace,
         parameterset = intermed_repr.parameterset,
@@ -106,7 +115,7 @@ def age_group(intermed_repr):
     if not intermed_repr.age_group:
         return ""
     return (
-        "py::class_<{namespace}AgeGroup, {base}>(m, \"AgeGroup\").def(py::init<{init}>());"
+        "py::class_<mio::AgeGroup, {base}>(m, \"AgeGroup\").def(py::init<{init}>());"
     ).format(
         namespace = intermed_repr.namespace,
         base = intermed_repr.age_group["base"],

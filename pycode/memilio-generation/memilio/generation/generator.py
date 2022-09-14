@@ -18,8 +18,9 @@ class Generator:
         self.substitutions_cpp["namespace"] = intermed_repr.namespace
         self.substitutions_cpp["model_class"] = intermed_repr.model_class
         self.substitutions_cpp["model_base"] = intermed_repr.model_base[0]
-        self.substitutions_cpp["model_base_templates"] = intermed_repr.model_base[1][0] + ", " + intermed_repr.model_base[2][0]
+        self.substitutions_cpp["model_base_templates"] = intermed_repr.model_base[1][0] + ", " + intermed_repr.model_base[2][0] + ", " + intermed_repr.model_base[3][0]
         self.substitutions_cpp["python_module_name"] = intermed_repr.python_module_name
+        self.substitutions_cpp["parameterset"] = intermed_repr.parameterset
         
         self.substitutions_cpp["includes"] = StringTemplates.include_string(intermed_repr)
         self.substitutions_cpp["pretty_name"] = StringTemplates.pretty_name_string(intermed_repr)

@@ -24,5 +24,18 @@
             "parameterset_wrapper": true,
             "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
+    },
+    {
+        "source_file": "/cpp/models/ode_secirvvs/model.cpp",
+        "path_database": "/build",
+        "namespace": "mio::osecirvvs::",
+        "optional": {
+            "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
+            "python_module_name": "test_secirvvs",
+            "simulation_class": "Simulation",
+            "age_group": true,
+            "parameterset_wrapper": true,
+            "target_folder": "/pycode/memilio-generation/memilio/tools"
+        }
     }
 ]

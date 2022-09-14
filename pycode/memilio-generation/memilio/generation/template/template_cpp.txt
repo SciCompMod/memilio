@@ -30,7 +30,7 @@ PYBIND11_MODULE(_simulation_${python_module_name}, m)
     ${enum_populations}
 
     ${parameterset_indexing}
-    pymio::bind_ParameterSet<${namespace}Parameters>(m, "Parameters");
+    pymio::bind_ParameterSet<${namespace}${parameterset}>(m, "${parameterset}");
 
     ${parameterset_wrapper}
     using Populations = ${population};

@@ -115,10 +115,7 @@ class Scanner:
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
-            print(base.spelling)
             base_type = base.get_definition().type
-            print(base.get_definition().get_num_template_arguments())
-            print(base_type.spelling)
             intermed_repr.model_base = Utility.get_base_class_string(base_type)
     
     def check_base_specifier(self, node, intermed_repr):
