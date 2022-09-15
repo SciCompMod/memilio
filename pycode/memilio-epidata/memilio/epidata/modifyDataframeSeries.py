@@ -295,10 +295,21 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
          [[1,3]],
          [[1,3]]]
     """
-    if (from_lower_bounds[0] < to_lower_bounds[0] or
-            from_lower_bounds[-1] > to_lower_bounds[-1]):
-        raise ValueError("Range of intervals mapped from exeeds range of" +
-                         "intervals mapped to.")
+    if (from_lower_bounds[0] != to_lower_bounds[0] or
+            from_lower_bounds[-1] != to_lower_bounds[-1]):
+        print("Range of intervals mapped from is different than range of " +
+              "intervals mapped to. Therefore, empty entries are possible.")
+
+    extended_begin = False
+    extended_end = False
+    if (from_lower_bounds[0] < to_lower_bounds[0]):
+        to_lower_bounds.insert(0, from_lower_bounds[0])
+        extended_begin = True
+
+    if (from_lower_bounds[-1] > to_lower_bounds[-1]):
+        to_lower_bounds.append(from_lower_bounds[-1])
+        extended_end = True
+
     # compute the shares of the original intervals mapped to the new intervals
     from_to_mapping = [[] for i in range(0, len(from_lower_bounds)-1)]
     to_idx = 0  # iterator over new intervals
@@ -314,26 +325,29 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
         while from_lower_bounds[from_idx+1] > to_lower_bounds[to_idx+1]:
             # compute share of original interval that is send to new interval
             share = (to_lower_bounds[to_idx+1] - pos) / len_orig_interval
-            from_to_mapping[from_idx].append([share, to_idx])
+            if extended_begin:
+                from_to_mapping[from_idx].append([share, to_idx-1])
+            else:
+                from_to_mapping[from_idx].append([share, to_idx])
             remaining_share -= share
             pos = to_lower_bounds[to_idx+1]
             to_idx += 1
         # if upper bound of the new interval is not smaller than upper bound of
         # the original interval assign remaining share of the original interval
         # to the new interval
-        from_to_mapping[from_idx].append([remaining_share, to_idx])
+        if (extended_begin and to_idx == 0) or (extended_end and to_idx == len(from_lower_bounds)):
+            continue
+        else:
+            from_to_mapping[from_idx].append([remaining_share, to_idx])
+
     return from_to_mapping
 
 
 def fit_age_group_intervals(
         df_age_in, age_out, df_population=None, max_age=100):
-    """! Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y". Boundary age groups can be provided with "<x" or ">y". Minimum and maximum are then taken as 0 and 99, respectively.
-
-    @param df_age_in Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
-    @param age_out Desired age group distribution in list of strings. 
-    @param df_population Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in.
-    @return Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
-
+    """! Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y".
+         Boundary age groups can be provided with "<x" or ">y". Minimum and maximum are then taken as 0 and 99, respectively.
+        Example:
         If df_population is set, we can use this data set to best interpolate
         @df_age_in to the desired age stratification of @age_out.
         Where this data is not finely enough resolved or if this data set is not
@@ -349,48 +363,77 @@ def fit_age_group_intervals(
         population = ["1-5": 40, "6-7": 5, "8-10": 5, "11-60": 25, "61-99": 25],
         The output is:
         ["1-5": 3.2, "6-10": 0.8, "11-50": 8., "51:99": 10.]
+
+    @param df_age_in Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
+    @param age_out Desired age group distribution in list of strings. 
+    @param df_population Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in.
+    @return Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
+
     """
+    # First check if the input is valid.
+
     # get minimum ages of each group
     age_in_min = []
-    max_entry = 0
+    max_entry_in = 0
+    min_entry_in = max_age
     for age in df_age_in.iloc[0]:
         age = age.split()[0]  # remove " years" from string
         if '-' in age:
             age_in_min.append(int(age.split('-')[0]))
-            max_entry = np.maximum(max_entry, int(age.split('-')[1]))
+            min_entry_in = np.minimum(min_entry_in, int(age.split('-')[0]))
+            max_entry_in = np.maximum(max_entry_in, int(age.split('-')[1]))
         elif '>' in age:
             age_in_min.append(int(age.split('>')[1])+1)
-            max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
+            max_entry_in = np.maximum(max_entry_in, max_age)
         elif '<' in age:
             age_in_min.append(0)
+            min_entry_in = 0
+            max_entry_in = np.maximum(max_entry_in, int(age.split('<')[1]))
         else:
-            print("Undefined entry for one age group in df_age_in")
-    if max_entry < max_age:
-        age_in_min.append(max_age)
+            raise ValueError("Undefined entry for one age group in df_age_in")
+    # if the max_entry is already element, then we dont need to add it.
+    # Otherwise we add the element to the end of the list and also set interset_max to true.
+    inserted_max = False
+    if max_entry_in not in age_in_min:
+        age_in_min.append(max_entry_in)
+        inserted_max = True
 
     age_out_min = []
-    max_entry = 0
+    max_entry_out = 0
+    min_entry_out = max_age
     for age in age_out:
         if "year" in age:
             age = age.split()[0]  # remove " years" from string
         if '-' in age:
             age_out_min.append(int(age.split('-')[0]))
-            max_entry = np.maximum(max_entry, int(age.split('-')[1]))
+            min_entry_out = np.minimum(min_entry_out, int(age.split('-')[0]))
+            max_entry_out = np.maximum(max_entry_out, int(age.split('-')[1]))
         elif '>' in age:
             age_out_min.append(int(age.split('>')[1])+1)
-            max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
+            max_entry_out = np.maximum(max_entry_out, int(age.split('>')[1])+1)
         elif '<' in age:
             age_out_min.append(0)
+            min_entry_out = 0
         else:
-            print("Undefined entry for one age group in age_out")
-    if max_entry < max_age:
-        age_out_min.append(max_age)
+            raise ValueError("Undefined entry for one age group in age_out")
+    if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
+        print(
+            "Data from df_age_in does not fit age_out. This means that there is an age group in age_out for which no data is given in df_age_in. Therefore, there can be zero values")
+    if max_entry_in not in age_out_min:
+        age_out_min.append(max_entry_in)
+
+    # if the first min age from age_out is greater than the first element in age_in,
+    # we need to add the element and delete it later in the return.
+    inserted_min = False
+    if age_in_min[0] != age_out_min[0]:
+        age_out_min.insert(0, age_in_min[0])
+        inserted_min = True
 
     # when no df_population is given, we assume the data is equally distributed
     if df_population is None:
         population = df_age_in.iloc[1].to_numpy()
         age_shares = create_intervals_mapping(age_in_min, age_out_min)
-        ans = np.zeros(len(age_out))
+        ans = np.zeros(len(age_out_min))
         population_indx = 0
         for age_entry_from in age_shares:
             for share_new in age_entry_from:
@@ -398,22 +441,36 @@ def fit_age_group_intervals(
             population_indx += 1
     else:
         age_pop_min = []
-        max_entry = 0
+        max_entry_pop = 0
+        min_entry_pop = max_age
         for age in df_population.iloc[0]:
             if "year" in age:
                 age = age.split()[0]  # remove " years" from string
             if '-' in age:
                 age_pop_min.append(int(age.split('-')[0]))
-                max_entry = np.maximum(max_entry, int(age.split('-')[1]))
+                min_entry_pop = np.minimum(
+                    min_entry_pop, int(age.split('-')[0]))
+                max_entry_pop = np.maximum(
+                    max_entry_pop, int(age.split('-')[1]))
             elif '>' in age:
                 age_pop_min.append(int(age.split('>')[1])+1)
-                max_entry = np.maximum(max_entry, int(age.split('>')[1])+1)
+                max_entry_pop = np.maximum(
+                    max_entry_pop, int(age.split('>')[1])+1)
             elif '<' in age:
                 age_pop_min.append(0)
+                min_entry_pop = 0
             else:
-                print("Undefined entry for one age group in population data")
-        if max_entry < max_age:
-            age_pop_min.append(max_age)
+                raise ValueError(
+                    "Undefined entry for one age group in population data")
+        if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
+            print(
+                "Data from df_age_in does not df_population. This means that there is an age group in df_population for which no data is given in df_age_in. Therefore, there can be zero values")
+        if max_entry_in not in age_pop_min:
+            age_pop_min.append(max_entry_in)
+
+        # As already done with age_out, we need to check the min values for the population data again.
+        if age_in_min[0] != age_pop_min[0]:
+            age_pop_min.insert(0, age_in_min[0])
 
         # get weights from population file
         pop_data = df_population.iloc[1].to_numpy()
@@ -432,11 +489,16 @@ def fit_age_group_intervals(
         # population is now stored in new_pop for the population age groups
         # now, we need to distribute them to the aim age group
         age_shares = create_intervals_mapping(age_pop_min, age_out_min)
-        ans = np.zeros(len(age_out))
+        ans = np.zeros(len(age_pop_min))
         population_indx = 0
         for age_entry_from in age_shares:
             for share_new in age_entry_from:
                 ans[share_new[1]] += share_new[0] * new_pop[population_indx]
             population_indx += 1
+
+    if inserted_min:
+        ans = ans[1:]
+    if inserted_max:
+        ans = ans[:-1]
 
     return ans

@@ -622,14 +622,16 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             [[1, 3]],
             [[1, 3]]]
 
+        test_map4 = [[], [[0.1111111111111111, 0], [0.7777777777777778, 1]]]
+
         map_bounds1 = mdfs.create_intervals_mapping(
             from_lower_bounds1, to_lower_bounds1)
         map_bounds2 = mdfs.create_intervals_mapping(
             from_lower_bounds2, to_lower_bounds2)
         map_bounds3 = mdfs.create_intervals_mapping(
             from_lower_bounds3, to_lower_bounds3)
-        with self.assertRaises(ValueError):
-            mdfs.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
+        map_bounds4 = mdfs.create_intervals_mapping(
+            from_lower_bounds4, to_lower_bounds4)
 
         for test_map, calculated_map in zip(test_map1, map_bounds1):
             for test_val, calculated_val in zip(test_map, calculated_map):
@@ -642,6 +644,11 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
                 self.assertAlmostEqual(test_val[0], calculated_val[0])
 
         for test_map, calculated_map in zip(test_map3, map_bounds3):
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
+
+        for test_map, calculated_map in zip(test_map4, map_bounds4):
             for test_val, calculated_val in zip(test_map, calculated_map):
                 self.assertEqual(test_val[1], calculated_val[1])
                 self.assertAlmostEqual(test_val[0], calculated_val[0])
@@ -663,19 +670,35 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         age_in_3.append(["0-9", "10-85", ">85"])
         age_in_3.append([0, 0, 0])
         df_age_in_3 = pd.DataFrame(age_in_3)
-        to_age_3 = ["0-99"]
+        to_age_3 = ["1-99"]
 
         age_in_4 = []
-        age_in_4.append(["1-99 years"])
-        age_in_4.append([4])
+        age_in_4.append(["1-10 years", "11-60 years", "61-99 years"])
+        age_in_4.append([4, 10, 8])
         df_age_in_4 = pd.DataFrame(age_in_4)
-        to_age_4 = ["5-9", "10-19", "20-89"]
+        to_age_4 = ["6-10", "11-50", ">50"]
+
+        age_in_5 = []
+        age_in_5.append(["10-16 years"])
+        age_in_5.append([4])
+        df_age_in_5 = pd.DataFrame(age_in_5)
+        to_age_5 = ["1-9", "10-19", "20-89"]
+
+        age_in_6 = []
+        age_in_6.append(["10-16 yars"])
+        age_in_6.append([4])
+        df_age_in_6 = pd.DataFrame(age_in_6)
+        to_age_6 = ["1-9", "10-19", "20-89 yaer"]
 
         test_fit1 = np.array([2., 2., 8., 10.])
 
         test_fit2 = np.array([22.])
 
         test_fit3 = np.array([0.])
+
+        test_fit4 = np.array([2., 8., 10.])
+
+        test_fit5 = np.array([0., 4., 0.])
 
         # tests with equal distribution
         fit1 = mdfs.fit_age_group_intervals(
@@ -684,8 +707,12 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             df_age_in_2, to_age_2)
         fit3 = mdfs.fit_age_group_intervals(
             df_age_in_3, to_age_3)
+        fit4 = mdfs.fit_age_group_intervals(
+            df_age_in_4, to_age_4)
+        fit5 = mdfs.fit_age_group_intervals(
+            df_age_in_5, to_age_5)
         with self.assertRaises(ValueError):
-            mdfs.fit_age_group_intervals(df_age_in_4, to_age_4)
+            mdfs.fit_age_group_intervals(df_age_in_6, to_age_6)
 
         for i in range(0, len(test_fit1)):
             self.assertAlmostEqual(test_fit1[i], fit1[i])
@@ -693,6 +720,10 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
             self.assertAlmostEqual(test_fit2[i], fit2[i])
         for i in range(0, len(test_fit3)):
             self.assertAlmostEqual(test_fit3[i], fit3[i])
+        for i in range(0, len(test_fit4)):
+            self.assertAlmostEqual(test_fit4[i], fit4[i])
+        for i in range(0, len(test_fit5)):
+            self.assertAlmostEqual(test_fit5[i], fit5[i])
 
         # tests with distribution from population data
         # define population for distribution
