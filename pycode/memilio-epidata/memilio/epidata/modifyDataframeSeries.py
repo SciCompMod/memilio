@@ -376,8 +376,9 @@ def fit_age_group_intervals(
     age_in_min = []
     max_entry_in = 0
     min_entry_in = max_age
-    for age in df_age_in.iloc[0]:
-        age = age.split()[0]  # remove " years" from string
+    for age in df_age_in.columns:
+        if "year" in age:
+            age = age.split()[0]  # remove " years" from string
         if '-' in age:
             age_in_min.append(int(age.split('-')[0]))
             min_entry_in = np.minimum(min_entry_in, int(age.split('-')[0]))
@@ -431,7 +432,7 @@ def fit_age_group_intervals(
 
     # when no df_population is given, we assume the data is equally distributed
     if df_population is None:
-        population = df_age_in.iloc[1].to_numpy()
+        population = df_age_in.iloc[0].to_numpy()
         age_shares = create_intervals_mapping(age_in_min, age_out_min)
         ans = np.zeros(len(age_out_min))
         population_indx = 0
@@ -443,7 +444,7 @@ def fit_age_group_intervals(
         age_pop_min = []
         max_entry_pop = 0
         min_entry_pop = max_age
-        for age in df_population.iloc[0]:
+        for age in df_population.columns:
             if "year" in age:
                 age = age.split()[0]  # remove " years" from string
             if '-' in age:
@@ -473,16 +474,16 @@ def fit_age_group_intervals(
             age_pop_min.insert(0, age_in_min[0])
 
         # get weights from population file
-        pop_data = df_population.iloc[1].to_numpy()
-        new_pop = np.zeros(df_population.iloc[1].shape[0])
+        pop_data = df_population.iloc[0].to_numpy()
+        new_pop = np.zeros(df_population.iloc[0].shape[0])
         age_shares_pop = create_intervals_mapping(age_in_min, age_pop_min)
         population_indx = 0
         for age_share in age_shares_pop:
-            sum_pop = sum(df_population.iloc[1].to_numpy()[
+            sum_pop = sum(df_population.iloc[0].to_numpy()[
                           age_share[0][1]:age_share[-1][1]+1])
             for age in age_share:
                 new_pop[age[1]] += pop_data[age[1]
-                                            ] / sum_pop * df_age_in.iloc[1][population_indx]
+                                            ] / sum_pop * df_age_in.iloc[0][population_indx]
 
             population_indx += 1
 
