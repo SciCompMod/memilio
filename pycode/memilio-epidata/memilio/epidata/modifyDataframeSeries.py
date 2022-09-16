@@ -392,7 +392,7 @@ def fit_age_group_intervals(
             max_entry_in = np.maximum(max_entry_in, int(age.split('<')[1]))
         else:
             raise ValueError("Undefined entry for one age group in df_age_in")
-    # if the max_entry is already element, then we dont need to add it.
+    # if the max_entry is already an element of the vector, then we dont need to add it.
     # Otherwise we add the element to the end of the list and also set interset_max to true.
     inserted_max = False
     if max_entry_in not in age_in_min:
@@ -419,7 +419,7 @@ def fit_age_group_intervals(
             raise ValueError("Undefined entry for one age group in age_out")
     if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
         print(
-            "Data from df_age_in does not fit age_out. This means that there is an age group in age_out for which no data is given in df_age_in. Therefore, there can be zero values")
+            "Data from input data frame does not fit to desired output. Required data that is missing is interpreted as zero.")
     if max_entry_in not in age_out_min:
         age_out_min.append(max_entry_in)
 
@@ -465,7 +465,7 @@ def fit_age_group_intervals(
                     "Undefined entry for one age group in population data")
         if min_entry_out < min_entry_in or max_entry_out > max_entry_in:
             print(
-                "Data from df_age_in does not df_population. This means that there is an age group in df_population for which no data is given in df_age_in. Therefore, there can be zero values")
+                "Data from input data frame does not fit to population data. Required data that is missing is interpreted as zero.")
         if max_entry_in not in age_pop_min:
             age_pop_min.append(max_entry_in)
 
