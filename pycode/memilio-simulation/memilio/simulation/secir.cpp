@@ -169,13 +169,6 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Recovered", mio::InfectionState::Recovered)
         .value("Dead", mio::InfectionState::Dead);
 
-    pymio::bind_Index<mio::InfectionState>(m, "Index_InfectionState");
-    pymio::bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");
-
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
-
-    pymio::bind_MultiIndex<mio::AgeGroup, mio::InfectionState>(m, "Index_Agegroup_InfectionState");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::InfectionState>(m, "SecirPopulationArray");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
     pymio::bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
@@ -185,9 +178,9 @@ PYBIND11_MODULE(_simulation_secir, m)
         .def("check_constraints", &mio::SecirParams::check_constraints)
         .def("apply_constraints", &mio::SecirParams::apply_constraints);
 
-    pymio::bind_Population<mio::AgeGroup, mio::InfectionState>(m, "SecirPopulation");
-
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
+    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::SecirModel::Populations>{});
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
     py::class_<mio::SecirModel, mio::CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>>(m, "SecirModel")
         .def(py::init<int>(), py::arg("num_agegroups"));

@@ -36,32 +36,32 @@ namespace mio
 {
 namespace osecirvvs
 {
-    /**
+/**
      * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
      * @param[inout] model Model including contact patterns for alle age groups
      */
-    void draw_sample_demographics(Model& model);
+void draw_sample_demographics(Model& model);
 
-    /**
+/**
      * draws a sample from the specified distributions for all parameters related to the infection.
      * @param[inout] model Model including contact patterns for alle age groups
      */
-    void draw_sample_infection(Model& model);
+void draw_sample_infection(Model& model);
 
-    /** Draws a sample from Model parameter distributions and stores sample values
+/** Draws a sample from Model parameter distributions and stores sample values
     * as Parameters parameter values (cf. UncertainValue and Parameters classes)
     * @param[inout] model Model including contact patterns for alle age groups
     */
-    void draw_sample(Model& model);
+void draw_sample(Model& model);
 
-    /**
+/**
     * Draws samples for each model node in a graph.
     * Some parameters are shared between nodes and only sampled once.
     * @param graph Graph to be sampled.
     * @param variant_high If true, use high value for infectiousness of variant.
     * @return Graph with nodes and edges from the input graph sampled.
     */
-    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high);
+Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high);
 
 } // namespace osecirvvs
 } // namespace mio

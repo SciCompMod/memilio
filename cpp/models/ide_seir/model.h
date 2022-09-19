@@ -32,12 +32,12 @@ namespace mio
 {
 namespace iseir
 {
-    class IdeSeirModel
-    {
-        using Pa = ParametersBase;
+class IdeSeirModel
+{
+    using Pa = ParametersBase;
 
-    public:
-        /**
+public:
+    /**
         * @brief Create an IDE SEIR model.
         *
         * @param[in, out] init TimeSeries with the initial values of the number of susceptibles at associated initial times.
@@ -50,9 +50,9 @@ namespace iseir
         * @param[in] dt_init The size of the time step used for numerical simulation.
         * @param[in] N_init The population of the considered region. 
         */
-        IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
+    IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
 
-        /**
+    /**
         * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.
         *
         * The simulation is performed by solving the underlying model equation numerically. 
@@ -63,9 +63,9 @@ namespace iseir
         * @return The result of the simulation, stored in a TimeSeries with simulation time and 
         *       associated number of susceptibles.
         */
-        TimeSeries<double> const& simulate(int t_max);
+    TimeSeries<double> const& simulate(int t_max);
 
-        /**
+    /**
         * @brief Calculate the distribution of the population in E, I and, R based on the calculated values for S.
         *
         * The values are calculated using the average latency and infection time, not using model equations. 
@@ -74,9 +74,9 @@ namespace iseir
         * @return The result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an
         *   associated Vector with values for S, E, I, and R.
         */
-        TimeSeries<double> const& calculate_EIR();
+    TimeSeries<double> const& calculate_EIR();
 
-        /**
+    /**
         * @brief Displays the results of the simulation.
         *
         * You can either output only the simulation times with the simulated values for S, or additionally the 
@@ -86,13 +86,13 @@ namespace iseir
         * @param[in] calculated_SEIR If true, the calculated numbers for E, I and R are displayed 
         *    in addition to the results for S.
         */
-        void print_result(bool calculated_SEIR = false) const;
+    void print_result(bool calculated_SEIR = false) const;
 
-        // Used Parameters for the simulation.
-        Pa parameters{};
+    // Used Parameters for the simulation.
+    Pa parameters{};
 
-    private:
-        /**
+private:
+    /**
         * @brief Density of the generalized beta distribution used for the function f_{beta} of the IDE SEIR model.
         *
         * @param[in] tau evaluation point of the generalized Beta distribution.
@@ -100,9 +100,9 @@ namespace iseir
         * @param[in] q parameter q of the generalized Beta distribution.
         * @result Evaluation of the generalized beta distribution at the given evaluation point.
         */
-        double generalized_beta_distribution(double tau, double p = 3.0, double q = 10.0) const;
+    double generalized_beta_distribution(double tau, double p = 3.0, double q = 10.0) const;
 
-        /**
+    /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
         * 
         * @param[in] ts_ide TimeSeries with the time steps already calculated. 
@@ -111,33 +111,33 @@ namespace iseir
         * @param[in] compartment Compartment for which the numerical differentiation is to be performed.
         * @return Numerically approximated derivative of the function belonging to the compartment at the point t[idx].
         */
-        double central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
-                                           Eigen::Index idx) const;
+    double central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
+                                       Eigen::Index idx) const;
 
-        /**
+    /**
         * @brief Numerical integration of the inner integral of the integro-differential equation for the group S using
         *    a trapezoidal sum.
         * 
         * @param[in] idx Index of the point of time used in the inner integral.
         * @return Result of the numerical integration.
         */
-        double num_integration_inner_integral(Eigen::Index idx) const;
+    double num_integration_inner_integral(Eigen::Index idx) const;
 
-        // TimeSeries containing points of time and the corresponding number of susceptibles.
-        TimeSeries<double> m_result;
-        // TimeSeries containing points of time and the corresponding number of susceptibles, exposed,
-        // infected and recovered.
-        TimeSeries<double> m_result_SEIR = TimeSeries<double>(4);
+    // TimeSeries containing points of time and the corresponding number of susceptibles.
+    TimeSeries<double> m_result;
+    // TimeSeries containing points of time and the corresponding number of susceptibles, exposed,
+    // infected and recovered.
+    TimeSeries<double> m_result_SEIR;
 
-        // Timestep used for simulation.
-        double m_dt{0};
-        // Population of the considered region.
-        int m_N{0};
+    // Timestep used for simulation.
+    double m_dt{0};
+    // Population of the considered region.
+    int m_N{0};
 
-        // Two Indices used for simulation.
-        Eigen::Index m_k{0};
-        Eigen::Index m_l{0};
-    };
+    // Two Indices used for simulation.
+    Eigen::Index m_k{0};
+    Eigen::Index m_l{0};
+};
 } // namespace iseir
 } // namespace mio
 #endif

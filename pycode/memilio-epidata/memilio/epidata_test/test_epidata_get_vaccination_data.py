@@ -26,6 +26,7 @@ import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -104,6 +105,12 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path)
+
     @unittest.skip
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
@@ -134,7 +141,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)
 
-        # test wrong columns names 
+        # test wrong columns names
         df_wrong_column_names = pd.DataFrame(
             {"Impfdatum": ["2022-01-12"],
              "LandkreisId_Impfort": ["05754"],
@@ -158,7 +165,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "Anzahl": [10000, 1, 2, 3, 4]})
         gvd.sanity_checks(df_no_errors)
 
-
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            side_effect=ImportError())
@@ -169,83 +175,17 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             "Error in reading csv while downloading vaccination data.")
         mock_print.assert_has_calls([expected_call])
 
-
-    def test_interval_mapping(self):
-        # testing refinement
-        from_lower_bounds1 = [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100]
-        to_lower_bounds1 = [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65,
-                            74, 80, 100]
-        # testing if the lists of bounds are not contained in one another
-        from_lower_bounds2 = [0, 10, 20, 70, 100]
-        to_lower_bounds2 = [0, 5, 15, 20, 50, 60, 70, 85, 90, 100]
-        # testing with different boundaries
-        from_lower_bounds3 = [5, 20, 30, 80, 85, 90]
-        to_lower_bounds3 = [0, 15, 20, 60, 100]
-        # testing error handling for invalid combination of boundaries
-        from_lower_bounds4 = [0, 10, 100]
-        to_lower_bounds4 = [10, 20, 90]
-
-        test_map1 = [
-            [[1, 0]],
-            [[2 / 3, 1], [1 / 3, 2]],
-            [[2 / 3, 3], [1 / 3, 4]],
-            [[1, 5]],
-            [[1, 6]],
-            [[1, 7]],
-            [[0.5, 8], [0.5, 9]],
-            [[1, 10]],
-            [[2/3, 11], [1/3, 12]],
-            [[1, 13]],
-            [[6/26, 14], [20/26, 15]]]
-
-        test_map2 = [
-            [[1 / 2, 0], [1 / 2, 1]],
-            [[0.5, 1], [0.5, 2]],
-            [[0.6, 3], [0.2, 4], [0.2, 5]],
-            [[1/2, 6], [1/6, 7], [1/3, 8]]]
-
-        test_map3 = [
-            [[2/3, 0], [1/3, 1]],
-            [[1, 2]],
-            [[3/5, 2], [2/5, 3]],
-            [[1, 3]],
-            [[1, 3]]]
-
-        map_bounds1 = gvd.create_intervals_mapping(
-            from_lower_bounds1, to_lower_bounds1)
-        map_bounds2 = gvd.create_intervals_mapping(
-            from_lower_bounds2, to_lower_bounds2)
-        map_bounds3 = gvd.create_intervals_mapping(
-            from_lower_bounds3, to_lower_bounds3)
-        with self.assertRaises(ValueError):
-            gvd.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
-
-        for test_map, calculated_map in zip(test_map1, map_bounds1):
-            for test_val, calculated_val in zip(test_map, calculated_map):
-                self.assertEqual(test_val[1], calculated_val[1])
-                self.assertAlmostEqual(test_val[0], calculated_val[0])
-
-        for test_map, calculated_map in zip(test_map2, map_bounds2):
-            for test_val, calculated_val in zip(test_map, calculated_map):
-                self.assertEqual(test_val[1], calculated_val[1])
-                self.assertAlmostEqual(test_val[0], calculated_val[0])
-
-        for test_map, calculated_map in zip(test_map3, map_bounds3):
-            for test_val, calculated_val in zip(test_map, calculated_map):
-                self.assertEqual(test_val[1], calculated_val[1])
-                self.assertAlmostEqual(test_val[0], calculated_val[0])
-
     def test_sanitizing_based_on_regions(self):
-        to_county_map={0:[1001,1002,2001],1:[6000],2:[6005,6006]}
-        age_groups = ['0-1','2-3','4-10','11+']
+        to_county_map = {0: [1001, 1002, 2001], 1: [6000], 2: [6005, 6006]}
+        age_groups = ['0-1', '2-3', '4-10', '11+']
         data = pd.DataFrame({
-            'Date':['2022-05-11'for i in range(0,24)],
-             'ID_State':sorted(4*[1,1,2,6,6,6]),
-             'ID_County':sorted(4*[1001,1002,2001,6000,6005,6006]),
-             'Age_RKI':6*age_groups,
-             'vacc_1':[0,0,0,0, 2,5,7,9, 2,4,6,8, 4,4,4,4, 1,6,1,2, 0,0,5,17],
-             'vacc_2':[0,1,0,2, 1,4,3,2, 1,1,6,4, 4,4,4,1, 2,1,2,0, 0,5,4,0]
-             })
+            'Date': ['2022-05-11'for i in range(0, 24)],
+            'ID_State': sorted(4*[1, 1, 2, 6, 6, 6]),
+            'ID_County': sorted(4*[1001, 1002, 2001, 6000, 6005, 6006]),
+            'Age_RKI': 6*age_groups,
+            'vacc_1': [0, 0, 0, 0, 2, 5, 7, 9, 2, 4, 6, 8, 4, 4, 4, 4, 1, 6, 1, 2, 0, 0, 5, 17],
+            'vacc_2': [0, 1, 0, 2, 1, 4, 3, 2, 1, 1, 6, 4, 4, 4, 4, 1, 2, 1, 2, 0, 0, 5, 4, 0]
+        })
         population = pd.DataFrame({
             'ID_County': [1001, 1002, 2001, 6000, 6005, 6006],
             '0-1': [100, 200, 150, 200, 100, 100],
@@ -266,14 +206,14 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         test_3 = data[data['Age_RKI'] ==
                       '4-10'].drop(['vacc_1', 'vacc_2'], axis=1)
         test_3['vacc_1'] = [26/7, 39/7, 26/7, 4.0, 6/3.8, 6*2.8/3.8]
-        test_3['vacc_2'] = [18/7, 27/7, 18/7 ,4.0, 6/3.8, 6*2.8/3.8]
+        test_3['vacc_2'] = [18/7, 27/7, 18/7, 4.0, 6/3.8, 6*2.8/3.8]
 
         test_4 = data[data['Age_RKI'] ==
                       '11+'].drop(['vacc_1', 'vacc_2'], axis=1)
         test_4['vacc_1'] = [17*3/8.5, 17*2/8.5, 17*3.5/8.5, 4.0, 0.0, 19.0]
         test_4['vacc_2'] = [8*3/8.5, 8*2/8.5, 8*3.5/8.5, 1.0, 0.0, 0.0]
         returndata = gvd.sanitizing_average_regions(data, to_county_map, age_groups, [
-                                                     'vacc_1', 'vacc_2'], population)
+            'vacc_1', 'vacc_2'], population)
         pd.testing.assert_frame_equal(
             returndata[returndata['Age_RKI'] == '0-1'].reset_index(drop=True),
             test_1.reset_index(drop=True), check_dtype=False)
@@ -287,7 +227,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             returndata[returndata['Age_RKI'] == '11+'].reset_index(drop=True),
             test_4.reset_index(drop=True), check_dtype=False)
 
-    def test_extrapolate_age_groups(self):
+    def test_extrapolate_age_groups_vaccinations(self):
         unique_age_groups_old = ['00-04', '05-11', '12-17', '18+']
         unique_age_groups_new = ['00-05', '06-16', '17-19', '20+']
         column_names = ['vacc_1', 'vacc_2']
@@ -344,7 +284,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             '18': [1600, 400, 800, 900, 1100, 2000],
             '20': [30000, 20000, 35000, 100000, 0, 20000]})
 
-
         # return should be population ratio in new age group * vaccination
         # for all old age groups
         test_1 = pd.DataFrame({'vacc_1': [0, 2+200/3200*5, 2+300/2300*4, 4+150/5150*4, 1+150/1150*6, 0], 'vacc_2': [
@@ -376,17 +315,16 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         test_4 = pd.DataFrame({'vacc_1': [0, 9*20000/20400, 8*35000/35800, 4*100000/100900, 0, 17*20000/22000],
                               'vacc_2': [2*30000/31600, 2*20000/20400, 4*35000/35800, 1*100000/100900, 0, 0]})
 
-
-        returndata = gvd.extrapolate_age_groups(
+        returndata = gvd.extrapolate_age_groups_vaccinations(
             df_data.copy(), population_all_ages, unique_age_groups_old,
             unique_age_groups_new, column_names, age_old_to_all_ages_indices,
             min_all_ages, all_ages_to_age_new_share)
 
-        #test if number of all vaccinations remains the same
+        # test if number of all vaccinations remains the same
         self.assertEqual(returndata['vacc_1'].sum(), df_data['vacc_1'].sum())
         self.assertEqual(returndata['vacc_2'].sum(), df_data['vacc_2'].sum())
 
-        #test if one day is calculated correctly
+        # test if one day is calculated correctly
         returndata_one_day = returndata[returndata['Date'] == '2022-05-11']
         # test each age group seperately
         pd.testing.assert_frame_equal(
