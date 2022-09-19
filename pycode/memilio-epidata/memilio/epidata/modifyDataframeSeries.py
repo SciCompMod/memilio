@@ -47,10 +47,10 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
     """
     # derive date from time
     try:
-        df_old.Date = df_old.Date.dt.date
+        df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
     except AttributeError:
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
-        df_old.Date = df_old.Date.dt.date
+        df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
 
     # create empty copy of the df
     df_new = pd.DataFrame(columns=df_old.columns)
@@ -169,7 +169,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
             df_local_new.fillna(values, inplace=True)
 
         # append current local entity (i.e., county or state)
-        df_new = df_new.append(df_local_new)
+        df_new = pd.concat([df_new, df_local_new])
         # rearrange indices from 0 to N
         df_new.index = (range(len(df_new)))
     

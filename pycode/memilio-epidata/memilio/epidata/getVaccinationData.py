@@ -453,8 +453,6 @@ def extrapolate_age_groups(
             info_df = county_age_df.drop(
                 column_names, axis=1).drop(
                 dd.EngEng['ageRKI'], axis=1)
-            # create new dataframe for vaccination data
-            vacc_data_df = pd.DataFrame()
 
             # get total population in old agegroup
             total_pop = 0
@@ -469,14 +467,12 @@ def extrapolate_age_groups(
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
                 new_dataframe[dd.EngEng['ageRKI']] = unique_age_groups_new[j]
-                vacc_data_df = vacc_data_df.append(
-                    pd.concat([info_df, new_dataframe], axis=1))
+                vacc_data_df = pd.concat([info_df, new_dataframe], axis=1)
             # merge all dataframes for each age group into one dataframe
             total_county_df = pd.concat([vacc_data_df, total_county_df]).groupby(groupby_list).sum().reset_index()
                 
         # merge all county specific dataframes
-        df_data_ageinf_county_cs = df_data_ageinf_county_cs.append(
-            total_county_df)
+        df_data_ageinf_county_cs = pd.concat([df_data_ageinf_county_cs, total_county_df])
 
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
@@ -560,6 +556,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(df_data, directory, "RKIVaccFull", "json")
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
+
+    df_data[dd.EngEng['date']] = pd.to_datetime(df_data[dd.EngEng['date']], format="%Y-%m-%d")
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[

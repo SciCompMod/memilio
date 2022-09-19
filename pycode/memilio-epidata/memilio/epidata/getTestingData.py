@@ -204,6 +204,9 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
 
+    df_test[0][dd.EngEng['date']] = pd.to_datetime(df_test[0][dd.EngEng['date']])
+    df_test[1][dd.EngEng['date']] = pd.to_datetime(df_test[1][dd.EngEng['date']])
+
     # drop columns
     df_test[0] = df_test[0].drop(
         columns=['Anzahl Testungen', 'Positiv getestet',
@@ -290,7 +293,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = df_test_counties.append(df_local.copy())
+        df_test_counties = pd.concat([df_test_counties, df_local.copy()])
 
      # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'
