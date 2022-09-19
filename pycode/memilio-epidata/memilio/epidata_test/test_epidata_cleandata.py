@@ -177,7 +177,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, , False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 0)
