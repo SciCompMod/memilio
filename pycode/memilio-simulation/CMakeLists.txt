@@ -35,12 +35,27 @@ pybind11_add_module(_simulation_abm MODULE
     memilio/simulation/abm.cpp
 )
 target_link_libraries(_simulation_abm PRIVATE memilio abm)
-target_include_directories(_simulation_abm PRIVATE memilio/abm)
+target_include_directories(_simulation_abm PRIVATE memilio/simulation)
 install(TARGETS _simulation_abm LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
+    memilio/simulation/epidemiology/damping_sampling.cpp
+    memilio/simulation/epidemiology/uncertain_matrix.cpp
+    memilio/simulation/mobility/mobility.cpp
+    memilio/simulation/utils/date.cpp
+    memilio/simulation/utils/logging.cpp
+    memilio/simulation/utils/time_series.cpp
+    memilio/simulation/utils/parameter_distributions.cpp
+    memilio/simulation/utils/uncertain_value.cpp
 )
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
 install(TARGETS _simulation LIBRARY DESTINATION memilio)
+
+pybind11_add_module(_simulation_oseir MODULE
+    memilio/simulation/oseir.cpp
+)
+target_link_libraries(_simulation_oseir PRIVATE memilio ode_seir)
+target_include_directories(_simulation_oseir PRIVATE memilio/simulation)
+install(TARGETS _simulation_oseir LIBRARY DESTINATION memilio)
