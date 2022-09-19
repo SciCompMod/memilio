@@ -715,6 +715,98 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
     return success();
 }
 
+IOResult<void> set_vaccination_rate(std::vector<Model>& model, int num_days, int vacc_campaign_szenario)
+{
+    auto num_groups = model[0].parameters.get_num_groups();
+
+    // the average number of vaccinations in the last 30 days was already set_vaccination_data and stored in RateOfDaily...Vaccinations.
+    // Since we called the function before the population was set, we still need to divide by the total numbers of people in the age group.
+    for (size_t i = 0; i < model.size(); ++i) {
+        for (auto g = AgeGroup(0); g < num_groups; ++g) {
+            auto group_total = model[i].populations.get_group_total(g);
+            model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}] /= group_total;
+            model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}] /= group_total;
+            model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}] /= group_total;
+
+            if (model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}] > 0.001 ||
+                model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}] > 0.001 ||
+                model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}] > 0.001) {
+                log_info("Rate of daily vaccinations unusually high");
+            }
+        }
+    }
+
+    // iterate over regions (e.g., counties)
+    for (size_t i = 0; i < model.size(); ++i) {
+        // iterate over age groups in region
+        for (auto g = AgeGroup(0); g < num_groups; ++g) {
+            model[i].parameters.template get<DailyPartialVaccination>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyBoosterVaccination>().resize(SimulationDay(num_days + 1));
+            auto num_possible_vacc = model[i].populations[{g, InfectionState::SusceptibleNaive}] +
+                                     model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] +
+                                     model[i].populations[{g, InfectionState::Recovered}];
+            auto num_possible_booster = model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] +
+                                        model[i].populations[{g, InfectionState::Recovered}];
+            // number of vaccinations per day, assuming we vaccinate 5% of the possible population per week
+            auto vacc_per_day         = num_possible_vacc * 0.05 / 7;
+            auto booster_vacc_per_day = num_possible_booster * 0.05 / 7;
+            double campaign_duration  = 0;
+            // get the number of days, we need to either vaccinate half of the boostered persons or all already boostered persons.
+            if (vacc_campaign_szenario == 2) {
+                campaign_duration = (0.5 * num_possible_booster) / booster_vacc_per_day;
+            }
+            else if (vacc_campaign_szenario == 3) {
+                campaign_duration = num_possible_booster / booster_vacc_per_day;
+            }
+
+            // Vaccine campaing start
+            auto start_simulation = Date(2022, 6, 1);
+            auto campaign_start   = Date(2022, 6, 3);
+            auto campaign_end     = offset_date_by_days(campaign_start, campaign_duration);
+
+            auto vacc_daily_partially =
+                model[i].populations[{g, InfectionState::SusceptibleNaive}] / num_possible_vacc * vacc_per_day;
+            auto vacc_daily_first_booster = model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] /
+                                            num_possible_booster * booster_vacc_per_day;
+            auto vacc_daily_more_booster =
+                model[i].populations[{g, InfectionState::Recovered}] / num_possible_booster * booster_vacc_per_day;
+
+            auto day_campaign_idx = 0;
+            for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
+                auto date = offset_date_by_days(start_simulation, d);
+                if (vacc_campaign_szenario > 1 && date >= campaign_start && date <= campaign_end) {
+
+                    // get number of people in compartment left
+                    auto number_S_left = model[i].populations[{g, InfectionState::SusceptibleNaive}] -
+                                         day_campaign_idx * vacc_daily_partially;
+                    auto number_Sp_left = model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] -
+                                          day_campaign_idx * vacc_daily_first_booster;
+                    auto number_R_left = model[i].populations[{g, InfectionState::Recovered}] -
+                                         day_campaign_idx * vacc_daily_more_booster;
+
+                    model[i].parameters.template get<DailyPartialVaccination>()[{g, SimulationDay{d}}] =
+                        vacc_daily_partially / number_S_left;
+                    model[i].parameters.template get<DailyFullVaccination>()[{g, SimulationDay{d}}] =
+                        vacc_daily_first_booster / number_Sp_left;
+                    model[i].parameters.template get<DailyBoosterVaccination>()[{g, SimulationDay{d}}] =
+                        vacc_daily_more_booster / number_R_left;
+                    day_campaign_idx++;
+                }
+                else {
+                    model[i].parameters.template get<DailyPartialVaccination>()[{g, SimulationDay{d}}] =
+                        model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}];
+                    model[i].parameters.template get<DailyFullVaccination>()[{g, SimulationDay{d}}] =
+                        model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}];
+                    model[i].parameters.template get<DailyBoosterVaccination>()[{g, SimulationDay{d}}] =
+                        model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}];
+                }
+            }
+        }
+    }
+    return success();
+}
+
 } // namespace details
 } // namespace osecirvvs
 } // namespace mio

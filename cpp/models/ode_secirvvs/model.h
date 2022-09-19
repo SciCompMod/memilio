@@ -52,6 +52,7 @@ public:
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
+        auto t_idx           = SimulationDay((size_t)t);
 
         ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
@@ -198,13 +199,27 @@ public:
                                              (risk_from_carrier * (pop[Cj] + pop[CVj] + pop[CV2j]) +
                                               risk_from_symptomatic * (pop[Ij] + pop[IVj] + pop[IV2j]));
 
-                double dummy_partial_imm = y[Si] * params.get<RateOfDailyPartialVaccinations>()[i] /
-                                           params.get<DaysUntilEffectivePartialImmunity>()[i];
-                double dummy_improved_imm = y[SVi] * params.get<RateOfDailyImprovedVaccinations>()[i] /
-                                            params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+                // double dummy_partial_imm = y[Si] * params.get<RateOfDailyPartialVaccinations>()[i] /
+                //                            params.get<DaysUntilEffectivePartialImmunity>()[i];
+                // double dummy_improved_imm = y[SVi] * params.get<RateOfDailyImprovedVaccinations>()[i] /
+                //                             params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+                // double dummy_booster_imm = y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
+                //                            params.get<DaysUntilEffectiveBoosterImmunity>()[i];
 
-                double dummy_booster_imm = y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
-                                           params.get<DaysUntilEffectiveBoosterImmunity>()[i];
+                // only add vaccinations, if there are any people in the compartment left.
+                double dummy_partial_imm =
+                    (y[Si] < 1) ? 0.
+                                : y[Si] * params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] /
+                                      params.get<DaysUntilEffectivePartialImmunity>()[i];
+
+                double dummy_improved_imm =
+                    (y[SVi] < 1) ? 0.
+                                 : y[SVi] * params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] /
+                                       params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+
+                double dummy_booster_imm = (y[Ri] < 1) ? 0.
+                                                       : y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
+                                                             params.get<DaysUntilEffectiveBoosterImmunity>()[i];
 
                 double dummy_S = y[Si] * ext_inf_force_dummy;
 
@@ -538,7 +553,7 @@ public:
         auto szenario_new_variant = this->get_model().parameters.template get<SzenarioNewVariant>();
 
         // szenario 1 means no new variant -> BA.5 or similar variant stays
-        if (start_day + t > variant_day || szenario_new_variant > 1) {
+        if (start_day + t > variant_day && szenario_new_variant > 1) {
             auto variant_growth = (start_day - variant_day) * 0.1666667;
             // 2 equal to the share of the delta variant on June 6
             double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);

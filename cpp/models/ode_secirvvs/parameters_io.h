@@ -669,6 +669,15 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 
 IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string& path, Date date,
                                     const std::vector<int>& vregion, int num_days);
+
+/**
+    * @brief Calculates vaccination rates for two scenarios. In each scenario, 5% of the population is vaccinated per week until:
+        First: 50% of all vaccinated persons are vaccinated.
+        Second: 100% of all vaccinated persons are vaccinated.
+    * @param model vector of objects in which the data is set
+    * @param num_days Number of days for which the time series is exported.
+    */
+IOResult<void> set_vaccination_rate(std::vector<Model>& model, int num_days, int vacc_campaign_szenario);
 } // namespace details
 
 #ifdef MEMILIO_HAS_HDF5
@@ -1250,28 +1259,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                                    path_join(dir, "cases_all_county_age_ma7.json"), county, date));
 
     // scale by total number of people in the county.
-    for (size_t i = 0; i < model.size(); ++i) {
-        for (auto g = AgeGroup(0); g < model[0].parameters.get_num_groups(); ++g) {
-            auto group_total = model[i].populations.get_group_total(g);
-            if (vacc_campaign_szenario > 1) {
-                model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}] =
-                    0.00730084; // 0.00730084 booster vaccinations per day are equivalent to 5% per week
-                model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}] = 0.00730084;
-            }
-            else {
-                model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}] /= group_total;
-                model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}] /= group_total;
-            }
-
-            model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}] /= group_total;
-
-            if (model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}] > 0.001 ||
-                model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}] > 0.001 ||
-                model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}] > 0.001) {
-                log_info("Rate of daily vaccinations unusually high");
-            }
-        }
-    }
+    BOOST_OUTCOME_TRY(details::set_vaccination_rate(model, num_days, vacc_campaign_szenario));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
