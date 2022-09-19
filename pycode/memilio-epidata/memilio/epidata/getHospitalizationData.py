@@ -138,7 +138,7 @@ def get_hospitailzations_per_day(seven_days_values):
     for i in range(len(daily_values)):
         for day in range(7):
             check[i+day] += daily_values[i]
-    if sum(check[6:-7]-seven_days_values[6:]) > 0:
+    if sum(check[6:-7]-seven_days_values[6:]) > 10**-7:
         raise gd.DataError("Check failed.")
 
     return daily_values
