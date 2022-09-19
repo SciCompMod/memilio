@@ -1493,10 +1493,10 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
     const auto testing_min_time = mio::abm::days(1);
-    const auto start_date        = mio::abm::TimePoint(0);
-    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
-    const auto probability       = 0.8;
-    const auto test_type         = mio::abm::PCRTest();
+    const auto start_date       = mio::abm::TimePoint(0);
+    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability      = 0.8;
+    const auto test_type        = mio::abm::PCRTest();
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criterias, testing_min_time, start_date, end_date, test_type, probability);
@@ -1529,7 +1529,9 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.9));
     ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), false); // Person tests and tests positive
     ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), true); // Person doesn't test
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home),
+              true); // Person is in quarantine and wants to go home -> can do so
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work), true); // Person doesn't test
 
     testing_scheme.add_testing_criteria(testing_criteria1);
     testing_scheme.remove_testing_criteria(testing_criteria1);
