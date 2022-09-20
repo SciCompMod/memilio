@@ -29,6 +29,7 @@
 #include "memilio/io/mobility_io.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
+#include "ode_secirvvs/parameters.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "boost/filesystem.hpp"
@@ -269,6 +270,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     const double seasonality_max = 0.3;
 
     assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
+
+    params.get<mio::osecirvvs::WaningPartialImmunity>()  = 90.0;
+    params.get<mio::osecirvvs::WaningImprovedImmunity>() = 90.0;
 
     return mio::success();
 }
@@ -920,9 +924,9 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 15.0;
+    const auto num_days_sim = 35.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 2;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;

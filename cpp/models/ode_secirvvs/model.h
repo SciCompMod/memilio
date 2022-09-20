@@ -240,10 +240,10 @@ public:
                 dydt[EV2i] += dummy_R;
 
                 // waning immunity
-                dydt[Si] += 1 / params.get<WainingPartialImmunity>()[i] * y[SVi];
-                dydt[SVi] -= 1 / params.get<WainingPartialImmunity>()[i] * y[SVi];
-                dydt[SVi] += 1 / params.get<WainingImprovedImmunity>()[i] * y[Ri];
-                dydt[Ri] -= 1 / params.get<WainingImprovedImmunity>()[i] * y[Ri];
+                dydt[Si] += 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
+                dydt[SVi] -= 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
+                dydt[SVi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
+                dydt[Ri] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
             }
 
             // ICU capacity shortage is close

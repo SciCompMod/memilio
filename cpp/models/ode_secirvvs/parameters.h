@@ -488,9 +488,9 @@ struct DaysUntilEffectiveBoosterImmunity {
 };
 
 /** 
- * @brief Time in days to describe waining immunity to get person from S_pv -> S
+ * @brief Time in days to describe waning immunity to get person from S_pv -> S
  */
-struct WainingPartialImmunity {
+struct WaningPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -498,14 +498,14 @@ struct WainingPartialImmunity {
     }
     static std::string name()
     {
-        return "WainingPartialImmunity";
+        return "WaningPartialImmunity";
     }
 };
 
 /** 
- * @brief Time in days to describe waining immunity to get person from R -> S_pv
+ * @brief Time in days to describe waning immunity to get person from R -> S_pv
  */
-struct WainingImprovedImmunity {
+struct WaningImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -513,7 +513,7 @@ struct WainingImprovedImmunity {
     }
     static std::string name()
     {
-        return "WainingImprovedImmunity";
+        return "WaningImprovedImmunity";
     }
 };
 
@@ -826,7 +826,7 @@ using ParametersBase =
                  ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity,
                  InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity,
                  InfectiousTimeFactorImmune, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant,
-                 BaseSeverity, BaseSeverityNewVariant, WainingPartialImmunity, WainingImprovedImmunity>;
+                 BaseSeverity, BaseSeverityNewVariant, WaningPartialImmunity, WaningImprovedImmunity>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
