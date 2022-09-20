@@ -171,11 +171,11 @@ IOResult<void> read_confirmed_cases_data(
                 num_rec[age] += entry.num_confirmed;
             }
             if (entry.date == offset_date_by_days(date, days_surplus)) {
-                num_car[age] += scaling_factor_inf[age] * entry.num_confirmed;
+                num_car[age] -= scaling_factor_inf[age] * entry.num_confirmed;
             }
             // +R3
             if (entry.date == offset_date_by_days(date, t_car_to_inf[age] + days_surplus)) {
-                num_car[age] -= scaling_factor_inf[age] * entry.num_confirmed;
+                num_car[age] += scaling_factor_inf[age] * entry.num_confirmed;
                 num_car[age] += mu_C_R[age] / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
                 num_exp[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
             }

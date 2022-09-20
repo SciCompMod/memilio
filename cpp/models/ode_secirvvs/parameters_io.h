@@ -186,10 +186,11 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         num_timm1[county] = std::vector<double>(num_age_groups, 0.0);
         num_timm2[county] = std::vector<double>(num_age_groups, 0.0);
         for (size_t group = 0; group < num_age_groups; group++) {
-
+            // added +1 to t_car_to_inf to round to the higher value
             t_car_to_inf[county].push_back(
                 static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                      model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
+                                      model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])) +
+                1);
             t_car_to_rec[county].push_back(
                 static_cast<int>(t_car_to_inf[county][group] +
                                  0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group]));
