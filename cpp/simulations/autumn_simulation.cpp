@@ -127,23 +127,23 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int vacc_effectiveness_szenario)
 {
     //times
-    const double tinc             = 3.1; // R_2^(-1)+R_3^(-1)
-    const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; // R_2^(-1)+0.5*R_3^(-1)
-    const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
-    const double t_inf_rec_min    = 6.37; // R4^(-1) = T_I^R
-    const double t_inf_rec_max    = 7.37;
-    const double t_inf_hosp_min[] = {9, 9, 9, 5, 5, 5}; // R6^(-1) = T_I^H
-    const double t_inf_hosp_max[] = {12, 12, 12, 7, 7, 7};
-    const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; // R5^(-1) = T_H^R
-    const double t_hosp_rec_max[] = {6, 6, 7, 9, 11, 17};
-    const double t_hosp_icu_min   = 3; // R7^(-1) = T_H^U
-    const double t_hosp_icu_max   = 7;
-    const double t_icu_rec_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
-    const double t_icu_rec_max[]  = {9, 9, 9, 21, 21, 15};
-    const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
-    const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
-    const double t_imm_min        = {30};
-    const double t_imm_max        = {30};
+    const double tinc             = 3.1; // doi.org/10.3201/eid2806.220158
+    const double tserint_min      = 2.38; // doi.org/10.1016/j.lanepe.2022.100446
+    const double tserint_max      = 2.38; // doi.org/10.1016/j.lanepe.2022.100446
+    const double t_inf_rec_min    = 6.37; // doi.org/10.1136/bmj.o922
+    const double t_inf_rec_max    = 7.37; // doi.org/10.1136/bmj.o922
+    const double t_inf_hosp_min[] = {7, 7, 7, 7, 7, 7}; // doi.org/10.1016/S0140-6736(20)30183-5
+    const double t_inf_hosp_max[] = {7, 7, 7, 7, 7, 7}; // doi.org/10.1016/S0140-6736(20)30183-5
+    const double t_hosp_rec_min[] = {1.8, 1.8, 1.8, 2.5, 3.5, 4.91}; // doi.org/10.1101/2022.03.16.22271361
+    const double t_hosp_rec_max[] = {2.3, 2.3, 2.3, 3.67, 5, 7.01}; // doi.org/10.1101/2022.03.16.22271361
+    const double t_hosp_icu_min[] = {0.67, 0.67, 0.67, 1.54, 1.7, 1.83}; // doi.org/10.1101/2022.03.16.22271361
+    const double t_hosp_icu_max[] = {0.97, 0.97, 0.97, 2.08, 2.2, 2.42}; // doi.org/10.1101/2022.03.16.22271361
+    const double t_icu_rec_min[]  = {5, 5, 5, 14, 14, 10}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    const double t_icu_rec_max[]  = {9, 9, 9, 21, 21, 15}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    const double t_imm_min        = {30}; // heuristic
+    const double t_imm_max        = {30}; // heuristic
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max);
@@ -160,46 +160,78 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 
     //probabilities
-    const double transmission_risk_min[] = {0.25, 0.225, 0.325, 0.35, 0.325, 0.28};
+    //probabilities
+    double fac_omicron                   = 1.4 * 2.8; // Factor omicron: doi.org/10.1021/acs.jcim.1c01451
+    const double transmission_risk_min[] = {0.02 * fac_omicron, 0.05 * fac_omicron, 0.05 * fac_omicron,
+                                            0.05 * fac_omicron, 0.08 * fac_omicron, 0.1 * fac_omicron};
 
-    const double transmission_risk_max[] = {0.3, 0.275, 0.375, 0.4, 0.375, 0.34};
+    const double transmission_risk_max[] = {0.04 * fac_omicron, 0.07 * fac_omicron, 0.07 * fac_omicron,
+                                            0.07 * fac_omicron, 0.10 * fac_omicron, 0.15 * fac_omicron};
 
     // noch offen
-    const double carr_infec_min          = 0.62;
-    const double carr_infec_max          = 0.83;
+    // = 1 - prob_car_rec_min ??
+    const double carr_infec_min[]        = {0.6, 0.55, 0.65, 0.7, 0.75, 0.85}; // doi.org/10.1101/2022.05.05.22274697
+    const double carr_infec_max[]        = {0.8, 0.75, 0.8, 0.8, 0.825, 0.9}; // doi.org/10.1101/2022.05.05.22274697
     const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
     const double beta_low_incidenc_max   = 0.2;
     const double beta_high_incidence_min = 0.4;
     const double beta_high_incidence_max = 0.5;
 
-    const double prob_car_rec_min[]  = {0.3, 0.35, 0.3, 0.25, 0.2, 0.17}; //{0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
-    const double prob_car_rec_max[]  = {0.35, 0.4, 0.35, 0.3, 0.25, 0.22};
-    const double prob_inf_hosp_min[] = {0.05, 0.001, 0.0005, 0.008, 0.071, 0.246};
-    const double prob_inf_hosp_max[] = {0.059, 0.01, 0.0015, 0.018, 0.081, 0.256};
+    const double prob_car_rec_min[]  = {0.2, 0.25, 0.2, 0.2, 0.175, 0.1}; // doi.org/10.1101/2022.05.05.22274697
+    const double prob_car_rec_max[]  = {0.4, 0.45, 0.35, 0.3, 0.25, 0.15}; // doi.org/10.1101/2022.05.05.22274697
+    const double prob_inf_hosp_min[] = {0.054, 0.005, 0.01,
+                                        0.013, 0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
+    const double prob_inf_hosp_max[] = {0.054, 0.005, 0.01,
+                                        0.013, 0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
 
-    const double prob_hosp_icu_min[] = {0.034, 0.029, 0.028, 0.063, 0.101, 0.101}; // theta
-    const double prob_hosp_icu_max[] = {0.044, 0.039, 0.038, 0.073, 0.111, 0.111};
-    const double prob_icu_dead_min[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
-    const double prob_icu_dead_max[] = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double prob_hosp_icu_min[] = {
+        0.0511, 0.0686, 0.0491, 0.114,
+        0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
+    const double prob_hosp_icu_max[] = {
+        0.0511, 0.0686, 0.0491, 0.114,
+        0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
+    const double prob_icu_dead_min[] = {0.00, 0.00, 0.10,
+                                        0.10, 0.30, 0.5}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    const double prob_icu_dead_max[] = {0.10, 0.10, 0.18,
+                                        0.18, 0.50, 0.7}; // improvable doi.org/10.1371/journal.pcbi.1010054
 
-    double vacc_fac{1.};
-    if (vacc_effectiveness_szenario == 1) {
-        vacc_fac = 0.5;
-    }
-    const double reduc_vacc_exp_min       = vacc_fac * 0.75;
-    const double reduc_vacc_exp_max       = vacc_fac * 0.85;
-    const double reduc_immune_exp_min     = vacc_fac * 0.281;
-    const double reduc_immune_exp_max     = vacc_fac * 0.381;
-    const double reduc_vacc_inf_min       = vacc_fac * 0.6;
-    const double reduc_vacc_inf_max       = vacc_fac * 0.7;
-    const double reduc_immune_inf_min     = vacc_fac * 0.193;
-    const double reduc_immune_inf_max     = vacc_fac * 0.293;
-    const double reduc_vacc_hosp_min      = vacc_fac * 0.05;
-    const double reduc_vacc_hosp_max      = vacc_fac * 0.15;
-    const double reduc_immune_hosp_min    = vacc_fac * 0.041;
-    const double reduc_immune_hosp_max    = vacc_fac * 0.141;
-    const double temp_reduc_mild_rec_time = vacc_fac * 0.5;
-    const double reduc_mild_rec_time      = vacc_fac * temp_reduc_mild_rec_time;
+    mio::unused(vacc_effectiveness_szenario);
+    // if (vacc_effectiveness_szenario == 1) {
+    const double reduc_partial_exp_min  = 0.569; // doi.org/10.1136/bmj-2022-071502
+    const double reduc_partial_exp_max  = 0.637; // doi.org/10.1136/bmj-2022-071502
+    const double reduc_improved_exp_min = 0.46; // doi.org/10.1136/bmj-2022-071502
+    const double reduc_improved_exp_max = 0.57; // doi.org/10.1136/bmj-2022-071502
+    const double reduc_partial_inf_min  = 0.746; // doi.org/10.1056/NEJMoa2119451
+    const double reduc_partial_inf_max  = 0.961; // doi.org/10.1056/NEJMoa2119451
+    const double reduc_improved_inf_min = 0.295; // doi.org/10.1056/NEJMoa2119451
+    const double reduc_improved_inf_max = 0.344; // doi.org/10.1056/NEJMoa2119451
+    const double reduc_vacc_hosp_min =
+        0.52; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
+    const double reduc_vacc_hosp_max =
+        0.82; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
+    const double reduc_improved_hosp_min  = 0.1; // doi.org/10.1136/bmj-2022-071502
+    const double reduc_improved_hosp_max  = 0.19; // doi.org/10.1136/bmj-2022-071502
+    const double temp_reduc_mild_rec_time = 0.5; // doi.org/10.1101/2021.09.24.21263978
+    // }
+    // else {
+    //     double vacc_add{0.25};
+    //     const double reduc_partial_exp_min  = 0.569 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double reduc_partial_exp_max  = 0.637 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double reduc_improved_exp_min = 0.46 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double reduc_improved_exp_max = 0.57 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double reduc_partial_inf_min  = 0.746 + vacc_add; // doi.org/10.1056/NEJMoa2119451
+    //     const double reduc_partial_inf_max  = 1.; // doi.org/10.1056/NEJMoa2119451
+    //     const double reduc_improved_inf_min = 0.295 + vacc_add; // doi.org/10.1056/NEJMoa2119451
+    //     const double reduc_improved_inf_max = 0.344 + vacc_add; // doi.org/10.1056/NEJMoa2119451
+    //     const double reduc_vacc_hosp_min =
+    //         0.52 +
+    //         vacc_add; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
+    //     const double reduc_vacc_hosp_max =
+    //         1.; // www.assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050721/Vaccine-surveillance-report-week-4.pdf
+    //     const double reduc_improved_hosp_min  = 0.1 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double reduc_improved_hosp_max  = 0.19 + vacc_add; // doi.org/10.1136/bmj-2022-071502
+    //     const double temp_reduc_mild_rec_time = 0.5 + vacc_add; // doi.org/10.1101/2021.09.24.21263978
+    // }
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
                                       transmission_risk_min, transmission_risk_max);
@@ -217,20 +249,20 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
                                       prob_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min,
-                                      reduc_vacc_exp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorImprovedImmunity>(), reduc_immune_exp_min,
-                                      reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(), reduc_vacc_inf_min,
-                                      reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_partial_exp_min,
+                                      reduc_partial_exp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorImprovedImmunity>(),
+                                      reduc_improved_exp_min, reduc_improved_exp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(),
+                                      reduc_partial_inf_min, reduc_partial_inf_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorImprovedImmunity>(),
-                                      reduc_immune_inf_min, reduc_immune_inf_max);
+                                      reduc_improved_inf_min, reduc_improved_inf_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartialImmunity>(),
                                       reduc_vacc_hosp_min, reduc_vacc_hosp_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorImprovedImmunity>(),
-                                      reduc_immune_hosp_min, reduc_immune_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
-                                      reduc_mild_rec_time);
+                                      reduc_improved_hosp_min, reduc_improved_hosp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(),
+                                      temp_reduc_mild_rec_time, temp_reduc_mild_rec_time);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -890,7 +922,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto start_date   = temp_date;
     const auto num_days_sim = 15.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 3;
+    const auto num_runs     = 1;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
@@ -962,7 +994,7 @@ int main(int argc, char** argv)
     std::string data_dir;
     std::string result_dir;
     int variant_szenario            = 1;
-    int vacc_campaign_szenario      = 1;
+    int vacc_campaign_szenario      = 2;
     int vacc_effectiveness_szenario = 1;
     if (argc == 6) {
         mode                        = RunMode::Save;

@@ -961,10 +961,10 @@ public:
                 this->get<HomeToHospitalizedTime>()[i] = 1.0;
             }
 
-            if (this->get<HospitalizedToICUTime>()[i] < 1.0) {
+            if (this->get<HospitalizedToICUTime>()[i] < 0.5) {
                 log_warning("Constraint check: Parameter HospitalizedToICUTime changed from {:.4f} to {:.4f}",
-                            this->get<HospitalizedToICUTime>()[i], 1.0);
-                this->get<HospitalizedToICUTime>()[i] = 1.0;
+                            this->get<HospitalizedToICUTime>()[i], 0.5);
+                this->get<HospitalizedToICUTime>()[i] = 0.5;
             }
 
             if (this->get<ICUToHomeTime>()[i] < 1.0) {
