@@ -160,7 +160,16 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
     shared_dynamic_npis.draw_sample();
 
-    double variant_fac{1};
+    auto szenario_new_variant    = shared_params_model.parameters.template get<SzenarioNewVariant>();
+    double variant_fac_infection = 1;
+    double variant_fac_severity  = 1;
+    if (szenario_new_variant == 2) {
+        variant_fac_infection = 2;
+    }
+    else if (szenario_new_variant == 3) {
+        variant_fac_infection = 2;
+        variant_fac_severity  = 1.4;
+    }
 
     //infectiousness of virus variants is not sampled independently but depend on base infectiousness
     for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
@@ -168,13 +177,13 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         shared_params_model.parameters.template get<BaseInfectiousness>()[i] =
             shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
         shared_params_model.parameters.template get<BaseInfectiousnessNewVariant>()[i] =
-            shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * variant_fac;
+            shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * variant_fac_infection;
 
         // severity
         shared_params_model.parameters.template get<BaseSeverity>()[i] =
             shared_params_model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
         shared_params_model.parameters.template get<BaseSeverityNewVariant>()[i] =
-            shared_params_model.parameters.template get<HospitalizedCasesPerInfectious>()[i] * variant_fac;
+            shared_params_model.parameters.template get<HospitalizedCasesPerInfectious>()[i] * variant_fac_severity;
     }
 
     for (auto& params_node : graph.nodes()) {
