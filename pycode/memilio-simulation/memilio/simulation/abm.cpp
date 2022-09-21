@@ -78,7 +78,6 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_CustomIndexArray<double, mio::abm::AgeGroup, mio::abm::VaccinationState>(
         m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
-    //pymio::bind_ParameterSet<mio::abm::GlobalTestingParameters>(m, "GlobalTestingParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
 
@@ -153,12 +152,20 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&, const std::vector<mio::abm::InfectionState>&>(), py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
     
-    //py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-    //    .def(py::init<mio::abm::TimeSpan, double>(), py::arg("interval"), py::arg("probability"))
-    //    .def_property("interval", &mio::abm::TestingScheme::get_interval, &mio::abm::TestingScheme::set_interval)
-    //    .def_property("probability", &mio::abm::TestingScheme::get_probability,
-    //                  &mio::abm::TestingScheme::set_probability);
-
+    py::class_<mio::abm::GenericTest>(m, "GenericTest")
+        .def(py::init<>());
+    py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest")
+        .def(py::init<>());
+    py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest")
+        .def(py::init<>());
+    
+    py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
+        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint, mio::abm::GenericTest, double>(), py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"), py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
+        .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
+    
+    py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
+        .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
+    
     py::class_<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
@@ -167,10 +174,6 @@ PYBIND11_MODULE(_simulation_abm, m)
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
                           self.get_infection_parameters() = params;
         });
-        //.def_property("testing_scheme", &mio::abm::Location::get_testing_scheme,
-        //              [](mio::abm::Location& self, mio::abm::TestingScheme scheme) {
-        //                  self.set_testing_scheme(scheme.get_interval(), scheme.get_probability());
-        //              });
 
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
@@ -220,13 +223,13 @@ PYBIND11_MODULE(_simulation_abm, m)
             [](mio::abm::World& self, mio::abm::MigrationParameters params) {
                 self.get_migration_parameters() = params;
             },
-                      py::return_value_policy::reference_internal);
-        //.def_property(
-        //    "testing_parameters", py::overload_cast<>(&mio::abm::World::get_global_testing_parameters, py::const_),
-        //    [](mio::abm::World& self, mio::abm::GlobalTestingParameters params) {
-        //        self.get_global_testing_parameters() = params;
-        //    },
-        //    py::return_value_policy::reference_internal);
+                      py::return_value_policy::reference_internal)
+        .def_property(
+            "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
+            [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
+                self.get_testing_strategy() = strategy;
+            },
+            py::return_value_policy::reference_internal);
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
