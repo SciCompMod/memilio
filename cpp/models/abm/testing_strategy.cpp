@@ -208,6 +208,10 @@ void TestingStrategy::update_activity_status(const TimePoint t)
 
 bool TestingStrategy::run_strategy(Person& person, const Location& location) const
 {
+    // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
+    if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
+        return true;
+    }
     return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location](TestingScheme ts) {
         if (ts.is_active()) {
             return ts.run_scheme(person, location);
