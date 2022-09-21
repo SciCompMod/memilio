@@ -47,6 +47,8 @@ class TestAbm(unittest.TestCase):
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
 
+        #testing_ages = [abm.AgeGroup("Age0to4")]
+        #testing_crit = abm.TestingCriteria(
         home.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
         self.assertEqual(home.testing_scheme.interval, abm.days(1))
 
