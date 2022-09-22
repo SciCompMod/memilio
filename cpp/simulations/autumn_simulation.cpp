@@ -162,7 +162,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
 
     //probabilities
     //probabilities
-    double fac_omicron                   = 1.4 * 2.8; // Factor omicron: doi.org/10.1021/acs.jcim.1c01451
+    double fac_omicron = 1.6 * 2.8; // Factor omicron: doi.org/10.1021/acs.jcim.1c01451
+    // Base values are for alpha
     const double transmission_risk_min[] = {0.02 * fac_omicron, 0.05 * fac_omicron, 0.05 * fac_omicron,
                                             0.05 * fac_omicron, 0.08 * fac_omicron, 0.1 * fac_omicron};
 
@@ -924,9 +925,9 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 35.0;
+    const auto num_days_sim = 150.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 2;
+    const auto num_runs     = 1;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
@@ -1056,7 +1057,7 @@ int main(int argc, char** argv)
     printf("Szenario : %s\n", szenario_info.c_str());
 
     result_dir += "_szenario_" + std::to_string(variant_szenario) + "_vacc_camp_" +
-                  std::to_string(vacc_campaign_szenario) + "_vacc_eff_ " + std::to_string(vacc_effectiveness_szenario);
+                  std::to_string(vacc_campaign_szenario) + "_vacc_eff_" + std::to_string(vacc_effectiveness_szenario);
 
     boost::filesystem::path dir(result_dir);
     bool created = boost::filesystem::create_directories(dir);
