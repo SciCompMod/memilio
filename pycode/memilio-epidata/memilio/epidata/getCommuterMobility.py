@@ -203,7 +203,7 @@ def get_counties_center_coordinates(
     directory = os.path.join(up(out_folder), 'mobility/')
     gd.check_dir(directory)
     df_centers_counties = pd.DataFrame(
-        data=centers_counties)
+        data=centers_counties.transpose(), columns=countykey_list)
     filename = 'county_centers_dim' + str(centers_counties.shape[0])
     gd.write_dataframe(df_centers_counties, directory, filename, file_format)
 
