@@ -145,13 +145,13 @@ def get_counties_center_coordinates(
         path_geojson,
         file_format=dd.defaultDict['file_format'],
         out_folder=dd.defaultDict['out_folder']):
-    """! Computes centers of counties based on a geojson file of germany.
+    """! Computes centers of counties based on a geojson file of Germany.
 
     In the case of multipolygons, we choose the largest polygon and take its center.
     The results are saved in a json file.
 
     Keyword arguments:
-    @param path_geojson geojson file which should contain the geodata for all counties in germany
+    @param path_geojson geojson file which should contain the geodata for all counties in Germany
     @param out_folder Path to folder where data is saved
     """
 
@@ -245,8 +245,8 @@ def get_distances_from_centers(center_coordinates):
 
 
 def scale_commuter_mobility(commuter_mobility, center_coordinates):
-    """! Computes scaled commuter migration patterns based on the Federal
-    Agency of Work data. The Scaling is as presented in https://www.medrxiv.org/content/10.1101/2020.12.18.20248509v1.full.pdf
+    """! Computes scaled commuter mobility patterns based on the Federal
+    Agency of Work data. The scaling is presented in https://www.sciencedirect.com/science/article/abs/pii/S0025556421000845
 
     The Scaling is still a very heuristic approach and based on the distances between the counties.
     
@@ -296,8 +296,8 @@ def get_commuter_data(setup_dict='',
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
 
-    @return df_commuter_migration_scaled DataFrame of commuter migration.
-        df_commuter_migration_scaled[i][j]= number of commuters from county with county-id i to county with county-id j
+    @return df_commuter_mobility_scaled DataFrame of commuter migration.
+        df_commuter_mobility_scaled[i][j]= number of commuters from county with county-id i to county with county-id j
     In commuter migration files is a cumulative value per county for number of commuters from whole Germany given.
     The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
