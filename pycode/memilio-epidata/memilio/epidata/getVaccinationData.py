@@ -422,6 +422,8 @@ def extrapolate_age_groups_vaccinations(
             info_df = county_age_df.drop(
                 column_names, axis=1).drop(
                 dd.EngEng['ageRKI'], axis=1)
+            # create new dataframe for vaccination data
+            vacc_data_df = pd.DataFrame()
 
             # get total population in old agegroup
             total_pop = 0
@@ -436,7 +438,8 @@ def extrapolate_age_groups_vaccinations(
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
                 new_dataframe[dd.EngEng['ageRKI']] = unique_age_groups_new[j]
-                vacc_data_df = pd.concat([info_df, new_dataframe], axis=1)
+                vacc_data_df = pd.concat([vacc_data_df, pd.concat([info_df, new_dataframe], axis=1)])
+
             # merge all dataframes for each age group into one dataframe
             total_county_df = pd.concat([vacc_data_df, total_county_df]).groupby(
                 groupby_list).sum().reset_index()
