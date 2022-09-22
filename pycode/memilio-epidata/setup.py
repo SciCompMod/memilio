@@ -76,6 +76,7 @@ setup(
         'tables',
         'numpy>=1.22',  # smaller numpy versions cause a security issue
         'openpyxl',
+        'xlrd',
         'requests',
 	    'pyxlsb',
         'wget'

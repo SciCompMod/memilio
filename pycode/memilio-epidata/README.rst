@@ -51,6 +51,7 @@ Required python packages:
 - tables
 - numpy>=1.22
 - openpyxl
+- xlrd
 - requests
 - pyxlsb
 - wget
