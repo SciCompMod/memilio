@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp38-cp38m/bin/python setup.py bdist_wheel
+        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
         /opt/python/cp310-cp310/bin/python setup.py bdist_wheel
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
