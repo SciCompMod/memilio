@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann
+* Authors: David Kerkmann, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,6 +19,11 @@
 */
 #ifndef EPI_ABM_INFECTION_H
 #define EPI_ABM_INFECTION_H
+
+#include "abm/time.h"
+#include <vector>
+#include "abm/state.h"
+#include <memory>
 
 namespace mio
 {
@@ -59,18 +64,22 @@ private:
 class ViralLoad
 {
 public:
-    ViralLoad(double peak, double increase, double decrease)
-        : m_peak(peak)
-        , m_increase_slope(increase)
-        , m_decline_slope(decrease)
+    ViralLoad()
     {
+        draw_viral_load();
     }
+    void draw_viral_load();
+    TimePoint determine_end_date(TimePoint start_date)
+    {
+        return start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
+    };
+    double get_viral_load(const TimePoint t, const TimePoint start_date) const;
 
 private:
     double m_peak;
-    double m_increase_slope;
-    double m_decline_slope;
-}
+    double m_incline;
+    double m_decline; // always negative
+};
 
 class Infection
 {
@@ -81,7 +90,13 @@ public:
      * @param start_date starting date of the infection
      * @param virus_type virus type of the infection
      */
-    Infection(TimePoint start_date, Virus virus);
+    Infection(TimePoint start_date, std::shared_ptr<Virus> virus)
+        : m_start_date(start_date)
+        , m_virus(virus)
+        , m_viral_load()
+    {
+        m_end_date = m_viral_load.determine_end_date(m_start_date);
+    };
 
     /**
      * get viral load at a given time
@@ -105,18 +120,17 @@ public:
 
     InfectionState get_infection_state(const TimePoint t) const;
 
+    void draw_infection_course(InfectionState start_state = InfectionState::Susceptible);
+
 private:
     /**
      * determine viral load course and infection course
      */
-    void draw_infection_course();
-    //peak = gauss::get_instance();
-    void determine_end_date();
 
-    Virus m_virus;
-    double m_infectivity_parameter; // have to ask for distribution/parametrization of the infectivity
+    std::shared_ptr<Virus> m_virus;
+    double m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
     std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course;
-
+    ViralLoad m_viral_load;
     TimePoint m_start_date;
     TimePoint m_end_date;
     bool m_detected = false;

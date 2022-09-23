@@ -21,6 +21,8 @@ add_library(abm
     lockdown_rules.h
     testing_scheme.cpp
     testing_scheme.h
+    infection.cpp
+    infection.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC
