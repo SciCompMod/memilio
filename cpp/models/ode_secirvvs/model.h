@@ -227,16 +227,16 @@ public:
 
                 double dummy_R = y[Ri] * exp_fac_impr_immune * ext_inf_force_dummy;
 
-                dydt[Si] -= dummy_S - dummy_partial_imm;
+                dydt[Si] = dydt[Si] - dummy_S - dummy_partial_imm;
                 dydt[Ei] += dummy_S;
 
-                dydt[SVi] -= dummy_SV - dummy_improved_imm;
+                dydt[SVi] = dydt[SVi] - dummy_SV - dummy_improved_imm;
                 dydt[EVi] += dummy_SV;
 
                 dydt[TImm1] += dummy_partial_imm;
-                dydt[TImm2] += dummy_improved_imm + dummy_booster_imm;
+                dydt[TImm2] = dydt[TImm2] + dummy_improved_imm + dummy_booster_imm;
 
-                dydt[Ri] -= dummy_R - dummy_booster_imm;
+                dydt[Ri] = dydt[Ri] - dummy_R - dummy_booster_imm;
                 dydt[EV2i] += dummy_R;
 
                 // waning immunity
@@ -460,8 +460,10 @@ public:
 
             double dummy_TImm1 = 1 / params.get<ImmunityInterval1>()[i];
             double dummy_TImm2 = 1 / params.get<ImmunityInterval2>()[i];
-            dydt[SVi]          = dummy_TImm1 * y[TImm1];
-            dydt[Ri]           = dummy_TImm2 * y[TImm2];
+            dydt[TImm1]        = dydt[TImm1] - dummy_TImm1 * y[TImm1];
+            dydt[TImm2]        = dydt[TImm1] - dummy_TImm2 * y[TImm2];
+            dydt[SVi] += dummy_TImm1 * y[TImm1];
+            dydt[Ri] += dummy_TImm2 * y[TImm2];
 
             dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui] +
                        death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i] /

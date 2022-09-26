@@ -937,16 +937,16 @@ public:
                 this->get<InfectiousTimeMild>()[i] = 1.0;
             }
 
-            if (this->get<ImmunityInterval1>()[i] < 1.0) {
+            if (this->get<ImmunityInterval1>()[i] < 5.0) {
                 log_warning("Constraint check: Parameter ImmunityInterval1 changed from {:.4f} to {:.4f}",
-                            this->get<ImmunityInterval1>()[i], 1.0);
-                this->get<ImmunityInterval1>()[i] = 1.0;
+                            this->get<ImmunityInterval1>()[i], 5.0);
+                this->get<ImmunityInterval1>()[i] = 5.0;
             }
 
-            if (this->get<ImmunityInterval2>()[i] < 1.0) {
+            if (this->get<ImmunityInterval2>()[i] < 5.0) {
                 log_warning("Constraint check: Parameter ImmunityInterval2 changed from {:.4f} to {:.4f}",
-                            this->get<ImmunityInterval2>()[i], 1.0);
-                this->get<ImmunityInterval2>()[i] = 1.0;
+                            this->get<ImmunityInterval2>()[i], 5.0);
+                this->get<ImmunityInterval2>()[i] = 5.0;
             }
 
             if (this->get<HospitalizedToHomeTime>()[i] < 1.0) {

@@ -743,11 +743,23 @@ IOResult<void> set_vaccination_rate(std::vector<Model>& model, int num_days, int
             model[i].parameters.template get<DailyPartialVaccination>().resize(SimulationDay(num_days + 1));
             model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days + 1));
             model[i].parameters.template get<DailyBoosterVaccination>().resize(SimulationDay(num_days + 1));
-            auto num_possible_vacc = model[i].populations[{g, InfectionState::SusceptibleNaive}] +
-                                     model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] +
-                                     model[i].populations[{g, InfectionState::Recovered}];
-            auto num_possible_booster = model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] +
-                                        model[i].populations[{g, InfectionState::Recovered}];
+
+            // Vaccine campaing start
+            auto start_simulation = Date(2022, 6, 1);
+            auto campaign_start   = Date(2022, 6, 3);
+
+            auto days_till_start = get_offset_in_days(campaign_start, start_simulation);
+            // to calculate the number of daily vaccinations when the campaign begins, we need to know the number of possible vaccinations.
+            auto num_partial_vaccinations =
+                model[i].populations[{g, InfectionState::SusceptibleNaive}] *
+                pow((1 - model[i].parameters.template get<RateOfDailyPartialVaccinations>()[{g}]), days_till_start);
+            auto num_possible_booster =
+                model[i].populations[{g, InfectionState::SusceptiblePartialImmunity}] *
+                    pow((1 - model[i].parameters.template get<RateOfDailyImprovedVaccinations>()[{g}]),
+                        days_till_start) +
+                model[i].populations[{g, InfectionState::Recovered}] *
+                    pow((1 - model[i].parameters.template get<RateOfDailyBoosterVaccinations>()[{g}]), days_till_start);
+            auto num_possible_vacc = num_partial_vaccinations + num_possible_booster;
             // number of vaccinations per day, assuming we vaccinate 5% of the possible population per week
             auto vacc_per_day         = num_possible_vacc * 0.05 / 7;
             auto booster_vacc_per_day = num_possible_booster * 0.05 / 7;
@@ -759,11 +771,7 @@ IOResult<void> set_vaccination_rate(std::vector<Model>& model, int num_days, int
             else if (vacc_campaign_szenario == 3) {
                 campaign_duration = num_possible_booster / booster_vacc_per_day;
             }
-
-            // Vaccine campaing start
-            auto start_simulation = Date(2022, 6, 1);
-            auto campaign_start   = Date(2022, 6, 3);
-            auto campaign_end     = offset_date_by_days(campaign_start, campaign_duration);
+            auto campaign_end = offset_date_by_days(campaign_start, campaign_duration);
 
             auto vacc_daily_partially =
                 model[i].populations[{g, InfectionState::SusceptibleNaive}] / num_possible_vacc * vacc_per_day;
