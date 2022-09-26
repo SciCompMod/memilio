@@ -203,11 +203,16 @@ public:
         return m_num_persons;
     }
 
-    /**
- * @param type the type of the location
- */
-    LocationCapacity get_default_capacity();
+    CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    {
+        return m_cached_exposure_rate;
+    }
 
+    /**
+ * Set the capacity of the location in person and volume
+ * @param persons maximum number of people that can visit the location at the same time
+ * @param volume volume of the location in m^3
+ */
     void set_capacity(int persons, int volume)
     {
         m_capacity.persons = persons;
@@ -215,8 +220,7 @@ public:
     }
 
     /**
- * @param use_volume if true returns the capacity in volume, else capacity in persons
- * @return the capacity in volume or persons
+ * @return the capacity of the location in person and volume
  */
     LocationCapacity get_capacity()
     {
@@ -231,6 +235,8 @@ public:
 
 private:
     void change_subpopulation(InfectionState s, int delta);
+
+    LocationCapacity get_default_capacity();
 
 private:
     LocationType m_type;
