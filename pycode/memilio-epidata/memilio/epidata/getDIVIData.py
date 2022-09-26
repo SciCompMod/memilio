@@ -98,7 +98,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         try:
             df_raw = pd.read_json(file_in)
-        except ValueError:
+        except FileNotFoundError:
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without"
                                     " -r flag to get it.")

@@ -70,7 +70,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_exit_strings(self, mocklcsv, mockrjson):
 
         # test read_data Error call if json file is not found
-        mockrjson.side_effect = ValueError
+        mockrjson.side_effect = FileNotFoundError
         with self.assertRaises(FileNotFoundError) as error:
             gdd.get_divi_data(read_data=True, out_folder=self.path)
         file_in = os.path.join(self.path, "Germany/FullData_DIVI.json")

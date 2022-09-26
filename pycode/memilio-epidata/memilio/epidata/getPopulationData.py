@@ -152,7 +152,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         file_in = os.path.join(directory, filename_counties + ".json")
         try:
             counties = pd.read_json(file_in)
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The file: " + file_in + \
                 "could not be read. Call program without -r flag to get it."
             raise FileNotFoundError(error_message)
@@ -161,7 +161,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         file_in = os.path.join(directory, filename_zensus + ".json")
         try:
             zensus = pd.read_json(file_in)
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The file: " + file_in + \
                 "could not be read. Call program without -r flag to get it."
             raise FileNotFoundError(error_message)
@@ -170,7 +170,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         file_in = os.path.join(directory, filename_reg_key + ".json")
         try:
             reg_key = pd.read_json(file_in)
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The file: " + file_in + \
                 "could not be read. Call program without -r flag to get it."
             raise FileNotFoundError(error_message)
