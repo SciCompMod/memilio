@@ -51,6 +51,7 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_SIMULATIONS`: build the simulation applications in the simulations directory, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
+- `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
 
 Other important options may need:
