@@ -456,8 +456,8 @@ public:
 
             double dummy_TImm1 = 1 / params.get<ImmunityInterval1>()[i];
             double dummy_TImm2 = 1 / params.get<ImmunityInterval2>()[i];
-            dydt[TImm1]        = dydt[TImm1] - dummy_TImm1 * y[TImm1];
-            dydt[TImm2]        = dydt[TImm1] - dummy_TImm2 * y[TImm2];
+            dydt[TImm1] -= dummy_TImm1 * y[TImm1];
+            dydt[TImm2] -= dummy_TImm2 * y[TImm2];
             dydt[SVi] += dummy_TImm1 * y[TImm1];
             dydt[Ri] += dummy_TImm2 * y[TImm2];
 
@@ -482,6 +482,12 @@ public:
             dydt[SVi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
             dydt[Ri] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
         }
+
+        double sum_dydt = 0.;
+        for (int i = 0; i < 168; ++i) {
+            sum_dydt += dydt[i];
+        }
+        std::cout << "Summe gleich " << sum_dydt << std::endl;
     }
 
     /**
