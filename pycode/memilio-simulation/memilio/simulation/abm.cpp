@@ -160,7 +160,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<>());
     
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint, mio::abm::GenericTest, double>(), py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"), py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
+        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint, const mio::abm::GenericTest&, double>(), py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"), py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
     
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
@@ -223,7 +223,7 @@ PYBIND11_MODULE(_simulation_abm, m)
             [](mio::abm::World& self, mio::abm::MigrationParameters params) {
                 self.get_migration_parameters() = params;
             },
-                      py::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def_property(
             "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
             [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
