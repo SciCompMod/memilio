@@ -547,7 +547,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, self.eisenach_merged_df)
         # the test dataframe should be unchanged as it is the input of the function
         pd.testing.assert_frame_equal(
-            test_df, pd.DataFrame(self.eisenach_unmerged_data), check_dtype = False)
+            test_df, pd.DataFrame(self.eisenach_unmerged_data))
 
 
 if __name__ == '__main__':
