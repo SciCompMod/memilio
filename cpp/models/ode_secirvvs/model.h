@@ -206,45 +206,41 @@ public:
                 // double dummy_booster_imm = y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
                 //                            params.get<DaysUntilEffectiveBoosterImmunity>()[i];
 
-                // only add vaccinations, if there are any people in the compartment left.
-                double dummy_partial_imm =
-                    (y[Si] < 1) ? 0.
-                                : y[Si] * params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] /
-                                      params.get<DaysUntilEffectivePartialImmunity>()[i];
-
-                double dummy_improved_imm =
-                    (y[SVi] < 1) ? 0.
-                                 : y[SVi] * params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] /
-                                       params.get<DaysUntilEffectiveImprovedImmunity>()[i];
-
-                double dummy_booster_imm = (y[Ri] < 1) ? 0.
-                                                       : y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
-                                                             params.get<DaysUntilEffectiveBoosterImmunity>()[i];
-
                 double dummy_S = y[Si] * ext_inf_force_dummy;
 
                 double dummy_SV = y[SVi] * exp_fac_part_immune * ext_inf_force_dummy;
 
                 double dummy_R = y[Ri] * exp_fac_impr_immune * ext_inf_force_dummy;
 
-                dydt[Si] = dydt[Si] - dummy_S - dummy_partial_imm;
+                dydt[Si] -= dummy_S;
                 dydt[Ei] += dummy_S;
 
-                dydt[SVi] = dydt[SVi] - dummy_SV - dummy_improved_imm;
+                dydt[SVi] -= dummy_SV;
                 dydt[EVi] += dummy_SV;
 
-                dydt[TImm1] += dummy_partial_imm;
-                dydt[TImm2] = dydt[TImm2] + dummy_improved_imm + dummy_booster_imm;
-
-                dydt[Ri] = dydt[Ri] - dummy_R - dummy_booster_imm;
+                dydt[Ri] -= dummy_R;
                 dydt[EV2i] += dummy_R;
-
-                // waning immunity
-                dydt[Si] += 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
-                dydt[SVi] -= 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
-                dydt[SVi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
-                dydt[Ri] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
             }
+            // only add vaccinations, if there are any people in the compartment left.
+            double dummy_partial_imm =
+                (y[Si] < 1) ? 0.
+                            : y[Si] * params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] /
+                                  params.get<DaysUntilEffectivePartialImmunity>()[i];
+
+            double dummy_improved_imm =
+                (y[SVi] < 1) ? 0.
+                             : y[SVi] * params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] /
+                                   params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+
+            double dummy_booster_imm = (y[Ri] < 1) ? 0.
+                                                   : y[Ri] * params.get<RateOfDailyBoosterVaccinations>()[i] /
+                                                         params.get<DaysUntilEffectiveBoosterImmunity>()[i];
+
+            dydt[Si] -= dummy_partial_imm;
+            dydt[SVi] -= dummy_improved_imm;
+            dydt[TImm1] += dummy_partial_imm;
+            dydt[TImm2] = dydt[TImm2] + dummy_improved_imm + dummy_booster_imm;
+            dydt[Ri] -= dummy_booster_imm;
 
             // ICU capacity shortage is close
             // TODO: if this is used with vaccination model, it has to be adapted if ICUCasesPerHospitalized
@@ -479,6 +475,12 @@ public:
 
             dydt[Di] += (death_fac_impr_immune / hosp_fac_impr_immune) * prob_hosp2dead /
                         params.get<HospitalizedToICUTime>()[i] * y[HV2i];
+
+            // waning immunity
+            dydt[Si] += 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
+            dydt[SVi] -= 1 / params.get<WaningPartialImmunity>()[i] * y[SVi];
+            dydt[SVi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
+            dydt[Ri] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
         }
     }
 
