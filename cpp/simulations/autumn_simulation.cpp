@@ -160,18 +160,9 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 
-    //probabilities
-    //probabilities
-    double fac_omicron = 1.6 * 2.8; // Factor omicron: doi.org/10.1021/acs.jcim.1c01451
-    // Base values are for alpha
-    const double transmission_risk_min[] = {0.02 * fac_omicron, 0.05 * fac_omicron, 0.05 * fac_omicron,
-                                            0.05 * fac_omicron, 0.08 * fac_omicron, 0.1 * fac_omicron};
+    const double transmission_risk_min[] = {0.14, 0.15, 0.12, 0.1, 0.08, 0.16}; // doi.org/10.21203/rs.3.rs-1729679/v1
+    const double transmission_risk_max[] = {0.15, 0.18, 0.16, 0.13, 0.16, 0.18}; // doi.org/10.21203/rs.3.rs-1729679/v1
 
-    const double transmission_risk_max[] = {0.04 * fac_omicron, 0.07 * fac_omicron, 0.07 * fac_omicron,
-                                            0.07 * fac_omicron, 0.10 * fac_omicron, 0.15 * fac_omicron};
-
-    // noch offen
-    // = 1 - prob_car_rec_min ??
     const double carr_infec_min[]        = {0.6, 0.55, 0.65, 0.7, 0.75, 0.85}; // doi.org/10.1101/2022.05.05.22274697
     const double carr_infec_max[]        = {0.8, 0.75, 0.8, 0.8, 0.825, 0.9}; // doi.org/10.1101/2022.05.05.22274697
     const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
@@ -925,7 +916,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 150.0;
+    const auto num_days_sim = 60.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 

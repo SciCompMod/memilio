@@ -482,12 +482,6 @@ public:
             dydt[SVi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
             dydt[Ri] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[Ri];
         }
-
-        double sum_dydt = 0.;
-        for (int i = 0; i < 168; ++i) {
-            sum_dydt += dydt[i];
-        }
-        std::cout << "Summe gleich " << sum_dydt << std::endl;
     }
 
     /**
