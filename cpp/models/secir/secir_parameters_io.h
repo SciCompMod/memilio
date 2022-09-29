@@ -148,11 +148,9 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        int num_days)
 {
-    std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
     std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
     std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
     std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
-    std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
     std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
     std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
     std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
@@ -179,8 +177,6 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                                  model[county].parameters.template get<IncubationTime>()[AgeGroup(group)]));
             t_inf_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)]));
-            t_inf_to_hosp[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[AgeGroup(group)]));
             t_hosp_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[AgeGroup(group)]));
             t_hosp_to_icu[county].push_back(

@@ -166,8 +166,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
-            t_inf_to_hosp[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu[county].push_back(
@@ -247,8 +245,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(static_cast<int>(
                 model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_inf_to_hosp[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu[county].push_back(
@@ -342,8 +338,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(static_cast<int>(
                 model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_inf_to_hosp[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu[county].push_back(
@@ -678,8 +672,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_uv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
-            t_inf_to_hosp_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_uv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu_uv[county].push_back(
@@ -746,8 +738,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_pv[county].push_back(static_cast<int>(
                 model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_inf_to_hosp_pv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_pv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu_pv[county].push_back(
@@ -831,8 +821,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_fv[county].push_back(static_cast<int>(
                 model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_inf_to_hosp_fv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_fv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[(AgeGroup)group]));
             t_hosp_to_icu_fv[county].push_back(

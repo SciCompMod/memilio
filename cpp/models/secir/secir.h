@@ -295,10 +295,10 @@ public:
                            y[Ci];
             dydt[Ii] = (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
                        ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
+                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                            y[Ii];
             dydt[Hi] =
-                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i] * y[Ii] -
+                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] -
                 ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
                  params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
                     y[Hi];

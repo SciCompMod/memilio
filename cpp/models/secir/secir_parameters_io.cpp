@@ -287,8 +287,6 @@ namespace details
                                      model[county].parameters.get<IncubationTime>()[(AgeGroup)group]));
                 t_inf_to_rec[county].push_back(
                     static_cast<int>(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group]));
-                t_inf_to_hosp[county].push_back(
-                    static_cast<int>(model[county].parameters.get<HomeToHospitalizedTime>()[(AgeGroup)group]));
                 t_hosp_to_rec[county].push_back(
                     static_cast<int>(model[county].parameters.get<HospitalizedToHomeTime>()[(AgeGroup)group]));
                 t_hosp_to_icu[county].push_back(

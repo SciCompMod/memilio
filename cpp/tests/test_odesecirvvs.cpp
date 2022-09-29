@@ -153,14 +153,12 @@ void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, boo
 void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_invalid_initial_value)
 {
     //times
-    const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
-    const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; // R_2^(-1)+0.5*R_3^(-1)
+    const double tinc             = 5.2;
+    const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; 
     const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
-    const double t_inf_min    = 5.6; // R4^(-1) = T_I^R
+    const double t_inf_min    = 5.6; 
     const double t_inf_max    = 8.4;
-    const double t_inf_hosp_min[] = {9, 9, 9, 5, 5, 5}; // R6^(-1) = T_I^H
-    const double t_inf_hosp_max[] = {12, 12, 12, 7, 7, 7};
-    const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; // R5^(-1) = T_H^R
+    const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; 
     const double t_hosp_rec_max[] = {6, 6, 7, 9, 11, 17};
     const double t_hosp_icu_min   = 3; // R7^(-1) = T_H^U
     const double t_hosp_icu_max   = 7;
@@ -175,8 +173,6 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
                                       set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), t_inf_min, t_inf_max,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HomeToHospitalizedTime>(), t_inf_hosp_min,
-                                      t_inf_hosp_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToHomeTime>(), t_hosp_rec_min,
                                       t_hosp_rec_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min,

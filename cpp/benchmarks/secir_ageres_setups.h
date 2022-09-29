@@ -37,14 +37,12 @@ namespace benchmark
          */
         mio::SecirModel make_model(int num)
         {
-            double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-                tinfmild   = 6, // 4-14  (=R4^(-1))
+            double tinc    = 5.2, 
+                tinf   = 6, 
                 tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
                 thosp2home = 12, // 7-16 (=R5^(-1))
-                thome2hosp = 5, // 2.5-7 (=R6^(-1))
                 thosp2icu  = 2, // 1-3.5 (=R7^(-1))
                 ticu2home  = 8, // 5-16 (=R8^(-1))
-                // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
                 ticu2death = 5; // 3.5-7 (=R5^(-1))
 
             double cont_freq = 10, // see Polymod study
@@ -73,7 +71,6 @@ namespace benchmark
                 params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
                 params.get<mio::SerialInterval>()[i]         = tserint;
                 params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
-                params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
                 params.get<mio::HospitalizedToICUTime>()[i]  = thosp2icu;
                 params.get<mio::ICUToHomeTime>()[i]          = ticu2home;
                 params.get<mio::ICUToDeathTime>()[i]         = ticu2death;

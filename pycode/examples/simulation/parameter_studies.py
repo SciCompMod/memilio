@@ -35,7 +35,6 @@ def parameter_study():
         model.parameters.TimeInfectedSymptoms[group] = 6
         model.parameters.SerialInterval[group] = 4.2
         model.parameters.HospitalizedToHomeTime[group] = 12
-        model.parameters.HomeToHospitalizedTime[group] = 5
         model.parameters.HospitalizedToICUTime[group] = 2
         model.parameters.ICUToHomeTime[group] = 8
         model.parameters.ICUToDeathTime[group] = 5

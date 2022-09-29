@@ -229,16 +229,16 @@ public:
 
             dydt[Ii] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
                        ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
+                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                            y[Ii];
             dydt[IDi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CDi] -
                         ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                         params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
+                         params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                             y[IDi];
 
             dydt[Hi] =
-                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i] * y[Ii] +
-                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i] * y[IDi] -
+                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
+                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[IDi] -
                 ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
                  params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
                     y[Hi];
@@ -270,7 +270,7 @@ public:
                 ((1 - hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IVi];
             dydt[IDVi] =
                 (inf_fac_part_immune / exp_fac_part_immune) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
@@ -278,12 +278,12 @@ public:
                 ((1 - hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IDVi];
             dydt[HVi] = hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                            params.get<HomeToHospitalizedTime>()[i] * y[IVi] +
+                            params.get<TimeInfectedSymptoms>()[i] * y[IVi] +
                         hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                            params.get<HomeToHospitalizedTime>()[i] * y[IDVi] -
+                            params.get<TimeInfectedSymptoms>()[i] * y[IDVi] -
                         ((1 - icu_fac_part_immune / hosp_fac_part_immune * params.get<ICUCasesPerHospitalized>()[i]) /
                              params.get<HospitalizedToHomeTime>()[i] +
                          icu_fac_part_immune / hosp_fac_part_immune * params.get<ICUCasesPerHospitalized>()[i] /
@@ -322,7 +322,7 @@ public:
                 ((1 - hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IV2i];
             dydt[IDV2i] =
                 (inf_fac_impr_immune / exp_fac_impr_immune) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
@@ -330,12 +330,12 @@ public:
                 ((1 - hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IDV2i];
             dydt[HV2i] = hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                             params.get<HomeToHospitalizedTime>()[i] * y[IV2i] +
+                             params.get<TimeInfectedSymptoms>()[i] * y[IV2i] +
                          hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                             params.get<HomeToHospitalizedTime>()[i] * y[IDV2i] -
+                             params.get<TimeInfectedSymptoms>()[i] * y[IDV2i] -
                          ((1 - icu_fac_impr_immune / hosp_fac_impr_immune * params.get<ICUCasesPerHospitalized>()[i]) /
                               params.get<HospitalizedToHomeTime>()[i] +
                           icu_fac_impr_immune / hosp_fac_impr_immune * params.get<ICUCasesPerHospitalized>()[i] /
@@ -353,30 +353,30 @@ public:
             // compute auxiliary compartment of all past infections
             dydt[ITi] =
                 ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
+                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                     y[Ii] +
                 ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
+                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                     y[IDi] +
                 ((1 - hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IDVi] +
                 ((1 - hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IVi] +
                 ((1 - hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IDV2i] +
                 ((1 - hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i]) /
                      (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) +
                  hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
-                     params.get<HomeToHospitalizedTime>()[i]) *
+                     params.get<TimeInfectedSymptoms>()[i]) *
                     y[IV2i];
 
             // recovered and deaths from all paths

@@ -34,7 +34,6 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.TimeInfectedSymptoms[A0] = 6
         model.parameters.SerialInterval[A0] = 4.2
         model.parameters.HospitalizedToHomeTime[A0] = 12
-        model.parameters.HomeToHospitalizedTime[A0] = 5
         model.parameters.HospitalizedToICUTime[A0] = 2
         model.parameters.ICUToHomeTime[A0] = 8
         model.parameters.ICUToDeathTime[A0] = 5
