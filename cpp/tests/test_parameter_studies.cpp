@@ -40,7 +40,6 @@ TEST(ParameterStudies, sample_from_secir_params)
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
@@ -67,7 +66,6 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
         params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
@@ -138,7 +136,6 @@ TEST(ParameterStudies, sample_graph)
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
@@ -165,7 +162,6 @@ TEST(ParameterStudies, sample_graph)
         params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
         params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
@@ -312,7 +308,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
@@ -340,7 +335,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
         params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
         model.populations.set_total(num_total_t0);

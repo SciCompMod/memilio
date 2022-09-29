@@ -199,21 +199,6 @@ struct ICUToHomeTime {
     }
 };
 
-/**
- * @brief the infectious time for asymptomatic cases in the SECIR model
- *        in day unit
- */
-struct InfectiousTimeAsymptomatic {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectiousTimeAsymptomatic";
-    }
-};
 
 /**
  * @brief the time people are treated by ICU before dying in the SECIR model
@@ -398,7 +383,7 @@ struct TestAndTraceCapacity {
 
 using SecirParamsBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
-                 IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, HospitalizedToHomeTime,
+                 IncubationTime, InfectiousTimeMild, SerialInterval, HospitalizedToHomeTime,
                  HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptomaticCasesPerInfectious,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, HospitalizedCasesPerInfectious,
@@ -491,15 +476,6 @@ public:
                 log_warning("Constraint check: Parameter ICUToDeathTime changed from {:.4f} to {:.4f}",
                             this->get<ICUToDeathTime>()[i], 1.0);
                 this->get<ICUToDeathTime>()[i] = 1.0;
-            }
-
-            auto t_inf_asymp = 1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
-                               0.5 * this->get<InfectiousTimeMild>()[i];
-            if (abs(this->get<InfectiousTimeAsymptomatic>()[i] - t_inf_asymp) > 1e-12) {
-                log_info("Constraint check: Parameter InfectiousTimeAsymptomatic set as fully dependent on tinc, "
-                         "tserint and tinfmild, as proposed by "
-                         "https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v1.");
-                this->get<InfectiousTimeAsymptomatic>()[i] = t_inf_asymp;
             }
 
             if (this->get<InfectionProbabilityFromContact>()[i] < 0.0) {
@@ -601,14 +577,6 @@ public:
             if (this->get<ICUToHomeTime>()[i] < 1.0) {
                 log_error("Constraint check: Parameter ICUToHomeTime {:.4f} smaller {:.4f}",
                           this->get<ICUToHomeTime>()[i], 1.0);
-            }
-
-            if (abs(this->get<InfectiousTimeAsymptomatic>()[i] -
-                    1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) -
-                    0.5 * this->get<InfectiousTimeMild>()[i]) > 1e-12) {
-                log_warning("Constraint check: Parameter InfectiousTimeAsymptomatic not set as fully dependent on "
-                            "tinc, tserint and tinfmild, as proposed by "
-                            "https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v1.");
             }
 
             if (this->get<ICUToDeathTime>()[i] < 1.0) {

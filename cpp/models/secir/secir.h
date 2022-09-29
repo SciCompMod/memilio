@@ -291,7 +291,7 @@ public:
             dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
             dydt[Ci] = dummy_R2 * y[Ei] -
                        ((1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 +
-                        params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
+                        params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3) *
                            y[Ci];
             dydt[Ii] = (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
                        ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] +
@@ -309,7 +309,7 @@ public:
             dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
 
             dydt[Ri] =
-                params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
+                params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3 * y[Ci] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
                 (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];

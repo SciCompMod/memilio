@@ -36,7 +36,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     double tmax = 50.5;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -57,7 +57,6 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
         model.parameters.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
         model.parameters.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
         model.parameters.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
         model.parameters.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
@@ -145,8 +144,6 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                   read_model.parameters.get<mio::HospitalizedToHomeTime>()[i]);
         ASSERT_EQ(model.parameters.get<mio::HomeToHospitalizedTime>()[i],
                   read_model.parameters.get<mio::HomeToHospitalizedTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i],
-                  read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i]);
         ASSERT_EQ(model.parameters.get<mio::HospitalizedToICUTime>()[i],
                   read_model.parameters.get<mio::HospitalizedToICUTime>()[i]);
         ASSERT_EQ(model.parameters.get<mio::ICUToHomeTime>()[i], read_model.parameters.get<mio::ICUToHomeTime>()[i]);
@@ -162,8 +159,6 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                            *read_model.parameters.get<mio::HospitalizedToHomeTime>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::HomeToHospitalizedTime>()[i].get_distribution(),
                            *read_model.parameters.get<mio::HomeToHospitalizedTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::HospitalizedToICUTime>()[i].get_distribution(),
                            *read_model.parameters.get<mio::HospitalizedToICUTime>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::ICUToHomeTime>()[i].get_distribution(),
@@ -207,7 +202,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     double tmax = 50.5;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -228,7 +223,6 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
         model.parameters.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
         model.parameters.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
         model.parameters.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
         model.parameters.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
@@ -333,8 +327,6 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                       graph_read_model.parameters.get<mio::HospitalizedToHomeTime>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group],
                       graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group],
-                      graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::HospitalizedToICUTime>()[group],
                       graph_read_model.parameters.get<mio::HospitalizedToICUTime>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::ICUToHomeTime>()[group],
@@ -371,9 +363,6 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                 *graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get());
-            check_distribution(
                 *graph_model.parameters.get<mio::HospitalizedToICUTime>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::HospitalizedToICUTime>()[group].get_distribution().get());
             check_distribution(*graph_model.parameters.get<mio::ICUToHomeTime>()[group].get_distribution().get(),
@@ -397,9 +386,6 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                      .get());
             check_distribution(*graph_model.parameters.get<mio::DeathsPerICU>()[group].get_distribution().get(),
                                *graph_read_model.parameters.get<mio::DeathsPerICU>()[group].get_distribution().get());
-            check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get());
             check_distribution(
                 *graph_model.parameters.get<mio::ICUCasesPerHospitalized>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::ICUCasesPerHospitalized>()[group].get_distribution().get());
