@@ -19,11 +19,10 @@ import matplotlib.pyplot as plt
 import memilio.simulation as mio
 from datetime import datetime, date
 from sklearn.preprocessing import FunctionTransformer
-
 import seaborn as sns  # plot after normalization
 
 
-def run_secir_groups_simulation(days, t1, t2, populations):
+def run_secir_groups_simulation(days, t1, t2, t3, populations):
     """
     Runs the c++ secir model using mulitple age groups
     and plots the results
@@ -43,8 +42,8 @@ def run_secir_groups_simulation(days, t1, t2, populations):
     num_groups = len(groups)
     num_compartments = len(compartments)
 
-    model = SecirModel(len(populations))
     # Initialize Parameters
+    model = SecirModel(len(populations))
 
     # set parameters
     for i in range(num_groups):
@@ -110,15 +109,14 @@ def run_secir_groups_simulation(days, t1, t2, populations):
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = baseline
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
-    # # add one random damping matrix and date
-    # model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-    #   coeffs=np.array(damping_data), t=5, level=0, type=0))
-
     damping1 = np.ones((num_groups, num_groups)
-                       ) * np.float16(random.uniform(0, 0.5))
+                       ) * np.float16(random.uniform(0, 0.6))
 
     damping2 = np.ones((num_groups, num_groups)
-                       ) * np.float16(random.uniform(0, 0.5))
+                       ) * np.float16(random.uniform(0, 0.6))
+
+    damping3 = np.ones((num_groups, num_groups)
+                       ) * np.float16(random.uniform(0, 0.6))
 
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
         coeffs=(damping1), t=t1, level=0, type=0))
@@ -126,10 +124,15 @@ def run_secir_groups_simulation(days, t1, t2, populations):
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
         coeffs=(damping2), t=t2, level=0, type=0))
 
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+        coeffs=(damping3), t=t3, level=0, type=0))
+
     correct_damping_matrix1 = model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
         t1+1)
     correct_damping_matrix2 = model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
         t2+1)
+    correct_damping_matrix3 = model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
+        t3+1)
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
@@ -147,7 +150,7 @@ def run_secir_groups_simulation(days, t1, t2, populations):
     for row in data:
         dataset.append(row)
 
-    return dataset, correct_damping_matrix1, correct_damping_matrix2
+    return dataset, correct_damping_matrix1, correct_damping_matrix2, correct_damping_matrix3
 
 
 def getBaselineMatrix():
@@ -188,7 +191,7 @@ def getMinimumMatrix():
     return minimum
 
 
-def generate_data(num_runs, path, input_width, label_width,
+def generate_data(num_runs, path,
                   normalize_labels=False, save_data=True):
     """! Generate dataset by calling run_secir_simulation (num_runs)-often
 
@@ -202,19 +205,13 @@ def generate_data(num_runs, path, input_width, label_width,
         "contact_matrix": []
     }
 
-    t1 = 0
-    t2 = 5
-    days = input_width + label_width
-
-    # create 100 different dampings
-    # for _ in range(100):
-    #     # create random damping matrix and date in a own list
-    #     # and save in list dampings
-    #     damping_single = []
-
-    #     damping_single.append(damping_matrix.tolist())
-    #     damping_single.append()
-    #     data["dampings"].append(damping_single)
+    t1 = 5    # maybe it would be better to put them as a paramenter of the generate data function
+    t2 = 20
+    t3 = 40
+    days = 60
+    #days = t3+30
+    input_width = 5
+    label_width = days-input_width
 
     # get population sizes
     population = get_population()
@@ -224,31 +221,17 @@ def generate_data(num_runs, path, input_width, label_width,
     bar = Bar('Number of Runs done', max=num_runs)
 
     for _ in range(num_runs):
-        #     baseline_matrix = np.zeros((4, 6, 6))
-        #     damping_matrix1 = np.zeros((4, 6, 6))
-        #     #damping_matrix2 = np.zeros((4, 6, 6))
-        #     for idx in range(6):
-        #         for i in range(idx+1):
-        #             damp = round(random.random(), 4)
-        #             baseline_matrix[idx][i] = damp
-        #             baseline_matrix[i][idx] = damp
 
-        #             damping_matrix1[idx][i] = damp
-        #             damping_matrix1[i][idx] = damp
-
-        #             #damping_matrix2[idx][i] = damp
-        #             #damping_matrix2[i][idx] = damp
-
-        data_run, damping_matrix1, damping_matrix2 = run_secir_groups_simulation(
-            days, t1, t2, population[random.randint(0, len(population) - 1)])
+        data_run, damping_matrix1, damping_matrix2, damping_matrix3 = run_secir_groups_simulation(
+            days, t1, t2, t3,  population[random.randint(0, len(population) - 1)])
 
         data["contact_matrix"].append(
-            [damping_matrix1, damping_matrix2])
+            [damping_matrix1, damping_matrix2, damping_matrix3])
 
         inputs = data_run[:input_width]
         data["inputs"].append(inputs)
         # data["labels"].append(data_run[input_width:])
-        data['labels'].append(data_run[input_width:])
+        data['labels'].append(data_run[input_width:days])
         bar.next()
 
     bar.finish()
@@ -270,15 +253,6 @@ def generate_data(num_runs, path, input_width, label_width,
         data['inputs'] = tf.stack(scaled_inputs_list)
         data['labels'] = tf.stack(scaled_labels_list)
 
-        # data["dampings"] = tf.stack(data["dampings"])
-
-        # normalize data
-        # data["inputs"] = normalize(data["inputs"])
-        # if normalize_labels:
-        #     data["labels"] = normalize(data["labels"])
-
-        # data = splitdata(data["inputs"], data["labels"])
-
         # check if data directory exists. If necessary create it.
         if not os.path.isdir(path):
             os.mkdir(path)
@@ -288,7 +262,6 @@ def generate_data(num_runs, path, input_width, label_width,
             pickle.dump(data, f)
 
 
-# def get_population(path="data\pydata\Germany\county_population_dim401.json"):
 def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population_dim401.json"):
 
     with open(path) as f:
@@ -314,124 +287,12 @@ def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pyda
         population.append(population_county)
     return population
 
-    return 0
 
-
-def splitdata(inputs, labels, split_train=0.7,
-              split_valid=0.2, split_test=0.1):
-    """! Split data in train, valid and test
-
-   @param inputs input dataset
-   @param labels label dataset
-   @param split_train ratio of train datasets
-   @param split_valid ratio of validation datasets
-   @param split_test ratio of test datasets
-   """
-
-    if split_train + split_valid + split_test != 1:
-        ValueError("summed Split ratios not equal 1! Please adjust the values")
-    elif inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
-        ValueError("Number of batches or features different for input and labels")
-
-    n = inputs.shape[0]
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = int(n * split_test)
-
-    if n_train + n_valid + n_test != n:
-        n_test = n - n_train - n_valid
-
-    inputs_train, inputs_valid, inputs_test = tf.split(
-        inputs, [n_train, n_valid, n_test], 0)
-    labels_train, labels_valid, labels_test = tf.split(
-        labels, [n_train, n_valid, n_test], 0)
-
-    data = {
-        "train_inputs": inputs_train,
-        "train_labels": labels_train,
-        "valid_inputs": inputs_valid,
-        "valid_labels": labels_valid,
-        "test_inputs": inputs_test,
-        "test_labels": labels_test
-    }
-
-    return data
-
-
-def flat_input(input):
-    dim = tf.reduce_prod(tf.shape(input)[1:])
-    return tf.reshape(input, [-1, dim])
-
-
-def split_contact_matrices(contact_matrices, split_train=0.7,
-                           split_valid=0.2, split_test=0.1):
-    """! Split dampings in train, valid and test
-
-   @param contact_matrices contact matrices
-   @param labels label dataset
-   @param split_train ratio of train datasets
-   @param split_valid ratio of validation datasets
-   @param split_test ratio of test datasets
-   """
-
-    if split_train + split_valid + split_test != 1:
-        ValueError("summed Split ratios not equal 1! Please adjust the values")
-
-    n = contact_matrices.shape[0]
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = int(n * split_test)
-
-    if n_train + n_valid + n_test != n:
-        n_test = n - n_train - n_valid
-
-    contact_matrices_train, contact_matrices_valid, contact_matrices_test = tf.split(
-        contact_matrices, [n_train, n_valid, n_test], 0)
-    data = {
-        "train": contact_matrices_train,
-        "valid": contact_matrices_valid,
-        "test": contact_matrices_test
-    }
-
-    return data
-
-
-def normalize(data):
-    """! # normalize input data with:
-                               (value     − min_value)
-                    data =  _________________________
-                               (max_value − min_value)
-
-    alternative is tf.linalg.normalize(
-        data, ord='euclidean', axis=None, name=None)
-
-    @param data  dataset
-
-    """
-    # return tf.divide(
-    #         tf.subtract(
-    #             data,
-    #             tf.reduce_min(data)
-    #         ),
-    #         tf.subtract(
-    #             tf.reduce_max(data),
-    #             tf.reduce_min(data)
-    #         )
-    #     )
-    return tf.linalg.normalize(data, ord='euclidean', axis=None, name=None)[0]
-
-
-print('x')
 if __name__ == "__main__":
-    # TODO: Save contact matrix depending on the damping.
-    # In the actual state it might be enough to save the regular one and the damping
 
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data_groups')
+        os.path.dirname(os.path.realpath(path)))), 'data_simulation')
 
-    input_width = 5
-    label_width = 30
-    num_runs = 1000
-    generate_data(num_runs, path_data, input_width,
-                  label_width, normalize_labels=True)
+    num_runs = 200
+    generate_data(num_runs, path_data, normalize_labels=True)
