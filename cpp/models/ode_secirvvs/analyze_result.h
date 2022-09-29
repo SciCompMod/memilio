@@ -81,7 +81,7 @@ namespace osecirvvs
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval>()[i]; });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<InfectiousTimeMild>()[i];
+                        return model.parameters.template get<TimeInfectedSymptoms>()[i];
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {

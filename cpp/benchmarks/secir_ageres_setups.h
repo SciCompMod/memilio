@@ -70,7 +70,7 @@ namespace benchmark
 
             for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
                 params.get<mio::IncubationTime>()[i]         = tinc;
-                params.get<mio::InfectiousTimeMild>()[i]     = tinfmild;
+                params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
                 params.get<mio::SerialInterval>()[i]         = tserint;
                 params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
                 params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;

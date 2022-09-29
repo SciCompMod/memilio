@@ -173,12 +173,12 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                 static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
                                       model[county].parameters.template get<SerialInterval>()[AgeGroup(group)])));
             t_car_to_rec[county].push_back(static_cast<int>(
-                t_car_to_inf[county][group] + 0.5 * model[county].parameters.template get<InfectiousTimeMild>()[AgeGroup(group)]));
+                t_car_to_inf[county][group] + 0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)]));
             t_exp_to_car[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[AgeGroup(group)] -
                                  model[county].parameters.template get<IncubationTime>()[AgeGroup(group)]));
             t_inf_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<InfectiousTimeMild>()[AgeGroup(group)]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)]));
             t_inf_to_hosp[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[AgeGroup(group)]));
             t_hosp_to_rec[county].push_back(

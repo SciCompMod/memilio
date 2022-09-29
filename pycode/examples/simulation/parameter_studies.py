@@ -32,7 +32,7 @@ def parameter_study():
         group = secir.AgeGroup(i)
 
         model.parameters.IncubationTime[group] = 5.2
-        model.parameters.InfectiousTimeMild[group] = 6
+        model.parameters.TimeInfectedSymptoms[group] = 6
         model.parameters.SerialInterval[group] = 4.2
         model.parameters.HospitalizedToHomeTime[group] = 12
         model.parameters.HomeToHospitalizedTime[group] = 5

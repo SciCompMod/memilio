@@ -85,13 +85,12 @@ int main()
     double tmax = 50;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 6, // 4-14  (=R4^(-1))
+        tinf   = 6, // 4-14  (=R4^(-1))
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
         thosp2home = 12, // 7-16 (=R5^(-1))
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
@@ -123,7 +122,7 @@ int main()
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         params.get<mio::IncubationTime>()[i]         = tinc;
-        params.get<mio::InfectiousTimeMild>()[i]     = tinfmild;
+        params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
         params.get<mio::SerialInterval>()[i]         = tserint;
         params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
         params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;

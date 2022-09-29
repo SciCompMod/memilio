@@ -32,7 +32,7 @@ TEST(TestSecir, compareWithPreviousRun)
     double tmax = 50;
     double dt   = 0.1;
 
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+    double tinc = 5.2, tinf = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            ticu2death = 5;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
@@ -50,7 +50,7 @@ TEST(TestSecir, compareWithPreviousRun)
     // delta = delta_in; // deaths per ICUs
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = tinc;
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]     = tinfmild;
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = tinf;
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = tserint;
     model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
     model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
@@ -103,7 +103,7 @@ TEST(TestSecir, compareWithPreviousRun)
 
 TEST(TestSecir, testParamConstructors)
 {
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+    double tinc = 5.2, tinf = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            ticu2death = 5;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 0.67, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
@@ -123,7 +123,7 @@ TEST(TestSecir, testParamConstructors)
     model.parameters.set<mio::Seasonality>(seasonality);
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = tinc;
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]     = tinfmild;
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = tinf;
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = tserint;
     model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
     model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
@@ -181,8 +181,8 @@ TEST(TestSecir, testParamConstructors)
               model2.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0],
               model2.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0],
-              model2.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0],
+              model2.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0],
               model2.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0],
@@ -241,8 +241,8 @@ TEST(TestSecir, testParamConstructors)
               model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0],
               model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0],
-              model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0],
+              model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0],
               model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0],
@@ -300,8 +300,8 @@ TEST(TestSecir, testParamConstructors)
               model4.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0],
               model4.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0],
-              model4.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0],
+              model4.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0],
               model4.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0],
@@ -359,8 +359,8 @@ TEST(TestSecir, testParamConstructors)
               model3.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0],
               model3.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0],
-              model3.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0],
+              model3.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0],
               model3.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0],
@@ -414,7 +414,7 @@ TEST(TestSecir, testSettersAndGetters)
     model.parameters.set<mio::ICUCapacity>(vec[0]);
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]             = vec[1];
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]         = vec[2];
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]         = vec[2];
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]             = vec[3];
     model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0]     = vec[4];
     model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]     = vec[5];
@@ -450,7 +450,7 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[1].get_distribution(),
                        *model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(*vec[2].get_distribution(),
-                       *model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0].get_distribution());
+                       *model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(*vec[3].get_distribution(),
                        *model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(*vec[4].get_distribution(),
@@ -499,7 +499,7 @@ TEST(TestSecir, testSettersAndGetters)
 
     EXPECT_EQ(vec[0], model.parameters.get<mio::ICUCapacity>());
     EXPECT_EQ(vec[1], model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(vec[2], model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(vec[2], model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[3], model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[4], model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[5], model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]);
@@ -527,7 +527,7 @@ TEST(TestSecir, testSettersAndGetters)
 TEST(TestSecir, testValueConstraints)
 {
     double tinc    = 5.1, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 5.86642, // 4-14  (=R4^(-1))
+        tinf   = 5.86642, // 4-14  (=R4^(-1))
         tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
         thosp2home = 11.6138, // 7-16 (=R5^(-1))
         thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
@@ -555,7 +555,7 @@ TEST(TestSecir, testValueConstraints)
     // delta = delta_in; // deaths per ICUs
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = tinc;
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]     = tinfmild;
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = tinf;
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = tserint;
     model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
     model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
@@ -606,7 +606,7 @@ TEST(TestSecir, testModelConstraints)
     double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
 
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+    double tinc = 5.2, tinf = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            ticu2death = 5;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
@@ -618,7 +618,7 @@ TEST(TestSecir, testModelConstraints)
     mio::SecirModel model(1);
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = tinc;
-    model.parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]     = tinfmild;
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = tinf;
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = tserint;
     model.parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
     model.parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
@@ -706,7 +706,7 @@ TEST(TestSecir, testModelConstraints)
 
 TEST(Secir, testAndTraceCapacity)
 {
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2;
+    double tinc = 5.2, tinf = 6, tserint = 4.2;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25;
 
@@ -716,7 +716,7 @@ TEST(Secir, testAndTraceCapacity)
     auto& params = model.parameters;
 
     params.get<mio::IncubationTime>()[(mio::AgeGroup)0]     = tinc;
-    params.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0] = tinfmild;
+    params.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0] = tinf;
     params.get<mio::SerialInterval>()[(mio::AgeGroup)0]     = tserint;
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();

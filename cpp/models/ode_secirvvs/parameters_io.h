@@ -160,12 +160,12 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec[county].push_back(
                 static_cast<int>(t_car_to_inf[county][group] +
-                                 0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group]));
+                                 0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
             t_exp_to_car[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
             t_inf_to_hosp[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
@@ -241,12 +241,12 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec[county].push_back(static_cast<int>(
                 t_car_to_inf[county][group] +
-                0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_exp_to_car[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(static_cast<int>(
-                model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_inf_to_hosp[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
@@ -336,12 +336,12 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec[county].push_back(static_cast<int>(
                 t_car_to_inf[county][group] +
-                0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_exp_to_car[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec[county].push_back(static_cast<int>(
-                model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_inf_to_hosp[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec[county].push_back(
@@ -672,12 +672,12 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec_uv[county].push_back(
                 static_cast<int>(t_car_to_inf_uv[county][group] +
-                                 0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group]));
+                                 0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
             t_exp_to_car_uv[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
             t_inf_to_hosp_uv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_uv[county].push_back(
@@ -740,12 +740,12 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec_pv[county].push_back(static_cast<int>(
                 t_car_to_inf_pv[county][group] +
-                0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_exp_to_car_pv[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_pv[county].push_back(static_cast<int>(
-                model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_inf_to_hosp_pv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_pv[county].push_back(
@@ -825,12 +825,12 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                       model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
             t_car_to_rec_fv[county].push_back(static_cast<int>(
                 t_car_to_inf_fv[county][group] +
-                0.5 * model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                0.5 * model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_exp_to_car_fv[county].push_back(
                 static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
                                  model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
             t_inf_to_rec_fv[county].push_back(static_cast<int>(
-                model[county].parameters.template get<InfectiousTimeMild>()[(AgeGroup)group] * reduc_t));
+                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
             t_inf_to_hosp_fv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[(AgeGroup)group]));
             t_hosp_to_rec_fv[county].push_back(

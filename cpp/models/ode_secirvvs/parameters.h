@@ -152,7 +152,7 @@ struct IncubationTime {
 * @brief the infectious time for symptomatic cases that are infected but
 *        who do not need to be hsopitalized in the SECIR model in day unit
 */
-struct InfectiousTimeMild {
+struct TimeInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -160,7 +160,7 @@ struct InfectiousTimeMild {
     }
     static std::string name()
     {
-        return "InfectiousTimeMild";
+        return "TimeInfectedSymptoms";
     }
 };
 
@@ -592,7 +592,7 @@ struct BaseInfectiousnessB161 {
 
 using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
-                 DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, SerialInterval,
+                 DynamicNPIsInfected, IncubationTime, TimeInfectedSymptoms, SerialInterval,
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
@@ -705,10 +705,10 @@ public:
                 this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - 0.5;
             }
 
-            if (this->get<InfectiousTimeMild>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter InfectiousTimeMild changed from {:.4f} to {:.4f}",
-                            this->get<InfectiousTimeMild>()[i], 1.0);
-                this->get<InfectiousTimeMild>()[i] = 1.0;
+            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
+                log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}",
+                            this->get<TimeInfectedSymptoms>()[i], 1.0);
+                this->get<TimeInfectedSymptoms>()[i] = 1.0;
             }
 
             if (this->get<HospitalizedToHomeTime>()[i] < 1.0) {
@@ -817,9 +817,9 @@ public:
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
             }
 
-            if (this->get<InfectiousTimeMild>()[i] < 1.0) {
-                log_error("Constraint check: Parameter InfectiousTimeMild {:.4f} smaller {:.4f}",
-                          this->get<InfectiousTimeMild>()[i], 1.0);
+            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
+                          this->get<TimeInfectedSymptoms>()[i], 1.0);
             }
 
             if (this->get<HospitalizedToHomeTime>()[i] < 1.0) {
@@ -841,6 +841,7 @@ public:
                 log_error("Constraint check: Parameter ICUToHomeTime {:.4f} smaller {:.4f}",
                           this->get<ICUToHomeTime>()[i], 1.0);
             }
+
 
             if (this->get<ICUToDeathTime>()[i] < 1.0) {
                 log_error("Constraint check: Parameter ICUToDeathTime {:.4f} smaller {:.4f}",

@@ -31,7 +31,7 @@ class Test_ParameterStudy(unittest.TestCase):
         A0 = secir.AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.InfectiousTimeMild[A0] = 6
+        model.parameters.TimeInfectedSymptoms[A0] = 6
         model.parameters.SerialInterval[A0] = 4.2
         model.parameters.HospitalizedToHomeTime[A0] = 12
         model.parameters.HomeToHospitalizedTime[A0] = 5
