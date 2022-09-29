@@ -49,9 +49,9 @@ protected:
             this->model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.set<mio::oseir::InfectionProbabilityFromContact>(1.0);
-        model.parameters.set<mio::oseir::LatentTime>(5.2);
-        model.parameters.set<mio::oseir::InfectiousTime>(2);
+        model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
+        model.parameters.set<mio::oseir::TimeExposed>(5.2);
+        model.parameters.set<mio::oseir::TimeInfected>(2);
         ;
 
         model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;

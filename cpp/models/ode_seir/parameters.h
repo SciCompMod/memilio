@@ -38,7 +38,7 @@ namespace oseir
     /**
      * @brief probability of getting infected from a contact
      */
-    struct InfectionProbabilityFromContact {
+    struct TransmissionProbabilityOnContact {
         using Type = UncertainValue;
         static Type get_default()
         {
@@ -46,14 +46,14 @@ namespace oseir
         }
         static std::string name()
         {
-            return "InfectionProbabilityFromContact";
+            return "TransmissionProbabilityOnContact";
         }
     };
 
     /**
      * @brief the latent time in day unit
      */
-    struct LatentTime {
+    struct TimeExposed {
         using Type = UncertainValue;
         static Type get_default()
         {
@@ -61,14 +61,14 @@ namespace oseir
         }
         static std::string name()
         {
-            return "LatentTime";
+            return "TimeExposed";
         }
     };
 
     /**
      * @brief the infectious time in day unit
      */
-    struct InfectiousTime {
+    struct TimeInfected {
         using Type = UncertainValue;
         static Type get_default()
         {
@@ -76,7 +76,7 @@ namespace oseir
         }
         static std::string name()
         {
-            return "InfectiousTime";
+            return "TimeInfected";
         }
     };
 
@@ -95,7 +95,7 @@ namespace oseir
         }
     };
 
-    using Parameters = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
+    using Parameters = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
 
 } // namespace oseir
 } // namespace mio
