@@ -36,8 +36,7 @@ TEST(ParameterStudies, sample_from_secir_params)
     double tinc    = 5.2, 
         tinf   = 6,
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        tsevere = 12, 
         ticu2home  = 8, // 5-16 (=R8^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
@@ -61,8 +60,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.get<mio::IncubationTime>()[i]             = tinc;
         params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
         params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
+        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
@@ -100,8 +98,6 @@ TEST(ParameterStudies, sample_from_secir_params)
                   params.get<mio::SerialInterval>()[i].value());
         ASSERT_EQ(params.get<mio::TimeInfectedSymptoms>()[mio::AgeGroup(0)].value(),
                   params.get<mio::TimeInfectedSymptoms>()[i].value());
-        ASSERT_EQ(params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::HospitalizedToICUTime>()[i].value());
         ASSERT_EQ(params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)].value(),
                   params.get<mio::RelativeCarrierInfectability>()[i].value());
         ASSERT_EQ(params.get<mio::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
@@ -130,8 +126,7 @@ TEST(ParameterStudies, sample_graph)
     double tinc    = 5.2, 
         tinf   = 6, 
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        tsevere = 12, 
         ticu2home  = 8, // 5-16 (=R8^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
@@ -155,8 +150,7 @@ TEST(ParameterStudies, sample_graph)
         params.get<mio::IncubationTime>()[i]             = tinc;
         params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
         params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
+        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 
@@ -300,8 +294,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double tinc    = 5.2, 
         tinf   = 6, 
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        tsevere = 12, 
         ticu2home  = 8, // 5-16 (=R8^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
@@ -326,8 +319,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::IncubationTime>()[i]             = tinc;
         params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
         params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
+        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 

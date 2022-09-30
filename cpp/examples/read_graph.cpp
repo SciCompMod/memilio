@@ -50,9 +50,8 @@ int main(int argc, char** argv)
 
     double tinc    = 5.2, 
         tinf   = 6, 
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        tserint    = 4.2,
+        tsevere = 12, 
         ticu2home  = 8, // 5-16 (=R8^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
@@ -81,8 +80,7 @@ int main(int argc, char** argv)
         params.get<mio::IncubationTime>()[i]         = tinc;
         params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
         params.get<mio::SerialInterval>()[i]         = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<mio::HospitalizedToICUTime>()[i]  = thosp2icu;
+        params.get<mio::TimeInfectedSevere>()[i] = tsevere;
         params.get<mio::ICUToHomeTime>()[i]          = ticu2home;
         params.get<mio::ICUToDeathTime>()[i]         = ticu2death;
 

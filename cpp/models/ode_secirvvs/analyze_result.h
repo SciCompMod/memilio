@@ -85,11 +85,7 @@ namespace osecirvvs
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<HospitalizedToICUTime>()[i];
-                    });
-                param_percentil(
-                    node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<HospitalizedToHomeTime>()[i];
+                        return model.parameters.template get<TimeInfectedSevere>()[i];
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });

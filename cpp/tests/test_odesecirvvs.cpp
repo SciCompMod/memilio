@@ -158,10 +158,10 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
     const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
     const double t_inf_min    = 5.6; 
     const double t_inf_max    = 8.4;
-    const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; 
-    const double t_hosp_rec_max[] = {6, 6, 7, 9, 11, 17};
-    const double t_hosp_icu_min   = 3; // R7^(-1) = T_H^U
-    const double t_hosp_icu_max   = 7;
+    const double tsevere_min[] = {4, 4, 5, 7, 9, 13}; 
+    const double tsevere_max[] = {6, 6, 7, 9, 11, 17};
+    // const double t_hosp_icu_min   = 3; 
+    // const double t_hosp_icu_max   = 7;
     const double t_icu_rec_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
     const double t_icu_rec_max[]  = {9, 9, 9, 21, 21, 15};
     const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
@@ -173,10 +173,8 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
                                       set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), t_inf_min, t_inf_max,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToHomeTime>(), t_hosp_rec_min,
-                                      t_hosp_rec_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min,
-                                      t_hosp_icu_max, set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), tsevere_min,
+                                      tsevere_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max,
                                       set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max,

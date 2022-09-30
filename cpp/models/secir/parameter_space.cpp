@@ -56,8 +56,7 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
         set_distribution(model.parameters.get<IncubationTime>()[i]);
         set_distribution(model.parameters.get<SerialInterval>()[i]);
         set_distribution(model.parameters.get<TimeInfectedSymptoms>()[i]);
-        set_distribution(model.parameters.get<HospitalizedToHomeTime>()[i]);
-        set_distribution(model.parameters.get<HospitalizedToICUTime>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedSevere>()[i]);
         set_distribution(model.parameters.get<ICUToHomeTime>()[i]);
         set_distribution(model.parameters.get<ICUToDeathTime>()[i]);
 
@@ -115,7 +114,6 @@ void draw_sample_infection(SecirModel& model)
     model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
     model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
     model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
@@ -125,7 +123,6 @@ void draw_sample_infection(SecirModel& model)
         model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
         model.parameters.get<SerialInterval>()[i]        = model.parameters.get<SerialInterval>()[AgeGroup(0)];
         model.parameters.get<TimeInfectedSymptoms>()[i]    = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
-        model.parameters.get<HospitalizedToICUTime>()[i] = model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)];
         model.parameters.get<RelativeCarrierInfectability>()[i] =
             model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
@@ -134,7 +131,7 @@ void draw_sample_infection(SecirModel& model)
             model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
         //age dependent
-        model.parameters.get<HospitalizedToHomeTime>()[i].draw_sample(); // here: home=recovered
+        model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
         model.parameters.get<ICUToDeathTime>()[i].draw_sample();
         model.parameters.get<ICUToHomeTime>()[i].draw_sample();
 

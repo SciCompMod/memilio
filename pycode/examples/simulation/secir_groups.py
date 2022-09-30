@@ -74,12 +74,10 @@ def run_secir_groups_simulation(show_plot = True):
             i)] = 6.  # 4-14  (=R4^(-1))
         # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
         model.parameters.SerialInterval[AgeGroup(i)] = 4.2
-        model.parameters.HospitalizedToHomeTime[AgeGroup(
+        model.parameters.TimeInfectedSevere[AgeGroup(
             i)] = 12.  # 7-16 (=R5^(-1))
         model.parameters.HomeToHospitalizedTime[AgeGroup(
             i)] = 5.  # 2.5-7 (=R6^(-1))
-        model.parameters.HospitalizedToICUTime[AgeGroup(
-            i)] = 2.  # 1-3.5 (=R7^(-1))
         model.parameters.ICUToHomeTime[AgeGroup(i)] = 8.  # 5-16 (=R8^(-1))
         model.parameters.ICUToDeathTime[AgeGroup(i)] = 5.  # 3.5-7 (=R5^(-1))
 

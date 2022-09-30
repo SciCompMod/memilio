@@ -134,10 +134,10 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     // TODO
     // const double t_inf_hosp_min[] = {9, 9, 9, 5, 5, 5}; 
     // const double t_inf_hosp_max[] = {12, 12, 12, 7, 7, 7};
-    const double t_hosp_rec_min[] = {4, 4, 5, 7, 9, 13}; 
-    const double t_hosp_rec_max[] = {6, 6, 7, 9, 11, 17};
-    const double t_hosp_icu_min   = 3; 
-    const double t_hosp_icu_max   = 7;
+    const double tsevere_min[] = {4, 4, 5, 7, 9, 13}; 
+    const double tsevere_max[] = {6, 6, 7, 9, 11, 17};
+    // const double t_hosp_icu_min   = 3; 
+    // const double t_hosp_icu_max   = 7;
     const double t_icu_rec_min[]  = {5, 5, 5, 14, 14, 10}; 
     const double t_icu_rec_max[]  = {9, 9, 9, 21, 21, 15};
     const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; 
@@ -146,10 +146,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), t_inf_min, t_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToHomeTime>(), t_hosp_rec_min,
-                                      t_hosp_rec_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min,
-                                      t_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), tsevere_min,
+                                      tsevere_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 

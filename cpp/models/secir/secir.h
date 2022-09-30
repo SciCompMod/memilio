@@ -299,24 +299,24 @@ public:
                            y[Ii];
             dydt[Hi] =
                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] -
-                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
-                 params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
+                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] +
+                 params.get<ICUCasesPerHospitalized>()[i] / params.get<TimeInfectedSevere>()[i]) *
                     y[Hi];
             dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] +
                          params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[Ui] += prob_hosp2icu / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             dydt[Ri] =
                 params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3 * y[Ci] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
-                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
+                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
                 (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
 
             dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui];
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[Di] += prob_hosp2dead / params.get<TimeInfectedSevere>()[i] * y[Hi];
         }
     }
 

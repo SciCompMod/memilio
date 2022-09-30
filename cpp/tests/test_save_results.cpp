@@ -31,7 +31,7 @@ TEST(TestSaveResult, compareResultWithH5)
     double tmax = 50;
     double dt   = 0.1;
 
-    double tinc = 5.2, tinf = 6, tserint = 4.2, thosp2home = 12, thosp2icu = 2, ticu2home = 8,
+    double tinc = 5.2, tinf = 6, tserint = 4.2, tsevere = 12, ticu2home = 8,
            ticu2death = 5;
 
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
@@ -48,8 +48,7 @@ TEST(TestSaveResult, compareResultWithH5)
         params.get<mio::IncubationTime>()[i]             = tinc;
         params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
         params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
+        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
         params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
         params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
 

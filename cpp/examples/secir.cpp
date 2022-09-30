@@ -35,8 +35,7 @@ int main()
     double tinc    = 5.2, 
         tinf   = 6, 
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        tsevere = 12, 
         ticu2home  = 8, // 5-16 (=R8^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
@@ -60,8 +59,7 @@ int main()
     model.parameters.get<mio::IncubationTime>()         = tinc;
     model.parameters.get<mio::TimeInfectedSymptoms>()     = tinf;
     model.parameters.get<mio::SerialInterval>()         = tserint;
-    model.parameters.get<mio::HospitalizedToHomeTime>() = thosp2home;
-    model.parameters.get<mio::HospitalizedToICUTime>()  = thosp2icu;
+    model.parameters.get<mio::TimeInfectedSevere>() = tsevere;
     model.parameters.get<mio::ICUToHomeTime>()          = ticu2home;
     model.parameters.get<mio::ICUToDeathTime>()         = ticu2death;
 

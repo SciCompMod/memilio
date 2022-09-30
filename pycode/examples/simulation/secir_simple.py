@@ -59,8 +59,7 @@ def run_secir_simulation(show_plot = True):
     model.parameters.TimeInfectedSymptoms[A0] = 6.  
     # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
     model.parameters.SerialInterval[A0] = 4.2
-    model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
-    model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
+    model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
     model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
     model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 

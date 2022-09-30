@@ -239,14 +239,14 @@ public:
             dydt[Hi] =
                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
                 params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[IDi] -
-                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
-                 params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
+                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] +
+                 params.get<ICUCasesPerHospitalized>()[i] / params.get<TimeInfectedSevere>()[i]) *
                     y[Hi];
             dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] +
                          params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[Ui] += prob_hosp2icu / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             /**** path of (partially, i.e., one dose) vaccinated ***/
 
@@ -285,9 +285,9 @@ public:
                         hosp_fac_part_immune / inf_fac_part_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
                             params.get<TimeInfectedSymptoms>()[i] * y[IDVi] -
                         ((1 - icu_fac_part_immune / hosp_fac_part_immune * params.get<ICUCasesPerHospitalized>()[i]) /
-                             params.get<HospitalizedToHomeTime>()[i] +
+                             params.get<TimeInfectedSevere>()[i] +
                          icu_fac_part_immune / hosp_fac_part_immune * params.get<ICUCasesPerHospitalized>()[i] /
-                             params.get<HospitalizedToICUTime>()[i]) *
+                             params.get<TimeInfectedSevere>()[i]) *
                             y[HVi];
             dydt[UVi] = -((1 - death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i]) /
                               params.get<ICUToHomeTime>()[i] +
@@ -296,7 +296,7 @@ public:
                         y[UVi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[UVi] += icu_fac_part_immune / hosp_fac_part_immune * prob_hosp2icu /
-                         params.get<HospitalizedToICUTime>()[i] * y[HVi];
+                         params.get<TimeInfectedSevere>()[i] * y[HVi];
 
             /**** path of twice vaccinated, here called immune although reinfection is possible now ***/
 
@@ -337,9 +337,9 @@ public:
                          hosp_fac_impr_immune / inf_fac_impr_immune * params.get<HospitalizedCasesPerInfectious>()[i] /
                              params.get<TimeInfectedSymptoms>()[i] * y[IDV2i] -
                          ((1 - icu_fac_impr_immune / hosp_fac_impr_immune * params.get<ICUCasesPerHospitalized>()[i]) /
-                              params.get<HospitalizedToHomeTime>()[i] +
+                              params.get<TimeInfectedSevere>()[i] +
                           icu_fac_impr_immune / hosp_fac_impr_immune * params.get<ICUCasesPerHospitalized>()[i] /
-                              params.get<HospitalizedToICUTime>()[i]) *
+                              params.get<TimeInfectedSevere>()[i]) *
                              y[HV2i];
             dydt[UV2i] = -((1 - death_fac_impr_immune / icu_fac_impr_immune * params.get<DeathsPerICU>()[i]) /
                                params.get<ICUToHomeTime>()[i] +
@@ -348,7 +348,7 @@ public:
                          y[UV2i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[UV2i] += icu_fac_impr_immune / hosp_fac_impr_immune * prob_hosp2icu /
-                          params.get<HospitalizedToICUTime>()[i] * y[HV2i];
+                          params.get<TimeInfectedSevere>()[i] * y[HV2i];
 
             // compute auxiliary compartment of all past infections
             dydt[ITi] =
@@ -385,7 +385,7 @@ public:
                 params.get<AsymptoticCasesPerInfectious>()[i] * dummy_R3 * y[CDi] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[IDi] +
-                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
+                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
                 (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
 
             dydt[Ri] +=
@@ -400,7 +400,7 @@ public:
                 (1 - (hosp_fac_part_immune / inf_fac_part_immune) * params.get<HospitalizedCasesPerInfectious>()[i]) /
                     (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) * y[IDVi] +
                 (1 - (icu_fac_part_immune / hosp_fac_part_immune) * params.get<ICUCasesPerHospitalized>()[i]) /
-                    params.get<HospitalizedToHomeTime>()[i] * y[HVi] +
+                    params.get<TimeInfectedSevere>()[i] * y[HVi] +
                 (1 - (death_fac_part_immune / icu_fac_part_immune) * params.get<DeathsPerICU>()[i]) /
                     params.get<ICUToHomeTime>()[i] * y[UVi];
 
@@ -416,7 +416,7 @@ public:
                 (1 - (hosp_fac_impr_immune / inf_fac_impr_immune) * params.get<HospitalizedCasesPerInfectious>()[i]) /
                     (params.get<TimeInfectedSymptoms>()[i] * inf_time_factor_immune) * y[IDV2i] +
                 (1 - (icu_fac_impr_immune / hosp_fac_impr_immune) * params.get<ICUCasesPerHospitalized>()[i]) /
-                    params.get<HospitalizedToHomeTime>()[i] * y[HV2i] +
+                    params.get<TimeInfectedSevere>()[i] * y[HV2i] +
                 (1 - (death_fac_impr_immune / icu_fac_impr_immune) * params.get<DeathsPerICU>()[i]) /
                     params.get<ICUToHomeTime>()[i] * y[UV2i];
 
@@ -427,13 +427,13 @@ public:
                            params.get<ICUToDeathTime>()[i] * y[UV2i];
             ;
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[Di] += prob_hosp2dead / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             dydt[Di] += (death_fac_part_immune / hosp_fac_part_immune) * prob_hosp2dead /
-                        params.get<HospitalizedToICUTime>()[i] * y[HVi];
+                        params.get<TimeInfectedSevere>()[i] * y[HVi];
 
             dydt[Di] += (death_fac_impr_immune / hosp_fac_impr_immune) * prob_hosp2dead /
-                        params.get<HospitalizedToICUTime>()[i] * y[HV2i];
+                        params.get<TimeInfectedSevere>()[i] * y[HV2i];
         }
     }
 
