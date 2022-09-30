@@ -155,7 +155,7 @@ struct TimeInfectedSevere {
  * @brief the time people are treated by ICU before returning home in the SECIR model
  *        in day unit
  */
-struct ICUToHomeTime {
+struct TimeInfectedCritical {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -163,24 +163,7 @@ struct ICUToHomeTime {
     }
     static std::string name()
     {
-        return "ICUToHomeTime";
-    }
-};
-
-
-/**
- * @brief the time people are treated by ICU before dying in the SECIR model
- *        in day unit
- */
-struct ICUToDeathTime {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "ICUToDeathTime";
+        return "TimeInfectedCritical";
     }
 };
 
@@ -352,7 +335,7 @@ struct TestAndTraceCapacity {
 using SecirParamsBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
                  IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere,
-                 ICUToHomeTime, ICUToDeathTime,
+                 TimeInfectedCritical,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptomaticCasesPerInfectious,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerICU>;
@@ -422,16 +405,10 @@ public:
                 this->get<TimeInfectedSevere>()[i] = 1.0;
             }
 
-            if (this->get<ICUToHomeTime>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter ICUToHomeTime changed from {:.4f} to {:.4f}",
-                            this->get<ICUToHomeTime>()[i], 1.0);
-                this->get<ICUToHomeTime>()[i] = 1.0;
-            }
-
-            if (this->get<ICUToDeathTime>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter ICUToDeathTime changed from {:.4f} to {:.4f}",
-                            this->get<ICUToDeathTime>()[i], 1.0);
-                this->get<ICUToDeathTime>()[i] = 1.0;
+            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
+                log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}",
+                            this->get<TimeInfectedCritical>()[i], 1.0);
+                this->get<TimeInfectedCritical>()[i] = 1.0;
             }
 
             if (this->get<InfectionProbabilityFromContact>()[i] < 0.0) {
@@ -520,14 +497,9 @@ public:
                           this->get<TimeInfectedSevere>()[i], 1.0);
             }
 
-            if (this->get<ICUToHomeTime>()[i] < 1.0) {
-                log_error("Constraint check: Parameter ICUToHomeTime {:.4f} smaller {:.4f}",
-                          this->get<ICUToHomeTime>()[i], 1.0);
-            }
-
-            if (this->get<ICUToDeathTime>()[i] < 1.0) {
-                log_error("Constraint check: Parameter ICUToDeathTime {:.4f} smaller {:.4f}",
-                          this->get<ICUToDeathTime>()[i], 1.0);
+            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
+                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
+                          this->get<TimeInfectedCritical>()[i], 1.0);
             }
 
             if (this->get<InfectionProbabilityFromContact>()[i] < 0.0) {

@@ -31,9 +31,6 @@ TEST(TestSaveResult, compareResultWithH5)
     double tmax = 50;
     double dt   = 0.1;
 
-    double tinc = 5.2, tinf = 6, tserint = 4.2, tsevere = 12, ticu2home = 8,
-           ticu2death = 5;
-
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
@@ -45,12 +42,11 @@ TEST(TestSaveResult, compareResultWithH5)
     ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]             = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]         = 5.;
+        params.get<mio::SerialInterval>()[i]             = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::TimeInfectedCritical>()[i]              = 8.;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = nb_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = nb_car_t0;

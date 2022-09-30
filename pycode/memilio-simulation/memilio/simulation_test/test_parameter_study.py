@@ -34,8 +34,7 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.TimeInfectedSymptoms[A0] = 6
         model.parameters.SerialInterval[A0] = 4.2
         model.parameters.TimeInfectedSevere[A0] = 12
-        model.parameters.ICUToHomeTime[A0] = 8
-        model.parameters.ICUToDeathTime[A0] = 5
+        model.parameters.TimeInfectedCritical[A0] = 8
 
         model.parameters.ContactPatterns.cont_freq_mat[0] = mio.ContactMatrix(np.r_[
                                                                               0.5])

@@ -152,7 +152,6 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
     std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
     std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
-    std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
     std::vector<std::vector<int>> t_icu_to_rec{model.size()};
 
     std::vector<std::vector<double>> mu_C_R{model.size()};
@@ -181,9 +180,9 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
             t_hosp_to_icu[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)]));
             t_icu_to_dead[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[AgeGroup(group)]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[AgeGroup(group)]));
             t_icu_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             mu_C_R[county].push_back(model[county].parameters.template get<AsymptomaticCasesPerInfectious>()[AgeGroup(group)]);
             mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);

@@ -32,8 +32,7 @@ def parameter_study():
     model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2
     model.parameters.TimeInfectedSymptoms[secir.AgeGroup(0)] = 6
     model.parameters.TimeInfectedSevere[secir.AgeGroup(0)] = 12
-    model.parameters.ICUToHomeTime[secir.AgeGroup(0)] = 8
-    model.parameters.ICUToDeathTime[secir.AgeGroup(0)] = 5
+    model.parameters.TimeInfectedCritical[secir.AgeGroup(0)] = 8
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.r_[0.5]
     model.parameters.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[0.3], t = 0.3))

@@ -60,8 +60,7 @@ def run_secir_simulation(show_plot = True):
     # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
     model.parameters.SerialInterval[A0] = 4.2
     model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
-    model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
-    model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
+    model.parameters.TimeInfectedCritical[A0] = 8.
 
     # Initial number of people in each compartment
     model.populations[A0, State.Exposed] = 100

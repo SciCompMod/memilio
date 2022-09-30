@@ -128,7 +128,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
     std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
     std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
-    std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
     std::vector<std::vector<int>> t_icu_to_rec{model.size()};
 
     std::vector<std::vector<double>> mu_C_R{model.size()};
@@ -171,9 +170,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             t_hosp_to_icu[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
@@ -250,9 +249,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             t_hosp_to_icu[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             double exp_fac_part_immune =
                 model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
@@ -343,9 +342,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             t_hosp_to_icu[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             double reduc_immune_exp =
                 model[county].parameters.template get<ExposedFactorImprovedImmunity>()[(AgeGroup)group];
@@ -644,7 +643,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     std::vector<std::vector<int>> t_inf_to_rec_uv{model.size()}; // R4
     std::vector<std::vector<int>> t_inf_to_hosp_uv{model.size()}; // R6
     std::vector<std::vector<int>> t_hosp_to_rec_uv{model.size()}; // R5
-    std::vector<std::vector<int>> t_icu_to_dead_uv{model.size()}; // R10
     std::vector<std::vector<int>> t_icu_to_rec_uv{model.size()};
 
     std::vector<std::vector<double>> mu_C_R_uv{model.size()};
@@ -676,9 +674,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
             t_hosp_to_icu_uv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             mu_C_R_uv[county].push_back(
                 model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
@@ -709,7 +707,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     std::vector<std::vector<int>> t_inf_to_rec_pv{model.size()}; // R4
     std::vector<std::vector<int>> t_inf_to_hosp_pv{model.size()}; // R6
     std::vector<std::vector<int>> t_hosp_to_rec_pv{model.size()}; // R5
-    std::vector<std::vector<int>> t_icu_to_dead_pv{model.size()}; // R10
     std::vector<std::vector<int>> t_icu_to_rec_pv{model.size()};
 
     std::vector<std::vector<double>> mu_C_R_pv{model.size()};
@@ -741,9 +738,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
             t_hosp_to_icu_pv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead_pv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec_pv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             double exp_fact_part_immune =
                 model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
@@ -791,7 +788,6 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     std::vector<std::vector<int>> t_inf_to_rec_fv{model.size()}; // R4
     std::vector<std::vector<int>> t_inf_to_hosp_fv{model.size()}; // R6
     std::vector<std::vector<int>> t_hosp_to_rec_fv{model.size()}; // R5
-    std::vector<std::vector<int>> t_icu_to_dead_fv{model.size()}; // R10
     std::vector<std::vector<int>> t_icu_to_rec_fv{model.size()};
 
     std::vector<std::vector<double>> mu_C_R_fv{model.size()};
@@ -823,9 +819,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
             t_hosp_to_icu_fv[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
             t_icu_to_dead_fv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
             t_icu_to_rec_fv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
+                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             double reduc_immune_exp =
                 model[county].parameters.template get<ExposedFactorImprovedImmunity>()[(AgeGroup)group];

@@ -34,12 +34,10 @@ class Test_secir_integration(unittest.TestCase):
         A0 = AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2  
-        model.parameters.TimeInfectedSymptoms[A0] = 6. 
-        # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        model.parameters.TimeInfectedSymptoms[A0] = 6.
         model.parameters.SerialInterval[A0] = 4.2
-        model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
-        model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
-        model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
+        model.parameters.TimeInfectedSevere[A0] = 12.
+        model.parameters.TimeInfectedCritical[A0] = 8.
 
         model.parameters.InfectionProbabilityFromContact[A0] = 1.0
         model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16

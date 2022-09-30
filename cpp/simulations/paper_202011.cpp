@@ -137,17 +137,16 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
     const double tsevere_max[] = {6, 6, 7, 9, 11, 17};
     // const double t_hosp_icu_min   = 3; 
     // const double t_hosp_icu_max   = 7;
-    const double t_icu_rec_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
-    const double t_icu_rec_max[]  = {9, 9, 9, 21, 21, 15};
-    const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
-    const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
+    const double tcritical_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
+    const double tcritical_max[]  = {9, 9, 9, 21, 21, 15};
+    // const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
+    // const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
 
     array_assign_uniform_distribution(params.get<mio::IncubationTime>(), tinc, tinc);
     array_assign_uniform_distribution(params.get<mio::SerialInterval>(), tserint_min, tserint_max);
     array_assign_uniform_distribution(params.get<mio::TimeInfectedSymptoms>(), t_inf_min, t_inf_max);
     array_assign_uniform_distribution(params.get<mio::TimeInfectedSevere>(), tsevere_min, tsevere_max);
-    array_assign_uniform_distribution(params.get<mio::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
-    array_assign_uniform_distribution(params.get<mio::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::TimeInfectedCritical>(), tcritical_min, tcritical_max);
 
     //probabilities
     const double transmission_risk_min[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};

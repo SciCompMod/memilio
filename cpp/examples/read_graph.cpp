@@ -52,8 +52,7 @@ int main(int argc, char** argv)
         tinf   = 6, 
         tserint    = 4.2,
         tsevere = 12, 
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
+        tcritical  = 8;
 
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
@@ -81,8 +80,7 @@ int main(int argc, char** argv)
         params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
         params.get<mio::SerialInterval>()[i]         = tserint;
         params.get<mio::TimeInfectedSevere>()[i] = tsevere;
-        params.get<mio::ICUToHomeTime>()[i]          = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i]         = ticu2death;
+        params.get<mio::TimeInfectedCritical>()[i]          = tcritical;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * nb_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = fact * nb_car_t0;

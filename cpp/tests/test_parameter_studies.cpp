@@ -33,13 +33,6 @@ TEST(ParameterStudies, sample_from_secir_params)
     double t0   = 0;
     double tmax = 100;
 
-    double tinc    = 5.2, 
-        tinf   = 6,
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        tsevere = 12, 
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
-
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
            alpha = 0.09, // 0.01-0.16
@@ -57,12 +50,11 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     auto& params = model.parameters;
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]                = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]          = 5.;
+        params.get<mio::SerialInterval>()[i]             = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::TimeInfectedCritical>()[i]              = 8.;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
@@ -123,13 +115,6 @@ TEST(ParameterStudies, sample_graph)
     double t0   = 0;
     double tmax = 100;
 
-    double tinc    = 5.2, 
-        tinf   = 6, 
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        tsevere = 12, 
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
-
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
            alpha = 0.09, // 0.01-0.16
@@ -147,12 +132,11 @@ TEST(ParameterStudies, sample_graph)
 
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]                = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]          = 5.;
+        params.get<mio::SerialInterval>()[i]             = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::TimeInfectedCritical>()[i]              = 8.;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
@@ -291,13 +275,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double t0   = 0;
     double tmax = 50;
 
-    double tinc    = 5.2, 
-        tinf   = 6, 
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        tsevere = 12, 
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
-
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
            alpha = 0.09, // 0.01-0.16
@@ -316,12 +293,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
     auto& params = model.parameters;
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]         = tinf;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::TimeInfectedSevere>()[i]     = tsevere;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]                = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]          = 5.;
+        params.get<mio::SerialInterval>()[i]             = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]     = 10.;
+        params.get<mio::TimeInfectedCritical>()[i]              = 8.;
 
         model.populations.set_total(num_total_t0);
         model.populations[{i, mio::InfectionState::Exposed}]      = num_exp_t0;

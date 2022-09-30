@@ -88,9 +88,7 @@ namespace osecirvvs
                         return model.parameters.template get<TimeInfectedSevere>()[i];
                     });
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });
-                param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToHomeTime>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical>()[i]; });
                 //probs
                 param_percentil(
                     node, [i](auto&& model) -> auto& {

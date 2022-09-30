@@ -377,7 +377,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     mio::SecirModel model2(2);
 
     auto& params                                                             = model.parameters;
-    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 3;
+    params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 3;
     params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 5;
     params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.2;
     params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.5;
@@ -385,7 +385,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 10;
 
     auto& params2                                                             = model2.parameters;
-    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 5;
+    params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 5;
     params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 2;
     params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.4;
     params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.2;
@@ -395,7 +395,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     auto g = std::vector<mio::SecirModel>({model, model2});
 
     params.set<mio::Seasonality>(0.4);
-    params.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 4;
+    params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 4;
     params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 6;
     params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.3;
     params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.6;
@@ -403,7 +403,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 11;
 
     params2.set<mio::Seasonality>(0.4);
-    params2.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)]                      = 6;
+    params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 6;
     params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 1;
     params2.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)]        = 0.5;
     params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.3;
@@ -423,11 +423,11 @@ TEST(TestEnsembleParamsPercentile, basic)
     EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::Seasonality>(), 0.4);
     EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::Seasonality>(), 0.4);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)], 3.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)], 5.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 3.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 5.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)], 4.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::ICUToDeathTime>()[mio::AgeGroup(0)], 6.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 4.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 6.0);
 
     EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 5.0);
     EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 1.0);

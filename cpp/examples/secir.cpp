@@ -36,8 +36,7 @@ int main()
         tinf   = 6, 
         tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
         tsevere = 12, 
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
+        tcritical  = 8;
 
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 1,
@@ -60,8 +59,7 @@ int main()
     model.parameters.get<mio::TimeInfectedSymptoms>()     = tinf;
     model.parameters.get<mio::SerialInterval>()         = tserint;
     model.parameters.get<mio::TimeInfectedSevere>() = tsevere;
-    model.parameters.get<mio::ICUToHomeTime>()          = ticu2home;
-    model.parameters.get<mio::ICUToDeathTime>()         = ticu2death;
+    model.parameters.get<mio::TimeInfectedCritical>()          = tcritical;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));

@@ -104,8 +104,7 @@ namespace osecirvvs
 
             //age dependent
             model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
-            model.parameters.get<ICUToDeathTime>()[i].draw_sample();
-            model.parameters.get<ICUToHomeTime>()[i].draw_sample();
+            model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
             model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
             model.parameters.get<AsymptoticCasesPerInfectious>()[i].draw_sample();

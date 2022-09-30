@@ -57,8 +57,7 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
         set_distribution(model.parameters.get<SerialInterval>()[i]);
         set_distribution(model.parameters.get<TimeInfectedSymptoms>()[i]);
         set_distribution(model.parameters.get<TimeInfectedSevere>()[i]);
-        set_distribution(model.parameters.get<ICUToHomeTime>()[i]);
-        set_distribution(model.parameters.get<ICUToDeathTime>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedCritical>()[i]);
 
         set_distribution(model.parameters.get<InfectionProbabilityFromContact>()[i]);
         set_distribution(model.parameters.get<RelativeCarrierInfectability>()[i]);
@@ -132,8 +131,7 @@ void draw_sample_infection(SecirModel& model)
 
         //age dependent
         model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
-        model.parameters.get<ICUToDeathTime>()[i].draw_sample();
-        model.parameters.get<ICUToHomeTime>()[i].draw_sample();
+        model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
         model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
         model.parameters.get<AsymptomaticCasesPerInfectious>()[i].draw_sample();

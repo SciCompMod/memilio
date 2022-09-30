@@ -242,8 +242,8 @@ public:
                 ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] +
                  params.get<ICUCasesPerHospitalized>()[i] / params.get<TimeInfectedSevere>()[i]) *
                     y[Hi];
-            dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] +
-                         params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i]) *
+            dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<TimeInfectedCritical>()[i] +
+                         params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[Ui] += prob_hosp2icu / params.get<TimeInfectedSevere>()[i] * y[Hi];
@@ -290,9 +290,9 @@ public:
                              params.get<TimeInfectedSevere>()[i]) *
                             y[HVi];
             dydt[UVi] = -((1 - death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i]) /
-                              params.get<ICUToHomeTime>()[i] +
+                              params.get<TimeInfectedCritical>()[i] +
                           death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i] /
-                              params.get<ICUToDeathTime>()[i]) *
+                              params.get<TimeInfectedCritical>()[i]) *
                         y[UVi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[UVi] += icu_fac_part_immune / hosp_fac_part_immune * prob_hosp2icu /
@@ -342,9 +342,9 @@ public:
                               params.get<TimeInfectedSevere>()[i]) *
                              y[HV2i];
             dydt[UV2i] = -((1 - death_fac_impr_immune / icu_fac_impr_immune * params.get<DeathsPerICU>()[i]) /
-                               params.get<ICUToHomeTime>()[i] +
+                               params.get<TimeInfectedCritical>()[i] +
                            death_fac_impr_immune / icu_fac_impr_immune * params.get<DeathsPerICU>()[i] /
-                               params.get<ICUToDeathTime>()[i]) *
+                               params.get<TimeInfectedCritical>()[i]) *
                          y[UV2i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[UV2i] += icu_fac_impr_immune / hosp_fac_impr_immune * prob_hosp2icu /
@@ -386,7 +386,7 @@ public:
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[IDi] +
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
+                (1 - params.get<DeathsPerICU>()[i]) / params.get<TimeInfectedCritical>()[i] * y[Ui];
 
             dydt[Ri] +=
                 (1 -
@@ -402,7 +402,7 @@ public:
                 (1 - (icu_fac_part_immune / hosp_fac_part_immune) * params.get<ICUCasesPerHospitalized>()[i]) /
                     params.get<TimeInfectedSevere>()[i] * y[HVi] +
                 (1 - (death_fac_part_immune / icu_fac_part_immune) * params.get<DeathsPerICU>()[i]) /
-                    params.get<ICUToHomeTime>()[i] * y[UVi];
+                    params.get<TimeInfectedCritical>()[i] * y[UVi];
 
             dydt[Ri] +=
                 (1 -
@@ -418,13 +418,13 @@ public:
                 (1 - (icu_fac_impr_immune / hosp_fac_impr_immune) * params.get<ICUCasesPerHospitalized>()[i]) /
                     params.get<TimeInfectedSevere>()[i] * y[HV2i] +
                 (1 - (death_fac_impr_immune / icu_fac_impr_immune) * params.get<DeathsPerICU>()[i]) /
-                    params.get<ICUToHomeTime>()[i] * y[UV2i];
+                    params.get<TimeInfectedCritical>()[i] * y[UV2i];
 
-            dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui] +
+            dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i] * y[Ui] +
                        death_fac_part_immune / icu_fac_part_immune * params.get<DeathsPerICU>()[i] /
-                           params.get<ICUToDeathTime>()[i] * y[UVi] +
+                           params.get<TimeInfectedCritical>()[i] * y[UVi] +
                        death_fac_impr_immune / icu_fac_impr_immune * params.get<DeathsPerICU>()[i] /
-                           params.get<ICUToDeathTime>()[i] * y[UV2i];
+                           params.get<TimeInfectedCritical>()[i] * y[UV2i];
             ;
             // add potential, additional deaths due to ICU overflow
             dydt[Di] += prob_hosp2dead / params.get<TimeInfectedSevere>()[i] * y[Hi];
