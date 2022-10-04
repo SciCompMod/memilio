@@ -376,6 +376,53 @@ TEST(TestLocation, beginStep)
     }
 }
 
+TEST(TestLocation, reachCapacity)
+{
+    using testing::Return;
+
+    auto world     = mio::abm::World();
+    auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    auto school_id = world.add_location(mio::abm::LocationType::School);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(10))
+        .WillOnce(testing::Return(0.8)) // draw vaccination state
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw vaccination state
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)); // draw random school hour
+    // .WillRepeatedly(testing::Return(1.0));
+
+    auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
+    auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+
+    p1.set_assigned_location(school_id);
+    p2.set_assigned_location(school_id);
+    p1.set_assigned_location(home_id);
+    p2.set_assigned_location(home_id);
+
+    auto& home   = world.get_individualized_location(home_id);
+    auto& school = world.get_individualized_location(school_id);
+    school.set_capacity(1, 66);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+    world.evolve(mio::abm::TimePoint(0) + mio::abm::hours(8), mio::abm::hours(1));
+
+    ASSERT_EQ(p1.get_location_id().type, mio::abm::LocationType::School);
+    ASSERT_EQ(p2.get_location_id().type, mio::abm::LocationType::Home); // p2 should not be able to enter the school
+    ASSERT_EQ(school.get_subpopulations().sum(), 1);
+    ASSERT_EQ(home.get_subpopulations().sum(), 1);
+}
+
 TEST(TestLocation, changedState)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
