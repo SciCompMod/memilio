@@ -483,6 +483,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
 /**
  * Set synthetic population data for testing.
+ * Only sets immune-naive part of the population. The remaining part is zero.
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
@@ -496,11 +497,11 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
 
         for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::CarrierNaive}]      = nb_car_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedNaive}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::HospitalizedNaive}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ICUNaive}]          = nb_icu_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Recovered}]         = nb_rec_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]      = nb_car_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]         = nb_rec_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]              = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
                 {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, nb_total_t0);
@@ -598,16 +599,16 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
 
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::CarrierNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNaive,
-                                   mio::osecirvvs::InfectionState::Recovered,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::CarrierPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::CarrierImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedImprovedImmunity};
+                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;

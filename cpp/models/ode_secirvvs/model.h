@@ -61,49 +61,49 @@ public:
             auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
             test_and_trace_required +=
                 (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 *
-                (this->populations.get_from(pop, {i, InfectionState::CarrierNaive}) +
-                 this->populations.get_from(pop, {i, InfectionState::CarrierPartialImmunity}) +
-                 this->populations.get_from(pop, {i, InfectionState::CarrierImprovedImmunity}) +
-                 this->populations.get_from(pop, {i, InfectionState::CarrierNaiveConfirmed}) +
-                 this->populations.get_from(pop, {i, InfectionState::CarrierPartialImmunityConfirmed}) +
-                 this->populations.get_from(pop, {i, InfectionState::CarrierImprovedImmunityConfirmed}));
-            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICUNaive}) +
-                             this->populations.get_from(pop, {i, InfectionState::ICUPartialImmunity}) +
-                             this->populations.get_from(pop, {i, InfectionState::ICUImprovedImmunity});
+                (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaiveConfirmed}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}) +
+                 this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}));
+            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCriticalNaive}) +
+                             this->populations.get_from(pop, {i, InfectionState::InfectedCriticalPartialImmunity}) +
+                             this->populations.get_from(pop, {i, InfectionState::InfectedCriticalImprovedImmunity});
         }
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
             size_t Si = this->populations.get_flat_index({i, InfectionState::SusceptibleNaive});
             size_t Ei = this->populations.get_flat_index({i, InfectionState::ExposedNaive});
-            size_t Ci = this->populations.get_flat_index({i, InfectionState::CarrierNaive});
-            size_t Ii = this->populations.get_flat_index({i, InfectionState::InfectedNaive});
-            size_t Hi = this->populations.get_flat_index({i, InfectionState::HospitalizedNaive});
-            size_t Ui = this->populations.get_flat_index({i, InfectionState::ICUNaive});
+            size_t Ci = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaive});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsNaive});
+            size_t Hi = this->populations.get_flat_index({i, InfectionState::InfectedSevereNaive});
+            size_t Ui = this->populations.get_flat_index({i, InfectionState::InfectedCriticalNaive});
 
-            size_t CDi = this->populations.get_flat_index({i, InfectionState::CarrierNaiveConfirmed});
-            size_t IDi = this->populations.get_flat_index({i, InfectionState::InfectedNaiveConfirmed});
+            size_t CDi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaiveConfirmed});
+            size_t IDi = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsNaiveConfirmed});
 
             size_t SVi = this->populations.get_flat_index({i, InfectionState::SusceptiblePartialImmunity});
             size_t EVi = this->populations.get_flat_index({i, InfectionState::ExposedPartialImmunity});
-            size_t CVi = this->populations.get_flat_index({i, InfectionState::CarrierPartialImmunity});
-            size_t IVi = this->populations.get_flat_index({i, InfectionState::InfectedPartialImmunity});
-            size_t HVi = this->populations.get_flat_index({i, InfectionState::HospitalizedPartialImmunity});
-            size_t UVi = this->populations.get_flat_index({i, InfectionState::ICUPartialImmunity});
+            size_t CVi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunity});
+            size_t IVi = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunity});
+            size_t HVi = this->populations.get_flat_index({i, InfectionState::InfectedSeverePartialImmunity});
+            size_t UVi = this->populations.get_flat_index({i, InfectionState::InfectedCriticalPartialImmunity});
 
-            size_t CDVi = this->populations.get_flat_index({i, InfectionState::CarrierPartialImmunityConfirmed});
-            size_t IDVi = this->populations.get_flat_index({i, InfectionState::InfectedPartialImmunityConfirmed});
+            size_t CDVi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed});
+            size_t IDVi = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
 
             size_t EV2i = this->populations.get_flat_index({i, InfectionState::ExposedImprovedImmunity});
-            size_t CV2i = this->populations.get_flat_index({i, InfectionState::CarrierImprovedImmunity});
-            size_t IV2i = this->populations.get_flat_index({i, InfectionState::InfectedImprovedImmunity});
-            size_t HV2i = this->populations.get_flat_index({i, InfectionState::HospitalizedImprovedImmunity});
-            size_t UV2i = this->populations.get_flat_index({i, InfectionState::ICUImprovedImmunity});
+            size_t CV2i = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsImprovedImmunity});
+            size_t IV2i = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunity});
+            size_t HV2i = this->populations.get_flat_index({i, InfectionState::InfectedSevereImprovedImmunity});
+            size_t UV2i = this->populations.get_flat_index({i, InfectionState::InfectedCriticalImprovedImmunity});
 
-            size_t CDV2i = this->populations.get_flat_index({i, InfectionState::CarrierImprovedImmunityConfirmed});
-            size_t IDV2i = this->populations.get_flat_index({i, InfectionState::InfectedImprovedImmunityConfirmed});
+            size_t CDV2i = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed});
+            size_t IDV2i = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
-            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
+            size_t Ri = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
             size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
 
             size_t ITi = this->populations.get_flat_index({i, InfectionState::TotalInfections});
@@ -144,33 +144,33 @@ public:
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj = this->populations.get_flat_index({j, InfectionState::SusceptibleNaive});
                 size_t Ej = this->populations.get_flat_index({j, InfectionState::ExposedNaive});
-                size_t Cj = this->populations.get_flat_index({j, InfectionState::CarrierNaive});
-                size_t Ij = this->populations.get_flat_index({j, InfectionState::InfectedNaive});
-                size_t Hj = this->populations.get_flat_index({j, InfectionState::HospitalizedNaive});
-                size_t Uj = this->populations.get_flat_index({j, InfectionState::ICUNaive});
-                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t Cj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsNaive});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsNaive});
+                size_t Hj = this->populations.get_flat_index({j, InfectionState::InfectedSevereNaive});
+                size_t Uj = this->populations.get_flat_index({j, InfectionState::InfectedCriticalNaive});
+                size_t Rj = this->populations.get_flat_index({j, InfectionState::SusceptibleImprovedImmunity});
 
                 size_t SVj = this->populations.get_flat_index({j, InfectionState::SusceptiblePartialImmunity});
                 size_t EVj = this->populations.get_flat_index({j, InfectionState::ExposedPartialImmunity});
-                size_t CVj = this->populations.get_flat_index({j, InfectionState::CarrierPartialImmunity});
-                size_t IVj = this->populations.get_flat_index({j, InfectionState::InfectedPartialImmunity});
-                size_t HVj = this->populations.get_flat_index({j, InfectionState::HospitalizedPartialImmunity});
-                size_t UVj = this->populations.get_flat_index({j, InfectionState::ICUPartialImmunity});
+                size_t CVj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsPartialImmunity});
+                size_t IVj = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsPartialImmunity});
+                size_t HVj = this->populations.get_flat_index({j, InfectionState::InfectedSeverePartialImmunity});
+                size_t UVj = this->populations.get_flat_index({j, InfectionState::InfectedCriticalPartialImmunity});
 
-                size_t CDj = this->populations.get_flat_index({j, InfectionState::CarrierNaiveConfirmed});
-                size_t IDj = this->populations.get_flat_index({j, InfectionState::InfectedNaiveConfirmed});
+                size_t CDj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsNaiveConfirmed});
+                size_t IDj = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsNaiveConfirmed});
 
-                size_t CDVj = this->populations.get_flat_index({j, InfectionState::CarrierPartialImmunityConfirmed});
-                size_t IDVj = this->populations.get_flat_index({j, InfectionState::InfectedPartialImmunityConfirmed});
+                size_t CDVj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed});
+                size_t IDVj = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
 
                 size_t EV2j = this->populations.get_flat_index({j, InfectionState::ExposedImprovedImmunity});
-                size_t CV2j = this->populations.get_flat_index({j, InfectionState::CarrierImprovedImmunity});
-                size_t IV2j = this->populations.get_flat_index({j, InfectionState::InfectedImprovedImmunity});
-                size_t HV2j = this->populations.get_flat_index({j, InfectionState::HospitalizedImprovedImmunity});
-                size_t UV2j = this->populations.get_flat_index({j, InfectionState::ICUImprovedImmunity});
+                size_t CV2j = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsImprovedImmunity});
+                size_t IV2j = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunity});
+                size_t HV2j = this->populations.get_flat_index({j, InfectionState::InfectedSevereImprovedImmunity});
+                size_t UV2j = this->populations.get_flat_index({j, InfectionState::InfectedCriticalImprovedImmunity});
 
-                size_t CDV2j = this->populations.get_flat_index({j, InfectionState::CarrierImprovedImmunityConfirmed});
-                size_t IDV2j = this->populations.get_flat_index({j, InfectionState::InfectedImprovedImmunityConfirmed});
+                size_t CDV2j = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed});
+                size_t IDV2j = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
@@ -530,7 +530,7 @@ public:
         auto count = (size_t)InfectionState::Count;
         auto S     = (size_t)InfectionState::SusceptibleNaive;
         auto SV    = (size_t)InfectionState::SusceptiblePartialImmunity;
-        auto R     = (size_t)InfectionState::Recovered;
+        auto R     = (size_t)InfectionState::SusceptibleImprovedImmunity;
 
         for (size_t i = 0; i < num_groups; ++i) {
 
@@ -666,12 +666,12 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedNaive});
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedNaiveConfirmed});
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedPartialImmunity});
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedImprovedImmunity});
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedPartialImmunityConfirmed});
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedImprovedImmunityConfirmed});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaive});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsNaiveConfirmed});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsPartialImmunity});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsImprovedImmunity});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
     }
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
@@ -699,11 +699,11 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     auto& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
     //slice of carriers
-    auto y_car = slice(y, {Eigen::Index(InfectionState::CarrierNaive), Eigen::Index(size_t(params.get_num_groups())),
+    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)}) +
-                 slice(y, {Eigen::Index(InfectionState::CarrierPartialImmunity),
+                 slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
-                 slice(y, {Eigen::Index(InfectionState::CarrierImprovedImmunity),
+                 slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsImprovedImmunity),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
@@ -715,13 +715,13 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
-    slice(factors, {Eigen::Index(InfectionState::InfectedNaive), Eigen::Index(size_t(params.get_num_groups())),
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionState::Count)})
         .array() = risk_from_symptomatic;
-    slice(factors, {Eigen::Index(InfectionState::InfectedPartialImmunity),
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsPartialImmunity),
                     Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
         .array() = risk_from_symptomatic;
-    slice(factors, {Eigen::Index(InfectionState::InfectedImprovedImmunity),
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsImprovedImmunity),
                     Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
         .array() = risk_from_symptomatic;
     return factors;
@@ -737,20 +737,20 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
         nondetection = (double)model.parameters.get_commuter_nondetection();
     }
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); ++i) {
-        auto Ii  = model.populations.get_flat_index({i, InfectionState::InfectedNaive});
-        auto IDi = model.populations.get_flat_index({i, InfectionState::InfectedNaiveConfirmed});
-        auto Ci  = model.populations.get_flat_index({i, InfectionState::CarrierNaive});
-        auto CDi = model.populations.get_flat_index({i, InfectionState::CarrierNaiveConfirmed});
+        auto Ii  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsNaive});
+        auto IDi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsNaiveConfirmed});
+        auto Ci  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaive});
+        auto CDi = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaiveConfirmed});
 
-        auto IV1i  = model.populations.get_flat_index({i, InfectionState::InfectedPartialImmunity});
-        auto IDV1i = model.populations.get_flat_index({i, InfectionState::InfectedPartialImmunityConfirmed});
-        auto CV1i  = model.populations.get_flat_index({i, InfectionState::CarrierPartialImmunity});
-        auto CDV1i = model.populations.get_flat_index({i, InfectionState::CarrierPartialImmunityConfirmed});
+        auto IV1i  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunity});
+        auto IDV1i = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
+        auto CV1i  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunity});
+        auto CDV1i = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed});
 
-        auto IV2i  = model.populations.get_flat_index({i, InfectionState::InfectedImprovedImmunity});
-        auto IDV2i = model.populations.get_flat_index({i, InfectionState::InfectedImprovedImmunityConfirmed});
-        auto CV2i  = model.populations.get_flat_index({i, InfectionState::CarrierImprovedImmunity});
-        auto CDV2i = model.populations.get_flat_index({i, InfectionState::CarrierImprovedImmunityConfirmed});
+        auto IV2i  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunity});
+        auto IDV2i = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
+        auto CV2i  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsImprovedImmunity});
+        auto CDV2i = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed});
 
         //put detected commuters in their own compartment so they don't contribute to infections in their home node
         sim.get_result().get_last_value()[Ii] -= migrated[Ii] * (1 - nondetection);

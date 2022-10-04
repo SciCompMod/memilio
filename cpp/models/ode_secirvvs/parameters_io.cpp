@@ -257,7 +257,7 @@ IOResult<void> read_confirmed_cases_data(
             try_fix_constraints(num_hosp[i], -5, "Hospitalized");
             try_fix_constraints(num_death[i], -5, "Dead");
             try_fix_constraints(num_icu[i], -5, "ICU");
-            try_fix_constraints(num_rec[i], -20, "Recovered");
+            try_fix_constraints(num_rec[i], -20, "Recovered or vaccinated");
         }
     }
 
@@ -508,7 +508,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // has the full protection of the second dose at day X = start_date + simulation_day
                 // Storing its value in get<DailyFullVaccination>() will eventually (in the simulation)
                 // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
-                // N susceptible, partially vaccinated individuals to 'Immune/Recovered' state at day d; see secir_vaccinated.h
+                // N susceptible, partially vaccinated individuals to 'SusceptibleImprovedImmunity' state at day d; see secir_vaccinated.h
                 auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
                 if (max_full_date >= offset_full_date) {
                     // Option 1: considered offset_full_date is available in input data frame

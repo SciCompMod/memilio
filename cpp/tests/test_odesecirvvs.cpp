@@ -86,31 +86,31 @@ void set_synthetic_population_data(mio::osecirvvs::Model::Populations& populatio
                                     set_invalid_initial_value);
         assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}], 10, 20,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::CarrierNaive}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::CarrierPartialImmunity}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::CarrierImprovedImmunity}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNaive}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedPartialImmunity}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedImprovedImmunity}], 5, 10,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}], 5, 10,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::HospitalizedNaive}], 1, 2,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}], 1, 2,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::HospitalizedImprovedImmunity}], 1,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}], 1,
                                     2, set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::HospitalizedPartialImmunity}], 1, 2,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}], 1, 2,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::ICUNaive}], 1, 2,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}], 1, 2,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::ICUPartialImmunity}], 1, 2,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}], 1, 2,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::ICUImprovedImmunity}], 1, 2,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}], 1, 2,
                                     set_invalid_initial_value);
-        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::Recovered}], 200, 300,
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}], 200, 300,
                                     set_invalid_initial_value);
         assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}], 200,
                                     300, set_invalid_initial_value);
@@ -297,7 +297,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
     auto& param_exp_factor = parameters0.get<mio::osecirvvs::ExposedFactorPartialImmunity>()[mio::AgeGroup(0)];
     ASSERT_GE(double(param_exp_factor), 0.75);
     ASSERT_LE(double(param_exp_factor), 0.85);
-    auto& compartment_inf = populations0[{mio::AgeGroup(2), mio::osecirvvs::InfectionState::InfectedPartialImmunity}];
+    auto& compartment_inf = populations0[{mio::AgeGroup(2), mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}];
     ASSERT_GE(double(compartment_inf), 5.0);
     ASSERT_LE(double(compartment_inf), 10.0);
     auto& npi_value = parameters0.get<mio::osecirvvs::DynamicNPIsInfected>().get_thresholds()[0].second[0].get_value();
@@ -488,41 +488,41 @@ TEST(TestOdeSECIRVVS, test_commuters)
 
     test_commuters(sim, migrated_tested, 0.0);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaiveConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNaive)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsNaive)] * (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedPartialImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity)] * (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedImprovedImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity)] * (1 - non_detection_factor),
                 1e-5);
 
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaiveConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierNaive)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive)] * (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierPartialImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity)] * (1 - non_detection_factor),
                 1e-5);
-    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)] * non_detection_factor,
+    ASSERT_NEAR(migrated_tested[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] * non_detection_factor,
                 1e-5);
-    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunityConfirmed)],
-                migrated[Eigen::Index(mio::osecirvvs::InfectionState::CarrierImprovedImmunity)] * (1 - non_detection_factor),
+    ASSERT_NEAR(sim.get_result().get_last_value()[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed)],
+                migrated[Eigen::Index(mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity)] * (1 - non_detection_factor),
                 1e-5);
 }

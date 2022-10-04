@@ -47,12 +47,12 @@ namespace osecirvvs
 
             //set susceptibles so the total number stays the same as before sampling.
             //if the new total without susceptibles is already bigger than the previous total
-            //subtract the overflow from recovered, susceptibles will then be approximately zero.
+            //subtract the overflow from SusceptibleImprovedImmunity, susceptibles will then be approximately zero.
             model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
             double diff = model.populations.get_group_total(i) - group_total;
             if (diff > 0) {
-                model.populations[{i, InfectionState::Recovered}] -= diff;
-                if (model.populations[{i, InfectionState::Recovered}] < 0.0) {
+                model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -= diff;
+                if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
                     log_error("Negative Compartment after sampling.");
                 }
                 assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
