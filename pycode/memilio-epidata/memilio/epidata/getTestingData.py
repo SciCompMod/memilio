@@ -173,7 +173,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         county_file_in = os.path.join(directory, filename_county + ".json")
         try:
             df_test[0] = pd.read_json(county_file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + county_file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")
@@ -181,7 +182,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         state_file_in = os.path.join(directory, filename_state + ".json")
         try:
             df_test[1] = pd.read_json(state_file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + state_file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")

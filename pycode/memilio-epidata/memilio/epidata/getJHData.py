@@ -73,7 +73,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         # if once dowloaded just read json file
         try:
             df = pandas.read_json(file_in)
-        except ValueError as err:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError) as err:
             raise FileNotFoundError("Error: The file: " + file_in + \
                                   " does not exist." + \
                                   " Call program without -r flag to get it.") \

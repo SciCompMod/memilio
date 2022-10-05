@@ -131,7 +131,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
         try:
             df = pd.read_json(file_in)
-        except ValueError as err:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError) as err:
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without -r flag to get it.") \
                 from err
