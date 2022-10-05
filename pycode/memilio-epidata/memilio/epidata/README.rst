@@ -33,6 +33,10 @@ Sources
   - Testing Data (RKI-T)
 
     https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx
+  
+  - Hospitalization data (RKI-H)
+  
+    https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv
 
 - Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
 
@@ -116,6 +120,9 @@ optional arguments working for some are:
 | -- rep-date                                 | The reporting date will be prefered over possibly given   |
 |                                             | dates of disease onset. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
+| -- sanitize-data                            | Different ways to distribute vaccinations to home         |
+|                                             | locations of vaccinated persons[vaccination]              |
++---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
 When using the "--make-plot" option close one figure-window to get the next one.
@@ -164,6 +171,11 @@ RKI-V          Germany     all_states_ageinf_vacc              administered vacc
 RKI-T          Germany     germany_testpos                     potive rates of tests over time for germany
 RKI-T          Germany     germany_states_testpos              positve rates of tests over time for different states
 RKI-T          Germany     germany_conties_from_states_testpos positive rates of tests over time for different counties from positive rate for states
+
+RKI-H          Germany     hospit_state_age                    hospitalizations per day for different age groups and states
+RKI-H          Germany     hospit_germany_age                  hospitalizations per day in germany for different age groups
+RKI-H          Germany     hospit_state_age                    hospitalizations per day for different states
+RKI-H          Germany     hospit_germany                      hospitalizations per day in germany
 
 RKI-Estimation Germany     cases_all_germany_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
 RKI-Estimation Germany     cases_all_state_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states    (Bundesländer)

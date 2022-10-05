@@ -26,7 +26,6 @@ import numpy as np
 
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch
 
 

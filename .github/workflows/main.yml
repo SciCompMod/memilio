@@ -233,6 +233,7 @@ jobs:
           getdividata -o data_dl
           getcommutermobility -o data_dl
           getvaccinationdata -o data_dl
+          gethospitalizationdata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
         with:
