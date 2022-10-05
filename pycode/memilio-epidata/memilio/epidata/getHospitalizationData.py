@@ -21,7 +21,7 @@
 @file getHospitalizationData.py
 @brief Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
-The raw hospitalization data we download can be found at
+The raw hospitalization data can be found at
 https://github.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland
 """
 
@@ -40,20 +40,19 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 def download_hospitalization_data():
     # RKI content from github
     url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv'
-    # empty data frame to return if not read correctly
-    df = pd.DataFrame()
     # try to read csv
     try:
         df = pd.read_csv(url)
     except Exception as err:
-        raise FileNotFoundError("Error in download of Hospitalization data.") from err
+        raise FileNotFoundError(
+            "Error in download of Hospitalization data.") from err
     hospit_sanity_checks(df)
 
     return df
 
 
 def hospit_sanity_checks(df):
-    """! Checks the sanity of the divi_data dataframe
+    """! Checks the sanity of the hospitalization_data dataframe
 
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
@@ -63,7 +62,7 @@ def hospit_sanity_checks(df):
     #test if dataframe is empty
     if df.empty:
         raise gd.DataError(
-            "Download of Vaccination Data failed. File is empty.")
+            "Download of Hospitalization Data failed. File is empty.")
 
     actual_strings_list = df.columns.tolist()
     # check number of data categories
@@ -94,25 +93,25 @@ def get_hospitailzations_per_day(seven_days_values):
 
     @return daily_values Hospitalizations per day.
     """
-    
+
     daily_values = np.zeros(len(seven_days_values), dtype=float)
     to_split = seven_days_values.copy()
     run = 1
-    while sum(to_split[6:])!=0 and run < 5:
-        # backward computation 
-        if max(to_split[6:])!=min(to_split[6:]):
+    while sum(to_split[6:]) != 0 and run < 5:
+        # backward computation
+        if max(to_split[6:]) != min(to_split[6:]):
             backward = np.zeros(len(daily_values), dtype=float)
             for i in range(1, len(daily_values)-6):
-                if to_split[-i-1]>to_split[-i]:
+                if to_split[-i-1] > to_split[-i]:
                     backward[-i-7] = to_split[-i-1]-to_split[-i]
                     for day in range(7):
                         try:
-                            to_split[-i-1-day]-=backward[-7-i]
+                            to_split[-i-1-day] -= backward[-7-i]
                         except IndexError:
                             pass
             daily_values += backward
         # start at first known value
-        if max(to_split[6:])>0:
+        if max(to_split[6:]) > 0:
             forward = np.zeros(len(daily_values), dtype=float)
             for i in range(7, len(to_split)):
                 if to_split[i-1] < to_split[i]:
@@ -124,15 +123,16 @@ def get_hospitailzations_per_day(seven_days_values):
                             pass
             daily_values += forward
 
-        if max(to_split[6:])==min(to_split[6:]):
-            daily_values = daily_values + max(to_split[6:])/7
-            to_split[6:]-=max(to_split[6:])
-        run+=1
-    
+        if max(to_split[6:]) == min(to_split[6:]):
+            daily_values += max(to_split[6:])/7
+            to_split[6:] -= max(to_split[6:])
+        run += 1
+
+    # break after 5 runs to prevent endless loop
     if run == 5:
         print("Can't get hospitalizations per day from incidence.")
     if len(daily_values[daily_values < 0]) > 0:
-        raise gd.DataError('Negative Hospitalizations found.')
+        raise gd.DataError('Negative hospitalizations found.')
     # check that daily values are calculated correctly
     check = np.zeros(len(daily_values)+7, dtype=float)
     for i in range(len(daily_values)):
@@ -158,13 +158,13 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     Available data starts from 2020-03-01.
     If it does not already exist, the folder Germany is generated in the given out_folder.
-    If read_data == True and the file "RKIHospitFull.json" exists, the data is read form this file
+    If read_data == True and the file "RKIHospitFull.json" exists, the data is read from this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
 
     The downloaded dataframe is written to the file "RKIHospitFull".
-    After that, the columns are renamed to English.
+    After that, the columns are renamed to english.
     From the sum of the cases of the last seven days the daily cases are calculated.
-    Afterwards, the data is stored in four differetn files:
+    Afterwards, the data is stored in four different files:
     "hospit_state_age", "hospit_state", "hospit_germany_age" and "hospit_germany"
     for states or germany and age groups.
 

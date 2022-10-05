@@ -86,7 +86,7 @@ def clean_data(
                 continue
 
             for item in files:
-                if item.endswith(".json") or item.endswith(".h5") :
+                if item.endswith(".json") or item.endswith(".h5"):
                     print("Deleting file ", os.path.join(directory, item))
                     os.remove(os.path.join(directory, item))
 
@@ -105,7 +105,7 @@ def clean_data(
             pass
 
         for item in files:
-            if item.endswith(".json") or item.endswith(".h5") :
+            if item.endswith(".json") or item.endswith(".h5"):
                 print("Deleting file ", os.path.join(out_path, item))
                 os.remove(os.path.join(out_path, item))
 
@@ -246,9 +246,9 @@ def cli():
                         action='store_true')
     parser.add_argument('-t', '--testing', help='Deletes just testing data.',
                         action='store_true')
-    parser.add_argument('-ho', '--hospitalization', 
-                        help = 'Deletes just hospitalizaiton data.',
-                        action = 'store_true')
+    parser.add_argument('-ho', '--hospitalization',
+                        help='Deletes just hospitalizaiton data.',
+                        action='store_true')
                         
     parser.add_argument('-h5', '--hdf5', help='Deletes just hdf5 files.',
                         action='store_true')

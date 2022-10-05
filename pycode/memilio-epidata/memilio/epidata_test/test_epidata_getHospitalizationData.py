@@ -81,7 +81,8 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
         df = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
             ghd.hospit_sanity_checks(df)
-        error_message = "Download of Vaccination Data failed. File is empty."
+        error_message = "Download of Hospitalization Data failed. File is empty."
+        self.assertEqual(str(error.exception), error_message)
 
         # second test
         # get dataframe with wanted columns and one additional column
