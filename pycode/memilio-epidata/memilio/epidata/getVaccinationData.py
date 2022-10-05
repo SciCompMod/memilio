@@ -594,7 +594,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     try:
         population = pd.read_json(
             directory + "county_current_population.json")
-    except FileNotFoundError:
+    except ValueError:
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,

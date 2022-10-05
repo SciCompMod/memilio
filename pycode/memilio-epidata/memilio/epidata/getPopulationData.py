@@ -181,7 +181,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
                 targetFileName='', apiUrl=path_counties, extension='',
                 param_dict={"sheet_name": 1, "header": 3,
                             "engine": 'openpyxl'})
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The counties file does not exist."
             raise FileNotFoundError(error_message)
 
@@ -192,7 +192,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
                 "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding":'utf_8_sig'})
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The zensus file does not exist."
             raise FileNotFoundError(error_message)
 
@@ -204,7 +204,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             # read tables
             reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='', param_dict={
                                    "engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
-        except ValueError:
+        except FileNotFoundError:
             error_message = "Error: The reg-key file does not exist."
             raise FileNotFoundError(error_message)
 

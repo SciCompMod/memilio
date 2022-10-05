@@ -183,8 +183,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @ patch('memilio.epidata.getPopulationData.gd.loadCsv')
     @ patch('memilio.epidata.getPopulationData.gd.loadExcel')
     def test_errors(self, mocklexcel, mocklcsv):
-        mocklexcel.side_effect = ValueError
-        mocklcsv.side_effect = ValueError
+        mocklexcel.side_effect = FileNotFoundError
+        mocklcsv.side_effect = FileNotFoundError
 
         with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
