@@ -60,7 +60,7 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
         set_distribution(model.parameters.get<TimeInfectedCritical>()[i]);
 
         set_distribution(model.parameters.get<InfectionProbabilityFromContact>()[i]);
-        set_distribution(model.parameters.get<RelativeCarrierInfectability>()[i]);
+        set_distribution(model.parameters.get<RelativeTransmissionNoSymptoms>()[i]);
         set_distribution(model.parameters.get<AsymptomaticCasesPerInfectious>()[i]);
         set_distribution(model.parameters.get<RiskOfInfectionFromSymptomatic>()[i]);
         set_distribution(model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
@@ -113,7 +113,7 @@ void draw_sample_infection(SecirModel& model)
     model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
     model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
     model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
 
@@ -122,8 +122,8 @@ void draw_sample_infection(SecirModel& model)
         model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
         model.parameters.get<SerialInterval>()[i]        = model.parameters.get<SerialInterval>()[AgeGroup(0)];
         model.parameters.get<TimeInfectedSymptoms>()[i]    = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
-        model.parameters.get<RelativeCarrierInfectability>()[i] =
-            model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)];
+        model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
+            model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
             model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
         model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i] =

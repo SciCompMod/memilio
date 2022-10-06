@@ -168,7 +168,7 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
 
     array_assign_uniform_distribution(params.get<mio::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
-    array_assign_uniform_distribution(params.get<mio::RelativeCarrierInfectability>(), carr_infec_min, carr_infec_max);
+    array_assign_uniform_distribution(params.get<mio::RelativeTransmissionNoSymptoms>(), carr_infec_min, carr_infec_max);
     array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
     array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), beta_high_incidence_min,

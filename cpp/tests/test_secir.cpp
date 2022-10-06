@@ -61,7 +61,7 @@ TEST(TestSecir, compareWithPreviousRun)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = carr_infec;
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
@@ -125,7 +125,7 @@ TEST(TestSecir, testParamConstructors)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = carr_infec;
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
@@ -175,8 +175,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0],
               model2.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0],
-              model2.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0],
+              model2.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0],
               model2.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0],
@@ -227,8 +227,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(model3.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0],
               model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0],
-              model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0],
+              model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0],
               model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0],
@@ -280,8 +280,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(model3.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0],
               model4.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0],
-              model4.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0],
+              model4.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0],
               model4.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0],
@@ -333,8 +333,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(model5.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0],
               model3.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0],
-              model3.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0],
+              model3.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0],
               model3.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0],
@@ -387,7 +387,7 @@ TEST(TestSecir, testSettersAndGetters)
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = vec[12];
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = vec[13];
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = vec[14];
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = vec[14];
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = vec[15];
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = vec[16];
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = vec[17];
@@ -431,7 +431,7 @@ TEST(TestSecir, testSettersAndGetters)
         *vec[13].get_distribution(),
         *model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(*vec[14].get_distribution(),
-                       *model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0].get_distribution());
+                       *model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(*vec[15].get_distribution(),
                        *model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0].get_distribution());
     check_distribution(
@@ -461,7 +461,7 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[11], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ(vec[12], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]));
     EXPECT_EQ(vec[13], model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0]);
-    EXPECT_EQ(vec[14], model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]);
+    EXPECT_EQ(vec[14], model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[15], model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[16], model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[17], model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]);
@@ -507,7 +507,7 @@ TEST(TestSecir, testValueConstraints)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = carr_infec;
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
@@ -559,7 +559,7 @@ TEST(TestSecir, testModelConstraints)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = carr_infec;
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
@@ -651,7 +651,7 @@ TEST(Secir, testAndTraceCapacity)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
-    params.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
+    params.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = carr_infec;
     params.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
     params.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
 

@@ -58,7 +58,7 @@ TEST(TestSaveResult, compareResultWithH5)
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;

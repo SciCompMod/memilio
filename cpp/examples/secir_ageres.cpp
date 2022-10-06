@@ -84,7 +84,7 @@ int main()
                                                                          fact * nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;

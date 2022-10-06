@@ -139,7 +139,7 @@ public:
 
             auto risk_from_carrier = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
                                                      params.get<TestAndTraceCapacity>() * 2,
-                                                     params.get<RelativeCarrierInfectability>()[i], 1.0);
+                                                     params.get<RelativeTransmissionNoSymptoms>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj = this->populations.get_flat_index({j, InfectionState::SusceptibleNaive});

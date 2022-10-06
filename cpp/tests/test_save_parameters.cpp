@@ -64,7 +64,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                                                                          fact * num_total_t0);
 
         model.parameters.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
-        model.parameters.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
+        model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
         model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
@@ -213,7 +213,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                                                                          fact * num_total_t0);
 
         model.parameters.get<mio::InfectionProbabilityFromContact>()[i]  = 0.06;
-        model.parameters.get<mio::RelativeCarrierInfectability>()[i]     = 0.67;
+        model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[i]     = 0.67;
         model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]     = alpha;
         model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]    = beta;
         model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[i] = beta * 3;

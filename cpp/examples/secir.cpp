@@ -76,7 +76,7 @@ int main()
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::InfectionProbabilityFromContact>() = inf_prob;
-    model.parameters.get<mio::RelativeCarrierInfectability>()    = carr_infec;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = carr_infec;
     model.parameters.get<mio::AsymptomaticCasesPerInfectious>()    = alpha;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()  = rho;

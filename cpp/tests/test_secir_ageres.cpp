@@ -58,7 +58,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
                                                                          fact * nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = 1.;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 1.;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
@@ -130,7 +130,7 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
                                                                          fact * nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = 1.;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 1.;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;

@@ -96,7 +96,7 @@ namespace osecirvvs
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<RelativeCarrierInfectability>()[i];
+                        return model.parameters.template get<RelativeTransmissionNoSymptoms>()[i];
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {

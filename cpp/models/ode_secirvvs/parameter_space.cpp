@@ -70,7 +70,7 @@ namespace osecirvvs
         model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
         model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
         model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
         model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
         model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
 
@@ -87,8 +87,8 @@ namespace osecirvvs
             model.parameters.get<IncubationTime>()[i]     = model.parameters.get<IncubationTime>()[AgeGroup(0)];
             model.parameters.get<SerialInterval>()[i]     = model.parameters.get<SerialInterval>()[AgeGroup(0)];
             model.parameters.get<TimeInfectedSymptoms>()[i] = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
-            model.parameters.get<RelativeCarrierInfectability>()[i] =
-                model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)];
+            model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
+                model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
             model.parameters.get<RiskOfInfectionFromSympomatic>()[i] =
                 model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)];
             model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =

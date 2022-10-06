@@ -185,7 +185,7 @@ struct InfectionProbabilityFromContact {
 /**
 * @brief the relative carrier infectability
 */
-struct RelativeCarrierInfectability {
+struct RelativeTransmissionNoSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -193,7 +193,7 @@ struct RelativeCarrierInfectability {
     }
     static std::string name()
     {
-        return "RelativeCarrierInfectability";
+        return "RelativeTransmissionNoSymptoms";
     }
 };
 
@@ -336,7 +336,7 @@ using SecirParamsBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
                  IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere,
                  TimeInfectedCritical,
-                 InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptomaticCasesPerInfectious,
+                 InfectionProbabilityFromContact, RelativeTransmissionNoSymptoms, AsymptomaticCasesPerInfectious,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerICU>;
 
@@ -417,10 +417,10 @@ public:
                 this->get<InfectionProbabilityFromContact>()[i] = 0;
             }
 
-            if (this->get<RelativeCarrierInfectability>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter RelativeCarrierInfectability changed from {:0.4f} to {:d} ",
-                            this->get<RelativeCarrierInfectability>()[i], 0);
-                this->get<RelativeCarrierInfectability>()[i] = 0;
+            if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms changed from {:0.4f} to {:d} ",
+                            this->get<RelativeTransmissionNoSymptoms>()[i], 0);
+                this->get<RelativeTransmissionNoSymptoms>()[i] = 0;
             }
 
             if (this->get<AsymptomaticCasesPerInfectious>()[i] < 0.0 ||
@@ -506,8 +506,8 @@ public:
                 log_warning("Constraint check: Parameter InfectionProbabilityFromContact smaller {:d}", 0);
             }
 
-            if (this->get<RelativeCarrierInfectability>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter RelativeCarrierInfectability smaller {:d}", 0);
+            if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
+                log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
             }
 
             if (this->get<AsymptomaticCasesPerInfectious>()[i] < 0.0 ||

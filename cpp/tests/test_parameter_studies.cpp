@@ -67,7 +67,7 @@ TEST(ParameterStudies, sample_from_secir_params)
                                                                          fact * num_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
@@ -90,8 +90,8 @@ TEST(ParameterStudies, sample_from_secir_params)
                   params.get<mio::SerialInterval>()[i].value());
         ASSERT_EQ(params.get<mio::TimeInfectedSymptoms>()[mio::AgeGroup(0)].value(),
                   params.get<mio::TimeInfectedSymptoms>()[i].value());
-        ASSERT_EQ(params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::RelativeCarrierInfectability>()[i].value());
+        ASSERT_EQ(params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::RelativeTransmissionNoSymptoms>()[i].value());
         ASSERT_EQ(params.get<mio::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
                   params.get<mio::RiskOfInfectionFromSymptomatic>()[i].value());
         ASSERT_EQ(params.get<mio::MaxRiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
@@ -149,7 +149,7 @@ TEST(ParameterStudies, sample_graph)
                                                                          fact * num_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
@@ -310,7 +310,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, num_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
         params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;

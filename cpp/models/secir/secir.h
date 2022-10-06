@@ -120,7 +120,7 @@ public:
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
                 double dummy_S =
                     y[Si] * cont_freq_eff * divNj * params.get<InfectionProbabilityFromContact>()[i] *
-                    (params.get<RelativeCarrierInfectability>()[j] * pop[Cj] + risk_from_symptomatic * pop[Ij]);
+                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[Cj] + risk_from_symptomatic * pop[Ij]);
 
                 dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
                 dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
