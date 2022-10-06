@@ -368,7 +368,7 @@ TEST(DynamicNPIs, secir_threshold_safe)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(23'000);
-    model.parameters.get<mio::DynamicNPIsInfected>() = npis;
+    model.parameters.get<mio::DynamicNPIsInfectedSymptoms>() = npis;
 
     ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
     
@@ -391,7 +391,7 @@ TEST(DynamicNPIs, secir_threshold_exceeded)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(50'000);
-    model.parameters.get<mio::DynamicNPIsInfected>() = npis;
+    model.parameters.get<mio::DynamicNPIsInfectedSymptoms>() = npis;
 
     ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
     

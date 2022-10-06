@@ -57,13 +57,13 @@ TEST(TestSaveResult, compareResultWithH5)
         model.populations[{i, mio::InfectionState::Dead}]         = nb_dead_t0;
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.06;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();

@@ -106,11 +106,11 @@ namespace osecirvvs
             model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
             model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
-            model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
+            model.parameters.get<TransmissionProbabilityOnContact>()[i].draw_sample();
             model.parameters.get<AsymptoticCasesPerInfectious>()[i].draw_sample();
-            model.parameters.get<DeathsPerICU>()[i].draw_sample();
-            model.parameters.get<HospitalizedCasesPerInfectious>()[i].draw_sample();
-            model.parameters.get<ICUCasesPerHospitalized>()[i].draw_sample();
+            model.parameters.get<DeathsPerCritical>()[i].draw_sample();
+            model.parameters.get<SeverePerInfectedSymptoms>()[i].draw_sample();
+            model.parameters.get<CriticalPerSevere>()[i].draw_sample();
         }
     }
 
@@ -131,7 +131,7 @@ namespace osecirvvs
         draw_sample_infection(shared_params_model);
         auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
         shared_contacts.draw_sample_dampings();
-        auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
+        auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
         shared_dynamic_npis.draw_sample();
 
         double delta_fac;
@@ -145,9 +145,9 @@ namespace osecirvvs
         //infectiousness of virus variants is not sampled independently but depend on base infectiousness
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
             shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
+                shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i];
             shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
+                shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] * delta_fac;
         }
 
         for (auto& params_node : graph.nodes()) {

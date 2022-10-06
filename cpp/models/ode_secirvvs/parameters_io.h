@@ -160,8 +160,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             mu_C_R[county].push_back(
                 model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
             mu_I_H[county].push_back(
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
-            mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
+            mu_H_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
         }
     }
 
@@ -236,10 +236,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                          (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
             mu_I_H[county].push_back(
                 hosp_fac_part_immune / inf_fac_part_immune *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
             mu_H_U[county].push_back(icu_fac_part_immune / hosp_fac_part_immune *
-                                     model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                                     model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
         }
     }
 
@@ -313,10 +313,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                          (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
             mu_I_H[county].push_back(
                 reduc_immune_hosp / reduc_immune_inf *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
             mu_H_U[county].push_back(reduc_immune_icu / reduc_immune_hosp *
-                                     model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                                     model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
         }
     }
 
@@ -377,10 +377,10 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
     for (size_t region = 0; region < vregion.size(); region++) {
         auto num_groups = model[region].parameters.get_num_groups();
         for (auto i = AgeGroup(0); i < num_groups; i++) {
-            sum_mu_I_U[region] += model[region].parameters.template get<ICUCasesPerHospitalized>()[i] *
-                                  model[region].parameters.template get<HospitalizedCasesPerInfectious>()[i];
-            mu_I_U[region].push_back(model[region].parameters.template get<ICUCasesPerHospitalized>()[i] *
-                                     model[region].parameters.template get<HospitalizedCasesPerInfectious>()[i]);
+            sum_mu_I_U[region] += model[region].parameters.template get<CriticalPerSevere>()[i] *
+                                  model[region].parameters.template get<SeverePerInfectedSymptoms>()[i];
+            mu_I_U[region].push_back(model[region].parameters.template get<CriticalPerSevere>()[i] *
+                                     model[region].parameters.template get<SeverePerInfectedSymptoms>()[i]);
         }
     }
     std::vector<double> num_icu(model.size(), 0.0);
@@ -621,17 +621,17 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
             mu_C_R_uv[county].push_back(
                 model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
             mu_I_H_uv[county].push_back(
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             mu_H_U_uv[county].push_back(
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
             /* begin: NOT in set_rki_data() */
             sum_mu_I_U_uv[county] +=
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
             mu_I_U_uv[county].push_back(
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
             /* end: NOT in set_rki_data() */
         }
     }
@@ -684,22 +684,22 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                          (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
             mu_I_H_pv[county].push_back(
                 hosp_fact_part_immune / inf_fact_part_immune *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
             mu_H_U_pv[county].push_back(
                 icu_fact_part_immune / hosp_fact_part_immune *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
             sum_mu_I_U_pv[county] +=
                 icu_fact_part_immune / hosp_fact_part_immune *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
                 hosp_fact_part_immune / inf_fact_part_immune *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
             mu_I_U_pv[county].push_back(
                 icu_fact_part_immune / hosp_fact_part_immune *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
                 hosp_fact_part_immune / inf_fact_part_immune *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
         }
     }
 
@@ -751,22 +751,22 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                          (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
             mu_I_H_fv[county].push_back(
                 reduc_immune_hosp / reduc_immune_inf *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             // transfer from H to U, D unchanged.
             mu_H_U_fv[county].push_back(
                 reduc_immune_icu / reduc_immune_hosp *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
 
             sum_mu_I_U_fv[county] +=
                 reduc_immune_icu / reduc_immune_hosp *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] * reduc_immune_hosp /
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * reduc_immune_hosp /
                 reduc_immune_inf *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
             mu_I_U_fv[county].push_back(
                 reduc_immune_icu / reduc_immune_hosp *
-                model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] * reduc_immune_hosp /
+                model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] * reduc_immune_hosp /
                 reduc_immune_inf *
-                model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
+                model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
         }
     }
     std::vector<TimeSeries<double>> extrapolated_rki(

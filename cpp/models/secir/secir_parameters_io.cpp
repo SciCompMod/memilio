@@ -245,13 +245,13 @@ namespace details
                     model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
                 mu_C_R[county].push_back(
-                    model[county].parameters.get<AsymptomaticCasesPerInfectious>()[(AgeGroup)group]);
+                    model[county].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
                 mu_I_H[county].push_back(
-                    model[county].parameters.get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
+                    model[county].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
                 mu_H_U[county].push_back(
-                    model[county].parameters.get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
+                    model[county].parameters.get<CriticalPerSevere>()[(AgeGroup)group]);
                 mu_U_D[county].push_back(
-                    model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
+                    model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
             }
         }
         std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
@@ -380,10 +380,10 @@ namespace details
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
-                sum_mu_I_U[region] += model[region].parameters.get<ICUCasesPerHospitalized>()[i] *
-                                      model[region].parameters.get<HospitalizedCasesPerInfectious>()[i];
-                mu_I_U[region].push_back(model[region].parameters.get<ICUCasesPerHospitalized>()[i] *
-                                         model[region].parameters.get<HospitalizedCasesPerInfectious>()[i]);
+                sum_mu_I_U[region] += model[region].parameters.get<CriticalPerSevere>()[i] *
+                                      model[region].parameters.get<SeverePerInfectedSymptoms>()[i];
+                mu_I_U[region].push_back(model[region].parameters.get<CriticalPerSevere>()[i] *
+                                         model[region].parameters.get<SeverePerInfectedSymptoms>()[i]);
             }
         }
         std::vector<double> num_icu(model.size(), 0.0);

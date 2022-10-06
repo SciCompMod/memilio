@@ -57,13 +57,13 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 1.;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 1.;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     params.apply_constraints();
@@ -129,13 +129,13 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = 1.;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 1.;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 1.;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     params.apply_constraints();

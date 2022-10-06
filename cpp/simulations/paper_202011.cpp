@@ -166,19 +166,19 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
     const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    array_assign_uniform_distribution(params.get<mio::InfectionProbabilityFromContact>(), transmission_risk_min,
+    array_assign_uniform_distribution(params.get<mio::TransmissionProbabilityOnContact>(), transmission_risk_min,
                                       transmission_risk_max);
     array_assign_uniform_distribution(params.get<mio::RelativeTransmissionNoSymptoms>(), carr_infec_min, carr_infec_max);
     array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
     array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), beta_high_incidence_min,
                                       beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<mio::AsymptomaticCasesPerInfectious>(), prob_car_rec_min,
+    array_assign_uniform_distribution(params.get<mio::RecoveredPerInfectedNoSymptoms>(), prob_car_rec_min,
                                       prob_car_rec_max);
-    array_assign_uniform_distribution(params.get<mio::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::SeverePerInfectedSymptoms>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::CriticalPerSevere>(), prob_hosp_icu_min, prob_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -387,7 +387,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     }
 
     //local dynamic NPIs
-    auto& dynamic_npis        = params.get<mio::DynamicNPIsInfected>();
+    auto& dynamic_npis        = params.get<mio::DynamicNPIsInfectedSymptoms>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
     dynamic_npi_dampings.push_back(
         contacts_at_home(mio::SimulationTime(0), 0.6, 0.8)); // increased from [0.4, 0.6] in Nov

@@ -380,7 +380,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 3;
     params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 5;
     params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.2;
-    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.5;
+    params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.5;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 10;
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 10;
 
@@ -388,7 +388,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 5;
     params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 2;
     params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.4;
-    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.2;
+    params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.2;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 20;
     model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 12;
 
@@ -398,7 +398,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 4;
     params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 6;
     params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.3;
-    params.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.6;
+    params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.6;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 11;
     model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 11;
 
@@ -406,7 +406,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 6;
     params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]               = 1;
     params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.5;
-    params2.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)]             = 0.3;
+    params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.3;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 22;
     model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 14;
 
@@ -441,11 +441,11 @@ TEST(TestEnsembleParamsPercentile, basic)
     EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.3);
     EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.5);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)], 0.5);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)], 0.2);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.5);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.2);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)], 0.6);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::ICUCasesPerHospitalized>()[mio::AgeGroup(1)], 0.3);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.6);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.3);
 
     EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 10);
     EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 20);

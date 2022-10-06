@@ -66,13 +66,13 @@ TEST(ParameterStudies, sample_from_secir_params)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -103,7 +103,7 @@ TEST(ParameterStudies, sample_from_secir_params)
 
         EXPECT_GE(params.get<mio::IncubationTime>()[i], 0);
 
-        EXPECT_GE(params.get<mio::InfectionProbabilityFromContact>()[i], 0);
+        EXPECT_GE(params.get<mio::TransmissionProbabilityOnContact>()[i], 0);
     }
 
     mio::ContactMatrixGroup& contact_matrix_sample = params.get<mio::ContactPatterns>();
@@ -148,13 +148,13 @@ TEST(ParameterStudies, sample_graph)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -309,13 +309,13 @@ TEST(ParameterStudies, check_ensemble_run_result)
         model.populations[{i, mio::InfectionState::Dead}]         = num_dead_t0;
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = rho;
+        params.get<mio::CriticalPerSevere>()[i]         = theta;
+        params.get<mio::DeathsPerCritical>()[i]                    = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();

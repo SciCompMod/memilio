@@ -84,28 +84,10 @@ int main()
     double t0   = 0;
     double tmax = 50;
 
-    double tinc    = 5.2, 
-        tinf   = 6, 
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        tsevere = 12, 
-        tcritical  = 8;
-
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study 
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
-
-    // alpha = alpha_in; // percentage of asymptomatic cases
-    // beta  = beta_in; // risk of infection from the infected symptomatic patients
-    // rho   = rho_in; // hospitalized per infected
-    // theta = theta_in; // icu per hospitalized
-    // delta = delta_in; // deaths per ICUs
 
     mio::SecirModel model(1);
     mio::AgeGroup num_groups = model.parameters.get_num_groups();
@@ -118,11 +100,11 @@ int main()
     params.set<mio::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]         = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
-        params.get<mio::SerialInterval>()[i]         = tserint;
-        params.get<mio::TimeInfectedSevere>()[i] = tsevere;
-        params.get<mio::TimeInfectedCritical>()[i]          = tcritical;
+        params.get<mio::IncubationTime>()[i]         = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]     = 6.;
+        params.get<mio::SerialInterval>()[i]         = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i] = 12;
+        params.get<mio::TimeInfectedCritical>()[i]          = 8;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
@@ -132,15 +114,15 @@ int main()
         model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
         model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
-                                                                         fact * num_total_t0);
+                                                                         fact * num_total_t0);                                                                
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = 0.2;
+        params.get<mio::CriticalPerSevere>()[i]         = 0.25;
+        params.get<mio::DeathsPerCritical>()[i]                    = 0.3;
     }
 
     params.apply_constraints();

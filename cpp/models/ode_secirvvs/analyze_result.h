@@ -92,7 +92,7 @@ namespace osecirvvs
                 //probs
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<InfectionProbabilityFromContact>()[i];
+                        return model.parameters.template get<TransmissionProbabilityOnContact>()[i];
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
@@ -112,14 +112,14 @@ namespace osecirvvs
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
+                        return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
-                        return model.parameters.template get<ICUCasesPerHospitalized>()[i];
+                        return model.parameters.template get<CriticalPerSevere>()[i];
                     });
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerICU>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical>()[i]; });
                 //vaccinations
                 param_percentil(
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<ExposedFactorPartialImmunity>()[i]; });

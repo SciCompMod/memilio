@@ -175,15 +175,15 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
             t_InfectedCritical[county].push_back(
                 static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
-            mu_C_R[county].push_back(model[county].parameters.template get<AsymptomaticCasesPerInfectious>()[AgeGroup(group)]);
-            mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
-            mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)]);
-            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
+            mu_C_R[county].push_back(model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[AgeGroup(group)]);
+            mu_I_H[county].push_back(model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
+            mu_H_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)]);
+            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
 
-            sum_mu_I_U[county] += model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                                  model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
-            mu_I_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
-                                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
+            sum_mu_I_U[county] += model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
+                                  model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)];
+            mu_I_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[AgeGroup(group)] *
+                                     model[county].parameters.template get<SeverePerInfectedSymptoms>()[AgeGroup(group)]);
         }
     }
 

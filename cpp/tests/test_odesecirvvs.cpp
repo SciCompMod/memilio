@@ -138,7 +138,7 @@ void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, boo
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
-    auto& npis = parameters.get<mio::osecirvvs::DynamicNPIsInfected>();
+    auto& npis = parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
     auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
     auto npi_value = mio::UncertainValue(0.5);
     assign_uniform_distribution(npi_value, 0.25, 0.75, set_invalid_initial_value);
@@ -215,12 +215,12 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
     const double reduc_mild_rec_time_min = 0.8;
     const double reduc_mild_rec_time_max = 1.0;
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact>(),
                                       transmission_risk_min, transmission_risk_max, set_invalid_initial_value);
     params.get<mio::osecirvvs::BaseInfectiousnessB117>().array() =
-        params.get<mio::osecirvvs::InfectionProbabilityFromContact>().array().cast<double>();
+        params.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array().cast<double>();
     params.get<mio::osecirvvs::BaseInfectiousnessB161>().array() =
-        params.get<mio::osecirvvs::InfectionProbabilityFromContact>().array().cast<double>() * fac_variant;
+        params.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array().cast<double>() * fac_variant;
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(), carr_infec_min,
                                       carr_infec_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(),
@@ -229,11 +229,11 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
                                       beta_high_incidence_min, beta_high_incidence_max, set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUCasesPerHospitalized>(), prob_hosp_icu_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), prob_hosp_icu_min,
                                       prob_hosp_icu_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max,
                                       set_invalid_initial_value);
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min,
@@ -300,21 +300,21 @@ TEST(TestOdeSECIRVVS, draw_sample)
     auto& compartment_inf = populations0[{mio::AgeGroup(2), mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}];
     ASSERT_GE(double(compartment_inf), 5.0);
     ASSERT_LE(double(compartment_inf), 10.0);
-    auto& npi_value = parameters0.get<mio::osecirvvs::DynamicNPIsInfected>().get_thresholds()[0].second[0].get_value();
+    auto& npi_value = parameters0.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>().get_thresholds()[0].second[0].get_value();
     ASSERT_GE(double(npi_value), 0.25);
     ASSERT_LE(double(npi_value), 0.75);
 
     // special cases
     ASSERT_NEAR(populations0.get_total(), 1000 * num_age_groups, 1e-2);
     ASSERT_TRUE((parameters0.get<mio::osecirvvs::BaseInfectiousnessB161>().array(),
-                 parameters0.get<mio::osecirvvs::InfectionProbabilityFromContact>().array() * 1.6) //using high variant
+                 parameters0.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array() * 1.6) //using high variant
                     .all());
 
     // spot check for parameters that should be equal or different between nodes
     auto& parameters1  = sampled_graph.nodes()[1].property.parameters;
     auto& populations1 = sampled_graph.nodes()[1].property.populations;
-    ASSERT_EQ(parameters1.get<mio::osecirvvs::DynamicNPIsInfected>().get_thresholds()[0].second[0].get_value(),
-              parameters0.get<mio::osecirvvs::DynamicNPIsInfected>().get_thresholds()[0].second[0].get_value());
+    ASSERT_EQ(parameters1.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>().get_thresholds()[0].second[0].get_value(),
+              parameters0.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>().get_thresholds()[0].second[0].get_value());
     ASSERT_TRUE((parameters1.get<mio::osecirvvs::TimeInfectedSymptoms>().array() ==
                  parameters0.get<mio::osecirvvs::TimeInfectedSymptoms>().array())
                     .all());

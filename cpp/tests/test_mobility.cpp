@@ -120,10 +120,10 @@ TEST(TestMobility, edgeApplyMigration)
 
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
-    params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
     params.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]  = 1.;
     params.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = 1.;
-    params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = 0.5;
+    params.get<mio::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]  = 0.5;
     params.get<mio::SerialInterval>()[(mio::AgeGroup)0]                  = 1.5;
     params.get<mio::IncubationTime>()[(mio::AgeGroup)0]                  = 2.;
     params.apply_constraints();

@@ -96,18 +96,18 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<AsymptomaticCasesPerInfectious>()[i];
+                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
+                    return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ICUCasesPerHospitalized>()[i];
+                    return model.parameters.template get<CriticalPerSevere>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerICU>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerCritical>()[i]; });
         }
         // group independent params
         param_percentil(

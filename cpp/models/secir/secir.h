@@ -71,7 +71,7 @@ public:
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
-            test_and_trace_required += (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 *
+            test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 *
                                        this->populations.get_from(pop, {i, InfectionState::Carrier});
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICU});
         }
@@ -119,7 +119,7 @@ public:
                 double Nj = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
                 double dummy_S =
-                    y[Si] * cont_freq_eff * divNj * params.get<InfectionProbabilityFromContact>()[i] *
+                    y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
                     (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[Cj] + risk_from_symptomatic * pop[Ij]);
 
                 dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
@@ -129,37 +129,37 @@ public:
             // ICU capacity shortage is close
             double criticalPerSevereAdjusted =
                 smoother_cosine(icu_occupancy, 0.90 * params.get<mio::ICUCapacity>(), params.get<mio::ICUCapacity>(),
-                                params.get<ICUCasesPerHospitalized>()[i], 0);
+                                params.get<CriticalPerSevere>()[i], 0);
 
-            double deathsPerSevereAdjusted = params.get<ICUCasesPerHospitalized>()[i] - criticalPerSevereAdjusted;
+            double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
             dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
             dydt[Ci] = dummy_R2 * y[Ei] -
-                       ((1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 +
-                        params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3) *
+                       ((1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 +
+                        params.get<RecoveredPerInfectedNoSymptoms>()[i] * dummy_R3) *
                            y[Ci];
-            dydt[Ii] = (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
-                       ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
+            dydt[Ii] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 * y[Ci] -
+                       ((1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
+                        params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
                            y[Ii];
             dydt[Hi] =
-                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] -
-                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] +
-                 params.get<ICUCasesPerHospitalized>()[i] / params.get<TimeInfectedSevere>()[i]) *
+                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] -
+                ((1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] +
+                 params.get<CriticalPerSevere>()[i] / params.get<TimeInfectedSevere>()[i]) *
                     y[Hi];
-            dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<TimeInfectedCritical>()[i] +
-                         params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i]) *
+            dydt[Ui] = -((1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] +
+                         params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[Ui] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             dydt[Ri] =
-                params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3 * y[Ci] +
-                (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
-                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerICU>()[i]) / params.get<TimeInfectedCritical>()[i] * y[Ui];
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * dummy_R3 * y[Ci] +
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
+                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
+                (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[Ui];
 
-            dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i] * y[Ui];
+            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[Ui];
             // add potential, additional deaths due to ICU overflow
             dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
         }
@@ -242,7 +242,7 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfected>();
+        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
         if (dyn_npis.get_thresholds().size() > 0) {
             auto t        = Base::get_result().get_last_time();
@@ -330,7 +330,7 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     //parameters as arrays
     auto&& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
     auto&& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto&& p_asymp   = params.template get<AsymptomaticCasesPerInfectious>().array().template cast<double>();
+    auto&& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of carriers

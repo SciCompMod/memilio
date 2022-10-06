@@ -194,7 +194,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     }
     const double reduc_mild_rec_time = temp_reduc_mild_rec_time;
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact>(),
                                       transmission_risk_min, transmission_risk_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(), carr_infec_min,
                                       carr_infec_max);
@@ -204,11 +204,11 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       beta_high_incidence_min, beta_high_incidence_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUCasesPerHospitalized>(), prob_hosp_icu_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), prob_hosp_icu_min,
                                       prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max);
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min,
                                       reduc_vacc_exp_max);
@@ -436,7 +436,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
 
     narrow = 0.0;
     //local dynamic NPIs
-    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfected>();
+    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
 
     dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));

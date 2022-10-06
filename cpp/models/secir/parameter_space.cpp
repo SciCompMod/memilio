@@ -59,14 +59,14 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
         set_distribution(model.parameters.get<TimeInfectedSevere>()[i]);
         set_distribution(model.parameters.get<TimeInfectedCritical>()[i]);
 
-        set_distribution(model.parameters.get<InfectionProbabilityFromContact>()[i]);
+        set_distribution(model.parameters.get<TransmissionProbabilityOnContact>()[i]);
         set_distribution(model.parameters.get<RelativeTransmissionNoSymptoms>()[i]);
-        set_distribution(model.parameters.get<AsymptomaticCasesPerInfectious>()[i]);
+        set_distribution(model.parameters.get<RecoveredPerInfectedNoSymptoms>()[i]);
         set_distribution(model.parameters.get<RiskOfInfectionFromSymptomatic>()[i]);
         set_distribution(model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
-        set_distribution(model.parameters.get<DeathsPerICU>()[i]);
-        set_distribution(model.parameters.get<HospitalizedCasesPerInfectious>()[i]);
-        set_distribution(model.parameters.get<ICUCasesPerHospitalized>()[i]);
+        set_distribution(model.parameters.get<DeathsPerCritical>()[i]);
+        set_distribution(model.parameters.get<SeverePerInfectedSymptoms>()[i]);
+        set_distribution(model.parameters.get<CriticalPerSevere>()[i]);
     }
 
     // dampings
@@ -133,11 +133,11 @@ void draw_sample_infection(SecirModel& model)
         model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
         model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
-        model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
-        model.parameters.get<AsymptomaticCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<DeathsPerICU>()[i].draw_sample();
-        model.parameters.get<HospitalizedCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<ICUCasesPerHospitalized>()[i].draw_sample();
+        model.parameters.get<TransmissionProbabilityOnContact>()[i].draw_sample();
+        model.parameters.get<RecoveredPerInfectedNoSymptoms>()[i].draw_sample();
+        model.parameters.get<DeathsPerCritical>()[i].draw_sample();
+        model.parameters.get<SeverePerInfectedSymptoms>()[i].draw_sample();
+        model.parameters.get<CriticalPerSevere>()[i].draw_sample();
     }
 }
 
@@ -158,7 +158,7 @@ Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationPa
     draw_sample_infection(shared_params_model);
     auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
     shared_contacts.draw_sample_dampings();
-    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
 
     for (auto& params_node : graph.nodes()) {

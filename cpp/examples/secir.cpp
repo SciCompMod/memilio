@@ -31,20 +31,8 @@ int main()
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    // working_params
-    double tinc    = 5.2, 
-        tinf   = 6, 
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        tsevere = 12, 
-        tcritical  = 8;
 
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 1,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -55,11 +43,11 @@ int main()
     model.parameters.set<mio::StartDay>(0);
     model.parameters.set<mio::Seasonality>(0);
 
-    model.parameters.get<mio::IncubationTime>()         = tinc;
-    model.parameters.get<mio::TimeInfectedSymptoms>()     = tinf;
-    model.parameters.get<mio::SerialInterval>()         = tserint;
-    model.parameters.get<mio::TimeInfectedSevere>() = tsevere;
-    model.parameters.get<mio::TimeInfectedCritical>()          = tcritical;
+    model.parameters.get<mio::IncubationTime>()         = 5.2;
+    model.parameters.get<mio::TimeInfectedSymptoms>()     = 6;
+    model.parameters.get<mio::SerialInterval>()         = 4.2;
+    model.parameters.get<mio::TimeInfectedSevere>() = 12;
+    model.parameters.get<mio::TimeInfectedCritical>()          = 8;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -75,13 +63,13 @@ int main()
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
-    model.parameters.get<mio::InfectionProbabilityFromContact>() = inf_prob;
-    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = carr_infec;
-    model.parameters.get<mio::AsymptomaticCasesPerInfectious>()    = alpha;
-    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = beta;
-    model.parameters.get<mio::HospitalizedCasesPerInfectious>()  = rho;
-    model.parameters.get<mio::ICUCasesPerHospitalized>()         = theta;
-    model.parameters.get<mio::DeathsPerICU>()                    = delta;
+    model.parameters.get<mio::TransmissionProbabilityOnContact>() = 0.05;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = 1;
+    model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()    = 0.09;
+    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = 0.25;
+    model.parameters.get<mio::SeverePerInfectedSymptoms>()  = 0.2;
+    model.parameters.get<mio::CriticalPerSevere>()         = 0.25;
+    model.parameters.get<mio::DeathsPerCritical>()                    = 0.3;
 
     model.apply_constraints();
 

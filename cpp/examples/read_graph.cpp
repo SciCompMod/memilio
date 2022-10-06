@@ -48,19 +48,7 @@ int main(int argc, char** argv)
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
 
-    double tinc    = 5.2, 
-        tinf   = 6, 
-        tserint    = 4.2,
-        tsevere = 12, 
-        tcritical  = 8;
-
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -76,11 +64,11 @@ int main(int argc, char** argv)
     params.set<mio::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::IncubationTime>()[i]         = tinc;
-        params.get<mio::TimeInfectedSymptoms>()[i]     = tinf;
-        params.get<mio::SerialInterval>()[i]         = tserint;
-        params.get<mio::TimeInfectedSevere>()[i] = tsevere;
-        params.get<mio::TimeInfectedCritical>()[i]          = tcritical;
+        params.get<mio::IncubationTime>()[i]         = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i]     = 6.;
+        params.get<mio::SerialInterval>()[i]         = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i] = 12;
+        params.get<mio::TimeInfectedCritical>()[i]          = 8;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * nb_exp_t0;
         model.populations[{i, mio::InfectionState::Carrier}]      = fact * nb_car_t0;
@@ -92,13 +80,13 @@ int main(int argc, char** argv)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]  = 0.2;
+        params.get<mio::CriticalPerSevere>()[i]         = 0.25;
+        params.get<mio::DeathsPerCritical>()[i]                    = 0.3;
     }
 
     params.apply_constraints();
