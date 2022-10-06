@@ -129,7 +129,7 @@ template <class M, std::enable_if_t<is_dynamic_matrix<M>::value, int> = 0>
 auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
 {
     assert(rows.start + rows.stride * rows.n <= m.rows());
-    assert(cols.start + cols.stride * cols.n <= m.rows());
+    assert(cols.start + cols.stride * cols.n <= m.cols());
 
     auto majSpec   = std::remove_reference_t<M>::IsRowMajor ? rows : cols;
     auto minSpec   = std::remove_reference_t<M>::IsRowMajor ? cols : rows;

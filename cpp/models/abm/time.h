@@ -22,6 +22,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * a duration of time.
@@ -266,7 +268,7 @@ public:
     /**
      * TimeSpan difference between two time points.
      */
-    TimeSpan operator-(const TimePoint& p2)
+    TimeSpan operator-(const TimePoint& p2) const
     {
         return TimeSpan{m_seconds - p2.seconds()};
     }
@@ -312,6 +314,7 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
+} // namespace abm
 } // namespace mio
 
 #endif

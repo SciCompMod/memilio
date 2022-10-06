@@ -18,8 +18,10 @@
 * limitations under the License.
 */
 #include "memilio/mobility/mobility.h"
-#include "secir/secir_parameters_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/compartments/parameter_studies.h"
+#include "secir/parameter_space.h"
+#include "secir/secir_parameters_io.h"
 #include <data_dir.h>
 #include <iostream>
 
@@ -99,8 +101,8 @@ int main(int argc, char** argv)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
         params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;

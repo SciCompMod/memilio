@@ -34,9 +34,9 @@ namespace mio
 // Create template specializations for the age resolved
 // SECIHURD model
 
-class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
+class SecirModel : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, SecirParams>
 {
-    using Base = CompartmentalModel<mio::Populations<AgeGroup, InfectionState>, SecirParams>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, SecirParams>;
     using Pa   = Base::ParameterSet;
     using Po   = Base::Populations;
 
@@ -226,7 +226,7 @@ public:
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
-            test_and_trace_required += (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 *
+            test_and_trace_required += (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 *
                                        this->populations.get_from(pop, {i, InfectionState::Carrier});
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICU});
         }
@@ -262,7 +262,7 @@ public:
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto risk_from_symptomatic = smoother_cosine(
                     test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
-                    params.get<RiskOfInfectionFromSympomatic>()[j], params.get<MaxRiskOfInfectionFromSympomatic>()[j]);
+                    params.get<RiskOfInfectionFromSymptomatic>()[j], params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val = (1 + params.get<mio::Seasonality>() *
@@ -290,10 +290,10 @@ public:
 
             dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
             dydt[Ci] = dummy_R2 * y[Ei] -
-                       ((1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 +
-                        params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
+                       ((1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 +
+                        params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
                            y[Ci];
-            dydt[Ii] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
+            dydt[Ii] = (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
                        ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] +
                         params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
                            y[Ii];
@@ -309,7 +309,7 @@ public:
             dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
 
             dydt[Ri] =
-                params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
+                params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
                 (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
@@ -485,9 +485,9 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     //parameters as arrays
     auto&& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
     auto&& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto&& p_asymp   = params.template get<AsymptoticCasesPerInfectious>().array().template cast<double>();
-    auto&& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
-    auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
+    auto&& p_asymp   = params.template get<AsymptomaticCasesPerInfectious>().array().template cast<double>();
+    auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
+    auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of carriers
     auto y_car = slice(y, {Eigen::Index(InfectionState::Carrier), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)});

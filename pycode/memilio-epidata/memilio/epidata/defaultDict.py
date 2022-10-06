@@ -42,7 +42,6 @@ defaultDict = {
     'read_data': False,
     'make_plot': False,
     'out_folder': default_file_path,
-    'update_data': False,
     'start_date': date(2020, 4, 24),
     'end_date': date.today(),
     'split_berlin': False,
@@ -50,7 +49,8 @@ defaultDict = {
     'moving_average': 0,
     'file_format': 'json_timeasstring',
     'no_raw': False,
-    'rep_date': False
+    'rep_date': False,
+    'sanitize_data': 1
 }
 
 # The following dict EngEng makes sure that for all
@@ -72,7 +72,6 @@ EngEng = {
     'idCounty': 'ID_County',
     'county': 'County',
     'ageRKI': 'Age_RKI',
-    'age5': 'Age5',
     'age10': 'Age',
     'unknown': 'unknown',
     'female': 'female',
@@ -116,7 +115,6 @@ GerEng = {
     'IdLandkreis': EngEng['idCounty'],
     'Landkreis': EngEng['county'],
     'Altersgruppe': EngEng['ageRKI'],
-    'Altersgruppe2': EngEng['age5'],
     'unbekannt': EngEng['unknown'],
     'W': EngEng['female'],
     'M': EngEng['male'],
@@ -142,12 +140,12 @@ GerEng = {
     'Anzahl': EngEng['number'],
     'Positivenanteil (%)': EngEng['positiveRate'],
     'Anteil positiv': EngEng['positiveRate'],
-    'bundesland': EngEng['state'],
     'ags2': EngEng['idState'],
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'], 
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],

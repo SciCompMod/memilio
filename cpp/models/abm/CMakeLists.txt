@@ -7,6 +7,8 @@ add_library(abm
     simulation.h
     person.cpp
     person.h
+    testing_strategy.cpp
+    testing_strategy.h
     world.cpp
     world.h
     state.h
@@ -15,10 +17,10 @@ add_library(abm
     parameters.cpp
     migration_rules.cpp
     migration_rules.h
+    trip_list.cpp
+    trip_list.h
     lockdown_rules.cpp
     lockdown_rules.h
-    testing_scheme.cpp
-    testing_scheme.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

@@ -199,7 +199,7 @@ jobs:
         with:
           package: epidata
 
-  dowload-data:
+  download-data:
     if: github.event.pull_request.draft == false
     needs: build-py-epidata
     runs-on: ubuntu-latest
@@ -227,10 +227,13 @@ jobs:
       - name: Dowload Data
         run: |
           mkdir -p data_dl
-          getrkidata -o data_dl
+          getcasedata -o data_dl
           getpopuldata -o data_dl
           getjhdata -o data_dl
           getdividata -o data_dl
+          getcommutermobility -o data_dl
+          getvaccinationdata -o data_dl
+          gethospitalizationdata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
         with:
@@ -302,7 +305,6 @@ jobs:
         run: |
           mkdir -p public
           cp ci_index/main_index.html public/index.html
-          cp ci_index/branch_index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
@@ -310,7 +312,7 @@ jobs:
       - name: Prepare pylint reports
         run: |
           mkdir -p public/pylint
-          cp pycode/build_pylint/pylint.html public/pylint/
+          cp pycode/build_pylint/pylint.html public/pylint/index.html
       - name: Prepare coverage reports
         run: |
           mkdir -p public/coverage

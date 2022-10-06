@@ -20,7 +20,7 @@
 */
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
-#include "secir/parameter_studies.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
@@ -82,8 +82,8 @@ TEST(ParameterStudies, sample_from_secir_params)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
         params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -108,10 +108,10 @@ TEST(ParameterStudies, sample_from_secir_params)
                   params.get<mio::HospitalizedToICUTime>()[i].value());
         ASSERT_EQ(params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)].value(),
                   params.get<mio::RelativeCarrierInfectability>()[i].value());
-        ASSERT_EQ(params.get<mio::RiskOfInfectionFromSympomatic>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::RiskOfInfectionFromSympomatic>()[i].value());
-        ASSERT_EQ(params.get<mio::MaxRiskOfInfectionFromSympomatic>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::MaxRiskOfInfectionFromSympomatic>()[i].value());
+        ASSERT_EQ(params.get<mio::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::RiskOfInfectionFromSymptomatic>()[i].value());
+        ASSERT_EQ(params.get<mio::MaxRiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::MaxRiskOfInfectionFromSymptomatic>()[i].value());
 
         EXPECT_GE(model.populations.get_group_total(i), 0);
 
@@ -180,8 +180,8 @@ TEST(ParameterStudies, sample_graph)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
         params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -198,7 +198,9 @@ TEST(ParameterStudies, sample_graph)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study   = mio::ParameterStudy<mio::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
-    auto results = study.run();
+    auto results = study.run([](auto&& g) {
+        return draw_sample(g);
+    });
 
     EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
     for (auto& node : results[0].nodes()) {
@@ -353,8 +355,8 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
         params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
@@ -364,11 +366,14 @@ TEST(ParameterStudies, check_ensemble_run_result)
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
+    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 1);
 
     // Run parameter study
     parameter_study.set_num_runs(1);
-    auto graph_results = parameter_study.run();
+    auto graph_results = parameter_study.run([](auto&& g) {
+        return draw_sample(g);
+    });
 
     std::vector<mio::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {

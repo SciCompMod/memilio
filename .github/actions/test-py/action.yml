@@ -47,12 +47,15 @@ runs:
         fi
         
         if [[ "${{ inputs.package }}" == "epidata" ]]; then
-          getrkidata --help
+          getcasedata --help
           getpopuldata --help
           getjhdata --help
           getdividata --help
           getsimdata --help
           cleandata --help
+          getcasesestimation --help
+          getcommutermobility --help
+          getvaccinationdata --help
         fi
     - name: Upload coverage reports
       uses: actions/upload-artifact@v2

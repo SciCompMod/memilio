@@ -22,9 +22,9 @@
 
 #include "memilio/compartments/simulation.h"
 #include "memilio/mobility/mobility.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "models/secir/secir.h"
 #include "models/secir/parameter_space.h"
-#include "models/secir/parameter_studies.h"
 
 namespace mio
 {
@@ -90,8 +90,8 @@ namespace benchmark
 
                 params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
                 params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-                params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-                params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+                params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+                params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
                 params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
                 params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
                 params.get<mio::DeathsPerICU>()[i]                    = delta;
