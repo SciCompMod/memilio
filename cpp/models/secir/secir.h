@@ -127,11 +127,11 @@ public:
             }
 
             // ICU capacity shortage is close
-            double prob_hosp2icu =
+            double criticalPerSevereAdjusted =
                 smoother_cosine(icu_occupancy, 0.90 * params.get<mio::ICUCapacity>(), params.get<mio::ICUCapacity>(),
                                 params.get<ICUCasesPerHospitalized>()[i], 0);
 
-            double prob_hosp2dead = params.get<ICUCasesPerHospitalized>()[i] - prob_hosp2icu;
+            double deathsPerSevereAdjusted = params.get<ICUCasesPerHospitalized>()[i] - criticalPerSevereAdjusted;
 
             dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
             dydt[Ci] = dummy_R2 * y[Ei] -
@@ -151,7 +151,7 @@ public:
                          params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += prob_hosp2icu / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[Ui] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             dydt[Ri] =
                 params.get<AsymptomaticCasesPerInfectious>()[i] * dummy_R3 * y[Ci] +
@@ -161,7 +161,7 @@ public:
 
             dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i] * y[Ui];
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += prob_hosp2dead / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
         }
     }
 

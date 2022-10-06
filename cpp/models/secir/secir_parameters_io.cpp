@@ -150,8 +150,6 @@ namespace details
                 }
                 if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age])) {
                     num_inf[age] -=  scaling_factor_inf[age] * region_entry.num_confirmed;
-                }
-                if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age])) {
                     num_hosp[age] += mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {

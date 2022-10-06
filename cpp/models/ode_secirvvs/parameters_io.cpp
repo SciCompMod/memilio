@@ -64,19 +64,16 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& vnum_car, std::vector<std::vector<double>>& vnum_inf,
     std::vector<std::vector<double>>& vnum_hosp, std::vector<std::vector<double>>& vnum_icu,
     std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
-    const std::vector<std::vector<int>>& vt_car_to_rec, const std::vector<std::vector<int>>& vt_car_to_inf,
-    const std::vector<std::vector<int>>& vt_exp_to_car, const std::vector<std::vector<int>>& vt_inf_to_rec,
-    const std::vector<std::vector<int>>& vt_inf_to_hosp, const std::vector<std::vector<int>>& vt_hosp_to_rec,
-    const std::vector<std::vector<int>>& vt_hosp_to_icu, const std::vector<std::vector<int>>& vt_icu_to_dead,
-    const std::vector<std::vector<int>>& vt_icu_to_rec, const std::vector<std::vector<double>>& vmu_C_R,
-    const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
-    const std::vector<std::vector<double>>& vmu_U_D, const std::vector<double>& scaling_factor_inf)
+    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,const std::vector<std::vector<int>>& vt_Exposed,
+    const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
+    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
+    const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
     return read_confirmed_cases_data(rki_data, vregion, date, vnum_exp, vnum_car, vnum_inf, vnum_hosp, vnum_icu,
-                                     vnum_death, vnum_rec, vt_car_to_rec, vt_car_to_inf, vt_exp_to_car, vt_inf_to_rec,
-                                     vt_inf_to_hosp, vt_hosp_to_rec, vt_hosp_to_icu, vt_icu_to_dead, vt_icu_to_rec,
-                                     vmu_C_R, vmu_I_H, vmu_H_U, vmu_U_D, scaling_factor_inf);
+                                     vnum_death, vnum_rec, vt_InfectedNoSymptoms, vt_Exposed,
+                                     vt_InfectedSymptoms, vt_InfectedSevere, vt_InfectedCritical,
+                                     vmu_C_R, vmu_I_H, vmu_H_U, scaling_factor_inf);
 }
 
 IOResult<void> read_confirmed_cases_data(
@@ -84,14 +81,11 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
     std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
-    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_car_to_rec,
-    const std::vector<std::vector<int>>& vt_car_to_inf, const std::vector<std::vector<int>>& vt_exp_to_car,
-    const std::vector<std::vector<int>>& vt_inf_to_rec, const std::vector<std::vector<int>>& vt_inf_to_hosp,
-    const std::vector<std::vector<int>>& vt_hosp_to_rec, const std::vector<std::vector<int>>& vt_hosp_to_icu,
-    const std::vector<std::vector<int>>& vt_icu_to_dead, const std::vector<std::vector<int>>& vt_icu_to_rec,
+    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, 
+    const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedSymptoms,
+    const std::vector<std::vector<int>>& vt_InfectedSevere, const std::vector<std::vector<int>>& vt_InfectedCritical,
     const std::vector<std::vector<double>>& vmu_C_R, const std::vector<std::vector<double>>& vmu_I_H,
-    const std::vector<std::vector<double>>& vmu_H_U, const std::vector<std::vector<double>>& vmu_U_D,
-    const std::vector<double>& scaling_factor_inf)
+    const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -109,7 +103,7 @@ IOResult<void> read_confirmed_cases_data(
     // shifts the initilization to the recent past if simulation starts
     // around current day and data of the future would be required.
     // Only needed for preinfection compartments, exposed and carrier.
-    auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E^C + T_C^I
+    auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E + T_C
     if (days_surplus > 0) {
         days_surplus = 0;
     }
@@ -121,15 +115,11 @@ IOResult<void> read_confirmed_cases_data(
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
 
-            auto& t_exp_to_car  = vt_exp_to_car[region_idx];
-            auto& t_car_to_rec  = vt_car_to_rec[region_idx];
-            auto& t_car_to_inf  = vt_car_to_inf[region_idx];
-            auto& t_inf_to_rec  = vt_inf_to_rec[region_idx];
-            auto& t_inf_to_hosp = vt_inf_to_hosp[region_idx];
-            auto& t_hosp_to_rec = vt_hosp_to_rec[region_idx];
-            auto& t_hosp_to_icu = vt_hosp_to_icu[region_idx];
-            auto& t_icu_to_dead = vt_icu_to_dead[region_idx];
-            auto& t_icu_to_rec  = vt_icu_to_rec[region_idx];
+            auto& t_Exposed  = vt_Exposed[region_idx];
+            auto& t_InfectedNoSymptoms  = vt_InfectedNoSymptoms[region_idx];
+            auto& t_InfectedSymptoms = vt_InfectedSymptoms[region_idx];
+            auto& t_InfectedSevere = vt_InfectedSevere[region_idx];
+            auto& t_InfectedCritical  = vt_InfectedCritical[region_idx];
 
             auto& num_car   = vnum_car[region_idx];
             auto& num_inf   = vnum_inf[region_idx];
@@ -142,71 +132,41 @@ IOResult<void> read_confirmed_cases_data(
             auto& mu_C_R = vmu_C_R[region_idx];
             auto& mu_I_H = vmu_I_H[region_idx];
             auto& mu_H_U = vmu_H_U[region_idx];
-            auto& mu_U_D = vmu_U_D[region_idx];
 
             bool read_icu = false; // params.populations.get({age, SecirCompartments::U}) == 0;
 
             auto age = (size_t)entry.age_group;
             if (entry.date == offset_date_by_days(date, 0)) {
-                num_inf[age] += mu_I_H[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                num_inf[age] += (1 - mu_I_H[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+                num_inf[age] += scaling_factor_inf[age] * entry.num_confirmed;
                 num_rec[age] += entry.num_confirmed;
             }
-            if (entry.date == offset_date_by_days(date, days_surplus)) {
-                num_car[age] -= scaling_factor_inf[age] * entry.num_confirmed;
-            }
-            // +R3
-            if (entry.date == offset_date_by_days(date, +t_car_to_inf[age] + days_surplus)) {
-                num_car[age] += scaling_factor_inf[age] * entry.num_confirmed;
-                num_car[age] += mu_C_R[age] / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+            if (entry.date == offset_date_by_days(date, t_InfectedNoSymptoms[age] + days_surplus)) {
+                num_car[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
                 num_exp[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
             }
-            // R2 - R9
-            if (entry.date == offset_date_by_days(date, t_car_to_inf[age] - t_car_to_rec[age] + days_surplus)) {
-                num_car[age] -= mu_C_R[age] / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+            if (entry.date == offset_date_by_days(date, days_surplus)) {
+                num_car[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
             }
-            // R2 + R3
-            if (entry.date == offset_date_by_days(date, t_exp_to_car[age] + t_car_to_inf[age] + days_surplus)) {
+            if (entry.date == offset_date_by_days(date, t_Exposed[age] + t_InfectedNoSymptoms[age] + days_surplus)) {
                 num_exp[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
             }
-            // -R4
-            if (entry.date == offset_date_by_days(date, -t_inf_to_rec[age])) {
-                num_inf[age] -= (1 - mu_I_H[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+            if (entry.date == offset_date_by_days(date, -t_InfectedSymptoms[age])) {
+                num_inf[age] -= scaling_factor_inf[age] * entry.num_confirmed;
+                num_hosp[age] += mu_I_H[age] * scaling_factor_inf[age] * entry.num_confirmed;
             }
-            // -R6
-            if (entry.date == offset_date_by_days(date, -t_inf_to_hosp[age])) {
-                num_inf[age] -= mu_I_H[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                num_hosp[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                num_hosp[age] += mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * entry.num_confirmed;
-            }
-            // -R6 - R7
-            if (entry.date == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                num_hosp[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
+            if (entry.date == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
+                num_hosp[age] -= mu_I_H[age] * scaling_factor_inf[age] * entry.num_confirmed;
                 if (read_icu) {
                     num_icu[age] +=
-                        mu_I_H[age] * mu_H_U[age] * mu_U_D[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                    num_icu[age] +=
-                        mu_I_H[age] * mu_H_U[age] * (1 - mu_U_D[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+                        mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
                 }
             }
-            // -R6 - R5
-            if (entry.date == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_rec[age])) {
-                num_hosp[age] -= mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * entry.num_confirmed;
-            }
-            // -R10 - R6 - R7 // - T_I^H - T_H^U - T_U^D
             if (entry.date ==
-                offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age] - t_icu_to_dead[age])) {
+                offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
                 num_death[age] += entry.num_deaths;
                 if (read_icu) {
                     num_icu[age] -=
-                        mu_I_H[age] * mu_H_U[age] * mu_U_D[age] * scaling_factor_inf[age] * entry.num_confirmed;
-                }
-            }
-            // - T_I^H - T_H^U - T_U^D
-            if (entry.date == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age] - t_icu_to_rec[age])) {
-                if (read_icu) {
-                    num_icu[age] -=
-                        mu_I_H[age] * mu_H_U[age] * (1 - mu_U_D[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+                        mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * entry.num_confirmed;
                 }
             }
         }

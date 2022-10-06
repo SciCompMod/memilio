@@ -212,11 +212,11 @@ public:
             // TODO: if this is used with vaccination model, it has to be adapted if ICUCasesPerHospitalized
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
             // is set to infinity and this functionality is deactivated, so this is OK for the moment.
-            double prob_hosp2icu =
+            double criticalPerSevereAdjusted =
                 smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
                                 params.get<ICUCasesPerHospitalized>()[i], 0);
 
-            double prob_hosp2dead = params.get<ICUCasesPerHospitalized>()[i] - prob_hosp2icu;
+            double deathsPerSevereAdjusted = params.get<ICUCasesPerHospitalized>()[i] - criticalPerSevereAdjusted;
 
             dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
             dydt[Ci] = dummy_R2 * y[Ei] -
@@ -246,7 +246,7 @@ public:
                          params.get<DeathsPerICU>()[i] / params.get<TimeInfectedCritical>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += prob_hosp2icu / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[Ui] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
             /**** path of (partially, i.e., one dose) vaccinated ***/
 
@@ -295,7 +295,7 @@ public:
                               params.get<TimeInfectedCritical>()[i]) *
                         y[UVi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[UVi] += icu_fac_part_immune / hosp_fac_part_immune * prob_hosp2icu /
+            dydt[UVi] += icu_fac_part_immune / hosp_fac_part_immune * criticalPerSevereAdjusted /
                          params.get<TimeInfectedSevere>()[i] * y[HVi];
 
             /**** path of twice vaccinated, here called immune although reinfection is possible now ***/
@@ -347,7 +347,7 @@ public:
                                params.get<TimeInfectedCritical>()[i]) *
                          y[UV2i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[UV2i] += icu_fac_impr_immune / hosp_fac_impr_immune * prob_hosp2icu /
+            dydt[UV2i] += icu_fac_impr_immune / hosp_fac_impr_immune * criticalPerSevereAdjusted /
                           params.get<TimeInfectedSevere>()[i] * y[HV2i];
 
             // compute auxiliary compartment of all past infections
@@ -427,12 +427,12 @@ public:
                            params.get<TimeInfectedCritical>()[i] * y[UV2i];
             ;
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += prob_hosp2dead / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
 
-            dydt[Di] += (death_fac_part_immune / hosp_fac_part_immune) * prob_hosp2dead /
+            dydt[Di] += (death_fac_part_immune / hosp_fac_part_immune) * deathsPerSevereAdjusted /
                         params.get<TimeInfectedSevere>()[i] * y[HVi];
 
-            dydt[Di] += (death_fac_impr_immune / hosp_fac_impr_immune) * prob_hosp2dead /
+            dydt[Di] += (death_fac_impr_immune / hosp_fac_impr_immune) * deathsPerSevereAdjusted /
                         params.get<TimeInfectedSevere>()[i] * y[HV2i];
         }
     }
