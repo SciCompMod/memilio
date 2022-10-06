@@ -120,17 +120,17 @@ public:
             double dummy_R2 = 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]);
             double dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
 
-            double exp_fac_part_immune    = params.get<ExposedFactorPartialImmunity>()[i];
-            double exp_fac_impr_immune    = params.get<ExposedFactorImprovedImmunity>()[i];
-            double inf_fac_part_immune    = params.get<InfectedFactorPartialImmunity>()[i];
-            double inf_fac_impr_immune    = params.get<InfectedFactorImprovedImmunity>()[i];
-            double hosp_fac_part_immune   = params.get<HospitalizedFactorPartialImmunity>()[i];
-            double icu_fac_part_immune    = params.get<HospitalizedFactorPartialImmunity>()[i];
-            double death_fac_part_immune  = params.get<HospitalizedFactorPartialImmunity>()[i];
-            double hosp_fac_impr_immune   = params.get<HospitalizedFactorImprovedImmunity>()[i];
-            double icu_fac_impr_immune    = params.get<HospitalizedFactorImprovedImmunity>()[i];
-            double death_fac_impr_immune  = params.get<HospitalizedFactorImprovedImmunity>()[i];
-            double inf_time_factor_immune = params.get<InfectiousTimeFactorImmune>()[i];
+            double exp_fac_part_immune    = params.get<ReducExposedPartialImmunity>()[i];
+            double exp_fac_impr_immune    = params.get<ReducExposedImprovedImmunity>()[i];
+            double inf_fac_part_immune    = params.get<ReducInfectedSymptomsPartialImmunity>()[i];
+            double inf_fac_impr_immune    = params.get<ReducInfectedSymptomsImprovedImmunity>()[i];
+            double hosp_fac_part_immune   = params.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+            double icu_fac_part_immune    = params.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+            double death_fac_part_immune  = params.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+            double hosp_fac_impr_immune   = params.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
+            double icu_fac_impr_immune    = params.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
+            double death_fac_impr_immune  = params.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
+            double inf_time_factor_immune = params.get<ReducTimeInfectedMild>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto risk_from_symptomatic = smoother_cosine(

@@ -409,7 +409,7 @@ struct DailyFullVaccination {
 /**
  * @brief Factor to reduce infection risk for persons with partial immunity.
  */
-struct ExposedFactorPartialImmunity {
+struct ReducExposedPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -417,14 +417,14 @@ struct ExposedFactorPartialImmunity {
     }
     static std::string name()
     {
-        return "ExposedFactorPartialImmunity";
+        return "ReducExposedPartialImmunity";
     }
 };
 
 /**
  * @brief Factor to reduce infection risk for persons with improved immunity.
  */
-struct ExposedFactorImprovedImmunity {
+struct ReducExposedImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -432,14 +432,14 @@ struct ExposedFactorImprovedImmunity {
     }
     static std::string name()
     {
-        return "ExposedFactorImprovedImmunity";
+        return "ReducExposedImprovedImmunity";
     }
 };
 
 /**
  * @brief Factor to reduce risk of developing symptoms for persons with partial immunity.
  */
-struct InfectedFactorPartialImmunity {
+struct ReducInfectedSymptomsPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -447,14 +447,14 @@ struct InfectedFactorPartialImmunity {
     }
     static std::string name()
     {
-        return "InfectedFactorPartialImmunity";
+        return "ReducInfectedSymptomsPartialImmunity";
     }
 };
 
 /**
  * @brief Factor to reduce risk of developing symptoms for persons with improved immunity.
  */
-struct InfectedFactorImprovedImmunity {
+struct ReducInfectedSymptomsImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -462,7 +462,7 @@ struct InfectedFactorImprovedImmunity {
     }
     static std::string name()
     {
-        return "InfectedFactorImprovedImmunity";
+        return "ReducInfectedSymptomsImprovedImmunity";
     }
 };
 
@@ -470,7 +470,7 @@ struct InfectedFactorImprovedImmunity {
  * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
  * Also applies to ICU and Death risk.
  */
-struct HospitalizedFactorPartialImmunity {
+struct ReducInfectedSevereCriticalDeadPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -478,14 +478,14 @@ struct HospitalizedFactorPartialImmunity {
     }
     static std::string name()
     {
-        return "HospitalizedFactorPartialImmunity";
+        return "ReducInfectedSevereCriticalDeadPartialImmunity";
     }
 };
 
 /**
  * @brief Factor to reduce risk of hospitalization for persons with improved immunity.
  */
-struct HospitalizedFactorImprovedImmunity {
+struct ReducInfectedSevereCriticalDeadImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -493,14 +493,14 @@ struct HospitalizedFactorImprovedImmunity {
     }
     static std::string name()
     {
-        return "HospitalizedFactorImprovedImmunity";
+        return "ReducInfectedSevereCriticalDeadImprovedImmunity";
     }
 };
 
 /**
  * @brief Factor to reduce infectious time of persons with partial or improved immunity.
  */
-struct InfectiousTimeFactorImmune {
+struct ReducTimeInfectedMild {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -508,7 +508,7 @@ struct InfectiousTimeFactorImmune {
     }
     static std::string name()
     {
-        return "InfectiousTimeFactorImmune";
+        return "ReducTimeInfectedMild";
     }
 };
 
@@ -550,9 +550,9 @@ using ParametersBase =
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
                  DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
-                 ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity,
-                 InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity,
-                 InfectiousTimeFactorImmune, BaseInfectiousnessB117, BaseInfectiousnessB161>;
+                 ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
+                 ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
+                 ReducTimeInfectedMild, BaseInfectiousnessB117, BaseInfectiousnessB161>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.

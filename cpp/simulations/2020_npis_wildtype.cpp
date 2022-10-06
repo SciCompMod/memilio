@@ -118,67 +118,63 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
 }
 
 /**
- * Set epidemiological parameters of Covid19.
+ * Set epidemiological parameters of Sars-CoV-2 for a immune-naive
+ * population and wild type variant.
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
 mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
 {
     //times
-    const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
-    const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; // R_2^(-1)+0.5*R_3^(-1)
-    const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
-    const double t_inf_min    = 5.6; 
-    const double t_inf_max    = 8.4;
-    // TODO
-    // const double t_inf_hosp_min[] = {9, 9, 9, 5, 5, 5}; 
-    // const double t_inf_hosp_max[] = {12, 12, 12, 7, 7, 7};
-    const double tsevere_min[] = {4, 4, 5, 7, 9, 13}; // R5^(-1) = T_H^R
-    const double tsevere_max[] = {6, 6, 7, 9, 11, 17};
-    // const double t_hosp_icu_min   = 3; 
-    // const double t_hosp_icu_max   = 7;
-    const double tcritical_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
-    const double tcritical_max[]  = {9, 9, 9, 21, 21, 15};
-    // const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
-    // const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
+    const double incubationTime             = 5.2; 
+    const double serialIntervalMin      = 0.5 * 2.67 + 0.5 * 5.2; 
+    const double serialIntervalMax      = 0.5 * 4.00 + 0.5 * 5.2;
+    const double timeInfectedSymptomsMin[]    = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465}; 
+    const double timeInfectedSymptomsMax[]    = {8.427,  8.427,  8.4684, 8.3139, 8.169, 8.085};
+    const double timeInfectedSevereMin[] = {3.925, 3.925, 4.85,  6.4, 7.2, 9.}; 
+    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.}
+    const double timeInfectedCriticalMin[]  = {4.95, 4.95, 4.86, 14.14, 14.4, 10.}; 
+    const double timeInfectedCriticalMax[]  = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
-    array_assign_uniform_distribution(params.get<mio::IncubationTime>(), tinc, tinc);
-    array_assign_uniform_distribution(params.get<mio::SerialInterval>(), tserint_min, tserint_max);
-    array_assign_uniform_distribution(params.get<mio::TimeInfectedSymptoms>(), t_inf_min, t_inf_max);
-    array_assign_uniform_distribution(params.get<mio::TimeInfectedSevere>(), tsevere_min, tsevere_max);
-    array_assign_uniform_distribution(params.get<mio::TimeInfectedCritical>(), tcritical_min, tcritical_max);
+    array_assign_uniform_distribution(params.get<mio::IncubationTime>(), incubationTime, incubationTime);
+    array_assign_uniform_distribution(params.get<mio::SerialInterval>(), serialIntervalMin, serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::TimeInfectedSymptoms>(), timeInfectedSymptomsMin, timeInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::TimeInfectedSevere>(), timeInfectedSevereMin, timeInfectedSevereMax);
+    array_assign_uniform_distribution(params.get<mio::TimeInfectedCritical>(), timeInfectedCriticalMin, timeInfectedCriticalMax);
 
     //probabilities
-    const double transmission_risk_min[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
-    const double transmission_risk_max[] = {0.04, 0.07, 0.07, 0.07, 0.10, 0.20};
-    const double carr_infec_min          = 1;
-    const double carr_infec_max          = 1;
-    const double beta_low_incidenc_min   = 0.1; // beta (depends on incidence and test and trace capacity)
-    const double beta_low_incidenc_max   = 0.3;
-    const double beta_high_incidence_min = 0.3;
-    const double beta_high_incidence_max = 0.5;
-    const double prob_car_rec_min[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
-    const double prob_car_rec_max[]      = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double prob_inf_hosp_min[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; // rho
-    const double prob_inf_hosp_max[]     = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double prob_hosp_icu_min[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35}; // theta
-    const double prob_hosp_icu_max[]     = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
-    const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double transmissionProbabilityOnContactMin[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
+    const double transmissionProbabilityOnContactMax[] = {0.04, 0.07, 0.07, 0.07, 0.10, 0.20};
+    const double relativeTransmissionNoSymptomsMin          = 1;
+    const double relativeTransmissionNoSymptomsMax          = 1;
+    // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control) 
+    // depends on incidence and test and trace capacity
+    const double riskOfInfectionFromSymptomaticMin   = 0.1; 
+    const double riskOfInfectionFromSymptomaticMax   = 0.3;
+    const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
+    const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
+    const double recoveredPerInfectedNoSymptomsMin[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; 
+    const double recoveredPerInfectedNoSymptomsMax[]      = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double severePerInfectedSymptomsMin[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; 
+    const double severePerInfectedSymptomsMax[]     = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double criticalPerSevereMin[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35}; 
+    const double criticalPerSevereMax[]     = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double deathsPerCriticalMin[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; 
+    const double deathsPerCriticalMax[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    array_assign_uniform_distribution(params.get<mio::TransmissionProbabilityOnContact>(), transmission_risk_min,
-                                      transmission_risk_max);
-    array_assign_uniform_distribution(params.get<mio::RelativeTransmissionNoSymptoms>(), carr_infec_min, carr_infec_max);
-    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), beta_low_incidenc_min,
-                                      beta_low_incidenc_max);
-    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), beta_high_incidence_min,
-                                      beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<mio::RecoveredPerInfectedNoSymptoms>(), prob_car_rec_min,
-                                      prob_car_rec_max);
-    array_assign_uniform_distribution(params.get<mio::SeverePerInfectedSymptoms>(), prob_inf_hosp_min,
-                                      prob_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::CriticalPerSevere>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::TransmissionProbabilityOnContact>(), transmissionProbabilityOnContactMin,
+                                      transmissionProbabilityOnContactMax);
+    array_assign_uniform_distribution(params.get<mio::RelativeTransmissionNoSymptoms>(), relativeTransmissionNoSymptomsMin, relativeTransmissionNoSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), riskOfInfectionFromSymptomaticMin,
+                                      riskOfInfectionFromSymptomaticMax);
+    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), maxRiskOfInfectionFromSymptomaticMin,
+                                      maxRiskOfInfectionFromSymptomaticMax);
+    array_assign_uniform_distribution(params.get<mio::RecoveredPerInfectedNoSymptoms>(), recoveredPerInfectedNoSymptomsMin,
+                                      recoveredPerInfectedNoSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::SeverePerInfectedSymptoms>(), severePerInfectedSymptomsMin,
+                                      severePerInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::CriticalPerSevere>(), criticalPerSevereMin, criticalPerSevereMax);
+    array_assign_uniform_distribution(params.get<mio::DeathsPerCritical>(), deathsPerCriticalMin, deathsPerCriticalMax);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -504,8 +500,8 @@ mio::IOResult<void> set_nodes(const mio::SecirParams& params, mio::Date start_da
 
 /**
  * Adds edges to graph.
- * Edges represent commuting and other migration between counties.
- * Reads migration from files in the data directory.
+ * Edges represent commuting and other mobility between counties.
+ * Reads mobility from files in the data directory.
  * @param data_dir data directory.
  * @param params_graph graph object that the nodes will be added to.
  * @returns any io errors that happen during reading of the files.
@@ -513,16 +509,16 @@ mio::IOResult<void> set_nodes(const mio::SecirParams& params, mio::Date start_da
 mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::SecirModel, mio::MigrationParameters>& params_graph)
 {
-    //migration between nodes
-    BOOST_OUTCOME_TRY(migration_data_commuter,
+    // mobility between nodes
+    BOOST_OUTCOME_TRY(mobility_data_commuter,
                       mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(migration_data_twitter,
+    BOOST_OUTCOME_TRY(mobility_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
-    if (size_t(migration_data_commuter.rows()) != params_graph.nodes().size() ||
-        size_t(migration_data_commuter.cols()) != params_graph.nodes().size() ||
-        size_t(migration_data_twitter.rows()) != params_graph.nodes().size() ||
-        size_t(migration_data_twitter.cols()) != params_graph.nodes().size()) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
+    if (size_t(mobility_data_commuter.rows()) != params_graph.nodes().size() ||
+        size_t(mobility_data_commuter.cols()) != params_graph.nodes().size() ||
+        size_t(mobility_data_twitter.rows()) != params_graph.nodes().size() ||
+        size_t(mobility_data_twitter.cols()) != params_graph.nodes().size()) {
+        return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices not the correct size.");
     }
 
     auto migrating_compartments = {mio::InfectionState::Susceptible, mio::InfectionState::Exposed,
@@ -531,9 +527,9 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
-            //migration coefficients have the same number of components as the contact matrices.
-            //so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto migration_coeffs = mio::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
+            // mobility coefficients have the same number of components as the contact matrices.
+            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
+            auto mobility_coeffs = mio::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
 
             //commuters
             auto working_population = 0.0;
@@ -542,30 +538,30 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
             }
-            auto commuter_coeff_ij = migration_data_commuter(county_idx_i, county_idx_j) /
+            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
-                    migration_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
                         commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
                 }
             }
             //others
             auto total_population = populations.get_total();
-            auto twitter_coeff    = migration_data_twitter(county_idx_i, county_idx_j) /
+            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
                                  total_population; //data is absolute numbers, we need relative
             for (auto age = mio::AgeGroup(0); age < populations.size<mio::AgeGroup>(); ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_idx = populations.get_flat_index({age, compartment});
-                    migration_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
+                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
                 }
             }
 
-            //only add edges with migration above thresholds for performance
-            //thresholds are chosen empirically so that more than 99% of migration is covered, approx. 1/3 of the edges
+            //only add edges with mobility above thresholds for performance
+            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
             if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(migration_coeffs));
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
             }
         }
     }
@@ -586,7 +582,7 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 {
     const auto start_day = mio::get_day_in_year(start_date);
 
-    //global parameters
+    // global parameters
     const int num_age_groups = 6;
     mio::SecirParams params(num_age_groups);
     params.get<mio::StartDay>() = start_day;
@@ -594,8 +590,8 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
-    //graph of counties with populations and local parameters
-    //and migration between counties
+    // graph of counties with populations and local parameters
+    // and mobility between counties
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));

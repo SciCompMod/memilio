@@ -236,19 +236,19 @@ void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_
     array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max,
                                       set_invalid_initial_value);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedPartialImmunity>(), reduc_vacc_exp_min,
                                       reduc_vacc_exp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorImprovedImmunity>(), reduc_immune_exp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedImprovedImmunity>(), reduc_immune_exp_min,
                                       reduc_immune_exp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(), reduc_vacc_inf_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(), reduc_vacc_inf_min,
                                       reduc_vacc_inf_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorImprovedImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(),
                                       reduc_immune_inf_min, reduc_immune_inf_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartialImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(),
                                       reduc_vacc_hosp_min, reduc_vacc_hosp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorImprovedImmunity>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(),
                                       reduc_immune_hosp_min, reduc_immune_hosp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(), reduc_mild_rec_time_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild>(), reduc_mild_rec_time_min,
                                       reduc_mild_rec_time_max, set_invalid_initial_value);
 
     //sasonality
@@ -294,7 +294,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
     auto& param_icu_home_time = parameters0.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(1)];
     ASSERT_GE(double(param_icu_home_time), 5.0);
     ASSERT_LE(double(param_icu_home_time), 9.0);
-    auto& param_exp_factor = parameters0.get<mio::osecirvvs::ExposedFactorPartialImmunity>()[mio::AgeGroup(0)];
+    auto& param_exp_factor = parameters0.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)];
     ASSERT_GE(double(param_exp_factor), 0.75);
     ASSERT_LE(double(param_exp_factor), 0.85);
     auto& compartment_inf = populations0[{mio::AgeGroup(2), mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}];
@@ -426,11 +426,11 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     auto percentile_params = mio::osecirvvs::ensemble_params_percentile(sampled_nodes, 0.6)[0].parameters;
 
     //spot check parameters
-    auto p = double(percentile_params.get<mio::osecirvvs::InfectiousTimeFactorImmune>()[mio::AgeGroup(2)]);
+    auto p = double(percentile_params.get<mio::osecirvvs::ReducTimeInfectedMild>()[mio::AgeGroup(2)]);
     auto samples = std::vector<double>();
     std::transform(sampled_nodes.begin(), sampled_nodes.end(), std::back_inserter(samples),
                    [](const std::vector<mio::osecirvvs::Model>& nodes) {
-                       return nodes[0].parameters.get<mio::osecirvvs::InfectiousTimeFactorImmune>()[mio::AgeGroup(2)];
+                       return nodes[0].parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[mio::AgeGroup(2)];
                    });
 
     std::nth_element(samples.begin(), samples.begin() + 6, samples.end());

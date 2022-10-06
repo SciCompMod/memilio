@@ -74,13 +74,13 @@ namespace osecirvvs
         model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
         model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
 
-        model.parameters.get<ExposedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ExposedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<InfectedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<InfectedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<HospitalizedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<HospitalizedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ReducTimeInfectedMild>()[AgeGroup(0)].draw_sample();
 
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
             //not age dependent
@@ -94,13 +94,13 @@ namespace osecirvvs
             model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =
                 model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)];
 
-            model.parameters.get<ExposedFactorPartialImmunity>()[i]     = model.parameters.get<ExposedFactorPartialImmunity>()[AgeGroup(0)];
-            model.parameters.get<ExposedFactorImprovedImmunity>()[i]   = model.parameters.get<ExposedFactorImprovedImmunity>()[AgeGroup(0)];
-            model.parameters.get<InfectedFactorPartialImmunity>()[i]     = model.parameters.get<InfectedFactorPartialImmunity>()[AgeGroup(0)];
-            model.parameters.get<InfectedFactorImprovedImmunity>()[i]   = model.parameters.get<InfectedFactorImprovedImmunity>()[AgeGroup(0)];
-            model.parameters.get<HospitalizedFactorPartialImmunity>()[i]    = model.parameters.get<HospitalizedFactorPartialImmunity>()[AgeGroup(0)];
-            model.parameters.get<HospitalizedFactorImprovedImmunity>()[i]  = model.parameters.get<HospitalizedFactorImprovedImmunity>()[AgeGroup(0)];
-            model.parameters.get<InfectiousTimeFactorImmune>()[i] = model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)];
+            model.parameters.get<ReducExposedPartialImmunity>()[i]     = model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducExposedImprovedImmunity>()[i]   = model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducInfectedSymptomsPartialImmunity>()[i]     = model.parameters.get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducInfectedSymptomsImprovedImmunity>()[i]   = model.parameters.get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i]    = model.parameters.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i]  = model.parameters.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(0)];
+            model.parameters.get<ReducTimeInfectedMild>()[i] = model.parameters.get<ReducTimeInfectedMild>()[AgeGroup(0)];
 
             //age dependent
             model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
