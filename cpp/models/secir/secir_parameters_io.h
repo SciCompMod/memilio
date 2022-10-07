@@ -61,9 +61,9 @@ namespace details
      * @param mu_* vector probabilities to get from one compartement to another for each age group
      */
     IOResult<void> read_rki_data(
-        std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_exp,
-        std::vector<std::vector<double>>& vnum_car, std::vector<std::vector<double>>& vnum_inf,
-        std::vector<std::vector<double>>& vnum_hosp, std::vector<std::vector<double>>& vnum_icu,
+        std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
+        std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
+        std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
         std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec, 
         const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, const std::vector<std::vector<int>>& vt_Exposed,
         const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere, 
@@ -191,17 +191,17 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * ConfirmedCasesDataEntry::age_group_names.size()));
 
     for (size_t j = 0; j < static_cast<size_t>(num_days); j++) {
-        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
-        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
-        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
-        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_Exposed(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<double> num_icu(model.size(), 0.0);
 
         BOOST_OUTCOME_TRY(details::read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json"), region, date,
-                                                 num_exp, num_car, num_inf, num_hosp, dummy_icu, num_death, num_rec,
+                                                 num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec,
                                                  t_InfectedNoSymptoms, t_Exposed, t_InfectedSymptoms,
                                                  t_InfectedSevere, t_InfectedCritical, mu_C_R,
                                                  mu_I_H, mu_H_U, scaling_factor_inf));
@@ -212,19 +212,19 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         for (size_t i = 0; i < region.size(); i++) {
             for (size_t age = 0; age < ConfirmedCasesDataEntry::age_group_names.size(); age++) {
                 rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)InfectionState::Count * age) =
-                    num_exp[i][age];
-                rki_data[i][j]((size_t)InfectionState::InfectedNoSymptoms + (size_t)InfectionState::Count * age) = num_car[i][age];
+                    num_Exposed[i][age];
+                rki_data[i][j]((size_t)InfectionState::InfectedNoSymptoms + (size_t)InfectionState::Count * age) = num_InfectedNoSymptoms[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedSymptoms + (size_t)InfectionState::Count * age) =
-                    num_inf[i][age];
+                    num_InfectedSymptoms[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedSevere + (size_t)InfectionState::Count * age) =
-                    num_hosp[i][age];
+                    num_InfectedSevere[i][age];
                 rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age) =
                     scaling_factor_icu * num_icu[i] * mu_I_U[i][age] / sum_mu_I_U[i];
                 rki_data[i][j]((size_t)InfectionState::Recovered + (size_t)InfectionState::Count * age) =
                     num_rec[i][age];
                 rki_data[i][j]((size_t)InfectionState::Dead + (size_t)InfectionState::Count * age) = num_death[i][age];
                 rki_data[i][j]((size_t)InfectionState::Susceptible + (size_t)InfectionState::Count * age) =
-                    num_population[i][age] - num_exp[i][age] - num_car[i][age] - num_inf[i][age] - num_hosp[i][age] -
+                    num_population[i][age] - num_Exposed[i][age] - num_InfectedNoSymptoms[i][age] - num_InfectedSymptoms[i][age] - num_InfectedSevere[i][age] -
                     num_rec[i][age] - num_death[i][age] -
                     rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age);
             }

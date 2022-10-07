@@ -71,9 +71,9 @@ namespace details
     }
 
     IOResult<void> read_rki_data(
-        std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_exp,
-        std::vector<std::vector<double>>& vnum_car, std::vector<std::vector<double>>& vnum_inf,
-        std::vector<std::vector<double>>& vnum_hosp, std::vector<std::vector<double>>& vnum_icu,
+        std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
+        std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
+        std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
         std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec, 
         const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, const std::vector<std::vector<int>>& vt_Exposed,
         const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
@@ -117,11 +117,11 @@ namespace details
                 auto& t_InfectedSevere = vt_InfectedSevere[region_idx];
                 auto& t_InfectedCritical  = vt_InfectedCritical[region_idx];
 
-                auto& num_car   = vnum_car[region_idx];
-                auto& num_inf   = vnum_inf[region_idx];
+                auto& num_InfectedNoSymptoms   = vnum_InfectedNoSymptoms[region_idx];
+                auto& num_InfectedSymptoms   = vnum_InfectedSymptoms[region_idx];
                 auto& num_rec   = vnum_rec[region_idx];
-                auto& num_exp   = vnum_exp[region_idx];
-                auto& num_hosp  = vnum_hosp[region_idx];
+                auto& num_Exposed   = vnum_Exposed[region_idx];
+                auto& num_InfectedSevere  = vnum_InfectedSevere[region_idx];
                 auto& num_death = vnum_death[region_idx];
                 auto& num_icu   = vnum_icu[region_idx];
 
@@ -135,25 +135,25 @@ namespace details
                 bool read_icu = false; //params.populations.get({age, SecirCompartments::U}) == 0;
 
                 if (date_df == offset_date_by_days(date, 0)) {
-                    num_inf[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
                     num_rec[age] += region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, days_surplus)) {
-                    num_car[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedNoSymptoms[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, t_InfectedNoSymptoms[age] + days_surplus)) {
-                    num_car[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
-                    num_exp[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedNoSymptoms[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_Exposed[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, t_Exposed[age] + t_InfectedNoSymptoms[age] + days_surplus)) {
-                    num_exp[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_Exposed[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age])) {
-                    num_inf[age] -=  scaling_factor_inf[age] * region_entry.num_confirmed;
-                    num_hosp[age] += mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedSymptoms[age] -=  scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedSevere[age] += mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                 }
                 if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
-                    num_hosp[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_InfectedSevere[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                     if (read_icu) {
                         num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] *
                                         region_entry.num_confirmed;
@@ -173,11 +173,11 @@ namespace details
         for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
             auto region = vregion[region_idx];
 
-            auto& num_car   = vnum_car[region_idx];
-            auto& num_inf   = vnum_inf[region_idx];
+            auto& num_InfectedNoSymptoms   = vnum_InfectedNoSymptoms[region_idx];
+            auto& num_InfectedSymptoms   = vnum_InfectedSymptoms[region_idx];
             auto& num_rec   = vnum_rec[region_idx];
-            auto& num_exp   = vnum_exp[region_idx];
-            auto& num_hosp  = vnum_hosp[region_idx];
+            auto& num_Exposed   = vnum_Exposed[region_idx];
+            auto& num_InfectedSevere  = vnum_InfectedSevere[region_idx];
             auto& num_death = vnum_death[region_idx];
             auto& num_icu   = vnum_icu[region_idx];
 
@@ -197,10 +197,10 @@ namespace details
                     }
                 };
 
-                try_fix_constraints(num_inf[i], -5, "InfectedSymptoms");
-                try_fix_constraints(num_car[i], -5, "InfectedNoSymptoms");
-                try_fix_constraints(num_exp[i], -5, "Exposed");
-                try_fix_constraints(num_hosp[i], -5, "InfectedSevere");
+                try_fix_constraints(num_InfectedSymptoms[i], -5, "InfectedSymptoms");
+                try_fix_constraints(num_InfectedNoSymptoms[i], -5, "InfectedNoSymptoms");
+                try_fix_constraints(num_Exposed[i], -5, "Exposed");
+                try_fix_constraints(num_InfectedSevere[i], -5, "InfectedSevere");
                 try_fix_constraints(num_death[i], -5, "Dead");
                 try_fix_constraints(num_icu[i], -5, "InfectedCritical");
                 try_fix_constraints(num_rec[i], -20, "Recovered");
@@ -254,31 +254,31 @@ namespace details
                     model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
             }
         }
-        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_Exposed(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-        BOOST_OUTCOME_TRY(read_rki_data(path, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death,
+        BOOST_OUTCOME_TRY(read_rki_data(path, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death,
                                         num_rec, t_InfectedNoSymptoms, t_Exposed, t_InfectedSymptoms,
                                         t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H,
                                         mu_H_U, scaling_factor_inf));
 
         for (size_t county = 0; county < model.size(); county++) {
-            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
+            if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
                 size_t num_groups = (size_t)model[county].parameters.get_num_groups();
                 for (size_t i = 0; i < num_groups; i++) {
                     model[county].populations[{AgeGroup(i), InfectionState::Exposed}] =
-                        num_exp[county][i];
+                        num_Exposed[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
-                        num_car[county][i];
+                        num_InfectedNoSymptoms[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
-                        num_inf[county][i];
+                        num_InfectedSymptoms[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
-                        num_hosp[county][i];
+                        num_InfectedSevere[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::Dead}] =
                         num_death[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::Recovered}] =
