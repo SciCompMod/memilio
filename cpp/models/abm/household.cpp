@@ -54,7 +54,7 @@ void HouseholdGroup::add_households(Household household, int number_of_household
     m_number_of_households += number_of_households;
 }
 
-void add_household_to_world(World& world, const Household& household)
+void add_household_to_world(World& world, const Household& household, const TimePoint& t)
 {
     auto home    = world.add_location(LocationType::Home);
     auto members = household.get_members();
@@ -65,7 +65,7 @@ void add_household_to_world(World& world, const Household& household)
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
-            auto& person   = world.add_person(home, InfectionState::Susceptible, age_group);
+            auto& person   = world.add_person(home, t, age_group);
             person.set_assigned_location(home);
         }
     }

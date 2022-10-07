@@ -96,7 +96,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(LocationId id, InfectionState infection_state, AgeGroup age = AgeGroup::Age15to34);
+    Person& add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age = AgeGroup::Age15to34, const VaccinationState& vaccination_state = VaccinationState::Unvaccinated, Infection* const infection = nullptr);
 
     /**
      * Sets the current infection state of the person.

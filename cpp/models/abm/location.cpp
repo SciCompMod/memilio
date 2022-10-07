@@ -39,30 +39,31 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-InfectionState Location::interact(const Person& person, TimeSpan dt,
-                                  const GlobalInfectionParameters& global_params) const
+Infection* Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
+                              const GlobalInfectionParameters& /*global_params*/) const
 {
-    auto infection_state   = person.get_infection_state();
+    auto infection         = person.get_infection(); // always susceptible (nullptr or finished infection)
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
 
-    switch (infection_state) {
-    case InfectionState::Susceptible:
-        if (!person.get_cells().empty()) {
-            for (auto cell_index : person.get_cells()) {
-                InfectionState new_state = random_transition(
-                    infection_state, dt,
-                    {{InfectionState::Exposed, m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
-                if (new_state != infection_state) {
-                    return new_state;
-                }
+    std::shared_ptr<Virus> virus; // subject to change
+    *virus = Virus(1,1,1);   // need to determine virus from other infected
+                             // persons at location/cell
+    
+    if (!person.get_cells().empty()) {
+        for (auto cell_index : person.get_cells()) {
+            Infection* new_infection = random_transition(infection, dt,
+                {{new Infection(virus, t), m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
+            if (new_infection != nullptr)
+            {
+                return new_infection;
             }
-            return infection_state;
         }
-        else {
-            return random_transition(infection_state, dt,
-                                     {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
-        }
+        return nullptr; // no infection caught
+    }
+    else {
+        return random_transition(infection, dt,
+                                 {{new Infection(virus, t), m_cached_exposure_rate[{age, vaccination_state}]}});
     }
 }
 
@@ -96,10 +97,10 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     }
 }
 
-void Location::add_person(const Person& p)
+void Location::add_person(const Person& p, const TimePoint& t)
 {
     ++m_num_persons;
-    InfectionState s = p.get_infection_state();
+    InfectionState s = p.get_infection_state(t);
     change_subpopulation(s, +1);
     if (!m_cells.empty()) {
         for (auto i : p.get_cells()) {
@@ -115,10 +116,10 @@ void Location::add_person(const Person& p)
     }
 }
 
-void Location::remove_person(const Person& p)
+void Location::remove_person(const Person& p, const TimePoint& t)
 {
     --m_num_persons;
-    InfectionState s = p.get_infection_state();
+    InfectionState s = p.get_infection_state(t);
     change_subpopulation(s, -1);
     for (auto i : p.get_cells()) {
         --m_cells[i].num_people;
@@ -132,10 +133,11 @@ void Location::remove_person(const Person& p)
     }
 }
 
-void Location::changed_state(const Person& p, InfectionState old_infection_state)
+void Location::changed_state(const Person& p, InfectionState old_infection_state, const TimePoint& t)
 {
     change_subpopulation(old_infection_state, -1);
-    change_subpopulation(p.get_infection_state(), +1);
+    change_subpopulation(p.get_infection_state(t), +1);
+    auto current_infection_state = p.get_infection_state(t);
     for (auto i : p.get_cells()) {
         if (old_infection_state == InfectionState::Carrier) {
             --m_cells[i].num_carriers;
@@ -145,12 +147,12 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
                  old_infection_state == InfectionState::Infected_Critical) {
             --m_cells[i].num_infected;
         }
-        if (p.get_infection_state() == InfectionState::Carrier) {
+        if (current_infection_state == InfectionState::Carrier) {
             ++m_cells[i].num_carriers;
         }
-        else if (p.get_infection_state() == InfectionState::Infected ||
-                 p.get_infection_state() == InfectionState::Infected_Severe ||
-                 p.get_infection_state() == InfectionState::Infected_Critical) {
+        else if (current_infection_state == InfectionState::Infected ||
+                 current_infection_state == InfectionState::Infected_Severe ||
+                 current_infection_state == InfectionState::Infected_Critical) {
             ++m_cells[i].num_infected;
         }
     }

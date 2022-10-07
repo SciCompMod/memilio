@@ -38,13 +38,12 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
+Person& World::add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age, const VaccinationState& vaccination_state, Infection* const infection)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
-                                                 VaccinationState::Unvaccinated, person_id));
+    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, infection, person_id));
     auto& person = *m_persons.back();
-    get_location(person).add_person(person);
+    get_location(person).add_person(person, t);
     return person;
 }
 
@@ -55,21 +54,22 @@ void World::evolve(TimePoint t, TimeSpan dt)
     migration(t, dt);
 }
 
-void World::interaction(TimePoint /*t*/, TimeSpan dt)
+void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
+        person->interact(t, dt, m_infection_parameters, loc);
     }
 }
 
-void World::set_infection_state(Person& person, InfectionState inf_state)
+/*void World::set_infection_state(Person& person, InfectionState inf_state)
 {
     auto& loc      = get_location(person);
-    auto old_state = person.get_infection_state();
+    auto old_state = person.get_infection_state(t);
     person.set_infection_state(inf_state);
     loc.changed_state(person, old_state);
 }
+*/
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
@@ -113,7 +113,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 Location* target = find_location(target_type, *person);
                 if (target != &get_location(*person)) {
                     if (target->get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
-                        person->migrate_to(get_location(*person), *target);
+                        person->migrate_to(get_location(*person), *target, t);
                     }
                     break;
                 }
@@ -129,7 +129,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
                 if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
-                    person->migrate_to(get_location(*person), target);
+                    person->migrate_to(get_location(*person), target, t);
                 }
             }
             m_trip_list.increase_index();

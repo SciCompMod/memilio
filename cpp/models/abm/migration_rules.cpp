@@ -132,31 +132,31 @@ LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*
     return current_loc;
 }
 
-LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+LocationType go_to_hospital(const Person& person, const TimePoint& t, TimeSpan /*dt*/,
                             const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Severe) {
+    if (person.get_infection_state(t) == InfectionState::Infected_Severe) {
         return LocationType::Hospital;
     }
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const MigrationParameters& /*params*/)
+LocationType go_to_icu(const Person& person, const TimePoint& t, TimeSpan /*dt*/, const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Critical) {
+    if (person.get_infection_state(t) == InfectionState::Infected_Critical) {
         return LocationType::ICU;
     }
     return current_loc;
 }
 
-LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+LocationType return_home_when_recovered(const Person& person, const TimePoint& t, TimeSpan /*dt*/,
                                         const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
-        person.get_infection_state() == InfectionState::Recovered_Infected) {
+        person.get_infection_state(t) == InfectionState::Recovered_Infected) {
         return LocationType::Home;
     }
     return current_loc;

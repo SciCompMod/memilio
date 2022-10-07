@@ -36,28 +36,6 @@ namespace abm
 
 class Location;
 
-/**
- * Infection properties describe the infection state of a person and if a infection is detected
- */
-struct InfectionProperties {
-    InfectionProperties(InfectionState infection_state, bool infection_detected = false)
-        : state(infection_state)
-        , detected(infection_detected)
-    {
-    }
-    InfectionState state;
-    bool detected;
-
-    bool operator==(const InfectionProperties& other) const
-    {
-        return std::tie(state, detected) == std::tie(other.state, detected);
-    }
-    bool operator!=(const InfectionProperties& other) const
-    {
-        return std::tie(state, detected) != std::tie(other.state, detected);
-    }
-};
-
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
@@ -75,9 +53,8 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
-           const GlobalInfectionParameters& global_params,
-           VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
+    Person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           Infection* const infection = nullptr, const uint32_t person_id = INVALID_PERSON_ID);
 
     /**
      * create a Person.
@@ -87,9 +64,8 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
-           const GlobalInfectionParameters& global_params,
-           VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
+    Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           Infection* const infection = nullptr, const uint32_t person_id = INVALID_PERSON_ID);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -97,25 +73,16 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc,
-                  const GlobalTestingParameters& global_testing_params);
-
+    void interact(const TimePoint& t, const TimeSpan& dt,
+                  const GlobalInfectionParameters& global_infection_parameters, Location& loc);
+    
     /** 
      * migrate to a different location.
      * @param loc_new the new location of the person.
      * @param cells_new the new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
-
-    /**
-     * Get the current infection of the person.
-     * @returns the current infection state of the person
-     */
-    Infection get_infection() const
-    {
-        return m_infection;
-    }
-
+    void migrate_to(Location& loc_old, Location& loc_new, const TimePoint& t, const std::vector<uint32_t>& cells_new = {});
+    
     /**
      * Get the current vaccination state of the person.
      * @returns the current vaccination state of the person
@@ -126,9 +93,20 @@ public:
     }
 
     /**
-     * Sets the current infection state of the person.
+     * Get the current infection of the person.
+     * @returns the current infection state of the person
      */
-    void set_infection_state(InfectionState inf_state);
+    Infection* get_infection() const
+    {
+        return m_infection;
+    }
+    
+    InfectionState get_infection_state(const TimePoint& t) const;
+    
+    bool is_infected() const
+    {
+        return m_infection != nullptr;
+    }
 
     /**
      * Get the age group of this person.
@@ -256,9 +234,8 @@ public:
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
-    Infection m_infection;
     VaccinationState m_vaccination_state; // change to immunity level
-    TimeSpan m_time_until_carrier; // remove (-> in vector in m_infection)
+    Infection* m_infection;
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

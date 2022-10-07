@@ -39,7 +39,7 @@ public:
         , m_recovery(recovery)
     {
     }
-
+    
     double get_infectivity() const
     {
         return m_infectivity;
@@ -69,11 +69,8 @@ public:
         draw_viral_load();
     }
     void draw_viral_load();
-    TimePoint determine_end_date(TimePoint start_date)
-    {
-        return start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
-    };
-    double get_viral_load(const TimePoint t, const TimePoint start_date) const;
+    TimePoint determine_end_date(const TimePoint& start_date);
+    double get_viral_load(const TimePoint& t, const TimePoint& start_date) const;
 
 private:
     double m_peak;
@@ -87,53 +84,52 @@ class Infection
 public:
     /**
      * create an infection for a single person.
+     * @param virus virus type of the infection
      * @param start_date starting date of the infection
-     * @param virus_type virus type of the infection
+     * @param start_state starting infection state of the person, default susceptible. Only for initialization.
      */
-    Infection(TimePoint start_date, std::shared_ptr<Virus> virus)
-        : m_start_date(start_date)
-        , m_virus(virus)
-        , m_viral_load()
-    {
-        m_end_date = m_viral_load.determine_end_date(m_start_date);
-    };
+    Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date, const InfectionState& start_state = InfectionState::Exposed, const bool detected = false);
 
     /**
      * get viral load at a given time
      * @param t time point of the querry
      * @return viral load at given time point
      */
-    double get_viral_load(const TimePoint t) const;
+    double get_viral_load(const TimePoint& t) const;
 
     /**
      * get infectivity at a given time
      * @param t time point of the querry
      * @return infectivity at given time point
      */
-    double get_infectivity(const TimePoint t) const;
+    double get_infectivity(const TimePoint& t) const;
 
     /**
      * get virus type
      * @return virus type of the infection
      */
-    VirusType get_virus_type() const;
+    std::shared_ptr<Virus> get_virus_type() const;
 
-    InfectionState get_infection_state(const TimePoint t) const;
-
-    void draw_infection_course(InfectionState start_state = InfectionState::Susceptible);
+    InfectionState get_start_infection_state() const;
+    
+    InfectionState get_infection_state(const TimePoint& t) const;
+    
+    void set_detected();
+    bool is_detected() const;
 
 private:
     /**
      * determine viral load course and infection course
      */
+    void draw_infection_course(const InfectionState& start_state = InfectionState::Exposed);
 
     std::shared_ptr<Virus> m_virus;
-    double m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
     std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course;
     ViralLoad m_viral_load;
     TimePoint m_start_date;
     TimePoint m_end_date;
-    bool m_detected = false;
+    double m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
+    bool m_detected;
 };
 
 } // namespace abm

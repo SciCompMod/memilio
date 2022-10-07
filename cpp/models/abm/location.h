@@ -24,6 +24,7 @@
 #include "abm/testing_scheme.h"
 #include "abm/state.h"
 #include "abm/location_type.h"
+#include "abm/infection.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -120,26 +121,27 @@ public:
      * @param global_params global infection parameters
      * @return new infection state of the person
      */
-    InfectionState interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    Infection* interact(const Person& person, const TimePoint& t, const TimeSpan dt,
+                            const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
      * @param person the person arriving
     */
-    void add_person(const Person& person);
+    void add_person(const Person& person, const TimePoint& t);
 
     /** 
      * remove a person from the population of this location.
      * @param person the person leaving
      */
-    void remove_person(const Person& person);
+    void remove_person(const Person& person, const TimePoint& t);
 
     /** 
      * notification that one person in this location changed infection state.
      * @param person the person that changed infection state
      * @param old_state the previous infection state of the person
      */
-    void changed_state(const Person& person, InfectionState old_infection_state);
+    void changed_state(const Person& person, InfectionState old_infection_state, const TimePoint& t);
 
     /** 
      * prepare the location for the next simulation step.

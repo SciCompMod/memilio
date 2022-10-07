@@ -21,17 +21,45 @@
 #include "abm/infection.h"
 #include <math.h>
 
-TimePoint mio::abm::ViralLoad::determine_end_date(TimePoint start_date)
+namespace mio
+{
+namespace abm
+{
+
+void ViralLoad::draw_viral_load()
+{
+    // These numbers are subject to change, They are going to be based on distributions backed from data.
+    m_peak    = 5.0;
+    m_incline = 1.0;
+    m_decline = -1.0;
+}
+
+TimePoint ViralLoad::determine_end_date(const TimePoint& start_date)
 {
     return start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 
-double mio::abm::Infection::get_infectivity(const TimePoint t) const
+double ViralLoad::get_viral_load(const TimePoint& t, const TimePoint& start_date) const
 {
-    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
+    if (t.seconds() <= start_date.seconds() + m_peak / m_incline) {
+        return m_incline * (t - start_date).seconds();
+    }
+    else {
+        return m_peak + m_decline * (t.seconds() - m_peak / m_incline - start_date.seconds());
+    }
 }
 
-double mio::abm::Infection::get_viral_load(const TimePoint t) const
+Infection::Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date, const InfectionState& start_state, const bool detected)
+    : m_virus(virus)
+    , m_viral_load()
+    , m_start_date(start_date)
+    , m_detected(detected)
+{
+    m_end_date = m_viral_load.determine_end_date(m_start_date);
+    draw_infection_course(start_state);
+};
+
+double Infection::get_viral_load(const TimePoint& t) const
 {
     if (t >= m_start_date && t <= m_end_date) {
         return m_viral_load.get_viral_load(t, m_start_date);
@@ -41,48 +69,72 @@ double mio::abm::Infection::get_viral_load(const TimePoint t) const
     }
 }
 
-// double mio::abm::ViralLoad::get_viral_load(const TimePoint t, const TimePoint start_date) const
-// {
-//     if (t <= m_peak / m_incline + start_date) {
-//         return m_incline * (t - start_date);
-//     }
-//     else {
-//         return m_peak + m_decline * (t - m_peak / m_incline - start_date);
-//     }
-// }
-// void mio::abm::ViralLoad::draw_viral_load()
-// {
-//     // These numbers are subject to change, They are going to be based on distributions backed from data.
-//     m_peak    = 5.0;
-//     m_incline = 1.0;
-//     m_decline = -1.0;
-// }
+double Infection::get_infectivity(const TimePoint& t) const
+{
+    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
+}
 
-// InfectionState mio::abm::Infection::get_infection_state(const TimePoint t) const
-// {
-//     return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t))).second;
-// }
+std::shared_ptr<Virus> Infection::get_virus_type() const
+{
+    return m_virus;
+}
 
-// void mio::abm::Infection::draw_infection_course(InfectionState start_state)
-// {
-//     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(m_start_date, start_state));
-//     while ((m_infection_course.back().second != InfectionState::Recovered_Infected ||
-//             m_infection_course.back().second != InfectionState::Recovered_Carrier ||
-//             m_infection_course.back().second != InfectionState::Dead)) {
-//         switch (m_infection_course.back().second) {
-//         case InfectionState::Susceptible:
+InfectionState Infection::get_start_infection_state() const
+{
+    return m_infection_course[0].second;
+}
 
-//             break;
-//         case InfectionState::Infected:
-//             break;
-//         case InfectionState::Carrier:
-//             break;
-//         case InfectionState::Infected_Severe:
-//             break;
-//         case InfectionState::Infected_Critical:
-//             break;
-//         default:
-//             break;
-//         }
-//     }
-//}
+InfectionState Infection::get_infection_state(const TimePoint& t) const
+{
+    return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t, [](std::pair<TimePoint, InfectionState> state, const TimePoint& t) { return state.first <= t; } ))).second;
+}
+
+void Infection::set_detected() {
+    m_detected = true;
+}
+
+bool Infection::is_detected() const {
+    return m_detected;
+}
+
+void Infection::draw_infection_course(const InfectionState& start_state)
+{
+    auto t = m_start_date;
+    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, start_state));
+    while ((m_infection_course.back().second != InfectionState::Recovered_Infected ||
+            m_infection_course.back().second != InfectionState::Recovered_Carrier ||
+            m_infection_course.back().second != InfectionState::Dead)) {
+        switch (m_infection_course.back().second) {
+            case InfectionState::Exposed:
+                // roll out how long until carrier
+                t = t + days(5); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Carrier));
+                break;
+            case InfectionState::Carrier:
+                // roll out if and how long until infected
+                t = t + days(4); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected));
+                break;
+            case InfectionState::Infected:
+                // roll out next infection step
+                t = t + days(3); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Severe));
+                break;
+            case InfectionState::Infected_Severe:
+                // roll out next infection step
+                t = t + days(2); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Critical));
+                break;
+            case InfectionState::Infected_Critical:
+                // roll out next infection step
+                t = t + days(1); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Dead));
+                break;
+            default:
+                break;
+         }
+     }
+}
+
+} // namespace abm
+} // namespace mio
