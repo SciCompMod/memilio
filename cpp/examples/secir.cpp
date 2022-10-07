@@ -55,10 +55,10 @@ int main()
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);

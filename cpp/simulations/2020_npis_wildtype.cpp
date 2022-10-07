@@ -425,10 +425,10 @@ void set_synthetic_population_data(std::vector<mio::SecirModel>& counties)
 
         for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
             counties[county_idx].populations[{i, mio::InfectionState::Exposed}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, mio::InfectionState::Carrier}]      = nb_car_t0;
-            counties[county_idx].populations[{i, mio::InfectionState::Infected}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, mio::InfectionState::ICU}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
             counties[county_idx].populations[{i, mio::InfectionState::Recovered}]    = nb_rec_t0;
             counties[county_idx].populations[{i, mio::InfectionState::Dead}]         = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
@@ -522,7 +522,7 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
     }
 
     auto migrating_compartments = {mio::InfectionState::Susceptible, mio::InfectionState::Exposed,
-                                   mio::InfectionState::Carrier, mio::InfectionState::Infected,
+                                   mio::InfectionState::InfectedNoSymptoms, mio::InfectionState::InfectedSymptoms,
                                    mio::InfectionState::Recovered};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {

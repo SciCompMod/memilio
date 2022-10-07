@@ -64,14 +64,14 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& vnum_car, std::vector<std::vector<double>>& vnum_inf,
     std::vector<std::vector<double>>& vnum_hosp, std::vector<std::vector<double>>& vnum_icu,
     std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
-    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,const std::vector<std::vector<int>>& vt_Exposed,
+    const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
     const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
     return read_confirmed_cases_data(rki_data, vregion, date, vnum_exp, vnum_car, vnum_inf, vnum_hosp, vnum_icu,
-                                     vnum_death, vnum_rec, vt_InfectedNoSymptoms, vt_Exposed,
+                                     vnum_death, vnum_rec, vt_Exposed, vt_InfectedNoSymptoms,
                                      vt_InfectedSymptoms, vt_InfectedSevere, vt_InfectedCritical,
                                      vmu_C_R, vmu_I_H, vmu_H_U, scaling_factor_inf);
 }
@@ -81,8 +81,8 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
     std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
     std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
-    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, 
-    const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedSymptoms,
+    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_Exposed, 
+    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, const std::vector<std::vector<int>>& vt_InfectedSymptoms,
     const std::vector<std::vector<int>>& vt_InfectedSevere, const std::vector<std::vector<int>>& vt_InfectedCritical,
     const std::vector<std::vector<double>>& vmu_C_R, const std::vector<std::vector<double>>& vmu_I_H,
     const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
@@ -211,12 +211,12 @@ IOResult<void> read_confirmed_cases_data(
                 }
             };
 
-            try_fix_constraints(num_inf[i], -5, "Infected");
-            try_fix_constraints(num_car[i], -5, "Carrier");
+            try_fix_constraints(num_inf[i], -5, "InfectedSymptoms");
+            try_fix_constraints(num_car[i], -5, "InfectedNoSymptoms");
             try_fix_constraints(num_exp[i], -5, "Exposed");
-            try_fix_constraints(num_hosp[i], -5, "Hospitalized");
+            try_fix_constraints(num_hosp[i], -5, "InfectedSevere");
             try_fix_constraints(num_death[i], -5, "Dead");
-            try_fix_constraints(num_icu[i], -5, "ICU");
+            try_fix_constraints(num_icu[i], -5, "InfectedCritical");
             try_fix_constraints(num_rec[i], -20, "Recovered or vaccinated");
         }
     }

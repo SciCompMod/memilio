@@ -72,18 +72,18 @@ public:
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
             test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 *
-                                       this->populations.get_from(pop, {i, InfectionState::Carrier});
-            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICU});
+                                       this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptoms});
+            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
         }
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-            size_t Ci = this->populations.get_flat_index({i, InfectionState::Carrier});
-            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
-            size_t Hi = this->populations.get_flat_index({i, InfectionState::Hospitalized});
-            size_t Ui = this->populations.get_flat_index({i, InfectionState::ICU});
+            size_t Ci = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+            size_t Ii = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+            size_t Hi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
+            size_t Ui = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
             size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
             size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
 
@@ -98,10 +98,10 @@ public:
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
                 size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                size_t Cj = this->populations.get_flat_index({j, InfectionState::Carrier});
-                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                size_t Hj = this->populations.get_flat_index({j, InfectionState::Hospitalized});
-                size_t Uj = this->populations.get_flat_index({j, InfectionState::ICU});
+                size_t Cj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
+                size_t Ij = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
+                size_t Hj = this->populations.get_flat_index({j, InfectionState::InfectedSevere});
+                size_t Uj = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
@@ -306,7 +306,7 @@ double get_infections_relative(const SecirSimulation<Base>& sim, double /*t*/,
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::Infected});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptoms});
     }
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
@@ -334,7 +334,7 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of carriers
-    auto y_car = slice(y, {Eigen::Index(InfectionState::Carrier), Eigen::Index(size_t(params.get_num_groups())),
+    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
@@ -346,7 +346,7 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
-    slice(factors, {Eigen::Index(InfectionState::Infected), Eigen::Index(size_t(params.get_num_groups())),
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptoms), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionState::Count)})
         .array() = risk_from_symptomatic;
     return factors;

@@ -49,10 +49,10 @@ TEST(TestSaveResult, compareResultWithH5)
         params.get<mio::TimeInfectedCritical>()[i]              = 8.;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = nb_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = nb_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = nb_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = nb_icu_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
         model.populations[{i, mio::InfectionState::Recovered}]    = nb_rec_t0;
         model.populations[{i, mio::InfectionState::Dead}]         = nb_dead_t0;
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);

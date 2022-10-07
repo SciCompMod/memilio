@@ -118,7 +118,7 @@ TEST(TestMobility, edgeApplyMigration)
     auto& cm                   = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
     params.get<mio::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
     params.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]  = 1.;

@@ -90,10 +90,10 @@ void draw_sample_demographics(SecirModel& model)
         double group_total = model.populations.get_group_total(i);
 
         model.populations[{i, InfectionState::Exposed}].draw_sample();
-        model.populations[{i, InfectionState::Carrier}].draw_sample();
-        model.populations[{i, InfectionState::Infected}].draw_sample();
-        model.populations[{i, InfectionState::Hospitalized}].draw_sample();
-        model.populations[{i, InfectionState::ICU}].draw_sample();
+        model.populations[{i, InfectionState::InfectedNoSymptoms}].draw_sample();
+        model.populations[{i, InfectionState::InfectedSymptoms}].draw_sample();
+        model.populations[{i, InfectionState::InfectedSevere}].draw_sample();
+        model.populations[{i, InfectionState::InfectedCritical}].draw_sample();
         model.populations[{i, InfectionState::Recovered}].draw_sample();
 
         // no sampling for dead and total numbers

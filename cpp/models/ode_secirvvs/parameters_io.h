@@ -60,7 +60,7 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& num_car, std::vector<std::vector<double>>& num_inf,
     std::vector<std::vector<double>>& num_hosp, std::vector<std::vector<double>>& num_icu,
     std::vector<std::vector<double>>& num_death, std::vector<std::vector<double>>& num_rec,
-    const std::vector<std::vector<int>>& t_InfectedNoSymptoms, const std::vector<std::vector<int>>& t_Exposed, 
+    const std::vector<std::vector<int>>& t_Exposed, const std::vector<std::vector<int>>& t_InfectedNoSymptoms,
     const std::vector<std::vector<int>>& t_InfectedSymptoms, const std::vector<std::vector<int>>& t_InfectedSevere,
     const std::vector<std::vector<int>>& t_InfectedCritical, const std::vector<std::vector<double>>& mu_C_R,
     const std::vector<std::vector<double>>& mu_I_H, const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
@@ -70,8 +70,8 @@ IOResult<void> read_confirmed_cases_data(
     std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
     std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
     std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
-    std::vector<std::vector<double>>& num_rec, const std::vector<std::vector<int>>& t_InfectedNoSymptoms, 
-    const std::vector<std::vector<int>>& t_Exposed, const std::vector<std::vector<int>>& t_InfectedSymptoms,
+    std::vector<std::vector<double>>& num_rec, const std::vector<std::vector<int>>& t_Exposed,
+    const std::vector<std::vector<int>>& t_InfectedNoSymptoms, const std::vector<std::vector<int>>& t_InfectedSymptoms,
     const std::vector<std::vector<int>>& t_InfectedSevere, const std::vector<std::vector<int>>& t_InfectedCritical,
     const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
     const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
@@ -115,8 +115,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 
     BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
 
-    std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
     std::vector<std::vector<int>> t_Exposed{model.size()};
+    std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
     std::vector<std::vector<int>> t_InfectedSymptoms{model.size()};
     std::vector<std::vector<int>> t_InfectedSevere{model.size()};
     std::vector<std::vector<int>> t_InfectedCritical{model.size()};
@@ -166,8 +166,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     }
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, t_InfectedNoSymptoms,
-        t_Exposed, t_InfectedSymptoms, t_InfectedSevere,
+        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, 
+        t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
         t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
@@ -244,8 +244,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     }
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, t_InfectedNoSymptoms,
-        t_Exposed, t_InfectedSymptoms, t_InfectedSevere,
+        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, 
+        t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
         t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
@@ -321,8 +321,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
     }
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_data(
-        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, t_InfectedNoSymptoms,
-        t_Exposed, t_InfectedSymptoms, t_InfectedSevere,
+        rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec, 
+        t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
         t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
@@ -785,7 +785,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
             rki_data, region, date, num_exp_uv, num_car_uv, num_inf_uv, num_hosp_uv, dummy_icu, num_death_uv,
-            num_rec_uv, t_InfectedNoSymptoms_uv, t_Exposed_uv, t_InfectedSymptoms_uv,
+            num_rec_uv, t_Exposed_uv, t_InfectedNoSymptoms_uv, t_InfectedSymptoms_uv,
             t_InfectedSevere_uv, t_InfectedCritical_uv, mu_C_R_uv, mu_I_H_uv, mu_H_U_uv, scaling_factor_inf));
 
         // partially vaccinated
@@ -801,7 +801,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         }
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
             rki_data, region, date, num_exp_pv, num_car_pv, num_inf_pv, num_hosp_pv, dummy_icu, dummy_death, dummy_rec,
-            t_InfectedNoSymptoms_pv, t_Exposed_pv, t_InfectedSymptoms_pv, t_InfectedSevere_pv,
+            t_Exposed_pv, t_InfectedNoSymptoms_pv, t_InfectedSymptoms_pv, t_InfectedSevere_pv,
             t_InfectedCritical_pv, mu_C_R_pv, mu_I_H_pv, mu_H_U_pv, scaling_factor_inf));
 
         // fully vaccinated
@@ -816,10 +816,10 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         }
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
             rki_data, region, date, num_exp_fv, num_car_fv, num_inf_fv, num_hosp_fv, dummy_icu, dummy_death, dummy_rec,
-            t_InfectedNoSymptoms_fv, t_Exposed_fv, t_InfectedSymptoms_fv, t_InfectedSevere_fv,
+            t_Exposed_fv, t_InfectedNoSymptoms_fv, t_InfectedSymptoms_fv, t_InfectedSevere_fv,
             t_InfectedCritical_fv, mu_C_R_fv, mu_I_H_fv, mu_H_U_fv, scaling_factor_inf));
 
-        // ICU only read for compartment InfectionState::ICU and then distributed later
+        // ICU only read for compartment InfectionState::InfectedCritical and then distributed later
         std::vector<double> dummy_icu2(model.size(), 0.0);
         BOOST_OUTCOME_TRY(details::read_divi_data(divi_data, region, date, dummy_icu2));
 

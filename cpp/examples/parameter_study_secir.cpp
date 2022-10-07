@@ -107,10 +107,10 @@ int main()
         params.get<mio::TimeInfectedCritical>()[i]          = 8;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]      = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]     = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}] = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]          = fact * num_icu_t0;
         model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
         model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},

@@ -358,7 +358,7 @@ public:
 TEST(DynamicNPIs, secir_threshold_safe)
 {
     mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 1.0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 1.0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100.0);
     
     mio::DynamicNPIs npis;
@@ -381,7 +381,7 @@ TEST(DynamicNPIs, secir_threshold_safe)
 TEST(DynamicNPIs, secir_threshold_exceeded)
 {
     mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100);
     
     mio::DynamicNPIs npis;

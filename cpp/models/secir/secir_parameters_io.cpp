@@ -197,12 +197,12 @@ namespace details
                     }
                 };
 
-                try_fix_constraints(num_inf[i], -5, "Infected");
-                try_fix_constraints(num_car[i], -5, "Carrier");
+                try_fix_constraints(num_inf[i], -5, "InfectedSymptoms");
+                try_fix_constraints(num_car[i], -5, "InfectedNoSymptoms");
                 try_fix_constraints(num_exp[i], -5, "Exposed");
-                try_fix_constraints(num_hosp[i], -5, "Hospitalized");
+                try_fix_constraints(num_hosp[i], -5, "InfectedSevere");
                 try_fix_constraints(num_death[i], -5, "Dead");
-                try_fix_constraints(num_icu[i], -5, "ICU");
+                try_fix_constraints(num_icu[i], -5, "InfectedCritical");
                 try_fix_constraints(num_rec[i], -20, "Recovered");
             }
         }
@@ -273,11 +273,11 @@ namespace details
                 for (size_t i = 0; i < num_groups; i++) {
                     model[county].populations[{AgeGroup(i), InfectionState::Exposed}] =
                         num_exp[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Carrier}] =
+                    model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
                         num_car[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Infected}] =
+                    model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
                         num_inf[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Hospitalized}] =
+                    model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
                         num_hosp[county][i];
                     model[county].populations[{AgeGroup(i), InfectionState::Dead}] =
                         num_death[county][i];
@@ -392,7 +392,7 @@ namespace details
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
-                model[region].populations[{i, InfectionState::ICU}] =
+                model[region].populations[{i, InfectionState::InfectedCritical}] =
                     scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
             }
         }

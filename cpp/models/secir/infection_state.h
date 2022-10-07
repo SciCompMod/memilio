@@ -31,10 +31,10 @@ enum class InfectionState
 {
     Susceptible  = 0,
     Exposed      = 1,
-    Carrier      = 2,
-    Infected     = 3,
-    Hospitalized = 4,
-    ICU          = 5,
+    InfectedNoSymptoms      = 2,
+    InfectedSymptoms     = 3,
+    InfectedSevere = 4,
+    InfectedCritical          = 5,
     Recovered    = 6,
     Dead         = 7,
     Count = 8

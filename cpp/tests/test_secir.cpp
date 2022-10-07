@@ -52,10 +52,10 @@ TEST(TestSecir, compareWithPreviousRun)
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
@@ -116,10 +116,10 @@ TEST(TestSecir, testParamConstructors)
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
@@ -147,14 +147,14 @@ TEST(TestSecir, testParamConstructors)
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Susceptible}]));
     EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]),
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]));
-    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]));
-    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]));
-    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]));
-    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]));
+    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]));
+    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]));
+    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]));
+    EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]));
     EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]),
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ((model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]),
@@ -201,14 +201,14 @@ TEST(TestSecir, testParamConstructors)
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Susceptible}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]),
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]),
-              (model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]),
+              (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]),
               (model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]),
@@ -254,14 +254,14 @@ TEST(TestSecir, testParamConstructors)
               (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Susceptible}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]),
               (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]),
-              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]),
-              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]),
-              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]));
-    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]),
-              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]),
+              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]),
+              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]),
+              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]));
+    EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]),
+              (model4.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]),
               (model4.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ((model3.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]),
@@ -307,14 +307,14 @@ TEST(TestSecir, testParamConstructors)
               (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Susceptible}]));
     EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]),
               (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]));
-    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]),
-              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]));
-    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]),
-              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]));
-    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]),
-              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]));
-    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]),
-              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]));
+    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]),
+              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]));
+    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]),
+              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]));
+    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]),
+              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]));
+    EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]),
+              (model3.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]));
     EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]),
               (model3.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ((model5.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]),
@@ -379,10 +379,10 @@ TEST(TestSecir, testSettersAndGetters)
     model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]              = vec[5];
 
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = vec[6];
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = vec[7];
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = vec[8];
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = vec[9];
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = vec[10];
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = vec[7];
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = vec[8];
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = vec[9];
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = vec[10];
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = vec[11];
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = vec[12];
 
@@ -416,13 +416,13 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[6].get_distribution(),
                        *model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}].get_distribution());
     check_distribution(*vec[7].get_distribution(),
-                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}].get_distribution());
+                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}].get_distribution());
     check_distribution(*vec[8].get_distribution(),
-                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}].get_distribution());
+                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}].get_distribution());
     check_distribution(*vec[9].get_distribution(),
-                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}].get_distribution());
+                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}].get_distribution());
     check_distribution(*vec[10].get_distribution(),
-                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}].get_distribution());
+                       *model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}].get_distribution());
     check_distribution(*vec[11].get_distribution(),
                        *model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}].get_distribution());
     check_distribution(*vec[12].get_distribution(),
@@ -454,10 +454,10 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[4], model.parameters.get<mio::TimeInfectedSevere>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[5], model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]);
     EXPECT_EQ(vec[6], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]));
-    EXPECT_EQ(vec[7], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]));
-    EXPECT_EQ(vec[8], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]));
-    EXPECT_EQ(vec[9], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}]));
-    EXPECT_EQ(vec[10], (model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]));
+    EXPECT_EQ(vec[7], (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]));
+    EXPECT_EQ(vec[8], (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]));
+    EXPECT_EQ(vec[9], (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]));
+    EXPECT_EQ(vec[10], (model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]));
     EXPECT_EQ(vec[11], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]));
     EXPECT_EQ(vec[12], (model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]));
     EXPECT_EQ(vec[13], model.parameters.get<mio::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0]);
@@ -498,10 +498,10 @@ TEST(TestSecir, testValueConstraints)
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
@@ -550,10 +550,10 @@ TEST(TestSecir, testModelConstraints)
     model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]          = 8.;
 
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
@@ -646,8 +646,8 @@ TEST(Secir, testAndTraceCapacity)
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]  = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]  = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]  = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     params.get<mio::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = inf_prob;
@@ -682,13 +682,13 @@ TEST(Secir, getInfectionsRelative)
 {
     size_t num_groups = 3;
     mio::SecirModel model((int)num_groups);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 100.0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 100.0;
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(0), mio::InfectionState::Susceptible}, 10'000.0);
-    model.populations[{mio::AgeGroup(1), mio::InfectionState::Infected}] = 50.0;
+    model.populations[{mio::AgeGroup(1), mio::InfectionState::InfectedSymptoms}] = 50.0;
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(1), mio::InfectionState::Susceptible}, 20'000.0);
-    model.populations[{mio::AgeGroup(2), mio::InfectionState::Infected}] = 25.0;
+    model.populations[{mio::AgeGroup(2), mio::InfectionState::InfectedSymptoms}] = 25.0;
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(2), mio::InfectionState::Susceptible}, 40'000.0);
 
@@ -707,26 +707,26 @@ TEST(Secir, get_migration_factors)
     model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>().array()     = 0.1;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>().array()    = beta;
     model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>().array() = max_beta;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]   = 100;
     mio::SecirSimulation<> sim(model, 0.0);
     {
         sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 45.;
         auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::InfectionState::Count)).eval();
-        cmp[Eigen::Index(mio::InfectionState::Infected)] = beta;
+        cmp[Eigen::Index(mio::InfectionState::InfectedSymptoms)] = beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 45. / 5.;
         auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
         auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::InfectionState::Count)).eval();
-        cmp[Eigen::Index(mio::InfectionState::Infected)] = max_beta;
+        cmp[Eigen::Index(mio::InfectionState::InfectedSymptoms)] = max_beta;
         ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
     }
     {
         sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 20.;
         auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
-        ASSERT_GT(factors[Eigen::Index(mio::InfectionState::Infected)], beta);
-        ASSERT_LT(factors[Eigen::Index(mio::InfectionState::Infected)], max_beta);
+        ASSERT_GT(factors[Eigen::Index(mio::InfectionState::InfectedSymptoms)], beta);
+        ASSERT_LT(factors[Eigen::Index(mio::InfectionState::InfectedSymptoms)], max_beta);
     }
 }

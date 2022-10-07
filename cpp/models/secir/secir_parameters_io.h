@@ -213,12 +213,12 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
             for (size_t age = 0; age < ConfirmedCasesDataEntry::age_group_names.size(); age++) {
                 rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)InfectionState::Count * age) =
                     num_exp[i][age];
-                rki_data[i][j]((size_t)InfectionState::Carrier + (size_t)InfectionState::Count * age) = num_car[i][age];
-                rki_data[i][j]((size_t)InfectionState::Infected + (size_t)InfectionState::Count * age) =
+                rki_data[i][j]((size_t)InfectionState::InfectedNoSymptoms + (size_t)InfectionState::Count * age) = num_car[i][age];
+                rki_data[i][j]((size_t)InfectionState::InfectedSymptoms + (size_t)InfectionState::Count * age) =
                     num_inf[i][age];
-                rki_data[i][j]((size_t)InfectionState::Hospitalized + (size_t)InfectionState::Count * age) =
+                rki_data[i][j]((size_t)InfectionState::InfectedSevere + (size_t)InfectionState::Count * age) =
                     num_hosp[i][age];
-                rki_data[i][j]((size_t)InfectionState::ICU + (size_t)InfectionState::Count * age) =
+                rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age) =
                     scaling_factor_icu * num_icu[i] * mu_I_U[i][age] / sum_mu_I_U[i];
                 rki_data[i][j]((size_t)InfectionState::Recovered + (size_t)InfectionState::Count * age) =
                     num_rec[i][age];
@@ -226,7 +226,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                 rki_data[i][j]((size_t)InfectionState::Susceptible + (size_t)InfectionState::Count * age) =
                     num_population[i][age] - num_exp[i][age] - num_car[i][age] - num_inf[i][age] - num_hosp[i][age] -
                     num_rec[i][age] - num_death[i][age] -
-                    rki_data[i][j]((size_t)InfectionState::ICU + (size_t)InfectionState::Count * age);
+                    rki_data[i][j]((size_t)InfectionState::InfectedCritical + (size_t)InfectionState::Count * age);
             }
         }
         date = offset_date_by_days(date, 1);

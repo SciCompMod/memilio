@@ -382,7 +382,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.2;
     params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.5;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 10;
-    model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 10;
+    model.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 10;
 
     auto& params2                                                             = model2.parameters;
     params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 5;
@@ -390,7 +390,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.4;
     params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.2;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 20;
-    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 12;
+    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 12;
 
     auto g = std::vector<mio::SecirModel>({model, model2});
 
@@ -400,7 +400,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.3;
     params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.6;
     model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 11;
-    model.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 11;
+    model.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 11;
 
     params2.set<mio::Seasonality>(0.4);
     params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                      = 6;
@@ -408,7 +408,7 @@ TEST(TestEnsembleParamsPercentile, basic)
     params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.5;
     params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]             = 0.3;
     model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]      = 22;
-    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}] = 14;
+    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 14;
 
     auto g2 = std::vector<mio::SecirModel>({model, model2});
 
@@ -453,11 +453,11 @@ TEST(TestEnsembleParamsPercentile, basic)
     EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 11);
     EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 22);
 
-    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}]), 10);
-    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}]), 12);
+    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 10);
+    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 12);
 
-    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}]), 11);
-    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::Hospitalized}]), 14);
+    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 11);
+    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 14);
 }
 
 TEST(TestDistance, same_result_zero_distance)
