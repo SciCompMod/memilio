@@ -258,49 +258,21 @@ public:
             dydt[EIIi] -= rateE * y[EIIi]; // only exchange of E and C done here
 
             dydt[INSIIi] =
-                rateE * y[EIIi] - ((reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                                          (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * rateINS +
-                                      (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                                               (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
-                                          rateINS / reducTimeInfectedMild) *
-                                         y[INSIIi];
-            dydt[INSIICi] = -((reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                                (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * rateINS +
-                            (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                                     (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
-                                rateINS / reducTimeInfectedMild) *
-                          y[INSIICi];
+                rateE * y[EIIi] - (rateINS / reducTimeInfectedMild) * y[INSIIi];
+            dydt[INSIICi] = -(rateINS / reducTimeInfectedMild) * y[INSIICi];
 
             dydt[ISyIIi] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
-                    rateINS * y[INSIIi] -
-                ((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyIIi];
+                    (rateINS / reducTimeInfectedMild) * y[INSIIi] -
+                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIIi];
             dydt[ISyIICi] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
-                    rateINS * y[INSIICi] -
-                ((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyIICi];
+                    (rateINS / reducTimeInfectedMild) * y[INSIICi] -
+                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIICi];
             dydt[ISevIIi] = reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                             params.get<TimeInfectedSymptoms>()[i] * y[ISyIIi] +
-                         reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                             params.get<TimeInfectedSymptoms>()[i] * y[ISyIICi] -
-                         ((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<CriticalPerSevere>()[i]) /
-                              params.get<TimeInfectedSevere>()[i] +
-                          reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<CriticalPerSevere>()[i] /
-                              params.get<TimeInfectedSevere>()[i]) *
-                             y[ISevIIi];
-            dydt[ICrIIi] = -((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<DeathsPerCritical>()[i]) /
-                               params.get<TimeInfectedCritical>()[i] +
-                           reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<DeathsPerCritical>()[i] /
-                               params.get<TimeInfectedCritical>()[i]) *
-                         y[ICrIIi];
+                             (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyIIi] + y[ISyIICi]) -
+                         (1  / params.get<TimeInfectedSevere>()[i]) * y[ISevIIi];
+            dydt[ICrIIi] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICrIIi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrIIi] += reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * criticalPerSevereAdjusted /
                           params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
