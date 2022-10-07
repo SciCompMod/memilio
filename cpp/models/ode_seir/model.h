@@ -49,13 +49,13 @@ namespace oseir
                              Eigen::Ref<Eigen::VectorXd> dydt) const override
         {
             auto& params     = this->parameters;
-            double S2E_coeff = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+            double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                                params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
             dydt[(size_t)InfectionState::Susceptible] =
-                -S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+                -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
             dydt[(size_t)InfectionState::Exposed] =
-                S2E_coeff * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
+                coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
                 (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
             dydt[(size_t)InfectionState::Infected] =
                 (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -

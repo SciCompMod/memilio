@@ -70,8 +70,8 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
-            test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 *
+            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                                        this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptoms});
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
         }
@@ -80,28 +80,28 @@ public:
 
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
             size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-            size_t Ci = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
-            size_t Ii = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
-            size_t Hi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
-            size_t Ui = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
+            size_t INSi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+            size_t ISyi = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+            size_t ISevi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
+            size_t ICri = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
             size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
             size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
 
             dydt[Si] = 0;
             dydt[Ei] = 0;
 
-            double dummy_R2 =
+            double rateE =
                 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
-            double dummy_R3 =
+            double rateINS =
                 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
                 size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                size_t Cj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
-                size_t Ij = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
-                size_t Hj = this->populations.get_flat_index({j, InfectionState::InfectedSevere});
-                size_t Uj = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
+                size_t INSj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
+                size_t ISyj = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
+                size_t ISevj = this->populations.get_flat_index({j, InfectionState::InfectedSevere});
+                size_t ICrj = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
@@ -116,14 +116,14 @@ public:
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
+                double Nj = pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
                 double dummy_S =
                     y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
-                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[Cj] + risk_from_symptomatic * pop[Ij]);
+                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] + risk_from_symptomatic * pop[ISyj]);
 
-                dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
-                dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+                dydt[Si] -= dummy_S; 
+                dydt[Ei] += dummy_S; 
             }
 
             // ICU capacity shortage is close
@@ -133,35 +133,26 @@ public:
 
             double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
-            dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
-            dydt[Ci] = dummy_R2 * y[Ei] -
-                       ((1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 +
-                        params.get<RecoveredPerInfectedNoSymptoms>()[i] * dummy_R3) *
-                           y[Ci];
-            dydt[Ii] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * dummy_R3 * y[Ci] -
-                       ((1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                        params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
-                           y[Ii];
-            dydt[Hi] =
-                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[Ii] -
-                ((1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] +
-                 params.get<CriticalPerSevere>()[i] / params.get<TimeInfectedSevere>()[i]) *
-                    y[Hi];
-            dydt[Ui] = -((1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] +
-                         params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i]) *
-                       y[Ui];
+            dydt[Ei] -= rateE * y[Ei]; // only exchange of E and INS done here
+            dydt[INSi] = rateE * y[Ei] - rateINS * y[INSi];
+            dydt[ISyi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
+                       (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
+            dydt[ISevi] =
+                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
+                (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
+            dydt[ICri] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICri];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[ICri] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
 
             dydt[Ri] =
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * dummy_R3 * y[Ci] +
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[Ii] +
-                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[Ui];
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi] +
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] +
+                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi] +
+                (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICri];
 
-            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[Ui];
+            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[Hi];
+            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
         }
     }
 
