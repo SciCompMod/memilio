@@ -214,7 +214,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(),
                                       reducInfectedSymptomsImprovedImmunityMin, reducInfectedSymptomsImprovedImmunityMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(),
-                                      reduc_vacc_hosp_min, reduc_vacc_hosp_max);
+                                      reducInfectedSevereCriticalDeadPartialImmunityMin, reducInfectedSevereCriticalDeadPartialImmunityMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(),
                                       reducInfectedSevereCriticalDeadImprovedImmunityMin, reducInfectedSevereCriticalDeadImprovedImmunityMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild>(), reducTimeInfectedMild,

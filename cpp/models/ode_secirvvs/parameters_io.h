@@ -511,7 +511,9 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                      model[region].populations[{i, InfectionState::InfectedCriticalNaive}] +
                      model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
                      model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::Dead}]);
+                     model[region].populations[{i, InfectionState::DeadNaive}] +
+                     model[region].populations[{i, InfectionState::DeadPartialImmunity}] +
+                     model[region].populations[{i, InfectionState::DeadImprovedImmunity}]);
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::min(
                     S + S_pv + S_v, std::max(0.0, double(model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
