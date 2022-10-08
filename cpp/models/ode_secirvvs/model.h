@@ -60,7 +60,7 @@ public:
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
             test_and_trace_required +=
-                (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * rateINS *
+                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
@@ -133,7 +133,7 @@ public:
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto risk_from_symptomatic = smoother_cosine(
                 test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 15,
-                params.get<RiskOfInfectionFromSympomatic>()[i], params.get<MaxRiskOfInfectionFromSympomatic>()[i]);
+                params.get<RiskOfInfectionFromSymptomatic>()[i], params.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
 
             auto risk_from_carrier = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
                                                      params.get<TestAndTraceCapacity>() * 2,
@@ -222,9 +222,9 @@ public:
             dydt[INSNi] = rateE * y[ENi] - rateINS * y[INSNi];
             dydt[INSNCi] = - rateINS * y[INSNCi];
 
-            dydt[ISyNi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * rateINS * y[INSNi] -
+            dydt[ISyNi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNi] -
                        (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyNi];
-            dydt[ISyNCi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * rateINS * y[INSNCi] -
+            dydt[ISyNCi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNCi] -
                         (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyNCi];
 
             dydt[ISevNi] =
@@ -240,11 +240,11 @@ public:
             dydt[INSPIi] = rateE * y[EPIi] - (rateINS / reducTimeInfectedMild) * y[INSPIi];
             dydt[INSPICi] = -(rateINS / reducTimeInfectedMild) * y[INSPICi];
             dydt[ISyPIi] =
-                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSPIi] -
                 (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyPIi];
             dydt[ISyPICi] =
-                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSPICi] -
                 (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyPIi];
             dydt[ISevPIi] = reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
@@ -264,11 +264,11 @@ public:
             dydt[INSIICi] = -(rateINS / reducTimeInfectedMild) * y[INSIICi];
 
             dydt[ISyIIi] =
-                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSIIi] -
                 (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIIi];
             dydt[ISyIICi] =
-                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSIICi] -
                 (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIICi];
             dydt[ISevIIi] = reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
@@ -287,14 +287,14 @@ public:
 
             // recovered and deaths from all paths
             dydt[SIIi] +=
-                params.get<AsymptoticCasesPerInfectious>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
                 (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * (y[ISyNi] +  y[ISyNCi]) +
                 (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi] +
                 (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
 
             dydt[SIIi] +=
                 (1 -
-                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
+                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
                     rateINS / reducTimeInfectedMild * (y[INSPIi] + y[INSPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyPIi] + y[ISyPICi]) +
@@ -305,7 +305,7 @@ public:
 
             dydt[SIIi] +=
                 (1 -
-                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) * 
+                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) * 
                  rateINS / reducTimeInfectedMild * (y[INSIIi] + y[INSIICi]) +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyIIi] + y[ISyIICi]) +
@@ -586,9 +586,9 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     //parameters as arrays
     auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
     auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto& p_asymp   = params.template get<AsymptoticCasesPerInfectious>().array().template cast<double>();
-    auto& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
-    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
+    auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
+    auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
+    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of carriers
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)}) +

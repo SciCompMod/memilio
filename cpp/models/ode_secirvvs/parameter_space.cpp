@@ -73,8 +73,8 @@ namespace osecirvvs
         model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
         model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
         model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
 
         model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)].draw_sample();
         model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)].draw_sample();
@@ -91,10 +91,10 @@ namespace osecirvvs
             model.parameters.get<TimeInfectedSymptoms>()[i] = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
             model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
                 model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
-            model.parameters.get<RiskOfInfectionFromSympomatic>()[i] =
-                model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)];
-            model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =
-                model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)];
+            model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
+                model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
+            model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i] =
+                model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
             model.parameters.get<ReducExposedPartialImmunity>()[i]     = model.parameters.get<ReducExposedPartialImmunity>()[AgeGroup(0)];
             model.parameters.get<ReducExposedImprovedImmunity>()[i]   = model.parameters.get<ReducExposedImprovedImmunity>()[AgeGroup(0)];
@@ -109,7 +109,7 @@ namespace osecirvvs
             model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
             model.parameters.get<TransmissionProbabilityOnContact>()[i].draw_sample();
-            model.parameters.get<AsymptoticCasesPerInfectious>()[i].draw_sample();
+            model.parameters.get<RecoveredPerInfectedNoSymptoms>()[i].draw_sample();
             model.parameters.get<DeathsPerCritical>()[i].draw_sample();
             model.parameters.get<SeverePerInfectedSymptoms>()[i].draw_sample();
             model.parameters.get<CriticalPerSevere>()[i].draw_sample();

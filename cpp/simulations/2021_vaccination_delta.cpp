@@ -132,16 +132,16 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double timeInfectedSymptomsMin[]    = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465}; 
     const double timeInfectedSymptomsMax[]    = {8.427,  8.427,  8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[] = {3.925, 3.925, 4.85,  6.4, 7.2, 9.}; 
-    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.}
+    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.};
     const double timeInfectedCriticalMin[]  = {4.95, 4.95, 4.86, 14.14, 14.4, 10.}; 
     const double timeInfectedCriticalMax[]  = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
     
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), t_inf_min, t_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), tsevere_min,
-                                      tsevere_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), tcritical_min, tcritical_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), incubationTime, incubationTime);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), serialIntervalMin, serialIntervalMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), timeInfectedSymptomsMin, timeInfectedSymptomsMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), timeInfectedSevereMin,
+                                      timeInfectedSevereMax);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), timeInfectedCriticalMin, timeInfectedCriticalMax);
 
     //probabilities
     double fac_variant                   = 1.4;
@@ -158,14 +158,14 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
     const double riskOfInfectionFromSymptomaticMax   = 0.2;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.4;
     const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
-    const double recoveredPerInfectedNoSymptomsMin[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
+    const double recoveredPerInfectedNoSymptomsMin[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; 
     const double recoveredPerInfectedNoSymptomsMax[]      = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double severePerInfectedSymptomsMin[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; // rho
+    const double severePerInfectedSymptomsMin[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; 
     const double severePerInfectedSymptomsMax[]     = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double criticalPerSevereMin[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35}; // theta
+    const double criticalPerSevereMin[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
     const double criticalPerSevereMax[]     = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double deathsPerCriticalMin[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
-    const double deathsPerCriticalMax[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};  
+    const double deathsPerCriticalMin[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; 
+    const double deathsPerCriticalMax[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7}; 
 
     const double reducExposedPartialImmunityMin    = 0.75;
     const double reducExposedPartialImmunityMax    = 0.85;
@@ -193,11 +193,11 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(), relativeTransmissionNoSymptomsMin,
                                       relativeTransmissionNoSymptomsMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(),
                                       riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSympomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>(),
                                       maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), recoveredPerInfectedNoSymptomsMin,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(), recoveredPerInfectedNoSymptomsMin,
                                       recoveredPerInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(), severePerInfectedSymptomsMin,
                                       severePerInfectedSymptomsMax);
@@ -497,7 +497,7 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}] = nb_hosp_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]          = nb_icu_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]         = nb_rec_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]              = nb_dead_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::DeadNaive}]              = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
                 {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, nb_total_t0);
         }

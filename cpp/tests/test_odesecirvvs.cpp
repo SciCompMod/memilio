@@ -122,7 +122,7 @@ void set_synthetic_population_data(mio::osecirvvs::Model::Populations& populatio
 void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters, bool set_invalid_initial_value)
 {
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity>(), 20, 50, set_invalid_initial_value);
-    assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 100, 200,
+    assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 0.01, 0.02,
                                 set_invalid_initial_value);
     parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
@@ -153,103 +153,111 @@ void set_contact_parameters(mio::osecirvvs::Model::ParameterSet& parameters, boo
 void set_covid_parameters(mio::osecirvvs::Model::ParameterSet& params, bool set_invalid_initial_value)
 {
     //times
-    const double tinc             = 5.2;
-    const double tserint_min      = 0.5 * 2.67 + 0.5 * 5.2; 
-    const double tserint_max      = 0.5 * 4.00 + 0.5 * 5.2;
-    const double t_inf_min    = 5.6; 
-    const double t_inf_max    = 8.4;
-    const double tsevere_min[] = {4, 4, 5, 7, 9, 13}; 
-    const double tsevere_max[] = {6, 6, 7, 9, 11, 17};
-    // const double t_hosp_icu_min   = 3; 
-    // const double t_hosp_icu_max   = 7;
-    const double tcritical_min[]  = {5, 5, 5, 14, 14, 10}; // R8^(-1) = T_U^R
-    const double tcritical_max[]  = {9, 9, 9, 21, 21, 15};
-    // const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
-    // const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
-
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc,
+    const double incubationTime             = 5.2; 
+    const double serialIntervalMin      = 0.5 * 2.67 + 0.5 * 5.2; 
+    const double serialIntervalMax      = 0.5 * 4.00 + 0.5 * 5.2;
+    const double timeInfectedSymptomsMin[]    = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465}; 
+    const double timeInfectedSymptomsMax[]    = {8.427,  8.427,  8.4684, 8.3139, 8.169, 8.085};
+    const double timeInfectedSevereMin[] = {3.925, 3.925, 4.85,  6.4, 7.2, 9.}; 
+    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.};
+    const double timeInfectedCriticalMin[]  = {4.95, 4.95, 4.86, 14.14, 14.4, 10.}; 
+    const double timeInfectedCriticalMax[]  = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
+    
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), incubationTime, incubationTime,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), serialIntervalMin, serialIntervalMax,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), t_inf_min, t_inf_max,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSymptoms>(), timeInfectedSymptomsMin, timeInfectedSymptomsMax,
                                       set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), tsevere_min,
-                                      tsevere_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), tcritical_min, tcritical_max,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedSevere>(), timeInfectedSevereMin,
+                                      timeInfectedSevereMax, set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), timeInfectedCriticalMin, timeInfectedCriticalMax,
                                       set_invalid_initial_value);
 
     //probabilities
     double fac_variant                   = 1.4;
-    const double transmission_risk_min[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
+    const double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
                                             0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
 
-    const double transmission_risk_max[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
+    const double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
                                             0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
-    const double carr_infec_min          = 0.5;
-    const double carr_infec_max          = 0.5;
-    const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
-    const double beta_low_incidenc_max   = 0.2;
-    const double beta_high_incidence_min = 0.4;
-    const double beta_high_incidence_max = 0.5;
-    const double prob_car_rec_min[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; // alpha
-    const double prob_car_rec_max[]      = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
-    const double prob_inf_hosp_min[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; // rho
-    const double prob_inf_hosp_max[]     = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
-    const double prob_hosp_icu_min[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35}; // theta
-    const double prob_hosp_icu_max[]     = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
-    const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
-    const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+    const double relativeTransmissionNoSymptomsMin          = 0.5;
+    const double relativeTransmissionNoSymptomsMax          = 0.5;
+    // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control) 
+    // depends on incidence and test and trace capacity    
+    const double riskOfInfectionFromSymptomaticMin   = 0.0; 
+    const double riskOfInfectionFromSymptomaticMax   = 0.2;
+    const double maxRiskOfInfectionFromSymptomaticMin = 0.4;
+    const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
+    const double recoveredPerInfectedNoSymptomsMin[]      = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15}; 
+    const double recoveredPerInfectedNoSymptomsMax[]      = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double severePerInfectedSymptomsMin[]     = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20}; 
+    const double severePerInfectedSymptomsMax[]     = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double criticalPerSevereMin[]     = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
+    const double criticalPerSevereMax[]     = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double deathsPerCriticalMin[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; 
+    const double deathsPerCriticalMax[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7}; 
 
-    const double reduc_vacc_exp_min      = 0.75;
-    const double reduc_vacc_exp_max      = 0.85;
-    const double reduc_immune_exp_min    = 0.281;
-    const double reduc_immune_exp_max    = 0.381;
-    const double reduc_vacc_inf_min      = 0.6;
-    const double reduc_vacc_inf_max      = 0.7;
-    const double reduc_immune_inf_min    = 0.193;
-    const double reduc_immune_inf_max    = 0.293;
-    const double reduc_vacc_hosp_min     = 0.05;
-    const double reduc_vacc_hosp_max     = 0.15;
-    const double reduc_immune_hosp_min   = 0.041;
-    const double reduc_immune_hosp_max   = 0.141;
-    const double reduc_mild_rec_time_min = 0.8;
-    const double reduc_mild_rec_time_max = 1.0;
+    const double reducExposedPartialImmunityMin    = 0.75;
+    const double reducExposedPartialImmunityMax    = 0.85;
+    const double reducExposedImprovedImmunityMin  = 0.281;
+    const double reducExposedImprovedImmunityMax  = 0.381;
+    const double reducInfectedSymptomsPartialImmunityMin    = 0.6;
+    const double reducInfectedSymptomsPartialImmunityMax    = 0.7;
+    const double reducInfectedSymptomsImprovedImmunityMin  = 0.193;
+    const double reducInfectedSymptomsImprovedImmunityMax  = 0.293;
+    const double reducInfectedSevereCriticalDeadPartialImmunityMin   = 0.05;
+    const double reducInfectedSevereCriticalDeadPartialImmunityMax   = 0.15;
+    const double reducInfectedSevereCriticalDeadImprovedImmunityMin = 0.041;
+    const double reducInfectedSevereCriticalDeadImprovedImmunityMax = 0.141;
+    const double reducTimeInfectedMildMin = 0.8;
+    const double reducTimeInfectedMildMax = 1.0;
 
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TransmissionProbabilityOnContact>(),
-                                      transmission_risk_min, transmission_risk_max, set_invalid_initial_value);
-    params.get<mio::osecirvvs::BaseInfectiousnessB117>().array() =
-        params.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array().cast<double>();
-    params.get<mio::osecirvvs::BaseInfectiousnessB161>().array() =
-        params.get<mio::osecirvvs::TransmissionProbabilityOnContact>().array().cast<double>() * fac_variant;
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(), carr_infec_min,
-                                      carr_infec_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(),
-                                      beta_low_incidenc_min, beta_low_incidenc_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSympomatic>(),
-                                      beta_high_incidence_min, beta_high_incidence_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
-                                      prob_car_rec_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(), prob_inf_hosp_min,
-                                      prob_inf_hosp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), prob_hosp_icu_min,
-                                      prob_hosp_icu_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), prob_icu_dead_min, prob_icu_dead_max,
+                                      transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>(), relativeTransmissionNoSymptomsMin,
+                                      relativeTransmissionNoSymptomsMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>(),
+                                      riskOfInfectionFromSymptomaticMin, riskOfInfectionFromSymptomaticMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>(),
+                                      maxRiskOfInfectionFromSymptomaticMin, maxRiskOfInfectionFromSymptomaticMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(), recoveredPerInfectedNoSymptomsMin,
+                                      recoveredPerInfectedNoSymptomsMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(), severePerInfectedSymptomsMin,
+                                      severePerInfectedSymptomsMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), criticalPerSevereMin,
+                                      criticalPerSevereMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), deathsPerCriticalMin, deathsPerCriticalMax,
                                       set_invalid_initial_value);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedPartialImmunity>(), reduc_vacc_exp_min,
-                                      reduc_vacc_exp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedImprovedImmunity>(), reduc_immune_exp_min,
-                                      reduc_immune_exp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(), reduc_vacc_inf_min,
-                                      reduc_vacc_inf_max, set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedPartialImmunity>(), reducExposedPartialImmunityMin,
+                                      reducExposedPartialImmunityMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducExposedImprovedImmunity>(), reducExposedImprovedImmunityMin,
+                                      reducExposedImprovedImmunityMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(), reducInfectedSymptomsPartialImmunityMin,
+                                      reducInfectedSymptomsPartialImmunityMax,
+                                      set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(),
-                                      reduc_immune_inf_min, reduc_immune_inf_max, set_invalid_initial_value);
+                                      reducInfectedSymptomsImprovedImmunityMin, reducInfectedSymptomsImprovedImmunityMax,
+                                      set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(),
-                                      reduc_vacc_hosp_min, reduc_vacc_hosp_max, set_invalid_initial_value);
+                                      reducInfectedSevereCriticalDeadPartialImmunityMin, reducInfectedSevereCriticalDeadPartialImmunityMax,
+                                      set_invalid_initial_value);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(),
-                                      reduc_immune_hosp_min, reduc_immune_hosp_max, set_invalid_initial_value);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild>(), reduc_mild_rec_time_min,
-                                      reduc_mild_rec_time_max, set_invalid_initial_value);
+                                      reducInfectedSevereCriticalDeadImprovedImmunityMin, reducInfectedSevereCriticalDeadImprovedImmunityMax,
+                                      set_invalid_initial_value);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ReducTimeInfectedMild>(), reducTimeInfectedMildMin,
+                                      reducTimeInfectedMildMax,
+                                      set_invalid_initial_value);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -291,9 +299,9 @@ TEST(TestOdeSECIRVVS, draw_sample)
     // spot check for sampling
     auto& parameters0 = sampled_graph.nodes()[0].property.parameters;
     auto& populations0 = sampled_graph.nodes()[0].property.populations;
-    auto& param_icu_home_time = parameters0.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(1)];
-    ASSERT_GE(double(param_icu_home_time), 5.0);
-    ASSERT_LE(double(param_icu_home_time), 9.0);
+    auto& timeInfectedCritical = parameters0.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(1)];
+    ASSERT_GE(double(timeInfectedCritical), 5.0);
+    ASSERT_LE(double(timeInfectedCritical), 9.0);
     auto& param_exp_factor = parameters0.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)];
     ASSERT_GE(double(param_exp_factor), 0.75);
     ASSERT_LE(double(param_exp_factor), 0.85);
@@ -322,6 +330,28 @@ TEST(TestOdeSECIRVVS, draw_sample)
     ASSERT_NE(parameters1.get<mio::osecirvvs::ICUCapacity>(), parameters0.get<mio::osecirvvs::ICUCapacity>())
         << "Failure might be spurious, check RNG seeds.";
     ASSERT_FALSE((populations1.array() == populations0.array()).all()) << "Failure might be spurious, check RNG seeds.";
+}
+
+TEST(TestOdeSECIRVVS, checkPopulationConservation)
+{
+    auto num_age_groups = 2;
+    auto model          = make_model(num_age_groups);
+    auto num_days       = 30;
+
+    auto result = mio::osecirvvs::simulate(0, num_days, 0.1, model);
+
+    double num_persons = 0.0;
+    for (auto i = 0; i < result.get_last_value().size(); i++) {
+        // do not sum up auxiliary compartment
+        if(i % (int)mio::osecirvvs::InfectionState::TotalInfections != 0)
+        {
+            EXPECT_GE(result.get_last_value()[i], -1e-3);
+            num_persons += result.get_last_value()[i];
+            std::cout << "comp " << i << " " << result.get_last_value()[i] << "\n";
+        }
+
+    }   
+    EXPECT_NEAR(num_persons, model.populations.get_total(), 1e-10);    
 }
 
 #if defined(MEMILIO_HAS_HDF5) && defined(MEMILIO_HAS_JSONCPP)

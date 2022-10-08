@@ -158,7 +158,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             mu_C_R[county].push_back(
-                model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
             mu_I_H[county].push_back(
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             mu_H_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
@@ -233,7 +233,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 model[county].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)group];
             mu_C_R[county].push_back(
                 (1 - inf_fac_part_immune / exp_fac_part_immune *
-                         (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
+                         (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
             mu_I_H[county].push_back(
                 hosp_fac_part_immune / inf_fac_part_immune *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
@@ -310,7 +310,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 model[county].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)group];
             mu_C_R[county].push_back(
                 (1 - reduc_immune_inf / reduc_immune_exp *
-                         (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
+                         (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
             mu_I_H[county].push_back(
                 reduc_immune_hosp / reduc_immune_inf *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
@@ -621,7 +621,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                 static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
 
             mu_C_R_uv[county].push_back(
-                model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group]);
+                model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
             mu_I_H_uv[county].push_back(
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
             mu_H_U_uv[county].push_back(
@@ -683,7 +683,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                 model[county].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)group];
             mu_C_R_pv[county].push_back(
                 (1 - inf_fact_part_immune / exp_fact_part_immune *
-                         (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
+                         (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
             mu_I_H_pv[county].push_back(
                 hosp_fact_part_immune / inf_fact_part_immune *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
@@ -750,7 +750,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                 model[county].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)group];
             mu_C_R_fv[county].push_back(
                 (1 - reduc_immune_inf / reduc_immune_exp *
-                         (1 - model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
+                         (1 - model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group])));
             mu_I_H_fv[county].push_back(
                 reduc_immune_hosp / reduc_immune_inf *
                 model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
