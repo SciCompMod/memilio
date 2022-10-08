@@ -132,11 +132,11 @@ TEST(TestSecir, checkPopulationConservation)
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
-    auto num_persons = 0;
+    double num_persons = 0.0;
     for (auto i = 0; i < secir.get_last_value().size(); i++) {
         num_persons += secir.get_last_value()[i];
     }   
-    EXPECT_EQ(num_persons, nb_total_t0);
+    EXPECT_NEAR(num_persons, nb_total_t0, 1e-10);
 
 }
 

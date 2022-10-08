@@ -27,17 +27,16 @@
 
 using real = double;
 
-class TestCompareSeirWithJS : public testing::Test
+class TestSeir : public testing::Test
 {
 protected:
     void SetUp() override
     {
-        refData = load_test_data_csv<real>("seir-js-compare.csv");
         t0      = 0.;
         tmax    = 50.;
         dt      = 0.1002004008016032;
 
-        double total_population = 1061000;
+        total_population = 1061000;
 
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
@@ -59,15 +58,16 @@ protected:
     }
 
 public:
-    std::vector<std::vector<real>> refData;
     real t0;
     real tmax;
     real dt;
+    double total_population;
     mio::oseir::Model model;
 };
 
-TEST_F(TestCompareSeirWithJS, integrate)
+TEST_F(TestSeir, CompareSeirWithJS)
 {
+    std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-js-compare.csv");
     auto integrator = std::make_shared<mio::EulerIntegratorCore>();
     auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
 
@@ -96,4 +96,15 @@ TEST_F(TestCompareSeirWithJS, integrate)
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
         }
     }
+}
+
+TEST_F(TestSeir, checkPopulationConservation)
+{
+    auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
+    double num_persons = 0.0;
+    for (auto i = 0; i < result.get_last_value().size(); i++) {
+        num_persons += result.get_last_value()[i];
+    }   
+    EXPECT_NEAR(num_persons, total_population, 1e-8);
+  
 }
