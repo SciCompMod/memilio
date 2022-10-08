@@ -39,7 +39,9 @@ namespace osecirvvs
             //sample initial compartments (with exceptions)
             for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
                 if (inf_state != InfectionState::SusceptibleNaive && //not sampled, fixed after sampling everything else
-                    inf_state != InfectionState::Dead && //not sampled, fixed from data
+                    inf_state != InfectionState::DeadNaive && //not sampled, fixed from data                
+                    inf_state != InfectionState::DeadPartialImmunity && //not sampled, fixed from data
+                    inf_state != InfectionState::DeadImprovedImmunity && //not sampled, fixed from data
                     inf_state != InfectionState::TotalInfections) { //not sampled, only for record keeping
                     model.populations[{i, inf_state}].draw_sample();
                 }

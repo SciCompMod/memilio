@@ -104,7 +104,9 @@ public:
             size_t ISyIICi = this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
             size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
-            size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
+            size_t DNi = this->populations.get_flat_index({i, InfectionState::DeadNaive});
+            size_t DPIi = this->populations.get_flat_index({i, InfectionState::DeadPartialImmunity});
+            size_t DIIi = this->populations.get_flat_index({i, InfectionState::DeadImprovedImmunity});
 
             size_t ITi = this->populations.get_flat_index({i, InfectionState::TotalInfections});
 
@@ -312,19 +314,16 @@ public:
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) * params.get<DeathsPerCritical>()[i]) /
                     params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
 
-            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICrNi] +
-                       reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity * params.get<DeathsPerCritical>()[i] /
-                           params.get<TimeInfectedCritical>()[i] * y[ICrPIi] +
-                       reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<DeathsPerCritical>()[i] /
+            dydt[DNi] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
+            dydt[DPIi] = reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity * params.get<DeathsPerCritical>()[i] /
+                           params.get<TimeInfectedCritical>()[i] * y[ICrPIi];
+            dydt[DIIi] = reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity * params.get<DeathsPerCritical>()[i] /
                            params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
-            ;
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
-
-            dydt[Di] += (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) * deathsPerSevereAdjusted /
+            dydt[DNi] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
+            dydt[DPIi] += (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) * deathsPerSevereAdjusted /
                         params.get<TimeInfectedSevere>()[i] * y[ISevPIi];
-
-            dydt[Di] += (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) * deathsPerSevereAdjusted /
+            dydt[DIIi] += (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) * deathsPerSevereAdjusted /
                         params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
         }
     }

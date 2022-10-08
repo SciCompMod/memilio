@@ -59,7 +59,9 @@ namespace osecirvvs
         InfectedCriticalPartialImmunity,
         InfectedCriticalImprovedImmunity,
         SusceptibleImprovedImmunity, //includes all with improved immunity, either through infection or at least two vaccinations
-        Dead, //no division by immunity
+        DeadNaive,
+        DeadPartialImmunity,
+        DeadImprovedImmunity,
         TotalInfections, //total number of infections during the simulation, for data tracking only, does not contribute to simulation
         
         Count

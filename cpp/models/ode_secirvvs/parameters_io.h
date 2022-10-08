@@ -936,7 +936,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                     // the extrapolated real number of deaths, they have to be set here. In the comparison of data
                     // it has to be paid attention to the fact, the the simulation starts with deaths=0
                     // while this method starts with deaths=number of reported deaths so far...
-                    extrapolated_rki[county][day]((size_t)InfectionState::Dead + age_group_offset) =
+                    // Additionally, we set the number of reported deaths to DeadNaive since no information on that is
+                    // available here.
+                    extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) =
                         num_death_uv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleImprovedImmunity + age_group_offset) =
@@ -956,7 +958,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity + age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::Dead + age_group_offset));
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity + age_group_offset));
 
                     extrapolated_rki[county][day]((size_t)InfectionState::SusceptibleImprovedImmunity + age_group_offset) = std::min(
                         S + S_pv + S_v, std::max(0.0, double(extrapolated_rki[county][day](
@@ -1004,7 +1008,9 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity + age_group_offset) +
-                         extrapolated_rki[county][day]((size_t)InfectionState::Dead + age_group_offset));
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::DeadImprovedImmunity + age_group_offset));
                 }
             }
             else {
