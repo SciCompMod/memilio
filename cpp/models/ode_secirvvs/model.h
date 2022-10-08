@@ -279,53 +279,23 @@ public:
 
             // compute auxiliary compartment of all past infections
             dydt[ITi] =
-                ((1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyNi] +
-                ((1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] +
-                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyNCi] +
-                ((1 - reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyPICi] +
-                ((1 - reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyPIi] +
-                ((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyIICi] +
-                ((1 - reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i]) /
-                     (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) +
-                 reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
-                     params.get<TimeInfectedSymptoms>()[i]) *
-                    y[ISyIIi];
+                (1 / params.get<TimeInfectedSymptoms>()[i]) * (y[ISyNi] + y[ISyNCi]) +
+                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyPIi] + y[ISyPICi]) +
+                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyIIi] + y[ISyIICi]);
 
             // recovered and deaths from all paths
             dydt[SIIi] +=
-                params.get<AsymptoticCasesPerInfectious>()[i] * rateINS * y[INSNi] +
-                params.get<AsymptoticCasesPerInfectious>()[i] * rateINS * y[INSNCi] +
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyNi] +
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyNCi] +
+                params.get<AsymptoticCasesPerInfectious>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * (y[ISyNi] +  y[ISyNCi]) +
                 (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi] +
                 (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
 
             dydt[SIIi] +=
                 (1 -
                  (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
-                    rateINS / reducTimeInfectedMild * y[INSPIi] +
-                (1 -
-                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
-                    rateINS / reducTimeInfectedMild * y[INSPICi] +
+                    rateINS / reducTimeInfectedMild * (y[INSPIi] + y[INSPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyPIi] +
-                (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyPICi] +
+                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyPIi] + y[ISyPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) * params.get<CriticalPerSevere>()[i]) /
                     params.get<TimeInfectedSevere>()[i] * y[ISevPIi] +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) * params.get<DeathsPerCritical>()[i]) /
@@ -334,14 +304,9 @@ public:
             dydt[SIIi] +=
                 (1 -
                  (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) * 
-                 rateINS / reducTimeInfectedMild * y[INSIIi] +
-                (1 -
-                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) *
-                    rateINS / reducTimeInfectedMild * y[INSIICi] +
+                 rateINS / reducTimeInfectedMild * (y[INSIIi] + y[INSIICi]) +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyIIi] +
-                (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) * params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyIICi] +
+                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyIIi] + y[ISyIICi]) +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) * params.get<CriticalPerSevere>()[i]) /
                     params.get<TimeInfectedSevere>()[i] * y[ISevIIi] +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) * params.get<DeathsPerCritical>()[i]) /
