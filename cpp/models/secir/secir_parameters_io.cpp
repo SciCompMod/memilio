@@ -75,7 +75,7 @@ namespace details
         std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
         std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
         std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec, 
-        const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, const std::vector<std::vector<int>>& vt_Exposed,
+        const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, 
         const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
         const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
         const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
@@ -263,7 +263,7 @@ namespace details
         std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
         BOOST_OUTCOME_TRY(read_rki_data(path, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death,
-                                        num_rec, t_InfectedNoSymptoms, t_Exposed, t_InfectedSymptoms,
+                                        num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms,
                                         t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H,
                                         mu_H_U, scaling_factor_inf));
 

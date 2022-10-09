@@ -65,7 +65,7 @@ namespace details
         std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
         std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
         std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec, 
-        const std::vector<std::vector<int>>& vt_InfectedNoSymptoms, const std::vector<std::vector<int>>& vt_Exposed,
+        const std::vector<std::vector<int>>& vt_Exposed, const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
         const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere, 
         const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
         const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf);
@@ -202,7 +202,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
 
         BOOST_OUTCOME_TRY(details::read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json"), region, date,
                                                  num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec,
-                                                 t_InfectedNoSymptoms, t_Exposed, t_InfectedSymptoms,
+                                                 t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms,
                                                  t_InfectedSevere, t_InfectedCritical, mu_C_R,
                                                  mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), region, date, num_icu));
