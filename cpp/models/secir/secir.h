@@ -105,7 +105,7 @@ public:
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-                auto risk_from_symptomatic = smoother_cosine(
+                auto riskFromInfectedSymptomatic = smoother_cosine(
                     test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
                     params.get<RiskOfInfectionFromSymptomatic>()[j], params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
@@ -120,7 +120,7 @@ public:
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
                 double dummy_S =
                     y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
-                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] + risk_from_symptomatic * pop[ISyj]);
+                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] + riskFromInfectedSymptomatic * pop[ISyj]);
 
                 dydt[Si] -= dummy_S; 
                 dydt[Ei] += dummy_S; 
@@ -332,14 +332,14 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     auto R3                      = 0.5 / (t_inc - t_ser);
     auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
     auto test_and_trace_capacity = double(params.template get<TestAndTraceCapacity>());
-    auto risk_from_symptomatic   = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+    auto riskFromInfectedSymptomatic   = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
                                                  test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptoms), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionState::Count)})
-        .array() = risk_from_symptomatic;
+        .array() = riskFromInfectedSymptomatic;
     return factors;
 }
 

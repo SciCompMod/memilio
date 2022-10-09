@@ -131,11 +131,11 @@ public:
             double reducTimeInfectedMild = params.get<ReducTimeInfectedMild>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-            auto risk_from_symptomatic = smoother_cosine(
+            auto riskFromInfectedSymptomatic = smoother_cosine(
                 test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 15,
                 params.get<RiskOfInfectionFromSymptomatic>()[i], params.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
 
-            auto risk_from_InfectedNoSymptoms = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
+            auto riskFromInfectedNoSymptoms = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
                                                      params.get<TestAndTraceCapacity>() * 2,
                                                      params.get<RelativeTransmissionNoSymptoms>()[i], 1.0);
 
@@ -187,8 +187,8 @@ public:
 
                 double ext_inf_force_dummy = cont_freq_eff * divNj *
                                              params.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
-                                             (risk_from_InfectedNoSymptomsNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
-                                              risk_from_symptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
+                                             (riskFromInfectedNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
+                                              riskFromInfectedSymptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
 
                 double dummy_S = y[SNi] * ext_inf_force_dummy;
 
@@ -600,7 +600,7 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     //compute isolation, same as infection risk from main model
     auto R3                      = 0.5 / (t_inc - t_ser);
     auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
-    auto risk_from_symptomatic =
+    auto riskFromInfectedSymptomatic =
         smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
                         params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());
 
@@ -608,13 +608,13 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionState::Count)})
-        .array() = risk_from_symptomatic;
+        .array() = riskFromInfectedSymptomatic;
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsPartialImmunity),
                     Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
-        .array() = risk_from_symptomatic;
+        .array() = riskFromInfectedSymptomatic;
     slice(factors, {Eigen::Index(InfectionState::InfectedSymptomsImprovedImmunity),
                     Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)})
-        .array() = risk_from_symptomatic;
+        .array() = riskFromInfectedSymptomatic;
     return factors;
 }
 

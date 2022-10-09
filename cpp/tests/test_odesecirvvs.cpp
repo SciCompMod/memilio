@@ -59,7 +59,7 @@ TEST(TestSecir, reduceToSecirAndCompareWithPreviousRun)
     mio::osecirvvs::Model model(1);
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+           nb_rec_t0 = 10;
 
     model.populations.set_total(nb_total_t0);           
     model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::ExposedNaive}]                                = nb_exp_t0;
