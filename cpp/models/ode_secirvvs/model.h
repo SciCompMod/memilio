@@ -589,7 +589,7 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    //slice of InfectedNoSymptomss
+    //slice of InfectedNoSymptoms
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)}) +
                  slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),
