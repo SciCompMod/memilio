@@ -39,15 +39,14 @@ int main()
 
     mio::SecirModel model(1);
 
-    // params.set_icu_capacity(20);
-    model.parameters.set<mio::StartDay>(0);
-    model.parameters.set<mio::Seasonality>(0);
+    model.parameters.set<mio::StartDay>(60);
+    model.parameters.set<mio::Seasonality>(0.2);
 
     model.parameters.get<mio::IncubationTime>()         = 5.2;
-    model.parameters.get<mio::TimeInfectedSymptoms>()     = 6;
+    model.parameters.get<mio::TimeInfectedSymptoms>()     = 5.8;
     model.parameters.get<mio::SerialInterval>()         = 4.2;
-    model.parameters.get<mio::TimeInfectedSevere>() = 12;
-    model.parameters.get<mio::TimeInfectedCritical>()          = 8;
+    model.parameters.get<mio::TimeInfectedSevere>() = 9.5;
+    model.parameters.get<mio::TimeInfectedCritical>()          = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -73,7 +72,12 @@ int main()
 
     model.apply_constraints();
 
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    integrator->set_dt_min(0.3);
+    integrator->set_dt_max(1.0);
+    integrator->set_rel_tolerance(1e-4);
+    integrator->set_abs_tolerance(1e-1);
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 

@@ -39,11 +39,14 @@ TEST(TestSecir, compareWithPreviousRun)
 
     mio::SecirModel model(1);
 
+    model.parameters.set<mio::StartDay>(60);
+    model.parameters.set<mio::Seasonality>(0.2);    
+
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = 5.2;
-    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = 5;
-    model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = 4.2;
-    model.parameters.get<mio::TimeInfectedSevere>()[(mio::AgeGroup)0] = 10.;
-    model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]          = 8.;
+    model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = 4.2;    
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = 5.8;
+    model.parameters.get<mio::TimeInfectedSevere>()[(mio::AgeGroup)0] = 9.5;
+    model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]          = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -101,10 +104,10 @@ TEST(TestSecir, checkPopulationConservation)
     mio::SecirModel model(1);
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = 5.2;
-    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = 5;
-    model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = 4.2;
-    model.parameters.get<mio::TimeInfectedSevere>()[(mio::AgeGroup)0] = 10.;
-    model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]          = 8.;
+    model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = 4.2;    
+    model.parameters.get<mio::TimeInfectedSymptoms>()[(mio::AgeGroup)0]     = 5.8;
+    model.parameters.get<mio::TimeInfectedSevere>()[(mio::AgeGroup)0] = 9.5;
+    model.parameters.get<mio::TimeInfectedCritical>()[(mio::AgeGroup)0]          = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));

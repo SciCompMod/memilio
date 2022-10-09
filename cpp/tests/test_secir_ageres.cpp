@@ -102,7 +102,7 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
     double tmax = 50;
     double dt   = 0.1;
 
-    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -111,13 +111,16 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
     mio::AgeGroup nb_groups = model.parameters.get_num_groups();
     double fact             = 1.0 / (double)(size_t)nb_groups;
 
+    model.parameters.set<mio::StartDay>(60);
+    model.parameters.set<mio::Seasonality>(0.2);    
+
     auto& params = model.parameters;
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
         params.get<mio::IncubationTime>()[i]             = 5.2;
-        params.get<mio::TimeInfectedSymptoms>()[i]         = 5.;
         params.get<mio::SerialInterval>()[i]             = 4.2;
-        params.get<mio::TimeInfectedSevere>()[i]     = 10.;
-        params.get<mio::TimeInfectedCritical>()[i]              = 8.;
+        params.get<mio::TimeInfectedSymptoms>()[i]         = 5.8;
+        params.get<mio::TimeInfectedSevere>()[i]     = 9.5;
+        params.get<mio::TimeInfectedCritical>()[i]              = 7.1;
 
         model.populations[{i, mio::InfectionState::Exposed}]      = fact * nb_exp_t0;
         model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]      = fact * nb_car_t0;
@@ -129,7 +132,7 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::TransmissionProbabilityOnContact>()[i] = 1.;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.05;
         params.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 1.;
         params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
