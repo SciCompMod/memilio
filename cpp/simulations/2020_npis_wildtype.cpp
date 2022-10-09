@@ -132,7 +132,7 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
     const double timeInfectedSymptomsMin[]    = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465}; 
     const double timeInfectedSymptomsMax[]    = {8.427,  8.427,  8.4684, 8.3139, 8.169, 8.085};
     const double timeInfectedSevereMin[] = {3.925, 3.925, 4.85,  6.4, 7.2, 9.}; 
-    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.}
+    const double timeInfectedSevereMax[] = {6.075, 6.075,  7.,  8.7, 9.8, 13.};
     const double timeInfectedCriticalMin[]  = {4.95, 4.95, 4.86, 14.14, 14.4, 10.}; 
     const double timeInfectedCriticalMax[]  = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
 
