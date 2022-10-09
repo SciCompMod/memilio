@@ -51,6 +51,107 @@
 #include <iterator>
 #include <limits>
 
+TEST(TestSecir, reduceToSecirAndCompareWithPreviousRun)
+{
+    double t0   = 0;
+    double tmax = 50;
+
+    mio::osecirvvs::Model model(1);
+
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
+
+    model.populations.set_total(nb_total_t0);           
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::ExposedNaive}]                                = nb_exp_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = nb_car_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = nb_inf_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                         = nb_hosp_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]                       = nb_icu_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = nb_rec_t0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadNaive}]                  = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadPartialImmunity}]                  = 0;
+    model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadImprovedImmunity}]                  = 0;
+    model.populations.set_difference_from_total(
+        {(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive}, nb_total_t0);
+
+    model.parameters.get<mio::osecirvvs::ICUCapacity>()          = 10000;
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity>() = 10000;
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
+
+    auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns>();
+    auto& contact_matrix = contacts.get_cont_freq_mat();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));    
+
+    //times
+    model.parameters.get<mio::osecirvvs::IncubationTime>()[mio::AgeGroup(0)]       = 5.2;
+    model.parameters.get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(0)]       = 4.2;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)] = 5;
+    model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]   = 10;
+    model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 8;
+
+    //probabilities
+    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.05;
+    model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = 1;
+    model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]    = 0.25;
+    model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[mio::AgeGroup(0)]    = 0.09;
+    model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms>()[mio::AgeGroup(0)]         = 0.2;
+    model.parameters.get<mio::osecirvvs::CriticalPerSevere>()[mio::AgeGroup(0)]                 = 0.25;
+    model.parameters.get<mio::osecirvvs::DeathsPerCritical>()[mio::AgeGroup(0)]                 = 0.3;
+
+    // TODO: Reduction not possible like this, division by zero!
+    model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)]                     = 0;
+    model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[mio::AgeGroup(0)]                    = 0;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[mio::AgeGroup(0)]            = 0;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[mio::AgeGroup(0)]           = 0;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[mio::AgeGroup(0)]  = 0;
+    model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[mio::AgeGroup(0)] = 0;
+    model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[mio::AgeGroup(0)]                           = 1;
+
+    model.parameters.get<mio::osecirvvs::Seasonality>() = 0.2;
+
+    model.apply_constraints();
+
+    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    integrator->set_dt_min(0.3);
+    integrator->set_dt_max(1.0);
+    integrator->set_rel_tolerance(1e-4);
+    integrator->set_abs_tolerance(1e-1);
+    mio::TimeSeries<double> secihurd = simulate(t0, tmax, 0.1, model, integrator);
+
+    // auto compare = load_test_data_csv<double>("secihurd-compare.csv");
+
+    // ASSERT_EQ(compare.size(), static_cast<size_t>(secihurd.get_num_time_points()));
+    // for (size_t i = 0; i < compare.size(); i++) {
+    //     ASSERT_EQ(compare[i].size(), static_cast<size_t>(secihurd.get_num_elements()) + 1) << "at row " << i;
+    //     EXPECT_NEAR(secihurd.get_time(i), compare[i][0], 1e-10) << "at row " << i;
+    //     for (size_t j = 1; j < compare[i].size(); j++) {
+    //         // TODO: extract naive compartments
+    //         EXPECT_NEAR(secihurd.get_value(i)[j - 1], compare[i][j], 1e-10) << " at row " << i;
+    //     }
+    // }
+}
+
 void assign_uniform_distribution(mio::UncertainValue& p, double min, double max, bool set_invalid_initial_value)
 {
     auto invalid_initial = max == 0 ? 1.0 : max * 1.001;
