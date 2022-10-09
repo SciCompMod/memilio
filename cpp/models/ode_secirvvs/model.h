@@ -135,7 +135,7 @@ public:
                 test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 15,
                 params.get<RiskOfInfectionFromSymptomatic>()[i], params.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
 
-            auto risk_from_carrier = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
+            auto risk_from_InfectedNoSymptoms = smoother_cosine(test_and_trace_required, params.get<TestAndTraceCapacity>(),
                                                      params.get<TestAndTraceCapacity>() * 2,
                                                      params.get<RelativeTransmissionNoSymptoms>()[i], 1.0);
 
@@ -187,7 +187,7 @@ public:
 
                 double ext_inf_force_dummy = cont_freq_eff * divNj *
                                              params.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *
-                                             (risk_from_carrier * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
+                                             (risk_from_InfectedNoSymptomsNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
                                               risk_from_symptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
 
                 double dummy_S = y[SNi] * ext_inf_force_dummy;
@@ -589,7 +589,7 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    //slice of carriers
+    //slice of InfectedNoSymptomss
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)}) +
                  slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsPartialImmunity),

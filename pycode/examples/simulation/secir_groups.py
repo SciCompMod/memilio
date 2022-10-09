@@ -35,8 +35,8 @@ def run_secir_groups_simulation(show_plot = True):
     """
 
     # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'Carrier',
-                    'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
+    compartments = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
+                    'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     # Define population of age groups
@@ -82,10 +82,10 @@ def run_secir_groups_simulation(show_plot = True):
 
         # Initial number of peaople in each compartment
         model.populations[AgeGroup(i), State.Exposed] = 100
-        model.populations[AgeGroup(i), State.Carrier] = 50
-        model.populations[AgeGroup(i), State.Infected] = 50
-        model.populations[AgeGroup(i), State.Hospitalized] = 20
-        model.populations[AgeGroup(i), State.ICU] = 10
+        model.populations[AgeGroup(i), State.InfectedNoSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedSymptoms] = 50
+        model.populations[AgeGroup(i), State.InfectedSevere] = 20
+        model.populations[AgeGroup(i), State.InfectedCritical] = 10
         model.populations[AgeGroup(i), State.Recovered] = 10
         model.populations[AgeGroup(i), State.Dead] = 0
         model.populations.set_difference_from_group_total_AgeGroup(
@@ -93,17 +93,17 @@ def run_secir_groups_simulation(show_plot = True):
 
         # Compartment transition propabilities
 
-        model.parameters.RelativeCarrierInfectability[AgeGroup(i)] = 0.67
-        model.parameters.InfectionProbabilityFromContact[AgeGroup(i)] = 1.0
-        model.parameters.AsymptomaticCasesPerInfectious[AgeGroup(
+        model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 0.67
+        model.parameters.TransmissionProbabilityOnContact[AgeGroup(i)] = 1.0
+        model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(
             i)] = 0.09  # 0.01-0.16
         model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(
             i)] = 0.25  # 0.05-0.5
-        model.parameters.HospitalizedCasesPerInfectious[AgeGroup(
+        model.parameters.SeverePerInfectedSymptoms[AgeGroup(
             i)] = 0.2  # 0.1-0.35
-        model.parameters.ICUCasesPerHospitalized[AgeGroup(
+        model.parameters.CriticalPerSevere[AgeGroup(
             i)] = 0.25  # 0.15-0.4
-        model.parameters.DeathsPerICU[AgeGroup(i)] = 0.3  # 0.15-0.77
+        model.parameters.DeathsPerCritical[AgeGroup(i)] = 0.3  # 0.15-0.77
         # twice the value of RiskOfInfectionFromSymptomatic
         model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
@@ -149,10 +149,10 @@ def run_secir_groups_simulation(show_plot = True):
     fig, ax = plt.subplots()
     ax.plot(t, data[:, 0], label='#Susceptible')
     ax.plot(t, data[:, 1], label='#Exposed')
-    ax.plot(t, data[:, 2], label='#Carrier')
-    ax.plot(t, data[:, 3], label='#Infected')
+    ax.plot(t, data[:, 2], label='#InfectedNoSymptoms')
+    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
     ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#ICU')
+    ax.plot(t, data[:, 5], label='#InfectedCritical')
     ax.plot(t, data[:, 6], label='#Recovered')
     ax.plot(t, data[:, 7], label='#Dead')
     ax.set_title("SECIR simulation results (entire population)")

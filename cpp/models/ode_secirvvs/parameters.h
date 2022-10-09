@@ -227,7 +227,7 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-* @brief the relative carrier infectability
+* @brief the relative InfectedNoSymptoms infectability
 */
 struct RelativeTransmissionNoSymptoms {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;

@@ -34,8 +34,8 @@ def run_secir_simulation(show_plot = True):
     """
 
     # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'Carrier',
-                    'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
+    compartments = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
+                    'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define population of age groups
     populations = [83000]
 
@@ -64,23 +64,23 @@ def run_secir_simulation(show_plot = True):
 
     # Initial number of people in each compartment
     model.populations[A0, State.Exposed] = 100
-    model.populations[A0, State.Carrier] = 50
-    model.populations[A0, State.Infected] = 50
-    model.populations[A0, State.Hospitalized] = 20
-    model.populations[A0, State.ICU] = 10
+    model.populations[A0, State.InfectedNoSymptoms] = 50
+    model.populations[A0, State.InfectedSymptoms] = 50
+    model.populations[A0, State.InfectedSevere] = 20
+    model.populations[A0, State.InfectedCritical] = 10
     model.populations[A0, State.Recovered] = 10
     model.populations[A0, State.Dead] = 0
     model.populations.set_difference_from_total(
         (A0, State.Susceptible), populations[0])
 
     # Compartment transition propabilities
-    model.parameters.RelativeCarrierInfectability[A0] = 0.67
-    model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-    model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+    model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.67
+    model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+    model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09  # 0.01-0.16
     model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
-    model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
-    model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
-    model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
+    model.parameters.SeverePerInfectedSymptoms[A0] = 0.2  # 0.1-0.35
+    model.parameters.CriticalPerSevere[A0] = 0.25  # 0.15-0.4
+    model.parameters.DeathsPerCritical[A0] = 0.3  # 0.15-0.77
     # twice the value of RiskOfInfectionFromSymptomatic
     model.parameters.MaxRiskOfInfectionFromSymptomatic[A0] = 0.5
 
@@ -122,9 +122,9 @@ def run_secir_simulation(show_plot = True):
     ax.plot(t, data[:, 0], label='#Susceptible')
     ax.plot(t, data[:, 1], label='#Exposed')
     ax.plot(t, data[:, 2], label='#Carrying')
-    ax.plot(t, data[:, 3], label='#Infected')
+    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
     ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#ICU')
+    ax.plot(t, data[:, 5], label='#InfectedCritical')
     ax.plot(t, data[:, 6], label='#Recovered')
     ax.plot(t, data[:, 7], label='#Died')
     ax.set_title("SECIR model simulation")

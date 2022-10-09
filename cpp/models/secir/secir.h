@@ -324,7 +324,7 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     auto&& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    //slice of carriers
+    //slice of InfectedNoSymptoms
     auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)});
 

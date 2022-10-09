@@ -102,7 +102,7 @@ IOResult<void> read_confirmed_cases_data(
 
     // shifts the initilization to the recent past if simulation starts
     // around current day and data of the future would be required.
-    // Only needed for preinfection compartments, exposed and carrier.
+    // Only needed for preinfection compartments, exposed and InfectedNoSymptoms.
     auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E + T_C
     if (days_surplus > 0) {
         days_surplus = 0;
@@ -251,7 +251,7 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
 
     // shifts the initilization to the recent past if simulation starts
     // around current day and data of the future would be required.
-    // Only needed for preinfection compartments, exposed and carrier.
+    // Only needed for preinfection compartments, exposed and InfectedNoSymptoms.
     auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E^C + T_C^I
     if (days_surplus > 0) {
         days_surplus = 0;

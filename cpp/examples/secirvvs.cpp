@@ -37,23 +37,29 @@ int main()
     mio::osecirvvs::Model model(1);
 
     for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                       = 10;
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]            = 11;
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]             = 12;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]            = 13;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]  = 14;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}] = 15;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]              = 5;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]    = 6;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]   = 7;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                = 8;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]     = 1;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]      = 2;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]              = 3;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]    = 4;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]   = 5;
-        model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]        = 6;
-        model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]         = 7;
+        model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                                = 10;
+        model.populations[{i, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 11;
+        model.populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 12;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = 13;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 13;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 14;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 14;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 15;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 15;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = 5;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 5;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 6;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 6;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 7;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 7;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                         = 8;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 1;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 2;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]                       = 3;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 4;
+        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 5;
+        model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = 6;
+        model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 7;
         model.populations.set_difference_from_group_total<mio::AgeGroup>(
             {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, 1000);
     }
