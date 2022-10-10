@@ -31,7 +31,6 @@ import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio import progress_indicator
 
 
 def get_new_counties(data):
@@ -549,8 +548,7 @@ def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("population")
-    with progress_indicator.Spinner():
-        get_population_data(**arg_dict)
+    get_population_data(**arg_dict)
 
 
 if __name__ == "__main__":
