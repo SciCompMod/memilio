@@ -71,7 +71,7 @@ class ProgressIndicator:
         self._thread = None
         self._enabled = False # whether _thread is running
         self._auto_adjust = auto_adjust
-        self._space = 0 # free space in a line, determined by _adjust_to_terminal_size
+        self._space = 0 # free space in a line, set by _adjust_to_terminal_size
         self._frame = ""
 
         self._adjust_to_terminal_size()
@@ -106,13 +106,13 @@ class ProgressIndicator:
                       " incorrectly." 
                 warn(msg, category=RuntimeWarning, stacklevel=2)
 
-    def _adjust_to_terminal_size(self):
+    def _adjust_to_terminal_size(self, reserve=0):
         """! Keep animation in a single line."""
         # use width - 1, since show() prepends a space
         width = get_terminal_size().columns - 1
         self._frame = self._frame[:(width)]
-        if len(self._message) + len(self._frame) >= width:
-            sys.stdout.write(self._message)
+        if len(self._message) + len(self._frame) >= width - reserve:
+            sys.stdout.write(self._message + "\n")
             self._message = ""
         self._space = width - len(self._frame) - len(self._message)
 
@@ -219,42 +219,44 @@ class Dots(ProgressIndicator):
 class Percentage(ProgressIndicator):
     """! Manages a ProgressIndicator with a predefined animation. """
     def __init__(self, delay=1, message="", percentage=0, use_bar=True,
-            use_delayed_output=True, keep_output=True):
+            keep_output=True):
         """! initializes ProgressIndicator displaying a percentage.
 
         The percentage can be updated using the `set_progress` method.
         By default, this method spawns a new thread to print the animation.
-        If use_delayed_output is set to False, the delay is ignored, and no
-        new thread is spawned. The output is then updated in the main thread,
-        whenever 'set_progress' is called.
         Start the animation by either using the `start`/`stop` functions or a
         `with` `as` block.
 
-        @param delay [Default: 1] positive real number. Sets delay in seconds
-            between drawing animation frames.
+        @param delay [Default: 1] non-negative real number. Sets delay in
+            seconds between drawing animation frames. If delay is set to 0, no
+            new thread is spawned. The output is then updated in the main
+            thread, whenever 'set_progress' is called.
         @param message [Default: ""] string. Text shown before the indicator.
         @param percentage [Default: 0] real number in [0, 1]. Initial
             percentage shown in the animation.
         @param use_bar [Default: True] bool. If True, adds a progress bar
             visualizing the current percentage.
-        @param use_delayed_output [Default: True] bool. If False, delay is
-            ignored and the animation is drawn in the main thread whenever
-            set_progress() is called.
-        @param keep_output [Default: True] bool. Set if the last animation
-            frame should be kept as a new line.
+        @param keep_output [Default: True] bool. Whether the last animation
+            frame should be kept as a new line  when stopping.
         """
-        self._use_thread = use_delayed_output
+        if delay == 0:
+            self._use_thread = False
+            delay = 1 # arbitrary, will not be used outside of init
+        else:
+            self._use_thread = True
         self._keep_output = keep_output
         self._use_bar = use_bar
         self._progress = percentage
         def _perc():
             while True:
                 yield "{:6.2f}%".format(100*self._progress)
-        super().__init__(message + " ", _perc(), delay, True)
+        super().__init__(message + " ", _perc(), delay, use_bar)
 
     def _advance(self):
         """! Advance the animation to the next frame. """
-        super()._advance()
+        self._frame = next(self._animator)
+        if self._auto_adjust:
+            self._adjust_to_terminal_size(5)
         if self._use_bar:
             # prepend bar to frame
             self._frame = self._bar(self._space, self._progress) + self._frame
@@ -262,8 +264,7 @@ class Percentage(ProgressIndicator):
     def start(self):
         """! Start the animation. Must call stop() afterwards.
         
-        By default, this method spawns a new thread. See option
-        use_delayed_output in the class constructor.
+        If delay > 0, this method spawns a new thread.
         """
         if self._use_thread:
             super().start()
@@ -292,12 +293,10 @@ class Percentage(ProgressIndicator):
     def _bar(width, percentage):
         """! Returns a progress bar.
 
-        @param width Total width of the bar. Should be at least 4.
+        @param width Total width of the bar. Must be at least 4.
         @param percentage Float in [0,1].
-        @return String of length width visualizing percentage, or an empty
-            string if width < 4.
+        @return String of length width, visualizing percentage.
         """
-        if width < 4: return ""
         w = width - 3 # 3 == len("[] ")
         n = int(w * percentage)
         return "[" + "#" * n + " " * (w - n) + "] "
@@ -316,7 +315,7 @@ if __name__ == "__main__":
             time.sleep(0.1467)
             p.set_progress((i+1)/13)
     with Percentage(message="download 2", use_bar=False,
-            use_delayed_output=False, keep_output=False) as p:
+            delay=0, keep_output=False) as p:
         for i in range(97):
             time.sleep(0.0367)
             p.set_progress((i+1)/97)
