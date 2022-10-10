@@ -448,7 +448,9 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 double denom_E =
                     1 / (S + S_pv * model[region].parameters.template get<ReducExposedPartialImmunity>()[i] +
                          S_v * model[region].parameters.template get<ReducExposedImprovedImmunity>()[i]);
-                double denom_C = 1 / (S + S_pv + S_v);
+                double denom_C = 
+                    1 / (S + S_pv * model[region].parameters.template get<ReducExposedPartialImmunity>()[i] +
+                         S_v * model[region].parameters.template get<ReducExposedImprovedImmunity>()[i]);
                 double denom_I =
                     1 / (S + S_pv * model[region].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i] +
                          S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i]);

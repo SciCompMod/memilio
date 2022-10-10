@@ -633,8 +633,8 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
         auto INSNi  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaive});
         auto INSNCi = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsNaiveConfirmed});
 
-        auto IV1i  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunity});
-        auto IDV1i = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
+        auto ISPIi  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunity});
+        auto ISPICi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsPartialImmunityConfirmed});
         auto INSPIi  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunity});
         auto INSPICi = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed});
 
@@ -649,8 +649,8 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
         sim.get_result().get_last_value()[INSNi] -= migrated[INSNi] * (1 - nondetection);
         sim.get_result().get_last_value()[INSNCi] += migrated[INSNi] * (1 - nondetection);
 
-        sim.get_result().get_last_value()[IV1i] -= migrated[IV1i] * (1 - nondetection);
-        sim.get_result().get_last_value()[IDV1i] += migrated[IV1i] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISPIi] -= migrated[ISPIi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISPICi] += migrated[ISPIi] * (1 - nondetection);
         sim.get_result().get_last_value()[INSPIi] -= migrated[INSPIi] * (1 - nondetection);
         sim.get_result().get_last_value()[INSPICi] += migrated[INSPIi] * (1 - nondetection);
 
@@ -663,7 +663,7 @@ auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated,
         migrated[ISyNi] *= nondetection;
         migrated[INSNi] *= nondetection;
 
-        migrated[IV1i] *= nondetection;
+        migrated[ISPIi] *= nondetection;
         migrated[INSPIi] *= nondetection;
 
         migrated[ISyIIi] *= nondetection;
