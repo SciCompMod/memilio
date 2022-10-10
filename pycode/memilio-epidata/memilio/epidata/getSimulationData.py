@@ -36,7 +36,6 @@ from memilio.epidata import getVaccinationData
 from memilio.epidata import getPopulationData
 from memilio.epidata import getCaseData
 from memilio.epidata import getDIVIData
-from memilio import progress_indicator
 
 
 def print_error(text):
@@ -128,8 +127,7 @@ def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("sim")
-    with progress_indicator.Spinner():
-        get_simulation_data(**arg_dict)
+    get_simulation_data(**arg_dict)
 
 
 if __name__ == "__main__":
