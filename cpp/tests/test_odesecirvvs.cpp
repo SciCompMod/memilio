@@ -200,6 +200,20 @@ void set_synthetic_population_data(mio::osecirvvs::Model::Populations& populatio
                                     set_invalid_initial_value);
         assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}], 5, 10,
                                     set_invalid_initial_value);
+
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+        assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}], 5, 10,
+                                    set_invalid_initial_value);
+
         assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}], 1, 2,
                                     set_invalid_initial_value);
         assign_uniform_distribution(populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}], 1,
@@ -445,11 +459,10 @@ TEST(TestOdeSECIRVVS, checkPopulationConservation)
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
         // do not sum up auxiliary compartment
-        if(i % (int)mio::osecirvvs::InfectionState::TotalInfections != 0)
+        if((i+1) % ((int)mio::osecirvvs::InfectionState::TotalInfections+1) != 0)
         {
             EXPECT_GE(result.get_last_value()[i], -1e-3);
             num_persons += result.get_last_value()[i];
-            std::cout << "comp " << i << " " << result.get_last_value()[i] << "\n";
         }
 
     }   

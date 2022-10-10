@@ -146,7 +146,7 @@ public:
                 size_t ISyNj = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsNaive});
                 size_t ISevNj = this->populations.get_flat_index({j, InfectionState::InfectedSevereNaive});
                 size_t ICrNj = this->populations.get_flat_index({j, InfectionState::InfectedCriticalNaive});
-                size_t RNj = this->populations.get_flat_index({j, InfectionState::SusceptibleImprovedImmunity});
+                size_t SIIj = this->populations.get_flat_index({j, InfectionState::SusceptibleImprovedImmunity});
 
                 size_t INSNCj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptomsNaiveConfirmed});
                 size_t ISyNCj = this->populations.get_flat_index({j, InfectionState::InfectedSymptomsNaiveConfirmed});
@@ -177,11 +177,10 @@ public:
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-
-                double Nj = pop[SNj] + pop[ENj] + pop[INSNj] + pop[ISyNj] + pop[ISevNj] + pop[ICrNj] + pop[RNj] + pop[INSNCj] + pop[ISyNCj] +
+                // without died people
+                double Nj = pop[SNj] + pop[ENj] + pop[INSNj] + pop[ISyNj] + pop[ISevNj] + pop[ICrNj] + pop[INSNCj] + pop[ISyNCj] +
                             pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] + pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] +
-                            pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] +
-                            pop[ISyIICj]; // without died people
+                            pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
 
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
 
@@ -190,20 +189,20 @@ public:
                                              (riskFromInfectedNoSymptoms * (pop[INSNj] + pop[INSPIj] + pop[INSIIj]) +
                                               riskFromInfectedSymptomatic * (pop[ISyNj] + pop[ISyPIj] + pop[ISyIIj]));
 
-                double dummy_S = y[SNi] * ext_inf_force_dummy;
+                double dummy_SN = y[SNi] * ext_inf_force_dummy;
 
-                double dummy_SV = y[SPIi] * reducExposedPartialImmunity * ext_inf_force_dummy;
+                double dummy_SPI = y[SPIi] * reducExposedPartialImmunity * ext_inf_force_dummy;
 
-                double dummy_R = y[SIIi] * reducExposedImprovedImmunity * ext_inf_force_dummy;
+                double dummy_SII = y[SIIi] * reducExposedImprovedImmunity * ext_inf_force_dummy;
 
-                dydt[SNi] -= dummy_S;
-                dydt[ENi] += dummy_S;
+                dydt[SNi] -= dummy_SN;
+                dydt[ENi] += dummy_SN;
 
-                dydt[SPIi] -= dummy_SV;
-                dydt[EPIi] += dummy_SV;
+                dydt[SPIi] -= dummy_SPI;
+                dydt[EPIi] += dummy_SPI;
 
-                dydt[SIIi] -= dummy_R;
-                dydt[EIIi] += dummy_R;
+                dydt[SIIi] -= dummy_SII;
+                dydt[EIIi] += dummy_SII;
             }
 
             // ICU capacity shortage is close
@@ -218,35 +217,35 @@ public:
 
             /**** path of immune-naive ***/
             
-            dydt[ENi] -= rateE * y[ENi]; // only exchange of E and C done here
+            dydt[ENi] -= rateE * y[ENi]; // only exchange of E and InfectedNoSymptoms done here
             dydt[INSNi] = rateE * y[ENi] - rateINS * y[INSNi];
             dydt[INSNCi] = - rateINS * y[INSNCi];
 
             dydt[ISyNi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNi] -
-                       (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyNi];
+                       (y[ISyNi]/ params.get<TimeInfectedSymptoms>()[i]);
             dydt[ISyNCi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNCi] -
-                        (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyNCi];
+                        (y[ISyNCi] / params.get<TimeInfectedSymptoms>()[i]);
 
             dydt[ISevNi] =
                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * (y[ISyNi] + y[ISyNCi])  -
                 (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevNi];
-            dydt[ICrNi] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICrNi];
+            dydt[ICrNi] = - y[ICrNi] / params.get<TimeInfectedCritical>()[i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrNi] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
 
             /**** path of partially immune (e.g., one dose of vaccination) ***/
 
-            dydt[EPIi] -= rateE * y[EPIi]; // only exchange of E and C done here
+            dydt[EPIi] -= rateE * y[EPIi]; // only exchange of E and InfectedNoSymptoms done here
             dydt[INSPIi] = rateE * y[EPIi] - (rateINS / reducTimeInfectedMild) * y[INSPIi];
             dydt[INSPICi] = -(rateINS / reducTimeInfectedMild) * y[INSPICi];
             dydt[ISyPIi] =
                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSPIi] -
-                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyPIi];
+                (y[ISyPIi] / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
             dydt[ISyPICi] =
                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) * (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
                     (rateINS / reducTimeInfectedMild) * y[INSPICi] -
-                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyPIi];
+                (y[ISyPICi] / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
             dydt[ISevPIi] = reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity * params.get<SeverePerInfectedSymptoms>()[i] /
                             (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyPIi] + y[ISyPICi])  -
                         (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevPIi];
