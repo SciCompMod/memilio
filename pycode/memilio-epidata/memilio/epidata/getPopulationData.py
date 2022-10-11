@@ -142,7 +142,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
-    filename_counties = 'migration'
+    filename_counties = 'county_table'
     filename_zensus = 'zensus'
     filename_reg_key = 'reg_key'
 
@@ -176,11 +176,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             raise FileNotFoundError(error_message)
     else:
         try:
-            path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-            counties = gd.loadExcel(
-                targetFileName='', apiUrl=path_counties, extension='',
-                param_dict={"sheet_name": 1, "header": 3,
-                            "engine": 'openpyxl'})
+            counties = geoger.get_official_county_table()
         except FileNotFoundError:
             error_message = "Error: The counties file does not exist."
             raise FileNotFoundError(error_message)
@@ -282,6 +278,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     new_data_file = os.path.join(directory, filename)
     new_data_avail = os.path.isfile(new_data_file + '.xlsx')
 
+    new_data_avail=False
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.loadExcel(
@@ -501,11 +498,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         ratio = np.ones(len(data[:, 0]))
         for i in range(len(ratio)):
             for j in range(len(counties)):
-                if not counties['Schlüssel-nummer'].isnull().values[j]:
+                if not counties[dd.EngEng['idCounty']].isnull().values[j]:
                     try:
                         if data[i, 0] == int(
-                                counties['Schlüssel-nummer'].values[j]):
-                            ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
+                                counties[dd.EngEng['idCounty']].values[j]):
+                            ratio[i] = counties[dd.EngEng['population']].values[j]/data[i, 1]
 
                     except ValueError:
                         pass
@@ -523,7 +520,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        if merge_eisenach == True:
+        if len(df_current) < 401 and merge_eisenach == True:
             # Merge Eisenach and Wartburgkreis
             df_current = geoger.merge_df_counties_all(
                 df_current, sorting=[dd.EngEng["idCounty"]],
@@ -535,8 +532,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             filename = 'county_current_population'
             filename_raw = 'county_population'
         else:  # Write Dataframe without merging
-            filename = 'county_current_population_dim401'
-            filename_raw = 'county_population_dim401'
+            filename = 'county_current_population_dim' + str(len(df_current))
+            filename_raw = 'county_population_dim' + str(len(df_current))
 
         gd.write_dataframe(df_current, directory, filename, file_format)
         gd.write_dataframe(df, directory, filename_raw, file_format)

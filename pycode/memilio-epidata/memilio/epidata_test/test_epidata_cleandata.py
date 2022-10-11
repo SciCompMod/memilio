@@ -149,7 +149,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -239,7 +239,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5",
                     "a_jh.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -293,7 +293,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -453,7 +453,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -485,7 +485,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         files = os.listdir(dir_path)
 
         population_files = [
-            "PopulData.json", "county_population.json", "migration.json",
+            "PopulData.json", "county_population.json", "county_table.json",
             "reg_key.json", "zensus.json"]
         # delete all files except which will be deleted
         for item in files:
@@ -561,7 +561,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -630,7 +630,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -678,7 +678,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -727,7 +727,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -1107,7 +1107,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "a_jh.json",
                     "PopulData.json", "cases_a.json", "county_population.json",
-                    "migration.json", "reg_key.json", "zensus.json",
+                    "county_table.json", "reg_key.json", "zensus.json",
                     "CaseDataFull.json"]
 
                 for file in fakefiles:
