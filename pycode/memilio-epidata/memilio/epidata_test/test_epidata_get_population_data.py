@@ -77,7 +77,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     data[:, 1] = [(x+1)*44 for x in range(len(data))]
 
     test_counties = pd.DataFrame(
-        data, columns=['Schlüssel-nummer', 'Bevölkerung2)'])
+        data, columns=[dd.EngEng['idCounty'], dd.EngEng['population']])
 
     columns = [
         'ID_County', 'Population', '<3 years', '3-5 years', '6-14 years',

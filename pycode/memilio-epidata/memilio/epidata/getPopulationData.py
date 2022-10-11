@@ -278,7 +278,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     new_data_file = os.path.join(directory, filename)
     new_data_avail = os.path.isfile(new_data_file + '.xlsx')
 
-    new_data_avail=False
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.loadExcel(
@@ -520,7 +519,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        if len(df_current) < 401 and merge_eisenach == True:
+        if len(df_current) < 401 or merge_eisenach == True:
             # Merge Eisenach and Wartburgkreis
             df_current = geoger.merge_df_counties_all(
                 df_current, sorting=[dd.EngEng["idCounty"]],
