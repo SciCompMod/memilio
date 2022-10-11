@@ -24,7 +24,7 @@ for k in dd.County.keys():
     if len(df_k) > 0:
 
         df_append = df_k.iloc[[0]]
-        df_neu = df_neu.append(df_append)
+        df_neu = pd.concat([df_neu, df_append])
 
 print("Number of counties in data:", len(df_neu))
 

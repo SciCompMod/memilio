@@ -501,7 +501,7 @@ def get_neighbors_mobility(
         else:
             commuter = pd.read_json(os.path.join(
                 directory, "migration_bfa_2020_dim401.json"))
-    except ValueError:
+    except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
 

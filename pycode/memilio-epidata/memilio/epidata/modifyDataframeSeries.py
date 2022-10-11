@@ -49,10 +49,10 @@ def impute_and_reduce_df(
     """
     # derive date from time
     try:
-        df_old.Date = df_old.Date.dt.date
+        df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
     except AttributeError:
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
-        df_old.Date = df_old.Date.dt.date
+        df_old.Date = df_old.Date.dt.date.astype(df_old.dtypes.Date)
 
     # create empty copy of the df
     df_new = pd.DataFrame(columns=df_old.columns)
@@ -125,14 +125,16 @@ def impute_and_reduce_df(
 
             if impute == 'zeros':
                 # impute zeros at missing dates
-                df_local_new.fillna(values, inplace=True)
+                for keys, vals in values.items():
+                    df_local_new[keys].fillna(vals, inplace=True)
             else:
                 # fill values of missing dates based on last entry
                 df_local_new.fillna(method='ffill', inplace=True)
                 # fill value of the first date, if it doesn't exist yet
                 # has to be conducted in second step to not impute 'value'
                 # at first missing value if start is present
-                df_local_new.fillna(values, limit=1, inplace=True)
+                for keys, vals in values.items():
+                    df_local_new[keys].fillna(vals, limit = 1, inplace=True)
                 # fill remaining values (between first date and first
                 # reported date of the df_local)
                 df_local_new.fillna(method='ffill', inplace=True)
@@ -169,10 +171,11 @@ def impute_and_reduce_df(
             # TODO: by this the corresponding columns will be zero-filled
             #       other entries such as names etc will get lost here
             #       any idea to introduce these names has to be found.
-            df_local_new.fillna(values, inplace=True)
+            for keys, vals in values.items():
+                df_local_new[keys].fillna(vals, inplace=True)
 
         # append current local entity (i.e., county or state)
-        df_new = df_new.append(df_local_new)
+        df_new = pd.concat([df_new, df_local_new])
         # rearrange indices from 0 to N
         df_new.index = (range(len(df_new)))
 

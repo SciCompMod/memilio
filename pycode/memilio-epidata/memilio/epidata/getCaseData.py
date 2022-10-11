@@ -131,7 +131,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
         try:
             df = pd.read_json(file_in)
-        except ValueError as err:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError) as err:
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without -r flag to get it.") \
                 from err
@@ -160,7 +161,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             try:
                 # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
                 # utf_8_sig can identify those bytes as one sign and display it correctly
-                df = gd.loadCsv(targetFileName=itemId, encoding='utf_8_sig')
+                df = gd.loadCsv(
+                    targetFileName=itemId,
+                    param_dict={"encoding": 'utf_8_sig'})
             except FileNotFoundError:
                 pass
             complete = check_for_completeness(df, merge_eisenach=True)
@@ -169,8 +172,10 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 print("Note: Case data is still incomplete. Trying a thrid source.")
                 try:
                     # If the data on github is not available we download the case data from rki from covid-19 datahub
-                    df = gd.loadCsv(apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
-                        targetFileName="f10774f1c63e40168479a1feb6c7ca74/data", extension = "", encoding='utf_8_sig')
+                    df = gd.loadCsv(
+                        apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
+                        targetFileName="f10774f1c63e40168479a1feb6c7ca74/data",
+                        extension="", param_dict={"encoding": 'utf_8_sig'})
                     df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 except FileNotFoundError:
                     pass
@@ -227,9 +232,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
             df['Meldedatum'])
 
-    # Correct Timestamps:
-    for col in [dd.EngEng['date']]:
-        df[col] = df[col].astype('datetime64[ns]')
+    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format="%Y-%m-%d")
 
     # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
