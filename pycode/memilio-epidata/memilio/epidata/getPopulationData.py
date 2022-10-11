@@ -408,10 +408,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        filename = 'county_current_population_dim401'
-        gd.write_dataframe(df_pop_export, directory, filename, file_format)
+        if len(df_pop_export) == 401:
+            filename = 'county_current_population_dim401'
+            gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
-        if merge_eisenach == True:
+        if len(df_pop_export) == 400 or merge_eisenach == True:
             filename = 'county_current_population'
 
             # Merge Eisenach and Wartburgkreis
@@ -519,7 +520,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        if len(df_current) < 401 or merge_eisenach == True:
+        if len(df_current) == 400 or merge_eisenach == True:
             # Merge Eisenach and Wartburgkreis
             df_current = geoger.merge_df_counties_all(
                 df_current, sorting=[dd.EngEng["idCounty"]],

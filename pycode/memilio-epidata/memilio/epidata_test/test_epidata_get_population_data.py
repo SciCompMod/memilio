@@ -134,8 +134,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             read_data=True, file_format='json', out_folder=self.path,
             no_raw=False, split_gender=False, merge_eisenach=False)
 
+        # add seven to the number of test_counties as this is the current workaround to add counties which are
+        # not mentioned in old data sets
         test_df = pd.read_json(os.path.join(
-            self.path, 'Germany/', 'county_current_population_dim401.json'))
+            self.path, 'Germany/', 'county_current_population_dim' + str(len(self.test_counties)+7) +'.json'))
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
