@@ -26,6 +26,11 @@ namespace mio
 namespace abm
 {
 
+ViralLoad::ViralLoad()
+{
+    draw_viral_load();
+}
+
 void ViralLoad::draw_viral_load()
 {
     // These numbers are subject to change, They are going to be based on distributions backed from data.

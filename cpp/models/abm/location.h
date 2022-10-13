@@ -119,7 +119,7 @@ public:
      * @param person the person that interacts with the population
      * @param dt length of the current simulation time step
      * @param global_params global infection parameters
-     * @return new infection state of the person
+     * @return new infection of the person
      */
     Infection* interact(const Person& person, const TimePoint& t, const TimeSpan dt,
                             const GlobalInfectionParameters& global_params) const;

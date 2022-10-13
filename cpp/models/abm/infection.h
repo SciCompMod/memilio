@@ -64,10 +64,7 @@ private:
 class ViralLoad
 {
 public:
-    ViralLoad()
-    {
-        draw_viral_load();
-    }
+    ViralLoad();
     void draw_viral_load();
     TimePoint determine_end_date(const TimePoint& start_date);
     double get_viral_load(const TimePoint& t, const TimePoint& start_date) const;
@@ -94,13 +91,18 @@ public:
      * get viral load at a given time
      * @param t time point of the querry
      * @return viral load at given time point
+     * Computed depending on indiviudal hat function depending on viral load parameters
+     * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
+     *
      */
     double get_viral_load(const TimePoint& t) const;
 
     /**
      * get infectivity at a given time
      * @param t time point of the querry
-     * @return infectivity at given time point
+     * @return infectivity at given time point.
+     * Computed depending on current viral load and individual invlogit function of each person
+     * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
      */
     double get_infectivity(const TimePoint& t) const;
 
