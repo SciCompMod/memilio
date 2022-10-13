@@ -17,7 +17,7 @@ Sources
 
     Robert Koch-Institut (2021): SARS-CoV-2 Infektionen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.4681153.
 
-    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland
 
     If the data on github is not available we download the case data from rki from
     https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/e408ccf8878541a7ab6f6077a42fd811_0
