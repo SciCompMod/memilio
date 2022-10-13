@@ -22,7 +22,7 @@
 @brief Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw case data we download can be found at
-https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland
 
 Be careful: Date of deaths or recovery is not reported in original case data and will be
 extrapolated in this script.
@@ -140,7 +140,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         # download data
         df = pd.DataFrame()
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
-              "SARS-CoV-2_Infektionen_in_Deutschland/master/"
+              "SARS-CoV-2-Infektionen_in_Deutschland/main/"
         source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
         try:
             df = gd.loadCsv(targetFileName=source_filename, apiUrl=url,
