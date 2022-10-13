@@ -176,7 +176,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedNaive}]      = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsNaive}]      = num_InfectedNoSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsNaiveConfirmed}]      = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsNaive}]     = num_InfectedSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsNaiveConfirmed}]     = 0;           
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] = num_InfectedSevere[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}]         = num_rec[county][i];
         }
@@ -254,7 +256,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}]      = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsPartialImmunity}]      = num_InfectedNoSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]      = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsPartialImmunity}]     = num_InfectedSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsPartialImmunityConfirmed}]     = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSeverePartialImmunity}] = num_InfectedSevere[county][i];
         }
         // }
@@ -331,7 +335,9 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}]  = num_Exposed[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsImprovedImmunity}]  = num_InfectedNoSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}]  = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsImprovedImmunity}] = num_InfectedSymptoms[county][i];
+            model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] = 0;
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereImprovedImmunity}] =
                 num_InfectedSevere[county][i];
         }
@@ -474,6 +480,13 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] =
                     S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] * denom_C;
 
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}] =
+                    S * model[region].populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}] * denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] =
+                    S_pv * model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] * denom_C;
+                model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] =
+                    S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] * denom_C;                   
+
                 model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] =
                     S * model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] * denom_I;
                 model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] =
@@ -482,6 +495,15 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] =
                     S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i] *
                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] * denom_I;
+
+                model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] =
+                    S * model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] =
+                    S_pv * model[region].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] * denom_I;
+                model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] =
+                    S_v * model[region].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[i] *
+                    model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] * denom_I;
 
                 model[region].populations[{i, InfectionState::InfectedSevereNaive}] =
                     S * model[region].populations[{i, InfectionState::InfectedSevereNaive}] * denom_HU;
