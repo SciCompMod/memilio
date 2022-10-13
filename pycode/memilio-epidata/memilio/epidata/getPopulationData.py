@@ -120,11 +120,11 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
                          read_data=dd.defaultDict['read_data'],
                          no_raw=dd.defaultDict['no_raw'],
                          file_format=dd.defaultDict['file_format']):
-    """! Load of counties, zensus and reg_key files
+    """! Load of county_table, zensus and reg_key files
 
     Data is downloaded from the following sources
    - Federal Statistical Office of Germany (Destatis/Genesis-Online), current
-        data for population per county [stored in "counties"]
+        data for population per county [stored in "county_table"]
    - Zensus2011 data with additional information on regional keys
         [stored in "reg_key"]
    - Zensus2011 data from opendata splitted for age and gender
