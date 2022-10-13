@@ -40,7 +40,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir_dic_all = {
             'Germany':
             ["cases_a", "a_jh", "CaseDataFull", "PopulData",
-             "county_population", "migration", "reg_key", "zensus", "FullVacc",
+             "county_population", "county_table", "reg_key", "zensus", "FullVacc",
              "all_county_vacc", "all_state_vacc", "migration_bfa_2020_dim401",
              "states_testpos", "FullData_DIVI", "county_divi"],
             'Spain': ["b_jh"],
@@ -52,7 +52,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         dir_dic_cases = {'Germany': ["cases_a", "CaseDataFull"]}
 
-        dir_dic_popul = {'Germany': ["PopulData", "county_population", "migration", "reg_key", "zensus"]}
+        dir_dic_popul = {'Germany': ["PopulData", "county_population", "county_table", "reg_key", "zensus"]}
 
         dir_dic_jh = {'Germany': ["a_jh"],
                       'Spain': ["b_jh"],
@@ -144,12 +144,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -234,12 +234,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5",
                     "a_jh.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -288,12 +288,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "a_jh.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -394,7 +394,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 25)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
@@ -453,7 +453,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -485,7 +485,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         files = os.listdir(dir_path)
 
         population_files = [
-            "PopulData.json", "county_population.json", "migration.json",
+            "PopulData.json", "county_population.json", "county_table.json",
             "reg_key.json", "zensus.json"]
         # delete all files except which will be deleted
         for item in files:
@@ -556,12 +556,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 30)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -625,12 +625,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 29)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -673,12 +673,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 29)
                 fakefiles = [
                     "cases_a.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -722,12 +722,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "cases_a.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -1101,13 +1101,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 23)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5",
                     "zensus.h5", "FullVacc.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "a_jh.json",
                     "PopulData.json", "cases_a.json", "county_population.json",
-                    "migration.json", "reg_key.json", "zensus.json",
+                    "county_table.json", "reg_key.json", "zensus.json",
                     "CaseDataFull.json"]
 
                 for file in fakefiles:
