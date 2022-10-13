@@ -38,7 +38,7 @@ Sources
   
     https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv
 
-- Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
+- Population data (P) like "Einwohnerzahl" for Bundesländer and Landkreise:
 
   https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
 
@@ -189,7 +189,7 @@ RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths,
 
 P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
 P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
-P              Germany     migration                           unchanged migration data
+P              Germany     county_table                        raw information on the German counties and its population sizes
 P              Germany     reg_key                             unchanged regional keys from excel table
 P              Germany     zensus                              unchanged zensus data
 

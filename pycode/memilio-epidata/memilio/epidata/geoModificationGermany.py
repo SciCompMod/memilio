@@ -327,7 +327,7 @@ def get_official_county_table():
     return county_table
 
 
-def get_nuts3_county_id_map(merge_eisenach=True):
+def get_nuts3_county_id_map():
     """! Downloads county list file from destatis and creates hash map from
     NUTS3 ID to county ID.
 

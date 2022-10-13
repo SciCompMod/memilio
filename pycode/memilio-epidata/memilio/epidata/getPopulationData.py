@@ -136,7 +136,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
    @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
    @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @return 3 Dataframes of migration, reg_key and zensus
+   @return Three dataframes of county_table, reg_key and zensus data.
     """
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -532,6 +532,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             filename = 'county_current_population'
             filename_raw = 'county_population'
         else:  # Write Dataframe without merging
+            if (len(df_current) != 400) and (len(df_current) != 401):
+                print('Population output only contains ' +
+                      str(len(df_current)) + ' counties. Is this intended?')
             filename = 'county_current_population_dim' + str(len(df_current))
             filename_raw = 'county_population_dim' + str(len(df_current))
 

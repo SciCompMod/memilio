@@ -392,7 +392,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
     def test_get_nuts3_county_id_map(self):
         # [merge_berlin = True], merge_eisenach = True (Eisenach not anymore in official table)
-        nuts_key_dict = geoger.get_nuts3_county_id_map(merge_eisenach = True)
+        nuts_key_dict = geoger.get_nuts3_county_id_map()
         assert 16056 not in nuts_key_dict.values()
         assert 11000 in nuts_key_dict.values()
         for id in self.merge_berlin_ids:
