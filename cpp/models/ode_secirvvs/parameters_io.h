@@ -529,6 +529,9 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                     (model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] +
                      model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
                      model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
+                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
                      model[region].populations[{i, InfectionState::InfectedSevereNaive}] +
                      model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
                      model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
@@ -545,7 +548,9 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::SusceptiblePartialImmunity}] =
                     std::max(0.0, S_pv - model[region].populations[{i, InfectionState::ExposedPartialImmunity}] -
                                       model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
+                                      model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
                                       model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
+                                      model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
                                       model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
                                       model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}]);
 
