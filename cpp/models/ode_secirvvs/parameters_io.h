@@ -84,7 +84,7 @@ IOResult<void> read_confirmed_cases_data(
         * @param date Date for which the arrays are initialized
         * @param num_rec output vector for number of people in the compartement recovered
         * @param delay number of days in the past the are used to set recovered compartment.
-        * @see mio::read_rki_data
+        * @see mio::read_confirmed_cases_data
         * @{
         */
 IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,

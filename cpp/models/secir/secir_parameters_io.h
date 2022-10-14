@@ -60,7 +60,7 @@ namespace details
      * @param t_* vector average time it takes to get from one compartement to another for each age group
      * @param mu_* vector probabilities to get from one compartement to another for each age group
      */
-    IOResult<void> read_rki_data(
+    IOResult<void> read_confirmed_cases_data(
         std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_Exposed,
         std::vector<std::vector<double>>& vnum_InfectedNoSymptoms, std::vector<std::vector<double>>& vnum_InfectedSymptoms,
         std::vector<std::vector<double>>& vnum_InfectedSevere, std::vector<std::vector<double>>& vnum_icu,
@@ -140,7 +140,7 @@ namespace details
 * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
 */
 template <class Model>
-IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::string& data_dir,
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, const std::string& data_dir,
                                        const std::string& results_dir, std::vector<int> const& region, Date date,
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        int num_days)
@@ -200,7 +200,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<double> num_icu(model.size(), 0.0);
 
-        BOOST_OUTCOME_TRY(details::read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json"), region, date,
+        BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(path_join(data_dir, "cases_all_county_age_ma7.json"), region, date,
                                                  num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec,
                                                  t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms,
                                                  t_InfectedSevere, t_InfectedCritical, mu_C_R,

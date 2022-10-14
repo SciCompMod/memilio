@@ -508,7 +508,7 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
-    auto extrapolate_result = mio::extrapolate_rki_results(model, TEST_DATA_DIR, results_dir, county, date,
+    auto extrapolate_result = mio::export_input_data_county_timeseries(model, TEST_DATA_DIR, results_dir, county, date,
                                                            scaling_factor_inf, scaling_factor_icu, 1);
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
