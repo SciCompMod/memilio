@@ -104,6 +104,8 @@ TEST(TestSecir, checkPopulationConservation)
     double nb_total_t0 = 10000;
 
     mio::SecirModel model(1);
+    
+    model.parameters.get<mio::TestAndTraceCapacity>()  = 35;
 
     model.parameters.get<mio::IncubationTime>()[(mio::AgeGroup)0]         = 5.2;
     model.parameters.get<mio::SerialInterval>()[(mio::AgeGroup)0]         = 4.2;    
@@ -129,6 +131,7 @@ TEST(TestSecir, checkPopulationConservation)
     model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]    = 1;
     model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)0]    = 0.09;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.25;
+    model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.45;
     model.parameters.get<mio::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]  = 0.2;
     model.parameters.get<mio::CriticalPerSevere>()[(mio::AgeGroup)0]         = 0.25;
     model.parameters.get<mio::DeathsPerCritical>()[(mio::AgeGroup)0]                    = 0.3;
