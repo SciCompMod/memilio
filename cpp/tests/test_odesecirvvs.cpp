@@ -238,7 +238,7 @@ void set_synthetic_population_data(mio::osecirvvs::Model::Populations& populatio
 void set_demographic_parameters(mio::osecirvvs::Model::ParameterSet& parameters, bool set_invalid_initial_value)
 {
     assign_uniform_distribution(parameters.get<mio::osecirvvs::ICUCapacity>(), 20, 50, set_invalid_initial_value);
-    assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 0.01, 0.02,
+    assign_uniform_distribution(parameters.get<mio::osecirvvs::TestAndTraceCapacity>(), 100, 200,
                                 set_invalid_initial_value);
     parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
     parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);

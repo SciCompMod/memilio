@@ -63,9 +63,11 @@ int main()
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<mio::TransmissionProbabilityOnContact>() = 0.05;
-    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = 1;
+    model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = 0.7;
     model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()    = 0.09;
     model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = 0.25;
+    model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()   = 0.45;
+    model.parameters.get<mio::TestAndTraceCapacity>()   = 35;
     model.parameters.get<mio::SeverePerInfectedSymptoms>()  = 0.2;
     model.parameters.get<mio::CriticalPerSevere>()         = 0.25;
     model.parameters.get<mio::DeathsPerCritical>()                    = 0.3;
