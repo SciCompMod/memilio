@@ -613,7 +613,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     ASSERT_THAT(p, samples[6]);
 }
 
-TEST(TestOdeSECIRVVS, get_infections_relative) //TODO
+TEST(TestOdeSECIRVVS, get_infections_relative) 
 {
     auto model = make_model(2);
     auto sim = mio::osecirvvs::Simulation<>(model);
@@ -621,7 +621,8 @@ TEST(TestOdeSECIRVVS, get_infections_relative) //TODO
 
     auto relative_infections = get_infections_relative(sim, 0.0, y);
 
-    ASSERT_DOUBLE_EQ(relative_infections, 45.0 / model.populations.get_total());
+    // see model population init to obtain sum 105=2*(7+7.5+8+9.5+10+10.5)
+    ASSERT_DOUBLE_EQ(relative_infections, 105 / model.populations.get_total());
 }
 
 TEST(TestOdeSECIRVVS, get_migration_factors)
