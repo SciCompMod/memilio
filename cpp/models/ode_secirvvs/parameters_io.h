@@ -810,6 +810,10 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         std::vector<std::vector<double>> num_Exposed_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedNoSymptoms_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSymptoms_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_uv(model.size(), std::vector<double>(num_age_groups, 0.0)); 
+        // end TODO
         std::vector<std::vector<double>> num_rec_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSevere_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_death_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
@@ -824,6 +828,10 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         std::vector<std::vector<double>> num_InfectedNoSymptoms_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSymptoms_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSevere_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_pv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_pv(model.size(), std::vector<double>(num_age_groups, 0.0)); 
+        // end TODO        
         std::vector<std::vector<double>> dummy_death(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> dummy_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
@@ -839,6 +847,10 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         std::vector<std::vector<double>> num_Exposed_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedNoSymptoms_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
         std::vector<std::vector<double>> num_InfectedSymptoms_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        // potential TODO: these confirmed are only confirmed by commuting, set to zero here. Adapt if generalized!
+        std::vector<std::vector<double>> num_InfectedNoSymptomsConfirmed_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
+        std::vector<std::vector<double>> num_InfectedSymptomsConfirmed_fv(model.size(), std::vector<double>(num_age_groups, 0.0)); 
+        // end TODO        
         std::vector<std::vector<double>> num_InfectedSevere_fv(model.size(), std::vector<double>(num_age_groups, 0.0));
         for (size_t county = 0; county < model.size(); county++) {
             dummy_rec[county]   = std::vector<double>(num_age_groups, 0.0);
@@ -932,6 +944,13 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity + age_group_offset) =
                         S_v * denom_C * num_InfectedNoSymptoms_fv[county][age];
 
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed + age_group_offset) =
+                        S * denom_C * num_InfectedNoSymptomsConfirmed_uv[county][age];
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed + age_group_offset) =
+                        S_pv * denom_C * num_InfectedNoSymptomsConfirmed_pv[county][age];
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed + age_group_offset) =
+                        S_v * denom_C * num_InfectedNoSymptomsConfirmed_fv[county][age];                   
+
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) =
                         S * denom_I * num_InfectedSymptoms_uv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity + age_group_offset) =
@@ -940,6 +959,15 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity + age_group_offset) =
                         S_v * model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(age)] *
                         denom_I * num_InfectedSymptoms_fv[county][age];
+
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed + age_group_offset) =
+                        S * denom_I * num_InfectedSymptomsConfirmed_uv[county][age];
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset) =
+                        S_pv * model[county].parameters.template get<ReducInfectedSymptomsPartialImmunity>()[AgeGroup(age)] *
+                        denom_I * num_InfectedSymptomsConfirmed_pv[county][age];
+                    extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed + age_group_offset) =
+                        S_v * model[county].parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(age)] *
+                        denom_I * num_InfectedSymptomsConfirmed_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) =
                         S * denom_HU * num_InfectedSevere_uv[county][age];
@@ -983,6 +1011,11 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                                        age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
                                                        age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed + age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                                       age_group_offset) +
+                         extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                                       age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
                                                        age_group_offset) +
@@ -1006,8 +1039,12 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                                                                         age_group_offset) -
                                           extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
                                                                         age_group_offset) -
+                                          extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                                                        age_group_offset) -                                                                        
                                           extrapolated_rki[county][day](
                                               (size_t)InfectionState::InfectedSymptomsPartialImmunity + age_group_offset) -
+                                          extrapolated_rki[county][day](
+                                              (size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset) -
                                           extrapolated_rki[county][day](
                                               (size_t)InfectionState::InfectedSeverePartialImmunity + age_group_offset) -
                                           extrapolated_rki[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
