@@ -80,7 +80,7 @@ namespace details
         const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
         const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U, const std::vector<double>& scaling_factor_inf)
     {
-        BOOST_OUTCOME_TRY(rki_data, read_confirmed_cases_data(path));
+        BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
         auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) { return a.date < b.date; }); 
         if (max_date_entry == rki_data.end()) {
             log_error("RKI data file is empty.");
