@@ -17,17 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import sys
 import time
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colors
 from scipy.spatial.distance import pdist
 from scipy.cluster import hierarchy
-from sklearn.cluster import KMeans
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
@@ -347,7 +345,7 @@ def transform_npi_data(fine_resolution=2,
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=2)
+                sheet_name=2, engine = 'openpyxl')
         else:
             df_npis_desc = pd.read_excel(
                 os.path.join(
@@ -372,7 +370,7 @@ def transform_npi_data(fine_resolution=2,
     if fine_resolution == 2:
         df_npis_combinations_pre = pd.read_excel(
             os.path.join(
-                directory, 'combination_npis.xlsx'))
+                directory, 'combination_npis.xlsx'), engine = 'openpyxl')
 
         # rename essential columns and throw away others
         column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
@@ -450,7 +448,7 @@ def transform_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i)
+                    sheet_name=i, engine = 'openpyxl')
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
                     print('Error in combination matrix.')
             except:
@@ -601,7 +599,7 @@ def transform_npi_data(fine_resolution=2,
     if fine_resolution > 0:
         npi_incid_start = dict()
         for i in range(len(npis)):
-            incid_threshold = 1e10
+            incid_threshold = 1e5
             if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
                 # set -1 for incidence-independent NPIs
                 incid_threshold = -1
@@ -648,7 +646,7 @@ def transform_npi_data(fine_resolution=2,
     counties_removed = df_npis_old[
         ~df_npis_old[dd.EngEng['idCounty']].isin(unique_geo_entities)][
         dd.EngEng['idCounty']].unique()
-    if len(counties_removed) == 1 and counties_removed[0] != 16056:
+    if list(counties_removed) != [16056]:
         sys.exit('Error. Other counties than that of Eisenach were removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
@@ -684,7 +682,7 @@ def transform_npi_data(fine_resolution=2,
     # NPIs were active
     if fine_resolution > 0:
         df_infec_rki = pd.read_json(os.path.join(
-            directory, 'all_county_all_dates_repdate_rki.json'))
+            directory, 'cases_all_county_all_dates_repdate.json'))
         df_infec_rki[dd.EngEng['date']] = pd.to_datetime(
             df_infec_rki[dd.EngEng['date']])
         df_population = pd.read_json(
@@ -731,8 +729,8 @@ def transform_npi_data(fine_resolution=2,
                                           == countyID, dd.EngEng['population']].values[0]
             # consider difference between current day and day-7 to compute incidence
             incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
-                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
-            df_infec_local['Incidence'] = incidence_local / pop_local * 100000
+                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']]) / pop_local * 100000
+            df_infec_local['Incidence'] = incidence_local
 
             # set to main data frame
             df_infec_rki.loc[df_infec_rki[dd.EngEng['idCounty']] ==
@@ -752,8 +750,7 @@ def transform_npi_data(fine_resolution=2,
                     for i in df_local_old[dd.EngEng['npiCode']]]
 
         # get list of NPI codes, ordered as the rows in the current data frame
-        npi_codes_ordered_as_rows = df_local_old[dd.EngEng['npiCode']][
-            npi_rows].to_list()
+        npi_codes_ordered_as_rows = npis_final['NPI_code'].to_list()
 
         # get indices of rows for the NPI codes as in the sorted npi_codes list
         # may be superfluous if NPI code rows are sorted correctly
@@ -1066,11 +1063,11 @@ def transform_npi_data(fine_resolution=2,
     #         df_validation.iloc[:, start_npi_cols - 1:] != df_npis.iloc
     #         [:, start_npi_cols - 1:])[0]) > 0:
     #     print('Error in file writing/reading')
+    npi_codes_considered = [] #which codes?
+    analyze_npi_data(True, True, fine_resolution, npis, directory, file_format, npi_codes_considered)
 
 
-def analyze_npi_data(
-        read_data=dd.defaultDict['read_data'],
-        make_plot=dd.defaultDict['make_plot']):
+def analyze_npi_data(read_data, make_plot, fine_resolution, npis, directory, file_format, npi_codes_considered):
 
     if not read_data:
         x = 15
