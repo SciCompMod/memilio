@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -24,6 +24,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /** 
  * infection state in ABM.
@@ -40,7 +42,7 @@ enum class InfectionState : std::uint32_t
     Recovered_Carrier,
     Recovered_Infected,
     Dead,
-    
+
     Count //last!!
 };
 
@@ -52,10 +54,11 @@ enum class VaccinationState : std::uint32_t
 {
     Unvaccinated = 0,
     Vaccinated,
-    
+
     Count //last!!
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

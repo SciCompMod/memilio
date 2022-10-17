@@ -2,6 +2,9 @@ configure_file(config_internal.h.in memilio/config_internal.h)
 
 add_library(memilio
     config.h
+    data/analyze_result.h
+    data/analyze_result.cpp
+    epidemiology/age_group.h
     epidemiology/populations.h
     epidemiology/damping.cpp
     epidemiology/damping.h
@@ -15,9 +18,11 @@ add_library(memilio
     epidemiology/dynamic_npis.cpp
     epidemiology/regions.h
     epidemiology/regions.cpp
+    epidemiology/simulation_day.h
     epidemiology/holiday_data_de.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h
+    compartments/parameter_studies.h
     io/io.h
     io/io.cpp
     io/hdf5_cpp.h
@@ -25,6 +30,10 @@ add_library(memilio
     io/json_serializer.cpp
     io/mobility_io.h
     io/mobility_io.cpp
+    io/result_io.h
+    io/result_io.cpp
+    io/epi_data.h
+    io/epi_data.cpp
     math/euler.cpp
     math/euler.h
     math/smoother.h
@@ -38,6 +47,8 @@ add_library(memilio
     math/eigen_util.h
     math/matrix_shape.h
     math/matrix_shape.cpp
+    math/interpolation.h
+    math/interpolation.cpp
     mobility/mobility.h
     mobility/mobility.cpp
     mobility/graph_simulation.h
@@ -87,4 +98,8 @@ endif()
 
 if (MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+endif()
+
+if (MEMILIO_HAS_MPI)
+    target_link_libraries(memilio PUBLIC ${MPI_CXX_LIBRARIES})
 endif()

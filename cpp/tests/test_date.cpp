@@ -75,11 +75,11 @@ TEST(TestDate, offsetByDays)
 
 TEST(TestDate, parse)
 {
-    EXPECT_EQ(mio::parse_date("2020.09.02"), mio::Date(2020, 9, 2));
-    EXPECT_EQ(mio::parse_date("2021.08.30"), mio::Date(2021, 8, 30));
-    EXPECT_EQ(mio::parse_date("2020.02.29"), mio::Date(2020, 2, 29));
-    EXPECT_EQ(mio::parse_date("2021.03.01"), mio::Date(2021, 3, 1));
-    EXPECT_EQ(mio::parse_date("2021.02.28"), mio::Date(2021, 2, 28));
+    EXPECT_EQ(mio::parse_date("2020.09.02").value(), mio::Date(2020, 9, 2));
+    EXPECT_EQ(mio::parse_date("2021.08.30").value(), mio::Date(2021, 8, 30));
+    EXPECT_EQ(mio::parse_date("2020.02.29").value(), mio::Date(2020, 2, 29));
+    EXPECT_EQ(mio::parse_date("2021.03.01").value(), mio::Date(2021, 3, 1));
+    EXPECT_EQ(mio::parse_date("2021.02.28").value(), mio::Date(2021, 2, 28));
 }
 
 TEST(TestDate, getDayInYear)

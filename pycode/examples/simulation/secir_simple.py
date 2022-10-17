@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: Martin J. Kuehn, Wadim Koslow
+# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,9 +24,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
+import argparse
 
 
-def run_secir_simulation():
+def run_secir_simulation(show_plot = True):
     """
     Runs the c++ secir model using one age group 
     and plots the results
@@ -65,26 +66,26 @@ def run_secir_simulation():
     model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
     # Initial number of people in each compartment
-    model.populations[A0, Index_InfectionState(State.Exposed)] = 100
-    model.populations[A0, Index_InfectionState(State.Carrier)] = 50
-    model.populations[A0, Index_InfectionState(State.Infected)] = 50
-    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 20
-    model.populations[A0, Index_InfectionState(State.ICU)] = 10
-    model.populations[A0, Index_InfectionState(State.Recovered)] = 10
-    model.populations[A0, Index_InfectionState(State.Dead)] = 0
+    model.populations[A0, State.Exposed] = 100
+    model.populations[A0, State.Carrier] = 50
+    model.populations[A0, State.Infected] = 50
+    model.populations[A0, State.Hospitalized] = 20
+    model.populations[A0, State.ICU] = 10
+    model.populations[A0, State.Recovered] = 10
+    model.populations[A0, State.Dead] = 0
     model.populations.set_difference_from_total(
-        (A0, Index_InfectionState(State.Susceptible)), populations[0])
+        (A0, State.Susceptible), populations[0])
 
     # Compartment transition propabilities
     model.parameters.RelativeCarrierInfectability[A0] = 0.67
     model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-    model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
-    model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
+    model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+    model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
     model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
     model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
     model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
     # twice the value of RiskOfInfectionFromSymptomatic
-    model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5
+    model.parameters.MaxRiskOfInfectionFromSymptomatic[A0] = 0.5
 
     model.parameters.StartDay = (
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
@@ -136,9 +137,15 @@ def run_secir_simulation():
     fig.tight_layout
     fig.savefig('Secir_simple.pdf')
 
-    plt.show()
-    plt.close()
+    if show_plot:
+        plt.show()
+        plt.close()
 
 
 if __name__ == "__main__":
-    run_secir_simulation()
+    arg_parser = argparse.ArgumentParser(
+        'secir_simple', 
+        description = 'Simple example demonstrating the setup and simulation of the SECIR model.')
+    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+    args = arg_parser.parse_args()
+    run_secir_simulation(**args.__dict__)

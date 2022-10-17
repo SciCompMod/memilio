@@ -44,26 +44,18 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.ContactPatterns.cont_freq_mat.add_damping(
             mio.Damping(np.r_[0.7], 30.0))
 
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Exposed)] = 100
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Carrier)] = 50
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Infected)] = 50
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Hospitalized)] = 20
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.ICU)] = 10
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Recovered)] = 10
-        model.populations[A0, secir.Index_InfectionState(
-            secir.InfectionState.Dead)] = 0
-        model.populations.set_difference_from_total(
-            (A0, secir.Index_InfectionState(secir.InfectionState.Susceptible)), 10000)
+        model.populations[A0, secir.InfectionState.Exposed] = 100
+        model.populations[A0, secir.InfectionState.Carrier] = 50
+        model.populations[A0, secir.InfectionState.Infected] = 50
+        model.populations[A0, secir.InfectionState.Hospitalized] = 20
+        model.populations[A0, secir.InfectionState.ICU] = 10
+        model.populations[A0, secir.InfectionState.Recovered] = 10
+        model.populations[A0, secir.InfectionState.Dead] = 0
+        model.populations.set_difference_from_total((A0, secir.InfectionState.Susceptible), 10000)
 
         model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09
-        model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25
+        model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2
         model.parameters.ICUCasesPerHospitalized[A0] = 0.25
         model.parameters.DeathsPerICU[A0] = 0.3

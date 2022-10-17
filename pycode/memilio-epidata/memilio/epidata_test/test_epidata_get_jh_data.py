@@ -21,9 +21,11 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 import os
 import pandas as pd
+from datetime import date,datetime
 
 from memilio.epidata import getJHData as gJHD
 from memilio.epidata import getDataIntoPandasDataFrame as gD
+from memilio.epidata import defaultDict as dd
 from unittest.mock import patch
 
 
@@ -94,7 +96,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(out_folder, file)
 
         with self.assertRaises(FileNotFoundError) as error:
-            gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+            gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
         self.assertEqual(str(error.exception),
                          "Error: The file: " + file_with_path + \
                          " does not exist. Call program without -r "
@@ -108,7 +110,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(self.path)), 1)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
 
         # check if expected files are written
         # 7 country-folders+3 all countries-files
@@ -197,7 +199,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
 
         mock_loadcsv.assert_called_once()
 
@@ -291,7 +293,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
 
         mock_loadcsv.assert_called_once()
 
@@ -376,6 +378,47 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
                 df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
+    def test_get_JH_Data_extract_subframe_between_timeframe(self):
+        
+        [read_data, file_format, out_folder, no_raw] \
+            = [True, "json", self.path, False]
+            
+        gD.check_dir(out_folder)
+        
+        # write files which should be read in by program
+        self.write_jh_data(out_folder)
+    
+        # define start and end date
+        test_start_date = date(2020,12,22)
+        test_end_date = date(2021,4,22)
+        
+        # read in JH data with start and end date
+        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw,
+                                                start_date=test_start_date,end_date=test_end_date)
+        
+        # read in german data
+        directory_ger = os.path.join(out_folder, 'Germany/')
+        f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
+        df_test_start_end_date = pd.read_json(f_read)
+        
+        # do the same without the date constraints
+        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
+        directory_ger = os.path.join(out_folder, 'Germany/')
+        f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
+        df_test = pd.read_json(f_read)
+        
+        # extract dates which are between start and end date
+        upperdate = datetime.strftime(test_end_date, '%Y-%m-%d')
+        lowerdate = datetime.strftime(test_start_date, '%Y-%m-%d')
+        df_test = df_test[df_test[dd.EngEng['date']] <= upperdate]
+        df_test = df_test[df_test[dd.EngEng['date']] >= lowerdate]
+        
+        # compare if they are the same
+        self.assertEqual(len(df_test),len(df_test_start_end_date),"Dataframes don't have the same length.")
+        self.assertEqual(list(df_test['Confirmed']),list(df_test_start_end_date['Confirmed']),"Dataframes don't have the same confirmed cases.")
+        self.assertEqual(list(df_test['Recovered']),list(df_test_start_end_date['Recovered']),"Dataframes don't have the same recovered cases.")
+        self.assertEqual(list(df_test['Deaths']),list(df_test_start_end_date['Deaths']),"Dataframes don't have the same death cases.")
+        
 
 if __name__ == '__main__':
     unittest.main()

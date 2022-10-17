@@ -72,6 +72,19 @@ struct is_expression_valid : details::is_expression_valid<Expr, void, T...>
 };
 
 /**
+ * Negates a type trait.
+ * If B::value is true, then negation<B>::value is false.
+ * @{
+ */
+template<class Trait>
+struct negation : std::integral_constant<bool, (!Trait::value)>
+{
+};
+template<class Trait>
+constexpr bool negation_v = negation<Trait>::value;
+/**@}*/
+
+/**
  * conjunction (logical and) of zero or more type traits with bool values.
  * Does boolean shortcircuiting as expected. 
  * see https://en.cppreference.com/w/cpp/types/conjunction.

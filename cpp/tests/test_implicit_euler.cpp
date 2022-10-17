@@ -75,8 +75,8 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
-    params.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0]   = beta;
+    params.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
+    params.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
     params.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)0]         = theta;
     params.get<mio::DeathsPerICU>()[(mio::AgeGroup)0]                    = delta;

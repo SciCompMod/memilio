@@ -21,21 +21,23 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/logging.h"
-#include "memilio/utils/mio_mpi.h"
-#include "memilio/utils/random_number_generator.h"
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
-#include "memilio/io/mobility_io.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/epidemiology/regions.h"
-#include "secir/parameter_studies.h"
+#include "memilio/io/epi_data.h"
+#include "memilio/io/result_io.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/utils/mio_mpi.h"
+#include "mpi.h"
 #include "secir/secir_parameters_io.h"
-#include "secir/secir_result_io.h"
+#include "secir/parameter_space.h"
 #include "boost/filesystem.hpp"
 #include "json/value.h"
 
 #include <cstdio>
 #include <iomanip>
+#include <vector>
+
+#define USE_ORDERED_OUTPUT
 
 namespace fs = boost::filesystem;
 
@@ -175,11 +177,11 @@ mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
     array_assign_uniform_distribution(params.get<mio::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
     array_assign_uniform_distribution(params.get<mio::RelativeCarrierInfectability>(), carr_infec_min, carr_infec_max);
-    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
+    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSymptomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
-    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSympomatic>(), beta_high_incidence_min,
+    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSymptomatic>(), beta_high_incidence_min,
                                       beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<mio::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
+    array_assign_uniform_distribution(params.get<mio::AsymptomaticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max);
     array_assign_uniform_distribution(params.get<mio::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
@@ -395,18 +397,19 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     //local dynamic NPIs
     auto& dynamic_npis        = params.get<mio::DynamicNPIsInfected>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
-    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 1.0, 1.0)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3));
-    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(
+        contacts_at_home(mio::SimulationTime(0), 0.6, 0.8)); // increased from [0.4, 0.6] in Nov
+    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.25, 0.25)); // see paper
+    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3)); // ...
+    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.1, 0.2));
+    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.6, 0.8));
     dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
     dynamic_npis.set_interval(mio::SimulationTime(3.0));
     dynamic_npis.set_duration(mio::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);
+    dynamic_npis.set_threshold(200.0, dynamic_npi_dampings);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = mio::UncertainValue();
@@ -664,7 +667,8 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
+                                       (result_dir_run / "Result.h5").string()));
     BOOST_OUTCOME_TRY(
         mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
     return mio::success();
@@ -685,10 +689,11 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
+    auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
     for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0},
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0}, num_groups,
                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids,
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids, num_groups,
                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
     }
 
@@ -713,15 +718,15 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
 
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
     }
 
     //save percentiles of results
@@ -732,11 +737,16 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
         auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
 
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(
+            mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
     }
 
     //save percentiles of parameters
@@ -880,7 +890,6 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
     const Eigen::Index ts_size = num_rows * num_timepoints; // number of doubles in a time series (stored contiguously)
     const size_t num_runs      = ensemble_results.size();
     const size_t num_nodes     = ensemble_results[0].size();
-    const size_t num_ts        = num_runs * num_nodes;
 
     // assert that each TimeSeries has the same dimensions
     // this should be true after interpolate_simulation_result()
@@ -903,7 +912,7 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
         return b;
     }());
 
-    std::vector<double> buffer(ts_size * num_ts);
+    std::vector<double> buffer(ts_size * num_nodes * num_runs);
     // send all local ensemble_results to root, using buffer
     if (my_rank != root) {
         auto itr = buffer.begin();
@@ -912,18 +921,26 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
                 itr = std::copy(node_result.data(), node_result.data() + ts_size, itr);
             }
         }
+        MPI_Send(&num_runs, 1, MIO_MPI_SIZE_T, root, tag, comm);
         MPI_Send(buffer.data(), buffer.size(), MPI_DOUBLE, root, tag, comm);
     }
     // recieve and fill all local results into ensemble_results
-    else { // my_size > 1
+    else // my_size > 1
+    {
         // reserve space for each rank
         ensemble_results.reserve(ensemble_results.size() * my_size);
         // create buffer of TimeSeries with correct data size
         std::vector<mio::TimeSeries<double>> ts_copy_buffer(ensemble_results[0]);
         for (int rank = 0; rank < my_size - 1; rank++) {
             auto itr = buffer.begin();
-            // recieve local results in any order
-            MPI_Recv(buffer.data(), buffer.size(), MPI_DOUBLE, MPI_ANY_SOURCE, tag, comm, MPI_STATUS_IGNORE);
+            size_t runs;
+            MPI_Status status;
+            MPI_Recv(&runs, 1, MIO_MPI_SIZE_T, MPI_ANY_SOURCE, tag, comm, &status);
+            if (runs > num_runs) {
+                buffer.resize(ts_size * num_nodes * runs);
+            }
+            MPI_Recv(buffer.data(), ts_size * num_nodes * runs, MPI_DOUBLE, status.MPI_SOURCE, tag, comm,
+                     MPI_STATUS_IGNORE);
             // copy the recieved data into ensemble_results via ts_copy_buffer
             for (size_t i = 0; i < num_runs; i++) {
                 for (size_t j = 0; j < num_nodes; j++) {
@@ -993,30 +1010,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 #else
     auto run_idx = size_t(0);
 #endif // MEMILIO_HAS_MPI
-
     //create or load graph
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-#ifdef MEMILIO_HAS_MPI
-        if (my_rank == root) {
-#endif // MEMILIO_HAS_MPI
-            BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
-            BOOST_OUTCOME_TRY(save_graph(created, save_dir));
-            params_graph = created;
-#ifdef MEMILIO_HAS_MPI
-            char success = 1;
-            MPI_Bcast(&success, 1, MPI_CHAR, root, comm);
-        }
-        else {
-            char success;
-            MPI_Bcast(&success, 1, MPI_CHAR, root, comm);
-            if (!success) {
-                return mio::failure(mio::IOStatus());
-            }
-            BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
-            params_graph = loaded;
-        }
-#endif // MEMILIO_HAS_MPI
+        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
+        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        params_graph = created;
     }
     else {
         BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
@@ -1034,34 +1033,35 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::SecirModel>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto save_result_result   = mio::IOResult<void>(mio::success());
-    auto result_dir_sim_graph = result_dir / "parameters_graph";
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_sim_graph.string()));
-    parameter_study.run([&](auto results_graph) {
+    auto save_result_result = mio::IOResult<void>(mio::success());
+
+    parameter_study.run(
+        [](auto&& graph) {
+            return draw_sample(graph);
+        },
+        [&](auto results_graph) {
 #ifdef MEMILIO_HAS_MPI
-        // TODO: consider alternatives for the following call - it fixes having different results when changing the number of ranks (but with the same seed)
-        // (e.g. if a run req. 500 random numbers, but 600 numbers are cached per run, then
-        //  each run after the first would be offset by (additively) 100 numbers, compared to a fully parallel run.
-        //  the skip() call would move the cache to the beginning of the next 600 numbers to fix this)
-        mio::thread_local_rng().skip();
+            // TODO: consider alternatives for the following call - it fixes having different results when changing the number of ranks (but with the same seed)
+            // (e.g. if a run requires 500 random numbers, but 600 numbers are cached per run, then
+            //  each run after the first would be offset by (additively) 100 numbers, compared to a fully parallel run.
+            //  the skip() call moves the cache to the beginning of the next 600 numbers to fix this)
+            mio::thread_local_rng().skip();
 #endif // MEMILIO_HAS_MPI
-        write_sim_graph(std::ofstream((result_dir_sim_graph / ("Run" + std::to_string(run_idx))).string()),
-                        results_graph);
-        ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
+            ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
-        ensemble_params.emplace_back();
-        ensemble_params.back().reserve(results_graph.nodes().size());
-        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                       std::back_inserter(ensemble_params.back()), [](auto&& node) {
-                           return node.property.get_simulation().get_model();
-                       });
+            ensemble_params.emplace_back();
+            ensemble_params.back().reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                           std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                               return node.property.get_simulation().get_model();
+                           });
 
-        if (save_result_result) {
-            save_result_result =
-                save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
-        }
-        ++run_idx;
-    });
+            if (save_result_result) {
+                save_result_result =
+                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            }
+            ++run_idx;
+        });
     // check whether save_result was successfull,
     BOOST_OUTCOME_TRY(save_result_result);
 
@@ -1133,10 +1133,10 @@ int main(int argc, char** argv)
     }
     else {
         printf("Usage:\n");
-        printf("paper1 <data_dir> <save_dir> <result_dir>\n");
+        printf("paper_202011 <data_dir> <save_dir> <result_dir>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
-        printf("paper1 <load_dir> <result_dir>\n");
+        printf("paper_202011 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }
@@ -1164,11 +1164,11 @@ int main(int argc, char** argv)
     }
 
     // from now on use subcomm for all computations
-    int my_rank, my_size, my_root;
+    int my_rank, my_size;
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &my_size);
     // use last rank as root, since it (potentially) has less runs to compute
-    my_root = my_size - 1;
+    const int my_root = my_size - 1;
 
     if (my_size < world_size && my_rank == my_root) {
         mio::log_warning("Too many ranks ({}) for the number of runs ({}). Some ranks will idle.", world_size, my_size);
@@ -1177,10 +1177,8 @@ int main(int argc, char** argv)
     // currently, 14899 random numbers are generated on SAVE, and 14898 on LOAD
     const size_t rng_cache_size = 20000;
     mio::initialize_rng_cache(num_runs * rng_cache_size,
-                              {432594781, 856020163, 1893783597, 1080248813, 3012324386, 794391132}, 0, comm);
+                              {432594781, 856020163, 1893783597, 1080248813, 3012324386, 794391132}, my_root, comm);
     mio::thread_local_rng().chunk_size(rng_cache_size);
-    (void)mio::write_json(((fs::path)result_dir / ("RNG_" + std::to_string(my_rank))).string(),
-                          mio::thread_local_rng());
 
     if (my_rank == my_root)
 #endif // MEMILIO_HAS_MPI
@@ -1194,11 +1192,6 @@ int main(int argc, char** argv)
 
 #ifdef MEMILIO_HAS_MPI
     auto result = run(mode, data_dir, save_dir, result_dir, num_runs, run_id, my_root, comm);
-    if (!result && my_rank == my_root) {
-        // signal other ranks that loading failed
-        char success = 0;
-        MPI_Bcast(&success, 1, MPI_CHAR, my_root, comm);
-    }
 #else
     auto result = run(mode, data_dir, save_dir, result_dir, num_runs);
 #endif // MEMILIO_HAS_MPI

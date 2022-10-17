@@ -230,8 +230,15 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_with_estimations(self):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [True, False, "json", self.path, False]
+        read_data = True
+        make_plot = False
+        file_format= 'json'
+        out_folder = self.path
+        no_raw = False
+        impute_dates = False
+        moving_average = 0
+        split_berlin = False
+        rep_date = False
 
         # write files which should be read in by program
 
@@ -249,7 +256,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
+            moving_average=moving_average, make_plot=make_plot,
+            split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -336,8 +346,15 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_case_data_with_estimations_age_data(self):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [True, False, "json", self.path, False]
+        read_data = True
+        make_plot = False
+        file_format= 'json'
+        out_folder = self.path
+        no_raw = False
+        impute_dates = False
+        moving_average = 0
+        split_berlin = False
+        rep_date = False
 
         # write files which should be read in by program
 
@@ -355,7 +372,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
+            moving_average=moving_average, make_plot=make_plot,
+            split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -408,8 +428,15 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             self, mock_get_jh_data, mock_get_case_data,
             mock_download_weekly_deaths_numbers):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [False, False, "json", self.path, False]
+        read_data = False
+        make_plot = False
+        file_format= 'json'
+        out_folder = self.path
+        no_raw = False
+        impute_dates = False
+        moving_average = 0
+        split_berlin = False
+        rep_date = False
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -455,7 +482,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             2 + len(case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
+            moving_average=moving_average, make_plot=make_plot,
+            split_berlin=split_berlin, rep_date=rep_date)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -572,8 +602,15 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     @patch('builtins.print')
     def test_except_non_existing_file(self, mock_print):
 
-        [read_data, make_plot, file_format, out_folder, no_raw] \
-            = [True, False, "json", self.path, False]
+        read_data = True
+        make_plot = False
+        file_format= 'json'
+        out_folder = self.path
+        no_raw = False
+        impute_dates = False
+        moving_average = 0
+        split_berlin = False
+        rep_date = False
 
         # write files which should be read in by program
 
@@ -582,7 +619,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.write_jh_data(directory)
 
         gcdwe.get_case_data_with_estimations(
-            read_data, file_format, out_folder, no_raw, make_plot)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, impute_dates=impute_dates,
+            moving_average=moving_average, make_plot=make_plot,
+            split_berlin=split_berlin, rep_date=rep_date)
 
         # print is called 9 times, because no file exists
         self.assertEqual(len(mock_print.mock_calls), 9)

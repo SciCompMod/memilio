@@ -77,7 +77,7 @@ def loadGeojson(
 
 def loadCsv(
         targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='.csv', encoding=None):
+        extension='.csv', param_dict={}):
     """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data
     item ID into a pandas DataFrame and returns the DataFrame.
@@ -85,15 +85,24 @@ def loadCsv(
     @param targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
     @param apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
-    @param extension -- Data format extension (string, default 'csv')
-    @param encoding -- CSV Encoding format (string, default None)
-    return dataframe
+    @param extension -- Data format extension (string, default '.csv')
+    @param param_dict -- Defines the parameter for read_csv:
+            "sep": Delimiter to use (string, default ',')
+            "header": Row to use for column labels (Use None if there is no header) (int, default 0)
+            "encoding": Encoding to use for UTF when reading (string, default None)
+            "dtype": Data type for data or column (dict of column -> type, default None)
+    @return dataframe 
     """
 
     url = apiUrl + targetFileName + extension
+    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+
+    for k in param_dict_default:
+        if k not in param_dict:
+            param_dict[k] = param_dict_default[k]
 
     try:
-        df = pd.read_csv(url, encoding=encoding)
+        df = pd.read_csv(url, **param_dict)
     except OSError as err:
         raise FileNotFoundError(
             "ERROR: URL " + url + " could not be opened.") from err
@@ -150,19 +159,24 @@ def cli(what):
     The string is the message that should be printed when working on the specific package.
     The further list, contains all special command line arguments which are needed for this package.
 
-    If the key is nor part of the dictionary the program is stopped.
+    If the key is not part of the dictionary the program is stopped.
 
-    Three default arguments are added to the parser:
-    - read-from-disk, Default = False
-    - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
-    - out_path Default = data/pydata/
+    The following default arguments are added to the parser:
+    - read-from-disk
+    - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
+    - out_path
+    - no_raw
+    The default values are defined in default dict.
 
     Depending on what following parser can be added:
-    - end_date
-    - plot
-    - split_berlin
-    - moving-average
     - start_date
+    - end_date
+    - impute_dates
+    - moving_average
+    - make_plot
+    - split_berlin
+    - rep_date
+    - sanitize_data
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -173,16 +187,15 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "cases": ['Download case data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "jh": ['Downloads data from Johns Hopkins University'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date',
-                        'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -215,6 +228,13 @@ def cli(what):
         help='Defines if raw data will be stored for further use.',
         action='store_true')
 
+    if 'start_date' in what_list:
+        parser.add_argument(
+            '-s', '--start-date',
+            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
+            'Default is 2020-04-24',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+            default=dd.defaultDict['start_date'])
     if 'end_date' in what_list:
         parser.add_argument(
             '-e', '--end-date',
@@ -227,13 +247,13 @@ def cli(what):
             '-i', '--impute-dates',
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
-                            action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
             '-m', '--moving-average', type=int, default=0,
             help='Compute a moving average of N days over the time series')
+    if 'make_plot' in what_list:
+        parser.add_argument('-p', '--make-plot', help='Plots the data.',
+                            action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin',
@@ -246,13 +266,11 @@ def cli(what):
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
-    if 'start_date' in what_list:
+    if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-s', '--start-date',
-            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
+            '-sd', '--sanitize_data', type=int, default=1,
+            help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
+        )
     args = parser.parse_args()
 
     return vars(args)
@@ -283,7 +301,7 @@ def check_dir(directory):
         os.makedirs(directory)
 
 
-def write_dataframe(df, directory, file_prefix, file_type):
+def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     """! Writes pandas dataframe to file
 
     This routine writes a pandas dataframe to a file in a given format.
@@ -292,20 +310,23 @@ def write_dataframe(df, directory, file_prefix, file_type):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json or hdf5.
+    The file format can be json, hdf5 or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
     @param directory directory where to safe (string)
     @param file_prefix filename without ending (string)
     @param file_type defines ending (string)
+    @param param_dict defines parameters for to_csv/txt(dictionary)
 
     """
 
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
-               'hdf5': [".h5", {"key": "data"}]}
+               'hdf5': [".h5", {"key": "data"}],
+               'txt': [".txt", param_dict]}
 
     try:
         outFormEnd = outForm[file_type][0]
@@ -313,7 +334,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring or hdf5.")
+            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -326,6 +347,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == "txt":
+        df.to_csv(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)
 
