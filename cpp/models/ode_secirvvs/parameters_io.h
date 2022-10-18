@@ -514,14 +514,14 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                     S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] *
                     model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] * denom_HU;
 
-                model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
-                    S * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
                 model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] =
                     S_pv * model[region].parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] *
                     model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
                 model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] =
                     S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] *
                     model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
+                model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
+                    S * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;                    
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                     model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
