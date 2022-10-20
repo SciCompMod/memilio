@@ -159,7 +159,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                                                                       max_date=max_date,
                                                                       start_w_firstval=True)
 
-            df_weather = df_weather.append(df_local_new.copy())
+            df_weather = pd.concat([df_weather, df_local_new.copy()])
 
         # reset index and drop old index column
         df_weather.reset_index(inplace=True)

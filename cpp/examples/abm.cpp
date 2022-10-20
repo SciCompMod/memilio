@@ -151,7 +151,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
      * Community Households are: Refugee, Disabled, Retirement and Others. We have an explicit age distribution, amount of households and amount of people for them but not the exact amount of people in each household.
      * The private Households are divided with respect to the amount of people living in each household. For a one person household we have the exact age distribution. For the rest we have data about which kind of family lives in them. The different kinds of families are: A family with two parents and the rest are children, a family with one parent and the rest are children and  "other" families with no exact data about their age.
     */
-    /*
+
     // Refugee
     auto refugee = mio::abm::HouseholdMember();
     refugee.set_age_weight(mio::abm::AgeGroup::Age0to4, 25);
@@ -209,7 +209,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
 
     add_household_group_to_world(world, otherGroup);
-*/
+
     // One Person Household (we have exact age data about this)
     auto one_person_household_member = mio::abm::HouseholdMember();
     one_person_household_member.set_age_weight(mio::abm::AgeGroup::Age15to34, 4364);
@@ -265,7 +265,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
                                                          four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
-    /*
+
     // Five plus person households
     int fiveplus_person_full_families  = 1245;
     int fiveplus_person_half_families  = 80;
@@ -273,7 +273,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     auto fivePlusPersonHouseholds =
         make_homes_with_families(child, parent, random, 5, fiveplus_person_full_families, fiveplus_person_half_families,
                                  fiveplus_person_other_families);
-    add_household_group_to_world(world, fivePlusPersonHouseholds);*/
+    add_household_group_to_world(world, fivePlusPersonHouseholds);
 }
 
 /**
@@ -286,8 +286,21 @@ void create_assign_locations(mio::abm::World& world)
     // People have to get tested in the 2 days before the event
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-    world.get_individualized_location(event).set_testing_scheme(mio::abm::days(2), 1);
     world.get_individualized_location(event).set_capacity(100, 375);
+
+    std::vector<mio::abm::LocationType> test_at_social_event = {mio::abm::LocationType::SocialEvent};
+    auto testing_criteria =
+        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_social_event, {})};
+    auto testing_min_time = mio::abm::days(2);
+    auto start_date       = mio::abm::TimePoint(0);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto probability      = 1;
+    auto test_type        = mio::abm::AntigenTest();
+
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type, probability);
+
+    world.get_testing_strategy().add_testing_scheme(testing_scheme);
 
     // Add hospital and ICU with 5 maximum contacs.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
@@ -309,12 +322,10 @@ void create_assign_locations(mio::abm::World& world)
 
     auto school = world.add_location(mio::abm::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(school).set_testing_scheme(mio::abm::days(7), 1);
     world.get_individualized_location(school).set_capacity(600, 3600);
 
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(work).set_testing_scheme(mio::abm::days(7), 0.5);
     world.get_individualized_location(work).set_capacity(100, 3000);
     int counter_event  = 0;
     int counter_school = 0;
@@ -345,21 +356,18 @@ void create_assign_locations(mio::abm::World& world)
             counter_event = 0;
             event         = world.add_location(mio::abm::LocationType::SocialEvent);
             world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-            world.get_individualized_location(event).set_testing_scheme(mio::abm::days(2), 1);
             world.get_individualized_location(event).set_capacity(100, 375);
         }
         if (counter_school == 600) {
             counter_school = 0;
             school         = world.add_location(mio::abm::LocationType::School);
             world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(school).set_testing_scheme(mio::abm::days(7), 1);
             world.get_individualized_location(school).set_capacity(600, 3600);
         }
         if (counter_work == 100) {
             counter_work = 0;
             work         = world.add_location(mio::abm::LocationType::Work);
             world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(work).set_testing_scheme(mio::abm::days(7), 0.5);
             world.get_individualized_location(work).set_capacity(100, 3000);
         }
         if (counter_shop == 15000) {
@@ -369,6 +377,27 @@ void create_assign_locations(mio::abm::World& world)
             world.get_individualized_location(shop).set_capacity(240, 7200);
         }
     }
+
+    // add the testing schemes for school and work
+    auto test_at_school = std::vector<mio::abm::LocationType>{mio::abm::LocationType::School};
+    auto testing_criteria_school =
+        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
+
+    testing_min_time           = mio::abm::days(7);
+    probability                = 1;
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
+                                                         end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
+
+    auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
+    auto testing_criteria_work =
+        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+
+    testing_min_time = mio::abm::days(1);
+    probability      = 0.5;
+    auto testing_scheme_work =
+        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
 /**
@@ -385,26 +414,8 @@ void assign_infection_state(mio::abm::World& world, double exposed_pct, double i
     }
 }
 
-int main()
+void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 {
-    //mio::abm::set_log_level(mio::abm::LogLevel::warn);
-
-    // Set seeds of previous run for debugging:
-    mio::thread_local_rng().seed({162486831, 289055258, 4171428088, 1679181017, 2899811504, 1730785156});
-
-    // Print seeds to be able to use them again for debugging:
-    // printf("Seeds: ");
-    // for (auto s : mio::thread_local_rng().get_seeds()) {
-    //    printf("%u, ", s);
-    // }
-    // printf("\n");
-
-    // Assumed percentage of infection state at the beginning of the simulation.
-    double exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
-
-    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters infection_params;
-
     infection_params.set<mio::abm::IncubationPeriod>(
         {{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 4.});
 
@@ -778,7 +789,28 @@ int main()
         0.052;
     infection_params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::AgeGroup::Age80plus,
                                                               mio::abm::VaccinationState::Vaccinated}] = 0.0;
+}
 
+int main()
+{
+    //mio::abm::set_log_level(mio::abm::LogLevel::warn);
+
+    // Set seeds of previous run for debugging:
+    mio::thread_local_rng().seed({162486831, 289055258, 4171428088, 1679181017, 2899811504, 1730785156});
+
+    // Print seeds to be able to use them again for debugging:
+    // printf("Seeds: ");
+    // for (auto s : mio::thread_local_rng().get_seeds()) {
+    //    printf("%u, ", s);
+    // }
+    // printf("\n");
+
+    // Assumed percentage of infection state at the beginning of the simulation.
+    double exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
+
+    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
+    mio::abm::GlobalInfectionParameters infection_params;
+    set_parameters(infection_params);
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.

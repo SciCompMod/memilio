@@ -173,7 +173,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         county_file_in = os.path.join(directory, filename_county + ".json")
         try:
             df_test[0] = pd.read_json(county_file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + county_file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")
@@ -181,7 +182,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         state_file_in = os.path.join(directory, filename_state + ".json")
         try:
             df_test[1] = pd.read_json(state_file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + state_file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")
@@ -203,6 +205,9 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # rename columns
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
+
+    df_test[0][dd.EngEng['date']] = pd.to_datetime(df_test[0][dd.EngEng['date']])
+    df_test[1][dd.EngEng['date']] = pd.to_datetime(df_test[1][dd.EngEng['date']])
 
     # drop columns
     df_test[0] = df_test[0].drop(
@@ -290,7 +295,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = df_test_counties.append(df_local.copy())
+        df_test_counties = pd.concat([df_test_counties, df_local.copy()])
 
      # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'

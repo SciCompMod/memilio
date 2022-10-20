@@ -21,7 +21,6 @@
 #define EPI_ABM_LOCATION_H
 
 #include "abm/parameters.h"
-#include "abm/testing_scheme.h"
 #include "abm/state.h"
 #include "abm/location_type.h"
 
@@ -183,16 +182,6 @@ public:
         return m_parameters;
     }
 
-    void set_testing_scheme(TimeSpan interval, double probability)
-    {
-        m_testing_scheme = TestingScheme(interval, probability);
-    }
-
-    const TestingScheme& get_testing_scheme() const
-    {
-        return m_testing_scheme;
-    }
-
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
@@ -246,7 +235,6 @@ private:
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
-    TestingScheme m_testing_scheme;
     std::vector<Cell> m_cells;
 };
 

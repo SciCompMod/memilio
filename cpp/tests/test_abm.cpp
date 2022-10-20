@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -84,14 +84,6 @@ TEST(TestLocation, addRemovePerson)
     ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
     ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
     ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
-}
-
-TEST(TestLocation, setTestingScheme)
-{
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    location.set_testing_scheme(mio::abm::days(5), 0.9);
-    ASSERT_EQ(location.get_testing_scheme().get_interval(), mio::abm::days(5));
-    ASSERT_EQ(location.get_testing_scheme().get_probability(), 0.9);
 }
 
 TEST(TestLocation, setCapacity)
@@ -181,7 +173,7 @@ TEST(TestPerson, init)
     ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::abm::TimeSpan dt = mio::abm::hours(1);
-    person.interact(dt, {}, location, {});
+    person.interact(dt, {}, location);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Carrier);
 }
 
@@ -664,7 +656,7 @@ TEST(TestPerson, quarantine)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.04));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
-    person.interact(dt, infection_parameters, home, {});
+    person.interact(dt, infection_parameters, home);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Recovered_Infected);
     ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, {}), mio::abm::LocationType::Work);
 }
@@ -677,17 +669,41 @@ TEST(TestPerson, get_tested)
     auto infected    = mio::abm::Person(loc, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
     auto susceptible = mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, {});
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+    auto pcr_test     = mio::abm::PCRTest();
+    auto antigen_test = mio::abm::AntigenTest();
+
+    // Test pcr test
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+        mock_uniform_dist_pcr;
+    EXPECT_CALL(mock_uniform_dist_pcr.get_mock(), invoke)
         .Times(4)
         .WillOnce(Return(0.4))
         .WillOnce(Return(0.95))
         .WillOnce(Return(0.6))
         .WillOnce(Return(0.999));
-    ASSERT_EQ(infected.get_tested({0.9, 0.99}), true);
-    ASSERT_EQ(infected.get_tested({0.9, 0.99}), false);
-    ASSERT_EQ(susceptible.get_tested({0.9, 0.99}), false);
-    ASSERT_EQ(susceptible.get_tested({0.9, 0.99}), true);
+    ASSERT_EQ(infected.get_tested(pcr_test.get_default()), true);
+    ASSERT_EQ(infected.is_in_quarantine(), true);
+    ASSERT_EQ(infected.get_tested(pcr_test.get_default()), false);
+    ASSERT_EQ(infected.is_in_quarantine(), false);
+    ASSERT_EQ(susceptible.get_tested(pcr_test.get_default()), false);
+    ASSERT_EQ(susceptible.is_in_quarantine(), false);
+    ASSERT_EQ(susceptible.get_tested(pcr_test.get_default()), true);
+    ASSERT_EQ(susceptible.is_in_quarantine(), true);
+    ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
+
+    // Test antigen test
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+        mock_uniform_dist_antigen;
+    EXPECT_CALL(mock_uniform_dist_antigen.get_mock(), invoke)
+        .Times(4)
+        .WillOnce(Return(0.4))
+        .WillOnce(Return(0.95))
+        .WillOnce(Return(0.6))
+        .WillOnce(Return(0.999));
+    ASSERT_EQ(infected.get_tested(antigen_test.get_default()), true);
+    ASSERT_EQ(infected.get_tested(antigen_test.get_default()), false);
+    ASSERT_EQ(susceptible.get_tested(antigen_test.get_default()), false);
+    ASSERT_EQ(susceptible.get_tested(antigen_test.get_default()), true);
     ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::abm::days(0));
 }
 
@@ -720,7 +736,7 @@ TEST(TestPerson, interact)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    person.interact(dt, infection_parameters, loc, {});
+    person.interact(dt, infection_parameters, loc);
     EXPECT_EQ(person.get_infection_state(), mio::abm::InfectionState::Recovered_Infected);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Recovered_Infected), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Infected), 0);
@@ -758,23 +774,23 @@ TEST(TestPerson, interact_exposed)
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     //person becomes exposed
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Exposed), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Carrier), 1);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Infected), 2);
 
     //person becomes a carrier after the incubation time runs out, not random
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(12), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(24), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(24), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
 
-    person.interact(mio::abm::hours(1), infection_parameters, loc, {});
+    person.interact(mio::abm::hours(1), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Carrier);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Exposed), 0);
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Carrier), 2);
@@ -1158,7 +1174,7 @@ TEST(TestMigrationRules, shop_return)
     auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
-    p.interact(dt, {}, shop, {}); //person only returns home after some time passed
+    p.interact(dt, {}, shop); //person only returns home after some time passed
 
     ASSERT_EQ(mio::abm::go_to_shop(p, t, dt, {}), mio::abm::LocationType::Home);
 }
@@ -1197,7 +1213,7 @@ TEST(TestMigrationRules, event_return)
     auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
-    p.interact(dt, {}, shop, {});
+    p.interact(dt, {}, shop);
 
     ASSERT_EQ(mio::abm::go_to_event(p, t, dt, {}), mio::abm::LocationType::Home);
 }
@@ -1395,41 +1411,6 @@ TEST(TestMigrationRules, recover)
     ASSERT_EQ(mio::abm::return_home_when_recovered(p_inf, t, dt, {}), mio::abm::LocationType::Hospital);
 }
 
-TEST(TestTestingScheme, init)
-{
-    auto tests = mio::abm::TestingScheme(mio::abm::days(7), 0.8);
-    ASSERT_EQ(tests.get_interval(), mio::abm::days(7));
-    ASSERT_EQ(tests.get_probability(), 0.8);
-
-    tests.set_interval(mio::abm::days(2));
-    ASSERT_EQ(tests.get_interval(), mio::abm::days(2));
-}
-
-TEST(TestTestingScheme, runScheme)
-{
-    auto loc     = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto person1 = mio::abm::Person(loc, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
-    auto person2 = mio::abm::Person(loc, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age5to14, {});
-    auto testing = mio::abm::TestingScheme(mio::abm::days(5), 0.9);
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5));
-    testing.run_scheme(person1, {});
-
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5));
-    testing.run_scheme(person2, {});
-
-    ASSERT_EQ(person2.get_time_since_negative_test(), mio::abm::days(0));
-    ASSERT_EQ(person1.is_in_quarantine(), true);
-    ASSERT_EQ(person2.is_in_quarantine(), false);
-}
-
 TEST(TestWorld, evolveMigration)
 {
     using testing::Return;
@@ -1582,4 +1563,143 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_GE(d, 0);
         ASSERT_LE(d, 4);
     }
+}
+
+TEST(TestTestingCriteria, addremoveandevaluateTestCriteria)
+{
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+
+    auto testing_criteria = mio::abm::TestingCriteria();
+    ASSERT_EQ(testing_criteria.evaluate(person, work), true);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Carrier);
+    testing_criteria.add_location_type(mio::abm::LocationType::Home);
+    testing_criteria.add_location_type(mio::abm::LocationType::Work);
+
+    ASSERT_EQ(testing_criteria.evaluate(person, work), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), true);
+
+    testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
+    ASSERT_EQ(testing_criteria.evaluate(person, home),
+              false); // now it isn't empty and get's evaluated against age group
+    testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), true);
+
+    testing_criteria.remove_infection_state(mio::abm::InfectionState::Infected);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), false);
+
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.remove_location_type(mio::abm::LocationType::Home);
+    ASSERT_EQ(testing_criteria.evaluate(person, home), false);
+
+    auto testing_criteria_manual = mio::abm::TestingCriteria(
+        {}, std::vector<mio::abm::LocationType>({mio::abm::LocationType::Work}),
+        std::vector<mio::abm::InfectionState>({mio::abm::InfectionState::Carrier, mio::abm::InfectionState::Infected}));
+    ASSERT_EQ(testing_criteria == testing_criteria_manual, true);
+    testing_criteria_manual.remove_infection_state(mio::abm::InfectionState::Infected);
+    ASSERT_EQ(testing_criteria == testing_criteria_manual, false);
+}
+
+TEST(TestTestingScheme, runScheme)
+{
+    std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::Infected,
+                                                                    mio::abm::InfectionState::Carrier};
+    std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
+                                                                mio::abm::LocationType::Work};
+
+    auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
+    std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
+
+    const auto testing_min_time = mio::abm::days(1);
+    const auto start_date       = mio::abm::TimePoint(0);
+    const auto end_date         = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability      = 0.8;
+    const auto test_type        = mio::abm::PCRTest();
+
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criterias, testing_min_time, start_date, end_date, test_type, probability);
+
+    ASSERT_EQ(testing_scheme.is_active(), false);
+    testing_scheme.update_activity_status(mio::abm::TimePoint(10));
+    ASSERT_EQ(testing_scheme.is_active(), true);
+    testing_scheme.update_activity_status(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200));
+    ASSERT_EQ(testing_scheme.is_active(), false);
+    testing_scheme.update_activity_status(mio::abm::TimePoint(0));
+
+    std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered_Carrier};
+    std::vector<mio::abm::LocationType> test_location_types2     = {mio::abm::LocationType::Home};
+    auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
+    testing_scheme.add_testing_criteria(testing_criteria2);
+
+    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
+    auto person2 =
+        mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age15to34, {});
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(5))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.9));
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work), true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home),
+              true); // Person is in quarantine and wants to go home -> can do so
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work), true); // Person doesn't test
+
+    testing_scheme.add_testing_criteria(testing_criteria1);
+    testing_scheme.remove_testing_criteria(testing_criteria1);
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home), true);
+}
+
+TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
+{
+
+    auto world   = mio::abm::World();
+    auto home_id = world.add_location(mio::abm::LocationType::Home);
+    auto work_id = world.add_location(mio::abm::LocationType::Work);
+    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
+                                   world.get_global_infection_parameters());
+    auto& home   = world.get_individualized_location(home_id);
+    auto& work   = world.get_individualized_location(work_id);
+    person.set_assigned_location(home);
+    person.set_assigned_location(work);
+
+    auto testing_criteria = mio::abm::TestingCriteria({}, {}, {});
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
+    testing_criteria.add_infection_state(mio::abm::InfectionState::Carrier);
+    testing_criteria.add_location_type(mio::abm::LocationType::Home);
+    testing_criteria.add_location_type(mio::abm::LocationType::Work);
+
+    const auto testing_frequency = mio::abm::days(1);
+    const auto start_date        = mio::abm::TimePoint(20);
+    const auto end_date          = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto probability       = 1.0;
+    const auto test_type         = mio::abm::PCRTest();
+
+    auto testing_scheme =
+        mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
+
+    world.get_testing_strategy().add_testing_scheme(testing_scheme);
+    auto current_time = mio::abm::TimePoint(0);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work),
+              true); // no active testing scheme -> person can enter
+    current_time = mio::abm::TimePoint(30);
+    world.get_testing_strategy().update_activity_status(current_time);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.4));
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), false);
+
+    world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
+    world.get_testing_strategy().remove_testing_scheme(testing_scheme);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), true); // no more testing_schemes
 }

@@ -26,7 +26,7 @@ setup(
     setup_requires=['cmake'],
     install_requires=[],
     extras_require={
-        'dev': ['numpy >= 1.21'],
+        'dev': ['numpy >= 1.22'],
     },
     long_description='',
     test_suite='memilio.simulation_test',

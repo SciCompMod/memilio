@@ -64,6 +64,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
     interaction(t, dt);
+    m_testing_strategy.update_activity_status(t);
     migration(t, dt);
 }
 
@@ -71,7 +72,7 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
+        person->interact(dt, m_infection_parameters, loc);
     }
 }
 
@@ -112,6 +113,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
             std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
     }
+
     for (auto&& person : m_persons) {
         for (auto rule : rules) {
             //check if transition rule can be applied
@@ -123,11 +125,11 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
-                    if (target->get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                if (m_testing_strategy.run_strategy(*person, *target)) {
+                    if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
                         person->migrate_to(get_location(*person), *target);
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -140,7 +142,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                if (m_testing_strategy.run_strategy(*person, target)) {
                     person->migrate_to(get_location(*person), target);
                 }
             }
@@ -224,16 +226,6 @@ const GlobalInfectionParameters& World::get_global_infection_parameters() const
     return m_infection_parameters;
 }
 
-GlobalTestingParameters& World::get_global_testing_parameters()
-{
-    return m_testing_parameters;
-}
-
-const GlobalTestingParameters& World::get_global_testing_parameters() const
-{
-    return m_testing_parameters;
-}
-
 TripList& World::get_trip_list()
 {
     return m_trip_list;
@@ -252,6 +244,16 @@ void World::use_migration_rules(bool param)
 bool World::use_migration_rules() const
 {
     return m_use_migration_rules;
+}
+
+TestingStrategy& World::get_testing_strategy()
+{
+    return m_testing_strategy;
+}
+
+const TestingStrategy& World::get_testing_strategy() const
+{
+    return m_testing_strategy;
 }
 
 } // namespace abm
