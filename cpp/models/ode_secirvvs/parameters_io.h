@@ -182,6 +182,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereNaive}] = num_InfectedSevere[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}]         = num_rec[county][i];
         }
+        
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
             log_warning("No infections for unvaccinated reported on date " + std::to_string(date.year) + "-" +
@@ -430,7 +431,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
             auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = AgeGroup(0); i < num_groups; i++) {
+            for (auto i = AgeGroup(0); i < num_groups; i++) {               
 
                 double S_v =
                     std::min(model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
@@ -485,7 +486,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] =
                     S_pv * model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] * denom_C;
                 model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] =
-                    S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] * denom_C;                   
+                    S_v * model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] * denom_C;
 
                 model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] =
                     S * model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] * denom_I;
@@ -521,7 +522,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                     S_v * model[region].parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] *
                     model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
                 model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
-                    S * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;                    
+                    S * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
                     model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
@@ -883,6 +884,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         for (size_t county = 0; county < region.size(); county++) {
             if (std::accumulate(num_population[county].begin(), num_population[county].end(), 0.0) > 0) {
                 for (size_t age = 0; age < num_age_groups; age++) {
+
                     auto age_group_offset = age * (size_t)InfectionState::Count;
                     double S_v            = std::min(
                         model[county]
@@ -949,7 +951,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed + age_group_offset) =
                         S_pv * denom_C * num_InfectedNoSymptomsConfirmed_pv[county][age];
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed + age_group_offset) =
-                        S_v * denom_C * num_InfectedNoSymptomsConfirmed_fv[county][age];                   
+                        S_v * denom_C * num_InfectedNoSymptomsConfirmed_fv[county][age];
 
                     extrapolated_rki[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) =
                         S * denom_I * num_InfectedSymptoms_uv[county][age];
@@ -1145,6 +1147,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
         // Run time equals run time of the previous functions times the num_days !
         // (This only represents the vectorization of the previous function over all simulation days...)
+        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
+                    "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
                                                               scaling_factor_icu, num_days));
     }
