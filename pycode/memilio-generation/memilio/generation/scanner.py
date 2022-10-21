@@ -36,7 +36,7 @@ class Scanner:
                     file_args.append(argument)
         file_args = file_args[1:-4]
 
-        clang_cmd = ["clang", os.path.join(self.config.project_path + self.config.source_file), "-std=c++17", '-emit-ast', '-o', '-']
+        clang_cmd = ["clang", os.path.join(self.config.project_path + self.config.source_file), "-std=c++11", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()
