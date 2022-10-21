@@ -153,6 +153,7 @@ public:
      * prepare the location for the next simulation step.
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
+     * @param consider_capacity if true considers the capacity of the location for the calculation of the exposure rate
      */
     void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params, bool consider_capacity = true);
 
