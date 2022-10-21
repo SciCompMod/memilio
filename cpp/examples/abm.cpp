@@ -294,7 +294,7 @@ void create_assign_locations(mio::abm::World& world)
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
-    auto probability      = 1;
+    auto probability      = 1.0;
     auto test_type        = mio::abm::AntigenTest();
 
     auto testing_scheme =
@@ -380,22 +380,20 @@ void create_assign_locations(mio::abm::World& world)
     }
 
     // add the testing schemes for school and work
-    auto test_at_school = std::vector<mio::abm::LocationType>{mio::abm::LocationType::School};
-    auto testing_criteria_school =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
+    auto test_at_school = std::vector<mio::abm::LocationType> {mio::abm::LocationType::School};
+    auto testing_criteria_school = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_school, {})};
 
-    testing_min_time           = mio::abm::days(7);
-    probability                = 1;
-    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability);
+    testing_min_time             = mio::abm::days(7);
+    probability                  = 1.0;
+    auto testing_scheme_school =
+        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
-    auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+    auto test_at_work = std::vector<mio::abm::LocationType> {mio::abm::LocationType::Work};
+    auto testing_criteria_work = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_work, {})};
 
-    testing_min_time = mio::abm::days(1);
-    probability      = 0.5;
+    testing_min_time            = mio::abm::days(1);
+    probability                 = 0.5;
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);

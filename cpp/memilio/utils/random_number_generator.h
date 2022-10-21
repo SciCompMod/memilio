@@ -22,6 +22,7 @@
 
 #include "memilio/utils/logging.h"
 #include "memilio/utils/span.h"
+
 #include <cassert>
 #include <functional>
 #include <numeric>
