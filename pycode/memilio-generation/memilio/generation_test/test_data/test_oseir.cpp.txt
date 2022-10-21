@@ -45,8 +45,7 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 	    .value("Susceptible", mio::oseir::InfectionState::Susceptible)
 	    .value("Exposed", mio::oseir::InfectionState::Exposed)
 	    .value("Infected", mio::oseir::InfectionState::Infected)
-	    .value("Recovered", mio::oseir::InfectionState::Recovered)
-	    .value("Count", mio::oseir::InfectionState::Count);
+	    .value("Recovered", mio::oseir::InfectionState::Recovered);
 
 
 
@@ -57,7 +56,7 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
     using Populations = mio::Populations<mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>>(m, "ModelBase");
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::InfectionProbabilityFromContact, mio::oseir::LatentTime, mio::oseir::InfectiousTime, mio::oseir::ContactPatterns>>(m, "ModelBase");
     py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::InfectionProbabilityFromContact, mio::oseir::LatentTime, mio::oseir::InfectiousTime, mio::oseir::ContactPatterns>>>(m, "Model")
         .def(py::init<>());
 
