@@ -21,8 +21,6 @@
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
-#include <cstddef>
-#include <cstdio>
 
 namespace mio
 {
@@ -94,6 +92,7 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     if (infection_state != new_infection_state) {
         loc.changed_state(*this, infection_state);
     }
+
     m_time_at_location += dt;
 }
 

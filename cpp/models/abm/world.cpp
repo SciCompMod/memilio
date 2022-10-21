@@ -24,7 +24,6 @@
 #include "abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
-#include <cstdio>
 
 namespace mio
 {

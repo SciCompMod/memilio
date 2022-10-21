@@ -327,6 +327,7 @@ void create_assign_locations(mio::abm::World& world)
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
     world.get_individualized_location(work).set_capacity(100, 3000);
+
     int counter_event  = 0;
     int counter_school = 0;
     int counter_work   = 0;
@@ -796,14 +797,14 @@ int main()
     //mio::abm::set_log_level(mio::abm::LogLevel::warn);
 
     // Set seeds of previous run for debugging:
-    mio::thread_local_rng().seed({162486831, 289055258, 4171428088, 1679181017, 2899811504, 1730785156});
+    // mio::thread_local_rng().seed({...});
 
     // Print seeds to be able to use them again for debugging:
-    // printf("Seeds: ");
-    // for (auto s : mio::thread_local_rng().get_seeds()) {
-    //    printf("%u, ", s);
-    // }
-    // printf("\n");
+    printf("Seeds: ");
+    for (auto s : mio::thread_local_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
 
     // Assumed percentage of infection state at the beginning of the simulation.
     double exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
@@ -823,13 +824,13 @@ int main()
     create_assign_locations(world);
 
     auto t0         = mio::abm::TimePoint(0);
-    auto t_lockdown = mio::abm::TimePoint(0);
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
     auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0., world.get_migration_parameters());
-    mio::abm::set_school_closure(t_lockdown, 0.8, world.get_migration_parameters());
+    mio::abm::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
+    mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
