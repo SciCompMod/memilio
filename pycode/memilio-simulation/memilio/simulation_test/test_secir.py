@@ -39,12 +39,12 @@ class Test_secir_integration(unittest.TestCase):
         model.parameters.TimeInfectedSevere[A0] = 12.
         model.parameters.TimeInfectedCritical[A0] = 8.
 
-        model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09  # 0.01-0.16
-        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
-        model.parameters.SeverePerInfectedSymptoms[A0] = 0.2  # 0.1-0.35
-        model.parameters.CriticalPerSevere[A0] = 0.25  # 0.15-0.4
-        model.parameters.DeathsPerCritical[A0] = 0.3  # 0.15-0.77
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+        model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
+        model.parameters.SeverePerInfectedSymptoms[A0] = 0.2
+        model.parameters.CriticalPerSevere[A0] = 0.25
+        model.parameters.DeathsPerCritical[A0] = 0.3
 
         model.populations[A0, State.Susceptible] = 7600
         model.populations[A0, State.Exposed] = 100
