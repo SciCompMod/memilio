@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -543,16 +543,16 @@ struct BaseInfectiousnessB161 {
 };
 
 using ParametersBase =
-    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
-                 DynamicNPIsInfectedSymptoms, IncubationTime, TimeInfectedSymptoms, SerialInterval,
-                 TimeInfectedSevere, TimeInfectedCritical,
+    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
+                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
                  DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
                  ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
-                 ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
-                 ReducTimeInfectedMild, BaseInfectiousnessB117, BaseInfectiousnessB161>;
+                 ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
+                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, BaseInfectiousnessB117,
+                 BaseInfectiousnessB161>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
@@ -612,7 +612,7 @@ public:
     /**
      * Time in simulation after which no dynamic NPIs are applied.
      */
-    double& get_end_dynamic_npis() 
+    double& get_end_dynamic_npis()
     {
         return m_end_dynamic_npis;
     }
@@ -676,8 +676,9 @@ public:
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                            this->get<TransmissionProbabilityOnContact>()[i], 0);
+                log_warning(
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    this->get<TransmissionProbabilityOnContact>()[i], 0);
                 this->get<TransmissionProbabilityOnContact>()[i] = 0;
             }
 
@@ -701,8 +702,7 @@ public:
                 this->get<RiskOfInfectionFromSymptomatic>()[i] = 0;
             }
 
-            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 ||
-                this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
                             this->get<SeverePerInfectedSymptoms>()[i], 0);
                 this->get<SeverePerInfectedSymptoms>()[i] = 0;
@@ -760,7 +760,7 @@ public:
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSevere>()[i], 1.0);
             }
-            
+
             if (this->get<TimeInfectedCritical>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedCritical>()[i], 1.0);
@@ -786,10 +786,8 @@ public:
                             1);
             }
 
-            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 ||
-                this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0,
-                            1);
+            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -334,8 +334,7 @@ struct TestAndTraceCapacity {
 
 using SecirParamsBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere,
-                 TimeInfectedCritical,
+                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical>;
@@ -412,8 +411,9 @@ public:
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                            this->get<TransmissionProbabilityOnContact>()[i], 0);
+                log_warning(
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    this->get<TransmissionProbabilityOnContact>()[i], 0);
                 this->get<TransmissionProbabilityOnContact>()[i] = 0;
             }
 
@@ -437,8 +437,7 @@ public:
                 this->get<RiskOfInfectionFromSymptomatic>()[i] = 0;
             }
 
-            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 ||
-                this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
                             this->get<SeverePerInfectedSymptoms>()[i], 0);
                 this->get<SeverePerInfectedSymptoms>()[i] = 0;
@@ -522,10 +521,8 @@ public:
                             1);
             }
 
-            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 ||
-                this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0,
-                            1);
+            if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {

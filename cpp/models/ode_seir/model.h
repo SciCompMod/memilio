@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -31,39 +31,39 @@ namespace mio
 namespace oseir
 {
 
-    /********************
+/********************
     * define the model *
     ********************/
 
-    class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+{
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+
+public:
+    Model()
+        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
     {
-        using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    }
 
-    public:
-        Model()
-            : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
-        {
-        }
+    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    {
+        auto& params     = this->parameters;
+        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                             Eigen::Ref<Eigen::VectorXd> dydt) const override
-        {
-            auto& params     = this->parameters;
-            double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                               params.get<TransmissionProbabilityOnContact>() / populations.get_total();
-
-            dydt[(size_t)InfectionState::Susceptible] =
-                -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-            dydt[(size_t)InfectionState::Exposed] =
-                coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-                (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-            dydt[(size_t)InfectionState::Infected] =
-                (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-                (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-            dydt[(size_t)InfectionState::Recovered] =
-                (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        }
-    };
+        dydt[(size_t)InfectionState::Susceptible] =
+            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Exposed] =
+            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
+            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+        dydt[(size_t)InfectionState::Infected] =
+            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
+            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Recovered] =
+            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+    }
+};
 
 } // namespace oseir
 } // namespace mio

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -76,9 +76,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<TimeInfectedSevere>()[i];
-                });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSevere>()[i]; });
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical>()[i]; });
             //probs
@@ -103,11 +101,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<CriticalPerSevere>()[i];
-                });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerCritical>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<mio::DeathsPerCritical>()[i];
+                });
         }
         // group independent params
         param_percentil(

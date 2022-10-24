@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -41,9 +41,7 @@ namespace mio
 * @param[in] tmax end time
 * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
 */
-void set_params_distributions_normal(
-    SecirModel& model, double t0,
-    double tmax, double dev_rel);
+void set_params_distributions_normal(SecirModel& model, double t0, double tmax, double dev_rel);
 
 /**
  * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.

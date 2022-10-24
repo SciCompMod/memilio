@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -119,9 +119,9 @@ void draw_sample_infection(SecirModel& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.get<SerialInterval>()[i]        = model.parameters.get<SerialInterval>()[AgeGroup(0)];
-        model.parameters.get<TimeInfectedSymptoms>()[i]    = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
+        model.parameters.get<IncubationTime>()[i]       = model.parameters.get<IncubationTime>()[AgeGroup(0)];
+        model.parameters.get<SerialInterval>()[i]       = model.parameters.get<SerialInterval>()[AgeGroup(0)];
+        model.parameters.get<TimeInfectedSymptoms>()[i] = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
         model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
             model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
@@ -130,7 +130,7 @@ void draw_sample_infection(SecirModel& model)
             model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
         //age dependent
-        model.parameters.get<TimeInfectedSevere>()[i].draw_sample(); 
+        model.parameters.get<TimeInfectedSevere>()[i].draw_sample();
         model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
         model.parameters.get<TransmissionProbabilityOnContact>()[i].draw_sample();

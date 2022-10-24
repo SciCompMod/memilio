@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -78,14 +78,14 @@ public:
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
-            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-            size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-            size_t INSi = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
-            size_t ISyi = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+            size_t Si    = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ei    = this->populations.get_flat_index({i, InfectionState::Exposed});
+            size_t INSi  = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+            size_t ISyi  = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
             size_t ISevi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
-            size_t ICri = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
-            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
-            size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
+            size_t ICri  = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
+            size_t Ri    = this->populations.get_flat_index({i, InfectionState::Recovered});
+            size_t Di    = this->populations.get_flat_index({i, InfectionState::Dead});
 
             dydt[Si] = 0;
             dydt[Ei] = 0;
@@ -96,18 +96,19 @@ public:
                 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
-                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                size_t INSj = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
-                size_t ISyj = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
+                size_t Sj    = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ej    = this->populations.get_flat_index({j, InfectionState::Exposed});
+                size_t INSj  = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
+                size_t ISyj  = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
                 size_t ISevj = this->populations.get_flat_index({j, InfectionState::InfectedSevere});
-                size_t ICrj = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
-                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t ICrj  = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
+                size_t Rj    = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto riskFromInfectedSymptomatic = smoother_cosine(
                     test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
-                    params.get<RiskOfInfectionFromSymptomatic>()[j], params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
+                    params.get<RiskOfInfectionFromSymptomatic>()[j],
+                    params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val = (1 + params.get<mio::Seasonality>() *
@@ -116,14 +117,15 @@ public:
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj = pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S =
-                    y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
-                    (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] + riskFromInfectedSymptomatic * pop[ISyj]);
+                double Nj =
+                    pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
+                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
+                double dummy_S = y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
+                                 (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] +
+                                  riskFromInfectedSymptomatic * pop[ISyj]);
 
-                dydt[Si] -= dummy_S; 
-                dydt[Ei] += dummy_S; 
+                dydt[Si] -= dummy_S;
+                dydt[Ei] += dummy_S;
             }
 
             // ICU capacity shortage is close
@@ -136,10 +138,9 @@ public:
             dydt[Ei] -= rateE * y[Ei]; // only exchange of E and INS done here
             dydt[INSi] = rateE * y[Ei] - rateINS * y[INSi];
             dydt[ISyi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
-                       (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
-            dydt[ISevi] =
-                params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
-                (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
+                         (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
+            dydt[ISevi] = params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
+                          (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
             dydt[ICri] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICri];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICri] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
@@ -325,15 +326,15 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
     //slice of InfectedNoSymptoms
-    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms), Eigen::Index(size_t(params.get_num_groups())),
-                           Eigen::Index(InfectionState::Count)});
+    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms),
+                           Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
-    auto R3                      = 0.5 / (t_inc - t_ser);
-    auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
-    auto test_and_trace_capacity = double(params.template get<TestAndTraceCapacity>());
-    auto riskFromInfectedSymptomatic   = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
-                                                 test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
+    auto R3                          = 0.5 / (t_inc - t_ser);
+    auto test_and_trace_required     = ((1 - p_asymp) * R3 * y_car.array()).sum();
+    auto test_and_trace_capacity     = double(params.template get<TestAndTraceCapacity>());
+    auto riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+                                                       test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
