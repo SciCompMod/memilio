@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -36,7 +36,9 @@ void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>&
 void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t,
                       double dt, const double tmax, double& err)
 {
-    auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
+    auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) {
+        dydt[0] = std::cos(t);
+    };
 
     mio::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);

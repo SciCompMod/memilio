@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -31,7 +31,6 @@ int main()
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-
     double cont_freq = 10; // see Polymod study
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
@@ -42,35 +41,35 @@ int main()
     model.parameters.set<mio::StartDay>(60);
     model.parameters.set<mio::Seasonality>(0.2);
 
-    model.parameters.get<mio::IncubationTime>()         = 5.2;
-    model.parameters.get<mio::TimeInfectedSymptoms>()     = 5.8;
-    model.parameters.get<mio::SerialInterval>()         = 4.2;
-    model.parameters.get<mio::TimeInfectedSevere>() = 9.5;
-    model.parameters.get<mio::TimeInfectedCritical>()          = 7.1;
+    model.parameters.get<mio::IncubationTime>()       = 5.2;
+    model.parameters.get<mio::TimeInfectedSymptoms>() = 5.8;
+    model.parameters.get<mio::SerialInterval>()       = 4.2;
+    model.parameters.get<mio::TimeInfectedSevere>()   = 9.5;
+    model.parameters.get<mio::TimeInfectedCritical>() = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}]      = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]     = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]          = nb_icu_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]            = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}]   = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSevere}]     = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedCritical}]   = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]          = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]               = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
-    model.parameters.get<mio::TransmissionProbabilityOnContact>() = 0.05;
+    model.parameters.get<mio::TransmissionProbabilityOnContact>()  = 0.05;
     model.parameters.get<mio::RelativeTransmissionNoSymptoms>()    = 0.7;
     model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()   = 0.25;
-    model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()   = 0.45;
-    model.parameters.get<mio::TestAndTraceCapacity>()   = 35;
-    model.parameters.get<mio::SeverePerInfectedSymptoms>()  = 0.2;
-    model.parameters.get<mio::CriticalPerSevere>()         = 0.25;
-    model.parameters.get<mio::DeathsPerCritical>()                    = 0.3;
+    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()    = 0.25;
+    model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
+    model.parameters.get<mio::TestAndTraceCapacity>()              = 35;
+    model.parameters.get<mio::SeverePerInfectedSymptoms>()         = 0.2;
+    model.parameters.get<mio::CriticalPerSevere>()                 = 0.25;
+    model.parameters.get<mio::DeathsPerCritical>()                 = 0.3;
 
     model.apply_constraints();
 
