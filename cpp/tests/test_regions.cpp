@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -22,11 +22,13 @@
 
 TEST(TestRegions, get_holidays)
 {
-    auto a = mio::regions::de::get_holidays(mio::regions::de::StateId(9), mio::Date(2020, 10, 15), mio::Date(2020, 11, 15));
+    auto a =
+        mio::regions::de::get_holidays(mio::regions::de::StateId(9), mio::Date(2020, 10, 15), mio::Date(2020, 11, 15));
     ASSERT_EQ(a.size(), 1);
     ASSERT_EQ(a[0], std::make_pair(mio::Date(2020, 10, 31), mio::Date(2020, 11, 7)));
 
-    auto b = mio::regions::de::get_holidays(mio::regions::de::StateId(3), mio::Date(2020, 7, 30), mio::Date(2020, 12, 31));
+    auto b =
+        mio::regions::de::get_holidays(mio::regions::de::StateId(3), mio::Date(2020, 7, 30), mio::Date(2020, 12, 31));
     ASSERT_EQ(b.size(), 3);
     ASSERT_EQ(b[0], std::make_pair(mio::Date(2020, 7, 16), mio::Date(2020, 8, 27)));
     ASSERT_EQ(b[1], std::make_pair(mio::Date(2020, 10, 12), mio::Date(2020, 10, 24)));

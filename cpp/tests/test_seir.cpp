@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel
 *
@@ -32,9 +32,9 @@ class TestSeir : public testing::Test
 protected:
     void SetUp() override
     {
-        t0      = 0.;
-        tmax    = 50.;
-        dt      = 0.1002004008016032;
+        t0   = 0.;
+        tmax = 50.;
+        dt   = 0.1002004008016032;
 
         total_population = 1061000;
 
@@ -68,8 +68,8 @@ public:
 TEST_F(TestSeir, CompareSeirWithJS)
 {
     std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-js-compare.csv");
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
+    auto integrator                        = std::make_shared<mio::EulerIntegratorCore>();
+    auto result                            = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -100,11 +100,10 @@ TEST_F(TestSeir, CompareSeirWithJS)
 
 TEST_F(TestSeir, checkPopulationConservation)
 {
-    auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
+    auto result        = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
     double num_persons = 0.0;
     for (auto i = 0; i < result.get_last_value().size(); i++) {
         num_persons += result.get_last_value()[i];
-    }   
+    }
     EXPECT_NEAR(num_persons, total_population, 1e-8);
-  
 }
