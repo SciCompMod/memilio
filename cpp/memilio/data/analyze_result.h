@@ -141,7 +141,7 @@ double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1
  * @param compartment the compartment to compare.
  * @return Computed distance between result1 and result2.
  */
-template<class InfectionState>
+template <class InfectionState>
 double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
                              const std::vector<mio::TimeSeries<double>>& result2, InfectionState compartment)
 {

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -96,7 +96,7 @@ public:
 
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
-        m_core= integrator;
+        m_core = integrator;
     }
 
 private:

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Wadim Koslow, Daniel Abele
 *
@@ -40,28 +40,33 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
     for (auto& result : results) {
         auto h5group_name = "/" + std::to_string(ids[county]);
         H5Group county_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
-        MEMILIO_H5_CHECK(county_h5group.id, StatusCode::UnknownError, "Group could not be created (" + h5group_name + ")");
+        MEMILIO_H5_CHECK(county_h5group.id, StatusCode::UnknownError,
+                         "Group could not be created (" + h5group_name + ")");
 
-        const int num_timepoints    = static_cast<int>(result.get_num_time_points());
+        const int num_timepoints   = static_cast<int>(result.get_num_time_points());
         const int num_compartments = (int)result.get_num_elements() / num_groups;
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
         H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
         MEMILIO_H5_CHECK(dspace_t.id, StatusCode::UnknownError, "Time DataSpace could not be created.");
-        H5DataSet dset_t{
-            H5Dcreate(county_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+        H5DataSet dset_t{H5Dcreate(county_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)};
         MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError, "Time DataSet could not be created (Time).");
         auto values_t = std::vector<double>(result.get_times().begin(), result.get_times().end());
         MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
                          StatusCode::UnknownError, "Time data could not be written.");
 
-        auto total = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints, num_compartments).eval();
+        auto total = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                                  num_compartments)
+                         .eval();
 
         for (int group_idx = 0; group_idx <= num_groups; ++group_idx) {
-            auto group = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints, num_compartments).eval();
+            auto group = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                                      num_compartments)
+                             .eval();
             if (group_idx < num_groups) {
                 for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
-                    auto v     = result[t_idx].transpose().eval();
+                    auto v           = result[t_idx].transpose().eval();
                     auto group_slice = mio::slice(v, {group_idx * num_compartments, num_compartments});
                     mio::slice(group, {t_idx, 1}, {0, num_compartments}) = group_slice;
                     mio::slice(total, {t_idx, 1}, {0, num_compartments}) += group_slice;
@@ -105,7 +110,8 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
 
     for (auto& h5group_name : h5group_names) {
         H5Group county_h5group{H5Gopen(file.id, h5group_name.c_str(), H5P_DEFAULT)};
-        MEMILIO_H5_CHECK(county_h5group.id, StatusCode::UnknownError, "Group could not be opened (" + h5group_name + ")");
+        MEMILIO_H5_CHECK(county_h5group.id, StatusCode::UnknownError,
+                         "Group could not be opened (" + h5group_name + ")");
 
         std::vector<std::string> h5dset_names;
         MEMILIO_H5_CHECK(
@@ -126,10 +132,9 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
         H5Sget_simple_extent_dims(dataspace_t.id, dims_t, NULL);
 
         auto num_timepoints = Eigen::Index(dims_t[0]);
-        auto time = std::vector<double>(num_timepoints);
+        auto time           = std::vector<double>(num_timepoints);
         MEMILIO_H5_CHECK(H5Dread(dataset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time.data()),
                          StatusCode::UnknownError, "Time data could not be read.");
-
 
         auto dataset_name_total("/" + h5group_name + "/Total");
         H5DataSet dataset_total{H5Dopen(file.id, dataset_name_total.c_str(), H5P_DEFAULT)};
@@ -146,7 +151,8 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
         }
         auto num_compartments = Eigen::Index(dims_total[1]);
 
-        auto total_values = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_compartments);
+        auto total_values =
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_compartments);
         MEMILIO_H5_CHECK(
             H5Dread(dataset_total.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total_values.data()),
             StatusCode::UnknownError, "Totals data could not be read");
@@ -180,7 +186,8 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
                 return failure(StatusCode::InvalidFileFormat, "Number of compartments does not match.");
             }
 
-            auto group_values = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_compartments);
+            auto group_values = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+                num_timepoints, num_compartments);
             MEMILIO_H5_CHECK(
                 H5Dread(dataset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, group_values.data()),
                 StatusCode::UnknownError, "Values data could not be read");
@@ -191,7 +198,7 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
                 }
             }
         }
-        
+
         results.push_back(SecirSimulationResult(groups, totals));
     }
     return success(results);
