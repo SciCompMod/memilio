@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -437,7 +437,7 @@ public:
      * @tparam T the type of value to be serialized.
      * @param io reference JsonContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
     friend void serialize_internal(JsonContext& io, const T& t)
     {
@@ -450,7 +450,7 @@ public:
      * @tparam T the type of value to be deserialized.
      * @param io reference JsonContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
     friend IOResult<T> deserialize_internal(JsonContext& io, Tag<T>)
     {

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef UNCERTAINMATRIX_H
-#define UNCERTAINMATRIX_H
+#ifndef MIO_EPI_ODE_UNCERTAINMATRIX_H
+#define MIO_EPI_ODE_UNCERTAINMATRIX_H
 
 #include "memilio/utils/date.h"
 #include "memilio/epidemiology/contact_matrix.h"
@@ -144,7 +144,7 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("UncertainContactMatrix");
@@ -194,4 +194,4 @@ private:
 
 } // namespace mio
 
-#endif // UNCERTAINMATRIX_H
+#endif // MIO_EPI_ODE_UNCERTAINMATRIX_H

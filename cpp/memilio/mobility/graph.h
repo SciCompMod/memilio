@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -166,8 +166,6 @@ public:
                                                      : e1.start_node_idx < e2.start_node_idx;
                                       });
     }
-
-
 
     /**
      * @brief range of nodes

@@ -39,11 +39,11 @@ def run_oseir_simulation():
     model = Model()
 
     # Compartment transition duration
-    model.parameters.LatentTime.value = 5.2
-    model.parameters.InfectiousTime.value = 6.
+    model.parameters.TimeExposed.value = 5.2
+    model.parameters.TimeInfected.value = 6.
 
     # Compartment transition propabilities
-    model.parameters.InfectionProbabilityFromContact.value = 1.
+    model.parameters.TransmissionProbabilityOnContact.value = 1.
 
     # Initial number of people in each compartment
     model.populations[Index_InfectionState(State.Exposed)] = 100
@@ -68,7 +68,7 @@ def run_oseir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()

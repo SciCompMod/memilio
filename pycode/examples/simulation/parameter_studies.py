@@ -23,6 +23,7 @@ import memilio.simulation as mio
 import memilio.simulation.secir as secir
 import argparse
 
+
 def parameter_study():
     # setup basic parameters
     num_groups = 6
@@ -32,31 +33,28 @@ def parameter_study():
         group = secir.AgeGroup(i)
 
         model.parameters.IncubationTime[group] = 5.2
-        model.parameters.InfectiousTimeMild[group] = 6
+        model.parameters.TimeInfectedSymptoms[group] = 6
         model.parameters.SerialInterval[group] = 4.2
-        model.parameters.HospitalizedToHomeTime[group] = 12
-        model.parameters.HomeToHospitalizedTime[group] = 5
-        model.parameters.HospitalizedToICUTime[group] = 2
-        model.parameters.ICUToHomeTime[group] = 8
-        model.parameters.ICUToDeathTime[group] = 5
+        model.parameters.TimeInfectedSevere[group] = 12
+        model.parameters.TimeInfectedCritical[group] = 8
 
         model.populations[group, secir.InfectionState.Exposed] = 100
-        model.populations[group, secir.InfectionState.Carrier] = 50
-        model.populations[group, secir.InfectionState.Infected] = 20
-        model.populations[group, secir.InfectionState.Hospitalized] = 20
-        model.populations[group, secir.InfectionState.ICU] = 10
+        model.populations[group, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[group, secir.InfectionState.InfectedSymptoms] = 20
+        model.populations[group, secir.InfectionState.InfectedSevere] = 20
+        model.populations[group, secir.InfectionState.InfectedCritical] = 10
         model.populations[group, secir.InfectionState.Recovered] = 50
         model.populations[group, secir.InfectionState.Dead] = 10
         model.populations.set_difference_from_group_total_AgeGroup(
             (group, secir.InfectionState.Susceptible), 10000)
 
-        model.parameters.InfectionProbabilityFromContact[group].set_distribution(
+        model.parameters.TransmissionProbabilityOnContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
-        model.parameters.AsymptomaticCasesPerInfectious[group] = 0.09
+        model.parameters.RecoveredPerInfectedNoSymptoms[group] = 0.09
         model.parameters.RiskOfInfectionFromSymptomatic[group] = 0.25
-        model.parameters.HospitalizedCasesPerInfectious[group] = 0.2
-        model.parameters.ICUCasesPerHospitalized[group] = 0.25
-        model.parameters.DeathsPerICU[group] = 0.3
+        model.parameters.SeverePerInfectedSymptoms[group] = 0.2
+        model.parameters.CriticalPerSevere[group] = 0.25
+        model.parameters.DeathsPerCritical[group] = 0.3
 
     model.parameters.ContactPatterns.cont_freq_mat = mio.ContactMatrixGroup(
         4, num_groups)
@@ -76,7 +74,7 @@ def parameter_study():
     def handle_result(graph):
         group = secir.AgeGroup(0)
         print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
-            0).property.model.parameters.InfectionProbabilityFromContact[group].value))
+            0).property.model.parameters.TransmissionProbabilityOnContact[group].value))
         print("compartments at t = {}:".format(
             graph.get_node(0).property.result.get_time(0)))
         print(graph.get_node(0).property.result.get_value(0))
@@ -99,9 +97,10 @@ def parameter_study():
     study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'parameter_studies', 
-        description = 'Example demonstrating ensemble runs of a SECIR model.')
+        'parameter_studies',
+        description='Example demonstrating ensemble runs of a SECIR model.')
     args = arg_parser.parse_args()
     parameter_study()

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -74,25 +74,15 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<InfectiousTimeMild>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSymptoms>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToICUTime>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedSevere>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<HospitalizedToHomeTime>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<HomeToHospitalizedTime>()[i];
-                });
-            param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });
-            param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToHomeTime>()[i]; });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<TimeInfectedCritical>()[i]; });
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RelativeCarrierInfectability>()[i];
+                    return model.parameters.template get<RelativeTransmissionNoSymptoms>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
@@ -104,18 +94,18 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<AsymptomaticCasesPerInfectious>()[i];
+                    return model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
+                    return model.parameters.template get<SeverePerInfectedSymptoms>()[i];
                 });
+            param_percentil(
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere>()[i]; });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<ICUCasesPerHospitalized>()[i];
+                    return model.parameters.template get<mio::DeathsPerCritical>()[i];
                 });
-            param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<mio::DeathsPerICU>()[i]; });
         }
         // group independent params
         param_percentil(

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
@@ -221,7 +221,7 @@ TEST(TestWorld, findLocation)
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age60to79,
-                                    world.get_global_infection_parameters());
+                                   world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& school = world.get_individualized_location(school_id);
     auto& work   = world.get_individualized_location(work_id);
@@ -1487,7 +1487,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::Infected,
                                                                     mio::abm::InfectionState::Carrier};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                    mio::abm::LocationType::Work};
+                                                                mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -1545,7 +1545,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
-                                    world.get_global_infection_parameters());
+                                   world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& work   = world.get_individualized_location(work_id);
     person.set_assigned_location(home);
