@@ -182,7 +182,8 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::SecirModel::Populations>{});
     py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
-    py::class_<mio::SecirModel, mio::CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>>(m, "SecirModel")
+    py::class_<mio::SecirModel, mio::CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>>(
+        m, "SecirModel")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
@@ -209,7 +210,12 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
           py::arg("tmax"), py::arg("dev_rel"));
 
-    m.def("draw_sample", [](mio::SecirModel& model) { return mio::draw_sample(model); }, py::arg("model"));
+    m.def(
+        "draw_sample",
+        [](mio::SecirModel& model) {
+            return mio::draw_sample(model);
+        },
+        py::arg("model"));
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));

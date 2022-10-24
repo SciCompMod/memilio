@@ -57,10 +57,10 @@ void bind_Population(pybind11::module& m, std::string const& name, mio::Tag<mio:
 {
     using C    = mio::Populations<Cats...>;
     using Base = mio::CustomIndexArray<mio::UncertainValue, Cats...>;
-    try{
+    try {
         bind_CustomIndexArray<mio::UncertainValue, Cats...>(m, (name + "Array").c_str());
-    } 
-    catch(std::runtime_error &e) {
+    }
+    catch (std::runtime_error& e) {
         pybind11::print("Catched exception: ");
         pybind11::print(e.what());
     }

@@ -23,6 +23,7 @@ import memilio.simulation as mio
 import memilio.simulation.secir as secir
 import argparse
 
+
 def parameter_study():
     # setup basic parameters
     num_groups = 6
@@ -96,9 +97,10 @@ def parameter_study():
     study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'parameter_studies', 
-        description = 'Example demonstrating ensemble runs of a SECIR model.')
+        'parameter_studies',
+        description='Example demonstrating ensemble runs of a SECIR model.')
     args = arg_parser.parse_args()
     parameter_study()

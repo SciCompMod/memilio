@@ -28,15 +28,16 @@ import os
 import argparse
 
 
-def run_secir_groups_simulation(show_plot = True):
+def run_secir_groups_simulation(show_plot=True):
     """
     Runs the c++ secir model using mulitple age groups 
     and plots the results
     """
 
     # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
-                    'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+    compartments = [
+        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
+        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     # Define population of age groups
@@ -202,8 +203,9 @@ def run_secir_groups_simulation(show_plot = True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_groups', 
-        description = 'Simple example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
-    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+        'secir_groups',
+        description='Simple example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
+    arg_parser.add_argument('-p', '--show_plot',
+                            action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
     run_secir_groups_simulation(**args.__dict__)

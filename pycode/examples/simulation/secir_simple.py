@@ -27,15 +27,16 @@ from datetime import datetime, date
 import argparse
 
 
-def run_secir_simulation(show_plot = True):
+def run_secir_simulation(show_plot=True):
     """
     Runs the c++ secir model using one age group 
     and plots the results
     """
 
     # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'InfectedNoSymptoms',
-                    'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
+    compartments = [
+        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
+        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define population of age groups
     populations = [83000]
 
@@ -55,8 +56,8 @@ def run_secir_simulation(show_plot = True):
     # Set parameters
 
     # Compartment transition duration
-    model.parameters.IncubationTime[A0] = 5.2  
-    model.parameters.TimeInfectedSymptoms[A0] = 6.  
+    model.parameters.IncubationTime[A0] = 5.2
+    model.parameters.TimeInfectedSymptoms[A0] = 6.
     # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
     model.parameters.SerialInterval[A0] = 4.2
     model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
@@ -113,8 +114,10 @@ def run_secir_simulation(show_plot = True):
         data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
 
     # Plot Results
-    datelist = np.array(pd.date_range(datetime(start_year, start_month,
-                        start_day), periods=days, freq='D').strftime('%m-%d').tolist())
+    datelist = np.array(
+        pd.date_range(
+            datetime(start_year, start_month, start_day),
+            periods=days, freq='D').strftime('%m-%d').tolist())
 
     tick_range = (np.arange(int(days / 10) + 1) * 10)
     tick_range[-1] -= 1
@@ -141,8 +144,9 @@ def run_secir_simulation(show_plot = True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the SECIR model.')
-    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the SECIR model.')
+    arg_parser.add_argument('-p', '--show_plot',
+                            action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
     run_secir_simulation(**args.__dict__)

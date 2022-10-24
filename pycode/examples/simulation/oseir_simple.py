@@ -68,7 +68,7 @@ def run_oseir_simulation():
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()

@@ -48,7 +48,8 @@ class Test_ParameterStudy(unittest.TestCase):
         model.populations[A0, secir.InfectionState.InfectedCritical] = 10
         model.populations[A0, secir.InfectionState.Recovered] = 10
         model.populations[A0, secir.InfectionState.Dead] = 0
-        model.populations.set_difference_from_total((A0, secir.InfectionState.Susceptible), 10000)
+        model.populations.set_difference_from_total(
+            (A0, secir.InfectionState.Susceptible), 10000)
 
         model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
         model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
