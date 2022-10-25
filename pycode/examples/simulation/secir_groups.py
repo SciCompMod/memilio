@@ -77,8 +77,6 @@ def run_secir_groups_simulation(show_plot=True):
         model.parameters.SerialInterval[AgeGroup(i)] = 4.2
         model.parameters.TimeInfectedSevere[AgeGroup(
             i)] = 12.  # 7-16 (=R5^(-1))
-        model.parameters.HomeToHospitalizedTime[AgeGroup(
-            i)] = 5.  # 2.5-7 (=R6^(-1))
         model.parameters.TimeInfectedCritical[AgeGroup(i)] = 8.
 
         # Initial number of peaople in each compartment
