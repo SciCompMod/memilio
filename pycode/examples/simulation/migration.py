@@ -63,10 +63,9 @@ def parameter_study():
         0), secir.InfectionState.InfectedCritical] = 10
     model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 10
     model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
-    model.populations.set_difference_from_group_total_AgeGroup(
-        secir.Index_Agegroup_InfectionState(
-            secir.AgeGroup(0),
-            secir.InfectionState.Susceptible),
+    model.populations.set_difference_from_group_total_AgeGroup((
+        secir.AgeGroup(0),
+        secir.InfectionState.Susceptible),
         10000)
     model.apply_constraints()
     graph.add_node(id=0, model=model, t0=t0)  # copies the model into the graph
@@ -81,10 +80,9 @@ def parameter_study():
         0), secir.InfectionState.InfectedCritical] = 0
     model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 0
     model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
-    model.populations.set_difference_from_group_total_AgeGroup(
-        secir.Index_Agegroup_InfectionState(
-            secir.AgeGroup(0),
-            secir.InfectionState.Susceptible),
+    model.populations.set_difference_from_group_total_AgeGroup((
+        secir.AgeGroup(0),
+        secir.InfectionState.Susceptible),
         2000)
     model.apply_constraints()
     graph.add_node(id=1, model=model, t0=t0)
