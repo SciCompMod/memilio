@@ -422,8 +422,8 @@ TEST(TestOdeSECIRVVS, draw_sample)
     auto& parameters0          = sampled_graph.nodes()[0].property.parameters;
     auto& populations0         = sampled_graph.nodes()[0].property.populations;
     auto& timeInfectedCritical = parameters0.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(1)];
-    ASSERT_GE(double(timeInfectedCritical), 5.0);
-    ASSERT_LE(double(timeInfectedCritical), 9.0);
+    ASSERT_GE(double(timeInfectedCritical), 4.95);
+    ASSERT_LE(double(timeInfectedCritical), 8.95);
     auto& param_exp_factor = parameters0.get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)];
     ASSERT_GE(double(param_exp_factor), 0.75);
     ASSERT_LE(double(param_exp_factor), 0.85);
