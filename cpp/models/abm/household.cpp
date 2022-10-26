@@ -58,7 +58,8 @@ void add_household_to_world(World& world, const Household& household)
 {
     auto home    = world.add_location(LocationType::Home);
     auto members = household.get_members();
-    world.get_individualized_location(home).set_capacity(4, 264);
+    world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
+                                                         household.get_total_number_of_members() * 66);
 
     for (auto& memberTouple : members) {
         int count;
