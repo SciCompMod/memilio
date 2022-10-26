@@ -41,7 +41,7 @@ class Person;
  */
 struct LocationCapacity {
     int volume;
-    int persons;
+    int person_capacity;
 };
 
 /**
@@ -205,8 +205,8 @@ public:
  */
     void set_capacity(int persons, int volume)
     {
-        m_capacity.persons = persons;
-        m_capacity.volume  = volume;
+        m_capacity.person_capacity = persons;
+        m_capacity.volume          = volume;
     }
 
     /**

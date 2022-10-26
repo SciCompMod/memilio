@@ -204,8 +204,8 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 
 LocationCapacity Location::get_default_capacity()
 {
-    m_capacity.persons = 5;
-    m_capacity.volume  = 330;
+    m_capacity.person_capacity = 5;
+    m_capacity.volume          = 330;
     return m_capacity;
 }
 
