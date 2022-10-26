@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -44,161 +44,6 @@ public:
     SecirModel(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
     {
-#if !USE_DERIV_FUNC
-        size_t n_agegroups = (size_t)AgeGroup::Count;
-        for (size_t i = 0; i < n_agegroups; i++) {
-            for (size_t j = 0; j < n_agegroups; j++) {
-
-                // Si to Ei individually for each age group j
-                this->add_flow(
-                    std::make_tuple((AgeGroup)i, InfectionState::S), std::make_tuple((AgeGroup)i, InfectionState::E),
-                    [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y,
-                           double t) {
-                        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-                        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) *
-                                                       dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionState::C);
-                        auto risk_from_symptomatic =
-                            smoother_cosine(test_and_trace_required, params.get_test_and_trace_capacity(),
-                                            params.get_test_and_trace_capacity() * 5,
-                                            params.probabilities[i].get_risk_from_symptomatic(),
-                                            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
-
-                        // effective contact rate by contact rate between groups i and j and damping j
-                        ScalarType season_val =
-                            (1 + p.get_seasonality() * sin(3.141592653589793 *
-                                                           (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-                        ScalarType cont_freq_eff =
-                            season_val *
-                            contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
-                        ScalarType Nj = Po::get_from(pop, (AgeGroup)j, InfectionState::S) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::E) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::C) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::I) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::H) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::U) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::R); // without died people
-                        ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
-                        ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionState::S);
-                        ScalarType Cj    = Po::get_from(pop, (AgeGroup)j, InfectionState::C);
-                        ScalarType Ij    = Po::get_from(pop, (AgeGroup)j, InfectionState::I);
-                        return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
-                               (p.probabilities[j].get_carrier_infectability() * Cj + risk_from_symptomatic * Ij);
-                    });
-            }
-
-            // Ei to Ci
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::E),
-                           std::make_tuple((AgeGroup)i, InfectionState::C),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::E) /
-                                      (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
-                           });
-
-            // Ci to Ii
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::C),
-                           std::make_tuple((AgeGroup)i, InfectionState::I),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
-                               double alpha    = p.probabilities[i].get_asymp_per_infectious();
-                               return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                           });
-
-            // Ci to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::C),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               double alpha = p.probabilities[i].get_asymp_per_infectious();
-                               return (alpha / p.times[i].get_infectious_asymp()) *
-                                      Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                           });
-
-            // Ii to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::I),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                                      (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
-                                      p.times[i].get_infectious_mild();
-                           });
-
-            // Ii to Hi
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::I), std::make_tuple((AgeGroup)i, InfectionState::H),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                           p.probabilities[i].get_hospitalized_per_infectious() / p.times[i].get_home_to_hospitalized();
-                });
-
-            // Hi to Ui
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::H),
-                           std::make_tuple((AgeGroup)i, InfectionState::U),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               ScalarType icu_occupancy = 0;
-                               for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                                   icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                               }
-
-                               ScalarType prob_hosp2icu =
-                                   smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                                   p.probabilities[i].get_icu_per_hospitalized(), 0);
-
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2icu /
-                                      p.times[i].get_hospitalized_to_icu();
-                           });
-
-            // Hi to Di
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::H), std::make_tuple((AgeGroup)i, InfectionState::D),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    ScalarType icu_occupancy = 0;
-                    for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                        icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                    }
-
-                    ScalarType prob_hosp2icu =
-                        smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                        p.probabilities[i].get_icu_per_hospitalized(), 0);
-                    ScalarType prob_hosp2dead = p.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
-
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2dead /
-                           p.times[i].get_hospitalized_to_icu();
-                });
-
-            // Hi to Ri
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::H), std::make_tuple((AgeGroup)i, InfectionState::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::H) *
-                           (1 - p.probabilities[i].get_icu_per_hospitalized()) / p.times[i].get_hospitalized_to_home();
-                });
-
-            // Ui to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                      (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
-                           });
-
-            // Ui to Di
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                           std::make_tuple((AgeGroup)i, InfectionState::D),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                      p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
-                           });
-        }
-#endif
     }
 
     SecirModel(int num_agegroups)
@@ -225,44 +70,45 @@ public:
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
-            test_and_trace_required += (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 *
-                                       this->populations.get_from(pop, {i, InfectionState::Carrier});
-            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICU});
+            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+                                       this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptoms});
+            icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
         }
 
         for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
-            size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
-            size_t Ei = this->populations.get_flat_index({i, InfectionState::Exposed});
-            size_t Ci = this->populations.get_flat_index({i, InfectionState::Carrier});
-            size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
-            size_t Hi = this->populations.get_flat_index({i, InfectionState::Hospitalized});
-            size_t Ui = this->populations.get_flat_index({i, InfectionState::ICU});
-            size_t Ri = this->populations.get_flat_index({i, InfectionState::Recovered});
-            size_t Di = this->populations.get_flat_index({i, InfectionState::Dead});
+            size_t Si    = this->populations.get_flat_index({i, InfectionState::Susceptible});
+            size_t Ei    = this->populations.get_flat_index({i, InfectionState::Exposed});
+            size_t INSi  = this->populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+            size_t ISyi  = this->populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+            size_t ISevi = this->populations.get_flat_index({i, InfectionState::InfectedSevere});
+            size_t ICri  = this->populations.get_flat_index({i, InfectionState::InfectedCritical});
+            size_t Ri    = this->populations.get_flat_index({i, InfectionState::Recovered});
+            size_t Di    = this->populations.get_flat_index({i, InfectionState::Dead});
 
             dydt[Si] = 0;
             dydt[Ei] = 0;
 
-            double dummy_R2 =
+            double rateE =
                 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
-            double dummy_R3 =
+            double rateINS =
                 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
-                size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
-                size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
-                size_t Cj = this->populations.get_flat_index({j, InfectionState::Carrier});
-                size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
-                size_t Hj = this->populations.get_flat_index({j, InfectionState::Hospitalized});
-                size_t Uj = this->populations.get_flat_index({j, InfectionState::ICU});
-                size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+                size_t Sj    = this->populations.get_flat_index({j, InfectionState::Susceptible});
+                size_t Ej    = this->populations.get_flat_index({j, InfectionState::Exposed});
+                size_t INSj  = this->populations.get_flat_index({j, InfectionState::InfectedNoSymptoms});
+                size_t ISyj  = this->populations.get_flat_index({j, InfectionState::InfectedSymptoms});
+                size_t ISevj = this->populations.get_flat_index({j, InfectionState::InfectedSevere});
+                size_t ICrj  = this->populations.get_flat_index({j, InfectionState::InfectedCritical});
+                size_t Rj    = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-                auto risk_from_symptomatic = smoother_cosine(
+                auto riskFromInfectedSymptomatic = smoother_cosine(
                     test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
-                    params.get<RiskOfInfectionFromSymptomatic>()[j], params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
+                    params.get<RiskOfInfectionFromSymptomatic>()[j],
+                    params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val = (1 + params.get<mio::Seasonality>() *
@@ -271,52 +117,43 @@ public:
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S =
-                    y[Si] * cont_freq_eff * divNj * params.get<InfectionProbabilityFromContact>()[i] *
-                    (params.get<RelativeCarrierInfectability>()[j] * pop[Cj] + risk_from_symptomatic * pop[Ij]);
+                double Nj =
+                    pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
+                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
+                double dummy_S = y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
+                                 (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] +
+                                  riskFromInfectedSymptomatic * pop[ISyj]);
 
-                dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
-                dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+                dydt[Si] -= dummy_S;
+                dydt[Ei] += dummy_S;
             }
 
             // ICU capacity shortage is close
-            double prob_hosp2icu =
+            double criticalPerSevereAdjusted =
                 smoother_cosine(icu_occupancy, 0.90 * params.get<mio::ICUCapacity>(), params.get<mio::ICUCapacity>(),
-                                params.get<ICUCasesPerHospitalized>()[i], 0);
+                                params.get<CriticalPerSevere>()[i], 0);
 
-            double prob_hosp2dead = params.get<ICUCasesPerHospitalized>()[i] - prob_hosp2icu;
+            double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
-            dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
-            dydt[Ci] = dummy_R2 * y[Ei] -
-                       ((1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 +
-                        params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
-                           y[Ci];
-            dydt[Ii] = (1 - params.get<AsymptomaticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci] -
-                       ((1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] +
-                        params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i]) *
-                           y[Ii];
-            dydt[Hi] =
-                params.get<HospitalizedCasesPerInfectious>()[i] / params.get<HomeToHospitalizedTime>()[i] * y[Ii] -
-                ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
-                 params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
-                    y[Hi];
-            dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] +
-                         params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i]) *
-                       y[Ui];
+            dydt[Ei] -= rateE * y[Ei]; // only exchange of E and INS done here
+            dydt[INSi] = rateE * y[Ei] - rateINS * y[INSi];
+            dydt[ISyi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
+                         (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
+            dydt[ISevi] = params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
+                          (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
+            dydt[ICri] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICri];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[ICri] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
 
             dydt[Ri] =
-                params.get<AsymptomaticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
-                (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
-                (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
+                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi] +
+                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] +
+                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi] +
+                (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICri];
 
-            dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui];
+            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[Hi];
+            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
         }
     }
 
@@ -397,7 +234,7 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
-        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfected>();
+        auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
         if (dyn_npis.get_thresholds().size() > 0) {
             auto t        = Base::get_result().get_last_time();
@@ -461,7 +298,7 @@ double get_infections_relative(const SecirSimulation<Base>& sim, double /*t*/,
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
-        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::Infected});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptoms});
     }
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
@@ -485,25 +322,25 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     //parameters as arrays
     auto&& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
     auto&& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto&& p_asymp   = params.template get<AsymptomaticCasesPerInfectious>().array().template cast<double>();
+    auto&& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms>().array().template cast<double>();
     auto&& p_inf     = params.template get<RiskOfInfectionFromSymptomatic>().array().template cast<double>();
     auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic>().array().template cast<double>();
-    //slice of carriers
-    auto y_car = slice(y, {Eigen::Index(InfectionState::Carrier), Eigen::Index(size_t(params.get_num_groups())),
-                           Eigen::Index(InfectionState::Count)});
+    //slice of InfectedNoSymptoms
+    auto y_car = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptoms),
+                           Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)});
 
     //compute isolation, same as infection risk from main model
-    auto R3                      = 0.5 / (t_inc - t_ser);
-    auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
-    auto test_and_trace_capacity = double(params.template get<TestAndTraceCapacity>());
-    auto risk_from_symptomatic   = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
-                                                 test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
+    auto R3                          = 0.5 / (t_inc - t_ser);
+    auto test_and_trace_required     = ((1 - p_asymp) * R3 * y_car.array()).sum();
+    auto test_and_trace_capacity     = double(params.template get<TestAndTraceCapacity>());
+    auto riskFromInfectedSymptomatic = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+                                                       test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
-    slice(factors, {Eigen::Index(InfectionState::Infected), Eigen::Index(size_t(params.get_num_groups())),
+    slice(factors, {Eigen::Index(InfectionState::InfectedSymptoms), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionState::Count)})
-        .array() = risk_from_symptomatic;
+        .array() = riskFromInfectedSymptomatic;
     return factors;
 }
 

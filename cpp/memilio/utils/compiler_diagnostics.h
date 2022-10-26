@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -22,12 +22,14 @@
 
 namespace mio
 {
-    /**
+/**
      * does nothing, can be used to mark variables as not used.
      * e.g. for avoiding compiler warnings/error about unused variables.
      */
-    template<class... T>
-    void unused(T&&...) {}
+template <class... T>
+void unused(T&&...)
+{
+}
 
 #define QUOTE(x) #x
 
@@ -45,7 +47,7 @@ namespace mio
 
 #ifdef __GNUC__
 #define COMPILER GCC
-#else 
+#else
 #define COMPILER clang
 #endif
 
@@ -64,6 +66,6 @@ namespace mio
     MSVC_WARNING_DISABLE_PUSH(4127)                                                                                    \
     if (expr)                                                                                                          \
     MSVC_WARNING_POP
-}
+} // namespace mio
 
 #endif //EPI_UTILS_UNUSED_H

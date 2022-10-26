@@ -30,7 +30,8 @@
 
 namespace py = pybind11;
 
-namespace pymio{
+namespace pymio
+{
 //specialization of pretty_name
 template <>
 std::string pretty_name<mio::oseir::InfectionState>()
@@ -42,26 +43,27 @@ std::string pretty_name<mio::oseir::InfectionState>()
 
 PYBIND11_MODULE(_simulation_oseir, m)
 {
-pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
-    .value("Susceptible", mio::oseir::InfectionState::Susceptible)
-    .value("Exposed", mio::oseir::InfectionState::Exposed)
-    .value("Infected", mio::oseir::InfectionState::Infected)
-    .value("Recovered", mio::oseir::InfectionState::Recovered);
+    pymio::iterable_enum<mio::oseir::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::oseir::InfectionState::Susceptible)
+        .value("Exposed", mio::oseir::InfectionState::Exposed)
+        .value("Infected", mio::oseir::InfectionState::Infected)
+        .value("Recovered", mio::oseir::InfectionState::Recovered);
 
-pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
+    pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
 
-using Populations = mio::Populations<mio::oseir::InfectionState>;
-pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
-pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>(m, "ModelBase");
-py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
-   .def(py::init<>());
+    using Populations = mio::Populations<mio::oseir::InfectionState>;
+    pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>(m, "ModelBase");
+    py::class_<mio::oseir::Model,
+               mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
+        .def(py::init<>());
 
-m.def(
-"simulate",
-    [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
-        return mio::simulate(t0, tmax, dt, model);
-    },
-    "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::oseir::Model& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a oseir from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-m.attr("__version__") = "dev";
+    m.attr("__version__") = "dev";
 }

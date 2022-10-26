@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -26,19 +26,19 @@
 
 namespace mio
 {
-    /**
+/**
      * maximum absolute value of two numbers.
      * @param v1 first number
      * @param v2 second number
      * @return maximum absolute value between v1 and v2
      */
-    template<class T>
-    T abs_max(T v1, T v2)
-    {
-        return std::max(std::abs(v1), std::abs(v2));
-    }
+template <class T>
+T abs_max(T v1, T v2)
+{
+    return std::max(std::abs(v1), std::abs(v2));
+}
 
-    /**
+/**
      * compare two floating point values for equality with tolerances.
      * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
      * Otherwise use relative tolerance. If unsure, use both.
@@ -48,14 +48,14 @@ namespace mio
      * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
      * @return true if v1 is within the specified relative OR absolute tolerance of v2  
      */
-    template<class T>
-    bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
-    {
-        auto diff = std::abs(v1 - v2);
-        return diff <= abs_tol || diff <= abs_max(v1, v2) * rel_tol;
-    }
+template <class T>
+bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+{
+    auto diff = std::abs(v1 - v2);
+    return diff <= abs_tol || diff <= abs_max(v1, v2) * rel_tol;
+}
 
-    /**
+/**
      * compare two floating point values with tolerances.
      * v1 < v2 if 
      *  a) v1 not == v2 within tolerances and 
@@ -68,14 +68,14 @@ namespace mio
      * @param rel_tol maximum allowed relative difference for equality, default numeric_limits::min.
      * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
      */
-    template<class T>
-    bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
-    {
-        auto diff = v1 - v2;
-        return diff < -abs_tol || diff < -abs_max(v1, v2) * rel_tol;
-    }
+template <class T>
+bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+{
+    auto diff = v1 - v2;
+    return diff < -abs_tol || diff < -abs_max(v1, v2) * rel_tol;
+}
 
-    /**
+/**
      * compare two floating point values with tolerances.
      * v1 > v2 if 
      *  a) v1 not == v2 within tolerances AND 
@@ -88,13 +88,13 @@ namespace mio
      * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
      * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
      */
-    template<class T>
-    bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
-    {
-        return floating_point_less(v2, v1, abs_tol, rel_tol);
-    }
+template <class T>
+bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+{
+    return floating_point_less(v2, v1, abs_tol, rel_tol);
+}
 
-    /**
+/**
      * compare two floating point values with tolerances.
      * v1 <= v2 if 
      *  a) v1 < v2 OR 
@@ -107,13 +107,13 @@ namespace mio
      * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
      * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
      */
-    template<class T>
-    bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
-    {
-        return !floating_point_less(v2, v1, abs_tol, rel_tol);
-    }
+template <class T>
+bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+{
+    return !floating_point_less(v2, v1, abs_tol, rel_tol);
+}
 
-    /**
+/**
      * compare two floating point values with tolerances.
      * v1 >= v2 if 
      *  a) v1 > v2 OR 
@@ -126,11 +126,11 @@ namespace mio
      * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
      * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
      */
-    template<class T>
-    bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
-    {
-        return !floating_point_less(v1, v2, abs_tol, rel_tol);
-    }
+template <class T>
+bool floating_point_greater_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
+{
+    return !floating_point_less(v1, v2, abs_tol, rel_tol);
 }
+} // namespace mio
 
 #endif

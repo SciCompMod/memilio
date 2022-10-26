@@ -42,19 +42,22 @@ class TestCustomIndexArray(TestCase):
         array = SecirPopulationArray(dims)
         array[:, :] = 1.0
         array[:, InfectionState.Exposed] = 2.0
-        array[AgeGroup(0), InfectionState.Carrier] = 3.0
+        array[AgeGroup(0), InfectionState.InfectedNoSymptoms] = 3.0
         self.assertEqual(
             array[AgeGroup(0), InfectionState.Susceptible].value, 1.0)
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 2.0)
-        self.assertEqual(array[AgeGroup(0), InfectionState.Carrier].value, 3.0)
+        self.assertEqual(
+            array[AgeGroup(0), InfectionState.InfectedNoSymptoms].value, 3.0)
 
     def test_assign_steps(self):
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
         array = SecirPopulationArray(dims)
-        array[::AgeGroup(1), InfectionState.Carrier] = 1.0
+        array[::AgeGroup(1), InfectionState.InfectedNoSymptoms] = 1.0
         array[::AgeGroup(2), InfectionState.Exposed] = 2.0
-        self.assertEqual(array[AgeGroup(0), InfectionState.Carrier].value, 1.0)
-        self.assertEqual(array[AgeGroup(1), InfectionState.Carrier].value, 1.0)
+        self.assertEqual(
+            array[AgeGroup(0), InfectionState.InfectedNoSymptoms].value, 1.0)
+        self.assertEqual(
+            array[AgeGroup(1), InfectionState.InfectedNoSymptoms].value, 1.0)
         self.assertEqual(array[AgeGroup(0), InfectionState.Exposed].value, 2.0)
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 0.0)
 

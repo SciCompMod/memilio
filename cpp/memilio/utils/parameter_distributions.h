@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -42,21 +42,21 @@ using ConstParameterDistributionVisitor =
 
 template <class Derived>
 using VisitableParameterDistribution =
-    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;    
+    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
 
 namespace details
 {
-    template <class IOObj>
-    struct SerializationVisitor : ConstParameterDistributionVisitor {
-        SerializationVisitor(IOObj& o)
-            : obj(o)
-        {
-        }
-        virtual void visit(const ParameterDistributionNormal& normal_dist) final;
-        virtual void visit(const ParameterDistributionUniform& uniform_dist) final;
-        IOObj& obj;
-    };
-}
+template <class IOObj>
+struct SerializationVisitor : ConstParameterDistributionVisitor {
+    SerializationVisitor(IOObj& o)
+        : obj(o)
+    {
+    }
+    virtual void visit(const ParameterDistributionNormal& normal_dist) final;
+    virtual void visit(const ParameterDistributionUniform& uniform_dist) final;
+    IOObj& obj;
+};
+} // namespace details
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -321,8 +321,8 @@ public:
     template <class IOContext>
     static IOResult<ParameterDistributionNormal> deserialize(IOContext& io)
     {
-        auto obj  = io.expect_object("ParameterDistribution");
-        auto type = obj.expect_element("Type", Tag<std::string>{});
+        auto obj    = io.expect_object("ParameterDistribution");
+        auto type   = obj.expect_element("Type", Tag<std::string>{});
         auto m      = obj.expect_element("Mean", Tag<double>{});
         auto s      = obj.expect_element("StandardDev", Tag<double>{});
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
@@ -359,7 +359,7 @@ private:
     bool m_log_stddev_change = true;
 };
 
-template<class IOObj>
+template <class IOObj>
 void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionNormal& normal_dist)
 {
     obj.add_element("Type", std::string("Normal"));
@@ -403,8 +403,8 @@ public:
     template <class IOContext>
     static IOResult<ParameterDistributionUniform> deserialize(IOContext& io)
     {
-        auto obj  = io.expect_object("ParameterDistribution");
-        auto type = obj.expect_element("Type", Tag<std::string>{});
+        auto obj    = io.expect_object("ParameterDistribution");
+        auto type   = obj.expect_element("Type", Tag<std::string>{});
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
         auto ub     = obj.expect_element("UpperBound", Tag<double>{});
         auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
@@ -435,11 +435,6 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUnif
 {
     obj.add_element("Type", std::string("Uniform"));
 }
-
-
-
-
-
 
 /**
  * deserialize a parameter distribution as a shared_ptr.

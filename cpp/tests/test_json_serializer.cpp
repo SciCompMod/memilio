@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -43,12 +43,17 @@ struct Foo {
         obj.add_element("i", i);
     }
 
-    template<class IOContext>
+    template <class IOContext>
     static mio::IOResult<Foo> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Foo");
-        auto i = obj.expect_element("i", mio::Tag<int>{});
-        return mio::apply(io, [](auto i_) { return Foo{i_}; }, i);
+        auto i   = obj.expect_element("i", mio::Tag<int>{});
+        return mio::apply(
+            io,
+            [](auto i_) {
+                return Foo{i_};
+            },
+            i);
     }
     bool operator==(const Foo& other) const
     {
@@ -71,13 +76,18 @@ struct Bar {
         obj.add_element("s", s);
         obj.add_list("v", v.begin(), v.end());
     }
-    template<class IOContext>
+    template <class IOContext>
     static mio::IOResult<Bar> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Bar");
-        auto s = obj.expect_element("s", mio::Tag<std::string>{});
-        auto v = obj.expect_list("v", mio::Tag<Foo>{});
-        return mio::apply(io, [](auto&& s_, auto&& v_) { return Bar {s_, v_}; }, s, v);
+        auto s   = obj.expect_element("s", mio::Tag<std::string>{});
+        auto v   = obj.expect_list("v", mio::Tag<Foo>{});
+        return mio::apply(
+            io,
+            [](auto&& s_, auto&& v_) {
+                return Bar{s_, v_};
+            },
+            s, v);
     }
     bool operator==(const Bar& other) const
     {
@@ -97,12 +107,17 @@ struct DoubleList {
         auto obj = io.create_object("DoubleList");
         obj.add_list("vd", vd.begin(), vd.end());
     }
-    template<class IOContext>
+    template <class IOContext>
     static mio::IOResult<DoubleList> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("DoubleList");
-        auto v = obj.expect_list("vd", mio::Tag<double>{});
-        return mio::apply(io, [](auto&& v_) { return DoubleList{v_}; }, v);
+        auto v   = obj.expect_list("vd", mio::Tag<double>{});
+        return mio::apply(
+            io,
+            [](auto&& v_) {
+                return DoubleList{v_};
+            },
+            v);
     }
 
     bool operator==(const DoubleList& other) const
@@ -118,9 +133,9 @@ struct DoubleList {
 } // namespace jsontest
 
 //checks round trip (de)serialization and intermediate value
-template<class T, class StoredType = T>
+template <class T, class StoredType = T>
 void check_serialization_of_basic_type(T t)
-{        
+{
     auto js = mio::serialize_json(t);
     EXPECT_EQ(js.value(), Json::Value(StoredType(t)));
 
@@ -130,9 +145,10 @@ void check_serialization_of_basic_type(T t)
 }
 
 using SmallIntegerTypes = testing::Types<char, unsigned char, signed char, short, unsigned short, int, unsigned int>;
-template<class T>
+template <class T>
 class TestJsonSerializerSmallInts : public testing::Test
-{};
+{
+};
 TYPED_TEST_SUITE(TestJsonSerializerSmallInts, SmallIntegerTypes);
 TYPED_TEST(TestJsonSerializerSmallInts, full_domain)
 {
@@ -143,9 +159,11 @@ TYPED_TEST(TestJsonSerializerSmallInts, full_domain)
     check_serialization_of_basic_type<TypeParam, StorageType>(TypeParam(3));
 }
 
-using BigIntegerTypes = testing::Types<long, unsigned long, long long, unsigned long long>;template<class T>
+using BigIntegerTypes = testing::Types<long, unsigned long, long long, unsigned long long>;
+template <class T>
 class TestJsonSerializerBigInts : public testing::Test
-{};
+{
+};
 TYPED_TEST_SUITE(TestJsonSerializerBigInts, BigIntegerTypes);
 TYPED_TEST(TestJsonSerializerBigInts, full_domain)
 {
@@ -156,9 +174,10 @@ TYPED_TEST(TestJsonSerializerBigInts, full_domain)
 }
 
 using FloatingPointTypes = testing::Types<float, double>;
-template<class T>
+template <class T>
 class TestJsonSerializerFloats : public testing::Test
-{};
+{
+};
 TYPED_TEST_SUITE(TestJsonSerializerFloats, FloatingPointTypes);
 TYPED_TEST(TestJsonSerializerFloats, full_domain)
 {
@@ -193,8 +212,8 @@ TEST(TestJsonSerializer, enum)
 
 TEST(TestJsonSerializer, tuple)
 {
-    auto tup = std::make_tuple(1, 2.0, std::string("Hello"));
-    auto js = mio::serialize_json(tup);
+    auto tup                  = std::make_tuple(1, 2.0, std::string("Hello"));
+    auto js                   = mio::serialize_json(tup);
     auto expected_json        = Json::Value();
     expected_json["Element0"] = 1;
     expected_json["Element1"] = 2.0;
@@ -209,7 +228,7 @@ TEST(TestJsonSerializer, tuple)
 TEST(TestJsonSerializer, doublelist)
 {
     jsontest::DoubleList dl{{0.1, 0.2, 0.3, 0.4}};
-    auto js = mio::serialize_json(dl);
+    auto js                = mio::serialize_json(dl);
     auto expected_json     = Json::Value();
     expected_json["vd"][0] = 0.1;
     expected_json["vd"][1] = 0.2;
@@ -225,7 +244,7 @@ TEST(TestJsonSerializer, doublelist)
 TEST(TestJsonSerializer, aggregate)
 {
     jsontest::Bar bar{"Hello", {{1}, {2}}};
-    auto js = mio::serialize_json(bar);
+    auto js                    = mio::serialize_json(bar);
     auto expected_json         = Json::Value();
     expected_json["s"]         = "Hello";
     expected_json["v"][0]["i"] = 1;
@@ -258,7 +277,7 @@ TEST(TestJsonSerializer, customindexarray)
     mio::CustomIndexArray<double, jsontest::Tag> a(mio::Index<jsontest::Tag>(2));
     a[mio::Index<jsontest::Tag>(0)] = 1.0;
     a[mio::Index<jsontest::Tag>(1)] = 2.0;
-    auto js = mio::serialize_json(a);
+    auto js                         = mio::serialize_json(a);
     Json::Value expected_value;
     expected_value["Dimensions"]  = Json::UInt64(2);
     expected_value["Elements"][0] = 1.0;
@@ -275,13 +294,13 @@ TEST(TestJsonSerializer, normal_distribution)
 {
     auto dist = mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1);
     Json::Value expected_value;
-    expected_value["Type"] = "Normal";
-    expected_value["Mean"] = 0.5;
-    expected_value["StandardDev"] = 0.1;
-    expected_value["LowerBound"] = 0.0;
-    expected_value["UpperBound"] = 1.0;
+    expected_value["Type"]              = "Normal";
+    expected_value["Mean"]              = 0.5;
+    expected_value["StandardDev"]       = 0.1;
+    expected_value["LowerBound"]        = 0.0;
+    expected_value["UpperBound"]        = 1.0;
     expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
-    auto js = mio::serialize_json(dist);
+    auto js                             = mio::serialize_json(dist);
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
@@ -293,11 +312,11 @@ TEST(TestJsonSerializer, uniform_distribution)
 {
     auto dist = mio::ParameterDistributionUniform(0.0, 1.0);
     Json::Value expected_value;
-    expected_value["Type"] = "Uniform";
-    expected_value["LowerBound"] = 0.0;
-    expected_value["UpperBound"] = 1.0;
+    expected_value["Type"]              = "Uniform";
+    expected_value["LowerBound"]        = 0.0;
+    expected_value["UpperBound"]        = 1.0;
     expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
-    auto js = mio::serialize_json(dist);
+    auto js                             = mio::serialize_json(dist);
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
@@ -310,22 +329,22 @@ TEST(TestJsonSerializer, serialize_uv)
     mio::UncertainValue uv(2.0);
     Json::Value expected_value;
     expected_value["Value"] = 2.0;
-    auto js = mio::serialize_json(uv);
+    auto js                 = mio::serialize_json(uv);
     EXPECT_EQ(js.value(), expected_value);
-    
+
     uv.set_distribution(mio::ParameterDistributionNormal(-1.0, 2.0, 0.5, 0.1));
-    js = mio::serialize_json(uv);
-    expected_value["Distribution"]["Type"] = "Normal";
-    expected_value["Distribution"]["Mean"] = 0.5;
-    expected_value["Distribution"]["StandardDev"] = 0.1;
-    expected_value["Distribution"]["LowerBound"] = -1.0;
-    expected_value["Distribution"]["UpperBound"] = 2.0;
+    js                                                  = mio::serialize_json(uv);
+    expected_value["Distribution"]["Type"]              = "Normal";
+    expected_value["Distribution"]["Mean"]              = 0.5;
+    expected_value["Distribution"]["StandardDev"]       = 0.1;
+    expected_value["Distribution"]["LowerBound"]        = -1.0;
+    expected_value["Distribution"]["UpperBound"]        = 2.0;
     expected_value["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     EXPECT_EQ(js.value(), expected_value);
 }
 
 TEST(TestJsonSerializer, deserialize_uv)
-{    
+{
     Json::Value json_uv;
     json_uv["Value"] = 2.0;
     {
@@ -335,11 +354,11 @@ TEST(TestJsonSerializer, deserialize_uv)
         EXPECT_EQ(r.value().get_distribution(), nullptr);
     }
 
-    json_uv["Distribution"]["Type"] = "Normal";
-    json_uv["Distribution"]["LowerBound"] = -1.0;
-    json_uv["Distribution"]["UpperBound"] = 2.0;
-    json_uv["Distribution"]["Mean"] = 0.5;
-    json_uv["Distribution"]["StandardDev"] = 0.1;
+    json_uv["Distribution"]["Type"]              = "Normal";
+    json_uv["Distribution"]["LowerBound"]        = -1.0;
+    json_uv["Distribution"]["UpperBound"]        = 2.0;
+    json_uv["Distribution"]["Mean"]              = 0.5;
+    json_uv["Distribution"]["StandardDev"]       = 0.1;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
         auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue>{});
@@ -351,34 +370,32 @@ TEST(TestJsonSerializer, deserialize_uv)
 
 namespace jsontest
 {
-    struct Param1
+struct Param1 {
+    using Type = double;
+    static constexpr Type get_default()
     {
-        using Type = double;
-        static constexpr Type get_default()
-        {
-            return 1.0;
-        }
-        static std::string name()
-        {
-            return "Param1";
-        }
-    };
-
-    struct Param2
+        return 1.0;
+    }
+    static std::string name()
     {
-        using Type = std::string;
-        static Type get_default()
-        {
-            return "Hello";
-        }
-        static std::string name()
-        {
-            return "Param2";
-        }
-    };
+        return "Param1";
+    }
+};
 
-    using ParameterSet = mio::ParameterSet<Param1, Param2>;
-}
+struct Param2 {
+    using Type = std::string;
+    static Type get_default()
+    {
+        return "Hello";
+    }
+    static std::string name()
+    {
+        return "Param2";
+    }
+};
+
+using ParameterSet = mio::ParameterSet<Param1, Param2>;
+} // namespace jsontest
 
 TEST(TestJsonSerializer, paramset)
 {
@@ -395,12 +412,12 @@ TEST(TestJsonSerializer, paramset)
 }
 
 TEST(TestJsonSerializer, matrix)
-{    
+{
     Eigen::MatrixXd m(2, 3);
     m << 1.0, 2.0, 3.0, 4.0, 5.0, 6.0;
     auto js = mio::serialize_json(m);
     Json::Value expected_value{Json::objectValue};
-    expected_value["Rows"] = Json::Int64(2);
+    expected_value["Rows"]    = Json::Int64(2);
     expected_value["Columns"] = Json::Int64(3);
     expected_value["Elements"].append(1.0);
     expected_value["Elements"][1] = 2.0;
@@ -430,9 +447,10 @@ TEST(TestJsonSerializer, container)
     EXPECT_THAT(r.value(), testing::ElementsAreArray(v.data(), 3));
 }
 
-template<>
+template <>
 struct std::hash<jsontest::Foo> {
-    std::size_t operator()(const jsontest::Foo& f) const {
+    std::size_t operator()(const jsontest::Foo& f) const
+    {
         return std::hash<int>()(f.i);
     }
 };
