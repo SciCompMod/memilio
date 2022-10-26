@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/state.h"
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
@@ -51,6 +52,12 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     if (infection_properties.state == InfectionState::Exposed) {
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(
             0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
+    }
+
+    double vaccination_level  = 0.;
+    double vaccination_status = mio::UniformDistribution<double>::get_instance()();
+    if (vaccination_status <= vaccination_level) {
+        m_vaccination_state = mio::abm::VaccinationState::Vaccinated;
     }
 }
 
