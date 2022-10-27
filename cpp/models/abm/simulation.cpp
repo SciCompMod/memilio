@@ -25,15 +25,22 @@ namespace abm
 {
 
 Simulation::Simulation(TimePoint t, World&& world)
-    : m_world(std::move(world))
+    : m_output(t, world)
+    , m_world(std::move(world))
     , m_t(t)
     , m_dt(hours(1))
 {
 }
 
+void Simulation::set_print_data(bool print_data, bool print_location_data)
+{
+    m_output.set_print_results(print_data, print_location_data);
+}
+
 void Simulation::advance(TimePoint tmax)
 {
     auto t = m_t;
+    m_output.store_result_at(t, m_world);
     while (t < tmax) {
         auto dt = std::min(m_dt, tmax - t);
         m_world.evolve(t, dt);

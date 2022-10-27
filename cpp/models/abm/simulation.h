@@ -62,6 +62,13 @@ public:
      */
     void advance(TimePoint tmax);
 
+    /** 
+     * Setup which data should get written to a txt file and which not.
+     * @param print_data write aggregated data for each timestep
+     * @param print_location_data write aggregated data for each location for each timestep
+     */
+    void set_print_data(bool print_data, bool print_location_data);
+
     /**
      * Get the World that this simulation evolves.
      * @{

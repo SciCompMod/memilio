@@ -197,5 +197,33 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
 }
 
+const char* location_type_to_string(mio::LocationType e)
+{
+    switch (e) {
+    case mio::LocationType::Home:
+        return "Home";
+    case mio::LocationType::School:
+        return "School";
+    case mio::LocationType::Work:
+        return "Work";
+    case mio::LocationType::SocialEvent:
+        return "SocialEvent";
+    case mio::LocationType::BasicsShop:
+        return "BasicsShop";
+    case mio::LocationType::Hospital:
+        return "Hospital";
+    case mio::LocationType::Car:
+        return "Car";
+    case mio::LocationType::ICU:
+        return "ICU";
+    case mio::LocationType::PublicTransport:
+        return "PublicTransport";
+    case mio::LocationType::TransportWithoutContact:
+        return "TransportWithoutContact";
+    default:
+        return "Not_known_node";
+    }
+}
+
 } // namespace abm
 } // namespace mio
