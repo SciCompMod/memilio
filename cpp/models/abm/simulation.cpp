@@ -26,11 +26,9 @@ namespace abm
 
 Simulation::Simulation(TimePoint t, World&& world)
     : m_world(std::move(world))
-    , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
     , m_dt(hours(1))
 {
-    store_result_at(t);
 }
 
 void Simulation::advance(TimePoint tmax)
@@ -40,18 +38,7 @@ void Simulation::advance(TimePoint tmax)
         auto dt = std::min(m_dt, tmax - t);
         m_world.evolve(t, dt);
         t += m_dt;
-        store_result_at(t);
-    }
-}
-
-void Simulation::store_result_at(TimePoint t)
-{
-    m_result.add_time_point(t.days());
-    m_result.get_last_value().setZero();
-    for (auto&& locations : m_world.get_locations()) {
-        for (auto& location : locations){
-            m_result.get_last_value() += location.get_subpopulations().cast<double>();
-        }
+        m_output.store_result_at(t, m_world);
     }
 }
 
