@@ -378,17 +378,15 @@ TEST(TestLocation, reachCapacity)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(10))
+        .Times(testing::AtLeast(8))
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.8)) // draw vaccination state
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.8)); // draw vaccination state
+        .WillOnce(testing::Return(0.8)); // draw random school hour
     // .WillRepeatedly(testing::Return(1.0));
 
     auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
@@ -961,12 +959,10 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
         .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillRepeatedly(testing::Return(1.0));
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
@@ -1001,12 +997,10 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillRepeatedly(testing::Return(1.0));
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
@@ -1049,12 +1043,10 @@ TEST(TestMigrationRules, worker_goes_to_work)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillRepeatedly(testing::Return(1.0));
 
     auto p_retiree = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age60to79, {});
@@ -1079,12 +1071,10 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillRepeatedly(testing::Return(1.0));
 
     auto p_retiree = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age60to79, {});
@@ -1109,12 +1099,10 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
 
         .WillRepeatedly(testing::Return(1.0));
 
@@ -1274,12 +1262,10 @@ TEST(TestLockdownRules, school_closure)
         .WillOnce(testing::Return(0.4))
         .WillOnce(testing::Return(0.4))
         .WillOnce(testing::Return(0.4))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
-        .WillOnce(testing::Return(1.0)) // draw vaccination state
         .WillRepeatedly(testing::Return(1.0));
 
     auto p1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
@@ -1466,13 +1452,11 @@ TEST(TestWorld, evolveMigration)
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
             mock_uniform_dist;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-            .Times(testing::Exactly(10))
-            .WillOnce(testing::Return(0.8)) // draw vaccination state
+            .Times(testing::Exactly(8))
             .WillOnce(testing::Return(0.8)) // draw random work group
             .WillOnce(testing::Return(0.8)) // draw random school group
             .WillOnce(testing::Return(0.8)) // draw random work hour
             .WillOnce(testing::Return(0.8)) // draw random school hour
-            .WillOnce(testing::Return(0.8)) // draw vaccination state
             .WillOnce(testing::Return(0.8)) // draw random work group
             .WillOnce(testing::Return(0.8)) // draw random school group
             .WillOnce(testing::Return(0.8)) // draw random work hour
