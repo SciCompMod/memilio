@@ -24,7 +24,7 @@
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
 #include "abm/state.h"
-#include "abm/world."
+#include "abm/world.h"
 
 namespace mio
 {
@@ -35,11 +35,13 @@ namespace abm
 class OutputResults
 {
 public:
-    OutputResults(TimePoint t, const World& world)
+    OutputResults()
         : m_result(Eigen::Index(InfectionState::Count))
     {
-        for (int location = (int)mio::LocationType::Home; location < (int)mio::LocationType::Count; ++location)
-            m_location_result.insert({location, TimeSeries<double>(Eigen::Index(InfectionState::Count)});
+        for (int location = (int)mio::abm::LocationType::Home; location < (int)mio::abm::LocationType::Count;
+             ++location)
+            m_location_result.insert(std::map<std::uint32_t, TimeSeries<double>>::value_type(
+                location, TimeSeries<double>(Eigen::Index(InfectionState::Count))));
     };
 
     //void store_result_at(TimePoint t);
@@ -56,13 +58,13 @@ public:
         }
 
         if (m_print_location_results) {
-            for (it = results_per_location_type.begin(); it != results_per_location_type.end(); ++it) {
-                it.add_time_point(t.days());
-                it.get_last_value().setZero();
+            for (auto it = m_location_result.begin(); it != m_location_result.end(); ++it) {
+                it->second.add_time_point(t.days());
+                it->second.get_last_value().setZero();
             }
-            for (auto&& locations : m_world.get_locations()) {
+            for (auto&& locations : world.get_locations()) {
                 for (auto& location : locations) {
-                    results_per_location_type.at((std::uint32_t)location.get_type()).get_last_value() +=
+                    m_location_result.at((std::uint32_t)location.get_type()).get_last_value() +=
                         location.get_subpopulations().cast<double>();
                 }
             }
@@ -78,7 +80,7 @@ public:
     void print_result_to_file(const std::string& name_of_file)
     {
         if (m_print_results) {
-            auto f_abm = fopen(name_of_file, "w");
+            auto f_abm = fopen(name_of_file.c_str(), "w");
             fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
             for (auto i = 0; i < m_result.get_num_time_points(); ++i) {
                 fprintf(f_abm, "%f ", m_result.get_time(i));
@@ -100,8 +102,11 @@ public:
         }
 
         if (m_print_location_results) {
-            for (it = results_per_location_type.begin(); it != results_per_location_type.end(); ++it) {
-                auto f_abm_loc = fopen(name_of_file + "_" + location_type_to_string((mio::LocationType)it->first), "w");
+            for (auto it = m_location_result.begin(); it != m_location_result.end(); ++it) {
+                char filepath[256];
+                snprintf(filepath, sizeof(filepath), "location_%s.txt",
+                         location_type_to_string((mio::abm::LocationType)it->first));
+                auto f_abm_loc = fopen(filepath, "w");
                 fprintf(f_abm_loc, "# t S E C I I_s I_c R_C R_I D\n");
                 for (auto i = 0; i < it->second.get_num_time_points(); ++i) {
                     fprintf(f_abm_loc, "%f ", it->second.get_time(i));
@@ -125,9 +130,37 @@ public:
         }
     }
 
+    const char* location_type_to_string(mio::abm::LocationType l)
+    {
+        switch (l) {
+        case mio::abm::LocationType::Home:
+            return "Home";
+        case mio::abm::LocationType::School:
+            return "School";
+        case mio::abm::LocationType::Work:
+            return "Work";
+        case mio::abm::LocationType::SocialEvent:
+            return "SocialEvent";
+        case mio::abm::LocationType::BasicsShop:
+            return "BasicsShop";
+        case mio::abm::LocationType::Hospital:
+            return "Hospital";
+        case mio::abm::LocationType::Car:
+            return "Car";
+        case mio::abm::LocationType::ICU:
+            return "ICU";
+        case mio::abm::LocationType::PublicTransport:
+            return "PublicTransport";
+        case mio::abm::LocationType::TransportWithoutContact:
+            return "TransportWithoutContact";
+        default:
+            return "Not_known_node";
+        }
+    }
+
 private:
     TimeSeries<double> m_result;
-    std::map<int, TimeSeries<double>> m_location_result;
+    std::map<std::uint32_t, TimeSeries<double>> m_location_result;
     bool m_print_results          = true;
     bool m_print_location_results = true;
 };
