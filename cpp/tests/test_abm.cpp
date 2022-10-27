@@ -415,6 +415,36 @@ TEST(TestLocation, reachCapacity)
     ASSERT_EQ(home.get_subpopulations().sum(), 1);
 }
 
+TEST(TestLocation, computeRelativeTransmissionRisk)
+{
+    using testing::Return;
+
+    mio::abm::AgeGroup age =
+        mio::abm::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::abm::AgeGroup::Count) - 1));
+    mio::abm::VaccinationState vaccination_state =
+        mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
+
+    mio::abm::GlobalInfectionParameters params;
+
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    home.set_capacity(4, 264);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0);
+    location.set_capacity(4, 264);
+
+    auto infected1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, age, params, vaccination_state);
+    home.add_person(infected1);
+    auto infected2 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, age, params, vaccination_state);
+    location.add_person(infected2);
+
+    home.remove_consider_capacity_flag();
+
+    home.compute_relative_transmission_risk();
+    location.compute_relative_transmission_risk();
+
+    ASSERT_EQ(location.compute_relative_transmission_risk(), 0.25);
+    ASSERT_EQ(home.compute_relative_transmission_risk(), 1.0);
+}
+
 TEST(TestLocation, changedState)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
