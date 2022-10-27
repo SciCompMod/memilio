@@ -20,6 +20,7 @@ import memilio.simulation as mio
 from datetime import datetime, date
 from sklearn.preprocessing import FunctionTransformer
 import seaborn as sns  # plot after normalization
+from random import randrange
 
 
 def run_secir_groups_simulation(days, t1, t2, t3, populations):
@@ -202,25 +203,36 @@ def generate_data(num_runs, path,
     data = {
         "inputs": [],
         "labels": [],
-        "contact_matrix": []
+        "contact_matrix": [],
+        "days": []
     }
-
-    t1 = 5    # maybe it would be better to put them as a paramenter of the generate data function
-    t2 = 20
-    t3 = 40
-    days = 60
-    #days = t3+30
-    input_width = 5
-    label_width = days-input_width
 
     # get population sizes
     population = get_population()
+
+    dampdays = []
+    for i in range(num_runs):
+        #t1 = randrange(0, 20)
+        t1 = 5
+        t2 = t1 + randrange(5, 20)
+        t3 = t2 + randrange(5, 20)
+
+        dampdays.append([t1, t2, t3])
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
 
-    for _ in range(num_runs):
+    for i in range(num_runs):
+
+        t1 = dampdays[i][0]
+        t2 = dampdays[i][1]
+        t3 = dampdays[i][2]
+
+        input_width = 5
+        days = t3+20
+
+        label_width = days - input_width
 
         data_run, damping_matrix1, damping_matrix2, damping_matrix3 = run_secir_groups_simulation(
             days, t1, t2, t3,  population[random.randint(0, len(population) - 1)])
@@ -231,7 +243,12 @@ def generate_data(num_runs, path,
         inputs = data_run[:input_width]
         data["inputs"].append(inputs)
         # data["labels"].append(data_run[input_width:])
-        data['labels'].append(data_run[input_width:days])
+        labels = data_run[input_width:days]
+        transformer = FunctionTransformer(np.log1p, validate=True)
+        scaled_labels = transformer.transform(labels)
+        data['labels'].append(scaled_labels)
+
+        data['days'].append([t1, t2, t3])
         bar.next()
 
     bar.finish()
@@ -244,14 +261,14 @@ def generate_data(num_runs, path,
         scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 48)
         scaled_inputs_list = scaled_inputs.tolist()
 
-        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(48, -1)
-        scaled_labels = transformer.transform(labels)
-        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 48)
-        scaled_labels_list = scaled_labels.tolist()
+        # labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(48, -1)
+        # scaled_labels = transformer.transform(labels)
+        # scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 48)
+        # scaled_labels_list = scaled_labels.tolist()
 
         # cast dfs to tensors
         data['inputs'] = tf.stack(scaled_inputs_list)
-        data['labels'] = tf.stack(scaled_labels_list)
+        #data['labels'] = tf.stack(data['labels'])
 
         # check if data directory exists. If necessary create it.
         if not os.path.isdir(path):
