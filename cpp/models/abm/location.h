@@ -223,9 +223,9 @@ public:
  */
     double compute_relative_transmission_risk();
 
-    void remove_consider_capacity_flag()
+    void consider_capacity_flag()
     {
-        m_consider_capacity = false;
+        m_consider_capacity = true;
     }
 
 private:
