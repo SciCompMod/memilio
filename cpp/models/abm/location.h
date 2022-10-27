@@ -155,7 +155,7 @@ public:
      * @param global_params global infection parameters
      * @param consider_capacity if true considers the capacity of the location for the calculation of the exposure rate
      */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params, bool consider_capacity = true);
+    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
 
     /** 
      * number of persons at this location in one infection state.
@@ -223,6 +223,11 @@ public:
  */
     double compute_relative_transmission_risk(bool consider_capacity);
 
+    void remove_consider_capacity_flag()
+    {
+        m_consider_capacity = false;
+    }
+
 private:
     void change_subpopulation(InfectionState s, int delta);
 
@@ -233,6 +238,7 @@ private:
     uint32_t m_index;
     int m_num_persons = 0;
     LocationCapacity m_capacity;
+    bool m_consider_capacity;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;

@@ -299,9 +299,9 @@ TEST(TestLocation, beginStep)
         infected3.migrate_to(home, location1, {1});
 
         //cache precomputed results
-        auto dt                = mio::abm::seconds(8640);
-        bool consider_capacity = false;
-        location1.begin_step(dt, params, consider_capacity);
+        auto dt = mio::abm::seconds(8640);
+        location1.remove_consider_capacity_flag();
+        location1.begin_step(dt, params);
 
         ASSERT_TRUE(std::abs(location1.get_cells()[0].cached_exposure_rate[{age, vaccination_state}] - 0.9) < 0.001);
         ASSERT_TRUE(std::abs(location1.get_cells()[1].cached_exposure_rate[{age, vaccination_state}] - 1) < 0.001);
