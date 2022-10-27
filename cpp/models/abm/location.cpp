@@ -103,7 +103,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     else if (m_cells.empty()) {
         auto num_carriers               = get_subpopulation(InfectionState::Carrier);
         auto num_infected               = get_subpopulation(InfectionState::Infected);
-        auto relative_transmission_risk = compute_relative_transmission_risk(m_consider_capacity);
+        auto relative_transmission_risk = compute_relative_transmission_risk();
         m_cached_exposure_rate.array()  = relative_transmission_risk *
                                          std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
@@ -116,7 +116,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
                 cell.cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
             }
             else {
-                auto relative_transmission_risk = compute_relative_transmission_risk(m_consider_capacity);
+                auto relative_transmission_risk = compute_relative_transmission_risk();
                 cell.cached_exposure_rate.array() =
                     std::min(m_parameters.get<MaximumContacts>(), double(cell.num_people)) / cell.num_people *
                     (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
@@ -214,9 +214,9 @@ LocationCapacity Location::get_default_capacity()
 For the dependency of the transmission risk on the occupancy we use a linear approximation
 so that the risk of getting the virus is halved if the number of people at the location is half as big as the capactity in persons.
 */
-double Location::compute_relative_transmission_risk(bool consider_capacity)
+double Location::compute_relative_transmission_risk()
 {
-    if (consider_capacity) {
+    if (m_consider_capacity) {
         return 66.0 * m_num_persons / m_capacity.volume;
     }
     else {

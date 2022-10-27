@@ -221,7 +221,7 @@ public:
  * @param consider_capacity if true calculates the relative risk based on the capacity of the location
  * @return the relative risk factor for the location
  */
-    double compute_relative_transmission_risk(bool consider_capacity);
+    double compute_relative_transmission_risk();
 
     void remove_consider_capacity_flag()
     {
