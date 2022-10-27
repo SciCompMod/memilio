@@ -216,12 +216,7 @@ so that the risk of getting the virus is halved if the number of people at the l
 */
 double Location::compute_relative_transmission_risk()
 {
-    if (m_consider_capacity) {
-        return 66.0 * m_num_persons / m_capacity.volume;
-    }
-    else {
-        return 1.0;
-    }
+    return m_capacity.volume != 0 && m_consider_capacity ? 66.0 * m_num_persons / m_capacity.volume : 1.0;
 }
 
 } // namespace abm
