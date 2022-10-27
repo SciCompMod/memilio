@@ -16,13 +16,9 @@ from keras import Sequential
 from keras.layers import Dense
 from keras import backend as K
 import seaborn as sns  # plot after normalization
-from data_secir_age_groups import getBaselineMatrix, splitdata, split_contact_matrices, flat_input
+from data_secir_age_groups import splitdata, split_contact_matrices, flat_input
 from different_models import *
 from tensorflow import keras
-from data_secir_age_groups import run_secir_groups_simulation, get_population
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
-from memilio.simulation.secir import InfectionState as State
 
 
 # def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
@@ -75,7 +71,7 @@ from memilio.simulation.secir import InfectionState as State
 
 def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=3):
 
-    # 72 damping entries  and 48 age dependent compartments
+    # 36 damping entries  and 48 age dependent compartments
     input_width = int((inputs.shape[1] - 72) / 48)
     #label_width = int(labels.shape[1] / 48)
     label_width = int(labels.shape[1] / 36)
@@ -144,16 +140,16 @@ def network_fit(path, model, max_epochs=30, early_stop=3000):
     contact_matrices_test = flat_input(contact_matrices['test'])
 
     train_inputs = tf.concat(
-        [tf.cast(train_inputs_compartments, tf.float16),
-         tf.cast(contact_matrices_train, tf.float16)],
+        [tf.cast(train_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_train, tf.float32)],
         axis=1, name='concat')
     valid_inputs = tf.concat(
-        [tf.cast(valid_inputs_compartments, tf.float16),
-         tf.cast(contact_matrices_valid, tf.float16)],
+        [tf.cast(valid_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_valid, tf.float32)],
         axis=1, name='concat')
     test_inputs = tf.concat(
-        [tf.cast(test_inputs_compartments, tf.float16),
-         tf.cast(contact_matrices_test, tf.float16)],
+        [tf.cast(test_inputs_compartments, tf.float32),
+         tf.cast(contact_matrices_test, tf.float32)],
         axis=1, name='concat')
 
     # train_inputs = tf.concat(
@@ -200,8 +196,8 @@ def network_fit(path, model, max_epochs=30, early_stop=3000):
 
 
 def test_statistic(model, test_inputs, test_labels):
-    pred = np.float16(model(test_inputs))
-    #pred = pred.numpy()
+    pred = model(test_inputs)
+    pred = pred.numpy()
     test_labels = np.array(test_labels)
 
     diff = pred - test_labels
@@ -263,99 +259,6 @@ def plot_losses(history):
     plt.savefig('losses plot.pdf')
 
 
-def get_simulation_data():
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data_simulation')
-    file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
-
-    data = pickle.load(file)
-
-    return data
-
-
-def simulation(model):
-
-    t1 = 5
-    t2 = 35
-    t3 = 65
-
-    data = get_simulation_data()
-    sim_inputs_compartments = flat_input(data['inputs'])
-    sim_labels = flat_input(data['labels'])
-    sim_contact_matrix = (data['contact_matrix'])
-    matrices = np.asarray(sim_contact_matrix)
-    baseline = getBaselineMatrix()
-
-    i = 0
-
-    mean_percentage_error = []
-    while i < len(sim_inputs_compartments):
-
-        matrix1 = np.asarray((flat_input(matrices[i][0])))
-        matrix2 = np.asarray((flat_input(matrices[i][1])))
-        matrix3 = np.asarray((flat_input(matrices[i][2])))
-
-        # sim_input =  tf.concat([tf.cast(sim_inputs_compartments, tf.float16),
-        #      tf.cast(sim_contact_matrix, tf.float16)],
-        #     axis=1, name='concat')
-        first_input = tf.concat(
-            [tf.cast(sim_inputs_compartments[i],
-                     tf.float16),
-             tf.cast(
-                np.concatenate((baseline, matrix1)).flatten(
-                    order='C'),
-                tf.float16)],
-            axis=0, name='concat')
-
-        results = []
-
-        # data_run =
-        first_output = model.predict(tf.reshape(first_input, [1, 312]))
-        #results = np.append(results, first_input[:180])
-        first_days = t2-t1
-        results = np.append(
-            results, (first_output.reshape(1080)[:(first_days*6*6)]))
-
-        second_input = tf.concat(
-            [tf.cast(results[-240:],
-                     tf.float16),
-             tf.cast(
-                np.concatenate((matrix1, matrix2)).flatten(
-                    order='C'),
-                tf.float16)],
-            axis=0, name='concat')
-
-        second_output = model.predict(tf.reshape(second_input, [1, 312]))
-        second_days = t3-t2
-        results = np.append(
-            results, (second_output.reshape(1080)[:(second_days*6*6)]))
-
-        third_input = tf.concat(
-            [tf.cast(results[-240:],
-                     tf.float16),
-             tf.cast(
-                np.concatenate((matrix2, matrix3)).flatten(
-                    order='C'),
-                tf.float16)],
-            axis=0, name='concat')
-
-        third_output = model.predict(tf.reshape(third_input, [1, 312]))
-
-        results = np.append(
-            results, (third_output.reshape(1080)[:30*6*6]))
-
-        labels_run = np.asarray(sim_labels[0])
-
-        diff = results-labels_run
-        anteil = (abs(diff))/abs(labels_run)
-        mean_percentage_error = np.append(mean_percentage_error, anteil.mean())
-
-        i += 1
-
-
-print('x')
-
 if __name__ == "__main__":
     # TODO: Save contact matrix depending on the damping.
     # In the actual state it might be enough to save the regular one and the damping
@@ -364,7 +267,6 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data_groups')
 
-    max_epochs = 300
+    max_epochs = 500
 
-    #network_fit(path_data, mlp_model(), max_epochs=max_epochs)
-    network_fit(path_data, cnn_model(), max_epochs=max_epochs)
+    network_fit(path_data, mlp_model(), max_epochs=max_epochs)
