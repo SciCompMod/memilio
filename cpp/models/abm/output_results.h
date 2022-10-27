@@ -77,6 +77,7 @@ public:
 
 private:
     TimeSeries<double> m_result;
+
     bool m_print_results;
     bool m_print_location_results;
 };
