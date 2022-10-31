@@ -70,6 +70,14 @@ public:
     void set_print_data(bool print_data, bool print_location_data);
 
     /**
+     * Get the Output Object that this simulation generates.
+     */
+    OutputResults& get_output()
+    {
+        return m_output;
+    }
+
+    /**
      * Get the World that this simulation evolves.
      * @{
      */

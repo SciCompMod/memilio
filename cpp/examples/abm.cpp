@@ -239,7 +239,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int two_person_half_families  = 1765;
     int two_person_other_families = 166;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                        two_person_half_families, two_person_other_families);
+                                                             two_person_half_families, two_person_other_families);
     add_household_group_to_world(world, twoPersonHouseholds);
 
     // Three person households
@@ -247,7 +247,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int three_person_half_families  = 662;
     int three_person_other_families = 175;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                          three_person_half_families, three_person_other_families);
+                                                               three_person_half_families, three_person_other_families);
     add_household_group_to_world(world, threePersonHouseholds);
 
     // Four person households
@@ -255,7 +255,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int four_person_half_families  = 110;
     int four_person_other_families = 122;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                         four_person_half_families, four_person_other_families);
+                                                              four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
 
     // Five plus person households
@@ -461,7 +461,7 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
-
+    sim.get_output().set_print_results(true, false);
     sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.
@@ -476,20 +476,5 @@ int main()
     // set output "abm.png"
     // set terminal png
     // replot
-    auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
-        }
-    }
-    fclose(f_abm);
+    sim.get_output().print_result_to_file("abm.txt");
 }
