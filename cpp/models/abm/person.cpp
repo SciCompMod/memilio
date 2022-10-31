@@ -68,7 +68,7 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
 
     if (infection_state == InfectionState::Exposed) {
         if (m_time_until_carrier <= TimeSpan(0)) {
-            new_infection_state = InfectionState::Carrier;
+            new_infection_state = InfectionState::InfectedNoSymptoms;
         }
         m_time_until_carrier -= dt;
     }
@@ -158,7 +158,7 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
 bool Person::get_tested(const TestParameters& params)
 {
     double random = UniformDistribution<double>::get_instance()();
-    if (m_infection_state == InfectionState::Carrier || m_infection_state == InfectionState::Infected ||
+    if (m_infection_state == InfectionState::InfectedNoSymptoms || m_infection_state == InfectionState::Infected ||
         m_infection_state == InfectionState::Infected_Severe ||
         m_infection_state == InfectionState::Infected_Critical) {
         // true positive

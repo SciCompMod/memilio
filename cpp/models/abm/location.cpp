@@ -61,10 +61,10 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
             return random_transition(infection_state, dt,
                                      {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
         }
-    case InfectionState::Carrier:
+    case InfectionState::InfectedNoSymptoms:
         return random_transition(
             infection_state, dt,
-            {{InfectionState::Infected, global_params.get<CarrierToInfected>()[{age, vaccination_state}]},
+            {{InfectionState::InfectedSymptoms, global_params.get<CarrierToInfected>()[{age, vaccination_state}]},
              {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age, vaccination_state}]}});
     case InfectionState::Infected:
         return random_transition(
@@ -99,7 +99,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
         m_cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
     }
     else if (m_cells.empty()) {
-        auto num_carriers              = get_subpopulation(InfectionState::Carrier);
+        auto num_carriers              = get_subpopulation(InfectionState::InfectedNoSymptoms);
         auto num_infected              = get_subpopulation(InfectionState::Infected);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
@@ -129,7 +129,7 @@ void Location::add_person(const Person& p)
     if (!m_cells.empty()) {
         for (auto i : p.get_cells()) {
             ++m_cells[i].num_people;
-            if (s == InfectionState::Carrier) {
+            if (s == InfectionState::InfectedNoSymptoms) {
                 ++m_cells[i].num_carriers;
             }
             else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
@@ -147,7 +147,7 @@ void Location::remove_person(const Person& p)
     change_subpopulation(s, -1);
     for (auto i : p.get_cells()) {
         --m_cells[i].num_people;
-        if (s == InfectionState::Carrier) {
+        if (s == InfectionState::InfectedNoSymptoms) {
             --m_cells[i].num_carriers;
         }
         else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
@@ -162,7 +162,7 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
     change_subpopulation(old_infection_state, -1);
     change_subpopulation(p.get_infection_state(), +1);
     for (auto i : p.get_cells()) {
-        if (old_infection_state == InfectionState::Carrier) {
+        if (old_infection_state == InfectionState::InfectedNoSymptoms) {
             --m_cells[i].num_carriers;
         }
         else if (old_infection_state == InfectionState::Infected ||
@@ -170,7 +170,7 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
                  old_infection_state == InfectionState::Infected_Critical) {
             --m_cells[i].num_infected;
         }
-        if (p.get_infection_state() == InfectionState::Carrier) {
+        if (p.get_infection_state() == InfectionState::InfectedNoSymptoms) {
             ++m_cells[i].num_carriers;
         }
         else if (p.get_infection_state() == InfectionState::Infected ||
