@@ -21,6 +21,8 @@ add_library(abm
     trip_list.h
     lockdown_rules.cpp
     lockdown_rules.h
+    output_results.h
+    output_results.cpp
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC
