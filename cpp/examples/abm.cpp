@@ -461,7 +461,7 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
-    sim.get_output().set_print_results(true, false);
+    sim.get_output().set_print_results(true, true);
     sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.

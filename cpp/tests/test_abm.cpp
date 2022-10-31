@@ -221,7 +221,7 @@ TEST(TestWorld, findLocation)
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age60to79,
-                                   world.get_global_infection_parameters());
+                                    world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& school = world.get_individualized_location(school_id);
     auto& work   = world.get_individualized_location(work_id);
@@ -1487,7 +1487,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::Infected,
                                                                     mio::abm::InfectionState::Carrier};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                mio::abm::LocationType::Work};
+                                                                    mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -1545,7 +1545,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
-                                   world.get_global_infection_parameters());
+                                    world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& work   = world.get_individualized_location(work_id);
     person.set_assigned_location(home);
@@ -1582,4 +1582,49 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), true); // no more testing_schemes
+}
+
+TEST(TestSimulation, )
+{
+    auto world     = mio::World();
+    auto location1 = world.add_location(mio::LocationType::School);
+    auto location2 = world.add_location(mio::LocationType::Home);
+    auto& p1       = world.add_person(location1, mio::InfectionState::Infected, mio::AbmAgeGroup::Age5to14);
+    auto& p2       = world.add_person(location1, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age5to14);
+    auto& p3       = world.add_person(location1, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
+    auto& p4       = world.add_person(location1, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age5to14);
+    p1.set_assigned_location(location1);
+    p2.set_assigned_location(location1);
+    p3.set_assigned_location(location1);
+    p4.set_assigned_location(location2);
+    auto sim = mio::AbmSimulation(mio::TimePoint(0), std::move(world));
+
+    sim.advance(mio::TimePoint(0) + mio::hours(50));
+    int location_of_persons        = p1.get_location_id().index;
+    int infection_state_of_person1 = (int)p1.get_infection_state();
+    int infection_state_of_person2 = (int)p2.get_infection_state();
+    int infection_state_of_person3 = (int)p3.get_infection_state();
+    int infection_state_of_person4 = (int)p4.get_infection_state();
+    int last_time_point            = 51;
+
+    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person1], 1.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person2], 2.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person3], 1.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person4], 2.0);
+
+    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person1], 1.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person2], 2.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person3], 1.0);
+    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person4], 2.0);
+
+    //All the infection states should be occupied with 0, but the infection state of the person should be 1.
+    for (int i = 0; i < (int)mio::InfectionState::Count; i++) {
+        if (i == infection_state_of_person)
+            ASSERT_EQ(sim.get_output().get_location_result().at(location_of_person1).get_value(last_time_point - 1)[i],
+                      1.0);
+
+        else
+            ASSERT_EQ(sim.get_output().get_location_result().at(location_of_person1).get_value(last_time_point - 1)[i],
+                      0.0);
+    }
 }

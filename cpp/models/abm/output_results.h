@@ -51,13 +51,23 @@ public:
 
     void print_result_to_file(const std::string& name_of_file);
 
-    const char* location_type_to_string(const mio::abm::LocationType l);
+    TimeSeries<double> get_result() const
+    {
+        return m_result;
+    }
+
+    std::map<std::uint32_t, TimeSeries<double>> get_location_result() const
+    {
+        return m_location_result;
+    }
 
 private:
+    const char* location_type_to_string(const mio::abm::LocationType l);
+
     TimeSeries<double> m_result;
     std::map<std::uint32_t, TimeSeries<double>> m_location_result;
-    bool m_print_results          = true;
-    bool m_print_location_results = true;
+    bool m_print_results          = false;
+    bool m_print_location_results = false;
 };
 } // namespace abm
 } // namespace mio
