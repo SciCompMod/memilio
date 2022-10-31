@@ -1417,9 +1417,11 @@ TEST(TestSimulation, advance_random)
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
+    sim.get_output().set_print_results(true, false);
+
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
     ASSERT_EQ(sim.get_output().get_result().get_num_time_points(), 51);
-    ASSERT_THAT(sim.get_output().get_result(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
+    ASSERT_THAT(sim.get_output().get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
     for (auto&& v : sim.get_output().get_result()) {
         ASSERT_EQ(v.sum(), 4);
     }
@@ -1588,49 +1590,32 @@ TEST(TestSimulation, testOutput)
 {
     auto world     = mio::abm::World();
     auto location1 = world.add_location(mio::abm::LocationType::School);
-    auto location2 = world.add_location(mio::abm::LocationType::Home);
-    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
-    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p3       = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
-    auto& p4       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
+
+    auto& p1 = world.add_person(location1, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+
     p1.set_assigned_location(location1);
-    p2.set_assigned_location(location1);
-    p3.set_assigned_location(location1);
-    p4.set_assigned_location(location2);
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
+    sim.get_output().set_print_results(true, true);
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-    int location_of_person_but_4   = p1.get_location_id().index;
-    int location_of_person_4       = p4.get_location_id().index;
+
+    sim.get_output().print_result_to_file("test_output.txt");
+
     int infection_state_of_person1 = (int)p1.get_infection_state();
-    int infection_state_of_person2 = (int)p2.get_infection_state();
-    int infection_state_of_person3 = (int)p3.get_infection_state();
-    int infection_state_of_person4 = (int)p4.get_infection_state();
+    int location_of_person1        = (int)p1.get_location_id().type;
     int last_time_point            = 51;
 
-    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person1], 1.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person2], 2.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person3], 1.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(0)[infection_state_of_person4], 2.0);
-
     ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person1], 1.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person2], 2.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person3], 1.0);
-    ASSERT_EQ(sim.get_output().get_result().get_value(last_time_point - 1)[infection_state_of_person4], 2.0);
 
     //All the infection states should be occupied with 0, but the infection state of the person should be 1.
     for (int i = 0; i < (int)mio::abm::InfectionState::Count; i++) {
-        if (i == infection_state_of_person2) {
-            ASSERT_EQ(
-                sim.get_output().get_location_result().at(location_of_person_but_4).get_value(last_time_point - 1)[i],
-                1.0);
-            ASSERT_EQ(sim.get_output().get_location_result().at(location_of_person_4).get_value(last_time_point - 1)[i],
+        if (i == infection_state_of_person1) {
+            ASSERT_EQ(sim.get_output().get_location_result().at(location_of_person1).get_value(last_time_point - 1)[i],
                       1.0);
         }
         else {
-            ASSERT_EQ(
-                sim.get_output().get_location_result().at(location_of_person_but_4).get_value(last_time_point - 1)[i],
-                0.0);
+            ASSERT_EQ(sim.get_output().get_location_result().at(location_of_person1).get_value(last_time_point - 1)[i],
+                      0.0);
         }
     }
 }
