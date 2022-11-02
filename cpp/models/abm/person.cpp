@@ -45,7 +45,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 
-    if (infection_properties.state == InfectionState::Infected && infection_properties.detected) {
+    if (infection_properties.state == InfectionState::InfectedSymptoms && infection_properties.detected) {
         m_quarantine = true;
     }
     if (infection_properties.state == InfectionState::Exposed) {
@@ -80,8 +80,8 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         }
     }
 
-    if (new_infection_state == InfectionState::Infected_Severe ||
-        new_infection_state == InfectionState::Infected_Critical) {
+    if (new_infection_state == InfectionState::InfectedSevere ||
+        new_infection_state == InfectionState::InfectedCritical) {
         m_quarantine = true;
     }
     else {
@@ -158,9 +158,9 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
 bool Person::get_tested(const TestParameters& params)
 {
     double random = UniformDistribution<double>::get_instance()();
-    if (m_infection_state == InfectionState::InfectedNoSymptoms || m_infection_state == InfectionState::Infected ||
-        m_infection_state == InfectionState::Infected_Severe ||
-        m_infection_state == InfectionState::Infected_Critical) {
+    if (m_infection_state == InfectionState::InfectedNoSymptoms ||
+        m_infection_state == InfectionState::InfectedSymptoms || m_infection_state == InfectionState::InfectedSevere ||
+        m_infection_state == InfectionState::InfectedCritical) {
         // true positive
         if (random < params.sensitivity) {
             m_quarantine = true;

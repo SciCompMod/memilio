@@ -28,7 +28,7 @@
 #include "abm/world.h"
 #include "abm/person.h"
 #include "abm/location.h"
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "abm/location_type.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/migration_rules.h"

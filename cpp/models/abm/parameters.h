@@ -22,7 +22,7 @@
 
 #include "abm/age.h"
 #include "abm/time.h"
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"

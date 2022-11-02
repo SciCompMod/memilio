@@ -54,8 +54,8 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const 
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
-        person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        person.get_age() == AgeGroup::Age5to14 && person.goes_to_school(t, params) && !person.is_in_quarantine()) {
+        person.get_go_to_school_time(params) < t.time_since_midnight() + dt && person.get_age() == AgeGroup::Age5to14 &&
+        person.goes_to_school(t, params) && !person.is_in_quarantine()) {
         return LocationType::School;
     }
     //return home
@@ -70,8 +70,8 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Mi
     auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        (person.get_age() == AgeGroup::Age15to34 || person.get_age() == AgeGroup::Age35to59) &&
-        t.day_of_week() < 5 && t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
+        (person.get_age() == AgeGroup::Age15to34 || person.get_age() == AgeGroup::Age35to59) && t.day_of_week() < 5 &&
+        t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {
         return LocationType::Work;
@@ -136,7 +136,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt
                             const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Severe) {
+    if (person.get_infection_state() == InfectionState::InfectedSevere) {
         return LocationType::Hospital;
     }
     return current_loc;
@@ -145,7 +145,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt
 LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Critical) {
+    if (person.get_infection_state() == InfectionState::InfectedCritical) {
         return LocationType::ICU;
     }
     return current_loc;

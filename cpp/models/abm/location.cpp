@@ -66,17 +66,17 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
             infection_state, dt,
             {{InfectionState::InfectedSymptoms, global_params.get<CarrierToInfected>()[{age, vaccination_state}]},
              {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age, vaccination_state}]}});
-    case InfectionState::Infected:
+    case InfectionState::InfectedSymptoms:
         return random_transition(
             infection_state, dt,
             {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age, vaccination_state}]},
-             {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age, vaccination_state}]}});
-    case InfectionState::Infected_Severe:
+             {InfectionState::InfectedSevere, global_params.get<InfectedToSevere>()[{age, vaccination_state}]}});
+    case InfectionState::InfectedSevere:
         return random_transition(
             infection_state, dt,
             {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age, vaccination_state}]},
-             {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age, vaccination_state}]}});
-    case InfectionState::Infected_Critical:
+             {InfectionState::InfectedCritical, global_params.get<SevereToCritical>()[{age, vaccination_state}]}});
+    case InfectionState::InfectedCritical:
         return random_transition(
             infection_state, dt,
             {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age, vaccination_state}]},
@@ -100,7 +100,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     }
     else if (m_cells.empty()) {
         auto num_carriers              = get_subpopulation(InfectionState::InfectedNoSymptoms);
-        auto num_infected              = get_subpopulation(InfectionState::Infected);
+        auto num_infected              = get_subpopulation(InfectionState::InfectedSymptoms);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
                                          (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
@@ -132,8 +132,8 @@ void Location::add_person(const Person& p)
             if (s == InfectionState::InfectedNoSymptoms) {
                 ++m_cells[i].num_carriers;
             }
-            else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
-                     s == InfectionState::Infected_Critical) {
+            else if (s == InfectionState::InfectedSymptoms || s == InfectionState::InfectedSevere ||
+                     s == InfectionState::InfectedCritical) {
                 ++m_cells[i].num_infected;
             }
         }
@@ -150,8 +150,8 @@ void Location::remove_person(const Person& p)
         if (s == InfectionState::InfectedNoSymptoms) {
             --m_cells[i].num_carriers;
         }
-        else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
-                 s == InfectionState::Infected_Critical) {
+        else if (s == InfectionState::InfectedSymptoms || s == InfectionState::InfectedSevere ||
+                 s == InfectionState::InfectedCritical) {
             --m_cells[i].num_infected;
         }
     }
@@ -165,17 +165,17 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
         if (old_infection_state == InfectionState::InfectedNoSymptoms) {
             --m_cells[i].num_carriers;
         }
-        else if (old_infection_state == InfectionState::Infected ||
-                 old_infection_state == InfectionState::Infected_Severe ||
-                 old_infection_state == InfectionState::Infected_Critical) {
+        else if (old_infection_state == InfectionState::InfectedSymptoms ||
+                 old_infection_state == InfectionState::InfectedSevere ||
+                 old_infection_state == InfectionState::InfectedCritical) {
             --m_cells[i].num_infected;
         }
         if (p.get_infection_state() == InfectionState::InfectedNoSymptoms) {
             ++m_cells[i].num_carriers;
         }
-        else if (p.get_infection_state() == InfectionState::Infected ||
-                 p.get_infection_state() == InfectionState::Infected_Severe ||
-                 p.get_infection_state() == InfectionState::Infected_Critical) {
+        else if (p.get_infection_state() == InfectionState::InfectedSymptoms ||
+                 p.get_infection_state() == InfectionState::InfectedSevere ||
+                 p.get_infection_state() == InfectionState::InfectedCritical) {
             ++m_cells[i].num_infected;
         }
     }

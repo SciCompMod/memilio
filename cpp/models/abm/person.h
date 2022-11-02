@@ -20,7 +20,7 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "abm/age.h"
 #include "abm/time.h"
 #include "abm/parameters.h"

@@ -21,7 +21,7 @@
 #define EPI_ABM_LOCATION_H
 
 #include "abm/parameters.h"
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "abm/location_type.h"
 
 #include "memilio/math/eigen.h"
