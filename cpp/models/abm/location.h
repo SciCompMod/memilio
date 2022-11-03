@@ -43,11 +43,11 @@ class Person;
 struct LocationCapacity {
     LocationCapacity()
         : volume(0)
-        , person_capacity(std::numeric_limits<int>::max())
+        , persons(std::numeric_limits<int>::max())
     {
     }
     int volume;
-    int person_capacity;
+    int persons;
 };
 
 /**
@@ -211,8 +211,8 @@ public:
  */
     void set_capacity(int persons, int volume)
     {
-        m_capacity.person_capacity = persons;
-        m_capacity.volume          = volume;
+        m_capacity.persons = persons;
+        m_capacity.volume  = volume;
     }
 
     /**
