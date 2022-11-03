@@ -62,14 +62,14 @@ class TestAbm(unittest.TestCase):
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
-        p1 = world.add_person(home_id, abm.InfectionState.Carrier, abm.AgeGroup.Age15to34)
-        p2 = world.add_person(social_event_id, abm.InfectionState.Recovered_Infected, abm.AgeGroup.Age80plus)
+        p1 = world.add_person(home_id, abm.InfectionState.InfectedNoSymptoms, abm.AgeGroup.Age15to34)
+        p2 = world.add_person(social_event_id, abm.InfectionState.Recovered, abm.AgeGroup.Age80plus)
 
         #check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, abm.AgeGroup.Age15to34)
         self.assertEqual(p1.location_id, home_id)
-        self.assertEqual(p2.infection_state, abm.InfectionState.Recovered_Infected)
+        self.assertEqual(p2.infection_state, abm.InfectionState.Recovered)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
@@ -85,9 +85,9 @@ class TestAbm(unittest.TestCase):
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
         p1 = world.add_person(
-            home_id, abm.InfectionState.Infected, abm.AgeGroup.Age0to4)
+            home_id, abm.InfectionState.InfectedSymptoms, abm.AgeGroup.Age0to4)
         p2 = world.add_person(
-            home_id, abm.InfectionState.Recovered_Carrier, abm.AgeGroup.Age15to34)
+            home_id, abm.InfectionState.Recovered, abm.AgeGroup.Age15to34)
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))
@@ -97,9 +97,9 @@ class TestAbm(unittest.TestCase):
         social_event = world.locations[social_event_id.type][social_event_id.index]
         #social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
         #world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
-        world.infection_parameters.InfectedToSevere[abm.AgeGroup.Age0to4,
+        world.infection_parameters.InfectedSymptomsToSevere[abm.AgeGroup.Age0to4,
                                                     abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedToRecovered[abm.AgeGroup.Age0to4,
+        world.infection_parameters.InfectedSymptomsToRecovered[abm.AgeGroup.Age0to4,
                                                        abm.VaccinationState.Unvaccinated] = 0.0
 
         #trips

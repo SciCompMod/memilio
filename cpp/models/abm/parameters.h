@@ -47,7 +47,7 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByCarrier {
+struct SusceptibleToExposedByInfectedNoSymptoms {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -55,11 +55,11 @@ struct SusceptibleToExposedByCarrier {
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByCarrier";
+        return "SusceptibleToExposedByInfectedNoSymptoms";
     }
 };
 
-struct SusceptibleToExposedByInfected {
+struct SusceptibleToExposedByInfectedSymptoms {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -67,11 +67,11 @@ struct SusceptibleToExposedByInfected {
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByInfected";
+        return "SusceptibleToExposedByInfectedSymptoms";
     }
 };
 
-struct CarrierToInfected {
+struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -79,11 +79,11 @@ struct CarrierToInfected {
     }
     static std::string name()
     {
-        return "CarrierToInfected";
+        return "InfectedNoSymptomsToSymptoms";
     }
 };
 
-struct CarrierToRecovered {
+struct InfectedNoSymptomsToRecovered {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -91,11 +91,11 @@ struct CarrierToRecovered {
     }
     static std::string name()
     {
-        return "CarrierToRecovered";
+        return "InfectedNoSymptomsToRecovered";
     }
 };
 
-struct InfectedToRecovered {
+struct InfectedSymptomsToRecovered {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -103,11 +103,11 @@ struct InfectedToRecovered {
     }
     static std::string name()
     {
-        return "InfectedToRecovered";
+        return "InfectedSymptomsToRecovered";
     }
 };
 
-struct InfectedToSevere {
+struct InfectedSymptomsToSevere {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -115,7 +115,7 @@ struct InfectedToSevere {
     }
     static std::string name()
     {
-        return "InfectedToSevere";
+        return "InfectedSymptomsToSevere";
     }
 };
 
@@ -195,8 +195,8 @@ struct DetectInfection {
  * parameters of the infection that are the same everywhere within the world.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
-                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
+    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms, InfectedNoSymptomsToSymptoms,
+                 InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
 
 struct MaximumContacts {

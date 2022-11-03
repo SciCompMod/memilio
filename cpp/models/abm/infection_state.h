@@ -35,12 +35,11 @@ enum class InfectionState : std::uint32_t
 {
     Susceptible = 0,
     Exposed,
-    Carrier,
-    Infected,
-    Infected_Severe,
-    Infected_Critical,
-    Recovered_Carrier,
-    Recovered_Infected,
+    InfectedNoSymptoms,
+    InfectedSymptoms,
+    InfectedSevere,
+    InfectedCritical,
+    Recovered,
     Dead,
 
     Count //last!!

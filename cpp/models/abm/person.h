@@ -256,7 +256,7 @@ private:
     std::vector<uint32_t> m_assigned_locations;
     InfectionState m_infection_state;
     VaccinationState m_vaccination_state;
-    TimeSpan m_time_until_carrier;
+    TimeSpan m_time_until_infected_no_symptoms;
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

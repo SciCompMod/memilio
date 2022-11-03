@@ -11,7 +11,7 @@ add_library(abm
     testing_strategy.h
     world.cpp
     world.h
-    state.h
+    infection_state.h
     location_type.h
     parameters.h
     parameters.cpp

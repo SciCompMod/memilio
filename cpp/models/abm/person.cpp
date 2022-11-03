@@ -33,7 +33,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
     , m_vaccination_state(vaccination_state)
-    , m_time_until_carrier(std::numeric_limits<int>::max())
+    , m_time_until_infected_no_symptoms(std::numeric_limits<int>::max())
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
@@ -49,7 +49,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
         m_quarantine = true;
     }
     if (infection_properties.state == InfectionState::Exposed) {
-        m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(
+        m_time_until_infected_no_symptoms = hours(UniformIntDistribution<int>::get_instance()(
             0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
     }
 }
@@ -67,15 +67,15 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     auto new_infection_state = infection_state;
 
     if (infection_state == InfectionState::Exposed) {
-        if (m_time_until_carrier <= TimeSpan(0)) {
+        if (m_time_until_infected_no_symptoms <= TimeSpan(0)) {
             new_infection_state = InfectionState::InfectedNoSymptoms;
         }
-        m_time_until_carrier -= dt;
+        m_time_until_infected_no_symptoms -= dt;
     }
     else {
         new_infection_state = loc.interact(*this, dt, global_infection_params);
         if (new_infection_state == InfectionState::Exposed) {
-            m_time_until_carrier = hours(
+            m_time_until_infected_no_symptoms = hours(
                 int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
         }
     }

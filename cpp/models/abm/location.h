@@ -59,14 +59,14 @@ struct LocationId {
  */
 struct Cell {
     uint32_t num_people;
-    uint32_t num_carriers;
-    uint32_t num_infected;
+    uint32_t num_infected_no_symptoms;
+    uint32_t num_infected_symptoms;
     CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate;
 
     Cell()
         : num_people(0)
-        , num_carriers(0)
-        , num_infected(0)
+        , num_infected_no_symptoms(0)
+        , num_infected_symptoms(0)
         , cached_exposure_rate({{AgeGroup::Count, VaccinationState::Count}, 0.})
     {
     }
@@ -74,8 +74,8 @@ struct Cell {
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
          CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate_new)
         : num_people(num_p)
-        , num_carriers(num_c)
-        , num_infected(num_i)
+        , num_infected_no_symptoms(num_c)
+        , num_infected_symptoms(num_i)
         , cached_exposure_rate(cached_exposure_rate_new)
     {
     }

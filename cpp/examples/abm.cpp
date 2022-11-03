@@ -25,11 +25,11 @@
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(double exposed, double infected, double carrier, double recovered)
+mio::abm::InfectionState determine_infection_state(double exposed, double infected_symptoms, double infected_no_symptoms, double recovered)
 {
-    double susceptible          = 1 - exposed - infected - carrier - recovered;
-    std::vector<double> weights = {susceptible,  exposed,       carrier,      infected / 2,
-                                   infected / 2, recovered / 2, recovered / 2};
+    double susceptible          = 1 - exposed - infected_symptoms - infected_no_symptoms - recovered;
+    std::vector<double> weights = {susceptible,  exposed,       infected_no_symptoms,      infected_symptoms / 2,
+                                   infected_symptoms / 2, recovered / 2, recovered / 2};
     uint32_t state              = (uint32_t)mio::DiscreteDistribution<size_t>::get_instance()(weights);
     return (mio::abm::InfectionState)state;
 }
@@ -380,13 +380,13 @@ void create_assign_locations(mio::abm::World& world)
  * Assign an infection state to each person.
  */
 
-void assign_infection_state(mio::abm::World& world, double exposed_pct, double infected_pct, double carrier_pct,
+void assign_infection_state(mio::abm::World& world, double exposed_pct, double infected_symptoms_pct, double infected_no_symptoms_pct,
                             double recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
         world.set_infection_state(person,
-                                  determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
+                                  determine_infection_state(exposed_pct, infected_symptoms_pct, infected_no_symptoms_pct, recovered_pct));
     }
 }
 
@@ -405,19 +405,19 @@ int main()
     //printf("\n");
 
     // Assumed percentage of infection state at the beginning of the simulation.
-    double exposed_pct = 0.01, infected_pct = 0.08, carrier_pct = 0.05, recovered_pct = 0.01;
+    double exposed_pct = 0.01, infected_symptoms_pct = 0.08, infected_no_symptoms_pct = 0.05, recovered_pct = 0.01;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
 
     // Set same parameter for all age groups
     infection_params.get<mio::abm::IncubationPeriod>()               = 4.;
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()  = 0.02;
-    infection_params.get<mio::abm::SusceptibleToExposedByInfected>() = 0.02;
-    infection_params.get<mio::abm::CarrierToInfected>()              = 0.15;
-    infection_params.get<mio::abm::CarrierToRecovered>()             = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>()            = 0.2;
-    infection_params.get<mio::abm::InfectedToSevere>()               = 0.03;
+    infection_params.get<mio::abm::SusceptibleToExposedByInfectedNoSymptoms>()  = 0.02;
+    infection_params.get<mio::abm::SusceptibleToExposedByInfectedSymptoms>() = 0.02;
+    infection_params.get<mio::abm::InfectedNoSymptomsToSymptoms>()              = 0.15;
+    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>()             = 0.15;
+    infection_params.get<mio::abm::InfectedSymptomsToRecovered>()            = 0.2;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>()               = 0.03;
     infection_params.get<mio::abm::SevereToRecovered>()              = 0.1;
     infection_params.get<mio::abm::SevereToCritical>()               = 0.1;
     infection_params.get<mio::abm::CriticalToRecovered>()            = 0.02;
@@ -426,13 +426,13 @@ int main()
 
     // Set parameters for vaccinated people of all age groups
     infection_params.get<mio::abm::IncubationPeriod>().slice(mio::abm::VaccinationState::Vaccinated) = 4.;
-    infection_params.get<mio::abm::SusceptibleToExposedByCarrier>().slice(mio::abm::VaccinationState::Vaccinated) =
+    infection_params.get<mio::abm::SusceptibleToExposedByInfectedNoSymptoms>().slice(mio::abm::VaccinationState::Vaccinated) =
         0.02;
-    infection_params.get<mio::abm::SusceptibleToExposedByInfected>().slice(mio::abm::VaccinationState::Vaccinated) =
+    infection_params.get<mio::abm::SusceptibleToExposedByInfectedSymptoms>().slice(mio::abm::VaccinationState::Vaccinated) =
         0.02;
-    infection_params.get<mio::abm::CarrierToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)     = 0.15;
-    infection_params.get<mio::abm::InfectedToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.15;
-    infection_params.get<mio::abm::InfectedToSevere>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.05;
+    infection_params.get<mio::abm::InfectedNoSymptomsToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)     = 0.15;
+    infection_params.get<mio::abm::InfectedSymptomsToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.15;
+    infection_params.get<mio::abm::InfectedSymptomsToSevere>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.05;
     infection_params.get<mio::abm::SevereToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)      = 0.05;
     infection_params.get<mio::abm::SevereToCritical>().slice(mio::abm::VaccinationState::Vaccinated)       = 0.005;
     infection_params.get<mio::abm::CriticalToRecovered>().slice(mio::abm::VaccinationState::Vaccinated)    = 0.5;
@@ -445,7 +445,7 @@ int main()
     create_world_from_statistical_data(world);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    assign_infection_state(world, exposed_pct, infected_symptoms_pct, infected_no_symptoms_pct, recovered_pct);
 
     // Add locations and assign locations to the people.
     create_assign_locations(world);
@@ -466,8 +466,8 @@ int main()
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
+    // S = Susceptible, E = Exposed, I_n = InfectedNoSymptoms, I = InfectedSymptoms, I_s = Infected_Severe,
+    // I_c = Infected_Critical, R = Recovered, D = Dead
     // E.g. the following gnuplot skrips plots detected infections and deaths.
     // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:10 with lines title "dead"
     // set xlabel "days"
@@ -477,7 +477,7 @@ int main()
     // set terminal png
     // replot
     auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    fprintf(f_abm, "# t S E I_n I I_s I_c R D\n");
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         fprintf(f_abm, "%f ", sim.get_result().get_time(i));
         auto v = sim.get_result().get_value(i);

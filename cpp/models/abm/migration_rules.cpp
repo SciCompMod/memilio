@@ -156,7 +156,7 @@ LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, T
 {
     auto current_loc = person.get_location_id().type;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
-        person.get_infection_state() == InfectionState::Recovered_Infected) {
+        person.get_infection_state() == InfectionState::Recovered) {
         return LocationType::Home;
     }
     return current_loc;
