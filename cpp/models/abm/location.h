@@ -41,6 +41,11 @@ class Person;
  * of people that can be at the location at the same time.
  */
 struct LocationCapacity {
+    LocationCapacity()
+        : volume(0)
+        , person_capacity(std::numeric_limits<int>::max())
+    {
+    }
     int volume;
     int person_capacity;
 };
@@ -231,8 +236,6 @@ public:
 
 private:
     void change_subpopulation(InfectionState s, int delta);
-
-    LocationCapacity get_default_capacity();
 
 private:
     LocationType m_type;

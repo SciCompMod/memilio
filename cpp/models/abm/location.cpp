@@ -32,7 +32,7 @@ namespace abm
 Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
-    , m_capacity(get_default_capacity())
+    , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
     , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
@@ -203,16 +203,11 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
 }
 
-LocationCapacity Location::get_default_capacity()
-{
-    m_capacity.person_capacity = 5;
-    m_capacity.volume          = 330;
-    return m_capacity;
-}
-
 /*
-For the dependency of the transmission risk on the occupancy we use a linear approximation
-so that the risk of getting the virus is halved if the number of people at the location is half as big as the capactity in persons.
+For every location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
+the location "Home", which is 66. We multiply this rate with the factor m_capacity.persons / m_capacity.volume of the 
+considered location. For the dependency of the transmission risk on the occupancy we use a linear approximation which 
+leads to: 66 * (m_capacity.persons / m_capacity.volume) * (m_num_persons / m_capacity.persons).
 */
 double Location::compute_relative_transmission_risk()
 {
