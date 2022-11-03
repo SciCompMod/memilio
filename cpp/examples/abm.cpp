@@ -83,6 +83,10 @@ mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember
         auto household = mio::abm::Household();
         household.add_members(member, household_size); // Add members according to the amount of people in the list.
         householdGroup.add_households(household, 1); // Add the household to the household group.
+
+        // assuming 22 square meters per person and 3 meters of room height
+        // see: https://doi.org/10.1371/journal.pone.0259037
+        household.set_space_per_member(66);
     }
     return householdGroup;
 }
@@ -380,20 +384,22 @@ void create_assign_locations(mio::abm::World& world)
     }
 
     // add the testing schemes for school and work
-    auto test_at_school = std::vector<mio::abm::LocationType> {mio::abm::LocationType::School};
-    auto testing_criteria_school = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_school, {})};
+    auto test_at_school = std::vector<mio::abm::LocationType>{mio::abm::LocationType::School};
+    auto testing_criteria_school =
+        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
 
-    testing_min_time             = mio::abm::days(7);
-    probability                  = 1.0;
-    auto testing_scheme_school =
-        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date, end_date, test_type, probability);
+    testing_min_time           = mio::abm::days(7);
+    probability                = 1.0;
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
+                                                         end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
-    auto test_at_work = std::vector<mio::abm::LocationType> {mio::abm::LocationType::Work};
-    auto testing_criteria_work = std::vector<mio::abm::TestingCriteria> {mio::abm::TestingCriteria({}, test_at_work, {})};
+    auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
+    auto testing_criteria_work =
+        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 
-    testing_min_time            = mio::abm::days(1);
-    probability                 = 0.5;
+    testing_min_time = mio::abm::days(1);
+    probability      = 0.5;
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);

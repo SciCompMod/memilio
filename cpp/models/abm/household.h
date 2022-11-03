@@ -90,6 +90,7 @@ public:
         : m_household_member_list()
     {
         m_number_of_members = 0;
+        m_space_per_member  = 0;
     }
 
     /**
@@ -99,6 +100,24 @@ public:
     int get_total_number_of_members() const
     {
         return m_number_of_members;
+    }
+
+    /**
+     * @brief Set the space per member in cubic meters
+     * @param space_per_member 
+     */
+    void set_space_per_member(int space_per_member)
+    {
+        m_space_per_member = space_per_member;
+    }
+
+    /**
+     * @brief Get the space per member in the household
+     * @return Integer of space per member in cubic meters
+     */
+    int get_space_per_member() const
+    {
+        return m_space_per_member;
     }
 
     /**
@@ -119,6 +138,7 @@ public:
 
 private:
     int m_number_of_members;
+    int m_space_per_member; // space in cubic meters per person
     std::vector<std::tuple<HouseholdMember, int>> m_household_member_list;
 };
 
