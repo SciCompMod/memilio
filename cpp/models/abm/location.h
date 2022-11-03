@@ -37,7 +37,8 @@ class Person;
 
 /**
  * LocationCapacity describes the size of a location. 
- * It consists of a volume and a capacity in persons which is an upper bound for the number of people that can be at the location at the same time.
+ * It consists of a volume and a capacity in persons which is an upper bound for the number
+ * of people that can be at the location at the same time.
  */
 struct LocationCapacity {
     int volume;
@@ -153,7 +154,7 @@ public:
      * prepare the location for the next simulation step.
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
-     * @param consider_capacity if true considers the capacity of the location for the calculation of the exposure rate
+     * @param capacity_adapted_transmission_risk if true considers the capacity of the location for the calculation of the exposure rate
      */
     void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
 
@@ -218,14 +219,14 @@ public:
     }
 
     /**
- * @param consider_capacity if true calculates the relative risk based on the capacity of the location
+ * @param capacity_adapted_transmission_risk if true calculates the relative risk based on the capacity of the location
  * @return the relative risk factor for the location
  */
     double compute_relative_transmission_risk();
 
-    void consider_capacity_flag()
+    void capacity_adapted_transmission_risk_flag()
     {
-        m_consider_capacity = true;
+        m_capacity_adapted_transmission_risk = true;
     }
 
 private:
@@ -238,7 +239,7 @@ private:
     uint32_t m_index;
     int m_num_persons = 0;
     LocationCapacity m_capacity;
-    bool m_consider_capacity;
+    bool m_capacity_adapted_transmission_risk;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;

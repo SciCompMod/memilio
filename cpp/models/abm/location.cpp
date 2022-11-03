@@ -33,7 +33,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity(get_default_capacity())
-    , m_consider_capacity(false)
+    , m_capacity_adapted_transmission_risk(false)
     , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
@@ -216,7 +216,8 @@ so that the risk of getting the virus is halved if the number of people at the l
 */
 double Location::compute_relative_transmission_risk()
 {
-    return m_capacity.volume != 0 && m_consider_capacity ? 66.0 * m_num_persons / m_capacity.volume : 1.0;
+    return m_capacity.volume != 0 && m_capacity_adapted_transmission_risk ? 66.0 * m_num_persons / m_capacity.volume
+                                                                          : 1.0;
 }
 
 } // namespace abm
