@@ -298,8 +298,11 @@ def transform_npi_data(fine_resolution=2,
     if fine_resolution > 0:
         # defines delay in number of days between exceeding
         # incidence threshold and NPI getting active
-        npi_activation_delay = 1
-        npi_lifting_delay = 3
+        # delay = 0 means only one day is considered (=no delay)
+        npi_activation_delay = 0
+        npi_lifting_delay = 4   # for NRW, BW
+                                # 2 for bayern
+        # we use npi_lifting_delay = 4 as this is the most common
         print('Using a delay of NPI activation of ' +
               str(npi_activation_delay) + ' days.')
         print('Using a delay of NPI lifting of ' +
@@ -737,8 +740,10 @@ def transform_npi_data(fine_resolution=2,
                              countyID, 'Incidence'] = df_infec_local['Incidence'].values
 
             # cut infection information at start_date_new and end_date_new
-            df_infec_local = df_infec_local.loc[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
-                df_infec_local[dd.EngEng['date']] <= end_date_new), :].reset_index()
+            df_infec_local = df_infec_local[df_infec_local
+                                            [dd.EngEng['date']] >=
+                                            start_date_new][
+                df_infec_local[dd.EngEng['date']] <= end_date_new].reset_index()
 
         # get county-local data frame
         start_time = time.perf_counter()
@@ -819,87 +824,58 @@ def transform_npi_data(fine_resolution=2,
             for level, npi_indices in incidence_thresholds_to_npis.items():
                 if level[0] >= 0:  # level[0] = incidvalthrsh
                     local_incid = df_infec_local['Incidence'].copy()
+                    # NPI can only be activated or liftet the day AFTER 
+                    # incidence is below/over threshold for N days. The 
+                    # incidence on day N only effects the NPI on day N+1 and
+                    # NOT ON day N. Therefore we shift the incidence one day forward
+                    # to match the indices of our dataframe df_local_new so that
+                    # the NPIs can be calculated on the respective day.
+                    # 
+                    # Example (threshold=3.5): 
+                    # local_incid=pd.Series([4,2,4,2,2,4,4,2,4,2,2,2,2])
+                    # Yesterdays incidence is over the threshold on following days:
+                    # [?,1,0,1,0,0,1,1,0,1,0,0,0]
+                    # The first day is not known and always set to the first days value.
+                    # [1,1,0,1,0,0,1,1,0,1,0,0,0]
+                    
+                    # First get a Series with 0 for yesterdays incidence
+                    # is below threshold and 1 for incidence over threshold
+                    yesterdays_incid_over_threshold = (local_incid.shift(
+                        1).fillna(local_incid[0]) > level[0]).astype(int)
 
-                    # If npi_lifting_delay=0, then local_incid equals
-                    # local_incid.rolling(npi_lifting_delay+1)
-                    # take maximum over last 'npi_lifting_delay+1' days to
-                    # lift NPI only after incidence is below threshold for
-                    # 'npi_lifting_delay' number of days
-                    # Example why we use npi_lifting_delay+1:
-                    #   Incidences [4, 2, 2, 2], npi_lifting_delay = 2,
-                    #   Consideration: threshold: 3
-                    #   pd.Series([4, 2, 2, 2]).rolling(2).max().nan(...)
-                    #       = [4, 4, 2, 2, 2]
-                    #   would then lift NPIs on day 3 while incidence is
-                    #   below 4 for two days only ON day 3, so NPI would
-                    #   be lifted on day 4.
-                    # Therefore, use 'npi_lifting_delay+1', to lift AFTER
-                    # npi_lifting_delay many days and not on this day
-                    local_incid_max = local_incid.rolling(
-                        npi_lifting_delay+1).max().fillna(local_incid)
-
-                    # compare transformed incidence against threshold
-                    # (level[0] = incidvalthrsh)
-                    int_active = (local_incid_max >= level[0]).astype(int)
-
-                    # take minimum over last 'npi_activation_delay' days to
-                    # enforce NPI only after incidence is over threshold for
-                    # 'npi_activation_delay' number of days
-                    local_incid_min = local_incid.rolling(
-                        npi_activation_delay+1).min().fillna(local_incid)
-
-                    # Correct start dates of NPIs
+                    # If incidence is above threshold for 
+                    # 1+npi_activation_delay days, the NPI gets activated.
+                    # Similarly, if incidence is below threshold for 
+                    # 1+npi_lifting_delay days, the NPI is lifted.
+                    # 
                     # Example:
-                    # inc=pd.Series([4,2,4,2,2,4,4,2,4,2,2,2,2])
-                    # Threshold (i.e., level[0]): 3, NPI activation delay: 1,
-                    # NPI lifting delay: 3.
-                    # NPI should then start on 7th day and be lifted on 12th day
+                    # With yesterdays incidence over threshold on days:
+                    # [0,1,0,1,0,0,1,1,0,1,0,0,0]
+                    # npi_lifting_delay=2, npi_activation_delay=1
+                    # NPI should be activated on day 8 and lifted on day 13
+                    # int_active should then be:
+                    # [0,0,0,0,0,0,0,1,1,1,1,1,0]
                     #
-                    # We have
-                    # [1,0,1,1,1,1,1,1,1,1,1,1,0] for inc.rolling(3+1).max() >= 3
-                    # which is 'int_active' and indicates correct end date but
-                    # wrong start date.
-                    # I.e., NPI is lifted after three days below treshold 3 but
-                    # would have started on day 1 where the threshold 3 is only
-                    # exceeded for the first time and not yet for one full day.
-                    # To be more precise, activation_delay=N means that the NPI
-                    # starts AFTER N days where incidence is exceeded and not
-                    # ON the Nth day.
-                    # We also have
-                    # [1,0,0,0,0,0,1,0,0,0,0,0,0] for inc.rolling(1+1).min() >= 3
-                    # and
-                    # int_potential_begin_list = [0,6]
-                    # We then set the empty set of int_active[0:0] to zero
-                    # In the for loop:
-                    # Then, since 6 - 0 > npi_lifting_delay + 1 = 4
-                    # int_active[2,3,4,5] = 0
-                    #
-                    # Note that in case of the example
-                    # inc=pd.Series([4,4,4,2,2,4,4,2,4,2,2,2,2])
-                    # int_potential_begin_list = [0,1,2,6]
-                    # and NPI would correctly start on day 2 and would not have
-                    # been deactivated/lifted while incidence goes below 3 for
-                    # days 4 and 5.
-                    #
-                    # Note 2: There may be some negligible unwanted effects in
-                    # activation/deactivation for the first days of the full
-                    # time series since we cannot compute min(), max()
-                    # over the last days there (see also use of fillna(...))
-                    int_potential_begin_list = np.where(
-                        (local_incid_min >= level[0]).astype(int))[0]
-                    # Correct start date for first implementation of NPI
-                    # (take npi_lifting_delay is needed here instead of
-                    # npi_activation_delay since int_active is computed via
-                    # maximum over npi_lifting_delay+1 many days)
-                    int_active[range(max(
-                        (int_potential_begin_list[0]-npi_lifting_delay-1), 0), int_potential_begin_list[0])] = 0
-                    # Correct start dates for further implementations
-                    # and account for oscilating incidence which does
-                    # not directly yield lifting of the implementation
-                    for i in range(0, len(int_potential_begin_list)-1):
-                        if int_potential_begin_list[i+1] - int_potential_begin_list[i] > npi_lifting_delay + 1:
-                            int_active[range(
-                                (int_potential_begin_list[i+1]-npi_lifting_delay-1), int_potential_begin_list[i+1])] = 0
+                    # With yesterdays incidence over threshold on days:
+                    # [1,1,0,1,0,0,1,1,0,1,0,0,0] (as above)
+                    # NPI should be activated on day 2 and lifted on day 13
+                    # int_active should then be:
+                    # [0,1,1,1,1,1,1,1,1,1,1,1,0]
+
+                    # get a zero filled Series with same length to be
+                    # filled with ones where NPI is active
+                    int_active = pd.Series(np.zeros(len(local_incid), dtype=int))
+                    # loop over every day
+                    for i in range(len(yesterdays_incid_over_threshold)):
+                        # Set int_active=0 where last npi_lifting_delay+1 days are 0
+                        if yesterdays_incid_over_threshold[i-npi_lifting_delay:i+1].values.sum() == 0:
+                            int_active[i] = 0
+                        # Set int_active=1 where last npi_activation_delay+1 days are all 1
+                        elif yesterdays_incid_over_threshold[i-npi_activation_delay:i+1].values.sum() == npi_activation_delay+1:
+                            int_active[i] = 1
+                        # If no condition applies, set int_active to the value of the previous day
+                        else:
+                            int_active[i] = int_active[i-1]
 
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
