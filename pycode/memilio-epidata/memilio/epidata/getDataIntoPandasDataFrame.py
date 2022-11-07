@@ -34,11 +34,57 @@ from urllib.request import urlopen
 import json
 import argparse
 import datetime
+import requests
 import pandas as pd
-from io import BytesIO
+from io import BytesIO, StringIO
 from zipfile import ZipFile
 
 from memilio.epidata import defaultDict as dd
+from memilio import progress_indicator
+
+
+def download_file(url, encoding=None, chunk_size=1024, timeout=None, progress_function=None):
+    """! Download a file using GET over HTTP.
+
+    @param url Full url of the file to download.
+    @param encoding If speciefied, used to decode the downloaded bytes.
+    @param chunk_size Number of Bytes downloaded at once. Only used when a
+        progress_function is specified. For a good display of progress, this
+        size should be about the speed of your internet connection in Bytes/s.
+        Can be set to None to let the server decide the chunk size (may be
+        equal to the file size).
+    @param timeout Timeout in seconds for the GET request.
+    @param progress_function Function called regularly, with the current
+        download progress in [0,1] as a float argument.
+    @return File as BytesIO by default, or as StringIO if encoding was set.
+    """
+    # send GET request as stream so 
+    req = requests.get(url, stream=True, timeout=timeout)
+    if req.status_code != 200: #e.g. 404
+        raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
+    # get file size from http header
+    # this is only the number of bytes downloaded, the size of the actual file
+    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+    # by iter_content)
+    file_size = int(req.headers.get('content-length'))
+    file = bytearray() # file to be downloaded
+    if progress_function:
+        progress = 0
+        # download file as bytes via iter_content
+        for chunk in req.iter_content(chunk_size=chunk_size):
+            file += chunk # append chunk to file
+            # note: len(chunk) may be larger (e.g. encoding)
+            # or smaller (for the last chunk) than chunk_size
+            progress = min(progress+chunk_size, file_size)
+            progress_function(progress/file_size)
+    else: # download without tracking progress
+        for chunk in req.iter_content(chunk_size=None):
+            file += chunk # append chunk to file
+    # return the downloaded content as file like object
+    if encoding:
+        return StringIO(str(file, encoding=encoding))
+    else:
+        return BytesIO(file)
 
 
 def loadGeojson(
@@ -77,7 +123,7 @@ def loadGeojson(
 
 def loadCsv(
         targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='.csv', param_dict={}):
+        extension='.csv', param_dict={}, encoding=None):
     """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data
     item ID into a pandas DataFrame and returns the DataFrame.
@@ -95,14 +141,19 @@ def loadCsv(
     """
 
     url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_default = {"sep": ',', "header": 0, "encoding": encoding, 'dtype': None}
 
     for k in param_dict_default:
         if k not in param_dict:
             param_dict[k] = param_dict_default[k]
 
     try:
-        df = pd.read_csv(url, **param_dict)
+        try: # to download file from url and show download progress
+            with progress_indicator.Percentage(message="Downloading " + url) as p:
+                file = download_file(url, 1024, param_dict["encoding"], None, p.set_progress)
+            df = pd.read_csv(file, **param_dict)
+        except requests.exceptions.RequestException:
+            df = pd.read_csv(url, **param_dict)
     except OSError as err:
         raise FileNotFoundError(
             "ERROR: URL " + url + " could not be opened.") from err
