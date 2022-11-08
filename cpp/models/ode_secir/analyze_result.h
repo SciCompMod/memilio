@@ -17,16 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_SECIR_ANALYZE_RESULT_H
-#define EPI_SECIR_ANALYZE_RESULT_H
+#ifndef ODESECIR_ANALYZE_RESULT_H
+#define ODESECIR_ANALYZE_RESULT_H
 
-#include "secir/secir.h"
+#include "ode_secir/model.h"
 #include "memilio/data/analyze_result.h"
 
 #include <functional>
 #include <vector>
 
 namespace mio
+{
+
+namespace osecir
 {
 
 /**
@@ -126,6 +129,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     return percentile;
 }
 
+} // namespace osecir
 } // namespace mio
 
-#endif //EPI_SECIR_ANALYZE_RESULT_H
+#endif //ODESECIR_ANALYZE_RESULT_H

@@ -17,14 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir/parameter_space.h"
+#include "ode_secir/parameter_space.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "secir/secir.h"
+#include "ode_secir/model.h"
 
 namespace mio
 {
+namespace osecir
+{
 
-void set_params_distributions_normal(SecirModel& model, double t0, double tmax, double dev_rel)
+void set_params_distributions_normal(Model& model, double t0, double tmax, double dev_rel)
 {
     auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001) {
         v.set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
@@ -81,7 +83,7 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
     set_distribution(model.parameters.get<ContactPatterns>().get_dampings()[0].get_value(), 0.0);
 }
 
-void draw_sample_demographics(SecirModel& model)
+void draw_sample_demographics(Model& model)
 {
     model.parameters.get<ICUCapacity>().draw_sample();
     model.parameters.get<TestAndTraceCapacity>().draw_sample();
@@ -105,7 +107,7 @@ void draw_sample_demographics(SecirModel& model)
     }
 }
 
-void draw_sample_infection(SecirModel& model)
+void draw_sample_infection(Model& model)
 {
     model.parameters.get<Seasonality>().draw_sample();
 
@@ -141,7 +143,7 @@ void draw_sample_infection(SecirModel& model)
     }
 }
 
-void draw_sample(SecirModel& model)
+void draw_sample(Model& model)
 {
     draw_sample_infection(model);
     draw_sample_demographics(model);
@@ -149,9 +151,9 @@ void draw_sample(SecirModel& model)
     model.apply_constraints();
 }
 
-Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph)
+Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph)
 {
-    Graph<SecirModel, MigrationParameters> sampled_graph;
+    Graph<Model, MigrationParameters> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
@@ -195,4 +197,5 @@ Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationPa
     return sampled_graph;
 }
 
+} // namespace osecir
 } // namespace mio
