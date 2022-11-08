@@ -523,6 +523,10 @@ void Dampings<D>::finalize() const
         for (auto& damping : m_dampings) {
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
+            if((combined_damping.array() < 0 && combined_damping.array() >= -1e-15).all())
+            {
+                combined_damping = Matrix::Zero(m_shape.rows(), m_shape.cols());
+            }
             assert((combined_damping.array() <= 1).all() && (combined_damping.array() >= 0).all() &&
                    "unexpected error, accumulated damping out of range.");
             if (floating_point_equal(double(get<SimulationTime>(damping)),
