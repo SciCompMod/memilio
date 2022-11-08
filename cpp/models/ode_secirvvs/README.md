@@ -10,10 +10,10 @@ See *W. Koslow et al, 2022: Appropriate relaxation of non-pharmaceutical interve
 
 ## Examples
 
-The extended model is used in the paper_202107 simulation. 
+The extended model is used in 2020_npis_sarscov2_wildtype_germany.cpp. 
 
 Examples of the basic SECIR model can be found at:
 
-- examples/secir.cpp
-- examples/secir_ageres.cpp
-- examples/parameter_study_secir.cpp
+- examples/ode_secir.cpp
+- examples/ode_secir_ageres.cpp
+- examples/ode_secir_parameter_study.cpp

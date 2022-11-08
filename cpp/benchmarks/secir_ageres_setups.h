@@ -102,7 +102,7 @@ mio::osecir::Model SecirAgeres(size_t num_agegroups)
 
     auto nb_groups   = model.parameters.get_num_groups();
     double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
@@ -114,7 +114,7 @@ mio::osecir::Model SecirAgeres(size_t num_agegroups)
 /**
          * @brief Secir model with consistent setup for use in benchmarking with added dampings.
          */
-mio::SecirModel SecirAgeresDampings(size_t num_agegroups)
+mio::osecir::Model SecirAgeresDampings(size_t num_agegroups)
 {
     mio::osecir::Model model = mio::benchmark::detail::make_model(num_agegroups);
 
@@ -141,13 +141,13 @@ mio::SecirModel SecirAgeresDampings(size_t num_agegroups)
          * @brief Secir model with consistent setup for use in benchmarking with added dampings.
          * Dampings are set up to challenge the integrator, not to be realistic.
          */
-mio::SecirModel SecirAgeresAbsurdDampings(size_t num_agegroups)
+mio::osecir::Model SecirAgeresAbsurdDampings(size_t num_agegroups)
 {
-    mio::SecirModel model = mio::benchmark::detail::make_model(num_agegroups);
+    mio::osecir::Model model = mio::benchmark::detail::make_model(num_agegroups);
 
     auto nb_groups   = model.parameters.get_num_groups();
     double cont_freq = 10, fact = 1.0 / (double)(size_t)nb_groups;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
