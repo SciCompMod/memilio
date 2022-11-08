@@ -1,11 +1,12 @@
-from clang.cindex import Config
+from typing import Any, List, TextIO
+from clang.cindex import Config, Cursor, Type
 import subprocess
 import os
 
-def try_set_libclang_path(path):
+def try_set_libclang_path(path: str) -> None:
     """
     Try to set the file_path for the libclang library. 
-    If its already set, the returned Exception gets catched and discarded.
+    If its already set, the returned Exception gets caught and discarded.
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path):
@@ -18,26 +19,33 @@ def try_set_libclang_path(path):
         if str(e) != "library file must be set before before using any other functionalities in libclang." :
             raise(e)
 
-def get_base_class(base_type):
+def get_base_class(base_type: Type) -> List[Any]:
+    """
+    Retrieve the base class.
+    Example for base_type: CompartmentalModel.
+    """
     result = [base_type]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class(base_type.get_template_argument_type(i)))
     return result
 
-def get_base_class_string(base_type):
-    #result = [base_type.spelling.split("<")[0]]
+def get_base_class_string(base_type: Type) -> List[Any]:
+    """
+    Retrieve the spelling of the base class.
+    Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, mio::SecirParams>.
+    """
     result = [base_type.spelling]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class_string(base_type.get_template_argument_type(i)))
     return result
 
-def indent(level):
+def indent(level: int) -> str:
     """ 
     Indentation string for pretty-printing
     """ 
     return '  '*level
 
-def output_cursor(cursor, level):
+def output_cursor_print(cursor: Cursor, level: int) -> None:
     """ 
     Low level cursor output
     """
@@ -54,14 +62,14 @@ def output_cursor(cursor, level):
     print(indent(level+1) + '"'  + displayname + '"')
 
 
-def output_cursor_and_children(cursor, level=0):
+def output_cursor_and_children_print(cursor: Cursor, level: int = 0) -> None:
     """ 
     Output this cursor and its children with minimal formatting.
     """
-    output_cursor(cursor, level)
+    output_cursor_print(cursor, level)
     if cursor.kind.is_reference():
         print(indent(level) + 'reference to:')
-        output_cursor(cursor.referenced, level+1)
+        output_cursor_print(cursor.referenced, level+1)
 
     # Recurse for children of this cursor
     has_children = False
@@ -69,18 +77,12 @@ def output_cursor_and_children(cursor, level=0):
         if not has_children:
             print(indent(level) + '{')
             has_children = True
-        output_cursor_and_children(c, level+1)
+        output_cursor_and_children_print(c, level+1)
 
     if has_children:
         print(indent(level) + '}')
 
-def indent(level):
-    """ 
-    Indentation string for pretty-printing
-    """ 
-    return '  '*level
-
-def output_cursor_file(cursor, f, level):
+def output_cursor_file(cursor: Cursor, f: TextIO, level: int) -> None:
     """ 
     Low level cursor output
     """
@@ -98,7 +100,7 @@ def output_cursor_file(cursor, f, level):
         f.write(cursor.location.file.name + '\n')
     f.write(indent(level+1) + '"'  + displayname + '"\n')
 
-def output_cursor_and_children_file(cursor, f, level=0):
+def output_cursor_and_children_file(cursor: Cursor, f: TextIO, level: int = 0) -> None:
     """ 
     Output this cursor and its children with minimal formatting.
     """

@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from typing_extensions import Self
 from dataclasses_json import dataclass_json
 
 @dataclass_json
@@ -14,10 +15,8 @@ class ScannerConfig:
     project_path            : str  = field(init = False)
     target_folder           : str  = field(init = False)
 
-    def __post_init__(self):
+    def __post_init__(self: Self) -> None:
         # Predefined Variables
-        #self.model_class            = "SecirModel"
-        #self.parameterset           = "SecirParamsBase"
         self.model_class            = "Model"
         self.parameterset           = "Parameters"
         # Get the project path. If this is used outside of Memilio it needs to be changed.

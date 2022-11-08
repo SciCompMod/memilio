@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+from typing import Any, Dict, Union
+from typing_extensions import Self
 
 @dataclass
 class IntermediateRepresentation:
@@ -16,10 +18,10 @@ class IntermediateRepresentation:
     population_groups   : list  = field(default_factory=list)
     age_group           : dict  = field(default_factory=dict)
 
-    def set_attribute(self, attribute_name, value):
+    def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
         self.__setattr__(attribute_name, value)
     
-    def check_complete_data(self, optional):
+    def check_complete_data(self: Self, optional: Dict[str, Union[str, bool]]) -> None:
         assert(self.model_class != None), "set a model name"
         assert(self.namespace != None), "set a model name_space"
         assert(self.parameterset != None), "set a parameterset"
