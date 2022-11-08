@@ -158,7 +158,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
     draw_sample_infection(shared_params_model);
-    auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
+    auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns>();
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();

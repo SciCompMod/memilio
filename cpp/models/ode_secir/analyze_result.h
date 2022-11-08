@@ -106,24 +106,22 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<CriticalPerSevere>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<mio::DeathsPerCritical>()[i];
-                });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerCritical>()[i]; });
         }
         // group independent params
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<mio::Seasonality>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.template get<mio::TestAndTraceCapacity>(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });
 
         for (size_t run = 0; run < num_runs; run++) {
 
             auto const& params = ensemble_params[run][node];
             single_element_ensemble[run] =
-                params.parameters.template get<mio::ICUCapacity>() * params.populations.get_total();
+                params.parameters.template get<ICUCapacity>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<mio::ICUCapacity>(
+        percentile[node].parameters.template set<ICUCapacity>(
             single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;

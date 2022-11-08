@@ -65,7 +65,7 @@ public:
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
-        ContactMatrixGroup const& contact_matrix = params.get<mio::ContactPatterns>();
+        ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
@@ -111,9 +111,9 @@ public:
                     params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val = (1 + params.get<mio::Seasonality>() *
-                                             sin(3.141592653589793 *
-                                                 (std::fmod((params.get<mio::StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                double season_val =
+                    (1 + params.get<Seasonality>() *
+                             sin(3.141592653589793 * (std::fmod((params.get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
@@ -130,7 +130,7 @@ public:
 
             // ICU capacity shortage is close
             double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<mio::ICUCapacity>(), params.get<mio::ICUCapacity>(),
+                smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
                                 params.get<CriticalPerSevere>()[i], 0);
 
             double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
@@ -287,7 +287,7 @@ private:
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
-    return simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
 }
 
 //see declaration above.
