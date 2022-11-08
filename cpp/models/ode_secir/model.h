@@ -191,7 +191,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = Simulation<Model>>
+template <class Base = mio::Simulation<Model>>
 class Simulation;
 
 /**
@@ -201,7 +201,7 @@ class Simulation;
  * @param y current value of compartments.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
-template <class Base = Simulation<Model>>
+template <class Base = mio::Simulation<Model>>
 double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
 /**
@@ -313,7 +313,7 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
  * @return vector expression, same size as y, with migration factors per compartment.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
-template <class Base = Simulation<Model>>
+template <class Base = mio::Simulation<Model>>
 auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     auto& params = sim.get_model().parameters;
