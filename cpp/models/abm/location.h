@@ -121,8 +121,8 @@ public:
      * @param global_params global infection parameters
      * @return new infection of the person
      */
-    Infection* interact(const Person& person, const TimePoint& t, const TimeSpan dt,
-                            const GlobalInfectionParameters& global_params) const;
+    boost::optional<Infection> interact(const Person& person, const TimePoint& t, const TimeSpan dt,
+                        const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.

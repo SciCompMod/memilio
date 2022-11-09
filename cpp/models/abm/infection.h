@@ -24,6 +24,7 @@
 #include <vector>
 #include "abm/state.h"
 #include <memory>
+#include <boost/optional.hpp>
 
 namespace mio
 {
@@ -110,11 +111,15 @@ public:
      * get virus type
      * @return virus type of the infection
      */
-    std::shared_ptr<Virus> get_virus_type() const;
+    const Virus get_virus_type() const;
 
-    InfectionState get_start_infection_state() const;
+    const InfectionState& get_infection_state() const;
     
-    InfectionState get_infection_state(const TimePoint& t) const;
+    const InfectionState& get_infection_state(const TimePoint& t) const;
+    
+    InfectionState& get_infection_state(const TimePoint& t);
+    
+    void update_infection_state(const TimePoint& t);
     
     void set_detected();
     bool is_detected() const;
@@ -126,7 +131,8 @@ private:
     void draw_infection_course(const InfectionState& start_state = InfectionState::Exposed);
 
     std::shared_ptr<Virus> m_virus;
-    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course;
+    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course; // start date of each infection state
+    InfectionState* current_infection_state;
     ViralLoad m_viral_load;
     TimePoint m_start_date;
     TimePoint m_end_date;

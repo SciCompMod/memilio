@@ -186,6 +186,7 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    void update_infection_states(const TimePoint& t);
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);

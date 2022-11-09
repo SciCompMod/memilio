@@ -26,6 +26,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "abm/infection.h"
+#include <boost/optional.hpp>
 
 #include <functional>
 
@@ -45,7 +46,7 @@ class Person
 {
 public:
     /**
-     * create a Person.
+     * create a Person with infection.
      * @param id index and type of the initial location of the person
      * @param infection_properties the initial infection state of the person and if infection is detected
      * @param vaccination_state the initial infection state of the person
@@ -53,20 +54,36 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           Infection* const infection = nullptr, const uint32_t person_id = INVALID_PERSON_ID);
+    Person(const LocationId& id, const AgeGroup& age, const Infection& infection,
+           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           const uint32_t person_id = INVALID_PERSON_ID);
 
     /**
-     * create a Person.
+     * create a Person with infection.
      * @param location the initial location of the person
      * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           Infection* const infection = nullptr, const uint32_t person_id = INVALID_PERSON_ID);
+    Person(const Location& location, const AgeGroup& age, const Infection& infection,
+           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           const uint32_t person_id = INVALID_PERSON_ID);
 
+    /**
+     * create a Person without infection.
+     */
+    Person(const LocationId& id, const AgeGroup& age,
+           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           const uint32_t person_id = INVALID_PERSON_ID);
+    
+    /**
+     * create a Person without infection.
+     */
+    Person(const Location& location, const AgeGroup& age,
+           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
+           const uint32_t person_id = INVALID_PERSON_ID);
+    
     /** 
      * Time passes and the person interacts with the population at its current location.
      * The person might change infection state.
@@ -96,18 +113,23 @@ public:
      * Get the current infection of the person.
      * @returns the current infection state of the person
      */
-    Infection* get_infection() const
+    
+    Infection& get_infection()
     {
-        return m_infection;
+        return m_infections.back();
     }
     
-    InfectionState get_infection_state(const TimePoint& t) const;
-    
-    bool is_infected() const
+    const Infection& get_infection() const
     {
-        return m_infection != nullptr;
+        return m_infections.back();
     }
-
+    
+    bool is_infected() const;
+    const InfectionState& get_infection_state() const;
+    const InfectionState& get_infection_state(const TimePoint& t) const;
+    
+   
+    
     /**
      * Get the age group of this person.
      * @return age.
@@ -235,7 +257,7 @@ private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     VaccinationState m_vaccination_state; // change to immunity level
-    Infection* m_infection;
+    std::vector<Infection> m_infections;
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

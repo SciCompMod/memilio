@@ -39,10 +39,10 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-Infection* Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
+boost::optional<Infection> Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
                               const GlobalInfectionParameters& /*global_params*/) const
 {
-    auto infection         = person.get_infection(); // always susceptible (nullptr or finished infection)
+    auto infection         = person.get_infection(); // always susceptible
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
 
@@ -50,20 +50,17 @@ Infection* Location::interact(const Person& person, const TimePoint& t, const Ti
     *virus = Virus(1,1,1);   // need to determine virus from other infected
                              // persons at location/cell
     
+    Infection* temp;
     if (!person.get_cells().empty()) {
         for (auto cell_index : person.get_cells()) {
-            Infection* new_infection = random_transition(infection, dt,
-                {{new Infection(virus, t), m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
-            if (new_infection != nullptr)
-            {
-                return new_infection;
-            }
+            return random_transition({}, dt,
+            {*new Infection(virus, t), m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]});
         }
-        return nullptr; // no infection caught
+        
     }
     else {
         return random_transition(infection, dt,
-                                 {{new Infection(virus, t), m_cached_exposure_rate[{age, vaccination_state}]}});
+            {{*new Infection(virus, t), m_cached_exposure_rate[{age, vaccination_state}]}});
     }
 }
 

@@ -79,19 +79,29 @@ double Infection::get_infectivity(const TimePoint& t) const
     return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
-std::shared_ptr<Virus> Infection::get_virus_type() const
+const Virus Infection::get_virus_type() const
 {
-    return m_virus;
+    return *m_virus.get();
 }
 
-InfectionState Infection::get_start_infection_state() const
+const InfectionState& Infection::get_infection_state() const
 {
-    return m_infection_course[0].second;
+    return *current_infection_state;
 }
 
-InfectionState Infection::get_infection_state(const TimePoint& t) const
+const InfectionState& Infection::get_infection_state(const TimePoint& t) const
 {
     return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t, [](std::pair<TimePoint, InfectionState> state, const TimePoint& t) { return state.first <= t; } ))).second;
+}
+
+InfectionState& Infection::get_infection_state(const TimePoint& t)
+{
+    return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t, [](std::pair<TimePoint, InfectionState> state, const TimePoint& t) { return state.first <= t; } ))).second;
+}
+
+void Infection::update_infection_state(const TimePoint& t)
+{
+    current_infection_state = &get_infection_state(t);
 }
 
 void Infection::set_detected() {

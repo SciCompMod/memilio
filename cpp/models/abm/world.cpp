@@ -242,5 +242,12 @@ bool World::use_migration_rules() const
     return m_use_migration_rules;
 }
 
+void World::update_infection_states(const TimePoint& t)
+{
+    for (auto&& p : m_persons) {
+        p->get_infection().update_infection_state(t);
+    }
+}
+
 } // namespace abm
 } // namespace mio
