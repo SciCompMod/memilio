@@ -47,7 +47,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock-matchers.h"
 #include <algorithm>
-#include <gmock/gmock-generated-matchers.h>
 #include <iterator>
 #include <limits>
 
