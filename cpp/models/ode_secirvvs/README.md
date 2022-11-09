@@ -10,7 +10,7 @@ See *W. Koslow et al, 2022: Appropriate relaxation of non-pharmaceutical interve
 
 ## Examples
 
-The extended model is used in the paper_202107 simulation. 
+The extended model is used in the 2021_vaccination_sarscov2_delta_germany simulation. 
 
 Examples of the basic SECIR model can be found at:
 

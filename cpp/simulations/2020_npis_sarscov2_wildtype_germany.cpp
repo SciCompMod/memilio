@@ -870,10 +870,10 @@ int main(int argc, char** argv)
     }
     else {
         printf("Usage:\n");
-        printf("paper_202011 <data_dir> <save_dir> <result_dir>\n");
+        printf("2020_npis_wildtype <data_dir> <save_dir> <result_dir>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
-        printf("paper_202011 <load_dir> <result_dir>\n");
+        printf("2020_npis_wildtype <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }
