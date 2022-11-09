@@ -1,3 +1,26 @@
+#############################################################################
+# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+#
+# Authors: Maximilian Betz
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
+"""
+@file scanner.py
+@brief Analyzes the model and extracts the needed information. Passes them on to the intermediate represenation.
+"""
 import os
 from typing import Any, Callable, Dict
 from typing_extensions import Self
@@ -10,7 +33,7 @@ import tempfile
 
 class Scanner:
 
-    def __init__(self: Self, conf: Dict[Any]) -> None:
+    def __init__(self: Self, conf: Dict[str, Any]) -> None:
         # Maybe use clang -v to get install dir from clang. 
         # Need to be same version as libclang
         self.config = conf
@@ -52,7 +75,7 @@ class Scanner:
         Iterates over list of list_ast and calls find_node to visit all nodes of ast.
         """
         intermed_repr = IntermediateRepresentation()
-        Utility.output_cursor(self.ast.cursor, 1)
+        Utility.output_cursor_print(self.ast.cursor, 1)
         self.find_node(self.ast.cursor, intermed_repr)
         self.finalize(intermed_repr)
         return intermed_repr
