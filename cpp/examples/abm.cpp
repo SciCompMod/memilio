@@ -285,7 +285,7 @@ void create_assign_locations(mio::abm::World& world)
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
-    double probability    = 1.0;
+    auto probability      = 1.0;
     auto test_type        = mio::abm::AntigenTest();
 
     auto testing_scheme =
