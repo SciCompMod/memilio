@@ -97,9 +97,9 @@ herr_t store_group_name(hid_t /*id*/, const char* name, const H5L_info_t* /*linf
     return 0;
 }
 
-IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename)
+IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
 {
-    std::vector<SecirSimulationResult> results;
+    std::vector<SimulationResult> results;
 
     H5File file{H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
     MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
@@ -199,7 +199,7 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
             }
         }
 
-        results.push_back(SecirSimulationResult(groups, totals));
+        results.push_back(SimulationResult(groups, totals));
     }
     return success(results);
 }
