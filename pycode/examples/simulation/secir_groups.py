@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
+from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ def run_secir_groups_simulation(show_plot=True):
         data_dir, "contacts/baseline_other.txt")
 
     # Initialize Parameters
-    model = SecirModel(len(populations))
+    model = Model(len(populations))
 
     # set parameters
     for i in range(num_groups):
