@@ -47,7 +47,7 @@ def get_base_class(base_type: Type) -> List[Any]:
     Retrieve the base class.
     Example for base_type: CompartmentalModel.
     """
-    result = [base_type]
+    result = [base_type.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class(base_type.get_template_argument_type(i)))
     return result
@@ -57,7 +57,7 @@ def get_base_class_string(base_type: Type) -> List[Any]:
     Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, mio::SecirParams>.
     """
-    result = [base_type.spelling]
+    result = [base_type.spelling.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class_string(base_type.get_template_argument_type(i)))
     return result
