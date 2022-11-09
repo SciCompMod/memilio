@@ -30,7 +30,7 @@ def parameter_study():
     tmax = 50
 
     # setup basic parameters
-    model = secir.SecirModel(1)
+    model = secir.Model(1)
 
     model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
     model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2

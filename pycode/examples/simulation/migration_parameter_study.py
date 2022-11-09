@@ -27,7 +27,7 @@ def parameter_study():
     mio.set_log_level(mio.LogLevel.Warning)
 
     # setup basic parameters
-    model = secir.SecirModel(1)
+    model = secir.Model(1)
 
     model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
     model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2
@@ -48,7 +48,7 @@ def parameter_study():
     model.parameters.DeathsPerCritical[secir.AgeGroup(0)] = 0.3
 
     # two regions with different populations and with some migration between them
-    graph = secir.SecirModelGraph()
+    graph = secir.ModelGraph()
     model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
     model.populations[secir.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 50
