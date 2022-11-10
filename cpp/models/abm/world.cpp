@@ -38,7 +38,8 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age, const VaccinationState& vaccination_state, Infection* const infection)
+Person& World::add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age,
+                          const VaccinationState& vaccination_state, Infection* const infection)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, infection, person_id));
@@ -58,7 +59,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(t, dt, m_infection_parameters, loc);
+        person->interact(t, dt, m_infection_parameters, m_virus_variants, loc);
     }
 }
 

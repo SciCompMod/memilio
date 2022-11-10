@@ -34,13 +34,15 @@ namespace abm
 class Virus
 {
 public:
-    Virus(double infectivity, double mortality, double recovery)
-        : m_infectivity(infectivity)
+    Virus() = default;
+    Virus(VirusVariant v, double infectivity, double mortality, double recovery)
+        : m_virus_variant(v)
+        , m_infectivity(infectivity)
         , m_mortality(mortality)
         , m_recovery(recovery)
     {
     }
-    
+
     double get_infectivity() const
     {
         return m_infectivity;
@@ -57,6 +59,7 @@ public:
     }
 
 private:
+    VirusVariant m_virus_variant;
     double m_infectivity;
     double m_mortality;
     double m_recovery;
@@ -86,7 +89,8 @@ public:
      * @param start_date starting date of the infection
      * @param start_state starting infection state of the person, default susceptible. Only for initialization.
      */
-    Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date, const InfectionState& start_state = InfectionState::Exposed, const bool detected = false);
+    Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date,
+              const InfectionState& start_state = InfectionState::Exposed, const bool detected = false);
 
     /**
      * get viral load at a given time
@@ -114,13 +118,13 @@ public:
     const Virus get_virus_type() const;
 
     const InfectionState& get_infection_state() const;
-    
+
     const InfectionState& get_infection_state(const TimePoint& t) const;
-    
+
     InfectionState& get_infection_state(const TimePoint& t);
-    
+
     void update_infection_state(const TimePoint& t);
-    
+
     void set_detected();
     bool is_detected() const;
 
@@ -131,7 +135,8 @@ private:
     void draw_infection_course(const InfectionState& start_state = InfectionState::Exposed);
 
     std::shared_ptr<Virus> m_virus;
-    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>> m_infection_course; // start date of each infection state
+    std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>>
+        m_infection_course; // start date of each infection state
     InfectionState* current_infection_state;
     ViralLoad m_viral_load;
     TimePoint m_start_date;

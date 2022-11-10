@@ -21,23 +21,31 @@
 #define EPI_ABM_STATE_H
 
 #include <cstdint>
+#include <vector>
 
 namespace mio
 {
 namespace abm
 {
 
-/**
- * virus type in ABM.
- * can be used as 0-based index
- */
-enum class VirusType : std::uint32_t
-{
-    NoVirus  = 0,
-    Wildtype = 1,
+// Virus Variant handling to be discussed for better solutions
+// Ultimately, one would like to read in all Virus Variants from
+// a config file.
 
-    Count //last!!
+/**
+ * Virus variants in ABM.
+ * can be used as 0-based index
+*/
+
+enum class VirusVariant : std::uint32_t
+{
+    Wildtype = 0,
+    Alpha,
+
+    Count // last!!
 };
+
+std::vector<VirusVariant> VirusVariantVector{VirusVariant::Wildtype, VirusVariant::Alpha};
 
 /** 
  * infection state in ABM.

@@ -27,21 +27,24 @@ namespace mio
 namespace abm
 {
 
-Person::Person(const LocationId& id, const AgeGroup& age, const Infection& infection, const VaccinationState& vaccination_state, const uint32_t person_id)
+Person::Person(const LocationId& id, const AgeGroup& age, const Infection& infection,
+               const VaccinationState& vaccination_state, const uint32_t person_id)
     : Person(id, age, vaccination_state, person_id)
 {
-    m_infections = std::vector<Infection> {infection};
+    m_infections = std::vector<Infection>{infection};
     if (is_infected() && infection.is_detected()) {
         m_quarantine = true;
     }
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const Infection& infection, const VaccinationState& vaccination_state, const uint32_t person_id)
+Person::Person(const Location& location, const AgeGroup& age, const Infection& infection,
+               const VaccinationState& vaccination_state, const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, infection, vaccination_state, person_id)
-{}
+{
+}
 
-Person::Person(const LocationId& id, const AgeGroup& age,
-       const VaccinationState& vaccination_state, const uint32_t person_id)
+Person::Person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state,
+               const uint32_t person_id)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_vaccination_state(vaccination_state)
@@ -57,26 +60,27 @@ Person::Person(const LocationId& id, const AgeGroup& age,
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 }
 
-Person::Person(const Location& location, const AgeGroup& age,
-       const VaccinationState& vaccination_state, const uint32_t person_id)
+Person::Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
+               const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, vaccination_state, person_id)
-{}
+{
+}
 
- 
 void Person::interact(const TimePoint& t, const TimeSpan& dt,
-              const GlobalInfectionParameters& global_infection_parameters, Location& loc)
+                      const GlobalInfectionParameters& global_infection_parameters,
+                      CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> virus_variants, Location& loc)
 {
     auto current_infection_state = get_infection_state();
     if (current_infection_state == InfectionState::Susceptible) { // Susceptible
-        Infection infection = loc.interact(*this, t, dt, global_infection_parameters);
+        Infection infection = loc.interact(*this, t, dt, virus_variants);
         if (m_infections.empty()) {
             m_infections.push_back(infection);
         }
     }
-    
+
     //        m_time_until_carrier = hours(
     //            int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
-    
+
     auto new_infection_state = get_infection_state(t);
     if (current_infection_state != new_infection_state) {
         loc.changed_state(*this, current_infection_state, t);
@@ -102,9 +106,9 @@ bool Person::is_infected() const
         return false;
     }
     // subject to change if Recovered is removed
-    if (m_infections.back().get_infection_state() == InfectionState::Susceptible
-        || m_infections.back().get_infection_state() == InfectionState::Recovered_Carrier
-        || m_infections.back().get_infection_state() == InfectionState::Recovered_Infected) {
+    if (m_infections.back().get_infection_state() == InfectionState::Susceptible ||
+        m_infections.back().get_infection_state() == InfectionState::Recovered_Carrier ||
+        m_infections.back().get_infection_state() == InfectionState::Recovered_Infected) {
         return false;
     }
     return true;

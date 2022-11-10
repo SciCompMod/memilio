@@ -274,4 +274,9 @@ pycode/build_pylint/
 docs/html
 docs/xml
 
+# builds
+pycode/memilio-simulation/_skbuild/*
+cpp/tests/cmake/AddGoogleTest.cmake
+cpp/.vscode/settings.json
+
 # End of https://www.gitignore.io/api/c++,node,python

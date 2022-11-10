@@ -42,7 +42,7 @@ public:
      * @param t the starting time of the simulation
      * @param world the world to simulate
      */
-    Simulation(TimePoint t, World&& world);
+    Simulation(TimePoint t0, World&& world);
 
     /**
      * Create a simulation with an empty world.
@@ -50,9 +50,10 @@ public:
      * @see Simulation::get_world
      * @param t the starting time of the simulation.
      */
-    Simulation(TimePoint t)
-        : Simulation(t, World())
-    {}
+    Simulation(TimePoint t0)
+        : Simulation(t0, World())
+    {
+    }
 
     /** 
      * Run the simulation from the current time to tmax.
@@ -78,7 +79,7 @@ public:
     {
         return m_world;
     }
-    const World& get_world() const 
+    const World& get_world() const
     {
         return m_world;
     }

@@ -33,34 +33,52 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_subpopulations{}
-    , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
+    , m_cached_exposure_rate({AgeGroup::Count, VirusVariant::Count})
     , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
 {
 }
 
-boost::optional<Infection> Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
-                              const GlobalInfectionParameters& /*global_params*/) const
+boost::optional<std::shared_ptr<Virus>>
+Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
+                   const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> virus_variants) const
 {
     auto infection         = person.get_infection(); // always susceptible
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
 
-    std::shared_ptr<Virus> virus; // subject to change
-    *virus = Virus(1,1,1);   // need to determine virus from other infected
-                             // persons at location/cell
-    
-    Infection* temp;
+    std::shared_ptr<Virus> no_virus;
+
+    // remove duplicated code!
     if (!person.get_cells().empty()) {
         for (auto cell_index : person.get_cells()) {
-            return random_transition({}, dt,
-            {*new Infection(virus, t), m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]});
+            std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
+
+            std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [](auto v) {
+                std::make_pair(virus_variants[v], cached_exposure_rate[{age, v}])
+            });
+            std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
+            if (no_virus == new_virus) {
+                return boost::none;
+            }
+            else {
+                return new_virus;
+            }
         }
-        
     }
     else {
-        return random_transition(infection, dt,
-            {{*new Infection(virus, t), m_cached_exposure_rate[{age, vaccination_state}]}});
+        std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
+
+        std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [](auto v) {
+            std::make_pair(virus_variants[v], m_cached_exposure_rate[{age, v}])
+        });
+        std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
+        if (no_virus == new_virus) {
+            return boost::none;
+        }
+        else {
+            return new_virus;
+        }
     }
 }
 
@@ -69,7 +87,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     if (m_cells.empty() && m_num_persons == 0) {
-        m_cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
+        m_cached_exposure_rate = {{AgeGroup::Count, VirusVariant::Count}, 0.};
     }
     else if (m_cells.empty()) {
         auto num_carriers              = get_subpopulation(InfectionState::Carrier);
@@ -82,7 +100,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     else {
         for (auto& cell : m_cells) {
             if (cell.num_people == 0) {
-                cell.cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
+                cell.cached_exposure_rate = {{AgeGroup::Count, VirusVariant::Count}, 0.};
             }
             else {
                 cell.cached_exposure_rate.array() =

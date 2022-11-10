@@ -56,7 +56,7 @@ public:
      */
     Person(const LocationId& id, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           const uint32_t person_id = INVALID_PERSON_ID);
+           const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person with infection.
@@ -68,38 +68,39 @@ public:
      */
     Person(const Location& location, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           const uint32_t person_id = INVALID_PERSON_ID);
+           const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
     Person(const LocationId& id, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           const uint32_t person_id = INVALID_PERSON_ID);
-    
+           const uint32_t person_id                  = INVALID_PERSON_ID);
+
     /**
      * create a Person without infection.
      */
     Person(const Location& location, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-           const uint32_t person_id = INVALID_PERSON_ID);
-    
+           const uint32_t person_id                  = INVALID_PERSON_ID);
+
     /** 
      * Time passes and the person interacts with the population at its current location.
      * The person might change infection state.
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(const TimePoint& t, const TimeSpan& dt,
-                  const GlobalInfectionParameters& global_infection_parameters, Location& loc);
-    
+    void interact(const TimePoint& t, const TimeSpan& dt, const GlobalInfectionParameters& global_infection_parameters,
+                  CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> m_virus_variants, Location& loc);
+
     /** 
      * migrate to a different location.
      * @param loc_new the new location of the person.
      * @param cells_new the new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const TimePoint& t, const std::vector<uint32_t>& cells_new = {});
-    
+    void migrate_to(Location& loc_old, Location& loc_new, const TimePoint& t,
+                    const std::vector<uint32_t>& cells_new = {});
+
     /**
      * Get the current vaccination state of the person.
      * @returns the current vaccination state of the person
@@ -113,23 +114,21 @@ public:
      * Get the current infection of the person.
      * @returns the current infection state of the person
      */
-    
+
     Infection& get_infection()
     {
         return m_infections.back();
     }
-    
+
     const Infection& get_infection() const
     {
         return m_infections.back();
     }
-    
+
     bool is_infected() const;
     const InfectionState& get_infection_state() const;
     const InfectionState& get_infection_state(const TimePoint& t) const;
-    
-   
-    
+
     /**
      * Get the age group of this person.
      * @return age.
