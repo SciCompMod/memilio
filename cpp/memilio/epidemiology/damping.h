@@ -570,8 +570,8 @@ void Dampings<S>::update_active_dampings(
         auto& sum_same_level   = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
             return get<DampingLevel>(sum) == get<DampingLevel>(damping);
         });
-        auto x = get<MatrixIdx>(sum_same_level) + get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
-        get<MatrixIdx>(sum_same_level) = x.cwiseMax(Matrix::Zero(x.rows(), x.cols()));
+        get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
+        get<MatrixIdx>(sum_same_level) = get<MatrixIdx>(sum_same_level).cwiseMax(0.);
         get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {
