@@ -74,36 +74,8 @@ void World::set_infection_state(Person& person, InfectionState inf_state)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
-    using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
-    std::vector<std::pair<migration_rule, std::vector<LocationType>>> rules;
-    if (m_use_migration_rules) {
-        rules = {
-            std::make_pair(&return_home_when_recovered,
-                           std::vector<LocationType>{
-                               LocationType::Home,
-                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
-            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
-            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
-            std::make_pair(&go_to_school, std::vector<LocationType>{LocationType::School, LocationType::Home}),
-            std::make_pair(&go_to_work, std::vector<LocationType>{LocationType::Home, LocationType::Work}),
-            std::make_pair(&go_to_shop, std::vector<LocationType>{LocationType::Home, LocationType::BasicsShop}),
-            std::make_pair(&go_to_event, std::vector<LocationType>{LocationType::Home, LocationType::SocialEvent}),
-            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
-    }
-    else {
-        rules = {
-            std::make_pair(&return_home_when_recovered,
-                           std::vector<LocationType>{
-                               LocationType::Home,
-                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
-            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
-            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
-            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
-    }
-
     for (auto&& person : m_persons) {
-        for (auto rule : rules) {
+        for (auto rule : global_migration_rules) {
             //check if transition rule can be applied
             const auto& locs = rule.second;
             bool nonempty    = !locs.empty();
@@ -227,6 +199,32 @@ const TripList& World::get_trip_list() const
 void World::use_migration_rules(bool param)
 {
     m_use_migration_rules = param;
+    // Set up global migration rules for all agents
+    // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
+    if (m_use_migration_rules) {
+        global_migration_rules = {
+            std::make_pair(&return_home_when_recovered,
+                           std::vector<LocationType>{
+                               LocationType::Home,
+                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
+            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
+            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
+            std::make_pair(&go_to_school, std::vector<LocationType>{LocationType::School, LocationType::Home}),
+            std::make_pair(&go_to_work, std::vector<LocationType>{LocationType::Home, LocationType::Work}),
+            std::make_pair(&go_to_shop, std::vector<LocationType>{LocationType::Home, LocationType::BasicsShop}),
+            std::make_pair(&go_to_event, std::vector<LocationType>{LocationType::Home, LocationType::SocialEvent}),
+            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
+    }
+    else {
+        global_migration_rules = {
+            std::make_pair(&return_home_when_recovered,
+                           std::vector<LocationType>{
+                               LocationType::Home,
+                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
+            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
+            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
+            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
+    }
 }
 
 bool World::use_migration_rules() const
