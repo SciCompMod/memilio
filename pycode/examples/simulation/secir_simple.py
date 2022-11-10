@@ -27,15 +27,16 @@ from datetime import datetime, date
 import argparse
 
 
-def run_secir_simulation(show_plot = True):
+def run_secir_simulation(show_plot=True):
     """
     Runs the c++ secir model using one age group 
     and plots the results
     """
 
     # Define Comartment names
-    compartments = ['Susceptible', 'Exposed', 'Carrier',
-                    'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
+    compartments = [
+        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
+        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead']
     # Define population of age groups
     populations = [83000]
 
@@ -55,35 +56,32 @@ def run_secir_simulation(show_plot = True):
     # Set parameters
 
     # Compartment transition duration
-    model.parameters.IncubationTime[A0] = 5.2  # R_2^(-1)+R_3^(-1)
-    model.parameters.InfectiousTimeMild[A0] = 6.  # 4-14  (=R4^(-1))
+    model.parameters.IncubationTime[A0] = 5.2
+    model.parameters.TimeInfectedSymptoms[A0] = 6.
     # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
     model.parameters.SerialInterval[A0] = 4.2
-    model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
-    model.parameters.HomeToHospitalizedTime[A0] = 5.  # 2.5-7 (=R6^(-1))
-    model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
-    model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
-    model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
+    model.parameters.TimeInfectedSevere[A0] = 12.  # 7-16 (=R5^(-1))
+    model.parameters.TimeInfectedCritical[A0] = 8.
 
     # Initial number of people in each compartment
     model.populations[A0, State.Exposed] = 100
-    model.populations[A0, State.Carrier] = 50
-    model.populations[A0, State.Infected] = 50
-    model.populations[A0, State.Hospitalized] = 20
-    model.populations[A0, State.ICU] = 10
+    model.populations[A0, State.InfectedNoSymptoms] = 50
+    model.populations[A0, State.InfectedSymptoms] = 50
+    model.populations[A0, State.InfectedSevere] = 20
+    model.populations[A0, State.InfectedCritical] = 10
     model.populations[A0, State.Recovered] = 10
     model.populations[A0, State.Dead] = 0
     model.populations.set_difference_from_total(
         (A0, State.Susceptible), populations[0])
 
     # Compartment transition propabilities
-    model.parameters.RelativeCarrierInfectability[A0] = 0.67
-    model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-    model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+    model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.67
+    model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+    model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09  # 0.01-0.16
     model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
-    model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
-    model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
-    model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
+    model.parameters.SeverePerInfectedSymptoms[A0] = 0.2  # 0.1-0.35
+    model.parameters.CriticalPerSevere[A0] = 0.25  # 0.15-0.4
+    model.parameters.DeathsPerCritical[A0] = 0.3  # 0.15-0.77
     # twice the value of RiskOfInfectionFromSymptomatic
     model.parameters.MaxRiskOfInfectionFromSymptomatic[A0] = 0.5
 
@@ -116,8 +114,10 @@ def run_secir_simulation(show_plot = True):
         data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
 
     # Plot Results
-    datelist = np.array(pd.date_range(datetime(start_year, start_month,
-                        start_day), periods=days, freq='D').strftime('%m-%d').tolist())
+    datelist = np.array(
+        pd.date_range(
+            datetime(start_year, start_month, start_day),
+            periods=days, freq='D').strftime('%m-%d').tolist())
 
     tick_range = (np.arange(int(days / 10) + 1) * 10)
     tick_range[-1] -= 1
@@ -125,9 +125,9 @@ def run_secir_simulation(show_plot = True):
     ax.plot(t, data[:, 0], label='#Susceptible')
     ax.plot(t, data[:, 1], label='#Exposed')
     ax.plot(t, data[:, 2], label='#Carrying')
-    ax.plot(t, data[:, 3], label='#Infected')
+    ax.plot(t, data[:, 3], label='#InfectedSymptoms')
     ax.plot(t, data[:, 4], label='#Hospitalzed')
-    ax.plot(t, data[:, 5], label='#ICU')
+    ax.plot(t, data[:, 5], label='#InfectedCritical')
     ax.plot(t, data[:, 6], label='#Recovered')
     ax.plot(t, data[:, 7], label='#Died')
     ax.set_title("SECIR model simulation")
@@ -144,8 +144,9 @@ def run_secir_simulation(show_plot = True):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the SECIR model.')
-    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the SECIR model.')
+    arg_parser.add_argument('-p', '--show_plot',
+                            action='store_const', const=True, default=False)
     args = arg_parser.parse_args()
     run_secir_simulation(**args.__dict__)

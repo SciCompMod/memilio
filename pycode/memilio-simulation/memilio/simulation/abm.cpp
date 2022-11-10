@@ -150,22 +150,24 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&, const std::vector<mio::abm::InfectionState>&>(), py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
-    
-    py::class_<mio::abm::GenericTest>(m, "GenericTest")
-        .def(py::init<>());
-    py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest")
-        .def(py::init<>());
-    py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest")
-        .def(py::init<>());
-    
+        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
+                      const std::vector<mio::abm::InfectionState>&>(),
+             py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
+
+    py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
+    py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
+    py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
+
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint, const mio::abm::GenericTest&, double>(), py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"), py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
+        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint,
+                      mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
+             py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
+             py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
-    
+
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
-    
+
     py::class_<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
@@ -173,7 +175,7 @@ PYBIND11_MODULE(_simulation_abm, m)
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
                           self.get_infection_parameters() = params;
-        });
+                      });
 
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Martin Siggel, Daniel Abele
 *
@@ -43,12 +43,12 @@ namespace mio
 class UncertainValue
 {
 public:
-
     UncertainValue(ScalarType v, const ParameterDistribution& dist)
-        : m_value(v), m_dist(dist.clone())
+        : m_value(v)
+        , m_dist(dist.clone())
     {
     }
-    
+
     UncertainValue(ScalarType v = 0.)
         : m_value(v)
     {
@@ -143,7 +143,7 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("UncertainValue");
@@ -200,7 +200,8 @@ public:
                 d);
         }
         else {
-            return failure(StatusCode::InvalidValue, "Incompatible Flags in IO Context: IOF_OmitValues & IOF_OmitDistributions.");
+            return failure(StatusCode::InvalidValue,
+                           "Incompatible Flags in IO Context: IOF_OmitValues & IOF_OmitDistributions.");
         }
     }
 

@@ -166,7 +166,7 @@ def clean_data(
             cases_filenames = ["cases", "Case"]
             divi_filenames = ["divi", "DIVI"]
             vaccination_filenames = ["vacc", "Vacc"]
-            population_filenames = ["Popul", "popul", "migration.", "reg_key", "zensus"]
+            population_filenames = ["Popul", "popul", "county_table", "reg_key", "zensus"]
             commuter_filenames = ["bfa", 'commuter']            
             testing_filenames = ["testpos"]
             hospitalization_filenames = ["hospit", "Hospit"]

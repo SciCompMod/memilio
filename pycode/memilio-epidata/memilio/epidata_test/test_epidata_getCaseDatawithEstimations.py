@@ -226,7 +226,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             income_sheets[sheet_name].to_excel(
                 dummy, sheet_name=sheet_name, index=False)
 
-        dummy.save()
+        dummy.close()
 
     def test_get_case_data_with_estimations(self):
 

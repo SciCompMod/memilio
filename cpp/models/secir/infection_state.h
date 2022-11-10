@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -20,8 +20,8 @@
 #ifndef INFECTIONSTATE_H
 #define INFECTIONSTATE_H
 
-namespace mio {
-
+namespace mio
+{
 
 /**
  * @brief The InfectionState enum describes the possible
@@ -29,17 +29,17 @@ namespace mio {
  */
 enum class InfectionState
 {
-    Susceptible  = 0,
-    Exposed      = 1,
-    Carrier      = 2,
-    Infected     = 3,
-    Hospitalized = 4,
-    ICU          = 5,
-    Recovered    = 6,
-    Dead         = 7,
-    Count = 8
+    Susceptible        = 0,
+    Exposed            = 1,
+    InfectedNoSymptoms = 2,
+    InfectedSymptoms   = 3,
+    InfectedSevere     = 4,
+    InfectedCritical   = 5,
+    Recovered          = 6,
+    Dead               = 7,
+    Count              = 8
 };
 
-}
+} // namespace mio
 
 #endif

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -35,9 +35,6 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     double t0   = 0.0;
     double tmax = 50.5;
 
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
-
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
@@ -50,33 +47,29 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     auto& params = model.parameters;
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        model.parameters.get<mio::IncubationTime>()[i]             = tinc;
-        model.parameters.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
-        model.parameters.get<mio::SerialInterval>()[i]             = tserint;
-        model.parameters.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        model.parameters.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
-        model.parameters.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
-        model.parameters.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        model.parameters.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]       = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::SerialInterval>()[i]       = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        model.parameters.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
-        model.parameters.get<mio::RelativeCarrierInfectability>()[i]    = 0.67;
-        model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        model.parameters.get<mio::TransmissionProbabilityOnContact>()[i] = 0.06;
+        model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
         model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        model.parameters.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        model.parameters.get<mio::DeathsPerICU>()[i]                    = delta;
+        model.parameters.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
+        model.parameters.get<mio::CriticalPerSevere>()[i]                = theta;
+        model.parameters.get<mio::DeathsPerCritical>()[i]                = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -113,88 +106,75 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
         ASSERT_EQ((model.populations.get_group_total(i)), (read_model.populations.get_group_total(i)));
         ASSERT_EQ((model.populations[{i, mio::InfectionState::Exposed}]),
                   (read_model.populations[{i, mio::InfectionState::Exposed}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Carrier}]),
-                  (read_model.populations[{i, mio::InfectionState::Carrier}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Infected}]),
-                  (read_model.populations[{i, mio::InfectionState::Infected}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Hospitalized}]),
-                  (read_model.populations[{i, mio::InfectionState::Hospitalized}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::ICU}]),
-                  (read_model.populations[{i, mio::InfectionState::ICU}]));
+        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]),
+                  (read_model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]));
+        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedSymptoms}]),
+                  (read_model.populations[{i, mio::InfectionState::InfectedSymptoms}]));
+        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedSevere}]),
+                  (read_model.populations[{i, mio::InfectionState::InfectedSevere}]));
+        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedCritical}]),
+                  (read_model.populations[{i, mio::InfectionState::InfectedCritical}]));
         ASSERT_EQ((model.populations[{i, mio::InfectionState::Recovered}]),
                   (read_model.populations[{i, mio::InfectionState::Recovered}]));
 
         check_distribution(*model.populations[{i, mio::InfectionState::Exposed}].get_distribution(),
                            *read_model.populations[{i, mio::InfectionState::Exposed}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::Carrier}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::Carrier}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::Infected}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::Infected}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::Hospitalized}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::Hospitalized}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::ICU}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::ICU}].get_distribution());
+        check_distribution(*model.populations[{i, mio::InfectionState::InfectedNoSymptoms}].get_distribution(),
+                           *read_model.populations[{i, mio::InfectionState::InfectedNoSymptoms}].get_distribution());
+        check_distribution(*model.populations[{i, mio::InfectionState::InfectedSymptoms}].get_distribution(),
+                           *read_model.populations[{i, mio::InfectionState::InfectedSymptoms}].get_distribution());
+        check_distribution(*model.populations[{i, mio::InfectionState::InfectedSevere}].get_distribution(),
+                           *read_model.populations[{i, mio::InfectionState::InfectedSevere}].get_distribution());
+        check_distribution(*model.populations[{i, mio::InfectionState::InfectedCritical}].get_distribution(),
+                           *read_model.populations[{i, mio::InfectionState::InfectedCritical}].get_distribution());
         check_distribution(*model.populations[{i, mio::InfectionState::Recovered}].get_distribution(),
                            *read_model.populations[{i, mio::InfectionState::Recovered}].get_distribution());
 
         ASSERT_EQ(model.parameters.get<mio::IncubationTime>()[i], read_model.parameters.get<mio::IncubationTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::InfectiousTimeMild>()[i],
-                  read_model.parameters.get<mio::InfectiousTimeMild>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::TimeInfectedSymptoms>()[i],
+                  read_model.parameters.get<mio::TimeInfectedSymptoms>()[i]);
         ASSERT_EQ(model.parameters.get<mio::SerialInterval>()[i], read_model.parameters.get<mio::SerialInterval>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::HospitalizedToHomeTime>()[i],
-                  read_model.parameters.get<mio::HospitalizedToHomeTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::HomeToHospitalizedTime>()[i],
-                  read_model.parameters.get<mio::HomeToHospitalizedTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i],
-                  read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::HospitalizedToICUTime>()[i],
-                  read_model.parameters.get<mio::HospitalizedToICUTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::ICUToHomeTime>()[i], read_model.parameters.get<mio::ICUToHomeTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::ICUToDeathTime>()[i], read_model.parameters.get<mio::ICUToDeathTime>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::TimeInfectedSevere>()[i],
+                  read_model.parameters.get<mio::TimeInfectedSevere>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::TimeInfectedCritical>()[i],
+                  read_model.parameters.get<mio::TimeInfectedCritical>()[i]);
 
         check_distribution(*model.parameters.get<mio::IncubationTime>()[i].get_distribution(),
                            *read_model.parameters.get<mio::IncubationTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::InfectiousTimeMild>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::InfectiousTimeMild>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::TimeInfectedSymptoms>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::TimeInfectedSymptoms>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::SerialInterval>()[i].get_distribution(),
                            *read_model.parameters.get<mio::SerialInterval>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::HospitalizedToHomeTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::HospitalizedToHomeTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::HomeToHospitalizedTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::HomeToHospitalizedTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::HospitalizedToICUTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::HospitalizedToICUTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::ICUToHomeTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::ICUToHomeTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::ICUToDeathTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::ICUToDeathTime>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::TimeInfectedSevere>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::TimeInfectedSevere>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::TimeInfectedCritical>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::TimeInfectedCritical>()[i].get_distribution());
 
-        ASSERT_EQ(model.parameters.get<mio::InfectionProbabilityFromContact>()[i],
-                  read_model.parameters.get<mio::InfectionProbabilityFromContact>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::TransmissionProbabilityOnContact>()[i],
+                  read_model.parameters.get<mio::TransmissionProbabilityOnContact>()[i]);
         ASSERT_EQ(model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i],
                   read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i],
-                  read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::DeathsPerICU>()[i], read_model.parameters.get<mio::DeathsPerICU>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i],
-                  read_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::ICUCasesPerHospitalized>()[i],
-                  read_model.parameters.get<mio::ICUCasesPerHospitalized>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i],
+                  read_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::DeathsPerCritical>()[i],
+                  read_model.parameters.get<mio::DeathsPerCritical>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::SeverePerInfectedSymptoms>()[i],
+                  read_model.parameters.get<mio::SeverePerInfectedSymptoms>()[i]);
+        ASSERT_EQ(model.parameters.get<mio::CriticalPerSevere>()[i],
+                  read_model.parameters.get<mio::CriticalPerSevere>()[i]);
 
-        check_distribution(*model.parameters.get<mio::InfectionProbabilityFromContact>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::InfectionProbabilityFromContact>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::TransmissionProbabilityOnContact>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::TransmissionProbabilityOnContact>()[i].get_distribution());
         check_distribution(*model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution(),
                            *read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::DeathsPerICU>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::DeathsPerICU>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::ICUCasesPerHospitalized>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::ICUCasesPerHospitalized>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::DeathsPerCritical>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::DeathsPerCritical>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::SeverePerInfectedSymptoms>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::SeverePerInfectedSymptoms>()[i].get_distribution());
+        check_distribution(*model.parameters.get<mio::CriticalPerSevere>()[i].get_distribution(),
+                           *read_model.parameters.get<mio::CriticalPerSevere>()[i].get_distribution());
 
         ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
         ASSERT_EQ(contact.get_dampings(), read_contact.get_dampings());
@@ -205,9 +185,6 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 {
     double t0   = 0.0;
     double tmax = 50.5;
-
-    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
 
     double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -221,34 +198,30 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     model.parameters.set<mio::TestAndTraceCapacity>(30);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        model.parameters.get<mio::IncubationTime>()[i]             = tinc;
-        model.parameters.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
-        model.parameters.get<mio::SerialInterval>()[i]             = tserint;
-        model.parameters.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        model.parameters.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
-        model.parameters.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
-        model.parameters.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        model.parameters.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        model.parameters.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        model.parameters.get<mio::IncubationTime>()[i]       = 5.2;
+        model.parameters.get<mio::TimeInfectedSymptoms>()[i] = 5.;
+        model.parameters.get<mio::SerialInterval>()[i]       = 4.2;
+        model.parameters.get<mio::TimeInfectedSevere>()[i]   = 10.;
+        model.parameters.get<mio::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        model.parameters.get<mio::InfectionProbabilityFromContact>()[i]  = 0.06;
-        model.parameters.get<mio::RelativeCarrierInfectability>()[i]     = 0.67;
-        model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[i]     = alpha;
+        model.parameters.get<mio::TransmissionProbabilityOnContact>()[i]  = 0.06;
+        model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[i]    = 0.67;
+        model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i]    = alpha;
         model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]    = beta;
         model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[i] = beta * 3;
-        model.parameters.get<mio::HospitalizedCasesPerInfectious>()[i]   = rho;
-        model.parameters.get<mio::ICUCasesPerHospitalized>()[i]          = theta;
-        model.parameters.get<mio::DeathsPerICU>()[i]                     = delta;
+        model.parameters.get<mio::SeverePerInfectedSymptoms>()[i]         = rho;
+        model.parameters.get<mio::CriticalPerSevere>()[i]                 = theta;
+        model.parameters.get<mio::DeathsPerCritical>()[i]                 = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::ContactPatterns>();
@@ -305,17 +278,19 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                 *graph_model.populations[{group, mio::InfectionState::Exposed}].get_distribution().get(),
                 *graph_read_model.populations[{group, mio::InfectionState::Exposed}].get_distribution().get());
             check_distribution(
-                *graph_model.populations[{group, mio::InfectionState::Carrier}].get_distribution().get(),
-                *graph_read_model.populations[{group, mio::InfectionState::Carrier}].get_distribution().get());
+                *graph_model.populations[{group, mio::InfectionState::InfectedNoSymptoms}].get_distribution().get(),
+                *graph_read_model.populations[{group, mio::InfectionState::InfectedNoSymptoms}]
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_model.populations[{group, mio::InfectionState::Infected}].get_distribution().get(),
-                *graph_read_model.populations[{group, mio::InfectionState::Infected}].get_distribution().get());
+                *graph_model.populations[{group, mio::InfectionState::InfectedSymptoms}].get_distribution().get(),
+                *graph_read_model.populations[{group, mio::InfectionState::InfectedSymptoms}].get_distribution().get());
             check_distribution(
-                *graph_model.populations[{group, mio::InfectionState::Hospitalized}].get_distribution().get(),
-                *graph_read_model.populations[{group, mio::InfectionState::Hospitalized}].get_distribution().get());
+                *graph_model.populations[{group, mio::InfectionState::InfectedSevere}].get_distribution().get(),
+                *graph_read_model.populations[{group, mio::InfectionState::InfectedSevere}].get_distribution().get());
             check_distribution(
-                *graph_model.populations[{group, mio::InfectionState::ICU}].get_distribution().get(),
-                *graph_read_model.populations[{group, mio::InfectionState::ICU}].get_distribution().get());
+                *graph_model.populations[{group, mio::InfectionState::InfectedCritical}].get_distribution().get(),
+                *graph_read_model.populations[{group, mio::InfectionState::InfectedCritical}].get_distribution().get());
             check_distribution(
                 *graph_model.populations[{group, mio::InfectionState::Recovered}].get_distribution().get(),
                 *graph_read_model.populations[{group, mio::InfectionState::Recovered}].get_distribution().get());
@@ -325,84 +300,61 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
             ASSERT_EQ(graph_model.parameters.get<mio::IncubationTime>()[group],
                       graph_read_model.parameters.get<mio::IncubationTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::InfectiousTimeMild>()[group],
-                      graph_read_model.parameters.get<mio::InfectiousTimeMild>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::TimeInfectedSymptoms>()[group],
+                      graph_read_model.parameters.get<mio::TimeInfectedSymptoms>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::SerialInterval>()[group],
                       graph_read_model.parameters.get<mio::SerialInterval>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::HospitalizedToHomeTime>()[group],
-                      graph_read_model.parameters.get<mio::HospitalizedToHomeTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group],
-                      graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group],
-                      graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::HospitalizedToICUTime>()[group],
-                      graph_read_model.parameters.get<mio::HospitalizedToICUTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::ICUToHomeTime>()[group],
-                      graph_read_model.parameters.get<mio::ICUToHomeTime>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::ICUToDeathTime>()[group],
-                      graph_read_model.parameters.get<mio::ICUToDeathTime>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::TimeInfectedSevere>()[group],
+                      graph_read_model.parameters.get<mio::TimeInfectedSevere>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::TimeInfectedCritical>()[group],
+                      graph_read_model.parameters.get<mio::TimeInfectedCritical>()[group]);
 
-            ASSERT_EQ(graph_model.parameters.get<mio::InfectionProbabilityFromContact>()[group],
-                      graph_read_model.parameters.get<mio::InfectionProbabilityFromContact>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::TransmissionProbabilityOnContact>()[group],
+                      graph_read_model.parameters.get<mio::TransmissionProbabilityOnContact>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[group],
                       graph_read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[group]);
             ASSERT_EQ(graph_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group],
                       graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[group],
-                      graph_read_model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::DeathsPerICU>()[group],
-                      graph_read_model.parameters.get<mio::DeathsPerICU>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[group],
-                      graph_read_model.parameters.get<mio::HospitalizedCasesPerInfectious>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<mio::ICUCasesPerHospitalized>()[group],
-                      graph_read_model.parameters.get<mio::ICUCasesPerHospitalized>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group],
+                      graph_read_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::DeathsPerCritical>()[group],
+                      graph_read_model.parameters.get<mio::DeathsPerCritical>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::SeverePerInfectedSymptoms>()[group],
+                      graph_read_model.parameters.get<mio::SeverePerInfectedSymptoms>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<mio::CriticalPerSevere>()[group],
+                      graph_read_model.parameters.get<mio::CriticalPerSevere>()[group]);
 
             check_distribution(*graph_model.parameters.get<mio::IncubationTime>()[group].get_distribution().get(),
                                *graph_read_model.parameters.get<mio::IncubationTime>()[group].get_distribution().get());
             check_distribution(*graph_model.parameters.get<mio::SerialInterval>()[group].get_distribution().get(),
                                *graph_read_model.parameters.get<mio::SerialInterval>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeMild>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeMild>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::TimeInfectedSymptoms>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::TimeInfectedSymptoms>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::HospitalizedToHomeTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::HospitalizedToHomeTime>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::TimeInfectedSevere>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::TimeInfectedSevere>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get());
-            check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get());
-            check_distribution(
-                *graph_model.parameters.get<mio::HospitalizedToICUTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::HospitalizedToICUTime>()[group].get_distribution().get());
-            check_distribution(*graph_model.parameters.get<mio::ICUToHomeTime>()[group].get_distribution().get(),
-                               *graph_read_model.parameters.get<mio::ICUToHomeTime>()[group].get_distribution().get());
-            check_distribution(*graph_model.parameters.get<mio::ICUToDeathTime>()[group].get_distribution().get(),
-                               *graph_read_model.parameters.get<mio::ICUToDeathTime>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::TimeInfectedCritical>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::TimeInfectedCritical>()[group].get_distribution().get());
 
             check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeMild>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeMild>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::TimeInfectedSymptoms>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::TimeInfectedSymptoms>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::HospitalizedToHomeTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::HospitalizedToHomeTime>()[group].get_distribution().get());
-            check_distribution(
-                *graph_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::HomeToHospitalizedTime>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::TimeInfectedSevere>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::TimeInfectedSevere>()[group].get_distribution().get());
             check_distribution(
                 *graph_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<mio::MaxRiskOfInfectionFromSymptomatic>()[group]
                      .get_distribution()
                      .get());
-            check_distribution(*graph_model.parameters.get<mio::DeathsPerICU>()[group].get_distribution().get(),
-                               *graph_read_model.parameters.get<mio::DeathsPerICU>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::InfectiousTimeAsymptomatic>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::DeathsPerCritical>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::DeathsPerCritical>()[group].get_distribution().get());
             check_distribution(
-                *graph_model.parameters.get<mio::ICUCasesPerHospitalized>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<mio::ICUCasesPerHospitalized>()[group].get_distribution().get());
+                *graph_model.parameters.get<mio::CriticalPerSevere>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<mio::CriticalPerSevere>()[group].get_distribution().get());
 
             ASSERT_EQ(graph_model.parameters.get<mio::ContactPatterns>().get_dampings(),
                       graph_read_model.parameters.get<mio::ContactPatterns>().get_dampings());
@@ -423,9 +375,9 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
-        model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
+        model[0].parameters.get<mio::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
     auto read_result = mio::read_population_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -442,10 +394,10 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     for (size_t i = 0; i < 6; i++) {
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Susceptible}]), sus[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Exposed}]), exp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Carrier}]), car[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Infected}]), inf[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Hospitalized}]), hosp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::ICU}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedNoSymptoms}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSymptoms}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSevere}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedCritical}]), icu[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Recovered}]), rec[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Dead}]), death[i], 1e-1);
     }
@@ -466,9 +418,9 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
-        model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
+        model[0].parameters.get<mio::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
     auto read_result =
         mio::read_population_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
@@ -486,10 +438,10 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
     for (size_t i = 0; i < 6; i++) {
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Susceptible}]), sus[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Exposed}]), exp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Carrier}]), car[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Infected}]), inf[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Hospitalized}]), hosp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::ICU}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedNoSymptoms}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSymptoms}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSevere}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedCritical}]), icu[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Recovered}]), rec[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Dead}]), death[i], 1e-1);
     }
@@ -511,9 +463,9 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
-        model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
+        model[0].parameters.get<mio::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
     auto read_result =
         mio::read_population_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu, path);
@@ -531,10 +483,10 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     for (size_t i = 0; i < 6; i++) {
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Susceptible}]), sus[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Exposed}]), exp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Carrier}]), car[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Infected}]), inf[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Hospitalized}]), hosp[i], 1e-1);
-        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::ICU}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedNoSymptoms}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSymptoms}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedSevere}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::InfectedCritical}]), icu[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Recovered}]), rec[i], 1e-1);
         EXPECT_NEAR((model[0].populations[{mio::AgeGroup(i), mio::InfectionState::Dead}]), death[i], 1e-1);
     }
@@ -554,16 +506,16 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     std::vector<int> county = {1002};
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
-        model[0].parameters.get<mio::AsymptomaticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
-        model[0].parameters.get<mio::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<mio::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<mio::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
+        model[0].parameters.get<mio::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
 
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
-    auto extrapolate_result = mio::extrapolate_rki_results(model, TEST_DATA_DIR, results_dir, county, date,
-                                                           scaling_factor_inf, scaling_factor_icu, 1);
+    auto extrapolate_result = mio::export_input_data_county_timeseries(model, TEST_DATA_DIR, results_dir, county, date,
+                                                                       scaling_factor_inf, scaling_factor_icu, 1);
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
     auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));
@@ -585,14 +537,15 @@ TEST(TestSaveParameters, ExtrapolateRKI)
                     sus[i], 1e-1);
         EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Exposed + (size_t)mio::InfectionState::Count * i), exp[i],
                     1e-1);
-        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Carrier + (size_t)mio::InfectionState::Count * i), car[i],
-                    1e-1);
-        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Infected + (size_t)mio::InfectionState::Count * i), inf[i],
-                    1e-1);
-        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Hospitalized + (size_t)mio::InfectionState::Count * i),
+        EXPECT_NEAR(
+            results[0]((size_t)mio::InfectionState::InfectedNoSymptoms + (size_t)mio::InfectionState::Count * i),
+            car[i], 1e-1);
+        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::InfectedSymptoms + (size_t)mio::InfectionState::Count * i),
+                    inf[i], 1e-1);
+        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::InfectedSevere + (size_t)mio::InfectionState::Count * i),
                     hosp[i], 1e-1);
-        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::ICU + (size_t)mio::InfectionState::Count * i), icu[i],
-                    1e-1);
+        EXPECT_NEAR(results[0]((size_t)mio::InfectionState::InfectedCritical + (size_t)mio::InfectionState::Count * i),
+                    icu[i], 1e-1);
         EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Recovered + (size_t)mio::InfectionState::Count * i), rec[i],
                     1e-1);
         EXPECT_NEAR(results[0]((size_t)mio::InfectionState::Dead + (size_t)mio::InfectionState::Count * i), death[i],

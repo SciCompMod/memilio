@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -77,7 +77,8 @@ int main()
     auto& params = model.parameters;
 
     mio::AgeGroup nb_groups = params.get_num_groups();
-    mio::ContactMatrixGroup cm_group{mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
+    mio::ContactMatrixGroup cm_group{
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
     params.get<mio::ContactPatterns>() = cm_group;
 
     double t0   = 0;
@@ -94,8 +95,7 @@ int main()
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 
-    printf("\n First damping at %.2f with factor %.2f\n",
-           double(cfmat_sample[0].get_dampings()[0].get_time()),
+    printf("\n First damping at %.2f with factor %.2f\n", double(cfmat_sample[0].get_dampings()[0].get_time()),
            cfmat_sample[0].get_dampings()[0].get_coeffs()(0, 0));
 
     // printout the second damping

@@ -1,6 +1,6 @@
 
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -33,16 +33,6 @@ TEST(ParameterStudies, sample_from_secir_params)
     double t0   = 0;
     double tmax = 100;
 
-    double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 6, // 4-14  (=R4^(-1))
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thome2hosp = 5, // 2.5-7 (=R6^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
-
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
            alpha = 0.09, // 0.01-0.16
@@ -60,33 +50,29 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     auto& params = model.parameters;
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]       = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::SerialInterval>()[i]       = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
+        params.get<mio::CriticalPerSevere>()[i]                = theta;
+        params.get<mio::DeathsPerCritical>()[i]                = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -102,12 +88,10 @@ TEST(ParameterStudies, sample_from_secir_params)
                   params.get<mio::IncubationTime>()[i].value());
         ASSERT_EQ(params.get<mio::SerialInterval>()[mio::AgeGroup(0)].value(),
                   params.get<mio::SerialInterval>()[i].value());
-        ASSERT_EQ(params.get<mio::InfectiousTimeMild>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::InfectiousTimeMild>()[i].value());
-        ASSERT_EQ(params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::HospitalizedToICUTime>()[i].value());
-        ASSERT_EQ(params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::RelativeCarrierInfectability>()[i].value());
+        ASSERT_EQ(params.get<mio::TimeInfectedSymptoms>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::TimeInfectedSymptoms>()[i].value());
+        ASSERT_EQ(params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::RelativeTransmissionNoSymptoms>()[i].value());
         ASSERT_EQ(params.get<mio::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
                   params.get<mio::RiskOfInfectionFromSymptomatic>()[i].value());
         ASSERT_EQ(params.get<mio::MaxRiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
@@ -119,7 +103,7 @@ TEST(ParameterStudies, sample_from_secir_params)
 
         EXPECT_GE(params.get<mio::IncubationTime>()[i], 0);
 
-        EXPECT_GE(params.get<mio::InfectionProbabilityFromContact>()[i], 0);
+        EXPECT_GE(params.get<mio::TransmissionProbabilityOnContact>()[i], 0);
     }
 
     mio::ContactMatrixGroup& contact_matrix_sample = params.get<mio::ContactPatterns>();
@@ -130,16 +114,6 @@ TEST(ParameterStudies, sample_graph)
 {
     double t0   = 0;
     double tmax = 100;
-
-    double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 6, // 4-14  (=R4^(-1))
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thome2hosp = 5, // 2.5-7 (=R6^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
@@ -158,33 +132,29 @@ TEST(ParameterStudies, sample_graph)
 
     auto& params = model.parameters;
     for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]       = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::SerialInterval>()[i]       = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
+        params.get<mio::CriticalPerSevere>()[i]                = theta;
+        params.get<mio::DeathsPerCritical>()[i]                = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
@@ -305,16 +275,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double t0   = 0;
     double tmax = 50;
 
-    double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 6, // 4-14  (=R4^(-1))
-        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 12, // 7-16 (=R5^(-1))
-        thome2hosp = 5, // 2.5-7 (=R6^(-1))
-        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
-        ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-        ticu2death = 5; // 3.5-7 (=R5^(-1))
-
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
            alpha = 0.09, // 0.01-0.16
@@ -333,33 +293,29 @@ TEST(ParameterStudies, check_ensemble_run_result)
     auto& params = model.parameters;
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]             = tinc;
-        params.get<mio::InfectiousTimeMild>()[i]         = tinfmild;
-        params.get<mio::SerialInterval>()[i]             = tserint;
-        params.get<mio::HospitalizedToHomeTime>()[i]     = thosp2home;
-        params.get<mio::HomeToHospitalizedTime>()[i]     = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i]      = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i]              = ticu2home;
-        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<mio::ICUToDeathTime>()[i]             = ticu2death;
+        params.get<mio::IncubationTime>()[i]       = 5.2;
+        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::SerialInterval>()[i]       = 4.2;
+        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::TimeInfectedCritical>()[i] = 8.;
 
         model.populations.set_total(num_total_t0);
-        model.populations[{i, mio::InfectionState::Exposed}]      = num_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}]      = num_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}]     = num_inf_t0;
-        model.populations[{i, mio::InfectionState::Hospitalized}] = num_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}]          = num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]    = num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]         = num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]            = num_exp_t0;
+        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = num_car_t0;
+        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = num_inf_t0;
+        model.populations[{i, mio::InfectionState::InfectedSevere}]     = num_hosp_t0;
+        model.populations[{i, mio::InfectionState::InfectedCritical}]   = num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]          = num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]               = num_dead_t0;
         model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, num_total_t0);
 
-        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::TransmissionProbabilityOnContact>()[i] = inf_prob;
+        params.get<mio::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
+        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
         params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerICU>()[i]                    = delta;
+        params.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
+        params.get<mio::CriticalPerSevere>()[i]                = theta;
+        params.get<mio::DeathsPerCritical>()[i]                = delta;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();

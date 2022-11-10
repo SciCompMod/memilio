@@ -79,7 +79,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         # test loadCsv Error if file can't be downloaded
-        mocklcsv.side_effect = Exception
+        mocklcsv.side_effect = FileNotFoundError
         with self.assertRaises(FileNotFoundError) as error:
             gdd.get_divi_data(read_data=False)
         error_message = "Error: Download link for Divi data has changed."

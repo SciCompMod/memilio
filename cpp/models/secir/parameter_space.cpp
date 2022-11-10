@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -55,22 +55,18 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
 
         set_distribution(model.parameters.get<IncubationTime>()[i]);
         set_distribution(model.parameters.get<SerialInterval>()[i]);
-        set_distribution(model.parameters.get<InfectiousTimeMild>()[i]);
-        set_distribution(model.parameters.get<HospitalizedToHomeTime>()[i]);
-        set_distribution(model.parameters.get<HomeToHospitalizedTime>()[i]);
-        set_distribution(model.parameters.get<InfectiousTimeAsymptomatic>()[i]);
-        set_distribution(model.parameters.get<HospitalizedToICUTime>()[i]);
-        set_distribution(model.parameters.get<ICUToHomeTime>()[i]);
-        set_distribution(model.parameters.get<ICUToDeathTime>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedSymptoms>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedSevere>()[i]);
+        set_distribution(model.parameters.get<TimeInfectedCritical>()[i]);
 
-        set_distribution(model.parameters.get<InfectionProbabilityFromContact>()[i]);
-        set_distribution(model.parameters.get<RelativeCarrierInfectability>()[i]);
-        set_distribution(model.parameters.get<AsymptomaticCasesPerInfectious>()[i]);
+        set_distribution(model.parameters.get<TransmissionProbabilityOnContact>()[i]);
+        set_distribution(model.parameters.get<RelativeTransmissionNoSymptoms>()[i]);
+        set_distribution(model.parameters.get<RecoveredPerInfectedNoSymptoms>()[i]);
         set_distribution(model.parameters.get<RiskOfInfectionFromSymptomatic>()[i]);
         set_distribution(model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
-        set_distribution(model.parameters.get<DeathsPerICU>()[i]);
-        set_distribution(model.parameters.get<HospitalizedCasesPerInfectious>()[i]);
-        set_distribution(model.parameters.get<ICUCasesPerHospitalized>()[i]);
+        set_distribution(model.parameters.get<DeathsPerCritical>()[i]);
+        set_distribution(model.parameters.get<SeverePerInfectedSymptoms>()[i]);
+        set_distribution(model.parameters.get<CriticalPerSevere>()[i]);
     }
 
     // dampings
@@ -94,10 +90,10 @@ void draw_sample_demographics(SecirModel& model)
         double group_total = model.populations.get_group_total(i);
 
         model.populations[{i, InfectionState::Exposed}].draw_sample();
-        model.populations[{i, InfectionState::Carrier}].draw_sample();
-        model.populations[{i, InfectionState::Infected}].draw_sample();
-        model.populations[{i, InfectionState::Hospitalized}].draw_sample();
-        model.populations[{i, InfectionState::ICU}].draw_sample();
+        model.populations[{i, InfectionState::InfectedNoSymptoms}].draw_sample();
+        model.populations[{i, InfectionState::InfectedSymptoms}].draw_sample();
+        model.populations[{i, InfectionState::InfectedSevere}].draw_sample();
+        model.populations[{i, InfectionState::InfectedCritical}].draw_sample();
         model.populations[{i, InfectionState::Recovered}].draw_sample();
 
         // no sampling for dead and total numbers
@@ -116,37 +112,32 @@ void draw_sample_infection(SecirModel& model)
     //not age dependent
     model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
     model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<InfectiousTimeMild>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.get<SerialInterval>()[i]        = model.parameters.get<SerialInterval>()[AgeGroup(0)];
-        model.parameters.get<InfectiousTimeMild>()[i]    = model.parameters.get<InfectiousTimeMild>()[AgeGroup(0)];
-        model.parameters.get<HospitalizedToICUTime>()[i] = model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)];
-        model.parameters.get<RelativeCarrierInfectability>()[i] =
-            model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)];
+        model.parameters.get<IncubationTime>()[i]       = model.parameters.get<IncubationTime>()[AgeGroup(0)];
+        model.parameters.get<SerialInterval>()[i]       = model.parameters.get<SerialInterval>()[AgeGroup(0)];
+        model.parameters.get<TimeInfectedSymptoms>()[i] = model.parameters.get<TimeInfectedSymptoms>()[AgeGroup(0)];
+        model.parameters.get<RelativeTransmissionNoSymptoms>()[i] =
+            model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSymptomatic>()[i] =
             model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
         model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[i] =
             model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
         //age dependent
-        model.parameters.get<HospitalizedToHomeTime>()[i].draw_sample(); // here: home=recovered
-        model.parameters.get<HomeToHospitalizedTime>()[i].draw_sample(); // here: home=infectious
-        model.parameters.get<InfectiousTimeAsymptomatic>()[i].draw_sample();
-        model.parameters.get<ICUToDeathTime>()[i].draw_sample();
-        model.parameters.get<ICUToHomeTime>()[i].draw_sample();
+        model.parameters.get<TimeInfectedSevere>()[i].draw_sample();
+        model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 
-        model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
-        model.parameters.get<AsymptomaticCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<DeathsPerICU>()[i].draw_sample();
-        model.parameters.get<HospitalizedCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<ICUCasesPerHospitalized>()[i].draw_sample();
+        model.parameters.get<TransmissionProbabilityOnContact>()[i].draw_sample();
+        model.parameters.get<RecoveredPerInfectedNoSymptoms>()[i].draw_sample();
+        model.parameters.get<DeathsPerCritical>()[i].draw_sample();
+        model.parameters.get<SeverePerInfectedSymptoms>()[i].draw_sample();
+        model.parameters.get<CriticalPerSevere>()[i].draw_sample();
     }
 }
 
@@ -167,7 +158,7 @@ Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationPa
     draw_sample_infection(shared_params_model);
     auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
     shared_contacts.draw_sample_dampings();
-    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms>();
     shared_dynamic_npis.draw_sample();
 
     for (auto& params_node : graph.nodes()) {

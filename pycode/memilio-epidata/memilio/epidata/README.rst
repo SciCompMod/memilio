@@ -17,7 +17,7 @@ Sources
 
     Robert Koch-Institut (2021): SARS-CoV-2 Infektionen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.4681153.
 
-    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland
 
     If the data on github is not available we download the case data from rki from
     https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/e408ccf8878541a7ab6f6077a42fd811_0
@@ -38,7 +38,7 @@ Sources
   
     https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv
 
-- Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
+- Population data (P) like "Einwohnerzahl" for Bundesländer and Landkreise:
 
   https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
 
@@ -189,7 +189,7 @@ RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths,
 
 P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
 P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
-P              Germany     migration                           unchanged migration data
+P              Germany     county_table                        raw information on the German counties and its population sizes
 P              Germany     reg_key                             unchanged regional keys from excel table
 P              Germany     zensus                              unchanged zensus data
 

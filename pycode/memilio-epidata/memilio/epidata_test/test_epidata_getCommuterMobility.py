@@ -146,7 +146,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         for sheet_name in sheets.keys():
             sheets[sheet_name].to_excel(
                 dummy, sheet_name=sheet_name, index=False)
-        dummy.save()
         dummy.close()
 
     def write_commuter_all_federal_states(self, out_folder):
@@ -262,7 +261,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
             for sheet_name in sheets.keys():
                 sheets[sheet_name].to_excel(
                     dummy, sheet_name=sheet_name, index=False)
-            dummy.save()
             dummy.close()
 
     @patch('builtins.print')

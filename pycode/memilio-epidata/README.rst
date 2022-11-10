@@ -49,7 +49,7 @@ Required python packages:
 - pandas<1.2.0
 - matplotlib
 - tables
-- numpy>=1.21
+- numpy>=1.22
 - openpyxl
 - xlrd
 - requests
@@ -80,7 +80,6 @@ Testing and Coverage
 The following packages are used by the tests:
 
 - pyfakefs (creates fake directory to test that expected folders are created and data is written)
-- freezegun (freezes the time. Thus, the call today can be changed to a specific date.)
 - coverage
 
 See Installation on how to install all these dependencies automatically.

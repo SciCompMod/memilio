@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Wadim Koslow, Daniel Abele
 *
@@ -41,24 +41,24 @@ namespace mio
 IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids, int num_groups,
                            const std::string& filename);
 
-class SecirSimulationResult
+class SimulationResult
 {
 public:
     /**
-     * @brief Standard constructor of SecirSimulationResult
+     * @brief Standard constructor of SimulationResult
      */
-    SecirSimulationResult(int num_groups, int num_compartments)
+    SimulationResult(int num_groups, int num_compartments)
         : m_groups(num_groups * num_compartments)
         , m_totals(num_compartments)
     {
     }
 
     /**
-     * @brief Constructor of SecirSimulationResult storing time, groups, and total sums of all groups
+     * @brief Constructor of SimulationResult storing time, groups, and total sums of all groups
      * @param groups Simulation Results of individual groups
      * @param total Simulation Results of the sum over all groups
      */
-    SecirSimulationResult(const TimeSeries<double>& groups, const TimeSeries<double>& totals)
+    SimulationResult(const TimeSeries<double>& groups, const TimeSeries<double>& totals)
         : m_groups(groups)
         , m_totals(totals)
     {
@@ -86,10 +86,10 @@ private:
 };
 
 /**
- * @brief read secir simulation result from h5 file
+ * @brief read simulation result from h5 file
  * @param filename name of file
  */
-IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename);
+IOResult<std::vector<SimulationResult>> read_result(const std::string& filename);
 
 } // namespace mio
 

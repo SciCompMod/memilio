@@ -33,29 +33,25 @@ class Test_secir_integration(unittest.TestCase):
 
         A0 = AgeGroup(0)
 
-        model.parameters.IncubationTime[A0] = 5.2  # R_2^(-1)+R_3^(-1)
-        model.parameters.InfectiousTimeMild[A0] = 6.  # 4-14  (=R4^(-1))
-        # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        model.parameters.IncubationTime[A0] = 5.2
+        model.parameters.TimeInfectedSymptoms[A0] = 6.
         model.parameters.SerialInterval[A0] = 4.2
-        model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
-        model.parameters.HomeToHospitalizedTime[A0] = 5.  # 2.5-7 (=R6^(-1))
-        model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
-        model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
-        model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
+        model.parameters.TimeInfectedSevere[A0] = 12.
+        model.parameters.TimeInfectedCritical[A0] = 8.
 
-        model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
-        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25  # 0.05-0.5
-        model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
-        model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
-        model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+        model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
+        model.parameters.SeverePerInfectedSymptoms[A0] = 0.2
+        model.parameters.CriticalPerSevere[A0] = 0.25
+        model.parameters.DeathsPerCritical[A0] = 0.3
 
         model.populations[A0, State.Susceptible] = 7600
         model.populations[A0, State.Exposed] = 100
-        model.populations[A0, State.Carrier] = 50
-        model.populations[A0, State.Infected] = 50
-        model.populations[A0, State.Hospitalized] = 20
-        model.populations[A0, State.ICU] = 10
+        model.populations[A0, State.InfectedNoSymptoms] = 50
+        model.populations[A0, State.InfectedSymptoms] = 50
+        model.populations[A0, State.InfectedSevere] = 20
+        model.populations[A0, State.InfectedCritical] = 10
         model.populations[A0, State.Recovered] = 10
         model.populations[A0, State.Dead] = 0
 

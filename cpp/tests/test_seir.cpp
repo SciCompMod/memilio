@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel
 *
@@ -27,17 +27,16 @@
 
 using real = double;
 
-class TestCompareSeirWithJS : public testing::Test
+class TestSeir : public testing::Test
 {
 protected:
     void SetUp() override
     {
-        refData = load_test_data_csv<real>("seir-js-compare.csv");
-        t0      = 0.;
-        tmax    = 50.;
-        dt      = 0.1002004008016032;
+        t0   = 0.;
+        tmax = 50.;
+        dt   = 0.1002004008016032;
 
-        double total_population = 1061000;
+        total_population = 1061000;
 
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
@@ -49,9 +48,9 @@ protected:
             this->model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.set<mio::oseir::InfectionProbabilityFromContact>(1.0);
-        model.parameters.set<mio::oseir::LatentTime>(5.2);
-        model.parameters.set<mio::oseir::InfectiousTime>(2);
+        model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
+        model.parameters.set<mio::oseir::TimeExposed>(5.2);
+        model.parameters.set<mio::oseir::TimeInfected>(2);
         ;
 
         model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
@@ -59,17 +58,18 @@ protected:
     }
 
 public:
-    std::vector<std::vector<real>> refData;
     real t0;
     real tmax;
     real dt;
+    double total_population;
     mio::oseir::Model model;
 };
 
-TEST_F(TestCompareSeirWithJS, integrate)
+TEST_F(TestSeir, CompareSeirWithJS)
 {
-    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
-    auto result     = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
+    std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-js-compare.csv");
+    auto integrator                        = std::make_shared<mio::EulerIntegratorCore>();
+    auto result                            = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -96,4 +96,14 @@ TEST_F(TestCompareSeirWithJS, integrate)
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
         }
     }
+}
+
+TEST_F(TestSeir, checkPopulationConservation)
+{
+    auto result        = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
+    double num_persons = 0.0;
+    for (auto i = 0; i < result.get_last_value().size(); i++) {
+        num_persons += result.get_last_value()[i];
+    }
+    EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
