@@ -6,11 +6,9 @@ Vaccinations are modeled by adding compartments for partially and fully vaccinat
 
 The ratio of two variants can change over time, which affects the average transmissiblity of the disease. Infectiousness of different variants can be set in the parameters.
 
-See *W. Koslow et al, 2022: Appropriate relaxation of non-pharmaceutical interventions minimizes the risk of a resurgence in SARS-CoV-2 infections in spite of the Delta variant* for a full description.
-
 ## Examples
 
-The extended model is used in 2020_npis_sarscov2_wildtype_germany.cpp. 
+The extended model is used in the 2021_vaccination_sarscov2_delta_germany simulation. 
 
 Examples of the basic SECIR model can be found at:
 
