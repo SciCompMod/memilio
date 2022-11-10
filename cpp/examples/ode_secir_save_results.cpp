@@ -82,5 +82,5 @@ int main(int argc, char** argv)
     std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                  = {1, 2};
 
-    auto save_result_status = mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, "test_result.h5");
+    auto save_result_status = save_result(results_from_sim, ids, (int)(size_t)nb_groups, "test_result.h5");
 }
