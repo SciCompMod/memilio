@@ -43,11 +43,10 @@ from memilio.epidata import defaultDict as dd
 from memilio import progress_indicator
 
 
-def download_file(url, encoding=None, chunk_size=1024, timeout=None, progress_function=None):
+def download_file(url, chunk_size=1024, timeout=None, progress_function=None):
     """! Download a file using GET over HTTP.
 
     @param url Full url of the file to download.
-    @param encoding If speciefied, used to decode the downloaded bytes.
     @param chunk_size Number of Bytes downloaded at once. Only used when a
         progress_function is specified. For a good display of progress, this
         size should be about the speed of your internet connection in Bytes/s.
@@ -56,7 +55,7 @@ def download_file(url, encoding=None, chunk_size=1024, timeout=None, progress_fu
     @param timeout Timeout in seconds for the GET request.
     @param progress_function Function called regularly, with the current
         download progress in [0,1] as a float argument.
-    @return File as BytesIO by default, or as StringIO if encoding was set.
+    @return File as BytesIO
     """
     # send GET request as stream so 
     req = requests.get(url, stream=True, timeout=timeout)
@@ -81,10 +80,7 @@ def download_file(url, encoding=None, chunk_size=1024, timeout=None, progress_fu
         for chunk in req.iter_content(chunk_size=None):
             file += chunk # append chunk to file
     # return the downloaded content as file like object
-    if encoding:
-        return StringIO(str(file, encoding=encoding))
-    else:
-        return BytesIO(file)
+    return BytesIO(file)
 
 
 def loadGeojson(
@@ -150,7 +146,7 @@ def loadCsv(
     try:
         try: # to download file from url and show download progress
             with progress_indicator.Percentage(message="Downloading " + url) as p:
-                file = download_file(url, 1024, param_dict["encoding"], None, p.set_progress)
+                file = download_file(url, 1024, None, p.set_progress)
             df = pd.read_csv(file, **param_dict)
         except requests.exceptions.RequestException:
             df = pd.read_csv(url, **param_dict)
