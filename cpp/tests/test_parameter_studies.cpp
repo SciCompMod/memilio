@@ -82,8 +82,6 @@ TEST(ParameterStudies, sample_from_secir_params)
                   params.get<mio::osecir::IncubationTime>()[i].value());
         ASSERT_EQ(params.get<mio::osecir::SerialInterval>()[mio::AgeGroup(0)].value(),
                   params.get<mio::osecir::SerialInterval>()[i].value());
-        ASSERT_EQ(params.get<mio::osecir::TimeInfectedSymptoms>()[mio::AgeGroup(0)].value(),
-                  params.get<mio::osecir::TimeInfectedSymptoms>()[i].value());
         ASSERT_EQ(params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)].value(),
                   params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i].value());
         ASSERT_EQ(params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)].value(),
