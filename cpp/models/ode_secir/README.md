@@ -20,6 +20,6 @@ The simulation runs in discrete time steps using a numerical integration scheme.
 
 Different examples can be found at:
 
-- examples/secir.cpp
-- examples/secir_ageres.cpp
-- examples/parameter_study_secir.cpp
+- examples/ode_secir.cpp
+- examples/ode_secir_ageres.cpp
+- examples/ode_secir_parameter_study.cpp

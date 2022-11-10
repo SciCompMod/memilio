@@ -132,6 +132,7 @@ void draw_sample_infection(Model& model)
             model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
 
         //age dependent
+        model.parameters.get<TimeInfectedSymptoms>()[i].draw_sample();
         model.parameters.get<TimeInfectedSevere>()[i].draw_sample();
         model.parameters.get<TimeInfectedCritical>()[i].draw_sample();
 

@@ -85,6 +85,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<TransmissionProbabilityOnContact>()[i];
+                });
+            param_percentil(
+                node, [i](auto&& model) -> auto& {
                     return model.parameters.template get<RelativeTransmissionNoSymptoms>()[i];
                 });
             param_percentil(

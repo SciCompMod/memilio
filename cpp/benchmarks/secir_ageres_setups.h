@@ -23,7 +23,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "models/ode_secir/secir.h"
+#include "models/ode_secir/model.h"
 #include "models/ode_secir/parameter_space.h"
 
 namespace mio

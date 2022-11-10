@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESEIR_PARAMETER_SPACE_H
-#define ODESEIR_PARAMETER_SPACE_H
+#ifndef ODESECIR_PARAMETER_SPACE_H
+#define ODESECIR_PARAMETER_SPACE_H
 
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/memory.h"
@@ -68,4 +68,4 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
 } // namespace osecir
 } // namespace mio
 
-#endif // ODESEIR_PARAMETER_SPACE_H
+#endif // ODESECIR_PARAMETER_SPACE_H

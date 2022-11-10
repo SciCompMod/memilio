@@ -311,7 +311,7 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
  * @param t current simulation time.
  * @param y current value of compartments.
  * @return vector expression, same size as y, with migration factors per compartment.
- * @tparam Base simulation type that uses a secir compartment model. see Simulation.
+ * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <class Base = mio::Simulation<Model>>
 auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)

@@ -5,8 +5,8 @@ configure_file(data_dir.h.in data_dir.h)
 add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 
-add_executable(parameter_sampling_example parameter_sampling.cpp)
-target_link_libraries(parameter_sampling_example PRIVATE memilio ode_secir)
+add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
+target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
 
 add_executable(adapt_rk_example adapt_rk_test.cpp)
 target_link_libraries(adapt_rk_example PRIVATE memilio)
@@ -30,9 +30,9 @@ add_executable(abm_example abm.cpp)
 target_link_libraries(abm_example PRIVATE memilio abm)
 
 if(MEMILIO_HAS_JSONCPP)
-  add_executable(read_graph_example read_graph.cpp)
-  target_link_libraries(read_graph_example PRIVATE memilio ode_secir)
-  target_include_directories(read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # configured headers
+  add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
+  target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
+  target_include_directories(ode_secir_read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # configured headers
 endif()
 
 add_executable(twitter_migration_example twitter_migration.cpp)

@@ -33,13 +33,7 @@ TEST(ParameterStudies, sample_from_secir_params)
     double t0   = 0;
     double tmax = 100;
 
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
@@ -66,13 +60,13 @@ TEST(ParameterStudies, sample_from_secir_params)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = inf_prob;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = rho;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = theta;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = delta;
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
@@ -115,13 +109,7 @@ TEST(ParameterStudies, sample_graph)
     double t0   = 0;
     double tmax = 100;
 
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
@@ -148,13 +136,13 @@ TEST(ParameterStudies, sample_graph)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = inf_prob;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = rho;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = theta;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = delta;
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
@@ -277,13 +265,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double t0   = 0;
     double tmax = 50;
 
-    double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
-           alpha = 0.09, // 0.01-0.16
-        beta     = 0.25, // 0.05-0.5
-        delta    = 0.3, // 0.15-0.77
-        rho      = 0.2, // 0.1-0.35
-        theta    = 0.25; // 0.15-0.4
+    double cont_freq = 10; // see Polymod study
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
@@ -311,13 +293,13 @@ TEST(ParameterStudies, check_ensemble_run_result)
         model.populations[{i, mio::osecir::InfectionState::Dead}]               = num_dead_t0;
         model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, num_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = inf_prob;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = carr_infec;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = rho;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = theta;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = delta;
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
