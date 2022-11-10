@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Daniel Abele
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir/secir.h"
+#include "ode_secir/analyze_result.h"
+#include "memilio/math/interpolation.h"
 
 namespace mio
 {
 
+namespace osecir
+{
+
+} // namespace osecir
 } // namespace mio

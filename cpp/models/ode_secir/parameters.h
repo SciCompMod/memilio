@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_PARAMS_H
-#define SECIR_PARAMS_H
+#ifndef SECIR_PARAMETERS_H
+#define SECIR_PARAMETERS_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/uncertain_value.h"
@@ -32,6 +32,8 @@
 #include <vector>
 
 namespace mio
+{
+namespace osecir
 {
 
 /*******************************************
@@ -332,7 +334,7 @@ struct TestAndTraceCapacity {
     }
 };
 
-using SecirParamsBase =
+using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
@@ -342,11 +344,11 @@ using SecirParamsBase =
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-class SecirParams : public SecirParamsBase
+class Parameters : public ParametersBase
 {
 public:
-    SecirParams(AgeGroup num_agegroups)
-        : SecirParamsBase(num_agegroups)
+    Parameters(AgeGroup num_agegroups)
+        : ParametersBase(num_agegroups)
         , m_num_groups{num_agegroups}
     {
     }
@@ -536,8 +538,8 @@ public:
     }
 
 private:
-    SecirParams(SecirParamsBase&& base)
-        : SecirParamsBase(std::move(base))
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
         , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
     {
     }
@@ -548,10 +550,10 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<SecirParams> deserialize(IOContext& io)
+    static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, SecirParamsBase::deserialize(io));
-        return success(SecirParams(std::move(base)));
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
     }
 
 private:
@@ -561,8 +563,9 @@ private:
 /**
  * @brief WIP !! TO DO: returns the actual, approximated reproduction rate 
  */
-//double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
+//double get_reprod_rate(Parameters const& params, double t, std::vector<double> const& yt);
 
+} // namespace osecir
 } // namespace mio
 
-#endif // SECIR_H
+#endif // SECIR_PARAMETERS_H
