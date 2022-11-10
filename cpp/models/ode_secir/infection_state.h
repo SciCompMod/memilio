@@ -17,10 +17,33 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir/analyze_result.h"
-#include "memilio/math/interpolation.h"
+#ifndef ODESECIR_INFECTIONSTATE_H
+#define ODESECIR_INFECTIONSTATE_H
 
 namespace mio
 {
 
+namespace osecir
+{
+
+/**
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
+ */
+enum class InfectionState
+{
+    Susceptible        = 0,
+    Exposed            = 1,
+    InfectedNoSymptoms = 2,
+    InfectedSymptoms   = 3,
+    InfectedSevere     = 4,
+    InfectedCritical   = 5,
+    Recovered          = 6,
+    Dead               = 7,
+    Count              = 8
+};
+
+} // namespace osecir
 } // namespace mio
+
+#endif
