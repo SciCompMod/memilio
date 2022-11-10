@@ -50,3 +50,6 @@ endif()
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
+
+add_executable(ode_secir_save_results ode_secir_save_results.cpp)
+target_link_libraries(ode_secir_save_results PRIVATE memilio ode_secir)

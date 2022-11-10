@@ -71,13 +71,16 @@ int main(int argc, char** argv)
     }
 
     params.apply_constraints();
+    auto num_groups = (int)(size_t)params.get_num_groups();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix.add_damping(0.3, mio::SimulationTime(30.));
 
-    auto result_from_sim = simulate(t0, tmax, dt, model);
+    auto result_from_sim                                  = simulate(t0, tmax, dt, model);
+    std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
+    std::vector<int> ids                                  = {1, 2};
 
-    mio::save_result(result_from_sim, "test_result.h5");
+    auto save_result_status = mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, "test_result.h5");
 }
