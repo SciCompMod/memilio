@@ -686,29 +686,6 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
 }
 
 /**
- * Save the result of a single parameter study run.
- * Creates a new subdirectory for this run.
- * @param result result of the simulation run.
- * @param params parameters used for the simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @param run_idx index of the run.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
-                                const std::vector<mio::osecirvvs::Model>& params, const std::vector<int>& county_ids,
-                                const fs::path& result_dir, size_t run_idx)
-{
-    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                       (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
-        mio::write_graph(mio::create_graph_without_edges<mio::osecirvvs::Model, mio::MigrationParameters>(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
-    return mio::success();
-}
-
-/**
  * Different modes for running the parameter study.
  */
 enum class RunMode
@@ -726,10 +703,11 @@ enum class RunMode
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
  * @returns any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
-                        bool late, bool masks, bool test, bool high, bool long_time, bool future)
+                        bool save_single_runs, bool late, bool masks, bool test, bool high, bool long_time, bool future)
 {
     mio::Date temp_date;
     if (future) {
@@ -783,15 +761,15 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
                                return node.property.get_simulation().get_model();
                            });
 
-            if (save_result_result) {
-                save_result_result =
-                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            if (save_result_result && save_single_runs) {
+                save_result_result = save_result_with_params(ensemble_results.back(), ensemble_params.back(),
+                                                             county_ids, result_dir, run_idx);
             }
             std::cout << "run " << run_idx << " complete." << std::endl;
             ++run_idx;
         });
     BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
 
     return mio::success();
 }
@@ -818,24 +796,28 @@ int main(int argc, char** argv)
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 9) {
+    bool save_single_runs = true;
+    if (argc == 10) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        if (atoi(argv[4]) == 1) {
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
+        if (atoi(argv[5]) == 1) {
             high = true;
         }
         else {
             high = false;
         }
-        if (atoi(argv[5]) == 1) {
+        if (atoi(argv[6]) == 1) {
             late = true;
         }
         else {
             late = false;
         }
-        if (atoi(argv[6]) == 1) {
+        if (atoi(argv[7]) == 1) {
             masks = true;
             test  = true;
         }
@@ -843,13 +825,13 @@ int main(int argc, char** argv)
             masks = false;
             test  = false;
         }
-        if (atoi(argv[7]) == 1) {
+        if (atoi(argv[8]) == 1) {
             long_time = true;
         }
         else {
             long_time = false;
         }
-        if (atoi(argv[8]) == 1) {
+        if (atoi(argv[9]) == 1) {
             future = true;
         }
         else {
@@ -857,24 +839,29 @@ int main(int argc, char** argv)
         }
         printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
                (int)late, (int)high, (int)long_time, (int)future);
-
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
     }
-    else if (argc == 3) {
+    else if (argc == 4) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
         printf("Loading graph from \"%s\".\n", save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
     }
-    else if (argc == 4) {
+    else if (argc == 5) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
-               (int)late, (int)high, (int)long_time, (int)future);
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
+        printf("\n Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+        printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
     }
     else {
         printf("Usage:\n");
@@ -921,7 +908,8 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    auto result = run(mode, data_dir, save_dir, result_dir, late, masks, test, high, long_time, future);
+    auto result =
+        run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

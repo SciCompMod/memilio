@@ -27,6 +27,7 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/data/analyze_result.h"
+#include "memilio/io/mobility_io.h"
 #include "memilio/io/io.h"
 #include "boost/filesystem.hpp"
 
@@ -35,11 +36,12 @@ namespace mio
 {
 
 /**
- * @brief save results of a graph simulation to h5 file
- * @param result simulation results per node of the graph.
- * @param ids identifier of each node of the graph. 
- * @param num_groups number of groups in the results.
- * @param filename name of file
+ * @brief Save the results of a graph simulation run.
+ * @param result Simulation results per node of the graph.
+ * @param ids Identifiers for each node of the graph. 
+ * @param num_groups Number of groups in the results.
+ * @param filename Name of file
+ * @return Any io errors that occur during writing of the files. 
  */
 IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids, int num_groups,
                            const std::string& filename);
@@ -95,6 +97,30 @@ private:
  * @param filename name of the file to be read.
  */
 IOResult<std::vector<SimulationResult>> read_result(const std::string& filename);
+
+/**
+ * Save the results and the parameters of a single graph simulation run.
+ * Creates a new subdirectory for each run according to run_idx.
+ * @param result Simulation results per node of the graph.
+ * @param params Parameters used for the simulation run.
+ * @param ids Identifiers for each node of the graph. 
+ * @param result_dir Top level directory for all results of the parameter study.
+ * @param run_idx Index of the run; used in directory name.
+ * @return Any io errors that occur during writing of the files.
+ */
+template <class Model>
+IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& result,
+                                const std::vector<Model>& params, const std::vector<int>& county_ids,
+                                const fs::path& result_dir, size_t run_idx)
+{
+    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
+    BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
+    BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
+                                       (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(
+        write_graph(create_graph_without_edges<Model, MigrationParameters>(params, county_ids), result_dir_run.string(), IOF_OmitDistributions));
+    return success();
+}
 
 /**
  * @brief Save the results of a parameter study.

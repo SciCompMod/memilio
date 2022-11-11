@@ -605,29 +605,6 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 }
 
 /**
- * Save the result of a single parameter study run.
- * Creates a new subdirectory for this run.
- * @param result result of the simulation run.
- * @param params parameters used for the simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @param run_idx index of the run.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
-                                const std::vector<mio::osecir::Model>& params, const std::vector<int>& county_ids,
-                                const fs::path& result_dir, size_t run_idx)
-{
-    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                       (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
-        mio::write_graph(mio::create_graph_without_edges<mio::osecir::Model, mio::MigrationParameters>(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
-    return mio::success();
-}
-
-/**
  * Different modes for running the parameter study.
  */
 enum class RunMode
@@ -645,9 +622,11 @@ enum class RunMode
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns any io error that occurs during reading or writing of files.
  */
-mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
+mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
+                        bool save_single_runs = true)
 {
     const auto start_date   = mio::Date(2020, 12, 12);
     const auto num_days_sim = 20.0;
@@ -694,14 +673,14 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
                                return node.property.get_simulation().get_model();
                            });
 
-            if (save_result_result) {
-                save_result_result =
-                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            if (save_result_result && save_single_runs) {
+                save_result_result = save_result_with_params(ensemble_results.back(), ensemble_params.back(),
+                                                             county_ids, result_dir, run_idx);
             }
             ++run_idx;
         });
     BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
 
     return mio::success();
 }
@@ -721,19 +700,31 @@ int main(int argc, char** argv)
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 4) {
+    bool save_single_runs = true;
+    if (argc == 5) {
+        mode             = RunMode::Save;
+        data_dir         = argv[1];
+        save_dir         = argv[2];
+        result_dir       = argv[3];
+        save_single_runs = argv[4];
+        printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+    }
+    else if (argc == 4) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
     }
     else if (argc == 3) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
-        printf("Loading graph from \"%s\".\n", save_dir.c_str());
+        printf("\n Loading graph from \"%s\".\n", save_dir.c_str());
+        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
     }
     else {
         printf("Usage:\n");
@@ -753,7 +744,7 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    auto result = run(mode, data_dir, save_dir, result_dir);
+    auto result = run(mode, data_dir, save_dir, result_dir, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
