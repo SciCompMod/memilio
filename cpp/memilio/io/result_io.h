@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Wadim Koslow, Daniel Abele
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -46,17 +46,19 @@ class SimulationResult
 public:
     /**
      * @brief Standard constructor of SimulationResult
+     * @param num_groups Number of groups or subpopulations in the simulation.
+     * @param num_infectionstates Number of infection states in the considered simulation.
      */
-    SimulationResult(int num_groups, int num_compartments)
-        : m_groups(num_groups * num_compartments)
-        , m_totals(num_compartments)
+    SimulationResult(int num_groups, int num_infectionstates)
+        : m_groups(num_groups * num_infectionstates)
+        , m_totals(num_infectionstates)
     {
     }
 
     /**
      * @brief Constructor of SimulationResult storing time, groups, and total sums of all groups
-     * @param groups Simulation Results of individual groups
-     * @param total Simulation Results of the sum over all groups
+     * @param groups Simulation results of individual groups.
+     * @param total Simulation results as the sum over all groups.
      */
     SimulationResult(const TimeSeries<double>& groups, const TimeSeries<double>& totals)
         : m_groups(groups)
@@ -65,7 +67,7 @@ public:
     }
 
     /**
-     * @brief Simulation Results of individual groups.
+     * @brief Simulation results of individual groups.
      */
     const TimeSeries<double>& get_groups() const
     {
@@ -73,7 +75,7 @@ public:
     }
 
     /**
-     * @brief Simulation Results of the sum over all groups.
+     * @brief Simulation results of the sum over all groups.
      */
     const TimeSeries<double>& get_totals() const
     {
@@ -86,8 +88,8 @@ private:
 };
 
 /**
- * @brief read simulation result from h5 file
- * @param filename name of file
+ * @brief Read simulation result from h5 file.
+ * @param filename name of the file to be read.
  */
 IOResult<std::vector<SimulationResult>> read_result(const std::string& filename);
 

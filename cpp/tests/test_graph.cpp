@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -50,6 +50,25 @@ TEST(TestGraph, duplicate_edge)
     g.add_edge(1, 2, 3);
 
     EXPECT_EQ(g.edges()[1], (mio::Edge<int>{1, 2, 3}));
+}
+
+
+TEST(TestGraph, graph_without_edges)
+{
+    struct MockModel {
+
+    };
+
+    struct MockMobility {
+
+    };
+    std::vector<MockModel> models = {MockModel(), MockModel()};
+    std::vector<int> ids = {1,2};
+
+    auto g = mio::create_graph_without_edges<MockModel, MockMobility>(models, ids);
+
+    EXPECT_EQ(g.edges().size(), 0);
+    EXPECT_EQ(g.nodes().size(), 2);
 }
 
 TEST(TestGraph, ot_edges)

@@ -626,23 +626,6 @@ mio::IOResult<void> save_graph(const mio::Graph<mio::osecir::Model, mio::Migrati
 }
 
 /**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param params parameters for each county node.
- * @param county_ids id of each county node.
- * @return graph with county nodes but no edges.
- */
-auto make_graph_no_edges(const std::vector<mio::osecir::Model>& params, const std::vector<int>& county_ids)
-{
-    //make a graph without edges for writing to file
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
-    for (auto i = size_t(0); i < county_ids.size(); ++i) {
-        graph.add_node(county_ids[i], params[i]);
-    }
-    return graph;
-}
-
-/**
  * Save the result of a single parameter study run.
  * Creates a new subdirectory for this run.
  * @param result result of the simulation run.
@@ -661,7 +644,7 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
     BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
                                        (result_dir_run / "Result.h5").string()));
     BOOST_OUTCOME_TRY(
-        mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
+        mio::write_graph(mio::create_graph_without_edges<mio::osecir::Model, mio::MigrationParameters>(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
     return mio::success();
 }
 
@@ -749,7 +732,7 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_params_p95 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.95);
 
         auto make_graph = [&county_ids](auto&& params) {
-            return make_graph_no_edges(params, county_ids);
+            return mio::create_graph_without_edges<mio::osecir::Model, mio::MigrationParameters>(params, county_ids);
         };
         BOOST_OUTCOME_TRY(
             mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
