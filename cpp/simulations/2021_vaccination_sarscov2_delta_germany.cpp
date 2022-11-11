@@ -686,27 +686,6 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
 }
 
 /**
- * Load the input graph for the parameter study that was previously saved.
- * @param save_dir directory where the graph was saved.
- * @returns created graph or any io errors that happen during reading of the files.
- */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
-{
-    return mio::read_graph<mio::osecirvvs::Model>(save_dir.string());
-}
-
-/**
- * Save the input graph for the parameter study.
- * @param save_dir directory where the graph will be saved.
- * @returns any io errors that happen during writing of the files.
- */
-mio::IOResult<void> save_graph(const mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
-                               const fs::path& save_dir)
-{
-    return mio::write_graph(params_graph, save_dir.string());
-}
-
-/**
  * Save the result of a single parameter study run.
  * Creates a new subdirectory for this run.
  * @param result result of the simulation run.
@@ -768,11 +747,11 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
-        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
         params_graph = loaded;
     }
 
