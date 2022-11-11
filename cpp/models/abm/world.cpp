@@ -75,7 +75,7 @@ void World::set_infection_state(Person& person, InfectionState inf_state)
 void World::migration(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
-        for (auto rule : global_migration_rules) {
+        for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
             const auto& locs = rule.second;
             bool nonempty    = !locs.empty();
@@ -202,7 +202,7 @@ void World::use_migration_rules(bool param)
     // Set up global migration rules for all agents
     // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     if (m_use_migration_rules) {
-        global_migration_rules = {
+        m_migration_rules = {
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,
@@ -216,7 +216,7 @@ void World::use_migration_rules(bool param)
             std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
     }
     else {
-        global_migration_rules = {
+        m_migration_rules = {
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,

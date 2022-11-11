@@ -195,8 +195,8 @@ private:
     MigrationParameters m_migration_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
-    using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
-    std::vector<std::pair<migration_rule, std::vector<LocationType>>> global_migration_rules;
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+                          std::vector<LocationType>>> m_migration_rules;
 };
 
 } // namespace abm
