@@ -837,10 +837,10 @@ int main(int argc, char** argv)
         else {
             future = false;
         }
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
-               (int)late, (int)high, (int)long_time, (int)future);
+        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else if (argc == 4) {
         mode       = RunMode::Load;
@@ -848,7 +848,7 @@ int main(int argc, char** argv)
         result_dir = argv[2];
         data_dir   = "";
         printf("Loading graph from \"%s\".\n", save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else if (argc == 5) {
         mode       = RunMode::Save;
@@ -858,10 +858,10 @@ int main(int argc, char** argv)
         if (atoi(argv[4]) == 0) {
             save_single_runs = false;
         }
-        printf("\n Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
                (int)masks, (int)late, (int)high, (int)long_time, (int)future);
-        printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else {
         printf("Usage:\n");

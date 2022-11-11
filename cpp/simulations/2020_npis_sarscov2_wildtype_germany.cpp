@@ -708,23 +708,23 @@ int main(int argc, char** argv)
         result_dir       = argv[3];
         save_single_runs = argv[4];
         printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("\n Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else if (argc == 4) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else if (argc == 3) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
-        printf("\n Loading graph from \"%s\".\n", save_dir.c_str());
-        printf("\n Exporting single run results and parameters: %d", (int)save_single_runs);
+        printf("Loading graph from \"%s\".\n", save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else {
         printf("Usage:\n");
