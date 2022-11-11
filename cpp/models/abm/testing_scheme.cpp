@@ -40,12 +40,12 @@ TestingScheme::TestingScheme()
 {
 }
 
-bool TestingScheme::run_scheme(Person& person, const GlobalTestingParameters& params) const
+bool TestingScheme::run_scheme(Person& person, const TimePoint& t, const GlobalTestingParameters& params) const
 {
     if (person.get_time_since_negative_test() > m_time_interval) {
         double random = UniformDistribution<double>::get_instance()();
         if (random < m_probability) {
-            return !person.get_tested(params.get<AntigenTest>());
+            return !person.get_tested(t, params.get<AntigenTest>());
         }
     }
     return true;

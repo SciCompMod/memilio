@@ -38,13 +38,19 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age,
-                          const VaccinationState& vaccination_state, Infection* const infection)
+Person& World::add_person(const LocationId& id, const AgeGroup& age, const boost::optional<Infection>& infection,
+                          const VaccinationState& vaccination_state)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, infection, person_id));
+    if (infection.has_value()) {
+        m_persons.push_back(
+            std::make_unique<Person>(id, age, infection.get_value_or(Infection()), vaccination_state, person_id));
+    }
+    else {
+        m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
+    }
     auto& person = *m_persons.back();
-    get_location(person).add_person(person, t);
+    get_location(person).add_person(person);
     return person;
 }
 
@@ -59,7 +65,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(t, dt, m_infection_parameters, m_virus_variants, loc);
+        person->interact(t, dt, m_virus_variants, loc);
     }
 }
 
@@ -113,8 +119,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
                 if (target != &get_location(*person)) {
-                    if (target->get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
-                        person->migrate_to(get_location(*person), *target, t);
+                    if (target->get_testing_scheme().run_scheme(*person, t, m_testing_parameters)) {
+                        person->migrate_to(get_location(*person), *target);
                     }
                     break;
                 }
@@ -129,8 +135,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
-                    person->migrate_to(get_location(*person), target, t);
+                if (target.get_testing_scheme().run_scheme(*person, t, m_testing_parameters)) {
+                    person->migrate_to(get_location(*person), target);
                 }
             }
             m_trip_list.increase_index();
@@ -241,13 +247,6 @@ void World::use_migration_rules(bool param)
 bool World::use_migration_rules() const
 {
     return m_use_migration_rules;
-}
-
-void World::update_infection_states(const TimePoint& t)
-{
-    for (auto&& p : m_persons) {
-        p->get_infection().update_infection_state(t);
-    }
 }
 
 } // namespace abm

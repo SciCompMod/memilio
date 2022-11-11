@@ -90,7 +90,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(const TimePoint& t, const TimeSpan& dt, const GlobalInfectionParameters& global_infection_parameters,
+    void interact(const TimePoint& t, const TimeSpan& dt,
                   CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> m_virus_variants, Location& loc);
 
     /** 
@@ -98,8 +98,7 @@ public:
      * @param loc_new the new location of the person.
      * @param cells_new the new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const TimePoint& t,
-                    const std::vector<uint32_t>& cells_new = {});
+    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
      * Get the current vaccination state of the person.
@@ -125,8 +124,7 @@ public:
         return m_infections.back();
     }
 
-    bool is_infected() const;
-    const InfectionState& get_infection_state() const;
+    bool is_infected(const TimePoint& t) const;
     const InfectionState& get_infection_state(const TimePoint& t) const;
 
     /**
@@ -237,7 +235,7 @@ public:
      * @param params sensitivity and specificity of the test method
      * @return true if the test result of the person is positive
      */
-    bool get_tested(const TestParameters& params);
+    bool get_tested(const TimePoint& t, const TestParameters& params);
 
     /**
      * get the person id of the person

@@ -39,7 +39,7 @@ class Simulation
 public:
     /**
      * Create a simulation.
-     * @param t the starting time of the simulation
+     * @param t0 the starting time of the simulation
      * @param world the world to simulate
      */
     Simulation(TimePoint t0, World&& world);
@@ -48,7 +48,7 @@ public:
      * Create a simulation with an empty world.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param t the starting time of the simulation.
+     * @param t0 the starting time of the simulation.
      */
     Simulation(TimePoint t0)
         : Simulation(t0, World())

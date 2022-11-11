@@ -32,7 +32,6 @@ namespace abm
 Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
-    , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VirusVariant::Count})
     , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
@@ -40,22 +39,23 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 }
 
 boost::optional<std::shared_ptr<Virus>>
-Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
-                   const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> virus_variants) const
+Location::interact(const Person& person, const TimePoint& /*t*/, const TimeSpan& dt,
+                   const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant>& virus_variants) const
 {
-    auto infection         = person.get_infection(); // always susceptible
-    auto vaccination_state = person.get_vaccination_state();
-    auto age               = person.get_age();
+    //auto vaccination_state = person.get_vaccination_state(); // change to get immunity level and use!
+    auto age = person.get_age();
 
     std::shared_ptr<Virus> no_virus;
 
     // remove duplicated code!
+    // add individual infection probability through immunity level
     if (!person.get_cells().empty()) {
         for (auto cell_index : person.get_cells()) {
             std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
 
-            std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [](auto v) {
-                std::make_pair(virus_variants[v], cached_exposure_rate[{age, v}])
+            std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [&, n = VirusVariantVector.begin()] () mutable {
+                ++n;
+                return std::make_pair(virus_variants[*n], m_cells[cell_index].cached_exposure_rate[{age, *n}]);
             });
             std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
             if (no_virus == new_virus) {
@@ -65,13 +65,16 @@ Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
                 return new_virus;
             }
         }
+        return boost::
+            none; // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     }
     else {
         std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
 
-        std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [](auto v) {
-            std::make_pair(virus_variants[v], m_cached_exposure_rate[{age, v}])
-        });
+        std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [&, n = VirusVariantVector.begin()] () mutable {
+                ++n;
+                return std::make_pair(virus_variants[*n], m_cached_exposure_rate[{age, *n}]);
+            });
         std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
         if (no_virus == new_virus) {
             return boost::none;
@@ -82,16 +85,18 @@ Location::interact(const Person& person, const TimePoint& t, const TimeSpan dt,
     }
 }
 
-void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& /*global_params*/)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
+
+    /* TODO
     if (m_cells.empty() && m_num_persons == 0) {
         m_cached_exposure_rate = {{AgeGroup::Count, VirusVariant::Count}, 0.};
     }
     else if (m_cells.empty()) {
-        auto num_carriers              = get_subpopulation(InfectionState::Carrier);
-        auto num_infected              = get_subpopulation(InfectionState::Infected);
+        auto num_carriers              = 0;//get_subpopulation(InfectionState::Carrier);
+        auto num_infected              = 0;//get_subpopulation(InfectionState::Infected);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
                                          (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
@@ -110,11 +115,13 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
             }
         }
     }
+    */
 }
 
-void Location::add_person(const Person& p, const TimePoint& t)
+void Location::add_person(const Person& /*p*/)
 {
     ++m_num_persons;
+    /**TODO
     InfectionState s = p.get_infection_state(t);
     change_subpopulation(s, +1);
     if (!m_cells.empty()) {
@@ -129,11 +136,14 @@ void Location::add_person(const Person& p, const TimePoint& t)
             }
         }
     }
+    */
 }
 
-void Location::remove_person(const Person& p, const TimePoint& t)
+void Location::remove_person(const Person& /*p*/)
 {
     --m_num_persons;
+    /** TODO
+   
     InfectionState s = p.get_infection_state(t);
     change_subpopulation(s, -1);
     for (auto i : p.get_cells()) {
@@ -146,6 +156,7 @@ void Location::remove_person(const Person& p, const TimePoint& t)
             --m_cells[i].num_infected;
         }
     }
+     */
 }
 
 void Location::changed_state(const Person& p, InfectionState old_infection_state, const TimePoint& t)
@@ -173,11 +184,10 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
     }
 }
 
-void Location::change_subpopulation(InfectionState s, int delta)
+/*void Location::change_subpopulation(InfectionState s, int delta)
 {
     m_subpopulations[size_t(s)] += delta;
-    assert(m_subpopulations[size_t(s)] >= 0 && "subpopulations must be non-negative");
-}
+    assert(m_subpopulations[size_t(s)] >= 0 && "subpopulations must be non-negative");}
 
 int Location::get_subpopulation(InfectionState s) const
 {
@@ -188,6 +198,7 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 {
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
 }
+*/
 
 } // namespace abm
 } // namespace mio

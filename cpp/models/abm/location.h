@@ -63,18 +63,18 @@ struct Cell {
     uint32_t num_people;
     uint32_t num_carriers;
     uint32_t num_infected;
-    CustomIndexArray<std::vector<double>, AgeGroup, VaccinationState> cached_exposure_rate;
+    CustomIndexArray<double, AgeGroup, VirusVariant> cached_exposure_rate;
 
     Cell()
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup::Count, VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup::Count, VirusVariant::Count}, 0.})
     {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<std::vector<double>, AgeGroup, VaccinationState> cached_exposure_rate_new)
+         CustomIndexArray<double, AgeGroup, VirusVariant> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -122,20 +122,20 @@ public:
      * @return new infection of the person
      */
     boost::optional<std::shared_ptr<Virus>>
-    interact(const Person& person, const TimePoint& t, const TimeSpan dt,
-             const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> virus_variants) const;
+    interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
+             const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant>& virus_variants) const;
 
     /** 
      * add a person to the population at this location.
      * @param person the person arriving
     */
-    void add_person(const Person& person, const TimePoint& t);
+    void add_person(const Person& person);
 
     /** 
      * remove a person from the population of this location.
      * @param person the person leaving
      */
-    void remove_person(const Person& person, const TimePoint& t);
+    void remove_person(const Person& person);
 
     /** 
      * notification that one person in this location changed infection state.
@@ -199,9 +199,9 @@ private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
-    std::array<int, size_t(InfectionState::Count)> m_subpopulations;
+    std::vector<Person> m_persons;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<std::vector<double>, AgeGroup, VirusVariant> m_cached_exposure_rate;
+    CustomIndexArray<double, AgeGroup, VirusVariant> m_cached_exposure_rate;
     TestingScheme m_testing_scheme;
     std::vector<Cell> m_cells;
 };

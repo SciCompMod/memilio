@@ -98,9 +98,9 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(const LocationId& id, const TimePoint& t, const AgeGroup& age = AgeGroup::Age15to34,
-                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
-                       Infection* const infection                = nullptr);
+    Person& add_person(const LocationId& id, const AgeGroup& age = AgeGroup::Age15to34,
+                       const boost::optional<Infection>& infection = boost::none,
+                       const VaccinationState& vaccination_state   = VaccinationState::Unvaccinated);
 
     /**
      * Sets the current infection state of the person.
@@ -206,7 +206,7 @@ public:
     void createVirusVariants()
     {
         for (auto v : VirusVariantVector) {
-            m_virus_variants[v] = std::make_shared<Virus>(v);
+            m_virus_variants[v] = std::make_shared<Virus>();
         }
     }
 

@@ -89,7 +89,7 @@ public:
      * @return if the person is allowed to enter the location
      */
 
-    bool run_scheme(Person& person, const GlobalTestingParameters& params) const;
+    bool run_scheme(Person& person, const TimePoint& t, const GlobalTestingParameters& params) const;
 
 private:
     TimeSpan m_time_interval;
