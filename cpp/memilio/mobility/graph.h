@@ -236,7 +236,7 @@ private:
  * @param node_ids Indices for the nodes.
  * @return Graph with nodes only having no edges.
  */
- template <class NodePropertyT, class EdgePropertyT>
+template <class NodePropertyT, class EdgePropertyT>
 auto create_graph_without_edges(const std::vector<NodePropertyT>& node_properties, const std::vector<int>& node_ids)
 {
     // create a graph without edges for writing to file

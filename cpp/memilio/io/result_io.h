@@ -109,16 +109,15 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
  * @return Any io errors that occur during writing of the files.
  */
 template <class Model>
-IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& result,
-                                const std::vector<Model>& params, const std::vector<int>& county_ids,
-                                const fs::path& result_dir, size_t run_idx)
+IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& result, const std::vector<Model>& params,
+                                       const std::vector<int>& county_ids, const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
     BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                       (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
-        write_graph(create_graph_without_edges<Model, MigrationParameters>(params, county_ids), result_dir_run.string(), IOF_OmitDistributions));
+                                  (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MigrationParameters>(params, county_ids),
+                                  result_dir_run.string(), IOF_OmitDistributions));
     return success();
 }
 
@@ -135,25 +134,22 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
  */
 template <class Model>
 IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& ensemble_results,
-                            const std::vector<std::vector<Model>>& ensemble_params,
-                            const std::vector<int>& county_ids, const fs::path& result_dir,
-                            bool save_single_runs = true, bool save_percentiles = true)
+                            const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
+                            const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true)
 {
     //save results and sum of results over nodes
     auto ensemble_result_sum = sum_nodes(ensemble_results);
     auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
-    if(save_single_runs)
-    {
+    if (save_single_runs) {
         for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(save_result(ensemble_result_sum[i], {0}, num_groups,
-                                           (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(save_result(ensemble_results[i], county_ids, num_groups,
-                                           (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_result_sum[i], {0}, num_groups,
+                                          (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results[i], county_ids, num_groups,
+                                          (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
         }
     }
 
-    if(save_percentiles)
-    {
+    if (save_percentiles) {
         // make directories for percentiles
         auto result_dir_p05 = result_dir / "p05";
         auto result_dir_p25 = result_dir / "p25";

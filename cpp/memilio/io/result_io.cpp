@@ -43,7 +43,7 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
         MEMILIO_H5_CHECK(region_h5group.id, StatusCode::UnknownError,
                          "Group could not be created (" + h5group_name + ")");
 
-        const int num_timepoints   = static_cast<int>(result.get_num_time_points());
+        const int num_timepoints      = static_cast<int>(result.get_num_time_points());
         const int num_infectionstates = (int)result.get_num_elements() / num_groups;
 
         hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
@@ -61,8 +61,8 @@ IOResult<void> save_result(const std::vector<TimeSeries<double>>& results, const
                          .eval();
 
         for (int group_idx = 0; group_idx <= num_groups; ++group_idx) {
-            auto group = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
-                                                                                                      num_infectionstates)
+            auto group = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                             num_timepoints, num_infectionstates)
                              .eval();
             if (group_idx < num_groups) {
                 for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
