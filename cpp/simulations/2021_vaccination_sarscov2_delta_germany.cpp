@@ -1016,11 +1016,11 @@ int main(int argc, char** argv)
     }
     else {
         printf("Usage:\n");
-        printf("paper_202107 <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
+        printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
         printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
-        printf("paper_202107 <load_dir> <result_dir>\n");
+        printf("2021_vaccination_delta <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }

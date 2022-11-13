@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,29 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef INFECTIONSTATE_H
-#define INFECTIONSTATE_H
+#include "ode_secir/model.h"
 
 namespace mio
 {
-
-/**
- * @brief The InfectionState enum describes the possible
- * categories for the infectious state of persons
- */
-enum class InfectionState
+namespace osecir
 {
-    Susceptible        = 0,
-    Exposed            = 1,
-    InfectedNoSymptoms = 2,
-    InfectedSymptoms   = 3,
-    InfectedSevere     = 4,
-    InfectedCritical   = 5,
-    Recovered          = 6,
-    Dead               = 7,
-    Count              = 8
-};
 
+} // namespace osecir
 } // namespace mio
-
-#endif

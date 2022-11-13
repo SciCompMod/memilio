@@ -23,9 +23,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Note: this only works under linux and with make
 # Ninja creates different directory names which do not work together with this scrupt
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    option (MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
+    option(MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
     mark_as_advanced(MEMILIO_TEST_COVERAGE)
-    if (MEMILIO_TEST_COVERAGE)
+
+    if(MEMILIO_TEST_COVERAGE)
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
@@ -38,26 +39,26 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # set sanitizer compiler flags
-if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
+if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
     if(MEMILIO_SANITIZE_ADDRESS)
         string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=address")
-        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fsanitize=address")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG " -fsanitize=address")
     endif(MEMILIO_SANITIZE_ADDRESS)
 
     if(MEMILIO_SANITIZE_UNDEFINED)
         string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=undefined")
-        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fsanitize=undefined")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG " -fsanitize=undefined")
     endif(MEMILIO_SANITIZE_UNDEFINED)
-    
+
     if(MEMILIO_SANITIZE_ADDRESS OR MEMILIO_SANITIZE_UNDEFINED)
         string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -fno-sanitize-recover=all")
-        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fno-omit-frame-pointer -fno-sanitize-recover=all")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG " -fno-omit-frame-pointer -fno-sanitize-recover=all")
     endif(MEMILIO_SANITIZE_ADDRESS OR MEMILIO_SANITIZE_UNDEFINED)
-endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
+endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
 
 # define flags to enable most warnings and treat them as errors for different compilers
 # add flags to each target separately instead of globally so users have the choice to use their own flags
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")    
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -71,23 +72,28 @@ endif()
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio)
-if (MEMILIO_BUILD_MODELS)
+
+if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
-    add_subdirectory(models/secir)
+    add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
 endif()
-if (MEMILIO_BUILD_EXAMPLES)
+
+if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
-if (MEMILIO_BUILD_TESTS)
+
+if(MEMILIO_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
-if (MEMILIO_BUILD_SIMULATIONS)
+
+if(MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
 endif()
-if (MEMILIO_BUILD_BENCHMARKS)
+
+if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
@@ -95,11 +101,11 @@ endif()
 include(GNUInstallDirs)
 
 install(TARGETS memilio
-        EXPORT memilio-targets
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    EXPORT memilio-targets
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
@@ -110,20 +116,20 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/cmake/memilio-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake
-INSTALL_DESTINATION
+    INSTALL_DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
 )
 
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
+    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
 )
 
-install (
-  FILES
+install(
+    FILES
     "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
-  DESTINATION
+    DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
 )

@@ -12,6 +12,7 @@ if(MEMILIO_USE_BUNDLED_PYBIND11)
         GIT_TAG v2.5
     )
     FetchContent_GetProperties(pybind11)
+
     if(NOT pybind11_POPULATED)
         FetchContent_Populate(pybind11)
         add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
@@ -27,7 +28,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DI
 pybind11_add_module(_simulation_secir MODULE
     memilio/simulation/secir.cpp
 )
-target_link_libraries(_simulation_secir PRIVATE memilio secir)
+target_link_libraries(_simulation_secir PRIVATE memilio ode_secir)
 target_include_directories(_simulation_secir PRIVATE memilio/simulation)
 install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 

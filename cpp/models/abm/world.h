@@ -59,8 +59,8 @@ public:
         , m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
-        , m_use_migration_rules(true)
     {
+        use_migration_rules(true);
     }
 
     //type is move-only for stable references of persons/locations
@@ -195,6 +195,8 @@ private:
     MigrationParameters m_migration_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+                          std::vector<LocationType>>> m_migration_rules;
 };
 
 } // namespace abm
