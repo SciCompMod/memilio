@@ -52,6 +52,7 @@ public:
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
+        auto t_idx           = SimulationDay((size_t)t);
 
         ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
 
@@ -107,6 +108,9 @@ public:
             size_t ISyIICi =
                 this->populations.get_flat_index({i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
+            size_t TImm1 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunity1});
+            size_t TImm2 = this->populations.get_flat_index({i, InfectionState::TemporaryImmunity2});
+
             size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
             size_t DNi  = this->populations.get_flat_index({i, InfectionState::DeadNaive});
             size_t DPIi = this->populations.get_flat_index({i, InfectionState::DeadPartialImmunity});
@@ -119,6 +123,9 @@ public:
 
             dydt[SPIi] = 0;
             dydt[EPIi] = 0;
+
+            dydt[TImm1] = 0;
+            dydt[TImm2] = 0;
 
             dydt[SIIi] = 0;
             dydt[EIIi] = 0;
@@ -218,6 +225,27 @@ public:
                 dydt[EIIi] += dummy_SII;
             }
 
+            // only add vaccinations, if there are any people in the compartment left.
+            double dummy_partial_imm =
+                (y[SNi] < 1) ? 0.
+                             : y[SNi] * params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] /
+                                   params.get<DaysUntilEffectivePartialImmunity>()[i];
+
+            double dummy_improved_imm =
+                (y[SPIi] < 1) ? 0.
+                              : y[SPIi] * params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] /
+                                    params.get<DaysUntilEffectiveImprovedImmunity>()[i];
+
+            double dummy_booster_imm = (y[SIIi] < 1) ? 0.
+                                                     : y[SIIi] * params.get<RateOfDailyBoosterVaccinations>()[i] /
+                                                           params.get<DaysUntilEffectiveBoosterImmunity>()[i];
+
+            dydt[SNi] -= dummy_partial_imm;
+            dydt[SPIi] -= dummy_improved_imm;
+            dydt[TImm1] += dummy_partial_imm;
+            dydt[TImm2] = dydt[TImm2] + dummy_improved_imm + dummy_booster_imm;
+            dydt[SIIi] -= dummy_booster_imm;
+
             // ICU capacity shortage is close
             // TODO: if this is used with vaccination model, it has to be adapted if CriticalPerSevere
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
@@ -303,13 +331,13 @@ public:
                 (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyIIi] + y[ISyIICi]);
 
             // recovered and deaths from all paths
-            dydt[SIIi] += params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
-                          (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] *
-                              (y[ISyNi] + y[ISyNCi]) +
-                          (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi] +
-                          (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
+            dydt[TImm1] += params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
+                           (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] *
+                               (y[ISyNi] + y[ISyNCi]) +
+                           (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi] +
+                           (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
 
-            dydt[SIIi] +=
+            dydt[TImm2] +=
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
                          (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
                     rateINS / reducTimeInfectedMild * (y[INSPIi] + y[INSPICi]) +
@@ -323,7 +351,7 @@ public:
                          params.get<DeathsPerCritical>()[i]) /
                     params.get<TimeInfectedCritical>()[i] * y[ICrPIi];
 
-            dydt[SIIi] +=
+            dydt[TImm2] +=
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
                          (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
                     rateINS / reducTimeInfectedMild * (y[INSIIi] + y[INSIICi]) +
@@ -338,6 +366,13 @@ public:
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
                      params.get<DeathsPerCritical>()[i]) /
                     params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
+
+            double dummy_TImm1 = 1 / params.get<ImmunityInterval1>()[i];
+            double dummy_TImm2 = 1 / params.get<ImmunityInterval2>()[i];
+            dydt[TImm1] -= dummy_TImm1 * y[TImm1];
+            dydt[TImm2] -= dummy_TImm2 * y[TImm2];
+            dydt[SPIi] += dummy_TImm1 * y[TImm1];
+            dydt[SIIi] += dummy_TImm2 * y[TImm2];
 
             dydt[DNi]  = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
             dydt[DPIi] = reducInfectedSevereCriticalDeadPartialImmunity /
@@ -354,6 +389,11 @@ public:
             dydt[DIIi] +=
                 (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
                 deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
+            // waning immunity
+            dydt[SNi] += 1 / params.get<WaningPartialImmunity>()[i] * y[SPIi];
+            dydt[SPIi] -= 1 / params.get<WaningPartialImmunity>()[i] * y[SPIi];
+            dydt[SPIi] += 1 / params.get<WaningImprovedImmunity>()[i] * y[SPIi];
+            dydt[SIIi] -= 1 / params.get<WaningImprovedImmunity>()[i] * y[SPIi];
         }
     }
 
@@ -422,21 +462,38 @@ public:
     {
     }
 
-    void apply_b161(double t)
+    void apply_variant(double t)
     {
+        // TODO: Wachtstumsrate anpassen/ evtl als Parameter
+        auto start_day            = this->get_model().parameters.template get<StartDay>();
+        auto variant_day          = get_day_in_year(Date(2022, 11, 1));
+        auto szenario_new_variant = this->get_model().parameters.template get<SzenarioNewVariant>();
 
-        auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; ++i) {
-            double new_transmission =
-                (1 - share_new_variant) *
-                    this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
-            this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
-                new_transmission;
+        // szenario 1 means no new variant -> BA.5 or similar variant stays
+        if (start_day + t > variant_day && szenario_new_variant > 1) {
+            auto variant_growth = (start_day - variant_day) * 0.1666667;
+            // 2 equal to the share of the delta variant on June 6
+            double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + variant_growth) * 0.01);
+            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; ++i) {
+                double new_transmission =
+                    (1 - share_new_variant) *
+                        this->get_model().parameters.template get<BaseInfectiousness>()[(AgeGroup)i] +
+                    share_new_variant *
+                        this->get_model().parameters.template get<BaseInfectiousnessNewVariant>()[(AgeGroup)i];
+                this->get_model().parameters.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] =
+                    new_transmission;
+
+                // szenarion > 2 (i.e. szenario 3) means same severity as delta.
+                if (szenario_new_variant > 2) {
+                    double new_severtiy =
+                        (1 - share_new_variant) *
+                            this->get_model().parameters.template get<BaseSeverity>()[(AgeGroup)i] +
+                        share_new_variant *
+                            this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
+                    this->get_model().parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)i] = new_severtiy;
+                }
+            }
         }
     }
 
@@ -448,44 +505,44 @@ public:
         auto last_value   = this->get_result().get_last_value();
 
         auto count = (size_t)InfectionState::Count;
-        auto S     = (size_t)InfectionState::SusceptibleNaive;
-        auto SV    = (size_t)InfectionState::SusceptiblePartialImmunity;
-        auto R     = (size_t)InfectionState::SusceptibleImprovedImmunity;
+        auto SN    = (size_t)InfectionState::SusceptibleNaive;
+        auto SPI   = (size_t)InfectionState::SusceptiblePartialImmunity;
+        auto SII   = (size_t)InfectionState::SusceptibleImprovedImmunity;
 
         for (size_t i = 0; i < num_groups; ++i) {
 
             double first_vacc;
             double full_vacc;
             if (t_idx == SimulationDay(0)) {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
+                first_vacc = params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}];
                 full_vacc  = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
             }
             else {
-                first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
-                             params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                first_vacc = params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx}] -
+                             params.template get<DailyPartialVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
                 full_vacc = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
                             params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
             }
 
-            if (last_value(count * i + S) - first_vacc < 0) {
+            if (last_value(count * i + SN) - first_vacc < 0) {
                 auto corrected = 0.99 * last_value(count * i + S);
                 log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", t, first_vacc,
                             corrected);
                 first_vacc = corrected;
             }
 
-            last_value(count * i + S) -= first_vacc;
-            last_value(count * i + SV) += first_vacc;
+            last_value(count * i + SN) -= first_vacc;
+            last_value(count * i + SPI) += first_vacc;
 
-            if (last_value(count * i + SV) - full_vacc < 0) {
+            if (last_value(count * i + SPI) - full_vacc < 0) {
                 auto corrected = 0.99 * last_value(count * i + SV);
                 log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", t, full_vacc,
                             corrected);
                 full_vacc = corrected;
             }
 
-            last_value(count * i + SV) -= full_vacc;
-            last_value(count * i + R) += full_vacc;
+            last_value(count * i + SPI) -= full_vacc;
+            last_value(count * i + SII) += full_vacc;
         }
     }
 
@@ -514,12 +571,12 @@ public:
 
             if (t == 0) {
                 //this->apply_vaccination(t); // done in init now?
-                this->apply_b161(t);
+                this->apply_variant(t);
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
-                this->apply_b161(t);
+                // this->apply_vaccination(t + 0.5 + dt_eff);
+                this->apply_variant(t);
             }
 
             if (t > 0) {

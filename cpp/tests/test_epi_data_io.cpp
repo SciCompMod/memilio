@@ -247,12 +247,12 @@ TEST(TestEpiData, vaccination_data)
     ASSERT_EQ(vacc_data[0].date, mio::Date(2021, 12, 1));
     ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(1));
     ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1011));
-    ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 23.05);
+    ASSERT_EQ(vacc_data[0].num_second_vaccinations_completed, 23.05);
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2021, 12, 2));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
     ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
-    ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 12.0);
+    ASSERT_EQ(vacc_data[1].num_second_vaccinations_completed, 12.0);
 }
 
 TEST(TestEpiData, vaccination_data_error_age)

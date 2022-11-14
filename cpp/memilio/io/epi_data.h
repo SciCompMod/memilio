@@ -371,7 +371,8 @@ class VaccinationDataEntry
 public:
     static const std::array<const char*, 6> age_group_names;
 
-    double num_vaccinations_completed;
+    double num_second_vaccinations_completed, num_first_vaccinations_completed, num_vaccinations_refreshed,
+        num_vaccinations_refreshed_2;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::de::StateId> state_id;
@@ -380,15 +381,19 @@ public:
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
-        auto obj                        = io.expect_object("VaccinationDataEntry");
-        auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto date                       = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
-        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto obj                               = io.expect_object("VaccinationDataEntry");
+        auto num_second_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto num_first_vaccinations_completed  = obj.expect_element("Vacc_partially", Tag<double>{});
+        auto num_vaccinations_refreshed        = obj.expect_element("Vacc_refreshed", Tag<double>{});
+        auto num_vaccinations_refreshed_2      = obj.expect_element("Vacc_refreshed_2", Tag<double>{});
+        auto date                              = obj.expect_element("Date", Tag<StringDate>{});
+        auto age_group_str                     = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto state_id                          = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
+        auto county_id                         = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
         return mio::apply(
             io,
-            [](auto nf, auto d, auto&& a_str, auto sid, auto cid) -> IOResult<VaccinationDataEntry> {
+            [](auto nf, auto np, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid,
+               auto cid) -> IOResult<VaccinationDataEntry> {
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 auto a  = AgeGroup(0);
                 if (it != age_group_names.end()) {
@@ -397,9 +402,10 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{nf, d, a, sid, cid});
+                return success(VaccinationDataEntry{nf, np, n_refreshed_1, n_refreshed_2, d, a, sid, cid});
             },
-            num_vaccinations_completed, date, age_group_str, state_id, county_id);
+            num_second_vaccinations_completed, num_first_vaccinations_completed, num_vaccinations_refreshed,
+            num_vaccinations_refreshed_2, date, age_group_str, state_id, county_id);
     }
 };
 

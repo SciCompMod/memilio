@@ -196,6 +196,38 @@ struct TimeInfectedSevere {
 };
 
 /**
+ * @brief the time people stays immune after infection or vaccination located in S
+         in the SECIR model in day unit
+ */
+struct ImmunityInterval1 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ImmunityInterval1";
+    }
+};
+
+/**
+ * @brief the time people stays immune after infection or vaccination located in S_pv or R
+        in the SECIR model in day unit
+ */
+struct ImmunityInterval2 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "ImmunityInterval2";
+    }
+};
+
+/**
  * @brief the time people are treated by ICU before returning home in the SECIR model
  *        in day unit
  */
@@ -362,7 +394,7 @@ struct DaysUntilEffectivePartialImmunity {
 };
 
 /**
- * @brief Time in days until second vaccine dose takes full effect.
+ * @brief Time in days until improved vaccine dose takes full effect.
  */
 struct DaysUntilEffectiveImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -377,9 +409,157 @@ struct DaysUntilEffectiveImprovedImmunity {
 };
 
 /**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ */
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from S_pv -> S
+ */
+struct WaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from R -> S_pv
+ */
+struct WaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Number of people in Timm1 due to vaccination
+ */
+struct VaccinationTemporaryImm1 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm1";
+    }
+};
+
+/**
+ * @brief Number of people in Timm2 due to vaccination
+ */
+struct VaccinationTemporaryImm2 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm2";
+    }
+};
+/**
+ * @brief Time in days until booster vaccine dose takes full effect.
+ */
+struct DaysUntilEffectiveBoosterImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveBoosterImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from S_pv -> S
+ */
+struct WaningPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningPartialImmunity";
+    }
+};
+
+/** 
+ * @brief Time in days to describe waning immunity to get person from R -> S_pv
+ */
+struct WaningImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 90.0);
+    }
+    static std::string name()
+    {
+        return "WaningImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Number of people in Timm1 due to vaccination
+ */
+struct VaccinationTemporaryImm1 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm1";
+    }
+};
+
+/**
+ * @brief Number of people in Timm2 due to vaccination
+ */
+struct VaccinationTemporaryImm2 {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "VaccinationTemporaryImm2";
+    }
+};
+/**
 * @brief Total number of first vaccinations up to the given day.
 */
-struct DailyFirstVaccination {
+struct DailyPartialVaccination {
     using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
     {
@@ -387,7 +567,22 @@ struct DailyFirstVaccination {
     }
     static std::string name()
     {
-        return "DailyFirstVaccination";
+        return "DailyPartialVaccination";
+    }
+};
+
+/**
+* @brief rate of first vaccinations up to the given day.
+*/
+struct RateOfDailyPartialVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyPartialVaccinations";
     }
 };
 
@@ -403,6 +598,51 @@ struct DailyFullVaccination {
     static std::string name()
     {
         return "DailyFullVaccination";
+    }
+};
+
+/**
+* @brief Total number of full vaccinations up to the given day.
+*/
+struct DailyBoosterVaccination {
+    using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type({size, SimulationDay(0)});
+    }
+    static std::string name()
+    {
+        return "DailyBoosterVaccination";
+    }
+};
+
+/**
+* @brief rate of full vaccinations up to the given day.
+*/
+struct RateOfDailyImprovedVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyImprovedVaccinations";
+    }
+};
+
+/**
+* @brief rate of booster vaccinations for persons already located in R.
+*/
+struct RateOfDailyBoosterVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyBoosterVaccinations";
     }
 };
 
@@ -515,7 +755,7 @@ struct ReducTimeInfectedMild {
 /**
  * @brief Infectiousness of variant B117.
  */
-struct BaseInfectiousnessB117 {
+struct BaseInfectiousness {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -523,14 +763,14 @@ struct BaseInfectiousnessB117 {
     }
     static std::string name()
     {
-        return "BaseInfectiousnessB117";
+        return "BaseInfectiousness";
     }
 };
 
 /**
  * @brief Infectiousness of variant B161.
  */
-struct BaseInfectiousnessB161 {
+struct BaseInfectiousnessNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -538,7 +778,45 @@ struct BaseInfectiousnessB161 {
     }
     static std::string name()
     {
-        return "BaseInfectiousnessB161";
+        return "BaseInfectiousnessNewVariant";
+    }
+};
+struct BaseSeverity {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseSeverity";
+    }
+};
+
+/**
+ * @brief Szenario regarding new Variant. Different szenarios are explained in the simulation file.
+ */
+struct SzenarioNewVariant {
+    using Type = int;
+    static Type get_default(AgeGroup)
+    {
+        return 1;
+    }
+    static std::string name()
+    {
+        return "SzenarioNewVariant";
+    }
+};
+
+struct BaseSeverityNewVariant {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseSeverityNewVariant";
     }
 };
 
@@ -548,11 +826,13 @@ using ParametersBase =
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
                  RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
                  CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
-                 ReducExposedPartialImmunity, ReducExposedImprovedImmunity, ReducInfectedSymptomsPartialImmunity,
-                 ReducInfectedSymptomsImprovedImmunity, ReducInfectedSevereCriticalDeadPartialImmunity,
-                 ReducInfectedSevereCriticalDeadImprovedImmunity, ReducTimeInfectedMild, BaseInfectiousnessB117,
-                 BaseInfectiousnessB161>;
+                 DaysUntilEffectiveImprovedImmunity, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
+                 DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
+                 VaccinationTemporaryImm1, VaccinationTemporaryImm2, ReducExposedImprovedImmunity,
+                 ReducInfectedSymptomsPartialImmunity, ReducInfectedSymptomsImprovedImmunity,
+                 ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
+                 ReducTimeInfectedMild, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant,
+                 BaseSeverity, BaseSeverityNewVariant, WaningPartialImmunity, WaningImprovedImmunity>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
@@ -657,6 +937,18 @@ public:
                 this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - 0.5;
             }
 
+            if (this->get<ImmunityInterval1>()[i] < 5.0) {
+                log_warning("Constraint check: Parameter ImmunityInterval1 changed from {:.4f} to {:.4f}",
+                            this->get<ImmunityInterval1>()[i], 5.0);
+                this->get<ImmunityInterval1>()[i] = 5.0;
+            }
+
+            if (this->get<ImmunityInterval2>()[i] < 5.0) {
+                log_warning("Constraint check: Parameter ImmunityInterval2 changed from {:.4f} to {:.4f}",
+                            this->get<ImmunityInterval2>()[i], 5.0);
+                this->get<ImmunityInterval2>()[i] = 5.0;
+            }
+
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
                 log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}",
                             this->get<TimeInfectedSymptoms>()[i], 1.0);
@@ -669,10 +961,10 @@ public:
                 this->get<TimeInfectedSevere>()[i] = 1.0;
             }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
+            if (this->get<TimeInfectedCritical>()[i] < 0.5) {
                 log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedCritical>()[i], 1.0);
-                this->get<TimeInfectedCritical>()[i] = 1.0;
+                            this->get<TimeInfectedCritical>()[i], 0.5);
+                this->get<TimeInfectedCritical>()[i] = 0.5;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
@@ -749,6 +1041,16 @@ public:
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
+            }
+
+            if (this->get<ImmunityInterval1>()[i] < 5.0) {
+                log_error("Constraint check: Parameter ImmunityInterval1 {:.4f} smaller {:.4f}",
+                          this->get<ImmunityInterval1>()[i], 5.0);
+            }
+
+            if (this->get<ImmunityInterval2>()[i] < 5.0) {
+                log_error("Constraint check: Parameter ImmunityInterval2 {:.4f} smaller {:.4f}",
+                          this->get<ImmunityInterval2>()[i], 5.0);
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
