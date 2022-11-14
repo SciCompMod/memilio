@@ -26,13 +26,13 @@ namespace mio
 namespace abm
 {
 
-ViralLoad::ViralLoad(const TimePoint& start_date)
+ViralLoad::ViralLoad(const TimePoint& start_date, const GlobalInfectionParameters& params)
     : m_start_date(start_date)
 {
-    draw_viral_load();
+    draw_viral_load(params);
 }
 
-void ViralLoad::draw_viral_load()
+void ViralLoad::draw_viral_load(const GlobalInfectionParameters& /*params*/)
 {
     // These numbers are subject to change, They are going to be based on distributions backed from data.
     m_peak     = 5.0;
@@ -56,13 +56,13 @@ double ViralLoad::get_viral_load(const TimePoint& t) const
     }
 }
 
-Infection::Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date, const InfectionState& start_state,
-                     const bool detected)
-    : m_virus(virus)
-    , m_viral_load(start_date)
+Infection::Infection(const VirusVariant& virus, const GlobalInfectionParameters& params, const TimePoint& start_date,
+                     const InfectionState& start_state, const bool detected)
+    : m_virus_variant(virus)
+    , m_viral_load(start_date, params)
     , m_detected(detected)
 {
-    draw_infection_course(start_date, start_state);
+    draw_infection_course(start_date, params, start_state);
 };
 
 double Infection::get_viral_load(const TimePoint& t) const
@@ -75,9 +75,9 @@ double Infection::get_infectivity(const TimePoint& t) const
     return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
-const Virus Infection::get_virus_type() const
+const VirusVariant& Infection::get_virus_variant() const
 {
-    return *m_virus.get();
+    return m_virus_variant;
 }
 
 const InfectionState& Infection::get_infection_state(const TimePoint& t) const
@@ -99,7 +99,8 @@ bool Infection::is_detected() const
     return m_detected;
 }
 
-void Infection::draw_infection_course(const TimePoint& start_date, const InfectionState& start_state)
+void Infection::draw_infection_course(const TimePoint& start_date, const GlobalInfectionParameters& /*params*/,
+                                      const InfectionState& start_state)
 {
     auto t = start_date;
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, start_state));

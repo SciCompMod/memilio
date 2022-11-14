@@ -57,14 +57,12 @@ public:
      */
     World(const GlobalInfectionParameters& params = {})
         : m_locations((uint32_t)LocationType::Count)
-        , m_virus_variants({VirusVariant::Count})
         , m_infection_parameters(params)
         , m_migration_parameters()
         , m_testing_parameters()
         , m_trip_list()
         , m_use_migration_rules(true)
     {
-        createVirusVariants();
     }
 
     //type is move-only for stable references of persons/locations
@@ -192,31 +190,12 @@ public:
 
     void update_infection_states(const TimePoint& t);
 
-    /**
-     * Get the Virus types that are known for this simulation.
-    */
-    const auto& get_virus_variants() const
-    {
-        return m_virus_variants;
-    }
-
-    /**
-    * Add a Virus type to the simulation.
-   */
-    void createVirusVariants()
-    {
-        for (auto v : VirusVariantVector) {
-            m_virus_variants[v] = std::make_shared<Virus>();
-        }
-    }
-
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
-    CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> m_virus_variants;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;

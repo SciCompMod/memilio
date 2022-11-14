@@ -23,7 +23,7 @@
 #include "abm/time.h"
 #include "abm/state.h"
 #include "abm/age.h"
-#include "memilio/utils/custom_index_array.h"
+#include "abm/parameters.h"
 
 #include <vector>
 #include <memory>
@@ -37,7 +37,7 @@ namespace abm
 // Virus is always used in a shared pointer that is shared between all agents that are infected with this virus
 // In order to have different virus parameters within the same virus variant for different agents,
 // we would have to drop the shared pointer and assign a new virus object to each infection.
-class Virus
+/*class Virus
 {
 public:
     Virus() // for easy construction of no_virus
@@ -70,13 +70,14 @@ private:
     CustomIndexArray<double, AgeGroup> m_infectivity; // infectivity factor
     // need to discuss virus parameters
 };
+*/
 
 class ViralLoad
 {
 public:
     ViralLoad() = default;
-    ViralLoad(const TimePoint& start_day);
-    void draw_viral_load();
+    ViralLoad(const TimePoint& start_day, const GlobalInfectionParameters& params);
+    void draw_viral_load(const GlobalInfectionParameters& params);
     double get_viral_load(const TimePoint& t) const;
 
 private:
@@ -98,7 +99,7 @@ public:
      * @param start_date starting date of the infection
      * @param start_state starting infection state of the person, default susceptible. Only for initialization.
      */
-    Infection(std::shared_ptr<Virus> virus, const TimePoint& start_date,
+    Infection(const VirusVariant& virus, const GlobalInfectionParameters& params, const TimePoint& start_date,
               const InfectionState& start_state = InfectionState::Exposed, const bool detected = false);
 
     /**
@@ -124,7 +125,7 @@ public:
      * get virus type
      * @return virus type of the infection
      */
-    const Virus get_virus_type() const;
+    const VirusVariant& get_virus_variant() const;
 
     const InfectionState& get_infection_state(const TimePoint& t) const;
 
@@ -135,12 +136,12 @@ private:
     /**
      * determine viral load course and infection course
      */
-    void draw_infection_course(const TimePoint& start_date,
+    void draw_infection_course(const TimePoint& start_date, const GlobalInfectionParameters& params,
                                const InfectionState& start_state = InfectionState::Exposed);
 
-    std::shared_ptr<Virus> m_virus;
     std::vector<std::pair<mio::abm::TimePoint, mio::abm::InfectionState>>
         m_infection_course; // start date of each infection state
+    VirusVariant m_virus_variant;
     ViralLoad m_viral_load;
     double m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
     bool m_detected;

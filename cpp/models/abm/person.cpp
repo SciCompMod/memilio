@@ -66,20 +66,16 @@ Person::Person(const Location& location, const AgeGroup& age, const VaccinationS
 {
 }
 
-void Person::interact(const TimePoint& t, const TimeSpan& dt,
-                      CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> virus_variants, Location& loc)
+void Person::interact(const TimePoint& t, const TimeSpan& dt, Location& loc, const GlobalInfectionParameters& params)
 {
     auto current_infection_state = get_infection_state(t);
     if (current_infection_state == InfectionState::Susceptible) { // Susceptible
-        auto virus = loc.interact(*this, t, dt, virus_variants);
+        auto virus = loc.interact(*this, t, dt);
 
-        if (virus.has_value()) {
-            m_infections.push_back(Infection(virus.get_value_or(std::shared_ptr<Virus>()), t));
+        if (virus != VirusVariant::Count) {
+            m_infections.push_back(Infection(virus, params, t));
         }
     }
-
-    //        m_time_until_carrier = hours(
-    //            int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
 
     auto new_infection_state = get_infection_state(t);
     if (current_infection_state != new_infection_state) {

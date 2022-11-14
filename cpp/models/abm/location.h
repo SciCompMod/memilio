@@ -63,18 +63,18 @@ struct Cell {
     uint32_t num_people;
     uint32_t num_carriers;
     uint32_t num_infected;
-    CustomIndexArray<double, AgeGroup, VirusVariant> cached_exposure_rate;
+    CustomIndexArray<double, VirusVariant, AgeGroup> cached_exposure_rate;
 
     Cell()
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup::Count, VirusVariant::Count}, 0.})
+        , cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
     {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, AgeGroup, VirusVariant> cached_exposure_rate_new)
+         CustomIndexArray<double, VirusVariant, AgeGroup> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -121,9 +121,7 @@ public:
      * @param global_params global infection parameters
      * @return new infection of the person
      */
-    boost::optional<std::shared_ptr<Virus>>
-    interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
-             const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant>& virus_variants) const;
+    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt) const;
 
     /** 
      * add a person to the population at this location.

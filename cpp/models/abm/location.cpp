@@ -38,50 +38,39 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-boost::optional<std::shared_ptr<Virus>>
-Location::interact(const Person& person, const TimePoint& /*t*/, const TimeSpan& dt,
-                   const CustomIndexArray<std::shared_ptr<Virus>, VirusVariant>& virus_variants) const
+VirusVariant Location::interact(const Person& person, const TimePoint& /*t*/, const TimeSpan& dt) const
 {
     //auto vaccination_state = person.get_vaccination_state(); // change to get immunity level and use!
     auto age = person.get_age();
-
-    std::shared_ptr<Virus> no_virus;
 
     // remove duplicated code!
     // add individual infection probability through immunity level
     if (!person.get_cells().empty()) {
         for (auto cell_index : person.get_cells()) {
-            std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
+            std::pair<VirusVariant, double> virus_submission_probabilites[(uint32_t)VirusVariant::Count];
 
-            std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [&, n = VirusVariantVector.begin()] () mutable {
-                ++n;
-                return std::make_pair(virus_variants[*n], m_cells[cell_index].cached_exposure_rate[{age, *n}]);
-            });
-            std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
-            if (no_virus == new_virus) {
-                return boost::none;
-            }
-            else {
-                return new_virus;
-            }
+            std::generate(std::begin(virus_submission_probabilites), std::end(virus_submission_probabilites),
+                          [&, n = 0]() mutable {
+                              ++n;
+                              return std::make_pair((VirusVariant)n,
+                                                    m_cells[cell_index].cached_exposure_rate[{(VirusVariant)n, age}]);
+                          });
+            return random_transition(VirusVariant::Count, dt,
+                                     virus_submission_probabilites); // use VirusVariant::Count for no virus submission
         }
-        return boost::
-            none; // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
+        // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
+        return VirusVariant::Count;
     }
     else {
-        std::pair<std::shared_ptr<Virus>, double> virus_exposure_rates[(uint32_t)VirusVariant::Count];
+        std::pair<VirusVariant, double> virus_submission_probabilites[(uint32_t)VirusVariant::Count];
 
-        std::generate(std::begin(virus_exposure_rates), std::end(virus_exposure_rates), [&, n = VirusVariantVector.begin()] () mutable {
-                ++n;
-                return std::make_pair(virus_variants[*n], m_cached_exposure_rate[{age, *n}]);
-            });
-        std::shared_ptr<Virus> new_virus = random_transition(no_virus, dt, virus_exposure_rates);
-        if (no_virus == new_virus) {
-            return boost::none;
-        }
-        else {
-            return new_virus;
-        }
+        std::generate(std::begin(virus_submission_probabilites), std::end(virus_submission_probabilites),
+                      [&, n = 0]() mutable {
+                          ++n;
+                          return std::make_pair((VirusVariant)n, m_cached_exposure_rate[{(VirusVariant)n, age}]);
+                      });
+        return random_transition(VirusVariant::Count, dt,
+                                 virus_submission_probabilites); // use VirusVariant::Count for no virus submission
     }
 }
 

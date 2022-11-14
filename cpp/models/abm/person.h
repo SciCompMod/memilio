@@ -90,8 +90,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(const TimePoint& t, const TimeSpan& dt,
-                  CustomIndexArray<std::shared_ptr<Virus>, VirusVariant> m_virus_variants, Location& loc);
+    void interact(const TimePoint& t, const TimeSpan& dt, Location& loc, const GlobalInfectionParameters& params);
 
     /** 
      * migrate to a different location.

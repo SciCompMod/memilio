@@ -65,7 +65,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(t, dt, m_virus_variants, loc);
+        person->interact(t, dt, loc, m_infection_parameters);
     }
 }
 
