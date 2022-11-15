@@ -706,7 +706,9 @@ int main(int argc, char** argv)
         data_dir         = argv[1];
         save_dir         = argv[2];
         result_dir       = argv[3];
-        save_single_runs = argv[4];
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
         printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
         printf("\n Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
