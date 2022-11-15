@@ -1,23 +1,36 @@
-from cProfile import label
+#############################################################################
+# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+#
+# Authors: Agatha Schmidt, Henrik Zunker
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
 from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result
 from memilio.simulation.secir import InfectionState as State
+from datetime import date
+from progress.bar import Bar
+from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 import pandas as pd
 import pickle
-from datetime import date
-from math import ceil
 import random
 import os
 import copy
-from progress.bar import Bar  # pip install progess
-from sklearn.model_selection import train_test_split
-from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import memilio.simulation as mio
-from sklearn.preprocessing import FunctionTransformer
 
 
 def run_secir_simulation(days):
@@ -160,6 +173,7 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
         # save dict to json file
         with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
             pickle.dump(data, f)
+    return data
 
 
 def splitdata(inputs, labels, split_train=0.7,
@@ -211,5 +225,6 @@ if __name__ == "__main__":
     input_width = 5
     label_width = 30
     num_runs = 1000
-    generate_data(num_runs, path_data, input_width,
-                  label_width)
+    data = generate_data(num_runs, path_data, input_width,
+                         label_width)
+    ffef = 2

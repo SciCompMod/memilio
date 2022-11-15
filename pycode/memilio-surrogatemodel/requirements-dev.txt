@@ -1,0 +1,7 @@
+numpy
+pandas
+progress
+pyfakefs
+scikit_learn
+setuptools
+tensorflow
