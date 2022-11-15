@@ -16,7 +16,7 @@ If new functionality was added:
 If new third party software is used:
 * [ ] Did you pay attention to its license? Please remember to add it to the wiki after successful merging.
 If new mathematical methods or epidemiological terms are used:
-* [ ] Are new methods referenced ? Did you provide further documentation ? Has the glossary been updated ? 
+* [ ] Are new methods referenced? Did you provide further documentation? Has the glossary been updated? 
 The following questions are addressed in the documentation if need be: 
 * [ ] Developers (what did you do?, how can it be maintained?)
 * [ ] For users (how to use your work?)
