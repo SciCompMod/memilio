@@ -17,6 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/mask_type.h"
+#include "abm/mask.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/location.h"
 #include "abm/person.h"
@@ -35,6 +37,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
+    , m_required_mask(MaskType::Count) // welche würde man hier nehmen?
 {
 }
 
@@ -44,6 +47,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
+    // double mask_protection = person.get_mask().get_protection();
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (!person.get_cells().empty()) {

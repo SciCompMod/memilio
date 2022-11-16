@@ -20,11 +20,13 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
+#include "abm/mask_type.h"
 #include "abm/state.h"
 #include "abm/age.h"
 #include "abm/time.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
+#include "abm/mask.h"
 
 #include <functional>
 
@@ -251,6 +253,11 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
+    Mask get_mask() const
+    {
+        return m_mask;
+    }
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -267,6 +274,7 @@ private:
     TimeSpan m_time_since_negative_test;
     uint32_t m_person_id;
     std::vector<uint32_t> m_cells;
+    Mask m_mask;
 };
 
 } // namespace abm

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/mask_type.h"
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
@@ -39,6 +40,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_person_id(person_id)
+    , m_mask(MaskType::Community) // better do random stuff here, maybe with preferences
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
