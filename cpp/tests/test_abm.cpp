@@ -302,9 +302,9 @@ TEST(TestLocation, beginStep)
         auto dt = mio::abm::seconds(8640);
         location1.begin_step(dt, params);
 
-        ASSERT_TRUE(std::abs(location1.get_cells()[0].cached_exposure_rate[{age, vaccination_state}] - 0.9) < 0.001);
-        ASSERT_TRUE(std::abs(location1.get_cells()[1].cached_exposure_rate[{age, vaccination_state}] - 1) < 0.001);
-        ASSERT_TRUE(std::abs(location1.get_cells()[2].cached_exposure_rate[{age, vaccination_state}]) < 0.001);
+        EXPECT_NEAR((location1.get_cells()[0].cached_exposure_rate[{age, vaccination_state}]), 0.9, 1e-14);
+        EXPECT_NEAR((location1.get_cells()[1].cached_exposure_rate[{age, vaccination_state}]), 1, 1e-14);
+        EXPECT_NEAR((location1.get_cells()[2].cached_exposure_rate[{age, vaccination_state}]), 0, 1e-14);
     }
 
     {
@@ -361,10 +361,10 @@ TEST(TestLocation, beginStep)
 
         //cache precomputed results
         auto dt = mio::abm::seconds(8640);
-        location1.capacity_adapted_transmission_risk_flag();
+        location1.set_capacity_adapted_transmission_risk_flag(true);
         location1.begin_step(dt, params);
 
-        ASSERT_TRUE(std::abs(location1.get_cached_exposure_rate()[{age, vaccination_state}] - 15.4) < 0.001);
+        EXPECT_NEAR((location1.get_cached_exposure_rate()[{age, vaccination_state}]), 15.4, 1e-14);
     }
 }
 
@@ -434,7 +434,7 @@ TEST(TestLocation, computeRelativeTransmissionRisk)
     auto infected2 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, age, params, vaccination_state);
     location.add_person(infected2);
 
-    location.capacity_adapted_transmission_risk_flag();
+    location.set_capacity_adapted_transmission_risk_flag(true);
 
     home.compute_relative_transmission_risk();
     location.compute_relative_transmission_risk();
