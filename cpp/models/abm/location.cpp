@@ -211,8 +211,12 @@ leads to: 66 * (m_capacity.persons / m_capacity.volume) * (m_num_persons / m_cap
 */
 double Location::compute_relative_transmission_risk()
 {
-    return m_capacity.volume != 0 && m_capacity_adapted_transmission_risk ? 66.0 * m_num_persons / m_capacity.volume
-                                                                          : 1.0;
+    if (m_capacity.volume != 0 && m_capacity_adapted_transmission_risk) {
+        return 66.0 * m_num_persons / m_capacity.volume;
+    }
+    else {
+        return 1.0;
+    }
 }
 
 } // namespace abm
