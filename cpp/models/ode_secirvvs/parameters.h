@@ -482,82 +482,9 @@ struct VaccinationTemporaryImm2 {
         return "VaccinationTemporaryImm2";
     }
 };
-/**
- * @brief Time in days until booster vaccine dose takes full effect.
- */
-struct DaysUntilEffectiveBoosterImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 7.0);
-    }
-    static std::string name()
-    {
-        return "DaysUntilEffectiveBoosterImmunity";
-    }
-};
-
-/** 
- * @brief Time in days to describe waning immunity to get person from S_pv -> S
- */
-struct WaningPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 90.0);
-    }
-    static std::string name()
-    {
-        return "WaningPartialImmunity";
-    }
-};
-
-/** 
- * @brief Time in days to describe waning immunity to get person from R -> S_pv
- */
-struct WaningImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 90.0);
-    }
-    static std::string name()
-    {
-        return "WaningImprovedImmunity";
-    }
-};
 
 /**
- * @brief Number of people in Timm1 due to vaccination
- */
-struct VaccinationTemporaryImm1 {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "VaccinationTemporaryImm1";
-    }
-};
-
-/**
- * @brief Number of people in Timm2 due to vaccination
- */
-struct VaccinationTemporaryImm2 {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "VaccinationTemporaryImm2";
-    }
-};
-/**
-* @brief Total number of first vaccinations up to the given day.
+* @brief Total number of full vaccinations up to the given day.
 */
 struct DailyPartialVaccination {
     using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
@@ -567,22 +494,7 @@ struct DailyPartialVaccination {
     }
     static std::string name()
     {
-        return "DailyPartialVaccination";
-    }
-};
-
-/**
-* @brief rate of first vaccinations up to the given day.
-*/
-struct RateOfDailyPartialVaccinations {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.001);
-    }
-    static std::string name()
-    {
-        return "RateOfDailyPartialVaccinations";
+        return "DailyFullVaccination";
     }
 };
 
@@ -613,6 +525,21 @@ struct DailyBoosterVaccination {
     static std::string name()
     {
         return "DailyBoosterVaccination";
+    }
+};
+
+/**
+* @brief rate of first vaccinations up to the given day.
+*/
+struct RateOfDailyPartialVaccinations {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.001);
+    }
+    static std::string name()
+    {
+        return "RateOfDailyPartialVaccinations";
     }
 };
 
@@ -820,19 +747,19 @@ struct BaseSeverityNewVariant {
     }
 };
 
-using ParametersBase =
-    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
-                 RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
-                 CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
-                 DaysUntilEffectiveImprovedImmunity, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
-                 DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
-                 VaccinationTemporaryImm1, VaccinationTemporaryImm2, ReducExposedImprovedImmunity,
-                 ReducInfectedSymptomsPartialImmunity, ReducInfectedSymptomsImprovedImmunity,
-                 ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
-                 ReducTimeInfectedMild, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant,
-                 BaseSeverity, BaseSeverityNewVariant, WaningPartialImmunity, WaningImprovedImmunity>;
+using ParametersBase = ParameterSet<
+    StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
+    IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
+    TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
+    RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms, CriticalPerSevere,
+    DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity, DaysUntilEffectiveImprovedImmunity,
+    DaysUntilEffectiveBoosterImmunity, DailyFullVaccination, DailyBoosterVaccination, DailyPartialVaccination,
+    ReducExposedPartialImmunity, VaccinationTemporaryImm1, VaccinationTemporaryImm2, ReducExposedImprovedImmunity,
+    ReducInfectedSymptomsPartialImmunity, ReducInfectedSymptomsImprovedImmunity,
+    ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
+    ReducTimeInfectedMild, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant, BaseSeverity,
+    BaseSeverityNewVariant, WaningPartialImmunity, WaningImprovedImmunity, RateOfDailyPartialVaccinations,
+    RateOfDailyImprovedVaccinations, RateOfDailyBoosterVaccinations, ImmunityInterval1, ImmunityInterval2>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.

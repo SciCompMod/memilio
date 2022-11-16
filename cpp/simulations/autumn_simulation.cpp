@@ -241,7 +241,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     array_assign_uniform_distribution(params.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>(),
                                       recoveredPerInfectedNoSymptomsMin, recoveredPerInfectedNoSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::SeverePerInfectedSymptoms>(),
-                                      severePerInfectedSymptomsMin, severePerInfectedSymptomsMin);
+                                      severePerInfectedSymptomsMin, severePerInfectedSymptomsMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::CriticalPerSevere>(), criticalPerSevereMin,
                                       criticalPerSevereMax);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerCritical>(), deathsPerCriticalMin,
@@ -696,7 +696,7 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
             //only add edges with migration above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of migration is covered, approx. 1/3 of the edges
             if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(migration_coeffs));
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
             }
         }
     }
@@ -925,7 +925,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 60.0;
+    const auto num_days_sim = 10.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 

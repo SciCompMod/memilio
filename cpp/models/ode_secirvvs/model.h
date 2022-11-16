@@ -525,7 +525,7 @@ public:
             }
 
             if (last_value(count * i + SN) - first_vacc < 0) {
-                auto corrected = 0.99 * last_value(count * i + S);
+                auto corrected = 0.99 * last_value(count * i + SN);
                 log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", t, first_vacc,
                             corrected);
                 first_vacc = corrected;
@@ -535,7 +535,7 @@ public:
             last_value(count * i + SPI) += first_vacc;
 
             if (last_value(count * i + SPI) - full_vacc < 0) {
-                auto corrected = 0.99 * last_value(count * i + SV);
+                auto corrected = 0.99 * last_value(count * i + SPI);
                 log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", t, full_vacc,
                             corrected);
                 full_vacc = corrected;

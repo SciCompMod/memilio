@@ -79,8 +79,8 @@ void draw_sample_infection(Model& model)
     //not age dependent
     model.parameters.get<IncubationTime>()[AgeGroup(0)].draw_sample();
     model.parameters.get<SerialInterval>()[AgeGroup(0)].draw_sample();
-    model.parameters.get<ImmunityInterval1>()[i] = model.parameters.get<ImmunityInterval1>()[AgeGroup(0)];
-    model.parameters.get<ImmunityInterval2>()[i] = model.parameters.get<ImmunityInterval2>()[AgeGroup(0)];
+    model.parameters.get<ImmunityInterval1>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ImmunityInterval2>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
     model.parameters.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
@@ -194,7 +194,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyFirstVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyPartialVaccination>()                 = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
