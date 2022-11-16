@@ -1,7 +1,7 @@
 MEmilio Surrogate Model Package
 =======================
-This package contains machine learning models that make predictions based on the memilio ODE models. ODE simulations are used for data generation. The goal is to create a powerful tool that predicts the spread of Covid19 precisely and fast. 
-
+This package contains machine learning models that make predictions based on the memilio ODE models. ODE simulations are used for data generation. The goal is to create a powerful tool that predicts the spread of Covid19 faster than an ODE simulation while aiming for high precision. 
+ 
 ## Installation
 
 Use the provided `setup.py` script to build the bindings and install the package. The script requires CMake and the Scikit-Build packages. Both are installed by the script if not available on the system. The package uses the [Pybind11 C++ library](https://pybind11.readthedocs.io) to create the bindings.
@@ -18,6 +18,7 @@ For developement of code use
 
 ```bash
 pip install -e .[dev]
+``` 
 
 ## Usage
 
@@ -37,9 +38,8 @@ The package provides the following modules:
 
 - `tests`: this file contains all tests 
 
-## Testing
-
-The package provides a test suite in `memilio/simulation_test`. To run the tests, simply run the following command.
+## Testing 
+The package provides a test suite in `memilio/tests`. To run the tests, simply run the following command.
 
 ```bash
 python -m unittest
