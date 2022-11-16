@@ -159,7 +159,6 @@ public:
      * prepare the location for the next simulation step.
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
-     * @param capacity_adapted_transmission_risk if true considers the capacity of the location for the calculation of the exposure rate
      */
     void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
 
@@ -194,21 +193,28 @@ public:
         return m_cells;
     }
 
+    /**
+     * get the number of persons at the location
+     * @return number of persons
+     */
     int get_population()
     {
         return m_num_persons;
     }
 
+    /**
+     * get the exposure rate of the location
+     */
     CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
         return m_cached_exposure_rate;
     }
 
     /**
- * Set the capacity of the location in person and volume
- * @param persons maximum number of people that can visit the location at the same time
- * @param volume volume of the location in m^3
- */
+    * Set the capacity of the location in person and volume
+    * @param persons maximum number of people that can visit the location at the same time
+    * @param volume volume of the location in m^3
+    */
     void set_capacity(int persons, int volume)
     {
         m_capacity.persons = persons;
@@ -216,22 +222,27 @@ public:
     }
 
     /**
- * @return the capacity of the location in person and volume
- */
+    * @return the capacity of the location in person and volume
+    */
     LocationCapacity get_capacity()
     {
         return m_capacity;
     }
 
     /**
- * @param capacity_adapted_transmission_risk if true calculates the relative risk based on the capacity of the location
- * @return the relative risk factor for the location
- */
+    * computes a relative transmission risk factor for the location
+    * @return the relative risk factor for the location
+    */
     double compute_relative_transmission_risk();
 
-    void capacity_adapted_transmission_risk_flag()
+    /**
+    * Set the capacity adapted transmission risk flag
+    * @param consider_capacity if true considers the capacity of the location for the computation of relative 
+    * transmission risk
+    */
+    void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
     {
-        m_capacity_adapted_transmission_risk = true;
+        m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
 private:
