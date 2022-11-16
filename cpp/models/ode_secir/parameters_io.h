@@ -218,7 +218,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
             path_join(data_dir, "cases_all_county_age_ma7.json"), region, date, num_Exposed, num_InfectedNoSymptoms,
             num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms,
             t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), region, date, num_icu));
+        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi_ma7.json"), region, date, num_icu));
         BOOST_OUTCOME_TRY(num_population,
                           details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
 
@@ -326,7 +326,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
 {
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "county_divi.json"), county, date, scaling_factor_icu));
+            details::set_divi_data(model, path_join(dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
