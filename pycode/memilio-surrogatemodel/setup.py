@@ -11,4 +11,4 @@ setup(
         where=os.path.dirname(os.path.abspath(__file__))),
     install_requires=[],
     extras_require={},
-    long_description='', test_suite='memilio.surrogate model_test',)
+    long_description='', test_suite='memilio.surrogatemodel_test',)

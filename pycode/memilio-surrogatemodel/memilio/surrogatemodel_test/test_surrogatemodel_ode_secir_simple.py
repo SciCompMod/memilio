@@ -21,11 +21,10 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 import os
 
-from memilio.models.ode_secir_simple.data_generation import generate_data, run_secir_simulation
-from memilio.models.ode_secir_simple.different_networks import *
+from memilio.surrogatemodel.ode_secir_simple.data_generation import generate_data, run_secir_simulation
 
 
-class Test_osecir_surrogate(fake_filesystem_unittest.TestCase):
+class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
     path = '/home/'
 
