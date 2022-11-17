@@ -288,6 +288,8 @@ void create_assign_locations(mio::abm::World& world)
     // Add one social event with 100 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     // People have to get tested in the 2 days before the event
+    // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
+    // room height of 3 m
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
     world.get_individualized_location(event).set_capacity(100, 375);
@@ -307,6 +309,10 @@ void create_assign_locations(mio::abm::World& world)
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
 
     // Add hospital and ICU with 5 maximum contacs.
+    // For the number of agents in this example we assume a capacity of 584 persons (80 beds per 10000 residents in
+    // Germany (Statistisches Bundesamt, 2022) and a volume of 26242 m^3
+    // (https://doi.org/10.1016/j.buildenv.2021.107926))
+    // For the ICUs we assume a capacity of 30 agents and the same volume.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     world.get_individualized_location(hospital).set_capacity(584, 26242);
@@ -317,9 +323,14 @@ void create_assign_locations(mio::abm::World& world)
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
     // Students have to get tested once a week.
+    // We assume 2 m^2 per student (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
     // At every workplace work 100 people (needs to be varified), maximum contacts are 40.
     // People can get tested at work (and do this with 0.5 probability).
+    // Per person we assume an area of 10 m^2 (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
     // Add one supermarked per 15.000 people, maximum constacts are assumed to be 20.
+    // A shop has a capacity of 240 persons (https://doi.org/10.1016/j.buildenv.2021.107926)
+    // and a volume of 7200 cubic meters (10 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and 3 m
+    // room height).
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
     world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
     world.get_individualized_location(shop).set_capacity(240, 7200);
