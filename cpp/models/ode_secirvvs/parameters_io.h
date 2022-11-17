@@ -611,14 +611,6 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                         model[region].populations[{i, InfectionState::DeadPartialImmunity}] -
                         model[region].populations[{i, InfectionState::TemporaryImmunity1}]);
 
-                double sum = 0;
-                std::cout << "num population = " << num_population[region][size_t(i)] << std::endl;
-                for (auto j = Index<InfectionState>(0); j < InfectionState::Count; ++j) {
-                    log_warning("Compartment at age group {}, infection state {}, is {}", size_t(i), size_t(j),
-                                model[region].populations[{i, j}]);
-                    sum += model[region].populations[{i, j}];
-                }
-
                 model[region].populations.template set_difference_from_group_total<AgeGroup>(
                     {i, InfectionState::SusceptibleNaive}, num_population[region][size_t(i)]);
             }

@@ -54,19 +54,18 @@ void draw_sample_demographics(Model& model)
         model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
         double diff                                              = model.populations.get_group_total(i) - group_total;
         if (diff > 0) {
-            if (model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1e-10 > 0) {
+            if (model.populations[{i, InfectionState::TemporaryImmunity2}] - diff > 0) {
                 model.populations[{i, InfectionState::TemporaryImmunity2}] =
-                    model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1e-10;
+                    model.populations[{i, InfectionState::TemporaryImmunity2}] - diff - 1;
             }
             else {
                 model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-                    model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] - diff - 1e-10;
+                    model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] - diff - 1;
             }
-            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0 ||
-                model.populations[{i, InfectionState::TemporaryImmunity2}] < 0.0) {
-                log_error("Negative compartment after sampling.");
+            if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
+                log_error("Compartment SusceptibleImprovedImmunity negative after sampling.");
             }
-            assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
+            assert(group_total - model.populations.get_group_total(i) > 1e-10 && "Sanity check.");
         }
         model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive}, group_total);
     }
@@ -194,7 +193,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
         node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
-        node_model.parameters.template get<DailyPartialVaccination>()                 = local_daily_v1;
+        node_model.parameters.template get<DailyPartialVaccination>()               = local_daily_v1;
         node_model.parameters.template get<DailyFullVaccination>()                  = local_daily_v2;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();

@@ -406,7 +406,7 @@ IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std
 
 IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::string& path, const int& num_age_groups)
 {
-    std::vector<std::vector<double>> ans(num_age_groups, std::vector<double>(3, 0.0));
+    std::vector<std::vector<double>> ans(3, std::vector<double>(num_age_groups, 0.0));
     std::fstream immunity_file;
     immunity_file.open(path, std::ios::in);
     if (immunity_file.fail()) { // checks to see if file opended
@@ -416,7 +416,7 @@ IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::s
         // std::vector<double> tp;
         std::string tp;
         int linenumber = 0;
-        while (linenumber < num_age_groups) {
+        while (linenumber < 3) {
             getline(immunity_file, tp);
             // delete /r at the end by delete last entry.
             tp.erase(tp.size() - 1);
@@ -424,6 +424,9 @@ IOResult<std::vector<std::vector<double>>> read_immunity_population(const std::s
             ans[linenumber][0] = std::stod(line[0]);
             ans[linenumber][1] = std::stod(line[1]);
             ans[linenumber][2] = std::stod(line[2]);
+            ans[linenumber][3] = std::stod(line[3]);
+            ans[linenumber][4] = std::stod(line[4]);
+            ans[linenumber][5] = std::stod(line[5]);
             linenumber++;
         }
         immunity_file.close(); //close the file object.
