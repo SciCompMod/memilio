@@ -253,6 +253,8 @@ IOResult<void> read_confirmed_cases_data(
 
             num_timm_i[i] = num_rec[i] - num_Recovered_timm_i[i];
 
+            num_rec[i] -= num_timm_i[i];
+
             // Since we are calculating the compartments over the Confirmed tests, if the incidence decreases, it may result in a negative value here.
             // if this happens, set zero.
             if (num_timm_i[i] < 0) {

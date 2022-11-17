@@ -209,7 +209,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 num_InfectedSevere[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::SusceptibleImprovedImmunity}] = num_rec[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunity1}] =
-                num_timm1[county][i] * immunity_population[i][1];
+                num_timm1[county][i] * immunity_population[1][i];
         }
 
         // }
@@ -298,7 +298,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSeverePartialImmunity}] =
                 num_InfectedSevere[county][i];
             model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunity2}] =
-                num_timm2[county][i] * immunity_population[i][2];
+                num_timm2[county][i] * immunity_population[2][i];
         }
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
@@ -386,7 +386,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
             model[county].populations[{AgeGroup(i), InfectionState::InfectedSevereImprovedImmunity}] =
                 num_InfectedSevere[county][i];
             // model[county].populations[{AgeGroup(i), InfectionState::TemporaryImmunity2}] =
-            //     num_timm2[county][i] * immunity_population[i][2];
+            //     num_timm2[county][i] * immunity_population[2][i];
         }
         // }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
@@ -484,8 +484,8 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 
-                double SN  = num_population[region][size_t(i)] * immunity_population[size_t(i)][0];
-                double SPI = num_population[region][size_t(i)] * immunity_population[size_t(i)][1];
+                double SN  = num_population[region][size_t(i)] * immunity_population[0][size_t(i)];
+                double SPI = num_population[region][size_t(i)] * immunity_population[1][size_t(i)];
                 double SII = num_population[region][size_t(i)] - SN - SPI;
 
                 double denom_E =
@@ -564,24 +564,36 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                 model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
                     SN * model[region].populations[{i, InfectionState::InfectedCriticalNaive}] * denom_HU;
 
+                // model[region].populations[{i, InfectionState::TemporaryImmunity1}] +=
+                //     model[region].parameters.template get<VaccinationTemporaryImm1>()[{i}];
+
+                // model[region].populations[{i, InfectionState::TemporaryImmunity1}] =
+                //     std::min(double(model[region].populations[{i, InfectionState::TemporaryImmunity1}]),
+                //              double(SPI - model[region].populations[{i, InfectionState::ExposedPartialImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}]));
+
+                // // model[region].populations[{i, InfectionState::TemporaryImmunity2}] +=
+                // //     model[region].parameters.template get<VaccinationTemporaryImm2>()[{i}];
+
+                // model[region].populations[{i, InfectionState::TemporaryImmunity2}] =
+                //     std::min(double(model[region].populations[{i, InfectionState::TemporaryImmunity2}]),
+                //              double(SII - model[region].populations[{i, InfectionState::ExposedImprovedImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
+                //                     model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
+                //                     model[region].populations[{i, InfectionState::DeadImprovedImmunity}]));
+
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
-                    model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
-                    model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
-                    (model[region].populations[{i, InfectionState::InfectedSymptomsNaive}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
-                     model[region].populations[{i, InfectionState::InfectedSevereNaive}] +
-                     model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedCriticalNaive}] +
-                     model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
-                     model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
-                     model[region].populations[{i, InfectionState::DeadNaive}] +
-                     model[region].populations[{i, InfectionState::DeadPartialImmunity}] +
-                     model[region].populations[{i, InfectionState::DeadImprovedImmunity}]);
+                    SII - (model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+                           model[region].populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+                           model[region].populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+                           model[region].populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+                           model[region].populations[{i, InfectionState::DeadImprovedImmunity}] +
+                           model[region].populations[{i, InfectionState::TemporaryImmunity2}]);
 
                 model[region].populations[{i, InfectionState::SusceptibleImprovedImmunity}] = std::min(
                     SN + SPI + SII,
@@ -595,7 +607,17 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
                         model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
                         model[region].populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
                         model[region].populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
-                        model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}]);
+                        model[region].populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
+                        model[region].populations[{i, InfectionState::DeadPartialImmunity}] -
+                        model[region].populations[{i, InfectionState::TemporaryImmunity1}]);
+
+                double sum = 0;
+                std::cout << "num population = " << num_population[region][size_t(i)] << std::endl;
+                for (auto j = Index<InfectionState>(0); j < InfectionState::Count; ++j) {
+                    log_warning("Compartment at age group {}, infection state {}, is {}", size_t(i), size_t(j),
+                                model[region].populations[{i, j}]);
+                    sum += model[region].populations[{i, j}];
+                }
 
                 model[region].populations.template set_difference_from_group_total<AgeGroup>(
                     {i, InfectionState::SusceptibleNaive}, num_population[region][size_t(i)]);

@@ -999,7 +999,7 @@ int main(int argc, char** argv)
     std::string data_dir;
     std::string result_dir;
     int variant_szenario            = 1;
-    int vacc_campaign_szenario      = 2;
+    int vacc_campaign_szenario      = 1;
     int vacc_effectiveness_szenario = 1;
     if (argc == 6) {
         mode                        = RunMode::Save;
