@@ -22,12 +22,12 @@ from pyfakefs import fake_filesystem_unittest
 import os
 
 from memilio.models.ode_secir_simple.data_generation import generate_data, run_secir_simulation
-from memilio.models.ode_secir_simple.different_networks import generate_data, run_secir_simulation
+from memilio.models.ode_secir_simple.different_networks import *
 
 
 class Test_osecir_surrogate(fake_filesystem_unittest.TestCase):
 
-    path = '/home/osecir_surrogate'
+    path = '/home/'
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -59,21 +59,21 @@ class Test_osecir_surrogate(fake_filesystem_unittest.TestCase):
 
         data_1 = generate_data(num_runs_1, self.path, input_width_1,
                                label_width_1, save_data=False)
-        self.assertEqual(data_1['inputs'].shape[0], num_runs_1)
-        self.assertEqual(data_1['inputs'].shape[1], input_width_1)
-        self.assertEqual(data_1['inputs'].shape[2], 8)
-        self.assertEqual(data_1['labels'].shape[0], num_runs_1)
-        self.assertEqual(data_1['labels'].shape[1], label_width_1)
-        self.assertEqual(data_1['labels'].shape[2], 8)
+        self.assertEqual(len(data_1['inputs']), num_runs_1)
+        self.assertEqual(len(data_1['inputs'][0]), input_width_1)
+        self.assertEqual(len(data_1['inputs'][0][0]), 8)
+        self.assertEqual(len(data_1['labels']), num_runs_1)
+        self.assertEqual(len(data_1['labels'][0]), label_width_1)
+        self.assertEqual(len(data_1['labels'][0][0]), 8)
 
         data_2 = generate_data(num_runs_2, self.path, input_width_2,
                                label_width_2, save_data=False)
-        self.assertEqual(data_2['inputs'].shape[0], num_runs_2)
-        self.assertEqual(data_2['inputs'].shape[1], input_width_2)
-        self.assertEqual(data_2['inputs'].shape[2], 8)
-        self.assertEqual(data_2['labels'].shape[0], num_runs_2)
-        self.assertEqual(data_2['labels'].shape[1], label_width_2)
-        self.assertEqual(data_2['labels'].shape[2], 8)
+        self.assertEqual(len(data_2['inputs']), num_runs_2)
+        self.assertEqual(len(data_2['inputs'][0]), input_width_2)
+        self.assertEqual(len(data_2['inputs'][0][0]), 8)
+        self.assertEqual(len(data_2['labels']), num_runs_2)
+        self.assertEqual(len(data_2['labels'][0]), label_width_2)
+        self.assertEqual(len(data_2['labels'][0][0]), 8)
 
     def test_data_generation_save(self):
 

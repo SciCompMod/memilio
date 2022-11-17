@@ -227,4 +227,3 @@ if __name__ == "__main__":
     num_runs = 1000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)
-    ffef = 2
