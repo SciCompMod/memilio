@@ -24,7 +24,7 @@ The package currently provides the following modules:
    Currently we have the following models: 
    - `ode_secir_simple`: a very simplified model with only one population and one age group.
 
-     each model folder contains the following files: 
+     Each model folder contains the following files: 
      - `data_generation`: data is generated from memilio secir simulation.
      - `model`: training and evaluation of the model. 
      - `different_networks`: multiple network architectures are saved in this file.
