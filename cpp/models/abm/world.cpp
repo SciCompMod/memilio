@@ -19,6 +19,7 @@
 * limitations under the License.
 */
 #include "abm/world.h"
+#include "abm/mask_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/migration_rules.h"
@@ -115,11 +116,18 @@ void World::migration(TimePoint t, TimeSpan dt)
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target)) {
                     if (target != &get_location(*person)) {
-                        if (person->get_mask().get_type() != target->get_required_mask()) {
+                        if (target->get_required_mask() == MaskType::Count) {
+                            person->wear_mask(false);
+                        }
+                        else if (static_cast<int>(person->get_mask().get_type()) <
+                                 static_cast<int>(target->get_required_mask())) {
                             person->get_mask().change_mask(target->get_required_mask());
+                            person->wear_mask(true);
+                        }
+                        else {
+                            person->wear_mask(true);
                         }
                         person->migrate_to(get_location(*person), *target);
-                        person->get_mask().increase_time_used(dt);
                         break;
                     }
                 }
@@ -135,11 +143,18 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target)) {
-                    if (person->get_mask().get_type() != target.get_required_mask()) {
+                    if (target.get_required_mask() == MaskType::Count) {
+                        person->wear_mask(false);
+                    }
+                    else if (static_cast<int>(person->get_mask().get_type()) <
+                             static_cast<int>(target.get_required_mask())) {
                         person->get_mask().change_mask(target.get_required_mask());
+                        person->wear_mask(true);
+                    }
+                    else {
+                        person->wear_mask(true);
                     }
                     person->migrate_to(get_location(*person), target);
-                    person->get_mask().increase_time_used(dt);
                 }
             }
             m_trip_list.increase_index();

@@ -258,6 +258,13 @@ public:
         return m_mask;
     }
 
+    void wear_mask(bool wear_mask)
+    {
+        m_wears_mask = wear_mask;
+    }
+
+    double get_protection() const;
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -275,6 +282,7 @@ private:
     uint32_t m_person_id;
     std::vector<uint32_t> m_cells;
     Mask m_mask;
+    bool m_wears_mask;
 };
 
 } // namespace abm

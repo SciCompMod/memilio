@@ -1,6 +1,7 @@
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
-#include "mask.h"
+#include "abm/mask.h"
+#include "abm/time.h"
 
 namespace mio
 {
@@ -8,29 +9,15 @@ namespace abm
 {
 Mask::Mask(MaskType type)
     : m_type(type)
-    , m_time_used(0)
+    , m_time_used(TimeSpan(0))
 {
-}
-
-double Mask::get_protection()
-{
-    if (m_type == MaskType::Community) {
-        return 1.;
-    }
-    else if (m_type == MaskType::Surgical) {
-        return 1.;
-    }
-    else if (m_type == MaskType::FFP2) {
-        return 1.;
-    }
-    return 0;
 }
 
 void Mask::change_mask(MaskType new_mask_type)
 {
-    m_type = new_mask_type;
-    m_time_used *= 0; // there's probably a better way
-};
+    m_type      = new_mask_type;
+    m_time_used = TimeSpan(0);
+}
 
 } // namespace abm
 } // namespace mio

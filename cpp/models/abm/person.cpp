@@ -40,7 +40,8 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_person_id(person_id)
-    , m_mask(MaskType::Community) // better do random stuff here, maybe with preferences
+    , m_mask(Mask(MaskType::Community)) // better do random stuff here, maybe with preferences
+    , m_wears_mask(false)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
@@ -203,6 +204,27 @@ std::vector<uint32_t>& Person::get_cells()
 const std::vector<uint32_t>& Person::get_cells() const
 {
     return m_cells;
+}
+
+/**
+ * get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection
+ * @return protection factor of the mask 
+ */
+double Person::get_protection() const
+{
+    if (m_wears_mask == false) {
+        return 1.;
+    }
+    else if (m_mask.get_type() == mio::abm::MaskType::Community) {
+        return 0.;
+    }
+    else if (m_mask.get_type() == mio::abm::MaskType::Surgical) {
+        return 0.;
+    }
+    else if (m_mask.get_type() == mio::abm::MaskType::FFP2) {
+        return 0.;
+    }
+    return 1.;
 }
 
 } // namespace abm

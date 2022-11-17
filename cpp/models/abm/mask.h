@@ -1,3 +1,6 @@
+#ifndef EPI_ABM_MASK_H
+#define EPI_ABM_MASK_H
+
 #include "abm/mask_type.h"
 #include "abm/time.h"
 
@@ -10,7 +13,7 @@ class Mask
 public:
     Mask(MaskType type);
 
-    MaskType get_type()
+    MaskType get_type() const
     {
         return m_type;
     }
@@ -25,8 +28,6 @@ public:
         m_time_used += dt;
     }
 
-    double get_protection(); // dependend on the type
-
     void change_mask(MaskType new_mask_type); // changes the type of the mask and sets time_used to 0
 
 private:
@@ -35,3 +36,5 @@ private:
 };
 } // namespace abm
 } // namespace mio
+
+#endif
