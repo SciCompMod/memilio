@@ -40,3 +40,15 @@ The package provides a test suite in `memilio/generation_test`. To run the tests
 ```bash
 python -m unittest
 ```
+
+## Development
+
+When implementing new model features you can follow these steps:
+- Add necessary configurations to [config file](./memilio/tools/config.json) and add corresponding attributes to the [ScannerConfig class](./memilio/generation/scanner_config.py).
+- Find the nodes in the AST with the features you want to implement (use method Scanner.output_ast_file()).
+- Add the extraction of those features. Therefore you need to change the "check_*"-methods corresponding to the CursorKind of your nodes in the [Scanner class](./memilio/generation/scanner.py). If there is no corresponding "check_*"-method you need to write a new one and add it to the switch-method (scanner.switch_node_kind()).
+- Extend the [IntermediateRepresentation](./memilio/generation/intermediate_representation.py) for the new model features.
+- Adjust the [cpp-template](./memilio//generation/template/template_cpp.txt) and the [string-template-methods](./memilio/generation/template/template_string.py). If needed use new identifiers and write new string-template-methods for them.
+- Adjust the substitution dictionaries in the [Generator class](./memilio/generation/generator.py).
+- Write new/Adjust script in the [tool folder](./memilio/tools/) for the model an try to run.
+- Update [tests](./memilio/generation_test/)
