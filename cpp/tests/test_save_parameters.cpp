@@ -183,19 +183,6 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
 TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 {
-    enum class InterventionLevelMock
-    {
-        level,
-    };
-    enum class InterventionMock
-    {
-        intervention,
-    };
-    enum class ContactLocationMock
-    {
-        location,
-    };
-
     const auto start_date   = mio::Date(2020, 12, 12);
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
     auto damping_time1      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
@@ -211,17 +198,17 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
     v1.set_distribution(mio::ParameterDistributionUniform(0.4, 0.6));
     auto v2 = mio::UncertainValue(0.5 * (0.3 + 0.2));
     v1.set_distribution(mio::ParameterDistributionUniform(0.2, 0.3));
-    contact_dampings.push_back(mio::DampingSampling(v1, mio::DampingLevel(int(InterventionLevelMock::level)),
-                                mio::DampingType(int(InterventionMock::intervention)), damping_time1, {size_t(ContactLocationMock::location)}, group_weights));
-    contact_dampings.push_back(mio::DampingSampling(v2, mio::DampingLevel(int(InterventionLevelMock::level)),
-                                mio::DampingType(int(InterventionMock::intervention)), damping_time2, {size_t(ContactLocationMock::location)}, group_weights));
+    contact_dampings.push_back(mio::DampingSampling(v1, mio::DampingLevel(0),
+                                mio::DampingType(0), damping_time1, {size_t(0)}, group_weights));
+    contact_dampings.push_back(mio::DampingSampling(v2, mio::DampingLevel(0),
+                                mio::DampingType(0), damping_time2, {size_t(0)}, group_weights));
     //add school_holiday_damping
     auto school_holiday_value = mio::UncertainValue(1);
     school_holiday_value.set_distribution(mio::ParameterDistributionUniform(1, 1));
     contacts.get_school_holiday_damping() =
-        mio::DampingSampling(school_holiday_value, mio::DampingLevel(int(InterventionLevelMock::level)),
-                             mio::DampingType(int(InterventionMock::intervention)), mio::SimulationTime(0.0),
-                             {size_t(ContactLocationMock::location)}, group_weights);
+        mio::DampingSampling(school_holiday_value, mio::DampingLevel(0),
+                             mio::DampingType(0), mio::SimulationTime(0.0),
+                             {size_t(0)}, group_weights);
 
     //add school holidays
     auto holiday_start_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 23), start_date));
