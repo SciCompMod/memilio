@@ -48,9 +48,8 @@ def single_output():
     return model
 
 
-def cnn_multi_output():
+def cnn_multi_output(label_width):
     CONV_WIDTH = 3
-    label_width = 30
     num_outputs = 8
     model = tf.keras.Sequential([
         # Shape [batch, time, features] => [batch, CONV_WIDTH, features]
@@ -67,8 +66,7 @@ def cnn_multi_output():
     return model
 
 
-def lstm_multi_output():
-    label_width = 30
+def lstm_multi_output(label_width):
     num_outputs = 8
     model = tf.keras.Sequential([
         # Shape [batch, time, features] => [batch, lstm_units].

@@ -23,8 +23,8 @@ import os
 import pickle
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from data_generation import splitdata
-from different_networks import *
+from memilio.surrogatemodel.ode_secir_simple import data_generation
+from memilio.surrogatemodel.ode_secir_simple import different_networks
 
 
 def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
@@ -73,7 +73,7 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
     plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
 
 
-def network_fit(path, model, max_epochs=30, early_stop=500):
+def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
     """! Training and evaluation of the model. 
 
     @param path path of the dataset. 
@@ -89,7 +89,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500):
     file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
 
     data = pickle.load(file)
-    data_splitted = splitdata(data["inputs"], data["labels"])
+    data_splitted = data_generation.splitdata(data["inputs"], data["labels"])
 
     train_inputs = data_splitted["train_inputs"]
     train_labels = data_splitted["train_labels"]
@@ -111,16 +111,17 @@ def network_fit(path, model, max_epochs=30, early_stop=500):
                         validation_data=(valid_inputs, valid_labels),
                         callbacks=[early_stopping])
 
-    plot_losses(history)
-    plotCol(test_inputs, test_labels, model=model,
-            plot_col='Infected', max_subplots=6)
-    plotCol(test_inputs, test_labels, model=model,
-            plot_col='Exposed', max_subplots=6)
-    plotCol(test_inputs, test_labels, model=model,
-            plot_col='Dead', max_subplots=6)
-    plot_losses(history)
-    df = get_test_statistic(test_inputs, test_labels, model)
-    print(df)
+    if(plot):
+        plot_losses(history)
+        plotCol(test_inputs, test_labels, model=model,
+                plot_col='Infected', max_subplots=6)
+        plotCol(test_inputs, test_labels, model=model,
+                plot_col='Exposed', max_subplots=6)
+        plotCol(test_inputs, test_labels, model=model,
+                plot_col='Dead', max_subplots=6)
+        plot_losses(history)
+        df = get_test_statistic(test_inputs, test_labels, model)
+        print(df)
     return history
 
 
@@ -170,26 +171,19 @@ def get_test_statistic(test_inputs, test_labels, model):
 
 
 if __name__ == "__main__":
-
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
+    max_epochs = 5
 
-    max_epochs = 1000
+    model = "Dense"
+    if model == "Dense":
+        model = different_networks.multilayer_multi_input()
+    elif model == "LSTM":
+        model = different_networks.lstm_multi_output(30)
+    elif model == "CNN":
+        model = different_networks.cnn_multi_output(30)
 
-    ### Models ###
-    # single input
-    # hist = network_fit(path_data, model=single_output(), max_epochs=max_epochs)
-
-    # # multi input
-    # lstm_hist = network_fit(path_data, model=lstm_network_multi_input(), max_epochs=max_epochs)
-    # ml_hist = network_fit(path_data, model=multilayer_multi_input(), max_epochs=max_epochs)
-
-    # # Multi output
-    cnn_output = network_fit(
-        path_data, model=cnn_multi_output(), max_epochs=max_epochs)
-
-    #lstm_hist_multi = network_fit(path_data, model=lstm_multi_output(), max_epochs=max_epochs)
-
-    # histories = [ lstm_hist, ml_hist]
-    # plot_histories(histories)
+    model_output = network_fit(
+        path_data, model=model,
+        max_epochs=max_epochs)
