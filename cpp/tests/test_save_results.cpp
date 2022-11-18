@@ -19,7 +19,7 @@
 */
 #include "load_test_data.h"
 #include "memilio/compartments/simulation.h"
-#include "secir/secir.h"
+#include "ode_secir/model.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/result_io.h"
 #include "temp_file_register.h"
@@ -36,37 +36,37 @@ TEST(TestSaveResult, compareResultWithH5)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::SecirModel model(1);
+    mio::osecir::Model model(1);
     auto& params            = model.parameters;
     mio::AgeGroup nb_groups = params.get_num_groups();
     ;
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::IncubationTime>()[i]       = 5.2;
-        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::SerialInterval>()[i]       = 4.2;
-        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::TimeInfectedCritical>()[i] = 8.;
+        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::InfectionState::Exposed}]            = nb_exp_t0;
-        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
-        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = nb_inf_t0;
-        model.populations[{i, mio::InfectionState::InfectedSevere}]     = nb_hosp_t0;
-        model.populations[{i, mio::InfectionState::InfectedCritical}]   = nb_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]          = nb_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]               = nb_dead_t0;
-        model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = nb_dead_t0;
+        model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, nb_total_t0);
 
-        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.06;
-        params.get<mio::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
-        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        params.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
-        params.get<mio::CriticalPerSevere>()[i]                = theta;
-        params.get<mio::DeathsPerCritical>()[i]                = delta;
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.06;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = beta;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = rho;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = theta;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = delta;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
@@ -96,9 +96,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double total = 0.0;
             for (Eigen::Index j = 0; j < Eigen::Index((size_t)nb_groups); j++) {
-                total += result_from_sim[i][j * (size_t)mio::InfectionState::Count + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)mio::InfectionState::Count + l],
-                            result_from_sim[i][j * (size_t)mio::InfectionState::Count + l], 1e-10)
+                total += result_from_sim[i][j * (size_t)mio::osecir::InfectionState::Count + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)mio::osecir::InfectionState::Count + l],
+                            result_from_sim[i][j * (size_t)mio::osecir::InfectionState::Count + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;

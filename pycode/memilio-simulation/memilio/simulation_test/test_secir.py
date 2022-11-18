@@ -20,7 +20,7 @@
 import unittest
 
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
+from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 
@@ -29,7 +29,7 @@ class Test_secir_integration(unittest.TestCase):
 
     def setUp(self):
 
-        model = SecirModel(1)
+        model = Model(1)
 
         A0 = AgeGroup(0)
 
@@ -71,7 +71,7 @@ class Test_secir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_simulation_simple(self):
-        sim = SecirSimulation(self.model, t0=0., dt=0.1)
+        sim = Simulation(self.model, t0=0., dt=0.1)
         sim.advance(tmax=100.)
         result = sim.result
         self.assertAlmostEqual(result.get_time(0), 0.)

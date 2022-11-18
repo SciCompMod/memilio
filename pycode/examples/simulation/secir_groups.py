@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
+from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ def run_secir_groups_simulation(show_plot=True):
         data_dir, "contacts/baseline_other.txt")
 
     # Initialize Parameters
-    model = SecirModel(len(populations))
+    model = Model(len(populations))
 
     # set parameters
     for i in range(num_groups):
@@ -125,8 +125,11 @@ def run_secir_groups_simulation(show_plot=True):
 
     # Run Simulation
     result = simulate(0, days, dt, model)
-    # print(result.get_last_value())
 
+    # interpolate results
+    result = interpolate_simulation_result(result)
+
+    # print(result.get_last_value())
     num_time_points = result.get_num_time_points()
     result_array = result.as_ndarray()
     t = result_array[0, :]

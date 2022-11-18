@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir/secir_parameters_io.h"
-#include "secir/parameter_space.h"
+#include "ode_secir/parameters_io.h"
+#include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/io/result_io.h"
@@ -32,7 +32,7 @@
  */
 mio::IOResult<void>
 write_single_run_result(const int run,
-                        const mio::Graph<mio::SimulationNode<mio::SecirSimulation<>>, mio::MigrationEdge>& graph)
+                        const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
@@ -88,49 +88,49 @@ int main()
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    mio::SecirModel model(1);
+    mio::osecir::Model model(1);
     mio::AgeGroup num_groups = model.parameters.get_num_groups();
     double fact              = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
 
-    params.set<mio::ICUCapacity>(std::numeric_limits<double>::max());
-    params.set<mio::StartDay>(0);
-    params.set<mio::Seasonality>(0);
+    params.set<mio::osecir::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]       = 5.2;
-        params.get<mio::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::SerialInterval>()[i]       = 4.2;
-        params.get<mio::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
+        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.get<mio::TransmissionProbabilityOnContact>()[i] = 0.05;
-        params.get<mio::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
-        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
-        params.get<mio::SeverePerInfectedSymptoms>()[i]        = 0.2;
-        params.get<mio::CriticalPerSevere>()[i]                = 0.25;
-        params.get<mio::DeathsPerCritical>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     auto write_parameters_status = mio::write_json("parameters.json", model);
     if (!write_parameters_status) {
@@ -140,12 +140,12 @@ int main()
 
     //create study
     auto num_runs = size_t(1);
-    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, num_runs);
+    mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, num_runs);
 
     //run study
     int run           = 0;
     auto sample_graph = [](auto&& graph) {
-        return mio::draw_sample(graph);
+        return mio::osecir::draw_sample(graph);
     };
     auto handle_result = [&run](auto&& graph) {
         auto write_result_status = write_single_run_result(run++, graph);

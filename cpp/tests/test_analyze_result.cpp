@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/compartments/simulation.h"
-#include "secir/analyze_result.h"
+#include "ode_secir/analyze_result.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -168,7 +168,7 @@ TEST(TestInterpolateTimeSeries, timePointsCanBeChosen)
 
 TEST(TestInterpolateGraph, basic)
 {
-    using Model      = mio::SecirModel;
+    using Model      = mio::osecir::Model;
     using Simulation = mio::Simulation<Model>;
     auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>();
     g.add_node(0, Model(1), 0.5);
@@ -373,96 +373,104 @@ TEST(TestEnsemblePercentile, basic)
 
 TEST(TestEnsembleParamsPercentile, basic)
 {
-    mio::SecirModel model(2);
-    mio::SecirModel model2(2);
+    mio::osecir::Model model(2);
+    mio::osecir::Model model2(2);
 
-    auto& params                                                               = model.parameters;
-    params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 3;
-    params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 5;
-    params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.2;
-    params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.5;
-    model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]        = 10;
-    model.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 10;
+    auto& params                                                                       = model.parameters;
+    params.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 3;
+    params.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 5;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.2;
+    params.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.5;
+    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 10;
+    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 10;
 
-    auto& params2                                                               = model2.parameters;
-    params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 5;
-    params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 2;
-    params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.4;
-    params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.2;
-    model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]        = 20;
-    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 12;
+    auto& params2                                                                       = model2.parameters;
+    params2.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 5;
+    params2.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 2;
+    params2.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.4;
+    params2.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.2;
+    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 20;
+    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 12;
 
-    auto g = std::vector<mio::SecirModel>({model, model2});
+    auto g = std::vector<mio::osecir::Model>({model, model2});
 
-    params.set<mio::Seasonality>(0.4);
-    params.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 4;
-    params.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 6;
-    params.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.3;
-    params.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.6;
-    model.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]        = 11;
-    model.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 11;
+    params.set<mio::osecir::Seasonality>(0.4);
+    params.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 4;
+    params.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 6;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.3;
+    params.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.6;
+    model.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 11;
+    model.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 11;
 
-    params2.set<mio::Seasonality>(0.4);
-    params2.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 6;
-    params2.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 1;
-    params2.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.5;
-    params2.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.3;
-    model2.populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]        = 22;
-    model2.populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}] = 14;
+    params2.set<mio::osecir::Seasonality>(0.4);
+    params2.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)]                  = 6;
+    params2.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)]                    = 1;
+    params2.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]        = 0.5;
+    params2.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)]                     = 0.3;
+    model2.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]        = 22;
+    model2.populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}] = 14;
 
-    auto g2 = std::vector<mio::SecirModel>({model, model2});
+    auto g2 = std::vector<mio::osecir::Model>({model, model2});
 
-    auto ensemble_params = std::vector<std::vector<mio::SecirModel>>({g, g2});
+    auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>({g, g2});
 
-    auto ensemble_p49_params = mio::ensemble_params_percentile(ensemble_params, 0.49);
-    auto ensemble_p51_params = mio::ensemble_params_percentile(ensemble_params, 0.51);
+    auto ensemble_p49_params = mio::osecir::ensemble_params_percentile(ensemble_params, 0.49);
+    auto ensemble_p51_params = mio::osecir::ensemble_params_percentile(ensemble_params, 0.51);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::Seasonality>(), 0.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::Seasonality>(), 0.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::Seasonality>(), 0.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::Seasonality>(), 0.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::Seasonality>(), 0.4);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::Seasonality>(), 0.4);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::Seasonality>(), 0.4);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::Seasonality>(), 0.4);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 3.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 5.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)], 3.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)], 5.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 4.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::TimeInfectedCritical>()[mio::AgeGroup(0)], 6.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)], 4.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::TimeInfectedCritical>()[mio::AgeGroup(0)], 6.0);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 5.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 1.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)], 5.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)], 1.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 6.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::TimeInfectedSevere>()[mio::AgeGroup(1)], 2.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)], 6.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::TimeInfectedSevere>()[mio::AgeGroup(1)], 2.0);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.2);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.4);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)],
+              0.2);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)],
+              0.4);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.3);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)], 0.5);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)],
+              0.3);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)],
+              0.5);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.5);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.2);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)], 0.5);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)], 0.2);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.6);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::CriticalPerSevere>()[mio::AgeGroup(1)], 0.3);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)], 0.6);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<mio::osecir::CriticalPerSevere>()[mio::AgeGroup(1)], 0.3);
 
-    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 10);
-    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 20);
+    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]), 10);
+    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]), 20);
 
-    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 11);
-    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)0, mio::InfectionState::Exposed}]), 22);
+    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]), 11);
+    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}]), 22);
 
-    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 10);
-    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 12);
+    EXPECT_EQ((ensemble_p49_params[0].populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]),
+              10);
+    EXPECT_EQ((ensemble_p49_params[1].populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]),
+              12);
 
-    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 11);
-    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)1, mio::InfectionState::InfectedSevere}]), 14);
+    EXPECT_EQ((ensemble_p51_params[0].populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]),
+              11);
+    EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]),
+              14);
 }
 
 TEST(TestDistance, same_result_zero_distance)
 {
-    auto n = Eigen::Index(mio::InfectionState::Count);
+    auto n = Eigen::Index(mio::osecir::InfectionState::Count);
     std::vector<mio::TimeSeries<double>> v1(2, mio::TimeSeries<double>(n));
     v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 2.3));
     v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 2.3123));
@@ -470,12 +478,12 @@ TEST(TestDistance, same_result_zero_distance)
     v1[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 15151.3123));
 
     ASSERT_EQ(mio::result_distance_2norm(v1, v1), 0.0);
-    ASSERT_EQ(mio::result_distance_2norm(v1, v1, mio::InfectionState::Exposed), 0.0);
+    ASSERT_EQ(mio::result_distance_2norm(v1, v1, mio::osecir::InfectionState::Exposed), 0.0);
 }
 
 TEST(TestDistance, all_compartments)
 {
-    auto n = Eigen::Index(mio::InfectionState::Count);
+    auto n = Eigen::Index(mio::osecir::InfectionState::Count);
     std::vector<mio::TimeSeries<double>> v1(2, mio::TimeSeries<double>(n));
     v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 1.0));
     v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 2.0));
@@ -493,8 +501,8 @@ TEST(TestDistance, all_compartments)
 
 TEST(TestDistance, one_compartment)
 {
-    auto n = Eigen::Index(mio::InfectionState::Count);
-    auto e = Eigen::Index(mio::InfectionState::Exposed);
+    auto n = Eigen::Index(mio::osecir::InfectionState::Count);
+    auto e = Eigen::Index(mio::osecir::InfectionState::Exposed);
     std::vector<mio::TimeSeries<double>> v1(2, mio::TimeSeries<double>(n));
     v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 1.0;
     v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 2.0;
@@ -507,5 +515,6 @@ TEST(TestDistance, one_compartment)
     v2[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 3.0;
     v2[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 10.0;
 
-    ASSERT_EQ(mio::result_distance_2norm(v1, v2, mio::InfectionState::Exposed), std::sqrt(4.0 + 1.0 + 0.0 + 36.0));
+    ASSERT_EQ(mio::result_distance_2norm(v1, v2, mio::osecir::InfectionState::Exposed),
+              std::sqrt(4.0 + 1.0 + 0.0 + 36.0));
 }

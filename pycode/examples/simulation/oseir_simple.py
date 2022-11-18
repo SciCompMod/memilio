@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
+from memilio.simulation.oseir import Model, simulate, Index_InfectionState, interpolate_simulation_result
 from memilio.simulation.oseir import InfectionState as State
 import numpy as np
 import argparse
@@ -63,6 +63,9 @@ def run_oseir_simulation():
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+    # interpolate results
+    result = interpolate_simulation_result(result)
+
     print(result.get_last_value())
 
 
