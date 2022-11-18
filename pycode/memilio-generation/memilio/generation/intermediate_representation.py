@@ -28,6 +28,9 @@ from typing_extensions import Self
 
 @dataclass
 class IntermediateRepresentation:
+    """
+    Dataclass storing the model features. Serves as interface between Scanner and Generator.
+    """
     namespace: str = None
     model_class: str = None
     python_module_name: str = None

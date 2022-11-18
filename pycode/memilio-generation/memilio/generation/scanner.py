@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file scanner.py
-@brief Analyzes the model and extracts the needed information. Passes them on to the intermediate represenation.
+@brief Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
 """
 import os
 from typing import Any, Callable
@@ -32,6 +32,9 @@ import tempfile
 
 
 class Scanner:
+    """
+    Analyzes the model and extracts the needed information. Passes them on to the IntermediatRepresenation.
+    """
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
@@ -283,8 +286,7 @@ class Scanner:
         # pass information from config
         intermed_repr.set_attribute("namespace", self.config.namespace)
         intermed_repr.set_attribute(
-            "python_module_name", self.config.optional.get(
-                "python_module_name"))
+            "python_module_name", self.config.python_module_name)
         intermed_repr.set_attribute("target_folder", self.config.target_folder)
         intermed_repr.set_attribute("project_path", self.config.project_path)
 

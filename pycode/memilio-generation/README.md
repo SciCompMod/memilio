@@ -23,9 +23,9 @@ pip install .
 
 The package provides an example script on how to use it in `memilio/tools`. The example uses the ode_seir model from the [C++ Library](../../cpp/models/ode_seir/README.md).
 
-Before running the example you have to do multiple steps of setup:
-- Change `memilio/tools/config.json`
-- Change `memilio/generation/scanner_config.py`
+Before running the example you have to do these steps of setup:
+- Change [config.json](./memilio/tools/config.json). Documentation in the ScannerConfig class.
+- Change [ScannerConfig class](./memilio/generation/scanner_config.py).
 
 Run the example with the command (path according to the current folder):
 

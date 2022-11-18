@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file generator.py
-@brief Generates the model specific python bindings code with the information given by the intermediate represantation.
+@brief Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
 """
 import string
 import os
@@ -29,6 +29,10 @@ from memilio.generation.template import template_string as StringTemplates
 
 
 class Generator:
+    """
+    Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
+    """
+
     def __init__(self: Self) -> None:
         self.substitutions_py = {}
         self.substitutions_cpp = {}

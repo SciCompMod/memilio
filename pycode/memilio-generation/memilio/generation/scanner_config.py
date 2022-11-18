@@ -30,6 +30,21 @@ from dataclasses_json import dataclass_json
 @dataclass_json
 @dataclass
 class ScannerConfig:
+    """
+    Provide configurations from JSON-file in Python as dataclass.
+
+    Attributes (and config.json parameters):
+        source_file: Path to the main file of the mode e.g., model.cpp
+        path_database: Path to the folder of the compile_commands.json
+        namespace: C++ namespace of the model class
+        python_module_name: Individual name for binded python module
+        optional: List with optional arguments
+            libclang_library_path: Path to the local libclang library, if empty string path gets obtained with terminal command
+            simulation_class: Name of simulation class, if not used set as empty string
+            age_group: Boolean defining if model uses age groups
+            parameterset_wrapper": Boelean defining if model uses wrapper for parameterset
+            target_folder: Target folder for generated files
+    """
     source_file: str
     path_database: str
     namespace: str
