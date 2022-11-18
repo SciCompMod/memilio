@@ -17,6 +17,7 @@ For developement of code use
 pip install -e .[dev]
 ``` 
 
+Since we are running simulations to generate the data, the MEmilio `simulation <https://github.com/DLR-SC/memilio/blob/main/pycode/memilio-simulation/setup.py>`_ package also needs to be installed.
 ## Usage
 The package currently provides the following modules:
 
