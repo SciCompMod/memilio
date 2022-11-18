@@ -183,11 +183,13 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
 TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 {
+    int a = 2;
+    ASSERT_EQ(a, 2);
     // const auto start_date   = mio::Date(2020, 12, 12);
     // const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
     // auto damping_time1      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
     // auto damping_time2      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 24), start_date));
-    mio::SecirModel model(2);
+    //mio::SecirModel model(2);
     // auto& contacts = model.parameters.get<mio::ContactPatterns>();
     // auto& contact_dampings = contacts.get_dampings();
 
