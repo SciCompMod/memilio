@@ -18,10 +18,12 @@
 # limitations under the License.
 #############################################################################
 
+import argparse
+
 import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import argparse
 
 
 def parameter_study():

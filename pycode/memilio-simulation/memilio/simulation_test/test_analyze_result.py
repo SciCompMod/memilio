@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 import unittest
+
+import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import numpy as np
 
 
 class Test_AnalyzeResult(unittest.TestCase):

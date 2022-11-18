@@ -17,24 +17,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
 import sys
-from io import StringIO
-from unittest.mock import patch, call
+import unittest
 from datetime import date, datetime
+from io import StringIO
+from unittest.mock import call, patch
+
 import pandas as pd
+from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-
-from memilio.epidata import getVaccinationData
-from memilio.epidata import getPopulationData
-from memilio.epidata import getCaseData
-from memilio.epidata import getDIVIData
-from memilio.epidata import getCaseDatawithEstimations
-from memilio.epidata import getJHData
+from memilio.epidata import getCaseData, getCaseDatawithEstimations
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import (getDIVIData, getJHData, getPopulationData,
+                             getVaccinationData)
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -254,13 +251,13 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
+            self.assertRegex(mock_stderr.getvalue(), r"invalid choice")
 
         test_args = ["prog", '--update-data', ]
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -268,7 +265,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -276,7 +273,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -475,7 +472,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), [file])
 
         file_with_path = os.path.join(self.path, file)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
 
@@ -495,7 +492,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path).sort(), [file, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
@@ -539,7 +536,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "file_format": dd.defaultDict['file_format'],
             "out_folder": os.path.join(dd.defaultDict['out_folder']),
             'no_raw': dd.defaultDict["no_raw"]}
-        
+
         arg_dict_data_download = {
             "start_date": dd.defaultDict['start_date'],
             "end_date": dd.defaultDict['end_date'],
@@ -558,11 +555,10 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_vaccination = {
             **arg_dict_all, **arg_dict_data_download,
             "sanitize_data": dd.defaultDict['sanitize_data']}
-        
+
         arg_dict_cases_est = {**arg_dict_cases}
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
-
 
         getVaccinationData.main()
         mock_vaccination.assert_called()

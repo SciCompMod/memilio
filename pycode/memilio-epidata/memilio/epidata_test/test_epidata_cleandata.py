@@ -17,11 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
 import sys
+import unittest
 from unittest.mock import patch
+
+from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import cleanData as cd
 from memilio.epidata import defaultDict as dd
@@ -52,7 +53,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         dir_dic_cases = {'Germany': ["cases_a", "CaseDataFull"]}
 
-        dir_dic_popul = {'Germany': ["PopulData", "county_population", "county_table", "reg_key", "zensus"]}
+        dir_dic_popul = {'Germany': [
+            "PopulData", "county_population", "county_table", "reg_key", "zensus"]}
 
         dir_dic_jh = {'Germany': ["a_jh"],
                       'Spain': ["b_jh"],
@@ -743,13 +745,14 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         os.makedirs(dir_path)
         with open(os.path.join(self.path, 'Germany', 'commuter_test.txt'), 'w') as f:
             f.write('foo')
-        # check if file is written 
-        self.assertEqual(os.listdir(os.path.join(self.path, 'Germany')), ['commuter_test.txt'])
+        # check if file is written
+        self.assertEqual(os.listdir(os.path.join(self.path, 'Germany')), [
+                         'commuter_test.txt'])
         # delete file and folder
-        cd.clean_data(False, False, False,False, False, False, True, False, False, False, False, True, self.path)
-        #check if folder is deleted
+        cd.clean_data(False, False, False, False, False, False,
+                      True, False, False, False, False, True, self.path)
+        # check if folder is deleted
         self.assertEqual(os.listdir(self.path), [])
-        
 
     def test_file_not_found_cases(self):
 
@@ -763,7 +766,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         cd.clean_data(False, True, False, False, False,
                       False, False, False, False, True, False, False, self.path)
-    
+
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
@@ -1083,7 +1086,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
-        
+
         # Test wanted folder and file structure
 
         self.assertEqual(len(os.listdir(self.path)), 11)
@@ -1126,6 +1129,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(
                     os.listdir(dir_path),
                     ["c_jh.json", "c_jh.h5"])
+
 
 if __name__ == '__main__':
     unittest.main()

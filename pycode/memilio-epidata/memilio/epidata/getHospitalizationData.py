@@ -27,13 +27,13 @@ https://github.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschla
 
 # Imports
 import os
-import pandas as pd
-import numpy as np
-
 from datetime import timedelta
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+import numpy as np
+import pandas as pd
+
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
@@ -59,7 +59,7 @@ def hospit_sanity_checks(df):
 
     @param df The dataframe which has to be checked
     """
-    #test if dataframe is empty
+    # test if dataframe is empty
     if df.empty:
         raise gd.DataError(
             "Download of Hospitalization Data failed. File is empty.")
@@ -75,7 +75,7 @@ def hospit_sanity_checks(df):
         '7T_Hospitalisierung_Faelle', '7T_Hospitalisierung_Inzidenz'}
     # check if headers are those we want
     for name in test_strings:
-        if(name not in actual_strings_list):
+        if (name not in actual_strings_list):
             raise gd.DataError("Error: Data categories have changed.")
 
 
