@@ -182,6 +182,27 @@ jobs:
         with: 
           package: simulation
           
+  build-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: surrogatemodel
+
+  test-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    needs: build-py-surrogatemodel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: surrogatemodel
+
   test-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
