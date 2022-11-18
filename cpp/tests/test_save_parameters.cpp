@@ -183,203 +183,55 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
 TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 {
-    double t0   = 0.0;
-    double tmax = 50.5;
-
-    double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
-
-    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
-           num_rec_t0 = 10, num_dead_t0 = 0;
-
+    const auto start_date   = mio::Date(2020, 12, 12);
+    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
+    auto damping_time1      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
+    auto damping_time2      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 24), start_date));
     mio::SecirModel model(2);
-    mio::AgeGroup num_groups = model.parameters.get_num_groups();
-    double fact              = 1.0 / (double)(size_t)num_groups;
+    auto& contacts = model.parameters.get<mio::ContactPatterns>();
+    auto& contact_dampings = contacts.get_dampings();
 
-    auto& params = model.parameters;
+    auto group_weights     = Eigen::VectorXd::Constant(size_t(model.parameters.get_num_groups()), 1.0);
 
-    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i]       = 5.2;
-        params.get<mio::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::SerialInterval>()[i]       = 4.2;
-        params.get<mio::TimeInfectedSevere>()[i]   = 10.;
-        params.get<mio::TimeInfectedCritical>()[i] = 8.;
+    //add two dampings
+    auto v1 = mio::UncertainValue(0.5 * (0.6 + 0.4));
+    v1.set_distribution(mio::ParameterDistributionUniform(0.4, 0.6));
+    auto v2 = mio::UncertainValue(0.5 * (0.3 + 0.2));
+    v1.set_distribution(mio::ParameterDistributionUniform(0.2, 0.3));
+    contact_dampings.push_back(mio::DampingSampling(v1, mio::DampingLevel(0),
+                                mio::DampingType(0), damping_time1, {size_t(0)}, group_weights));
+    contact_dampings.push_back(mio::DampingSampling(v2, mio::DampingLevel(0),
+                                mio::DampingType(0), damping_time2, {size_t(0)}, group_weights));
+    //add school_holiday_damping
+    auto school_holiday_value = mio::UncertainValue(1);
+    school_holiday_value.set_distribution(mio::ParameterDistributionUniform(1, 1));
+    contacts.get_school_holiday_damping() =
+        mio::DampingSampling(school_holiday_value, mio::DampingLevel(0),
+                             mio::DampingType(0), mio::SimulationTime(0.0),
+                             {size_t(0)}, group_weights);
 
-        model.populations[{i, mio::InfectionState::Exposed}]            = fact * num_exp_t0;
-        model.populations[{i, mio::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
-        model.populations[{i, mio::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
-        model.populations[{i, mio::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
-        model.populations[{i, mio::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}]          = fact * num_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}]               = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
-                                                                         fact * num_total_t0);
+    //add school holidays
+    auto holiday_start_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 23), start_date));
+    auto holiday_end_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), end_date));
+    contacts.get_school_holidays() = {std::make_pair(holiday_start_time,holiday_end_time)};
 
-        model.parameters.get<mio::TransmissionProbabilityOnContact>()[i] = 0.06;
-        model.parameters.get<mio::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i]   = alpha;
-        model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
-        model.parameters.get<mio::SeverePerInfectedSymptoms>()[i]        = rho;
-        model.parameters.get<mio::CriticalPerSevere>()[i]                = theta;
-        model.parameters.get<mio::DeathsPerCritical>()[i]                = delta;
-    }
-
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
-    contact_matrix.add_damping(0.7, mio::SimulationTime(30.));
-    auto damping2  = Eigen::MatrixXd::Zero((size_t)num_groups, (size_t)num_groups).eval();
-    damping2(0, 0) = 0.8;
-    contact_matrix.add_damping(damping2, mio::SimulationTime(35));
-
-    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
-
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
-
+    //write json
     TempFileRegister file_register;
     auto filename     = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
     auto write_status = mio::write_json(filename, model);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
+    //read json
     auto read_result = mio::read_json(filename, mio::Tag<mio::SecirModel>{});
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& read_model = read_result.value();
 
-    const mio::UncertainContactMatrix& contact      = model.parameters.get<mio::ContactPatterns>();
-    const mio::UncertainContactMatrix& read_contact = read_model.parameters.get<mio::ContactPatterns>();
+    auto& read_contacts = read_model.parameters.get<mio::ContactPatterns>();
 
-    num_groups           = model.parameters.get_num_groups();
-    auto num_groups_read = read_model.parameters.get_num_groups();
-    ASSERT_EQ(num_groups, num_groups_read);
-
-    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Dead}]),
-                  (read_model.populations[{i, mio::InfectionState::Dead}]));
-        ASSERT_EQ((model.populations.get_group_total(i)), (read_model.populations.get_group_total(i)));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Exposed}]),
-                  (read_model.populations[{i, mio::InfectionState::Exposed}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]),
-                  (read_model.populations[{i, mio::InfectionState::InfectedNoSymptoms}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedSymptoms}]),
-                  (read_model.populations[{i, mio::InfectionState::InfectedSymptoms}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedSevere}]),
-                  (read_model.populations[{i, mio::InfectionState::InfectedSevere}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::InfectedCritical}]),
-                  (read_model.populations[{i, mio::InfectionState::InfectedCritical}]));
-        ASSERT_EQ((model.populations[{i, mio::InfectionState::Recovered}]),
-                  (read_model.populations[{i, mio::InfectionState::Recovered}]));
-
-        check_distribution(*model.populations[{i, mio::InfectionState::Exposed}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::Exposed}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::InfectedNoSymptoms}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::InfectedNoSymptoms}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::InfectedSymptoms}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::InfectedSymptoms}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::InfectedSevere}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::InfectedSevere}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::InfectedCritical}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::InfectedCritical}].get_distribution());
-        check_distribution(*model.populations[{i, mio::InfectionState::Recovered}].get_distribution(),
-                           *read_model.populations[{i, mio::InfectionState::Recovered}].get_distribution());
-
-        ASSERT_EQ(model.parameters.get<mio::IncubationTime>()[i], read_model.parameters.get<mio::IncubationTime>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::TimeInfectedSymptoms>()[i],
-                  read_model.parameters.get<mio::TimeInfectedSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::SerialInterval>()[i], read_model.parameters.get<mio::SerialInterval>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::TimeInfectedSevere>()[i],
-                  read_model.parameters.get<mio::TimeInfectedSevere>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::TimeInfectedCritical>()[i],
-                  read_model.parameters.get<mio::TimeInfectedCritical>()[i]);
-
-        check_distribution(*model.parameters.get<mio::IncubationTime>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::IncubationTime>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::TimeInfectedSymptoms>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::TimeInfectedSymptoms>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::SerialInterval>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::SerialInterval>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::TimeInfectedSevere>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::TimeInfectedSevere>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::TimeInfectedCritical>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::TimeInfectedCritical>()[i].get_distribution());
-
-        ASSERT_EQ(model.parameters.get<mio::TransmissionProbabilityOnContact>()[i],
-                  read_model.parameters.get<mio::TransmissionProbabilityOnContact>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i],
-                  read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i],
-                  read_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::DeathsPerCritical>()[i],
-                  read_model.parameters.get<mio::DeathsPerCritical>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::SeverePerInfectedSymptoms>()[i],
-                  read_model.parameters.get<mio::SeverePerInfectedSymptoms>()[i]);
-        ASSERT_EQ(model.parameters.get<mio::CriticalPerSevere>()[i],
-                  read_model.parameters.get<mio::CriticalPerSevere>()[i]);
-
-        check_distribution(*model.parameters.get<mio::TransmissionProbabilityOnContact>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::TransmissionProbabilityOnContact>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::RecoveredPerInfectedNoSymptoms>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::DeathsPerCritical>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::DeathsPerCritical>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::SeverePerInfectedSymptoms>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::SeverePerInfectedSymptoms>()[i].get_distribution());
-        check_distribution(*model.parameters.get<mio::CriticalPerSevere>()[i].get_distribution(),
-                           *read_model.parameters.get<mio::CriticalPerSevere>()[i].get_distribution());
-
-        ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
-        ASSERT_EQ(contact.get_dampings(), read_contact.get_dampings());
-    }
-    // const auto start_date   = mio::Date(2020, 12, 12);
-    // const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
-    // auto damping_time1      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
-    // auto damping_time2      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 24), start_date));
-    //mio::SecirModel model(2);
-    // auto& contacts = model.parameters.get<mio::ContactPatterns>();
-    // auto& contact_dampings = contacts.get_dampings();
-
-    // auto group_weights     = Eigen::VectorXd::Constant(size_t(model.parameters.get_num_groups()), 1.0);
-
-    // //add two dampings
-    // auto v1 = mio::UncertainValue(0.5 * (0.6 + 0.4));
-    // v1.set_distribution(mio::ParameterDistributionUniform(0.4, 0.6));
-    // auto v2 = mio::UncertainValue(0.5 * (0.3 + 0.2));
-    // v1.set_distribution(mio::ParameterDistributionUniform(0.2, 0.3));
-    // contact_dampings.push_back(mio::DampingSampling(v1, mio::DampingLevel(0),
-    //                             mio::DampingType(0), damping_time1, {size_t(0)}, group_weights));
-    // contact_dampings.push_back(mio::DampingSampling(v2, mio::DampingLevel(0),
-    //                             mio::DampingType(0), damping_time2, {size_t(0)}, group_weights));
-    // //add school_holiday_damping
-    // auto school_holiday_value = mio::UncertainValue(1);
-    // school_holiday_value.set_distribution(mio::ParameterDistributionUniform(1, 1));
-    // contacts.get_school_holiday_damping() =
-    //     mio::DampingSampling(school_holiday_value, mio::DampingLevel(0),
-    //                          mio::DampingType(0), mio::SimulationTime(0.0),
-    //                          {size_t(0)}, group_weights);
-
-    // //add school holidays
-    // auto holiday_start_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 23), start_date));
-    // auto holiday_end_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), end_date));
-    // contacts.get_school_holidays() = {std::make_pair(holiday_start_time,holiday_end_time)};
-
-    // //write json
-    // TempFileRegister file_register;
-    // auto filename     = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
-    // auto write_status = mio::write_json(filename, model);
-    // ASSERT_THAT(print_wrap(write_status), IsSuccess());
-
-    // //read json
-    // auto read_result = mio::read_json(filename, mio::Tag<mio::SecirModel>{});
-    // ASSERT_THAT(print_wrap(read_result), IsSuccess());
-    // auto& read_model = read_result.value();
-
-    // auto& read_contacts = read_model.parameters.get<mio::ContactPatterns>();
-
-    // //check parameters
-    // ASSERT_EQ(contacts.get_dampings(), read_contacts.get_dampings());
-    // ASSERT_EQ(contacts.get_school_holiday_damping(), read_contacts.get_school_holiday_damping());
-    // ASSERT_EQ(contacts.get_school_holidays(), read_contacts.get_school_holidays());
-
+    //check parameters
+    ASSERT_EQ(contacts.get_dampings(), read_contacts.get_dampings());
+    ASSERT_EQ(contacts.get_school_holiday_damping(), read_contacts.get_school_holiday_damping());
+    ASSERT_EQ(contacts.get_school_holidays(), read_contacts.get_school_holidays());
 
 }
 
