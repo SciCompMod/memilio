@@ -27,7 +27,9 @@ from memilio.surrogatemodel.ode_secir_simple import data_generation
 from memilio.surrogatemodel.ode_secir_simple import different_networks
 
 
-def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
+def plotCol(
+        inputs, labels, model=None, plot_col='InfectedSymptoms',
+        max_subplots=8):
     """! Plot prediction of the model and label for one compartment.
 
     @param inputs test inputs for model prediction. 
@@ -41,8 +43,9 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
     label_width = labels.shape[1]
 
     plt.figure(figsize=(12, 8))
-    cols = np.array(['Exposed', 'Carrier',
-                     'Infected', 'Hospitalized', 'ICU', 'Dead'])
+    cols = np.array([
+        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
+        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead'])
     plot_col_index = np.where(cols == plot_col)[0][0]
     max_n = min(max_subplots, inputs.shape[0])
 
@@ -69,8 +72,9 @@ def plotCol(inputs, labels, model=None, plot_col='Infected', max_subplots=8):
                         c='#ff7f0e', s=64)
 
     plt.xlabel('days')
-    plt.show()
-    plt.savefig('evaluation_secir_simple_' + plot_col + '.pdf')
+    if os.path.isdir("plots") == False:
+        os.mkdir("plots")
+    plt.savefig('plots/evaluation_secir_simple_' + plot_col + '.pdf')
 
 
 def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
@@ -114,12 +118,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
     if(plot):
         plot_losses(history)
         plotCol(test_inputs, test_labels, model=model,
-                plot_col='Infected', max_subplots=6)
-        plotCol(test_inputs, test_labels, model=model,
-                plot_col='Exposed', max_subplots=6)
-        plotCol(test_inputs, test_labels, model=model,
-                plot_col='Dead', max_subplots=6)
-        plot_losses(history)
+                plot_col='InfectedSymptoms', max_subplots=6)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
     return history
@@ -137,8 +136,10 @@ def plot_losses(history):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
+    if os.path.isdir("plots") == False:
+        os.mkdir("plots")
+    plt.savefig('plots/losses_plot.pdf')
     plt.show()
-    plt.savefig('losses plot.pdf')
 
 
 def get_test_statistic(test_inputs, test_labels, model):
@@ -174,9 +175,9 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 5
+    max_epochs = 400
 
-    model = "Dense"
+    model = "LSTM"
     if model == "Dense":
         model = different_networks.multilayer_multi_input()
     elif model == "LSTM":
