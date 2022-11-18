@@ -5,3 +5,4 @@ pyfakefs
 scikit_learn
 setuptools
 tensorflow
+matplotlib
