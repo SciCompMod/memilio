@@ -21,11 +21,15 @@
 @file generator.py
 @brief Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
 """
+from __future__ import annotations
 import string
 import os
+from typing import TYPE_CHECKING
 from typing_extensions import Self
-from memilio.generation import IntermediateRepresentation
+
 from memilio.generation.template import template_string as StringTemplates
+if TYPE_CHECKING:
+    from memilio.generation import IntermediateRepresentation
 
 
 class Generator:

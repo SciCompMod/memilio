@@ -23,8 +23,8 @@
 """
 import os
 from dataclasses import dataclass, field
-from typing_extensions import Self
 from dataclasses_json import dataclass_json
+from typing_extensions import Self
 
 
 @dataclass_json
@@ -48,6 +48,7 @@ class ScannerConfig:
     source_file: str
     path_database: str
     namespace: str
+    python_module_name: str
     optional: dict = field(default_factory=dict)
     model_class: str = field(init=False)
     parameterset: str = field(init=False)

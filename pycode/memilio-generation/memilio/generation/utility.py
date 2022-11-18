@@ -21,10 +21,10 @@
 @file utility.py
 @brief Additional functions used for the code generation.
 """
-from typing import Any, List, TextIO
-from clang.cindex import Config, Cursor, Type
 import subprocess
 import os
+from typing import Any, List, TextIO
+from clang.cindex import Config, Cursor, Type
 
 
 def try_set_libclang_path(path: str) -> None:

@@ -21,14 +21,18 @@
 @file scanner.py
 @brief Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
 """
+from __future__ import annotations
 import os
-from typing import Any, Callable
+import subprocess
+import tempfile
+from typing import Any, Callable, TYPE_CHECKING
 from typing_extensions import Self
 from warnings import catch_warnings
 from clang.cindex import *
-import subprocess
-from memilio.generation import IntermediateRepresentation, ScannerConfig, utility
-import tempfile
+
+from memilio.generation import IntermediateRepresentation, utility
+if TYPE_CHECKING:
+    from memilio.generation import ScannerConfig
 
 
 class Scanner:

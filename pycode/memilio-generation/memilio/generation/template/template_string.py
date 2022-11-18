@@ -21,7 +21,10 @@
 @file template_string.py
 @brief Generate small pieces of the target code as strings.
 """
-from memilio.generation import IntermediateRepresentation
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from memilio.generation import IntermediateRepresentation
 
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:

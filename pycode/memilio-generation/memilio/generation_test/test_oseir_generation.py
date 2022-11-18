@@ -55,9 +55,9 @@ class TestOseirGeneration(unittest.TestCase):
             "source_file": "/cpp/models/ode_seir/model.cpp",
             "path_database": path_database,
             "namespace": "mio::oseir::",
+            "python_module_name": "test_oseir",
             "optional": {
                 "libclang_library_path": "",
-                "python_module_name": "test_oseir",
                 "simulation_name": "",
                 "age_group": False
             }
