@@ -62,7 +62,8 @@ setup(
             'cleandata = memilio.epidata.cleanData:main',
             'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
-            'getvaccinationdata = memilio.epidata.getVaccinationData:main'
+            'getvaccinationdata = memilio.epidata.getVaccinationData:main',
+            'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
         ],
     },
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
@@ -74,7 +75,7 @@ setup(
         'pandas>=1.2.2',
         'matplotlib',
         'tables',
-        'numpy>=1.21',  # smaller numpy versions cause a security issue
+        'numpy>=1.22',  # smaller numpy versions cause a security issue
         'openpyxl',
         'xlrd',
         'requests',
@@ -85,7 +86,6 @@ setup(
         'dev': [
             # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
             'pyfakefs>=4.2.1',
-            'freezegun',
             'coverage',
             'pylint<=2.11.1',
             'pylint_json2html<=0.3.0',

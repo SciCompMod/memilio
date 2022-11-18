@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -21,7 +21,6 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 
-
 MSVC_WARNING_DISABLE_PUSH(4268)
 #include <boost/filesystem.hpp>
 MSVC_WARNING_POP
@@ -39,7 +38,7 @@ IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_pa
 {
     boost::filesystem::path dir(rel_path);
     boost::system::error_code ec;
-    bool created =  boost::filesystem::create_directory(dir, ec);
+    bool created = boost::filesystem::create_directory(dir, ec);
     if (ec) {
         return failure(ec, rel_path);
     }
@@ -52,11 +51,9 @@ IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_pa
         log_info("Directory '{:s}' was created.", dir.string());
     }
     else {
-        log_info(
-            "Directory '{:s}' already exists.",
-            dir.string(), mio::get_current_dir_name());
+        log_info("Directory '{:s}' already exists.", dir.string(), mio::get_current_dir_name());
     }
-    
+
     return success(created);
 }
 

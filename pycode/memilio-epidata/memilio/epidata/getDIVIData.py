@@ -36,23 +36,23 @@ data explanation:
 """
 
 import os
-from datetime import date
 import pandas as pd
-
+from datetime import date
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
-                  end_date=dd.defaultDict['end_date'],
                   start_date=dd.defaultDict['start_date'],
+                  end_date=dd.defaultDict['end_date'],
                   impute_dates=dd.defaultDict['impute_dates'],
-                  moving_average=dd.defaultDict['moving_average']
+                  moving_average=dd.defaultDict['moving_average'],
+                  make_plot=dd.defaultDict['make_plot']
                   ):
     """! Downloads or reads the DIVI ICU data and writes them in different files.
 
@@ -69,22 +69,22 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
-    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    "False [Default]" if it is downloaded for all dates from start_date to end_date.
-    @param out_folder Folder where data is written to.
-    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param start_date [Optional] Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date [Optional] Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False [Default]. Defines if values for dates without new information are imputed.
-    @param moving_average 0 [Default] or >0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
 
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         print("Warning: First data available on 2020-04-24. "
-              "You asked for " + start_date.strftime("%Y-%m-%d") + ".")
+              "You asked for " + start_date.strftime("%Y-%m-%d") + ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -98,7 +98,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         try:
             df_raw = pd.read_json(file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without"
                                     " -r flag to get it.")
@@ -108,7 +109,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                 'zeitreihe-tagesdaten',
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
-        except Exception as err:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 "Error: Download link for Divi data has changed.") from err
 
@@ -122,20 +123,18 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
-    df = modifyDataframeSeries.extract_subframe_based_on_dates(
-        df, start_date, end_date)
+    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
     if (impute_dates == True) or (moving_average > 0):
-        df = modifyDataframeSeries.impute_and_reduce_df(
-            df,
-            {dd.EngEng["idCounty"]: geoger.get_county_ids()},
-            [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
-            impute='forward', moving_average=moving_average)
+        df = mdfs.impute_and_reduce_df(
+            df, {dd.EngEng["idCounty"]: geoger.get_county_ids()},
+            [dd.EngEng["ICU"],
+             dd.EngEng["ICU_ventilated"]],
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
 
     # add names etc for empty frames (counties where no ICU beds are available)
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
@@ -145,6 +144,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     df = geoger.insert_names_of_states(df)
     df = geoger.insert_names_of_counties(df)
+    
+    # extract subframe of dates
+    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],

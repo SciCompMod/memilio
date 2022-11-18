@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -92,67 +92,67 @@ namespace mio
 
 namespace detail
 {
-    /**
+/**
      * category that describes StatusCode in std::error_code
      */
-    class StatusCodeCategory : public std::error_category
-    {
-    public:
-        /**
+class StatusCodeCategory : public std::error_category
+{
+public:
+    /**
          * name of the status
          */
-        virtual const char* name() const noexcept override final
-        {
-            return "StatusCode";
-        }
+    virtual const char* name() const noexcept override final
+    {
+        return "StatusCode";
+    }
 
-        /**
+    /**
          * convert enum to string message.
          */
-        virtual std::string message(int c) const override final
-        {
-            switch (static_cast<StatusCode>(c)) {
-            case StatusCode::OK:
-                return "No error";
-            case StatusCode::OutOfRange:
-                return "Invalid range";
-            case StatusCode::InvalidValue:
-                return "Invalid value";
-            case StatusCode::InvalidFileFormat:
-                return "Invalid file format";
-            case StatusCode::KeyNotFound:
-                return "Key not found";
-            case StatusCode::InvalidType:
-                return "Invalid type";
-            case StatusCode::FileNotFound:
-                return "File not found";
-            default:
-                return "Unknown Error";
-            }
+    virtual std::string message(int c) const override final
+    {
+        switch (static_cast<StatusCode>(c)) {
+        case StatusCode::OK:
+            return "No error";
+        case StatusCode::OutOfRange:
+            return "Invalid range";
+        case StatusCode::InvalidValue:
+            return "Invalid value";
+        case StatusCode::InvalidFileFormat:
+            return "Invalid file format";
+        case StatusCode::KeyNotFound:
+            return "Key not found";
+        case StatusCode::InvalidType:
+            return "Invalid type";
+        case StatusCode::FileNotFound:
+            return "File not found";
+        default:
+            return "Unknown Error";
         }
+    }
 
-        /**
+    /**
          * convert to standard error code to make it comparable.
          */
-        virtual std::error_condition default_error_condition(int c) const noexcept override final
-        {
-            switch (static_cast<StatusCode>(c)) {
-            case StatusCode::OK:
-                return std::error_condition();
-            case StatusCode::OutOfRange:
-                return std::make_error_condition(std::errc::argument_out_of_domain);
-            case StatusCode::InvalidValue:
-            case StatusCode::InvalidFileFormat:
-            case StatusCode::InvalidType:
-            case StatusCode::KeyNotFound:
-                return std::make_error_condition(std::errc::invalid_argument);
-            case StatusCode::FileNotFound:
-                return std::make_error_condition(std::errc::no_such_file_or_directory);
-            default:
-                return std::error_condition(c, *this);
-            }
+    virtual std::error_condition default_error_condition(int c) const noexcept override final
+    {
+        switch (static_cast<StatusCode>(c)) {
+        case StatusCode::OK:
+            return std::error_condition();
+        case StatusCode::OutOfRange:
+            return std::make_error_condition(std::errc::argument_out_of_domain);
+        case StatusCode::InvalidValue:
+        case StatusCode::InvalidFileFormat:
+        case StatusCode::InvalidType:
+        case StatusCode::KeyNotFound:
+            return std::make_error_condition(std::errc::invalid_argument);
+        case StatusCode::FileNotFound:
+            return std::make_error_condition(std::errc::no_such_file_or_directory);
+        default:
+            return std::error_condition(c, *this);
         }
-    };
+    }
+};
 } // namespace detail
 
 /**
@@ -404,45 +404,45 @@ IOResult<T> deserialize(IOContext& io, Tag<T> tag);
 //utility for apply function implementation
 namespace details
 {
-    //multiple nested IOResults are redundant and difficult to use.
-    //so transform IOResult<IOResult<T>> into IOResult<T>.
-    template <class T>
-    struct FlattenIOResult {
-        using Type = IOResult<T>;
-    };
-    template <class T>
-    struct FlattenIOResult<IOResult<T>> {
-        using Type = typename FlattenIOResult<T>::Type;
-    };
-    template <class T>
-    using FlattenIOResultT = typename FlattenIOResult<T>::Type;
+//multiple nested IOResults are redundant and difficult to use.
+//so transform IOResult<IOResult<T>> into IOResult<T>.
+template <class T>
+struct FlattenIOResult {
+    using Type = IOResult<T>;
+};
+template <class T>
+struct FlattenIOResult<IOResult<T>> {
+    using Type = typename FlattenIOResult<T>::Type;
+};
+template <class T>
+using FlattenIOResultT = typename FlattenIOResult<T>::Type;
 
-    //check if a type is an IOResult or something else
-    template <class T>
-    struct IsIOResult : std::false_type {
-    };
-    template <class T>
-    struct IsIOResult<IOResult<T>> : std::true_type {
-    };
+//check if a type is an IOResult or something else
+template <class T>
+struct IsIOResult : std::false_type {
+};
+template <class T>
+struct IsIOResult<IOResult<T>> : std::true_type {
+};
 
-    //if F(T...) returns an IOResult<U>, apply returns that directly
-    //if F(T...) returns a different type U, apply returns IOResult<U>
-    template <class F, class... T>
-    using ApplyResultT = FlattenIOResultT<std::result_of_t<F(T...)>>;
+//if F(T...) returns an IOResult<U>, apply returns that directly
+//if F(T...) returns a different type U, apply returns IOResult<U>
+template <class F, class... T>
+using ApplyResultT = FlattenIOResultT<std::result_of_t<F(T...)>>;
 
-    //evaluates the function f using the values of the given IOResults as arguments, assumes all IOResults are succesful
-    //overload for functions that do internal validation, so return an IOResult
-    template <class F, class... T, std::enable_if_t<IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
-    ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
-    {
-        return f(rs.value()...);
-    }
-    //overload for functions that can't fail because all values are acceptable, so return some other type
-    template <class F, class... T, std::enable_if_t<!IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
-    ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
-    {
-        return success(f(rs.value()...));
-    }
+//evaluates the function f using the values of the given IOResults as arguments, assumes all IOResults are succesful
+//overload for functions that do internal validation, so return an IOResult
+template <class F, class... T, std::enable_if_t<IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
+ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
+{
+    return f(rs.value()...);
+}
+//overload for functions that can't fail because all values are acceptable, so return some other type
+template <class F, class... T, std::enable_if_t<!IsIOResult<std::result_of_t<F(T...)>>::value, void*> = nullptr>
+ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
+{
+    return success(f(rs.value()...));
+}
 } // namespace details
 
 /**
@@ -494,58 +494,58 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
 //utility for (de-)serializing tuple-like objects
 namespace details
 {
-    template <size_t Idx>
-    std::string make_tuple_element_name()
-    {
-        return "Element" + std::to_string(Idx);
-    }
+template <size_t Idx>
+std::string make_tuple_element_name()
+{
+    return "Element" + std::to_string(Idx);
+}
 
-    //recursive tuple serialization for each tuple element
-    //store one tuple element after the other in the IOObject 
-    template <size_t Idx, class IOObj, class Tup>
-    std::enable_if_t<(Idx >= std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj&, const Tup&)
-    {
-        //end of recursion, no more elements to serialize
-    }
-    template <size_t Idx, class IOObj, class Tup>
-    std::enable_if_t<(Idx < std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj& obj, const Tup& tup)
-    {
-        //serialize one element, then recurse
-        obj.add_element(make_tuple_element_name<Idx>(), std::get<Idx>(tup));
-        serialize_tuple_element<Idx + 1>(obj, tup);
-    }
+//recursive tuple serialization for each tuple element
+//store one tuple element after the other in the IOObject
+template <size_t Idx, class IOObj, class Tup>
+std::enable_if_t<(Idx >= std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj&, const Tup&)
+{
+    //end of recursion, no more elements to serialize
+}
+template <size_t Idx, class IOObj, class Tup>
+std::enable_if_t<(Idx < std::tuple_size<Tup>::value)> serialize_tuple_element(IOObj& obj, const Tup& tup)
+{
+    //serialize one element, then recurse
+    obj.add_element(make_tuple_element_name<Idx>(), std::get<Idx>(tup));
+    serialize_tuple_element<Idx + 1>(obj, tup);
+}
 
-    //recursive tuple deserialization for each tuple element
-    //read one tuple element after the other from the IOObject
-    //argument pack rs contains the elements that have been read already
-    template <class IOObj, class Tup, class... Ts>
-    std::enable_if_t<(sizeof...(Ts) == std::tuple_size<Tup>::value), IOResult<Tup>>
-    deserialize_tuple_element(IOObj& o, Tag<Tup>, const IOResult<Ts>&... rs)
-    {
-        //end of recursion
-        //number of arguments in rs is the same as the size of the tuple
-        //no more elements to read, so finalize the object
-        return mio::apply(
-            o,
-            [](const Ts&... ts) {
-                return Tup(ts...);
-            },
-            rs...);
-    }
-    template <class IOObj, class Tup, class... Ts>
-    std::enable_if_t<(sizeof...(Ts) < std::tuple_size<Tup>::value), IOResult<Tup>>
-    deserialize_tuple_element(IOObj& obj, Tag<Tup> tag, const IOResult<Ts>&... rs)
-    {
-        //get the next element of the tuple from the IO object
-        const size_t Idx = sizeof...(Ts);
-        auto r           = obj.expect_element(make_tuple_element_name<Idx>(), Tag<std::tuple_element_t<Idx, Tup>>{});
-        //recurse, append the new element to the pack of arguments
-        return deserialize_tuple_element(obj, tag, rs..., r);
-    }
+//recursive tuple deserialization for each tuple element
+//read one tuple element after the other from the IOObject
+//argument pack rs contains the elements that have been read already
+template <class IOObj, class Tup, class... Ts>
+std::enable_if_t<(sizeof...(Ts) == std::tuple_size<Tup>::value), IOResult<Tup>>
+deserialize_tuple_element(IOObj& o, Tag<Tup>, const IOResult<Ts>&... rs)
+{
+    //end of recursion
+    //number of arguments in rs is the same as the size of the tuple
+    //no more elements to read, so finalize the object
+    return mio::apply(
+        o,
+        [](const Ts&... ts) {
+            return Tup(ts...);
+        },
+        rs...);
+}
+template <class IOObj, class Tup, class... Ts>
+std::enable_if_t<(sizeof...(Ts) < std::tuple_size<Tup>::value), IOResult<Tup>>
+deserialize_tuple_element(IOObj& obj, Tag<Tup> tag, const IOResult<Ts>&... rs)
+{
+    //get the next element of the tuple from the IO object
+    const size_t Idx = sizeof...(Ts);
+    auto r           = obj.expect_element(make_tuple_element_name<Idx>(), Tag<std::tuple_element_t<Idx, Tup>>{});
+    //recurse, append the new element to the pack of arguments
+    return deserialize_tuple_element(obj, tag, rs..., r);
+}
 
-    //detect tuple-like types, e.g. std::tuple or std::pair
-    template <class Tup>
-    using tuple_size_value_t = decltype(std::tuple_size<Tup>::value);
+//detect tuple-like types, e.g. std::tuple or std::pair
+template <class Tup>
+using tuple_size_value_t = decltype(std::tuple_size<Tup>::value);
 } // namespace details
 
 /**
@@ -660,7 +660,7 @@ IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 template <class IOContext, class T>
 using serialize_t = decltype(std::declval<T>().serialize(std::declval<IOContext&>()));
 
-template<class IOContext, class T>
+template <class IOContext, class T>
 using has_serialize = is_expression_valid<serialize_t, IOContext, T>;
 
 /**
@@ -681,7 +681,7 @@ void serialize_internal(IOContext& io, const T& t)
 template <class IOContext, class T>
 using deserialize_t = decltype(T::deserialize(std::declval<IOContext&>()));
 
-template<class IOContext, class T>
+template <class IOContext, class T>
 using has_deserialize = is_expression_valid<deserialize_t, IOContext, T>;
 
 /**
@@ -701,12 +701,12 @@ IOResult<T> deserialize_internal(IOContext& io, Tag<T> /*tag*/)
 //utilities for (de-)serializing STL containers
 namespace details
 {
-    //detect stl container.
-    //don't check all requirements, since there are too many. Instead assume that if begin and end
-    //iterators are available, the other requirements are met as well, as they should be in any
-    //proper implementation.
-    template <class C>
-    using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::declval<const C&>().end());
+//detect stl container.
+//don't check all requirements, since there are too many. Instead assume that if begin and end
+//iterators are available, the other requirements are met as well, as they should be in any
+//proper implementation.
+template <class C>
+using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::declval<const C&>().end());
 } // namespace details
 
 /**
@@ -808,7 +808,7 @@ IOResult<T> deserialize(IOContext& io, Tag<T> tag)
 
 /**
  * @brief Returns the current working directory name
- */ 
+ */
 std::string get_current_dir_name();
 
 /**

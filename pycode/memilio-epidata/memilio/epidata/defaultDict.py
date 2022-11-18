@@ -49,7 +49,8 @@ defaultDict = {
     'moving_average': 0,
     'file_format': 'json_timeasstring',
     'no_raw': False,
-    'rep_date': False
+    'rep_date': False,
+    'sanitize_data': 1
 }
 
 # The following dict EngEng makes sure that for all
@@ -143,7 +144,8 @@ GerEng = {
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'], 
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],

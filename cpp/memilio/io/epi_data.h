@@ -97,8 +97,9 @@ public:
         auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid) -> IOResult<ConfirmedCasesDataEntry>{
-                auto a = AgeGroup(0);
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid,
+               auto&& cid) -> IOResult<ConfirmedCasesDataEntry> {
+                auto a  = AgeGroup(0);
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 if (it != age_group_names.end()) {
                     a = AgeGroup(size_t(it - age_group_names.begin()));
@@ -148,13 +149,13 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
  * Region can be a county, a state, or a country. If it is a country, both
  * state_id and county_id will be empty.
  */
-class DiviEntry 
+class DiviEntry
 {
 public:
     double num_icu;
     Date date;
     boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;    
+    boost::optional<regions::de::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
@@ -178,7 +179,8 @@ public:
  * @param jsvalue Json value that contains DIVI data.
  * @return list of DiviEntry.
  */
-inline IOResult<std::vector<DiviEntry>> deserialize_divi_data(const Json::Value& jsvalue) {
+inline IOResult<std::vector<DiviEntry>> deserialize_divi_data(const Json::Value& jsvalue)
+{
     return deserialize_json(jsvalue, Tag<std::vector<DiviEntry>>{});
 }
 
@@ -192,19 +194,21 @@ inline IOResult<std::vector<DiviEntry>> read_divi_data(const std::string& filena
     return read_json(filename, Tag<std::vector<DiviEntry>>{});
 }
 
-namespace details {
-    //check all results in a vector and unpack each
-    template<class T>
-    IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v) {
-        std::vector<T> w;
-        w.reserve(v.size());
-        for (auto&& r : v) {
-            BOOST_OUTCOME_TRY(t, r);
-            w.push_back(t);
-        }
-        return success(w);
+namespace details
+{
+//check all results in a vector and unpack each
+template <class T>
+IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v)
+{
+    std::vector<T> w;
+    w.reserve(v.size());
+    for (auto&& r : v) {
+        BOOST_OUTCOME_TRY(t, r);
+        w.push_back(t);
     }
+    return success(w);
 }
+} // namespace details
 
 /**
  * Represents an entry of a population data file.
@@ -219,8 +223,8 @@ public:
 
     CustomIndexArray<double, AgeGroup> population;
     boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;    
-    
+    boost::optional<regions::de::CountyId> county_id;
+
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
@@ -229,9 +233,10 @@ public:
         auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
         std::vector<IOResult<double>> age_groups;
         age_groups.reserve(age_group_names.size());
-        std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups), [&obj](auto&& age_name) {
-            return obj.expect_element(age_name, Tag<double>{});
-        });
+        std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
+                       [&obj](auto&& age_name) {
+                           return obj.expect_element(age_name, Tag<double>{});
+                       });
         return apply(
             io,
             [](auto&& ag, auto&& sid, auto&& cid) {
@@ -244,89 +249,88 @@ public:
 
 namespace details
 {
-    inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
-                                                       std::vector<std::vector<double>>& interpolation,
-                                                       std::vector<bool>& carry_over)
-    {
-        std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
-        static_assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size(),
-                      "Number of RKI age groups does not match number of age ranges.");
+inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
+                                                   std::vector<std::vector<double>>& interpolation,
+                                                   std::vector<bool>& carry_over)
+{
+    std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
+    static_assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size(),
+                  "Number of RKI age groups does not match number of age ranges.");
 
-        //counter for parameter age groups
-        size_t counter = 0;
+    //counter for parameter age groups
+    size_t counter = 0;
 
-        //residual of param age groups
-        double res = 0.0;
-        for (size_t i = 0; i < age_ranges.size(); i++) {
+    //residual of param age groups
+    double res = 0.0;
+    for (size_t i = 0; i < age_ranges.size(); i++) {
 
-            // if current param age group didn't fit into previous rki age group, transfer residual to current age group
-            if (res < 0) {
-                interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+        // if current param age group didn't fit into previous rki age group, transfer residual to current age group
+        if (res < 0) {
+            interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+        }
+
+        if (counter < param_ranges.size() - 1) {
+            res += age_ranges[i];
+            if (std::abs(res) < age_ranges[i]) {
+                counter++;
             }
-
-            if (counter < param_ranges.size() - 1) {
-                res += age_ranges[i];
-                if (std::abs(res) < age_ranges[i]) {
+            // iterate over param age groups while there is still room in the current rki age group
+            while (res > 0) {
+                res -= param_ranges[counter];
+                interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
+                if (res >= 0) {
                     counter++;
                 }
-                // iterate over param age groups while there is still room in the current rki age group
-                while (res > 0) {
-                    res -= param_ranges[counter];
-                    interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
-                    if (res >= 0) {
-                        counter++;
-                    }
-                }
-                if (res < 0) {
-                    carry_over.push_back(true);
-                }
-                else if (res == 0) {
-                    carry_over.push_back(false);
-                }
             }
-            // if last param age group is reached
-            else {
-                interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
-                if (res < 0 || counter == 0) {
-                    carry_over.push_back(true);
-                }
-                else if (res == 0) {
-                    carry_over.push_back(false);
-                }
-                res = 0;
+            if (res < 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
             }
         }
-    }
-
-    inline std::vector<PopulationDataEntry>
-    interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population_data)
-    {
-        std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
-        std::vector<std::vector<double>> coefficients{ age_ranges.size() };
-        std::vector<bool> carry_over{};
-        get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
-
-        std::vector<PopulationDataEntry> interpolated{population_data};
-        for (auto region_entry_idx = size_t(0); region_entry_idx < population_data.size(); ++region_entry_idx) {
-            interpolated[region_entry_idx].population =
-                CustomIndexArray<double, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
-
-            size_t interpolated_age_idx = 0;
-            for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {
-                for (size_t coeff_idx = 0; coeff_idx < coefficients[age_idx].size(); coeff_idx++) {
-                    interpolated[region_entry_idx].population[AgeGroup(interpolated_age_idx)] +=
-                        coefficients[age_idx][coeff_idx] *
-                        population_data[region_entry_idx].population[AgeGroup(age_idx)];
-                    if (coeff_idx < coefficients[age_idx].size() - 1 || !carry_over[age_idx]) {
-                        interpolated_age_idx++;
-                    }
-                }
+        // if last param age group is reached
+        else {
+            interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
+            if (res < 0 || counter == 0) {
+                carry_over.push_back(true);
             }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+            res = 0;
         }
-
-        return interpolated;
     }
 }
+
+inline std::vector<PopulationDataEntry>
+interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population_data)
+{
+    std::vector<double> age_ranges = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
+    std::vector<std::vector<double>> coefficients{age_ranges.size()};
+    std::vector<bool> carry_over{};
+    get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
+
+    std::vector<PopulationDataEntry> interpolated{population_data};
+    for (auto region_entry_idx = size_t(0); region_entry_idx < population_data.size(); ++region_entry_idx) {
+        interpolated[region_entry_idx].population =
+            CustomIndexArray<double, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
+
+        size_t interpolated_age_idx = 0;
+        for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {
+            for (size_t coeff_idx = 0; coeff_idx < coefficients[age_idx].size(); coeff_idx++) {
+                interpolated[region_entry_idx].population[AgeGroup(interpolated_age_idx)] +=
+                    coefficients[age_idx][coeff_idx] * population_data[region_entry_idx].population[AgeGroup(age_idx)];
+                if (coeff_idx < coefficients[age_idx].size() - 1 || !carry_over[age_idx]) {
+                    interpolated_age_idx++;
+                }
+            }
+        }
+    }
+
+    return interpolated;
+}
+} // namespace details
 
 /**
  * Deserialize population data from a JSON value.
@@ -334,7 +338,7 @@ namespace details
  * @param jsvalue JSON value that contains the population data.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue) 
+inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue)
 {
     BOOST_OUTCOME_TRY(population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
     return success(details::interpolate_to_rki_age_groups(population_data));
@@ -346,7 +350,7 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  * @param filename JSON file that contains the population data.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename) 
+inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue);
@@ -373,7 +377,7 @@ public:
     boost::optional<regions::de::StateId> state_id;
     boost::optional<regions::de::CountyId> county_id;
 
-    template<class IoContext>
+    template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
         auto obj                        = io.expect_object("VaccinationDataEntry");

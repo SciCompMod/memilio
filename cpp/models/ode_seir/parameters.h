@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -31,71 +31,71 @@ namespace mio
 namespace oseir
 {
 
-    /*******************************************
+/*******************************************
       * Define Parameters of the SEIR model *
     *******************************************/
 
-    /**
+/**
      * @brief probability of getting infected from a contact
      */
-    struct InfectionProbabilityFromContact {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(1.0);
-        }
-        static std::string name()
-        {
-            return "InfectionProbabilityFromContact";
-        }
-    };
+struct TransmissionProbabilityOnContact {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(1.0);
+    }
+    static std::string name()
+    {
+        return "TransmissionProbabilityOnContact";
+    }
+};
 
-    /**
+/**
      * @brief the latent time in day unit
      */
-    struct LatentTime {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(5.2);
-        }
-        static std::string name()
-        {
-            return "LatentTime";
-        }
-    };
+struct TimeExposed {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(5.2);
+    }
+    static std::string name()
+    {
+        return "TimeExposed";
+    }
+};
 
-    /**
+/**
      * @brief the infectious time in day unit
      */
-    struct InfectiousTime {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(6.0);
-        }
-        static std::string name()
-        {
-            return "InfectiousTime";
-        }
-    };
+struct TimeInfected {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(6.0);
+    }
+    static std::string name()
+    {
+        return "TimeInfected";
+    }
+};
 
-    /**
+/**
      * @brief the contact patterns within the society are modelled using a ContactMatrix
      */
-    struct ContactPatterns {
-        using Type = ContactMatrix;
-        static Type get_default()
-        {
-            return Type{1};
-        }
-        static std::string name()
-        {
-            return "ContactPatterns";
-        }
-    };
+struct ContactPatterns {
+    using Type = ContactMatrix;
+    static Type get_default()
+    {
+        return Type{1};
+    }
+    static std::string name()
+    {
+        return "ContactPatterns";
+    }
+};
 
-    using Parameters = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
+using Parameters = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
 
 } // namespace oseir
 } // namespace mio

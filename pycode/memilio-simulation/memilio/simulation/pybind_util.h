@@ -175,12 +175,13 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
 // If the python object is None: returns empty optional.
 // Otherwise: casts the python object to type T.
 // Throws exception if obj cannot be cast to T.
-template<class T, class Obj>
+template <class T, class Obj>
 boost::optional<T> cast_or_none(Obj&& obj)
 {
     if (obj.is_none()) {
         return {};
-    } else {
+    }
+    else {
         return obj.template cast<T>();
     }
 }

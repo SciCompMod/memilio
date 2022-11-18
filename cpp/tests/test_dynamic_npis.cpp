@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -19,7 +19,7 @@
 */
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/mobility/mobility.h"
-#include "secir/secir.h"
+#include "ode_secir/model.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>
@@ -156,8 +156,9 @@ TEST(DynamicNPIs, implement)
     dampexprs[1].add_damping(0.9, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
 
     {
-        auto dynamic_npis = std::vector<mio::DampingSampling>({mio::DampingSampling(
-            0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1}, Eigen::MatrixXd::Ones(3, 1))});
+        auto dynamic_npis = std::vector<mio::DampingSampling>(
+            {mio::DampingSampling(0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1},
+                                  Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.45), mio::SimulationTime(0.6),
                                     make_mask);
     }
@@ -196,8 +197,9 @@ TEST(DynamicNPIs, implement)
             Damping(0.5, mio::DampingLevel(0), mio::DampingType(1), mio::SimulationTime(0.5), 3, 1), //other type
             Damping(0.6, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.6), 3,
                     1), //old npi ends, down to value of new npi
-            Damping(0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3,
-                    1))); //bigger than new npi, new npi ends at t = 0.9, but is already overwritten here by a higher value
+            Damping(
+                0.7, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.7), 3,
+                1))); //bigger than new npi, new npi ends at t = 0.9, but is already overwritten here by a higher value
 
     //second matrix not changed by the new npi
     EXPECT_THAT(
@@ -296,14 +298,15 @@ TEST(DynamicNPIs, migration)
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
-    EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) { 
-        node_from.get_simulation().result.add_time_point(t, last_state_crit); 
+    EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
+        node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
     node_from.evolve(4.5, 1.5);
     node_to.evolve(4.5, 1.5);
     edge.apply_migration(4.5, 1.5, node_from, node_to);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold exceeded, but only check every 3 days
+    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
+              0); //threshold exceeded, but only check every 3 days
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
@@ -321,7 +324,7 @@ namespace mio_test
 class MockSimulation
 {
 public:
-    MockSimulation(mio::SecirModel m, double t0, double /*dt*/)
+    MockSimulation(mio::osecir::Model m, double t0, double /*dt*/)
         : m_model(m)
         , m_result(t0, m.get_initial_values())
     {
@@ -343,13 +346,13 @@ public:
         return m_model;
     }
     auto advance(double t)
-    { 
+    {
         //simple simulation that is constant over time
         m_result.reserve(m_result.get_num_time_points() + 1);
         return m_result.add_time_point(t, m_result.get_last_value());
     }
 
-    mio::SecirModel m_model;
+    mio::osecir::Model m_model;
     mio::TimeSeries<double> m_result;
 };
 
@@ -357,10 +360,10 @@ public:
 
 TEST(DynamicNPIs, secir_threshold_safe)
 {
-    mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 1.0;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100.0);
-    
+    mio::osecir::Model model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 1.0;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100.0);
+
     mio::DynamicNPIs npis;
     npis.set_threshold(
         0.05 * 23'000,
@@ -368,22 +371,23 @@ TEST(DynamicNPIs, secir_threshold_safe)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(23'000);
-    model.parameters.get<mio::DynamicNPIsInfected>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
-    
-    mio::SecirSimulation<mio_test::MockSimulation> sim(model);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+
+    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
-    
-    ASSERT_EQ(sim.get_model().parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+
+    ASSERT_EQ(
+        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
 }
 
 TEST(DynamicNPIs, secir_threshold_exceeded)
 {
-    mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100);
-    
+    mio::osecir::Model model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
+
     mio::DynamicNPIs npis;
     npis.set_threshold(
         0.05 * 50'000,
@@ -391,12 +395,13 @@ TEST(DynamicNPIs, secir_threshold_exceeded)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(50'000);
-    model.parameters.get<mio::DynamicNPIsInfected>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
-    
-    mio::SecirSimulation<mio_test::MockSimulation> sim(model);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+
+    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
-    
-    ASSERT_EQ(sim.get_model().parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 2);
+
+    ASSERT_EQ(
+        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 2);
 }

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -22,16 +22,20 @@
 
 #include "memilio/utils/index.h"
 
-namespace mio {
+namespace mio
+{
 
 /**
  * @brief The AgeGroup struct is used as a dynamically
  * sized tag for all age dependent categories
  */
 struct AgeGroup : public Index<AgeGroup> {
-    AgeGroup(size_t val) : Index<AgeGroup>(val){}
+    AgeGroup(size_t val)
+        : Index<AgeGroup>(val)
+    {
+    }
 };
 
-}
+} // namespace mio
 
 #endif

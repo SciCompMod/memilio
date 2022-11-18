@@ -22,7 +22,7 @@
 @brief Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw case data we download can be found at
-https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland
 
 Be careful: Date of deaths or recovery is not reported in original case data and will be
 extrapolated in this script.
@@ -33,10 +33,11 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import date
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import geoModificationGermany as geoger
 
 
@@ -64,9 +65,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
+                  start_date=date(2020, 1, 1),
+                  end_date=dd.defaultDict['end_date'],
                   impute_dates=dd.defaultDict['impute_dates'],
-                  make_plot=dd.defaultDict['make_plot'],
                   moving_average=dd.defaultDict['moving_average'],
+                  make_plot=dd.defaultDict['make_plot'],
                   split_berlin=dd.defaultDict['split_berlin'],
                   rep_date=dd.defaultDict['rep_date']
                   ):
@@ -105,15 +108,18 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
         - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
-    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param impute_dates False [Default] or True. Defines if values for dates without new information are imputed.
-    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
-    @param moving_average 0 [Default] or >0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out weekend effects.
-    @param split_berlin True or False [Default]. Defines if Berlin's disctricts are kept separated or get merged.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default 2020-01-01.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
+    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     """
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -125,7 +131,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
         try:
             df = pd.read_json(file_in)
-        except ValueError as err:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError) as err:
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without -r flag to get it.") \
                 from err
@@ -133,7 +140,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         # download data
         df = pd.DataFrame()
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
-              "SARS-CoV-2_Infektionen_in_Deutschland/master/"
+              "SARS-CoV-2-Infektionen_in_Deutschland/main/"
         source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
         try:
             df = gd.loadCsv(targetFileName=source_filename, apiUrl=url,
@@ -154,7 +161,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             try:
                 # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
                 # utf_8_sig can identify those bytes as one sign and display it correctly
-                df = gd.loadCsv(targetFileName=itemId, encoding='utf_8_sig')
+                df = gd.loadCsv(
+                    targetFileName=itemId,
+                    param_dict={"encoding": 'utf_8_sig'})
             except FileNotFoundError:
                 pass
             complete = check_for_completeness(df, merge_eisenach=True)
@@ -163,8 +172,10 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 print("Note: Case data is still incomplete. Trying a thrid source.")
                 try:
                     # If the data on github is not available we download the case data from rki from covid-19 datahub
-                    df = gd.loadCsv(apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
-                        targetFileName="f10774f1c63e40168479a1feb6c7ca74/data", extension = "", encoding='utf_8_sig')
+                    df = gd.loadCsv(
+                        apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
+                        targetFileName="f10774f1c63e40168479a1feb6c7ca74/data",
+                        extension="", param_dict={"encoding": 'utf_8_sig'})
                     df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 except FileNotFoundError:
                     pass
@@ -215,19 +226,17 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     # = reference date (date of disease onset) if IstErkrankungsbeginn = 1 else
     #       take Meldedatum (reporting date)
     if rep_date:
-        df['Date'] = df['Meldedatum'].astype('object')
+        df[dd.EngEng['date']] = df['Meldedatum'].astype('object')
     else:
-        df['Date'] = np.where(
+        df[dd.EngEng['date']] = np.where(
             df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
             df['Meldedatum'])
 
-    # Correct Timestamps:
-    for col in ['Date']:
-        df[col] = df[col].astype('datetime64[ns]')
+    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format="%Y-%m-%d")
 
     # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
-    dateToUse = 'Date'
+    dateToUse = dd.EngEng['date']
     df.sort_values(dateToUse, inplace=True)
 
     # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
@@ -260,18 +269,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNF_cs.reset_index(), directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbNF_cs.reset_index(),
+            start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNF_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbNF_cs = mdfs.impute_and_reduce_df(
             gbNF_cs.reset_index(),
             {},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNF_cs, directory, prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbNF_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     if make_plot:
         # make plot
@@ -291,19 +307,26 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNT_cs.reset_index(), directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbNT_cs.reset_index(),
+            start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNT_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbNT_cs = mdfs.impute_and_reduce_df(
             gbNT_cs.reset_index(),
             {},
             ['Deaths'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNT_cs.reset_index(), directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbNT_cs.reset_index(),
+                start_date, end_date),
+            directory, prefix + filename, file_format)
 
     if make_plot:
         gbNT_cs.plot(title='COVID-19 deaths', grid=True,
@@ -326,18 +349,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNF_cs.reset_index(), directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbNF_cs.reset_index(),
+            start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNF_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbNF_cs = mdfs.impute_and_reduce_df(
             gbNF_cs.reset_index(),
             {},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNF_cs, directory, prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbNF_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ############## Data for states all ages ################
 
@@ -353,19 +383,24 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNFst_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbNFst_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNFst_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbNFst_cs = mdfs.impute_and_reduce_df(
             gbNFst_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNFst_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbNFst_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     # output nested json
     # gbNFst_cs.groupby(['IdBundesland'], as_index=False) \
@@ -386,19 +421,24 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllSt_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllSt_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllSt_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllSt_cs = mdfs.impute_and_reduce_df(
             gbAllSt_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllSt_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllSt_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ############# Data for counties all ages ######################
 
@@ -426,18 +466,23 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNFc_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(mdfs.extract_subframe_based_on_dates(
+        gbNFc_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbNFc_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbNFc_cs = mdfs.impute_and_reduce_df(
             gbNFc_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNFc_cs, directory, prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbNFc_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     # infected (incl recovered), deaths and recovered together
     groupby_list = [dateToUse, IdLandkreis]
@@ -455,19 +500,24 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllC_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllC_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllC_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllC_cs = mdfs.impute_and_reduce_df(
             gbAllC_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllC_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllC_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ######### Data whole Germany different gender ##################
 
@@ -485,19 +535,24 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllG_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllG_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllG_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllG_cs = mdfs.impute_and_reduce_df(
             gbAllG_cs,
             {dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllG_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllG_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     if make_plot:
         df.groupby(Geschlecht) \
@@ -523,20 +578,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllGState_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllGState_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllGState_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllGState_cs = mdfs.impute_and_reduce_df(
             gbAllGState_cs,
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllGState_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllGState_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ############# Gender and County #####################
     groupby_list = [dateToUse, IdLandkreis, Geschlecht]
@@ -555,20 +615,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllGCounty_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllGCounty_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllGCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllGCounty_cs = mdfs.impute_and_reduce_df(
             gbAllGCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllGCounty_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllGCounty_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ######### Data whole Germany different ages ####################
 
@@ -585,19 +650,24 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllA_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllA_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllA_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllA_cs = mdfs.impute_and_reduce_df(
             gbAllA_cs,
             {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllA_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllA_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     if make_plot:
         df.groupby(Altersgruppe).agg(
@@ -633,20 +703,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllAgeState_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllAgeState_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllAgeState_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllAgeState_cs = mdfs.impute_and_reduce_df(
             gbAllAgeState_cs,
             {dd.EngEng["idState"]: geoger.get_state_ids(),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllAgeState_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllAgeState_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
     ############# Age and County #####################
     groupby_list = [dateToUse, IdLandkreis, Altersgruppe]
@@ -665,20 +740,25 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllAgeCounty_cs, directory,
-                       prefix + filename_orig, file_format)
+    gd.write_dataframe(
+        mdfs.extract_subframe_based_on_dates(
+            gbAllAgeCounty_cs, start_date, end_date),
+        directory, prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
-        gbAllAgeCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
+        gbAllAgeCounty_cs = mdfs.impute_and_reduce_df(
             gbAllAgeCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)
+            impute='forward', moving_average=moving_average,
+            min_date=start_date, max_date=end_date)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllAgeCounty_cs, directory,
-                           prefix + filename, file_format)
+        gd.write_dataframe(
+            mdfs.extract_subframe_based_on_dates(
+                gbAllAgeCounty_cs, start_date, end_date),
+            directory, prefix + filename, file_format)
 
 
 def main():

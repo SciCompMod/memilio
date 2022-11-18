@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
+from memilio.simulation.oseir import Model, simulate, Index_InfectionState, interpolate_simulation_result
 from memilio.simulation.oseir import InfectionState as State
 import numpy as np
 import argparse
@@ -39,11 +39,11 @@ def run_oseir_simulation():
     model = Model()
 
     # Compartment transition duration
-    model.parameters.LatentTime.value = 5.2
-    model.parameters.InfectiousTime.value = 6.
+    model.parameters.TimeExposed.value = 5.2
+    model.parameters.TimeInfected.value = 6.
 
     # Compartment transition propabilities
-    model.parameters.InfectionProbabilityFromContact.value = 1.
+    model.parameters.TransmissionProbabilityOnContact.value = 1.
 
     # Initial number of people in each compartment
     model.populations[Index_InfectionState(State.Exposed)] = 100
@@ -63,12 +63,15 @@ def run_oseir_simulation():
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+    # interpolate results
+    result = interpolate_simulation_result(result)
+
     print(result.get_last_value())
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()

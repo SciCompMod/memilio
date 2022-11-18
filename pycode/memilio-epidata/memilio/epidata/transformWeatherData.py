@@ -25,7 +25,7 @@ import numpy as np
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata  import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def transformWeatherData(read_data=dd.defaultDict['read_data'],
@@ -149,7 +149,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             # a literal sorting of the code strings
             df_local_new[col_new] = np.transpose(weather_vals)
 
-            df_local_new = modifyDataframeSeries.impute_and_reduce_df(
+            df_local_new = mdfs.impute_and_reduce_df(
                                                                       df_local_new,
                                                                       {},
                                                                       col_new,
@@ -159,7 +159,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                                                                       max_date=max_date,
                                                                       start_w_firstval=True)
 
-            df_weather = df_weather.append(df_local_new.copy())
+            df_weather = pd.concat([df_weather, df_local_new.copy()])
 
         # reset index and drop old index column
         df_weather.reset_index(inplace=True)

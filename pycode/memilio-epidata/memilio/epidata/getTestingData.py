@@ -24,7 +24,7 @@ import io
 import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 
@@ -111,8 +111,9 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                      no_raw=dd.defaultDict['no_raw'],
                      start_date=dd.defaultDict['start_date'],
                      end_date=dd.defaultDict['end_date'],
-                     make_plot=dd.defaultDict['make_plot'],
-                     moving_average=dd.defaultDict['moving_average']):
+                     impute_dates=dd.defaultDict['impute_dates'],
+                     moving_average=dd.defaultDict['moving_average'],
+                     make_plot=dd.defaultDict['make_plot']):
     """! Downloads the RKI testing data and provides positive rates of 
     testing data in different ways. Since positive rates also implicitly 
     provide information on testing numbers while the opposite is
@@ -143,22 +144,17 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     - Start and end dates can be provided to define the length of the 
         returned data frames.
 
-    @param read_data False [Default]. Data is always downloaded from 
-        the internet.
-    @param file_format File format which is used for writing the data. 
-        Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder 
-        out_folder/Germany.
-    @param no_raw True or False [Default]. Defines if raw data is 
-        saved or not.
-    @param start_date [Default = '', taken from read data] Start date
-        of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of
-        stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are
-        generated with matplotlib.
-    @param moving_average 0 [Default] or Number>0. Defines the number of
-        days for which a centered moving average is computed.
+    @param read_data True or False. Defines if data is read from file or downloaded.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+        At the moment they are always imputed.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
     # data for all dates is automatically added
     impute_dates = True
@@ -167,15 +163,40 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    df_test = download_testing_data()
+    filename_county = "RKITestFull_Country"
+    filename_state = "RKITestFull_FederalStates"
+
+    if read_data:
+
+        df_test = [[], []]
+
+        county_file_in = os.path.join(directory, filename_county + ".json")
+        try:
+            df_test[0] = pd.read_json(county_file_in)
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
+            raise FileNotFoundError("Error: The file: " + county_file_in + \
+                                  " does not exist. Call program without" \
+                                  " -r flag to get it.")
+                                  
+        state_file_in = os.path.join(directory, filename_state + ".json")
+        try:
+            df_test[1] = pd.read_json(state_file_in)
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
+            raise FileNotFoundError("Error: The file: " + state_file_in + \
+                                  " does not exist. Call program without" \
+                                  " -r flag to get it.")
+    else:
+        df_test = download_testing_data()
 
     if not no_raw:
         gd.write_dataframe(
             df_test[0],
-            directory, "RKITestFull_Country", "json")
+            directory, filename_county, "json")
         gd.write_dataframe(
             df_test[1],
-            directory, "RKITestFull_FederalStates", "json")
+            directory, filename_state, "json")
 
     # transform calender week to date by using Thursday ('-4')
     # of the corresponding calender week
@@ -184,6 +205,9 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # rename columns
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
+
+    df_test[0][dd.EngEng['date']] = pd.to_datetime(df_test[0][dd.EngEng['date']])
+    df_test[1][dd.EngEng['date']] = pd.to_datetime(df_test[1][dd.EngEng['date']])
 
     # drop columns
     df_test[0] = df_test[0].drop(
@@ -208,12 +232,13 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                        == stateName, dd.EngEng['idState']] = stateID
 
     # set last values for missing dates via forward imputation
-    df_test[0] = modifyDataframeSeries.impute_and_reduce_df(
+    df_test[0] = mdfs.impute_and_reduce_df(
         df_test[0],
         {},
         [dd.EngEng['positiveRate']],
-        impute='forward', moving_average=moving_average)
-
+        impute='forward', moving_average=moving_average,
+        min_date=start_date, max_date=end_date)
+    
     # store positive rates for the whole country
     filename = 'germany_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)
@@ -230,12 +255,12 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             "Germany_Testing_positive_rate")
 
     # set last values for missing dates via forward imputation
-    df_test[1] = modifyDataframeSeries.impute_and_reduce_df(
+    df_test[1] = mdfs.impute_and_reduce_df(
         df_test[1],
         {dd.EngEng["idState"]: [k for k in geoger.get_state_ids()]},
         [dd.EngEng['positiveRate']],
-        impute='forward', moving_average=moving_average)
-
+        impute='forward', moving_average=moving_average,
+        min_date=start_date, max_date=end_date)
     # store positive rates for the all federal states
     filename = 'germany_states_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)
@@ -270,7 +295,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = df_test_counties.append(df_local.copy())
+        df_test_counties = pd.concat([df_test_counties, df_local.copy()])
 
      # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'

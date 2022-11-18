@@ -17,7 +17,7 @@ Sources
 
     Robert Koch-Institut (2021): SARS-CoV-2 Infektionen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.4681153.
 
-    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+    We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland
 
     If the data on github is not available we download the case data from rki from
     https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/e408ccf8878541a7ab6f6077a42fd811_0
@@ -33,8 +33,12 @@ Sources
   - Testing Data (RKI-T)
 
     https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx
+  
+  - Hospitalization data (RKI-H)
+  
+    https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv
 
-- Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
+- Population data (P) like "Einwohnerzahl" for Bundesländer and Landkreise:
 
   https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
 
@@ -116,6 +120,9 @@ optional arguments working for some are:
 | -- rep-date                                 | The reporting date will be prefered over possibly given   |
 |                                             | dates of disease onset. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
+| -- sanitize-data                            | Different ways to distribute vaccinations to home         |
+|                                             | locations of vaccinated persons[vaccination]              |
++---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
 When using the "--make-plot" option close one figure-window to get the next one.
@@ -165,6 +172,11 @@ RKI-T          Germany     germany_testpos                     potive rates of t
 RKI-T          Germany     germany_states_testpos              positve rates of tests over time for different states
 RKI-T          Germany     germany_conties_from_states_testpos positive rates of tests over time for different counties from positive rate for states
 
+RKI-H          Germany     hospit_state_age                    hospitalizations per day for different age groups and states
+RKI-H          Germany     hospit_germany_age                  hospitalizations per day in germany for different age groups
+RKI-H          Germany     hospit_state_age                    hospitalizations per day for different states
+RKI-H          Germany     hospit_germany                      hospitalizations per day in germany
+
 RKI-Estimation Germany     cases_all_germany_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
 RKI-Estimation Germany     cases_all_state_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states    (Bundesländer)
 RKI-Estimation Germany     cases_all_county_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties   (Landkreise)
@@ -177,7 +189,7 @@ RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths,
 
 P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
 P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
-P              Germany     migration                           unchanged migration data
+P              Germany     county_table                        raw information on the German counties and its population sizes
 P              Germany     reg_key                             unchanged regional keys from excel table
 P              Germany     zensus                              unchanged zensus data
 

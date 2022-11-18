@@ -61,8 +61,7 @@ Person::Person(Location& location, InfectionProperties infection_properties, Age
 {
 }
 
-void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc,
-                      const GlobalTestingParameters& global_testing_params)
+void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc)
 {
     auto infection_state     = m_infection_state;
     auto new_infection_state = infection_state;
@@ -84,12 +83,6 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     if (new_infection_state == InfectionState::Infected_Severe ||
         new_infection_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
-    }
-    else if (new_infection_state == InfectionState::Infected) {
-        double rand = UniformDistribution<double>::get_instance()();
-        if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age] * dt.days()) {
-            this->get_tested(global_testing_params.get<AntigenTest>());
-        }
     }
     else {
         m_quarantine = false;
@@ -168,10 +161,12 @@ bool Person::get_tested(const TestParameters& params)
     if (m_infection_state == InfectionState::Carrier || m_infection_state == InfectionState::Infected ||
         m_infection_state == InfectionState::Infected_Severe ||
         m_infection_state == InfectionState::Infected_Critical) {
+        // true positive
         if (random < params.sensitivity) {
             m_quarantine = true;
             return true;
         }
+        // false negative
         else {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
@@ -179,12 +174,15 @@ bool Person::get_tested(const TestParameters& params)
         }
     }
     else {
+        // true negative
         if (random < params.specificity) {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
             return false;
         }
+        // false positive
         else {
+            m_quarantine = true;
             return true;
         }
     }

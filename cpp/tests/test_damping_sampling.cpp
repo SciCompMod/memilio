@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -60,13 +60,13 @@ TEST(TestDampingSampling, apply)
 TEST(TestDampingSampling, contactMask)
 {
     auto m = mio::make_contact_damping_matrix((Eigen::VectorXd(2) << 0.0, 0.5).finished()).eval();
-    ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 1-sqrt(0.5), 1-sqrt(0.5), 0.5).finished()));
+    ASSERT_THAT(print_wrap(m),
+                MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 1 - sqrt(0.5), 1 - sqrt(0.5), 0.5).finished()));
 }
 
 TEST(TestDampingSampling, migrationMask)
 {
-    auto m = mio::make_migration_damping_vector(mio::ColumnVectorShape(6),
-                                                       (Eigen::VectorXd(2) << 0.5, 0.25).finished())
+    auto m = mio::make_migration_damping_vector(mio::ColumnVectorShape(6), (Eigen::VectorXd(2) << 0.5, 0.25).finished())
                  .eval();
     ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::VectorXd(6) << 0.5, 0.5, 0.5, 0.25, 0.25, 0.25).finished()));
 }

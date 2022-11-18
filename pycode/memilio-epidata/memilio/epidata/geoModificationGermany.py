@@ -327,7 +327,7 @@ def get_official_county_table():
     return county_table
 
 
-def get_nuts3_county_id_map(merge_eisenach=True):
+def get_nuts3_county_id_map():
     """! Downloads county list file from destatis and creates hash map from
     NUTS3 ID to county ID.
 
@@ -569,7 +569,7 @@ def merge_df_counties(
             df_merged[dd.EngEng['idCounty']] = merged_id
         if dd.EngEng['county'] in columns:
             df_merged[dd.EngEng['county']] = dd.County[merged_id]
-        df_merged = df_merged.groupby(columns).agg(method)
+        df_merged = df_merged.groupby(columns).agg(method, numeric_only=True)
         # bring 'columns' which have been transfered to 'index' back as real
         # columns
         df_merged.reset_index(inplace=True)

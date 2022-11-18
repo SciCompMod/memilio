@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert
 *
@@ -35,7 +35,8 @@ enum class InfectionState
     Count
 };
 
-struct AgeGroup{};
+struct AgeGroup {
+};
 
 enum Continent
 {
@@ -53,8 +54,8 @@ TEST(TestPopulations, sizes)
 {
 
     mio::Index<InfectionState> num_infType(InfectionState::Count);
-    mio::Index<AgeGroup>      num_ageGroup(7);
-    mio::Index<Continent>     num_continents(Continent::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
 
     size_t num_compartments = (size_t)num_infType * (size_t)num_ageGroup * (size_t)num_continents;
     ASSERT_EQ(7 * 7 * 8, num_compartments);
@@ -74,8 +75,8 @@ TEST(TestPopulations, sizes)
 TEST(TestPopulations, set_population)
 {
     mio::Index<InfectionState> num_infType(InfectionState::Count);
-    mio::Index<AgeGroup>      num_ageGroup(7);
-    mio::Index<Continent>     num_continents(Continent::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
 
     mio::Populations<InfectionState, AgeGroup, Continent> m({num_infType, num_ageGroup, num_continents});
 
@@ -85,7 +86,7 @@ TEST(TestPopulations, set_population)
     for (auto i = mio::Index<InfectionState>(0); i < m.size<InfectionState>(); ++i) {
         for (auto j = mio::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = mio::Index<Continent>(0); k < m.size<Continent>(); ++k) {
-                ASSERT_NEAR(1. / num_compartments, (m[{i, j ,k}]), 1e-12);
+                ASSERT_NEAR(1. / num_compartments, (m[{i, j, k}]), 1e-12);
             }
         }
     }
@@ -95,8 +96,8 @@ TEST(TestPopulations, set_population)
 TEST(TestPopulations, group_population)
 {
     mio::Index<InfectionState> num_infType(InfectionState::Count);
-    mio::Index<AgeGroup>      num_ageGroup(7);
-    mio::Index<Continent>     num_continents(Continent::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
 
     mio::Populations<InfectionState, AgeGroup, Continent> m({num_infType, num_ageGroup, num_continents});
 
@@ -114,12 +115,10 @@ TEST(TestPopulations, group_population)
     for (auto i = mio::Index<InfectionState>(0); i < m.size<InfectionState>(); ++i) {
         for (auto j = mio::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = mio::Index<Continent>(0); k < m.size<Continent>(); ++k) {
-                ASSERT_EQ(idx, m.get_flat_index({i, j , k}));
+                ASSERT_EQ(idx, m.get_flat_index({i, j, k}));
 
                 if (j == fortyToFifty) {
-                    ASSERT_NEAR(y[idx],
-                                1. /
-                                    (static_cast<size_t>(num_infType) * static_cast<size_t>(num_continents)),
+                    ASSERT_NEAR(y[idx], 1. / (static_cast<size_t>(num_infType) * static_cast<size_t>(num_continents)),
                                 1e-12);
                 }
                 else {
@@ -134,19 +133,16 @@ TEST(TestPopulations, group_population)
 TEST(TestPopulations, set_difference_from_total)
 {
     mio::Index<InfectionState> num_infType(InfectionState::Count);
-    mio::Index<AgeGroup>      num_ageGroup(7);
-    mio::Index<Continent>     num_continents(Continent::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
 
     using Po = mio::Populations<InfectionState, AgeGroup, Continent>;
     Po m({num_infType, num_ageGroup, num_continents});
 
-
-    Po::Index S_2_Africa = {mio::Index<InfectionState>(InfectionState::S),
-                            mio::Index<AgeGroup>(2),
+    Po::Index S_2_Africa = {mio::Index<InfectionState>(InfectionState::S), mio::Index<AgeGroup>(2),
                             mio::Index<Continent>(Africa)};
 
-    Po::Index E_2_Africa = {mio::Index<InfectionState>(InfectionState::E),
-                            mio::Index<AgeGroup>(2),
+    Po::Index E_2_Africa = {mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(2),
                             mio::Index<Continent>(Africa)};
 
     m[S_2_Africa] = 100;
@@ -163,10 +159,10 @@ TEST(TestPopulations, set_difference_from_total)
         for (auto j = mio::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = mio::Index<Continent>(0); k < m.size<Continent>(); ++k) {
                 auto current = Po::Index(i, j, k);
-                if ( current == S_2_Africa ) {
+                if (current == S_2_Africa) {
                     ASSERT_NEAR(100, (m[current]), 1e-12);
                 }
-                else if ( current == E_2_Africa ) {
+                else if (current == E_2_Africa) {
                     ASSERT_NEAR(1900, (m[current]), 1e-12);
                 }
                 else {
@@ -180,22 +176,19 @@ TEST(TestPopulations, set_difference_from_total)
 TEST(TestPopulations, set_difference_from_group_total)
 {
     mio::Index<InfectionState> num_infType(InfectionState::Count);
-    mio::Index<AgeGroup>      num_ageGroup(7);
-    mio::Index<Continent>     num_continents(Continent::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
 
     using Po = mio::Populations<InfectionState, AgeGroup, Continent>;
     Po m({num_infType, num_ageGroup, num_continents});
 
-    Po::Index S_2_Africa = {mio::Index<InfectionState>(InfectionState::S),
-                            mio::Index<AgeGroup>(2),
+    Po::Index S_2_Africa = {mio::Index<InfectionState>(InfectionState::S), mio::Index<AgeGroup>(2),
                             mio::Index<Continent>(Africa)};
 
-    Po::Index E_2_Africa = {mio::Index<InfectionState>(InfectionState::E),
-                            mio::Index<AgeGroup>(2),
+    Po::Index E_2_Africa = {mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(2),
                             mio::Index<Continent>(Africa)};
 
-    Po::Index S_2_Europe = {mio::Index<InfectionState>(InfectionState::E),
-                            mio::Index<AgeGroup>(2),
+    Po::Index S_2_Europe = {mio::Index<InfectionState>(InfectionState::E), mio::Index<AgeGroup>(2),
                             mio::Index<Continent>(Europe)};
 
     m[S_2_Africa] = 100;
@@ -214,7 +207,7 @@ TEST(TestPopulations, set_difference_from_group_total)
         for (auto j = mio::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = mio::Index<Continent>(0); k < m.size<Continent>(); ++k) {
                 auto current = Po::Index(i, j, k);
-                if (current  == S_2_Africa) {
+                if (current == S_2_Africa) {
                     ASSERT_NEAR(100, (m[current]), 1e-12);
                 }
                 else if (current == E_2_Africa) {

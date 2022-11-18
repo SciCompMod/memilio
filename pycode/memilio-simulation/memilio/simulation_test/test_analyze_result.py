@@ -45,8 +45,8 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated[1].get_time(1), 1.0)
 
     def test_ensemble_graph(self):
-        model = secir.SecirModel(1)
-        graph = secir.SecirModelGraph()
+        model = secir.Model(1)
+        graph = secir.ModelGraph()
         graph.add_node(0, model)
         graph.add_node(1, model)
         graph.add_edge(0, 1, 0.01 * np.ones(8))

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -25,18 +25,18 @@ namespace mio
 namespace oseir
 {
 
-    /**
+/**
      * @brief The InfectionState enum describes the possible
      * categories for the infectious state of persons
      */
-    enum class InfectionState
-    {
-        Susceptible,
-        Exposed,
-        Infected,
-        Recovered,
-        Count
-    };
+enum class InfectionState
+{
+    Susceptible,
+    Exposed,
+    Infected,
+    Recovered,
+    Count
+};
 
 } // namespace oseir
 } // namespace mio

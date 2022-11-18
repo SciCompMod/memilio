@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,13 +21,12 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
-#include "abm/age.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
-#include "abm/testing_scheme.h"
 #include "abm/trip_list.h"
+#include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -59,17 +58,16 @@ public:
         : m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(params)
         , m_migration_parameters()
-        , m_testing_parameters()
         , m_trip_list()
-        , m_use_migration_rules(true)
     {
+        use_migration_rules(true);
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /** 
      * prepare the world for the next simulation step.
@@ -152,25 +150,18 @@ public:
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
 
     /** 
-     *get migration parameters
+     * get migration parameters
      */
     MigrationParameters& get_migration_parameters();
 
     const MigrationParameters& get_migration_parameters() const;
 
     /** 
-     *get global infection parameters
+     * get global infection parameters
      */
     GlobalInfectionParameters& get_global_infection_parameters();
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
-
-    /** 
-     *get global testing parameters
-     */
-    GlobalTestingParameters& get_global_testing_parameters();
-
-    const GlobalTestingParameters& get_global_testing_parameters() const;
 
     /**
      * get migration data
@@ -186,17 +177,26 @@ public:
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
+    /** 
+     * get testing strategy
+     */
+    TestingStrategy& get_testing_strategy();
+
+    const TestingStrategy& get_testing_strategy() const;
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
+    TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
-    GlobalTestingParameters m_testing_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+                          std::vector<LocationType>>> m_migration_rules;
 };
 
 } // namespace abm

@@ -237,13 +237,13 @@ jobs:
         with:
           name: python-wheels-epidata
           path: pycode/wheelhouse
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*cp37*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+          for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
           for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
       - name: Dowload Data
         run: |
@@ -254,6 +254,7 @@ jobs:
           getdividata -o data_dl
           getcommutermobility -o data_dl
           getvaccinationdata -o data_dl
+          gethospitalizationdata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
         with:
