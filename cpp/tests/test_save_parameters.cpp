@@ -196,8 +196,8 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
     auto damping_time1      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
     auto damping_time2      = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 24), start_date));
-    mio::SecirModel model(2);
-    auto& contacts = model.parameters.get<mio::ContactPatterns>();
+    mio::osecir::Model model(2);
+    auto& contacts = model.parameters.get<mio::osecir::ContactPatterns>();
     auto& contact_dampings = contacts.get_dampings();
 
     auto group_weights     = Eigen::VectorXd::Constant(size_t(model.parameters.get_num_groups()), 1.0);
@@ -231,11 +231,11 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
     //read json
-    auto read_result = mio::read_json(filename, mio::Tag<mio::SecirModel>{});
+    auto read_result = mio::read_json(filename, mio::Tag<mio::osecir::Model>{});
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& read_model = read_result.value();
 
-    auto& read_contacts = read_model.parameters.get<mio::ContactPatterns>();
+    auto& read_contacts = read_model.parameters.get<mio::osecir::ContactPatterns>();
 
     //check parameters
     ASSERT_EQ(contacts.get_dampings(), read_contacts.get_dampings());
