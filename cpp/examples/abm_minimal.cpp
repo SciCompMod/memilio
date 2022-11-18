@@ -64,16 +64,11 @@ int main()
     }
     add_household_group_to_world(world, threePersonHousehold_group);
 
-    // Assumed percentage of infection state at the beginning of the simulation.
-    double exposed_pct = 0.01, infected_pct = 0.08, carrier_pct = 0.05, recovered_pct = 0.01;
     // Assign an infection state to each person.
-    // The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
+    // The infection states are chosen randomly. 
     auto persons = world.get_persons();
-    double susceptible          = 1 - exposed_pct - infected_pct - carrier_pct - recovered_pct;
-    std::vector<double> weights = {susceptible, exposed_pct, carrier_pct, infected_pct / 2,
-                                   infected_pct / 2, recovered_pct / 2, recovered_pct / 2};
     for (auto& person : persons) {
-        uint32_t state  = (uint32_t)mio::DiscreteDistribution<size_t>::get_instance()(weights);
+        uint32_t state = rand()%(uint32_t)mio::abm::InfectionState::Count;
         world.set_infection_state(person, (mio::abm::InfectionState)state);
     }
 
@@ -139,7 +134,7 @@ int main()
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    auto f_abm = fopen("minimal_abm.txt", "w");
+    auto f_abm = fopen("abm_minimal.txt", "w");
     fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         fprintf(f_abm, "%f ", sim.get_result().get_time(i));
