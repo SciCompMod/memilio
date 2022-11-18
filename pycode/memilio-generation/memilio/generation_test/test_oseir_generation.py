@@ -25,12 +25,13 @@ import tempfile
 
 import os
 
+
 class TestOseirGeneration(unittest.TestCase):
 
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     project_path = here.split('/pycode')[0]
-    
+
     # Load expected results for oseir generation.
     with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
         expected_test_oseir_py = expected.read()
@@ -44,28 +45,28 @@ class TestOseirGeneration(unittest.TestCase):
     # Create compile_commands
     build_path = os.path.join(test_dir.name + '/build')
     source_path = os.path.join(project_path + '/cpp')
-    clang_cmd = ["cmake", '-S', source_path, '-B', build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'] 
+    clang_cmd = ["cmake", '-S', source_path, '-B',
+                 build_path, '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
     subprocess.run(clang_cmd)
 
-    def setUp(self): 
+    def setUp(self):
         path_database = self.build_path.split('memilio')[-1]
-        config_json =   {
-                        "source_file": "/cpp/models/ode_seir/model.cpp",
-                        "path_database": path_database,
-                        "namespace": "mio::oseir::",
-                        "optional": {
-                            "libclang_library_path": "",
-                            "python_module_name": "test_oseir",
-                            "simulation_name": "",
-                            "age_group": False
-                            }
-                        }
+        config_json = {
+            "source_file": "/cpp/models/ode_seir/model.cpp",
+            "path_database": path_database,
+            "namespace": "mio::oseir::",
+            "optional": {
+                "libclang_library_path": "",
+                "python_module_name": "test_oseir",
+                "simulation_name": "",
+                "age_group": False
+            }
+        }
 
         conf = ScannerConfig.from_dict(config_json)
         conf.project_path = self.project_path
         conf.target_folder = os.path.join(self.project_path + path_database)
         self.scanner = Scanner(conf)
-        
 
     def test_clean_oseir(self):
         irdata = self.scanner.extract_results()
@@ -75,18 +76,17 @@ class TestOseirGeneration(unittest.TestCase):
         generator.generate_files(irdata)
 
         with open(os.path.join(irdata.target_folder + "/test_oseir.py")) as result:
-                self.assertEqual(result.read(), self.expected_test_oseir_py)
+            self.assertEqual(result.read(), self.expected_test_oseir_py)
         with open(os.path.join(irdata.target_folder + "/test_oseir.cpp")) as result:
-                self.assertEqual(result.read(), self.expected_test_oseir_cpp)
+            self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):
         self.scanner.config.model_class = "wrong_name"
         with self.assertRaises(AssertionError) as error:
             self.scanner.extract_results()
-    
+
         error_message = "set a model name"
         self.assertEqual(str(error.exception), error_message)
-
 
 
 if __name__ == '__main__':

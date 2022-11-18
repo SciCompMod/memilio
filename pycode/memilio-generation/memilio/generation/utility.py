@@ -26,10 +26,14 @@ from clang.cindex import Config, Cursor, Type
 import subprocess
 import os
 
+
 def try_set_libclang_path(path: str) -> None:
     """
     Try to set the file_path for the libclang library. 
     If its already set, the returned Exception gets caught and discarded.
+    If the given path string is empty, it is obtain with a call on the terminal.
+
+    @param path Path to the library files of libClang. Can be an empty string.
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path):
@@ -39,38 +43,52 @@ def try_set_libclang_path(path: str) -> None:
     try:
         Config.set_library_file(os.path.abspath(path))
     except Exception as e:
-        if str(e) != "library file must be set before before using any other functionalities in libclang." :
-            raise(e)
+        if str(e) != "library file must be set before before using any other functionalities in libclang.":
+            raise (e)
+
 
 def get_base_class(base_type: Type) -> List[Any]:
     """
     Retrieve the base class.
     Example for base_type: CompartmentalModel.
+
+    @param Type of the current node.
     """
     result = [base_type.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class(base_type.get_template_argument_type(i)))
     return result
 
+
 def get_base_class_string(base_type: Type) -> List[Any]:
     """
     Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, mio::SecirParams>.
+
+    @param Type of the current node.
     """
     result = [base_type.spelling.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
-        result.append(get_base_class_string(base_type.get_template_argument_type(i)))
+        result.append(get_base_class_string(
+            base_type.get_template_argument_type(i)))
     return result
+
 
 def indent(level: int) -> str:
     """ 
-    Indentation string for pretty-printing
-    """ 
+    Indentation string for pretty-printing.
+
+    @param level Amount of indentations.
+    """
     return '  '*level
+
 
 def output_cursor_print(cursor: Cursor, level: int) -> None:
     """ 
-    Low level cursor output
+    Low level cursor output to the terminal.
+
+    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param level Amount of indentations.
     """
     spelling = ''
     displayname = ''
@@ -82,12 +100,15 @@ def output_cursor_print(cursor: Cursor, level: int) -> None:
     kind = cursor.kind
 
     print(indent(level) + spelling, '<' + str(kind) + '>')
-    print(indent(level+1) + '"'  + displayname + '"')
+    print(indent(level+1) + '"' + displayname + '"')
 
 
 def output_cursor_and_children_print(cursor: Cursor, level: int = 0) -> None:
     """ 
-    Output this cursor and its children with minimal formatting.
+    Output this cursor and its children with minimal formatting to the terminal.
+
+    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param level [Default = 0] Amount of indentations.
     """
     output_cursor_print(cursor, level)
     if cursor.kind.is_reference():
@@ -105,9 +126,14 @@ def output_cursor_and_children_print(cursor: Cursor, level: int = 0) -> None:
     if has_children:
         print(indent(level) + '}')
 
+
 def output_cursor_file(cursor: Cursor, f: TextIO, level: int) -> None:
     """ 
-    Low level cursor output
+    Low level cursor output to a file.
+
+    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param f Open file object for output.
+    @param level Amount of indentations.
     """
     spelling = ''
     displayname = ''
@@ -121,11 +147,17 @@ def output_cursor_file(cursor: Cursor, f: TextIO, level: int) -> None:
     f.write(indent(level) + spelling + ' <' + str(kind) + '> ')
     if cursor.location.file:
         f.write(cursor.location.file.name + '\n')
-    f.write(indent(level+1) + '"'  + displayname + '"\n')
+    f.write(indent(level+1) + '"' + displayname + '"\n')
 
-def output_cursor_and_children_file(cursor: Cursor, f: TextIO, level: int = 0) -> None:
+
+def output_cursor_and_children_file(
+        cursor: Cursor, f: TextIO, level: int = 0) -> None:
     """ 
-    Output this cursor and its children with minimal formatting.
+    Output this cursor and its children with minimal formatting to a file.
+
+    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param f Open file object for output.
+    @param level Amount of indentations.
     """
     output_cursor_file(cursor, f, level)
     if cursor.kind.is_reference():

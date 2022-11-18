@@ -23,7 +23,12 @@
 """
 from memilio.generation import IntermediateRepresentation
 
+
 def includes(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     substition_string = (
         "#include \"pybind_util.h\"\n"
         "//Includes from pymio\n"
@@ -35,7 +40,12 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
         substition_string += "#include <vector>\n"
     return substition_string
 
+
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     substition_string = (
         "namespace pymio"
         "{"
@@ -53,7 +63,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
                 "}}\n"
                 "\n"
             ).format(
-                enum_class = key
+                enum_class=key
             )
         else:
             substition_string += (
@@ -64,39 +74,54 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
                 "}}\n"
                 "\n"
             ).format(
-                namespace = intermed_repr.namespace,
-                enum_class = key
+                namespace=intermed_repr.namespace,
+                enum_class=key
             )
 
     return substition_string + "} // namespace pymio\n"
 
+
 def population_enums(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     substition_string = ""
     for key, values in intermed_repr.enum_populations.items():
         substition_string += (
             "pymio::iterable_enum<{namespace}{enum_class}>(m, \"{enum_class}\")\n\t"
-            ).format(
-                namespace = intermed_repr.namespace,
-                enum_class=key
-            )
+        ).format(
+            namespace=intermed_repr.namespace,
+            enum_class=key
+        )
 
         for value in values[:-1]:
             substition_string += (
                 "    .value(\"{comp_class}\", {namespace}{enum_class}::{comp_class})\n\t"
             ).format(
-                namespace = intermed_repr.namespace,
-                comp_class = value,
-                enum_class = key
+                namespace=intermed_repr.namespace,
+                comp_class=value,
+                enum_class=key
             )
         substition_string = substition_string.rstrip() + ";\n\n"
     return substition_string
 
+
 def population(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     for value in intermed_repr.model_base[1:]:
         if "Population" in value[0]:
             return value[0]
 
+
 def model_init(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     substition_string = ""
     for init in intermed_repr.model_init:
 
@@ -108,12 +133,20 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
             substition_string += (
                 "    .def(py::init<{type}>(), py::arg(\"{name}\"))\n\t"
             ).format(
-                type = init["type"][0],
-                name = init["name"][0]
+                type=init["type"][0],
+                name=init["name"][0]
             )
     return substition_string.rstrip() + ";\n"
 
+
 def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    Generate the code for the AgeGroup class.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     if not intermed_repr.parameterset_wrapper:
         return ""
 
@@ -121,7 +154,15 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
         "pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, \"AgeGroupArray\");\n"
     )
 
+
 def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    Generate the code for the parameterset_wrapper needed when using age groups.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     if not intermed_repr.parameterset_wrapper:
         return ""
 
@@ -131,36 +172,62 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
         "\t.def(\"check_constraints\", &{namespace}{parameterset_wrapper}::check_constraints)\n"
         "\t.def(\"apply_constraints\", &{namespace}{parameterset_wrapper}::apply_constraints);\n"
     ).format(
-        namespace = intermed_repr.namespace,
-        parameterset = intermed_repr.parameterset,
-        parameterset_wrapper = intermed_repr.parameterset_wrapper
+        namespace=intermed_repr.namespace,
+        parameterset=intermed_repr.parameterset,
+        parameterset_wrapper=intermed_repr.parameterset_wrapper
     )
 
+
 def age_group(intermed_repr: IntermediateRepresentation) -> str:
+    """
+    Generate the code for the AgeGroup class.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
     if not intermed_repr.age_group:
         return ""
 
     return (
         "py::class_<mio::AgeGroup, {base}>(m, \"AgeGroup\").def(py::init<{init}>());"
     ).format(
-        namespace = intermed_repr.namespace,
-        base = intermed_repr.age_group["base"],
-        init = intermed_repr.age_group["init"][0]
+        namespace=intermed_repr.namespace,
+        base=intermed_repr.age_group["base"],
+        init=intermed_repr.age_group["init"][0]
     )
 
+
 def simulation(intermed_repr: IntermediateRepresentation) -> str:
-    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
+    """
+    Generate the code for the Simulation class.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
+    if intermed_repr.simulation_class is None or (
+            not intermed_repr.simulation_class.strip()):
         return ""
 
     return (
         "pymio::bind_Simulation<{namespace}{simulation_class}<>>(m, \"{simulation_class}\");\n"
     ).format(
-        namespace = intermed_repr.namespace,
-        simulation_class = intermed_repr.simulation_class
+        namespace=intermed_repr.namespace,
+        simulation_class=intermed_repr.simulation_class
     )
 
+
 def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
-    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
+    """
+    Generate the code of the classes for graph simulations.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
+    if intermed_repr.simulation_class is None or (
+            not intermed_repr.simulation_class.strip()):
         return ""
 
     return (
@@ -170,18 +237,28 @@ def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
         "pymio::bind_MigrationGraph<{namespace}{simulation_class}<>>(m, \"MigrationGraph\");\n\t"
         "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MigrationEdge>>(m, \"MigrationSimulation\");\n\t"
     ).format(
-        namespace = intermed_repr.namespace,
-        model_class = intermed_repr.model_class,
-        simulation_class = intermed_repr.simulation_class
+        namespace=intermed_repr.namespace,
+        model_class=intermed_repr.model_class,
+        simulation_class=intermed_repr.simulation_class
     )
 
-def simulation_vector_definition(intermed_repr: IntermediateRepresentation) -> str:
-    if intermed_repr.simulation_class is None or (not intermed_repr.simulation_class.strip()):
+
+def simulation_vector_definition(
+        intermed_repr: IntermediateRepresentation) -> str:
+    """
+    Generate the code for vector definition.
+    Not used by every model.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.
+    """
+    if intermed_repr.simulation_class is None or (
+            not intermed_repr.simulation_class.strip()):
         return ""
 
     return (
         "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}>, mio::MigrationEdge>>);\n"
     ).format(
-        namespace = intermed_repr.namespace,
-        simulation_class = intermed_repr.simulation_class
+        namespace=intermed_repr.namespace,
+        simulation_class=intermed_repr.simulation_class
     )

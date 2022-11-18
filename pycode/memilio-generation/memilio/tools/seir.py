@@ -20,7 +20,7 @@
 """
 Example for the ode seir model.
 """
-from memilio.generation import Scanner, ScannerConfig, Generator
+from memilio.generation import ScannerConfig, Generator, Scanner
 import os
 
 
@@ -39,4 +39,4 @@ generator = Generator()
 generator.create_substitutions(intermed_repr)
 generator.generate_files(intermed_repr)
 
-#scanner.output_ast_file()
+# scanner.output_ast_file()
