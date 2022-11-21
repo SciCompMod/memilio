@@ -740,10 +740,10 @@ def transform_npi_data(fine_resolution=2,
                              countyID, 'Incidence'] = df_infec_local['Incidence'].values
 
             # cut infection information at start_date_new and end_date_new
-            df_infec_local = df_infec_local[df_infec_local
+            df_infec_local = df_infec_local[(df_infec_local
                                             [dd.EngEng['date']] >=
-                                            start_date_new][
-                df_infec_local[dd.EngEng['date']] <= end_date_new].reset_index()
+                                            start_date_new) and
+                (df_infec_local[dd.EngEng['date']] <= end_date_new)].reset_index()
 
         # get county-local data frame
         start_time = time.perf_counter()

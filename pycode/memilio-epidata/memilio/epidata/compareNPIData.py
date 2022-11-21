@@ -60,37 +60,26 @@ for code in codelist:
     # rename dates so that they match dates from old npi dataframe
     dates_new = ['d' + date.replace('-', '') for date in dates]
 
+    if (counter_col >  0) and ((old_cols != df_npis_new.columns[0:5]).any()):
+        print('error')
+
     for i in range(0,401):
         if counter_col == 0:
             df_local[i] = pd.DataFrame(columns=list(df_npis_new.columns[0:5]) + ['code'] + dates_new)
-        else:
-            print('todo')
 
-        df_npis_new[df_npis_new.ags5 == counties[i]].iloc[:, 6:].T.reset_index()
+        dummy_to_append = pd.DataFrame(columns=['code'] + dates_new, data=df_npis_new[df_npis_new.ags5 == counties[i]].iloc[:, 6:].T.reset_index().values.copy())
 
-    if counter_col == 0:
-        df = df_npis_new.copy()
-    else:
-        # extend data frame with columns for each date that is included in new data set
-        df = pd.concat([df, pd.DataFrame(columns=list(df_npis_new.columns[0:5])+ dates_new)])
+        df_local[i] = pd.concat([df_local[i], dummy_to_append])
 
-    for i in range(start_county, numberofcities):
-        print('County number', i)
-        counter_col = 0
+    old_cols = df_npis_new.columns[0:5]
+
+    counter_col += 1
+
+# set names for all rows of county
+for i in range(0,401):
+    df_local[i][old_cols] = df_npis_new[df_npis_new.ags5 == counties[i]].iloc[0,0:5]
 
 
-
-    # get number of codes for current subcategory, we substract 6 because we have 6 columns for bundesland, kreis, etc.
-    numberofcodes = len(df_npis_new.columns) - 6
-    #print('numberofcodes', numberofcodes)
-
-    # insert values from new dataset into data frame
-    df_local[0].iloc[:, 6:] = df_npis_new.iloc[0:numberofdays, 6:].T
-
-    #print(df.iloc[i*1248 + counter: i*1248 + counter + numberofcodes])
-
-    counter_col += numberofcodes
-    counter_counties += 1
 print(df)
 
 df_dropped = df
