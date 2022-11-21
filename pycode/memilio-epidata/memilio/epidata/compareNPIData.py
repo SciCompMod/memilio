@@ -77,8 +77,9 @@ for code in codelist:
 
 # set names for all rows of county
 for i in range(0,401):
+    print('county ' + str(i))
     df_local[i][old_cols] = df_npis_new[df_npis_new.ags5 == counties[i]].iloc[0,0:5]
-
+    pd.testing.assert_frame_equal(df_npis_old[df_npis_old.ags5==counties[i]].iloc[:1152,6:].reset_index(drop=True), df_local[i].iloc[:,6:723].reset_index(drop=True), check_dtype=False)
 
 print(df)
 
