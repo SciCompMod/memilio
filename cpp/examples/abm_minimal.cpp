@@ -32,7 +32,7 @@ int main()
     // Create the world with infection parameters.
     auto world = mio::abm::World(infection_params);
 
-    // There are 3 households for each hosehold group.
+    // There are 3 households for each household group.
     int n_households = 3;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
@@ -40,7 +40,7 @@ int main()
     child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
     child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
 
-    auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34, 35-59 or 60-79.
+    auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
     parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
     
@@ -91,11 +91,11 @@ int main()
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
-    // People can get tested at work (and do this with 0.5 probability).
+    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
     auto testing_min_time = mio::abm::days(1);
     auto probability      = 0.5;
     auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto test_type        = mio::abm::AntigenTest();
     auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
