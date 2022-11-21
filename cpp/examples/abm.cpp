@@ -251,7 +251,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int two_person_half_families  = 1765;
     int two_person_other_families = 166;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
-                                                        two_person_half_families, two_person_other_families);
+                                                             two_person_half_families, two_person_other_families);
     add_household_group_to_world(world, twoPersonHouseholds);
 
     // Three person households
@@ -259,7 +259,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int three_person_half_families  = 662;
     int three_person_other_families = 175;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
-                                                          three_person_half_families, three_person_other_families);
+                                                               three_person_half_families, three_person_other_families);
     add_household_group_to_world(world, threePersonHouseholds);
 
     // Four person households
@@ -267,7 +267,7 @@ void create_world_from_statistical_data(mio::abm::World& world)
     int four_person_half_families  = 110;
     int four_person_other_families = 122;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
-                                                         four_person_half_families, four_person_other_families);
+                                                              four_person_half_families, four_person_other_families);
     add_household_group_to_world(world, fourPersonHouseholds);
 
     // Five plus person households

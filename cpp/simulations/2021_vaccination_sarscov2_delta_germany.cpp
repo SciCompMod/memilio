@@ -686,167 +686,6 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
 }
 
 /**
- * Load the input graph for the parameter study that was previously saved.
- * @param save_dir directory where the graph was saved.
- * @returns created graph or any io errors that happen during reading of the files.
- */
-mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
-{
-    return mio::read_graph<mio::osecirvvs::Model>(save_dir.string());
-}
-
-/**
- * Save the input graph for the parameter study.
- * @param save_dir directory where the graph will be saved.
- * @returns any io errors that happen during writing of the files.
- */
-mio::IOResult<void> save_graph(const mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
-                               const fs::path& save_dir)
-{
-    return mio::write_graph(params_graph, save_dir.string());
-}
-
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param params parameters for each county node.
- * @param county_ids id of each county node.
- * @return graph with county nodes but no edges.
- */
-auto make_graph_no_edges(const std::vector<mio::osecirvvs::Model>& params, const std::vector<int>& county_ids)
-{
-    //make a graph without edges for writing to file
-    auto graph = mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>();
-    for (auto i = size_t(0); i < county_ids.size(); ++i) {
-        graph.add_node(county_ids[i], params[i]);
-    }
-    return graph;
-}
-
-/**
- * Save the result of a single parameter study run.
- * Creates a new subdirectory for this run.
- * @param result result of the simulation run.
- * @param params parameters used for the simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @param run_idx index of the run.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
-                                const std::vector<mio::osecirvvs::Model>& params, const std::vector<int>& county_ids,
-                                const fs::path& result_dir, size_t run_idx)
-{
-    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                       (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
-        mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
-    return mio::success();
-}
-
-/**
- * Save the results of a parameter study.
- * Stores different percentiles and sums of the results and parameters. 
- * @param ensemble_results result of each simulation run.
- * @param ensemble_params parameters used for each simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
-                                 const std::vector<std::vector<mio::osecirvvs::Model>>& ensemble_params,
-                                 const std::vector<int>& county_ids, const fs::path& result_dir)
-{
-    //save results and sum of results over nodes
-    auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
-    auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
-    for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY((mio::save_result(ensemble_result_sum[i], {0}, num_groups,
-                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string())));
-        BOOST_OUTCOME_TRY((mio::save_result(ensemble_results[i], county_ids, num_groups,
-                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string())));
-    }
-
-    //make directories for percentiles
-    auto result_dir_p05 = result_dir / "p05";
-    auto result_dir_p25 = result_dir / "p25";
-    auto result_dir_p50 = result_dir / "p50";
-    auto result_dir_p75 = result_dir / "p75";
-    auto result_dir_p95 = result_dir / "p95";
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p05.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p25.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p50.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p75.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p95.string()));
-
-    //save percentiles of results, summed over nodes
-    {
-        auto ensemble_results_sum_p05 = mio::ensemble_percentile(ensemble_result_sum, 0.05);
-        auto ensemble_results_sum_p25 = mio::ensemble_percentile(ensemble_result_sum, 0.25);
-        auto ensemble_results_sum_p50 = mio::ensemble_percentile(ensemble_result_sum, 0.50);
-        auto ensemble_results_sum_p75 = mio::ensemble_percentile(ensemble_result_sum, 0.75);
-        auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
-
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
-    }
-
-    //save percentiles of results
-    {
-        auto ensemble_results_p05 = mio::ensemble_percentile(ensemble_results, 0.05);
-        auto ensemble_results_p25 = mio::ensemble_percentile(ensemble_results, 0.25);
-        auto ensemble_results_p50 = mio::ensemble_percentile(ensemble_results, 0.50);
-        auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
-        auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
-
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
-    }
-
-    //save percentiles of parameters
-    {
-        auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
-        auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
-        auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
-        auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
-        auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
-
-        auto make_graph = [&county_ids](auto&& params) {
-            return make_graph_no_edges(params, county_ids);
-        };
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
-    }
-    return mio::success();
-}
-
-/**
  * Different modes for running the parameter study.
  */
 enum class RunMode
@@ -864,10 +703,11 @@ enum class RunMode
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
  * @returns any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
-                        bool late, bool masks, bool test, bool high, bool long_time, bool future)
+                        bool save_single_runs, bool late, bool masks, bool test, bool high, bool long_time, bool future)
 {
     mio::Date temp_date;
     if (future) {
@@ -885,11 +725,11 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
-        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
         params_graph = loaded;
     }
 
@@ -921,15 +761,15 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
                                return node.property.get_simulation().get_model();
                            });
 
-            if (save_result_result) {
-                save_result_result =
-                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            if (save_result_result && save_single_runs) {
+                save_result_result = save_result_with_params(ensemble_results.back(), ensemble_params.back(),
+                                                             county_ids, result_dir, run_idx);
             }
             std::cout << "run " << run_idx << " complete." << std::endl;
             ++run_idx;
         });
     BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
 
     return mio::success();
 }
@@ -956,24 +796,28 @@ int main(int argc, char** argv)
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 9) {
+    bool save_single_runs = true;
+    if (argc == 10) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        if (atoi(argv[4]) == 1) {
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
+        if (atoi(argv[5]) == 1) {
             high = true;
         }
         else {
             high = false;
         }
-        if (atoi(argv[5]) == 1) {
+        if (atoi(argv[6]) == 1) {
             late = true;
         }
         else {
             late = false;
         }
-        if (atoi(argv[6]) == 1) {
+        if (atoi(argv[7]) == 1) {
             masks = true;
             test  = true;
         }
@@ -981,46 +825,51 @@ int main(int argc, char** argv)
             masks = false;
             test  = false;
         }
-        if (atoi(argv[7]) == 1) {
+        if (atoi(argv[8]) == 1) {
             long_time = true;
         }
         else {
             long_time = false;
         }
-        if (atoi(argv[8]) == 1) {
+        if (atoi(argv[9]) == 1) {
             future = true;
         }
         else {
             future = false;
         }
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
-               (int)late, (int)high, (int)long_time, (int)future);
-
+        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
-    else if (argc == 3) {
+    else if (argc == 4) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
         printf("Loading graph from \"%s\".\n", save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
-    else if (argc == 4) {
+    else if (argc == 5) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
-               (int)late, (int)high, (int)long_time, (int)future);
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
+        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
     }
     else {
         printf("Usage:\n");
-        printf("paper_202107 <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
+        printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
         printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
         printf("\tStore the results in <result_dir>\n");
         printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
-        printf("paper_202107 <load_dir> <result_dir>\n");
+        printf("2021_vaccination_delta <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }
@@ -1059,7 +908,8 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    auto result = run(mode, data_dir, save_dir, result_dir, late, masks, test, high, long_time, future);
+    auto result =
+        run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
