@@ -16,10 +16,10 @@ cd ../..
 # download data
 cd "pycode/memilio-epidata"
 python setup.py install
-python memilio/epidata/getPopulationData.py -o -m 7
-python memilio/epidata/getDIVIData.py       -o -m 7
-python memilio/epidata/getSimulationData.py -o -m 7
-python memilio/epidata/getCaseData.py       -o -m 7
+python memilio/epidata/getPopulationData.py
+python memilio/epidata/getDIVIData.py -m 7
+python memilio/epidata/getSimulationData.py -m 7
+python memilio/epidata/getCaseData.py -m 7
 python memilio/epidata/transformMobilityData.py
 
-echo "Generated was succesful." 
+echo "Generation was succesful." 
