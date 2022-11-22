@@ -8,6 +8,7 @@ Always to be checked:
 * [ ] There is at least one issue associated with the pull request.
 * [ ] The branch follows the naming conventions as defined in the [git workflow](git-workflow).
 * [ ] New code adheres with the [coding guidelines](coding-guidelines)
+* [ ] Make sure that the [pre-commit linting/style checks pass](https://github.com/DLR-SC/memilio/wiki).
 
 If functions were changed or functionality was added:
 * [ ] Tests for new functionality has been added
