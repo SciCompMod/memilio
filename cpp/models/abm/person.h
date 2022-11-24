@@ -263,7 +263,7 @@ public:
         m_wears_mask = wear_mask;
     }
 
-    double get_protection() const;
+    double get_protective_factor() const;
 
 private:
     LocationId m_location_id;

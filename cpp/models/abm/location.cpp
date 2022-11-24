@@ -49,7 +49,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
-    double mask_protection = person.get_protection();
+    double mask_protection = person.get_protective_factor();
     person.get_mask().increase_time_used(dt);
     switch (infection_state) {
     case InfectionState::Susceptible:
@@ -58,7 +58,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
                 InfectionState new_state = random_transition(
                     infection_state, dt,
                     {{InfectionState::Exposed,
-                      mask_protection * m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
+                      (1 - mask_protection) * m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
                 if (new_state != infection_state) {
                     return new_state;
                 }
@@ -68,7 +68,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
         else {
             return random_transition(
                 infection_state, dt,
-                {{InfectionState::Exposed, mask_protection * m_cached_exposure_rate[{age, vaccination_state}]}});
+                {{InfectionState::Exposed, (1 - mask_protection) * m_cached_exposure_rate[{age, vaccination_state}]}});
         }
     case InfectionState::Carrier:
         return random_transition(

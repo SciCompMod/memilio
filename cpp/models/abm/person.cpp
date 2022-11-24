@@ -211,21 +211,21 @@ const std::vector<uint32_t>& Person::get_cells() const
  * get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection
  * @return protection factor of the mask 
  */
-double Person::get_protection() const
+double Person::get_protective_factor() const
 {
     if (m_wears_mask == false) {
-        return 1.;
+        return 0.;
     }
     else if (m_mask.get_type() == mio::abm::MaskType::Community) {
-        return 0.;
+        return 1.;
     }
     else if (m_mask.get_type() == mio::abm::MaskType::Surgical) {
-        return 0.;
+        return 1.;
     }
     else if (m_mask.get_type() == mio::abm::MaskType::FFP2) {
-        return 0.;
+        return 1.;
     }
-    return 1.;
+    return 0.;
 }
 
 } // namespace abm
