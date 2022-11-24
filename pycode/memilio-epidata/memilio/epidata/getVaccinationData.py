@@ -17,19 +17,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import datetime
-import os
 import itertools
-import pandas as pd
-import numpy as np
+import os
+from datetime import datetime
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import getPopulationData as gpd
-from memilio.epidata import modifyDataframeSeries as mdfs
+import numpy as np
+import pandas as pd
+
 from memilio.epidata import customPlot
+from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getPopulationData as gpd
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 # Downloads vaccination data from RKI
 
@@ -174,7 +175,7 @@ def sanitizing_extrapolation_mobility(
     @param neighbors_mobility dict with counties as keys and commuter migration to other counties as values.
     @return New DataFrame with sanitized data.
     """
-    max_sanit_threshold_arr = np.zeros((len(age_groups)))
+    max_sanit_threshold_arr = np.zeros(len(age_groups))
 
     # compute average vaccination ratio per age group for full vaccinations
     aver_ratio = df.groupby(dd.EngEng['ageRKI']).agg({column_names[1]: sum})[
@@ -438,15 +439,16 @@ def extrapolate_age_groups_vaccinations(
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
                 new_dataframe[dd.EngEng['ageRKI']] = unique_age_groups_new[j]
-                vacc_data_df = vacc_data_df.append(
-                    pd.concat([info_df, new_dataframe], axis=1))
+                vacc_data_df = pd.concat(
+                    [vacc_data_df, pd.concat([info_df, new_dataframe], axis=1)])
+
             # merge all dataframes for each age group into one dataframe
             total_county_df = pd.concat([vacc_data_df, total_county_df]).groupby(
                 groupby_list).sum().reset_index()
 
         # merge all county specific dataframes
-        df_data_ageinf_county_cs = df_data_ageinf_county_cs.append(
-            total_county_df)
+        df_data_ageinf_county_cs = pd.concat(
+            [df_data_ageinf_county_cs, total_county_df])
 
         # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
         for vacc in column_names:
@@ -533,6 +535,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
+    df_data[dd.EngEng['date']] = pd.to_datetime(
+        df_data[dd.EngEng['date']], format="%Y-%m-%d")
+
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[
             df_data[dd.EngEng['idCounty']] == 'u'].agg(
@@ -593,7 +598,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     try:
         population = pd.read_json(
             directory + "county_current_population.json")
-    except ValueError:
+    # pandas>1.5 raise FileNotFoundError instead of ValueError
+    except (ValueError, FileNotFoundError):
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,

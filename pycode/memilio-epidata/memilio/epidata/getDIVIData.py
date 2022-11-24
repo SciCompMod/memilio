@@ -36,11 +36,13 @@ data explanation:
 """
 
 import os
-import pandas as pd
 from datetime import date
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+
+import pandas as pd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
@@ -98,7 +100,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         try:
             df_raw = pd.read_json(file_in)
-        except ValueError:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without"
                                     " -r flag to get it.")
@@ -108,7 +111,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                 'zeitreihe-tagesdaten',
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
-        except Exception as err:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 "Error: Download link for Divi data has changed.") from err
 
@@ -122,7 +125,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
+    df[dd.EngEng['date']] = pd.to_datetime(
+        df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
@@ -143,7 +147,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     df = geoger.insert_names_of_states(df)
     df = geoger.insert_names_of_counties(df)
-    
+
     # extract subframe of dates
     df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
@@ -183,7 +187,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
 
-    return(df_raw, df_counties, df_states, df_ger)
+    return (df_raw, df_counties, df_states, df_ger)
 
 
 def divi_data_sanity_checks(df=pd.DataFrame()):
@@ -208,7 +212,7 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
 
     # check if headers are those we want
     for name in test_strings:
-        if(name not in actual_strings_list):
+        if (name not in actual_strings_list):
             raise gd.DataError("Error: Data categories have changed.")
     # check if size of dataframe is not unusal
     # data colletion starts at 24.04.2020

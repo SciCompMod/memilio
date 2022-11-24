@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -96,7 +96,7 @@ TEST(TestUncertain, uncertain_value_assign)
 TEST(TestUncertain, uncertain_value_predef)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
-    
+
     mio::UncertainValue val(3.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);

@@ -19,10 +19,12 @@
 #############################################################################
 import unittest
 
-from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
-from memilio.simulation.oseir import InfectionState as State
 import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import Model, simulate
 
 
 class Test_oseir_integration(unittest.TestCase):
@@ -31,15 +33,14 @@ class Test_oseir_integration(unittest.TestCase):
 
         model = Model()
 
-        model.parameters.LatentTime.value = 5.2
-        model.parameters.InfectiousTime.value = 6.
-        model.parameters.InfectionProbabilityFromContact.value = 1.
+        model.parameters.TimeExposed.value = 5.2
+        model.parameters.TimeInfected.value = 6.
+        model.parameters.TransmissionProbabilityOnContact.value = 1.
 
         model.populations[Index_InfectionState(State.Susceptible)] = 4800
         model.populations[Index_InfectionState(State.Exposed)] = 100
         model.populations[Index_InfectionState(State.Infected)] = 50
         model.populations[Index_InfectionState(State.Recovered)] = 50
-
 
         model.parameters.ContactPatterns.baseline = np.ones((1, 1))
         model.parameters.ContactPatterns.minimum = np.zeros((1, 1))
@@ -55,6 +56,7 @@ class Test_oseir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
+
 
 if __name__ == '__main__':
     unittest.main()

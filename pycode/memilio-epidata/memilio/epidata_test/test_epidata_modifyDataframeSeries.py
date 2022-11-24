@@ -19,10 +19,12 @@
 #############################################################################
 
 import unittest
-import pandas as pd
-import numpy as np
-from pyfakefs import fake_filesystem_unittest
 from datetime import date
+
+import numpy as np
+import pandas as pd
+from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 

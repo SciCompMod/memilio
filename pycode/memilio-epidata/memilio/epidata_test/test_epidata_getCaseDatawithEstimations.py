@@ -17,19 +17,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
-import numpy as np
 import io
-from datetime import date, timedelta
-
 import os
-import pandas as pd
+import unittest
+from datetime import date, timedelta
+from unittest.mock import call, patch
 
+import numpy as np
+import pandas as pd
+from pyfakefs import fake_filesystem_unittest
+
+from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseDatawithEstimations as gcdwe
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
-from unittest.mock import patch, call
 
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
@@ -226,13 +226,13 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             income_sheets[sheet_name].to_excel(
                 dummy, sheet_name=sheet_name, index=False)
 
-        dummy.save()
+        dummy.close()
 
     def test_get_case_data_with_estimations(self):
 
         read_data = True
         make_plot = False
-        file_format= 'json'
+        file_format = 'json'
         out_folder = self.path
         no_raw = False
         impute_dates = False
@@ -348,7 +348,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         read_data = True
         make_plot = False
-        file_format= 'json'
+        file_format = 'json'
         out_folder = self.path
         no_raw = False
         impute_dates = False
@@ -430,7 +430,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         read_data = False
         make_plot = False
-        file_format= 'json'
+        file_format = 'json'
         out_folder = self.path
         no_raw = False
         impute_dates = False
@@ -604,7 +604,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         read_data = True
         make_plot = False
-        file_format= 'json'
+        file_format = 'json'
         out_folder = self.path
         no_raw = False
         impute_dates = False

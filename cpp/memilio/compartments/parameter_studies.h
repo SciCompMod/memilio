@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -48,8 +48,8 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0, double tmax, double graph_sim_dt,
-                   size_t num_runs)
+    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0,
+                   double tmax, double graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
         , m_t0{t0}
@@ -58,8 +58,8 @@ public:
     {
     }
 
-    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0, double tmax,
-                   double dev_rel, double graph_sim_dt, size_t num_runs)
+    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0,
+                   double tmax, double dev_rel, double graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
         , m_t0{t0}
@@ -175,7 +175,7 @@ public:
      * Get the input model that the parameter study is run for.
      * Use for single node simulations, use get_secir_model_graph for graph simulations.
      * @{
-     */ 
+     */
     const typename Simulation::Model& get_model() const
     {
         return m_graph.nodes()[0].property;
@@ -190,7 +190,7 @@ public:
      * Get the input graph that the parameter study is run for.
      * Use for graph simulations, use get_model for single node simulations.
      * @{
-     */ 
+     */
     const Graph<typename Simulation::Model, MigrationParameters>& get_secir_model_graph() const
     {
         return m_graph;

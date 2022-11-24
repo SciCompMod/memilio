@@ -18,14 +18,14 @@
 # limitations under the License.
 ######################################################################
 import unittest
-from unittest.mock import patch, call
-from pyfakefs import fake_filesystem_unittest
+from unittest.mock import call, patch
 
 import pandas as pd
+from pyfakefs import fake_filesystem_unittest
 
+from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
@@ -57,10 +57,10 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(county), '60+', 3, 76),
             ('2020-12-27', str(county), '60+', 4, 1)
         ]
-        df_to_append = pd.DataFrame(
+        df_to_concatenate = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
-        df_vacc_data = df_vacc_data.append(
-            df_to_append, ignore_index=True)
+        df_vacc_data = pd.concat(
+            [df_vacc_data, df_to_concatenate], ignore_index=True)
 
     df_vacc_data = df_vacc_data.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
@@ -86,10 +86,10 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(counties[i]), '56+', 3, 57),
             ('2020-12-27', str(counties[i]), '56+', 4, 1)
         ]
-        df_to_append = pd.DataFrame(
+        df_to_concatenate = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
-        df_vacc_data_altern = df_vacc_data_altern.append(
-            df_to_append, ignore_index=True)
+        df_vacc_data_altern = pd.concat(
+            [df_vacc_data_altern, df_to_concatenate], ignore_index=True)
 
     df_vacc_data_altern = df_vacc_data_altern.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
