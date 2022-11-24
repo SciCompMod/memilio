@@ -95,7 +95,8 @@ def loadCsv(
     """
 
     url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_default = {"sep": ',', "header": 0,
+                          "encoding": None, 'dtype': None}
 
     for k in param_dict_default:
         if k not in param_dict:
@@ -187,7 +188,8 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+    cli_dict = {"default": ['moving_average'],
+                "divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources'],

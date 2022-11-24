@@ -11,13 +11,12 @@ fi
 # path to memilio dir
 cd ../..
 data_dir=$PWD/data/pydata
+mobility_dir=$PWD/data/mobility/
 
 # download data
 cd "pycode/memilio-epidata"
 python setup.py install
-python memilio/epidata/getPopulationData.py -o $data_dir
-python memilio/epidata/getDIVIData.py -o $data_dir -m 7
 python memilio/epidata/getSimulationData.py -o $data_dir -m 7
-python memilio/epidata/getCaseData.py -o $data_dir -m 7
+python memilio/epidata/transformMobilityData.py -o $mobility_dir
 
 echo "Generation was succesful." 
