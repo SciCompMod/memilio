@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#define _CRT_SECURE_NO_DEPRECATE
 #include "abm/abm.h"
 #include "abm/household.h"
 #include "memilio/compartments/parameter_studies.h"
