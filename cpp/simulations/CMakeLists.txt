@@ -6,4 +6,8 @@ if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     add_executable(2021_vaccination_delta 2021_vaccination_sarscov2_delta_germany.cpp)
     target_link_libraries(2021_vaccination_delta PRIVATE memilio ode_secirvvs Boost::filesystem ${HDF5_C_LIBRARIES})
     target_compile_options(2021_vaccination_delta PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    
+    add_executable(abm_example abm.cpp)
+    target_link_libraries(abm_example PRIVATE memilio abm)
+    target_compile_options(abm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
