@@ -22,7 +22,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # code coverage analysis
 # Note: this only works under linux and with make
 # Ninja creates different directory names which do not work together with this scrupt
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# as STREQUAL is case-sensitive https://github.com/TriBITSPub/TriBITS/issues/131, also allow DEBUG as accepted input
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     option(MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
     mark_as_advanced(MEMILIO_TEST_COVERAGE)
 
