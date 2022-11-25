@@ -251,6 +251,11 @@ public:
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
+    bool get_npi_active()
+    {
+        return m_npi_active;
+    }
+
 private:
     void change_subpopulation(InfectionState s, int delta);
 
@@ -265,6 +270,7 @@ private:
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
     MaskType m_required_mask;
+    bool m_npi_active;
 };
 
 } // namespace abm

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -39,7 +39,8 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_subpopulations{}
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
-    , m_required_mask(MaskType::Surgical) // welche würde man hier nehmen?
+    , m_required_mask(MaskType::Community)
+    , m_npi_active(false)
 {
 }
 
@@ -50,7 +51,6 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
     double mask_protection = person.get_protective_factor();
-    person.get_mask().increase_time_used(dt);
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (!person.get_cells().empty()) {

@@ -23,6 +23,7 @@
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
+#include <vector>
 
 namespace mio
 {
@@ -40,9 +41,10 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
-    , m_person_id(person_id)
     , m_mask(Mask(MaskType::Community)) // better do random stuff here, maybe with preferences
     , m_wears_mask(false)
+    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
+    , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()();

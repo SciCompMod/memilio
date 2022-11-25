@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
+#include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/state.h"
 #include "abm/age.h"
@@ -29,6 +30,7 @@
 #include "abm/mask.h"
 
 #include <functional>
+#include <vector>
 
 namespace mio
 {
@@ -253,17 +255,37 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
+    Mask& get_mask()
+    {
+        return m_mask;
+    }
+
     Mask get_mask() const
     {
         return m_mask;
     }
 
-    void wear_mask(bool wear_mask)
+    bool get_wear_mask()
+    {
+        return m_wears_mask;
+    }
+
+    void set_wear_mask(bool wear_mask)
     {
         m_wears_mask = wear_mask;
     }
 
     double get_protective_factor() const;
+
+    void set_mask_preferences(std::vector<double> preferences)
+    {
+        m_mask_compliance = preferences;
+    }
+
+    double get_mask_compliance(LocationType location)
+    {
+        return m_mask_compliance[static_cast<int>(location)];
+    }
 
 private:
     LocationId m_location_id;
@@ -279,10 +301,11 @@ private:
     double m_random_goto_work_hour;
     double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
-    uint32_t m_person_id;
-    std::vector<uint32_t> m_cells;
     Mask m_mask;
     bool m_wears_mask;
+    std::vector<double> m_mask_compliance;
+    uint32_t m_person_id;
+    std::vector<uint32_t> m_cells;
 };
 
 } // namespace abm
