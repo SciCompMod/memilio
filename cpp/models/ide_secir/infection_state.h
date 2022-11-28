@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -41,6 +41,22 @@ enum class InfectionState
     Recovered          = 6,
     Dead               = 7,
     Count              = 8
+};
+
+/**
+ * @brief The InfectionTransitions enum describes the possible
+ * transitions of the infectious state of persons.
+ * InfectionsTransitions ignores the transitions to Recovered because they are not needed for Simulation. 
+ */
+enum class InfectionTransitions
+{
+    SusceptibleToExposed  = 0,
+    SExposedToInfectedNoSymptoms        = 1,
+    InfectedNoSymptomsToInfectedSymptoms = 2,
+    InfectedSymptomsToInfectedSevere  = 3,
+    InfectedSevereToInfectedCritical = 4,
+    InfectedCriticalToDead   = 5,
+    Count              = 6
 };
 
 } // namespace isecir

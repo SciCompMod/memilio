@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,6 +23,16 @@ namespace mio
 {
 namespace isecir
 {
+
+    Model::Model(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
+    : parameters{Parameterset_init}
+    , m_transitions{std::move(init)}
+    , m_SECIR{TimeSeries<double>(4)}
+    , m_dt{dt_init}
+    , m_N{N_init}
+{
+}
+
 
 } // namespace isecir
 } // namespace mio
