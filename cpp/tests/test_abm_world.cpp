@@ -182,6 +182,9 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p2.get_location_id().type, mio::abm::LocationType::School);
         EXPECT_EQ(school.get_subpopulations().sum(), 1);
         EXPECT_EQ(work.get_subpopulations().sum(), 1);
+        mio::abm::TimePoint t = mio::abm::TimePoint(0) + mio::abm::hours(9);
+        EXPECT_EQ(school.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Susceptible)], 1);
+        EXPECT_EQ(work.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Carrier)], 1);
     }
 
     {
@@ -240,6 +243,11 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(work.get_subpopulations().sum(), 1);
         EXPECT_EQ(home.get_subpopulations().sum(), 2);
         EXPECT_EQ(hospital.get_subpopulations().sum(), 1);
+        mio::abm::TimePoint t = mio::abm::TimePoint(0) + mio::abm::hours(10);
+        EXPECT_EQ(event.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Susceptible)], 1);
+        EXPECT_EQ(work.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Carrier)], 1);
+        EXPECT_EQ(home.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Recovered_Infected)], 1);
+        EXPECT_EQ(hospital.get_subpopulations_at_time(t)[size_t(mio::abm::InfectionState::Infected_Severe)], 1);
     }
 }
 

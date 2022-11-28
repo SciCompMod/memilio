@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -244,6 +244,24 @@ public:
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
+    
+    /**
+     * Save the current number of individuals in the each infection state at a specific time step
+     * @param t the time step to save
+    */
+    void save_current_subpopulations(TimePoint& t) 
+    {
+        m_timestep_to_subpopulations_map.insert(std::pair<TimePoint, std::array<int, size_t(InfectionState::Count)>>(t, m_subpopulations));
+    }
+
+    /**
+     * Get the number of individuals in the each infection state at a specific time step
+     * @param t the time step 
+    */
+    std::array<int, size_t(InfectionState::Count)> get_subpopulations_at_time(TimePoint& t) 
+    {
+        return m_timestep_to_subpopulations_map[t];
+    }
 
 private:
     void change_subpopulation(InfectionState s, int delta);
@@ -254,6 +272,7 @@ private:
     int m_num_persons = 0;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
+    std::map<TimePoint, std::array<int, size_t(InfectionState::Count)>> m_timestep_to_subpopulations_map; 
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;

@@ -498,3 +498,26 @@ TEST(TestLocation, setCapacity)
     ASSERT_EQ(location.get_capacity().persons, 4);
     ASSERT_EQ(location.get_capacity().volume, 200);
 }
+
+TEST(TestLocation, saveCurrentSubpopulations)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14, {});
+    location.add_person(person1);
+    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+    location.add_person(person2);
+    auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59, {});
+    location.add_person(person3);
+    
+    auto t1 = mio::abm::TimePoint(7);
+    location.save_current_subpopulations(t1);
+
+    auto t2 = mio::abm::TimePoint(8);
+    person3.set_infection_state(mio::abm::InfectionState::Infected);
+    location.changed_state(person3,mio::abm::InfectionState::Exposed);
+    location.save_current_subpopulations(t2);
+    
+    ASSERT_EQ(location.get_subpopulations_at_time(t1)[size_t(mio::abm::InfectionState::Infected)], 2);
+    ASSERT_EQ(location.get_subpopulations_at_time(t1)[size_t(mio::abm::InfectionState::Exposed)], 1);
+    ASSERT_EQ(location.get_subpopulations_at_time(t2)[size_t(mio::abm::InfectionState::Infected)], 3);
+}
