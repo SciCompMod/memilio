@@ -236,7 +236,7 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 
     //add school holidays
     auto holiday_start_time        = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 23), start_date));
-    auto holiday_end_time          = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), end_date));
+    auto holiday_end_time          = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), start_date));
     contacts.get_school_holidays() = {std::make_pair(holiday_start_time, holiday_end_time)};
 
     //write json
