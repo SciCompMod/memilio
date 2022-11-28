@@ -17,3 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include "ide_secir/model.h"
+#include <iostream>
+
+int main()
+{
+    std::cout << "Hello World!\n";
+    return 0;
+}
