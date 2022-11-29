@@ -192,6 +192,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
 TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 {
+    GTEST_SKIP();
     enum class InterventionLevelMock
     {
         level,
