@@ -27,9 +27,9 @@ namespace mio
 namespace abm
 {
 
-Person::Person(const LocationId& id, const AgeGroup& age, const Infection& infection,
+Person::Person(LocationId&& id, const AgeGroup& age, const Infection& infection,
                const VaccinationState& vaccination_state, const uint32_t person_id)
-    : Person(id, age, vaccination_state, person_id)
+    : Person(std::forward<LocationId>(id), age, vaccination_state, person_id)
 {
     m_infections = std::vector<Infection>{infection};
     /*if (is_infected(t) && infection.is_detected()) {
@@ -37,13 +37,13 @@ Person::Person(const LocationId& id, const AgeGroup& age, const Infection& infec
     }*/
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const Infection& infection,
+Person::Person(Location& location, const AgeGroup& age, const Infection& infection,
                const VaccinationState& vaccination_state, const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, infection, vaccination_state, person_id)
 {
 }
 
-Person::Person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state,
+Person::Person(LocationId&& id, const AgeGroup& age, const VaccinationState& vaccination_state,
                const uint32_t person_id)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
@@ -60,7 +60,7 @@ Person::Person(const LocationId& id, const AgeGroup& age, const VaccinationState
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
+Person::Person(Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
                const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, vaccination_state, person_id)
 {
@@ -118,6 +118,11 @@ const InfectionState& Person::get_infection_state(const TimePoint& t) const
     else {
         return m_infections.back().get_infection_state(t);
     }
+}
+
+LocationId Person::get_location_id() const
+{
+    return m_location_id;
 }
 
 void Person::set_assigned_location(Location& location)

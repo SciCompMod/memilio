@@ -31,16 +31,15 @@ namespace abm
 class ImmunityLevel
 {
 public:
-    int get_immunity_level()
-    {
-        return 0;
-    };
-
     void got_infected(TimePoint t)
     {
         number_of_infections += 1;
         time_of_last_infection = t;
     };
+
+    double get_protection_factor(VirusVariant v, TimePoint t);
+
+    double get_severity_factor(VirusVariant v, TimePoint t);
 
 private:
     int number_of_vaccinations         = 0;

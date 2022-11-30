@@ -23,6 +23,7 @@ add_library(abm
     testing_scheme.h
     infection.cpp
     infection.h
+    immunity_level.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

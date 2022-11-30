@@ -22,11 +22,12 @@
 
 #include "abm/state.h"
 #include "abm/age.h"
+#include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/world.h"
 #include "abm/time.h"
 #include "abm/infection.h"
-#include <boost/optional.hpp>
+#include "abm/immunity_level.h"
 
 #include <functional>
 
@@ -35,6 +36,7 @@ namespace mio
 namespace abm
 {
 
+struct LocationId;
 class Location;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
@@ -54,7 +56,7 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(const LocationId& id, const AgeGroup& age, const Infection& infection,
+    Person(LocationId&& id, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
@@ -66,21 +68,21 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(const Location& location, const AgeGroup& age, const Infection& infection,
+    Person(Location& location, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
-    Person(const LocationId& id, const AgeGroup& age,
+    Person(LocationId&& id, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
-    Person(const Location& location, const AgeGroup& age,
+    Person(Location& location, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
@@ -139,10 +141,7 @@ public:
      * get index and type of the current location of the person.
      * @returns index and type of the current location of the person
      */
-    LocationId get_location_id() const
-    {
-        return m_location_id;
-    }
+    LocationId get_location_id() const;
 
     /**
      * Get the time the person has been at its current location.
@@ -249,11 +248,17 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
+    const ImmunityLevel& get_immunity_level() const
+    {
+        return m_immunity_level;
+    }
+
 private:
-    LocationId m_location_id;
+    LocationId& m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     VaccinationState m_vaccination_state; // change to immunity level
     std::vector<Infection> m_infections;
+    ImmunityLevel m_immunity_level;
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

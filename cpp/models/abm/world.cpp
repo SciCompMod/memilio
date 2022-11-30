@@ -38,17 +38,20 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId& id, const AgeGroup& age, const boost::optional<Infection>& infection,
+Person& World::add_person(const LocationId& id, const Infection& infection, const AgeGroup& age,
                           const VaccinationState& vaccination_state)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    if (infection.has_value()) {
-        m_persons.push_back(
-            std::make_unique<Person>(id, age, infection.get_value_or(Infection()), vaccination_state, person_id));
-    }
-    else {
-        m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
-    }
+    m_persons.push_back(std::make_unique<Person>(id, age, infection, vaccination_state, person_id));
+    auto& person = *m_persons.back();
+    get_location(person).add_person(person);
+    return person;
+}
+
+Person& World::add_person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state)
+{
+    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -144,11 +147,11 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::begin_step(TimePoint /*t*/, TimeSpan dt)
+void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location.begin_step(dt, m_infection_parameters);
+            location.begin_step(t, dt);
         }
     }
 }
@@ -191,11 +194,11 @@ Location& World::get_location(const Person& person)
     return get_individualized_location(person.get_location_id());
 }
 
-int World::get_subpopulation_combined(InfectionState s, LocationType type) const
+int World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
     return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc) {
-        return running_sum + loc.get_subpopulation(s);
+        return running_sum + loc.get_subpopulation(t, s);
     });
 }
 

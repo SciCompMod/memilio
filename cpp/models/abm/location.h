@@ -25,6 +25,7 @@
 #include "abm/state.h"
 #include "abm/location_type.h"
 #include "abm/infection.h"
+#include "abm/person.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -35,7 +36,6 @@ namespace mio
 {
 namespace abm
 {
-class Person;
 
 /**
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
@@ -60,25 +60,18 @@ struct LocationId {
  * The location can be split up into several cells. This allows a finer division of the people in public transport.
  */
 struct Cell {
-    uint32_t num_people;
-    uint32_t num_carriers;
-    uint32_t num_infected;
-    CustomIndexArray<double, VirusVariant, AgeGroup> cached_exposure_rate;
+    std::vector<Person> m_persons;
+    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate;
 
-    Cell()
-        : num_people(0)
-        , num_carriers(0)
-        , num_infected(0)
-        , cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
+    Cell(std::vector<Person> persons)
+        : m_persons(std::move(persons))
+        , m_cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
     {
     }
 
-    Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, VirusVariant, AgeGroup> cached_exposure_rate_new)
-        : num_people(num_p)
-        , num_carriers(num_c)
-        , num_infected(num_i)
-        , cached_exposure_rate(cached_exposure_rate_new)
+    Cell()
+        : m_persons{}
+        , m_cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
     {
     }
 
@@ -133,7 +126,7 @@ public:
      * remove a person from the population of this location.
      * @param person the person leaving
      */
-    void remove_person(const Person& person);
+    void remove_person(Person& person);
 
     /** 
      * notification that one person in this location changed infection state.
@@ -147,20 +140,7 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
-
-    /** 
-     * number of persons at this location in one infection state.
-     * @return number of persons at this location that are in the specified infection state
-     */
-    int get_subpopulation(InfectionState s) const;
-
-    /** 
-     * number of persons at this location for all infection states.
-     * vector is indexed by InfectionState.
-     * @return number of persons in all infection states.
-     * */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
+    void begin_step(TimePoint t, TimeSpan dt);
 
     /**
      * @return parameters of the infection that are specific to this location
@@ -190,18 +170,20 @@ public:
         return m_cells;
     }
 
-private:
-    void change_subpopulation(InfectionState s, int delta);
+    int get_subpopulation(TimePoint t, InfectionState state = InfectionState::Infected) const;
+
+    Eigen::Ref<const Eigen::VectorXi> get_subpopulations(TimePoint t) const;
+
+    int get_number_infected_total(TimePoint t) const;
 
 private:
     LocationType m_type;
     uint32_t m_index;
-    int m_num_persons = 0;
     std::vector<Person> m_persons;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, AgeGroup, VirusVariant> m_cached_exposure_rate;
+    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate;
     TestingScheme m_testing_scheme;
-    std::vector<Cell> m_cells;
+    std::vector<Cell> m_cells{};
 };
 
 } // namespace abm

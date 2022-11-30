@@ -96,9 +96,13 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
+    Person& add_person(const LocationId& id, const Infection& infection,
+                       const AgeGroup& age = AgeGroup::Age15to34,
+                    const VaccinationState& vaccination_state =
+                           VaccinationState::Unvaccinated);
+
     Person& add_person(const LocationId& id, const AgeGroup& age = AgeGroup::Age15to34,
-                       const boost::optional<Infection>& infection = boost::none,
-                       const VaccinationState& vaccination_state   = VaccinationState::Unvaccinated);
+                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
 
     /**
      * Sets the current infection state of the person.
@@ -151,7 +155,7 @@ public:
      * @param type specified location type
      * @return number of persons that are in the specified infection state
      */
-    int get_subpopulation_combined(InfectionState s, LocationType type) const;
+    int get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      *get migration parameters

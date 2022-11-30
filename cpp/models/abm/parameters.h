@@ -224,9 +224,25 @@ struct MaximumContacts {
 };
 
 /**
+ * contact rates
+*/
+struct ContactRates {
+    using Type = CustomIndexArray<double, AgeGroup, AgeGroup>;
+    static Type get_default()
+    {
+        return Type({AgeGroup::Count, AgeGroup::Count},
+                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+    }
+    static std::string name()
+    {
+        return "ContactRate";
+    }
+};
+
+/**
  * parameters of the infection that depend on the location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
 
 struct TestParameters {
     double sensitivity;
