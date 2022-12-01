@@ -19,8 +19,12 @@
 */
 #define _CRT_SECURE_NO_DEPRECATE
 #include "abm/abm.h"
+#include "abm/age.h"
 #include "abm/household.h"
-#include "memilio/compartments/parameter_studies.h"
+#include "abm/parameters.h"
+#include "abm/state.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/logging.h"
 #include "boost/filesystem.hpp"
 #include <sstream>
 #include <cstdio>
