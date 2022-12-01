@@ -635,9 +635,9 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
     //migration between nodes
     BOOST_OUTCOME_TRY(
         mobility_data_commuter,
-        mio::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
+        mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(mobility_data_twitter,
-                      mio::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
