@@ -13,8 +13,6 @@ option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" 
 option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
-option(BUILD_SHARED_LIBS "Build memilio as a shared library." OFF)
-option(BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -71,6 +69,9 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "/W4;/WX")
 endif()
+
+# set default library built type to static
+set(BUILD_SHARED_LIBS OFF)
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
