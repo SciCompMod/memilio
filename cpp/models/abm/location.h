@@ -26,6 +26,7 @@
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/time_series.h"
 #include <array>
 #include <random>
 
@@ -244,23 +245,20 @@ public:
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
-    
+
     /**
      * Save the current number of individuals in the each infection state at a specific time step
      * @param t the time step to save
     */
-    void save_current_subpopulations(TimePoint& t) 
-    {
-        m_timestep_to_subpopulations_map.insert(std::pair<TimePoint, std::array<int, size_t(InfectionState::Count)>>(t, m_subpopulations));
-    }
+    void add_subpopulations_to_timeSeries(TimePoint& t);
 
     /**
-     * Get the number of individuals in the each infection state at a specific time step
-     * @param t the time step 
+     * Return the time series object of the current number of individuals in the each infection state
+     * @return the time series object of the current number of individuals in the each infection state
     */
-    std::array<int, size_t(InfectionState::Count)> get_subpopulations_at_time(TimePoint& t) 
+    TimeSeries<double> get_timeSeries_subpopulations()
     {
-        return m_timestep_to_subpopulations_map[t];
+        return m_subpopulations_timeSeries;
     }
 
 private:
@@ -272,8 +270,8 @@ private:
     int m_num_persons = 0;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    std::map<TimePoint, std::array<int, size_t(InfectionState::Count)>> m_timestep_to_subpopulations_map; 
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
+    TimeSeries<double> m_subpopulations_timeSeries;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;

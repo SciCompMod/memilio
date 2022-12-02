@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -54,7 +54,6 @@ void World::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     m_testing_strategy.update_activity_status(t);
     migration(t, dt);
-    save_current_subpopulations(t, dt);
 }
 
 void World::interaction(TimePoint /*t*/, TimeSpan dt)
@@ -165,16 +164,6 @@ int World::get_subpopulation_combined(InfectionState s, LocationType type) const
     return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc) {
         return running_sum + loc.get_subpopulation(s);
     });
-}
-
-void World::save_current_subpopulations(TimePoint& t, TimeSpan& dt)
-{
-    t += dt;
-    for (auto&& locations : m_locations) {
-        for (auto& location : locations) {
-            location.save_current_subpopulations(t);
-        }
-    }
 }
 
 MigrationParameters& World::get_migration_parameters()
