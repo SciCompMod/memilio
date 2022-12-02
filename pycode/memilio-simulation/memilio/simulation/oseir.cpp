@@ -62,7 +62,11 @@ PYBIND11_MODULE(_simulation_oseir, m)
         .value("Infected", mio::oseir::InfectionState::Infected)
         .value("Recovered", mio::oseir::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
+    pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
+
+    py::class_<mio::oseir::Parameters, mio::oseir::ParametersBase>(m, "Parameters")
+        .def(py::init<>())
+        .def("check_constraints", &mio::oseir::Parameters::check_constraints);
 
     using Populations = mio::Populations<mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});

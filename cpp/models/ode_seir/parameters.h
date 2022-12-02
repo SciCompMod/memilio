@@ -95,7 +95,61 @@ struct ContactPatterns {
     }
 };
 
-using Parameters = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+
+/**
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     */
+    void check_constraints() const
+    {
+        if (this->get<TimeExposed>() <= 0.0) {
+            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
+                      this->get<TimeExposed>(), 0.0);
+            exit(EXIT_FAILURE);
+        }
+        if (this->get<TimeInfected>() <= 0.0) {
+            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
+                      this->get<TimeInfected>(), 0.0);
+            exit(EXIT_FAILURE);
+        }
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_error(
+                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
+                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+};
 
 } // namespace oseir
 } // namespace mio
