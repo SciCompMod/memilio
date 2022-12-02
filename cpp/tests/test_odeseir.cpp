@@ -51,7 +51,6 @@ protected:
         model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
         model.parameters.set<mio::oseir::TimeExposed>(5.2);
         model.parameters.set<mio::oseir::TimeInfected>(2);
-        ;
 
         model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
         model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
@@ -65,11 +64,14 @@ public:
     mio::oseir::Model model;
 };
 
-TEST_F(TestSeir, CompareSeirWithJS)
+TEST_F(TestSeir, CompareSeirWithPyBindings)
 {
-    std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-js-compare.csv");
-    auto integrator                        = std::make_shared<mio::EulerIntegratorCore>();
-    auto result                            = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model, integrator);
+    /*
+    This test test the cpp model. The same test is implemented in python to compare the results of both simulations.
+    If this test is change the corresponding python test needs to be changed aswell (also updating the data file).
+    */
+    std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-compare.csv");
+    auto result                            = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
