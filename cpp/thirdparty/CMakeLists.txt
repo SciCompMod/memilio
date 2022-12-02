@@ -109,8 +109,6 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
             URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
         )
         FetchContent_GetProperties(jsoncpp)
-        set(BUILD_SHARED_LIBS OFF)
-        set(BUILD_OBJECT_LIBS OFF)
 
         if(NOT jsoncpp_POPULATED)
             FetchContent_Populate(jsoncpp)
