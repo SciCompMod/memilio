@@ -81,11 +81,13 @@ struct TransitionDistributions{
 };
 
 struct TransitionProbabilities{
-    //we need probabilities for C->I, I->H, H->U, U->D (so 4 values)
+    // we need probabilities for C->I, I->H, H->U, U->D (so 4 values) (from this we can deduce prob for c->R etc.)
+    // for consistency we also define \mu_E^C = 1 to be able to apply general formula to get population from flows
+    // in total we need 5 values
     using Type = std::vector<double>;
     static Type get_default()
     {  
-        return std::vector<double>(4,0.0);
+        return std::vector<double>(5,0.0);
     }
 
     static std::string name()

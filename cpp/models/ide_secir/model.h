@@ -29,7 +29,7 @@ namespace mio
 {
 namespace isecir
 {
-class Model
+class IdeModel
 {
     /* Wir brauchen: -Funktion, die aus transitions die compartements berechnet
     -Funktion die Simuliert: in ode_secir wird die simulation glaube ich anders durchgeführt? 
@@ -52,12 +52,12 @@ public:
     * @param[in] N_init The population of the considered region. 
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    Model(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
+    IdeModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
 
 
 
     /**
-        * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.
+        * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
         *
         * The simulation is performed by solving the underlying model equation numerically. 
         * Here, an integro-differential equation is to be solved. The model parameters and the initial data are used.
@@ -71,11 +71,24 @@ public:
     // Used Parameters for the simulation.
     Pa parameters{};
 
+    // function that computes flows from one compartment to another at some time t
+    TimeSeries<double> get_flows(int t_max);
+    {}
+
+    // function that computes size of compartments from flows
+    // define function more general as a sum of some \mu, some \gamma and some \sigma
+    // later insert corresponding function 
+    TimeSeries<double> get_size_of_compartments(int t_max);
+    {}
+
 private:
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<double> m_transitions;
     // TimeSeries containing points of time and the corresponding number of people in defined Infectionstates.
     TimeSeries<double> m_SECIR;
+
+    // Force of infection term needed for numerical scheme, corresponds to phi
+    double m_forceofinfection;
 
     // Timestep used for simulation.
     double m_dt{0};
@@ -87,6 +100,10 @@ private:
     Eigen::Index m_l{0};
     
 };
+
+// define general function to comute size of compartments from flows
+// 
+struct FlowToCompartment{};
 
 } // namespace isecir
 } // namespace mio
