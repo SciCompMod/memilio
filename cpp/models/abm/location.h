@@ -126,14 +126,7 @@ public:
      * remove a person from the population of this location.
      * @param person the person leaving
      */
-    void remove_person(Person& person);
-
-    /** 
-     * notification that one person in this location changed infection state.
-     * @param person the person that changed infection state
-     * @param old_state the previous infection state of the person
-     */
-    void changed_state(const Person& person, InfectionState old_infection_state, const TimePoint& t);
+    void remove_person(const Person& person);
 
     /** 
      * prepare the location for the next simulation step.

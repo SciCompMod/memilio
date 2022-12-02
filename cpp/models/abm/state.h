@@ -45,8 +45,6 @@ enum class VirusVariant : std::uint32_t
     Count // last!!
 };
 
-std::vector<VirusVariant> VirusVariantVector{VirusVariant::Wildtype, VirusVariant::Alpha};
-
 /** 
  * infection state in ABM.
  * can be used as 0-based index

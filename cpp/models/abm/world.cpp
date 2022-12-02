@@ -24,6 +24,7 @@
 #include "abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
+#include "abm/infection.h"
 
 namespace mio
 {
@@ -38,7 +39,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId& id, const Infection& infection, const AgeGroup& age,
+Person& World::add_person(const LocationId id, const Infection& infection, const AgeGroup& age,
                           const VaccinationState& vaccination_state)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
@@ -48,7 +49,7 @@ Person& World::add_person(const LocationId& id, const Infection& infection, cons
     return person;
 }
 
-Person& World::add_person(const LocationId& id, const AgeGroup& age, const VaccinationState& vaccination_state)
+Person& World::add_person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
@@ -72,14 +73,10 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-/*void World::set_infection_state(Person& person, InfectionState inf_state)
+void World::set_infection_state(Person& person, const InfectionState inf_state, const TimePoint t)
 {
-    auto& loc      = get_location(person);
-    auto old_state = person.get_infection_state(t);
-    person.set_infection_state(inf_state);
-    loc.changed_state(person, old_state);
+    person.add_new_infection(Infection(static_cast<VirusVariant>(0), m_infection_parameters, t, inf_state));
 }
-*/
 
 void World::migration(TimePoint t, TimeSpan dt)
 {

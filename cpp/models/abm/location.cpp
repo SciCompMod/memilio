@@ -38,7 +38,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-VirusVariant Location::interact(const Person& person, const TimePoint& /*t*/, const TimeSpan& dt) const
+VirusVariant Location::interact(const Person& person, const TimePoint& t, const TimeSpan& dt) const
 {
     //auto vaccination_state = person.get_vaccination_state(); // change to get immunity level and use!
     auto age = person.get_age();
@@ -56,7 +56,7 @@ VirusVariant Location::interact(const Person& person, const TimePoint& /*t*/, co
                     local_indiv_trans_prob_v += m_cells[cell_index].m_cached_exposure_rate[{virus, age}] *
                                                 m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] *
                                                 dt.days() / days(1).days() *
-                                                person.get_immunity_level.get_protection_factor(virus, t);
+                                                person.get_immunity_level().get_protection_factor(virus, t);
                 }
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
             }
@@ -77,7 +77,7 @@ VirusVariant Location::interact(const Person& person, const TimePoint& /*t*/, co
                 local_indiv_trans_prob_v += m_cached_exposure_rate[{virus, age}] *
                                             m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] *
                                             dt.days() / days(1).days() *
-                                            person.get_immunity_level.get_protection_factor(virus, t);
+                                            person.get_immunity_level().get_protection_factor(virus, t);
             }
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
@@ -130,18 +130,11 @@ void Location::add_person(const Person& p)
     }
 }
 
-/*
-void Location::remove_person(Person& p)
+void Location::remove_person(const Person& p)
 {
-    std::erase(m_persons, p); // only in c++20
-
-    if (!m_cells.empty()) {
-        for (auto i : p.get_cells()) {
-            std::erase(m_cells[i].m_persons, p); // only in c++20
-        }
-    }
+    auto it = std::remove(m_persons.begin(), m_persons.end(), p);
+    m_persons.erase(it, m_persons.end());
 }
-*/
 
 int Location::get_subpopulation(TimePoint t, InfectionState state) const
 {

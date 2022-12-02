@@ -21,6 +21,7 @@
 #ifndef EPI_ABM_IMMUNITY_LEVEL_H
 #define EPI_ABM_IMMUNITY_LEVEL_H
 
+#include "abm/state.h"
 #include "abm/time.h"
 
 namespace mio
@@ -31,21 +32,28 @@ namespace abm
 class ImmunityLevel
 {
 public:
-    void got_infected(TimePoint t)
+    /*void got_infected(TimePoint t)
     {
         number_of_infections += 1;
         time_of_last_infection = t;
     };
+    */
 
-    double get_protection_factor(VirusVariant v, TimePoint t);
+    double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    {
+        return 1.;
+    }
 
-    double get_severity_factor(VirusVariant v, TimePoint t);
+    double get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    {
+        return 1.;
+    }
 
 private:
-    int number_of_vaccinations         = 0;
-    TimePoint time_of_last_infection   = mio::abm::TimePoint(0);
-    int number_of_infections           = 0;
-    TimePoint time_of_last_vaccination = mio::abm::TimePoint(0);
+    //int number_of_vaccinations         = 0;
+    //TimePoint time_of_last_infection   = mio::abm::TimePoint(0);
+    //int number_of_infections           = 0;
+    //TimePoint time_of_last_vaccination = mio::abm::TimePoint(0);
 };
 } // namespace abm
 } // namespace mio

@@ -27,9 +27,9 @@ namespace mio
 namespace abm
 {
 
-Person::Person(LocationId&& id, const AgeGroup& age, const Infection& infection,
+Person::Person(const LocationId id, const AgeGroup& age, const Infection& infection,
                const VaccinationState& vaccination_state, const uint32_t person_id)
-    : Person(std::forward<LocationId>(id), age, vaccination_state, person_id)
+    : Person(id, age, vaccination_state, person_id)
 {
     m_infections = std::vector<Infection>{infection};
     /*if (is_infected(t) && infection.is_detected()) {
@@ -37,15 +37,15 @@ Person::Person(LocationId&& id, const AgeGroup& age, const Infection& infection,
     }*/
 }
 
-Person::Person(Location& location, const AgeGroup& age, const Infection& infection,
+Person::Person(const Location& location, const AgeGroup& age, const Infection& infection,
                const VaccinationState& vaccination_state, const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, infection, vaccination_state, person_id)
 {
 }
 
-Person::Person(LocationId&& id, const AgeGroup& age, const VaccinationState& vaccination_state,
+Person::Person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state,
                const uint32_t person_id)
-    : m_location_id(id)
+    : m_location_id(std::make_shared<LocationId>(id))
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_vaccination_state(vaccination_state)
     , m_quarantine(false)
@@ -60,7 +60,7 @@ Person::Person(LocationId&& id, const AgeGroup& age, const VaccinationState& vac
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 }
 
-Person::Person(Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
+Person::Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
                const uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, age, vaccination_state, person_id)
 {
@@ -73,15 +73,9 @@ void Person::interact(const TimePoint& t, const TimeSpan& dt, Location& loc, con
         auto virus = loc.interact(*this, t, dt);
 
         if (virus != VirusVariant::Count) {
-            m_infections.push_back(Infection(virus, params, t));
+            add_new_infection(Infection(virus, params, t));
         }
     }
-
-    auto new_infection_state = get_infection_state(t);
-    if (current_infection_state != new_infection_state) {
-        loc.changed_state(*this, current_infection_state, t);
-    }
-
     m_time_at_location += dt;
 }
 
@@ -89,7 +83,7 @@ void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<
 {
     if (&loc_old != &loc_new) {
         loc_old.remove_person(*this);
-        m_location_id = {loc_new.get_index(), loc_new.get_type()};
+        m_location_id = std::make_shared<LocationId>(LocationId({loc_new.get_index(), loc_new.get_type()}));
         m_cells       = cells;
         loc_new.add_person(*this);
         m_time_at_location = TimeSpan(0);
@@ -120,9 +114,14 @@ const InfectionState& Person::get_infection_state(const TimePoint& t) const
     }
 }
 
+void Person::add_new_infection(Infection inf)
+{
+    m_infections.push_back(std::move(inf));
+}
+
 LocationId Person::get_location_id() const
 {
-    return m_location_id;
+    return *m_location_id;
 }
 
 void Person::set_assigned_location(Location& location)

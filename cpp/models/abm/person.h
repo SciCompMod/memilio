@@ -24,7 +24,6 @@
 #include "abm/age.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
-#include "abm/world.h"
 #include "abm/time.h"
 #include "abm/infection.h"
 #include "abm/immunity_level.h"
@@ -56,7 +55,7 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(LocationId&& id, const AgeGroup& age, const Infection& infection,
+    Person(const LocationId id, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
@@ -68,23 +67,31 @@ public:
      * @param global_params the global infection parameters
      * @param person_id index of the person
      */
-    Person(Location& location, const AgeGroup& age, const Infection& infection,
+    Person(const Location& location, const AgeGroup& age, const Infection& infection,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
-    Person(LocationId&& id, const AgeGroup& age,
+    Person(const LocationId id, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
-    Person(Location& location, const AgeGroup& age,
+    Person(const Location& location, const AgeGroup& age,
            const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
+
+    /**
+    * compare two persons
+    */
+    bool operator==(const Person& other) const
+    {
+        return (m_person_id == other.m_person_id);
+    }
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -127,6 +134,7 @@ public:
 
     bool is_infected(const TimePoint& t) const;
     const InfectionState& get_infection_state(const TimePoint& t) const;
+    void add_new_infection(Infection inf);
 
     /**
      * Get the age group of this person.
@@ -254,7 +262,7 @@ public:
     }
 
 private:
-    LocationId& m_location_id;
+    std::shared_ptr<LocationId> m_location_id = nullptr;
     std::vector<uint32_t> m_assigned_locations;
     VaccinationState m_vaccination_state; // change to immunity level
     std::vector<Infection> m_infections;

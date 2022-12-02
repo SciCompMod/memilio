@@ -34,5 +34,6 @@
 #include "abm/migration_rules.h"
 #include "abm/testing_scheme.h"
 #include "abm/infection.h"
+#include "abm/immunity_level.h"
 
 #endif
