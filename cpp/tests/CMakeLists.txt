@@ -8,7 +8,7 @@ set(TESTSOURCES
     test_household.cpp
     testmain.cpp
     test_populations.cpp
-    test_seir.cpp
+    test_odeseir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp

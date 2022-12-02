@@ -111,25 +111,26 @@ public:
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
      */
-    void check_constraints() const
+    int check_constraints() const
     {
         if (this->get<TimeExposed>() <= 0.0) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
                       this->get<TimeExposed>(), 0.0);
-            exit(EXIT_FAILURE);
+            return 0;
         }
         if (this->get<TimeInfected>() <= 0.0) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
                       this->get<TimeInfected>(), 0.0);
-            exit(EXIT_FAILURE);
+            return 0;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            exit(EXIT_FAILURE);
+            return 0;
         }
+        return 1;
     }
 
 private:
