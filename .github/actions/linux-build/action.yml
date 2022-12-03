@@ -47,9 +47,9 @@ runs:
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install clang-6.0
+            sudo apt-get -qq -y install clang-11
           else
-            sudo apt-get -qq -y install clang-9
+            sudo apt-get -qq -y install clang-14
           fi
         fi
     - name: Build
