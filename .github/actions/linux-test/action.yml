@@ -35,7 +35,7 @@ runs:
           cmake --build . --target coverage/fast
         else
           find -name "memilio-test"
-          cd cpp/build/bin
+          cd cpp/build/tests
           sudo chmod a+x memilio-test
           ./memilio-test  --gtest_output="xml:report.xml"
         fi
@@ -43,7 +43,7 @@ runs:
       uses: actions/upload-artifact@v2
       with:
         name: test-cpp-linux-report
-        path: cpp/build/bin/report.xml
+        path: cpp/build/tests/report.xml
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'ignore' || 'error' }}
         retention-days: 1
     - name: Upload coverage reports

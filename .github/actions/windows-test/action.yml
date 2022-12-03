@@ -15,7 +15,8 @@ runs:
     - name: Run unit tests
       shell: pwsh
       run: |
-        cd cpp/build-win/bin
+        cd cpp/build-win/tests
+        Get-ChildItem *.exe
         .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report
       uses: actions/upload-artifact@v2
