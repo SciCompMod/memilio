@@ -59,8 +59,8 @@ runs:
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/gcc-7
-            export CXX=/usr/bin/g++-7
+            export CC=/usr/bin/gcc-9
+            export CXX=/usr/bin/g++-9
           else        
             export CC=/usr/bin/gcc-10
             export CXX=/usr/bin/g++-10
