@@ -50,7 +50,7 @@ runs:
           if [[ "${{ inputs.version }}" == "min" ]]; then
             sudo apt-get -qq -y install clang-6.0
           else
-            sudo apt-get -qq -y install clang-10
+            sudo apt-get -qq -y install clang-14
           fi
         fi
     - name: Build
@@ -70,8 +70,8 @@ runs:
             export CC=/usr/bin/clang-6.0
             export CXX=/usr/bin/clang++-6.0
           else        
-            export CC=/usr/bin/clang-10
-            export CXX=/usr/bin/clang++-10
+            export CC=/usr/bin/clang-14
+            export CXX=/usr/bin/clang++-14
           fi
         else
           echo "unknown value for action input: compiler"
