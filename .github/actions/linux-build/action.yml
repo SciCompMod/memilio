@@ -40,7 +40,10 @@ runs:
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev 
         fi
-        apt-cache search clang
+        apt-cache search clang-11
+        apt-cache search clang-6.0
+        apt-cache search clang-14
+        apt-cache search gcc
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "latest" ]]; then   
             sudo apt-get -qq -y install gcc-11
