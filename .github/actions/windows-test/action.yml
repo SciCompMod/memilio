@@ -11,7 +11,7 @@ runs:
       uses: actions/download-artifact@v2
       with:
         name: ${{ inputs.build-artifact }}
-        path: cpp/build-win/tests
+        path: cpp/build-win/bin
     - name: Run unit tests
       shell: pwsh
       run: |
