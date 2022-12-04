@@ -15,7 +15,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        sudo apt-get -qq -y install libhdf5-103 wget gnupg lcov
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v2
@@ -34,7 +34,6 @@ runs:
           cd cpp/build
           cmake --build . --target coverage/fast
         else
-          find -name "memilio-test"
           cd cpp/build/bin
           sudo chmod a+x memilio-test
           ./memilio-test  --gtest_output="xml:report.xml"
