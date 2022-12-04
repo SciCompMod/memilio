@@ -54,5 +54,5 @@ runs:
       uses: actions/upload-artifact@v2
       with:
         name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
-        path: cpp/build-win/tests
+        path: cpp/build-win/bin
         retention-days: 1
