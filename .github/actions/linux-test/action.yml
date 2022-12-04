@@ -15,6 +15,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
+        find -name "libhdf5"
         sudo apt-get -qq -y install libhdf5-103 wget gnupg lcov
         sudo apt-get -qq update
     - name: Download built test directory
