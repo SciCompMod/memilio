@@ -15,8 +15,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-cache search libhdf5
-        sudo apt-get -qq -y install libhdf5-dev wget gnupg lcov
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v2
