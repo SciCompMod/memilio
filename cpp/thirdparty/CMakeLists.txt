@@ -10,32 +10,19 @@ set(SPDLOG_INSTALL ON)
 if(MEMILIO_USE_BUNDLED_SPDLOG)
     message(STATUS "Downloading Spdlog library")
 
-    if(CMAKE_VERSION VERSION_LESS 3.11)
-        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+    include(FetchContent)
+    FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v${MEMILIO_SPDLOG_VERSION}
+    )
+    FetchContent_GetProperties(spdlog)
 
-        include(DownloadProject)
-        download_project(PROJ spdlog
-            GIT_REPOSITORY https://github.com/gabime/spdlog.git
-            GIT_TAG v${MEMILIO_SPDLOG_VERSION}
-            UPDATE_DISCONNECTED 1
-            QUIET
-        )
-
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    else()
-        include(FetchContent)
-        FetchContent_Declare(
-            spdlog
-            GIT_REPOSITORY https://github.com/gabime/spdlog.git
-            GIT_TAG v${MEMILIO_SPDLOG_VERSION}
-        )
-        FetchContent_GetProperties(spdlog)
-
-        if(NOT spdlog_POPULATED)
-            FetchContent_Populate(spdlog)
-            add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-        endif()
+    if(NOT spdlog_POPULATED)
+        FetchContent_Populate(spdlog)
+        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
+
 else()
     find_package(spdlog REQUIRED)
 endif()
@@ -44,25 +31,14 @@ endif()
 if(MEMILIO_USE_BUNDLED_EIGEN)
     message(STATUS "Downloading Eigen library")
 
-    if(CMAKE_VERSION VERSION_LESS 3.11)
-        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+    include(FetchContent)
+    FetchContent_Declare(eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG ${MEMILIO_EIGEN_VERSION})
+    FetchContent_GetProperties(eigen)
 
-        include(DownloadProject)
-        download_project(PROJ eigen
-            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-            GIT_TAG ${MEMILIO_EIGEN_VERSION}
-            UPDATE_DISCONNECTED 1
-            QUIET)
-    else()
-        include(FetchContent)
-        FetchContent_Declare(eigen
-            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-            GIT_TAG ${MEMILIO_EIGEN_VERSION})
-        FetchContent_GetProperties(eigen)
-
-        if(NOT eigen_POPULATED)
-            FetchContent_Populate(eigen)
-        endif()
+    if(NOT eigen_POPULATED)
+        FetchContent_Populate(eigen)
     endif()
 
     add_library(eigen INTERFACE)
@@ -92,28 +68,16 @@ endif()
 if(MEMILIO_USE_BUNDLED_JSONCPP)
     message(STATUS "Downloading jsoncpp library")
 
-    if(CMAKE_VERSION VERSION_LESS 3.11)
-        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+    include(FetchContent)
+    FetchContent_Declare(
+        jsoncpp
+        URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
+    )
+    FetchContent_GetProperties(jsoncpp)
 
-        include(DownloadProject)
-        download_project(PROJ jsoncpp
-            URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
-            UPDATE_DISCONNECTED 1
-            QUIET
-        )
-        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    else()
-        include(FetchContent)
-        FetchContent_Declare(
-            jsoncpp
-            URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
-        )
-        FetchContent_GetProperties(jsoncpp)
-
-        if(NOT jsoncpp_POPULATED)
-            FetchContent_Populate(jsoncpp)
-            add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-        endif()
+    if(NOT jsoncpp_POPULATED)
+        FetchContent_Populate(jsoncpp)
+        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
     if(BUILD_SHARED_LIBS)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 project(memilio VERSION 0.1.0)
 
@@ -25,11 +25,6 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
 endif()
 
 include(GNUInstallDirs)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE PATH "Archive output dir.")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE PATH "Library output dir.")
-set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE PATH "PDB (MSVC debug symbol)output dir.")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Executable/dll output dir.")
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -82,8 +77,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         "/W4;/WX")
 endif()
 
-# set default library built type to static
-set(BUILD_SHARED_LIBS OFF)
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # current workaround due to jsoncpp dependency: set default library built type to static
+    set(BUILD_SHARED_LIBS OFF)
+endif()
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
