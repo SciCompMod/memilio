@@ -67,28 +67,36 @@ public:
         * @return The result of the simulation, stored in a TimeSeries with simulation time and 
         *       associated number of susceptibles.
         */
-    TimeSeries<double> const& simulate(int t_max);
+    void simulate(int t_max);
     // Used Parameters for the simulation.
     Pa parameters{};
 
     // function that computes flows from one compartment to another at some time t
     TimeSeries<double> get_flows(int t_max);
-    {}
+    
 
     // function that computes size of compartments from flows
     // define function more general as a sum of some \mu, some \gamma and some \sigma
     // later insert corresponding function 
-    TimeSeries<double> get_size_of_compartments(int t_max);
-    {}
+    void get_size_of_compartments(int t_max);
+
 
 private:
+
+    // Funktion to update current value for S
+    void update_susceptibles();
+    void update_forceofinfection(); 
+    void compute_flow(int idx_InfectionTransitions, double TransitionProbability, int idx_TransitionDistribution);
+
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<double> m_transitions;
     // TimeSeries containing points of time and the corresponding number of people in defined Infectionstates.
     TimeSeries<double> m_SECIR;
 
     // Force of infection term needed for numerical scheme, corresponds to phi
-    double m_forceofinfection;
+    double m_forceofinfection{0};
+    // current susceptibles needed for numerical scheme
+    double m_susceptibles{0};
 
     // Timestep used for simulation.
     double m_dt{0};
@@ -101,7 +109,7 @@ private:
     
 };
 
-// define general function to comute size of compartments from flows
+// define general function to compute size of compartments from flows
 // 
 struct FlowToCompartment{};
 

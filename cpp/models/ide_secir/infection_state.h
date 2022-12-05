@@ -51,7 +51,7 @@ enum class InfectionState
 enum class InfectionTransitions
 {
     SusceptibleToExposed  = 0,
-    SExposedToInfectedNoSymptoms        = 1,
+    ExposedToInfectedNoSymptoms        = 1,
     InfectedNoSymptomsToInfectedSymptoms = 2,
     InfectedSymptomsToInfectedSevere  = 3,
     InfectedSevereToInfectedCritical = 4,
