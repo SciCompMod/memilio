@@ -71,7 +71,9 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
     include(FetchContent)
     FetchContent_Declare(
         jsoncpp
-        URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
+        # URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
+        GIT_REPOSITORY https://github.com/mknaranja/jsoncpp.git
+        GIT_TAG a68b2dc569de33f83c8f53089857b03884fc1d41
     )
     FetchContent_GetProperties(jsoncpp)
 
