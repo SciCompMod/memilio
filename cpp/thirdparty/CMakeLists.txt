@@ -71,6 +71,7 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
     include(FetchContent)
     FetchContent_Declare(
         jsoncpp
+
         # URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
         GIT_REPOSITORY https://github.com/mknaranja/jsoncpp.git
         GIT_TAG a68b2dc569de33f83c8f53089857b03884fc1d41
@@ -79,7 +80,21 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
 
     if(NOT jsoncpp_POPULATED)
         FetchContent_Populate(jsoncpp)
+
+        # set jsoncpp configurations
+        set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
+        set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
+        set(JSONCPP_WITH_STRICT_ISO "Issue all the warnings demanded by strict ISO C and ISO C++" ON)
+        set(JSONCPP_WITH_CMAKE_PACKAGE "Generate and install cmake package files" OFF)
+
         add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
+
+        # unset global cache variables to avoid clashes with our code
+        unset(BUILD_OBJECT_LIBS CACHE)
+        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+        unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
+        unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
     endif()
 
     if(BUILD_SHARED_LIBS)
