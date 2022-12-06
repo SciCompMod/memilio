@@ -84,8 +84,6 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
         # set jsoncpp configurations
         set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
         set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
-        set(JSONCPP_WITH_STRICT_ISO "Issue all the warnings demanded by strict ISO C and ISO C++" ON)
-        set(JSONCPP_WITH_CMAKE_PACKAGE "Generate and install cmake package files" OFF)
 
         add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
 

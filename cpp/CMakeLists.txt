@@ -37,16 +37,10 @@ else()
     set(BUILD_STATIC_LIBS OFF)
 endif()
 
-# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 adn above:
+# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 and above
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
     cmake_policy(SET CMP0135 NEW)
 endif()
-
-include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # code coverage analysis
 # Note: this only works under linux and with make
