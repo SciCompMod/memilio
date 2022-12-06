@@ -250,15 +250,15 @@ public:
      * Save the current number of individuals in the each infection state at a specific time step
      * @param t the time step to save
     */
-    void add_subpopulations_to_timeSeries(TimePoint& t);
+    void add_subpopulations_to_time_series(const TimePoint& t);
 
     /**
      * Return the time series object of the current number of individuals in the each infection state
      * @return the time series object of the current number of individuals in the each infection state
     */
-    TimeSeries<double> get_timeSeries_subpopulations()
+    const TimeSeries<double>& get_time_series_subpopulations() const
     {
-        return m_subpopulations_timeSeries;
+        return m_subpopulations_time_series;
     }
 
 private:
@@ -271,7 +271,7 @@ private:
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
-    TimeSeries<double> m_subpopulations_timeSeries;
+    TimeSeries<double> m_subpopulations_time_series;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;

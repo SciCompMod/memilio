@@ -510,13 +510,20 @@ TEST(TestLocation, saveCurrentSubpopulations)
     location.add_person(person3);
 
     auto t1 = mio::abm::TimePoint(7);
-    location.add_subpopulations_to_timeSeries(t1);
+    location.add_subpopulations_to_time_series(t1);
+    auto&& v1 = location.get_time_series_subpopulations().get_last_value();
+    ASSERT_EQ(v1[3], 2); // Check whether number of infected state at the location is correct
 
     auto t2 = mio::abm::TimePoint(8);
-    location.add_subpopulations_to_timeSeries(t2);
+    person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
+    location.changed_state(person1, mio::abm::InfectionState::Infected);
+    location.add_subpopulations_to_time_series(t2);
+    auto&& v2 = location.get_time_series_subpopulations().get_last_value();
+    ASSERT_EQ(v2[3], 1); // Check whether number of infected state at the location is changed. 
 
-    ASSERT_EQ(location.get_timeSeries_subpopulations().get_num_time_points(), 2);
-    for (auto&& v : location.get_timeSeries_subpopulations()) {
-        ASSERT_EQ(v.sum(), 3);
+    // Check total number of subpopulation is correct. 
+    ASSERT_EQ(location.get_time_series_subpopulations().get_num_time_points(), 2);
+    for (auto&& v_iter : location.get_time_series_subpopulations()) {
+        ASSERT_EQ(v_iter.sum(), 3);
     }
 }

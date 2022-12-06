@@ -35,7 +35,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
     , m_subpopulations{}
-    , m_subpopulations_timeSeries(Eigen::Index(InfectionState::Count))
+    , m_subpopulations_time_series(Eigen::Index(InfectionState::Count))
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
 {
@@ -220,11 +220,11 @@ double Location::compute_relative_transmission_risk()
     }
 }
 
-void Location::add_subpopulations_to_timeSeries(TimePoint& t)
+void Location::add_subpopulations_to_time_series(const TimePoint& t)
 {
-    m_subpopulations_timeSeries.add_time_point(t.days());
-    m_subpopulations_timeSeries.get_last_value().setZero();
-    m_subpopulations_timeSeries.get_last_value() +=
+    m_subpopulations_time_series.add_time_point(t.days());
+    m_subpopulations_time_series.get_last_value().setZero();
+    m_subpopulations_time_series.get_last_value() +=
         Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size()).cast<double>();
 }
 
