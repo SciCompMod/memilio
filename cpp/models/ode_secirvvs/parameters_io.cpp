@@ -587,8 +587,8 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // a person whose second dose is reported at start_date + simulation_day - days_until_effective1 + vaccination_distance
                 // had the first dose on start_date + simulation_day - days_until_effective1. Furthermore, he/she has the full protection
                 // of the first dose at day X = start_date + simulation_day
-                // Storing its value in get<DailyFirstVaccination>() will eventually (in the simulation)
-                // transfer the difference (between get<DailyFirstVaccination>() at d and d-1) of
+                // Storing its value in get<DailyPartialVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyPartialVaccination>() at d and d-1) of
                 // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
                 auto offset_first_date = offset_date_by_days(date, (int)d - days_until_effective1);
                 if (max_full_date >= offset_first_date) {
@@ -607,11 +607,11 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 //     // (where the latter is computed as the difference between the total number at max_date and max_date-1)
                 //     days_plus = get_offset_in_days(offset_first_date, max_date);
                 //     if (date_df == offset_date_by_days(max_date, -1)) {
-                //         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
+                //         model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] -=
                 //             (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
                 //     }
                 //     else if (date_df == max_date) {
-                //         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
+                //         model[region_idx].parameters.template get<DailyPartialVaccination>()[{age, SimulationDay(d)}] +=
                 //             days_plus * vacc_data_entry.num_vaccinations_completed;
                 //     }
                 // }

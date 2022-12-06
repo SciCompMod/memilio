@@ -633,9 +633,8 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    BOOST_OUTCOME_TRY(
-        mobility_data_commuter,
-        mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
+    BOOST_OUTCOME_TRY(mobility_data_commuter,
+                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(mobility_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
@@ -925,9 +924,9 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     temp_date = mio::Date(2022, 6, 1);
 
     const auto start_date   = temp_date;
-    const auto num_days_sim = 10.0;
+    const auto num_days_sim = 365.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 3;
 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
