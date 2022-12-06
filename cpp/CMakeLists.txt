@@ -27,6 +27,14 @@ endif()
 
 if(MEMILIO_BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
+
+    if(MSVC)
+        # Current workaround for windows to not build shared libs as we neeed to plugin export variables
+        # TODO: add expoerts for windows files
+        message(WARNING "Building shared libs is not supported on windows. Building static libs instead.")
+        set(BUILD_SHARED_LIBS OFF)
+        set(BUILD_STATIC_LIBS ON)
+    endif()
 else()
     set(BUILD_SHARED_LIBS OFF)
 endif()
@@ -41,6 +49,13 @@ endif()
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
     cmake_policy(SET CMP0135 NEW)
 endif()
+
+include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # code coverage analysis
 # Note: this only works under linux and with make
