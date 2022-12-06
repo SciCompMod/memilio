@@ -3,6 +3,13 @@ project(memilio-python)
 
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
+include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
