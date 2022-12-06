@@ -78,6 +78,7 @@ VirusVariant Location::interact(const Person& person, const TimePoint& t, const 
                                             m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] *
                                             dt.days() / days(1).days() *
                                             person.get_immunity_level().get_protection_factor(virus, t);
+                // person.get_protection_factor()
             }
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
@@ -99,8 +100,10 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
                 auto inf   = p->get_infection();
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
-                m_cached_exposure_rate[{virus, age}] +=
-                    inf.get_infectivity(t + dt / 2); // average infectivity over the time step to second order accuracy
+                /* average infectivity over the time step 
+                *  to second order accuracy using midpoint rule
+                */
+                m_cached_exposure_rate[{virus, age}] += inf.get_infectivity(t + dt / 2);
             }
         }
     }
@@ -112,6 +115,9 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
                     auto inf   = p->get_infection();
                     auto virus = inf.get_virus_variant();
                     auto age   = p->get_age();
+                    /* average infectivity over the time step 
+                    *  to second order accuracy using midpoint rule
+                    */
                     cell.m_cached_exposure_rate[{virus, age}] += inf.get_infectivity(
                         t + dt / 2); // average infectivity over the time step to second order accuracy
                 }
