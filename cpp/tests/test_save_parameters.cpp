@@ -206,8 +206,7 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
     };
 
     const auto start_date = mio::Date(2020, 12, 12);
-    const auto end_date   = mio::offset_date_by_days(start_date, int(std::ceil(20.0)));
-    auto damping_time1    = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 1, 5), start_date));
+    auto damping_time1    = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 1), start_date));
     auto damping_time2    = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 24), start_date));
     mio::osecir::Model model(2);
     auto& contacts         = model.parameters.get<mio::osecir::ContactPatterns>();
@@ -236,7 +235,7 @@ TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 
     //add school holidays
     auto holiday_start_time        = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 12, 23), start_date));
-    auto holiday_end_time          = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), end_date));
+    auto holiday_end_time          = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 1, 6), start_date));
     contacts.get_school_holidays() = {std::make_pair(holiday_start_time, holiday_end_time)};
 
     //write json
