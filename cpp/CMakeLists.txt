@@ -137,9 +137,6 @@ if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-# install
-include(GNUInstallDirs)
-
 install(TARGETS memilio
     EXPORT memilio-targets
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
