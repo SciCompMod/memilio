@@ -15,7 +15,6 @@ runs:
     - name: Run unit tests
       shell: pwsh
       run: |
-        Get-ChildItem *.exe
         cd cpp/build-win/bin
         .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report

@@ -45,8 +45,6 @@ else()
     set(BUILD_STATIC_LIBS OFF)
 endif()
 
-set(BUILD_SHARED_LIBS OFF)
-
 # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 and above
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
     cmake_policy(SET CMP0135 NEW)
