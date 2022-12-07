@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,13 +20,12 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
-#include "abm/state.h"
 #include "abm/age.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/time.h"
 #include "abm/infection.h"
-#include "abm/immunity_level.h"
+#include "abm/vaccine.h"
 
 #include <functional>
 
@@ -95,7 +94,7 @@ public:
 
     /** 
      * Time passes and the person interacts with the population at its current location.
-     * The person might change infection state.
+     * The person might become infected.
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
@@ -109,19 +108,9 @@ public:
     void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
-     * Get the current vaccination state of the person.
-     * @returns the current vaccination state of the person
-     */
-    VaccinationState get_vaccination_state() const
-    {
-        return m_vaccination_state;
-    }
-
-    /**
      * Get the current infection of the person.
      * @returns the current infection state of the person
      */
-
     Infection& get_infection()
     {
         return m_infections.back();
@@ -132,8 +121,34 @@ public:
         return m_infections.back();
     }
 
+    /** 
+     * @returns all vaccinations.
+    */
+    std::vector<Vaccination>& get_vaccinations()
+    {
+        return m_vaccinations;
+    }
+
+    const std::vector<Vaccination>& get_vaccinations() const
+    {
+        return m_vaccinations;
+    }
+
+    /**
+     * @param t time point of querry. Usually the current time of the simulation.
+     * @returns true if the person is infected at the time point.
+    */
     bool is_infected(const TimePoint& t) const;
+
+    /**
+     * @param t time point of querry. Usually the current time of the simulation.
+     * @returns the infection state of the latest infection at time t.
+    */
     const InfectionState& get_infection_state(const TimePoint& t) const;
+
+    /**
+     * adds a new infection to the list of infections
+    */
     void add_new_infection(Infection inf);
 
     /**
@@ -256,17 +271,29 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
-    const ImmunityLevel& get_immunity_level() const
+private:
+    struct ImmunityLevel {
+        double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+        {
+            return 1.; // put implementation in .cpp
+        }
+        double get_severity_factor(VirusVariant v, TimePoint t) const;
+    };
+
+public:
+    double get_protection_factor(VirusVariant v, TimePoint t) const
     {
-        return m_immunity_level;
+        return m_immunity_level.get_protection_factor(v, t);
     }
+    //double get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
     std::shared_ptr<LocationId> m_location_id = nullptr;
     std::vector<uint32_t> m_assigned_locations;
-    VaccinationState m_vaccination_state; // change to immunity level
+    std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;
-    ImmunityLevel m_immunity_level;
+    ImmunityLevel m_immunity_level; // do we need this? Or can we call p.ImmunityLevel.get_...() ?
+    VaccinationState m_vaccination_state; // to be removed
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

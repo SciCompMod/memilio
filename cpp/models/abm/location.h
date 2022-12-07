@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,12 +20,12 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
+#include "abm/person.h"
 #include "abm/parameters.h"
 #include "abm/testing_scheme.h"
-#include "abm/state.h"
 #include "abm/location_type.h"
-#include "abm/infection.h"
-#include "abm/person.h"
+#include "abm/infection_state.h"
+#include "abm/vaccine.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"

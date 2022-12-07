@@ -25,6 +25,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 #include "abm/infection.h"
+#include "abm/vaccine.h"
 
 namespace mio
 {

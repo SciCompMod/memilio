@@ -22,7 +22,8 @@
 
 #include "abm/age.h"
 #include "abm/time.h"
-#include "abm/state.h"
+#include "abm/virus_variant.h"
+#include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"

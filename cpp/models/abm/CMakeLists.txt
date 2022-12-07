@@ -9,7 +9,6 @@ add_library(abm
     person.h
     world.cpp
     world.h
-    state.h
     location_type.h
     parameters.h
     parameters.cpp
@@ -23,7 +22,9 @@ add_library(abm
     testing_scheme.h
     infection.cpp
     infection.h
-    immunity_level.h
+    infection_state.h
+    virus_variant.h
+    vaccine.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

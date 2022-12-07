@@ -1,7 +1,7 @@
-/* 
+/*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Sascha Korf
+* Authors: David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,44 +17,50 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef EPI_ABM_VACCINE_H
+#define EPI_ABM_VACCINE_H
 
-#ifndef EPI_ABM_IMMUNITY_LEVEL_H
-#define EPI_ABM_IMMUNITY_LEVEL_H
-
-#include "abm/state.h"
 #include "abm/time.h"
+
+#include <cstdint>
 
 namespace mio
 {
 namespace abm
 {
 
-class ImmunityLevel
+/** 
+ * vaccine in ABM.
+ * can be used as 0-based index
+ */
+enum class Vaccine : std::uint32_t
 {
-public:
-    /*void got_infected(TimePoint t)
-    {
-        number_of_infections += 1;
-        time_of_last_infection = t;
-    };
-    */
+    Moderna = 0,
 
-    double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-    {
-        return 1.;
-    }
-
-    double get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-    {
-        return 1.;
-    }
-
-private:
-    //int number_of_vaccinations         = 0;
-    //TimePoint time_of_last_infection   = mio::abm::TimePoint(0);
-    //int number_of_infections           = 0;
-    //TimePoint time_of_last_vaccination = mio::abm::TimePoint(0);
+    Count //last!!
 };
+
+/**
+ * A vaccination is a tuple of time point and vaccine.
+*/
+struct Vaccination {
+    TimePoint t;
+    Vaccine vaccine;
+};
+
+// TO BE REMOVED
+/**
+ * vaccination state in ABM.
+ * can be used as 0-based index.
+ */
+enum class VaccinationState : std::uint32_t
+{
+    Unvaccinated = 0,
+    Vaccinated,
+
+    Count //last!!
+};
+
 } // namespace abm
 } // namespace mio
 

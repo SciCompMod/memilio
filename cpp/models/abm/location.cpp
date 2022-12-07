@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/random_number_generator.h"
 #include "abm/location.h"
-#include "abm/person.h"
+#include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
 
 #include <numeric>
@@ -55,8 +54,7 @@ VirusVariant Location::interact(const Person& person, const TimePoint& t, const 
                 for (uint32_t a = 0; a != static_cast<uint32_t>(AgeGroup::Count); ++a) {
                     local_indiv_trans_prob_v += m_cells[cell_index].m_cached_exposure_rate[{virus, age}] *
                                                 m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] *
-                                                dt.days() / days(1).days() *
-                                                person.get_immunity_level().get_protection_factor(virus, t);
+                                                dt.days() / days(1).days() * person.get_protection_factor(virus, t);
                 }
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
             }
@@ -76,8 +74,7 @@ VirusVariant Location::interact(const Person& person, const TimePoint& t, const 
             for (uint32_t a = 0; a != static_cast<uint32_t>(AgeGroup::Count); ++a) {
                 local_indiv_trans_prob_v += m_cached_exposure_rate[{virus, age}] *
                                             m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] *
-                                            dt.days() / days(1).days() *
-                                            person.get_immunity_level().get_protection_factor(virus, t);
+                                            dt.days() / days(1).days() * person.get_protection_factor(virus, t);
                 // person.get_protection_factor()
             }
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);

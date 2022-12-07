@@ -21,56 +21,17 @@
 #define EPI_ABM_INFECTION_H
 
 #include "abm/time.h"
-#include "abm/state.h"
-#include "abm/age.h"
+#include "abm/infection_state.h"
+#include "abm/virus_variant.h"
 #include "abm/parameters.h"
 
 #include <vector>
 #include <memory>
-#include <boost/optional.hpp>
 
 namespace mio
 {
 namespace abm
 {
-
-// Virus is always used in a shared pointer that is shared between all agents that are infected with this virus
-// In order to have different virus parameters within the same virus variant for different agents,
-// we would have to drop the shared pointer and assign a new virus object to each infection.
-/*class Virus
-{
-public:
-    Virus() // for easy construction of no_virus
-        : Virus(0)
-    {
-    }
-
-    Virus(double uniform_infectivity)
-        : m_infectivity({AgeGroup::Count}, uniform_infectivity)
-    {
-    }
-
-    template <typename T, std::enable_if<sizeof(T) == (size_t)AgeGroup::Count>>
-    Virus(const T& infectivities)
-        : m_infectivity({AgeGroup::Count}, infectivities)
-    {
-    }
-
-    Virus(const CustomIndexArray<double, AgeGroup>& infectivity)
-        : m_infectivity(infectivity)
-    {
-    }
-
-    double get_infectivity(const AgeGroup& age) const
-    {
-        return m_infectivity[age];
-    }
-
-private:
-    CustomIndexArray<double, AgeGroup> m_infectivity; // infectivity factor
-    // need to discuss virus parameters
-};
-*/
 
 class ViralLoad
 {
