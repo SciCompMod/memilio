@@ -54,11 +54,11 @@ ACTION_P(AddAssign, x)
 //make sure arg0 is not originally defined const, otherwise undefined behaviour
 ACTION_P(AddAssignUnsafe, x)
 {
-    const_cast<arg0_type&>(arg0) += x;
+    const_cast<std::decay_t<arg0_type>&>(arg0) += x;
 }
 ACTION(AssignUnsafe)
 {
-    const_cast<arg0_type&>(arg0) = arg1;
+    const_cast<std::decay_t<arg0_type>&>(arg0) = arg1;
 }
 
 #endif //EPI_TESTS_ACTIONS_H

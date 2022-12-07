@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/state.h"
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"

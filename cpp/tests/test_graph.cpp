@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,6 +20,7 @@
 #include "memilio/mobility/graph.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <type_traits>
 
 TEST(TestGraph, creation)
 {
@@ -50,6 +51,29 @@ TEST(TestGraph, duplicate_edge)
     g.add_edge(1, 2, 3);
 
     EXPECT_EQ(g.edges()[1], (mio::Edge<int>{1, 2, 3}));
+}
+
+TEST(TestGraph, graph_without_edges)
+{
+    struct MockModel {
+    };
+
+    struct MockMobility {
+    };
+    std::vector<MockModel> models = {MockModel(), MockModel()};
+    std::vector<int> ids          = {1, 2};
+
+    auto g = mio::create_graph_without_edges<MockModel, MockMobility>(models, ids);
+
+    EXPECT_EQ(g.edges().size(), 0);
+    EXPECT_EQ(g.nodes().size(), 2);
+    EXPECT_EQ(g.nodes()[0].id, 1);
+    EXPECT_EQ(g.nodes()[1].id, 2);
+    // Node property is the model itself
+    auto model_type_true = std::is_same<decltype(g.nodes()[0].property), MockModel>::value;
+    EXPECT_TRUE(model_type_true);
+    auto model_type_false = std::is_same<decltype(g.nodes()[0].property), MockMobility>::value;
+    EXPECT_FALSE(model_type_false);
 }
 
 TEST(TestGraph, ot_edges)

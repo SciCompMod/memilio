@@ -17,14 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
-from memilio.simulation.secir import InfectionState as State
+import argparse
+from datetime import date, datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime, date
-import argparse
+
+from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation.secir import InfectionState as State
+from memilio.simulation.secir import (Model, Simulation,
+                                      interpolate_simulation_result, simulate)
 
 
 def run_secir_simulation(show_plot=True):
@@ -49,7 +53,7 @@ def run_secir_simulation(show_plot=True):
     num_compartments = len(compartments)
 
     # Initialize Parameters
-    model = SecirModel(1)
+    model = Model(1)
 
     A0 = AgeGroup(0)
 
@@ -101,8 +105,10 @@ def run_secir_simulation(show_plot=True):
 
     # Run Simulation
     result = simulate(0, days, dt, model)
-    print(result.get_last_value())
+    # interpolate results
+    result = interpolate_simulation_result(result)
 
+    print(result.get_last_value())
     num_time_points = result.get_num_time_points()
     result_array = result.as_ndarray()
     t = result_array[0, :]

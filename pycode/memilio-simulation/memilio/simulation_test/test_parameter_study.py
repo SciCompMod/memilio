@@ -18,15 +18,17 @@
 # limitations under the License.
 #############################################################################
 import unittest
+
+import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import numpy as np
 
 
 class Test_ParameterStudy(unittest.TestCase):
 
     def _get_model(self):
-        model = secir.SecirModel(1)
+        model = secir.Model(1)
 
         A0 = secir.AgeGroup(0)
 
@@ -103,7 +105,7 @@ class Test_ParameterStudy(unittest.TestCase):
 
     def test_graph(self):
         model = self._get_model()
-        graph = secir.SecirModelGraph()
+        graph = secir.ModelGraph()
         graph.add_node(0, model)
         graph.add_node(1, model)
         graph.add_edge(0, 1, 0.01 * np.ones(8))

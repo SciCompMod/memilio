@@ -17,17 +17,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import argparse
+
+import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import numpy as np
-import argparse
 
 
 def parameter_study():
     mio.set_log_level(mio.LogLevel.Warning)
 
     # setup basic parameters
-    model = secir.SecirModel(1)
+    model = secir.Model(1)
 
     model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
     model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2
@@ -48,7 +50,7 @@ def parameter_study():
     model.parameters.DeathsPerCritical[secir.AgeGroup(0)] = 0.3
 
     # two regions with different populations and with some migration between them
-    graph = secir.SecirModelGraph()
+    graph = secir.ModelGraph()
     model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
     model.populations[secir.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 50
@@ -92,21 +94,21 @@ def parameter_study():
 
     # process the result of one run
     def handle_result(graph):
-        print('run {}'.format(handle_result.c))
+        print(f'run {handle_result.c}')
         handle_result.c = handle_result.c + 1
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
             result = node.property.result
             model = node.property.model
-            print("  node {}".format(node_idx))
+            print(f"  node {node_idx}")
             print(
                 "  initial InfectedNoSymptoms count {}.".format(
                     model.populations
                     [secir.AgeGroup(0),
                      secir.InfectionState.InfectedNoSymptoms].value))
-            print("  compartments at t = {}:".format(result.get_time(0)))
+            print(f"  compartments at t = {result.get_time(0)}:")
             print("  ", result.get_value(0))
-            print("  compartments at t = {}:".format(result.get_last_time()))
+            print(f"  compartments at t = {result.get_last_time()}:")
             print("  ", result.get_last_value())
     handle_result.c = 0
 

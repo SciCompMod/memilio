@@ -17,11 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
-from memilio.simulation.oseir import InfectionState as State
-import numpy as np
 import argparse
+
+import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import (Model, interpolate_simulation_result,
+                                      simulate)
 
 
 def run_oseir_simulation():
@@ -63,6 +67,9 @@ def run_oseir_simulation():
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+    # interpolate results
+    result = interpolate_simulation_result(result)
+
     print(result.get_last_value())
 
 

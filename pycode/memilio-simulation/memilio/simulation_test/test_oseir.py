@@ -19,10 +19,12 @@
 #############################################################################
 import unittest
 
-from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
-from memilio.simulation.oseir import InfectionState as State
 import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import Model, simulate
 
 
 class Test_oseir_integration(unittest.TestCase):
