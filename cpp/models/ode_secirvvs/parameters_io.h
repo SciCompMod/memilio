@@ -606,6 +606,23 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
 
 #ifdef MEMILIO_HAS_HDF5
 
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, Date date, const std::vector<int>& county, 
+                                                        int num_days, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                                        const std::string& data_dir, const std::string& results_dir,  bool set_vaccination_data)
+{
+    if(set_vaccination_data)
+    {
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(data_dir, "all_county_ageinf_vacc_ma7.json"), date,
+                                                   county, num_days));
+    }
+
+    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, data_dir, results_dir, county, date, scaling_factor_inf,
+                                                             scaling_factor_icu, num_days));
+
+    return success();
+}
+
 /**
     * @brief Exports the time series of extrapolated real data according to
     *   the extrapolation / approximation method used to initialize the model from
@@ -1234,8 +1251,8 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days));
+        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, date, county, num_days, scaling_factor_inf, 
+                                                    scaling_factor_icu, dir, dir, false));
     }
 
     return success();
