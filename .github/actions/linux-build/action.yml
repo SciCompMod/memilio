@@ -85,7 +85,7 @@ runs:
         cd cpp
         tar -czf build.tar.gz build
     - name: Upload built test directory
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
         path: cpp/build.tar.gz
