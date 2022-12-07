@@ -277,7 +277,7 @@ jobs:
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./pycode/test/coverage_python.xml,./coverage.info
           verbose: true
