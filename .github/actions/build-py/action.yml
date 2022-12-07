@@ -23,7 +23,7 @@ runs:
         /opt/python/cp310-cp310/bin/python setup.py bdist_wheel
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
-          for whl in dist/*.whl; do LD_LIBRARY_PATH=. auditwheel repair "$whl"; done
+          for whl in dist/*.whl; do auditwheel repair "$whl"; done
         else
           # no auditwheel necessary for pure python packages, so only copy the wheels to the same output directory 
           cp dist/*.whl wheelhouse

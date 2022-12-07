@@ -109,11 +109,6 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         "/W4;/WX")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # current workaround due to jsoncpp dependency: set default library built type to static
-    set(BUILD_SHARED_LIBS OFF)
-endif()
-
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio)
