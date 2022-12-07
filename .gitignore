@@ -275,8 +275,3 @@ docs/html
 docs/xml
 
 # End of https://www.gitignore.io/api/c++,node,python
-pycode/memilio-epidata/epi_venv/*
-pycode/memilio/data/pydata/Germany/*
-cpp/.vscode/settings.json
-pycode/memilio-simulation/_skbuild/*
-pycode/memilio-epidata/.vscode/settings.json
