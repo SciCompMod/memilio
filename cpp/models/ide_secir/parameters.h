@@ -25,53 +25,56 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/smoother.h"
 
-#include<vector>
+#include <vector>
 
 namespace mio
 {
 namespace isecir
 {
 
-    /*******************************************
+/*******************************************
     * Define Parameters of the IDE-SECIHURD model *
     *******************************************/
 
-    // dummy for gamma functions 
-    /* Vielleicht tatsächlich einen "Oberstruct für die Gammas, und die spezifischen Gammas erben dann von dem?
+// dummy for gamma functions
+/* Vielleicht tatsächlich einen "Oberstruct für die Gammas, und die spezifischen Gammas erben dann von dem?
     *Whs definiert man da auch am besten den Träger irgendwie und davon wäre dann abhängig bis wie weit wir in den Summen der Diskretisierung gehen und welche Anfangsdaten wir brauchen.*/
-    // Evtl macht man dann einen Array der Übergangsfunktionen, um einen Indexbasierten zugriff zu ermöglichen? 
-    /*Wollen wir die Ableitungen jetzt berechnen oder approxiieren?*/
+// Evtl macht man dann einen Array der Übergangsfunktionen, um einen Indexbasierten zugriff zu ermöglichen?
+/*Wollen wir die Ableitungen jetzt berechnen oder approxiieren?*/
 
 /**
      * @brief Distribution of the time spent in a compartment before transiting to next compartment.
      */
 struct DelayDistribution {
     DelayDistribution()
-    : xright{0.0}
+        : xright{1.0}
     {
     }
     DelayDistribution(double init_x_right)
-    : xright{init_x_right}
+        : xright{init_x_right}
     {
     }
 
-    double Distribution(double tau){
+    double Distribution(double tau)
+    {
         return smoother_cosine(tau, 0.0, xright, 1.0, 0.0);
-    }   
+    }
 
-    double get_xright(){
+    double get_xright()
+    {
         return xright;
     }
-private:
+
+    //private:
     double xright;
 };
 
-struct TransitionDistributions{
+struct TransitionDistributions {
     //we need transition distributions for E->C, C->I, C->R, I->H, I->R, H->U,H->R, U->D,U->R (so 9 distributions)
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
-    {  
-        return std::vector<DelayDistribution>(9,DelayDistribution());
+    {
+        return std::vector<DelayDistribution>(9, DelayDistribution());
     }
 
     static std::string name()
@@ -80,14 +83,29 @@ struct TransitionDistributions{
     }
 };
 
-struct TransitionProbabilities{
-    // we need probabilities for C->I, I->H, H->U, U->D (so 4 values) (from this we can deduce prob for c->R etc.)
-    // for consistency we also define \mu_E^C = 1 to be able to apply general formula to get population from flows
-    // in total we need 5 values
+struct TransitionParameters {
+    // we need to initialize transition distributions with some parameters (for now just use one parameter per distribution, i.e. xright)
+    // to be able to define different transition distributions for each transition
     using Type = std::vector<double>;
     static Type get_default()
-    {  
-        return std::vector<double>(5,0.0);
+    {
+        return std::vector<double>(9, 1.0);
+    }
+
+    static std::string name()
+    {
+        return "TransitionParameters";
+    }
+};
+
+struct TransitionProbabilities {
+    // we need probabilities for S->E, E->C, C->I, I->H, H->U, U->D (so 5 values) (from this we can deduce prob for c->R etc.)
+    // for consistency we also define mu_S^E = \mu_E^C = 1 to be able to apply general formula to get population from flows
+    // in total we need 6 values
+    using Type = std::vector<double>;
+    static Type get_default()
+    {
+        return std::vector<double>(6, 0.5);
     }
 
     static std::string name()
@@ -99,7 +117,7 @@ struct TransitionProbabilities{
 /**
  * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
  */
-struct ContactPatterns{
+struct ContactPatterns {
     using Type = UncertainContactMatrix;
 
     static Type get_default()
@@ -111,7 +129,6 @@ struct ContactPatterns{
         return "ContactPatterns";
     }
 };
-
 
 /**
 * @brief probability of getting infected from a contact
@@ -145,7 +162,6 @@ struct RelativeTransmissionNoSymptoms {
     }
 };
 
-
 /**
 * @brief the risk of infection from symptomatic cases in the SECIR model
 */
@@ -166,9 +182,9 @@ struct RiskOfInfectionFromSymptomatic {
 * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
 */
 struct MaxRiskOfInfectionFromSymptomatic {
-     // To Do: Dies irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
-      //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
-      // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
+    // To Do: Dies irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
+    //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
+    // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
     using Type = double;
     static Type get_default()
     {
@@ -180,12 +196,10 @@ struct MaxRiskOfInfectionFromSymptomatic {
     }
 };
 
-    // Define Parameterset for IDE SEIR model.
-    using ParametersBase = ParameterSet<TransitionDistributions,TransitionProbabilities,ContactPatterns,
-                            TransmissionProbabilityOnContact,RelativeTransmissionNoSymptoms,RiskOfInfectionFromSymptomatic>;
-
-
-
+// Define Parameterset for IDE SEIR model.
+using ParametersBase =
+    ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
+                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
 
 } // namespace isecir
 } // namespace mio

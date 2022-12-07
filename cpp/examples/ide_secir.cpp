@@ -19,10 +19,41 @@
 */
 
 #include "ide_secir/model.h"
+#include "memilio/math/eigen.h"
+#include "memilio/utils/time_series.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
 #include <iostream>
 
 int main()
 {
-    std::cout << "Hello World!\n";
-    return 0;
+    using Vec = mio::TimeSeries<double>::Vector;
+
+    int tmax  = 10;
+    int N     = 100;
+    double dt = 1;
+    mio::TimeSeries<double> result(1);
+
+    result.add_time_point<Eigen::VectorXd>(-5.0, Vec::Constant(1, N));
+    while (result.get_last_time() < 0) {
+        result.add_time_point(result.get_last_time() + dt, Vec::Constant(1, (double)result.get_last_value()[0] - 1));
+    }
+
+    std::cout << "# time  |  number of susceptibles" << std::endl;
+    Eigen::Index num_points = result.get_num_time_points();
+    for (Eigen::Index i = 0; i < num_points; ++i) {
+        std::cout << result.get_time(i) << "      |  " << result[i]
+                  << std::endl; //[Eigen::Index(InfectionState::S)] << std::endl;
+    }
+
+    // Initialize model.
+    mio::isecir::Model model(std::move(result), dt, N);
+
+    // Set working parameters.
+    // model.parameters.set<mio::iseir::LatencyTime>(3.3);
+    // model.parameters.set < mio::isecir::mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    // contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    // //model.parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
+
+    // // Carry out simulation.
+    model.simulate(tmax);
 }

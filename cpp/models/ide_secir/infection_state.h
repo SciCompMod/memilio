@@ -50,13 +50,13 @@ enum class InfectionState
  */
 enum class InfectionTransitions
 {
-    SusceptibleToExposed  = 0,
-    ExposedToInfectedNoSymptoms        = 1,
+    SusceptibleToExposed                 = 0,
+    ExposedToInfectedNoSymptoms          = 1,
     InfectedNoSymptomsToInfectedSymptoms = 2,
-    InfectedSymptomsToInfectedSevere  = 3,
-    InfectedSevereToInfectedCritical = 4,
-    InfectedCriticalToDead   = 5,
-    Count              = 6
+    InfectedSymptomsToInfectedSevere     = 3,
+    InfectedSevereToInfectedCritical     = 4,
+    InfectedCriticalToDead               = 5,
+    Count                                = 6
 };
 
 } // namespace isecir

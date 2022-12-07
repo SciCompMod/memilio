@@ -29,7 +29,7 @@ namespace mio
 {
 namespace isecir
 {
-class IdeModel
+class Model
 {
     /* Wir brauchen: -Funktion, die aus transitions die compartements berechnet
     -Funktion die Simuliert: in ode_secir wird die simulation glaube ich anders durchgeführt? 
@@ -38,6 +38,7 @@ class IdeModel
     */
     //vllt ist simulate der rueckgabetyp ar nicht so gut, weil jedes mal ne komplette timeseries zurückgegeben wird. vllt besser typ void und funktion get_m_transitions
     using Pa = ParametersBase;
+
 public:
     /**
     * @brief Constructor to create an IDE SECIR model.
@@ -52,9 +53,7 @@ public:
     * @param[in] N_init The population of the considered region. 
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    IdeModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
-
-
+    Model(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
 
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -73,20 +72,20 @@ public:
 
     // function that computes flows from one compartment to another at some time t
     TimeSeries<double> get_flows(int t_max);
-    
 
     // function that computes size of compartments from flows
     // define function more general as a sum of some \mu, some \gamma and some \sigma
-    // later insert corresponding function 
+    // later insert corresponding function
     void get_size_of_compartments(int t_max);
 
-
 private:
-
     // Funktion to update current value for S
     void update_susceptibles();
-    void update_forceofinfection(); 
+    void update_forceofinfection();
     void compute_flow(int idx_InfectionTransitions, double TransitionProbability, int idx_TransitionDistribution);
+    void compute_totaldeaths();
+    void get_size_of_compartments(int idx_IncomingFlow, double TransitionProbability, int idx_TransitionDistribution,
+                                  int idx_TransitionDistributionToRecov, int idx_InfectionState);
 
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<double> m_transitions;
@@ -106,12 +105,12 @@ private:
     // Two Indices used for simulation.
     Eigen::Index m_k{0};
     Eigen::Index m_l{0};
-    
 };
 
 // define general function to compute size of compartments from flows
-// 
-struct FlowToCompartment{};
+//
+struct FlowToCompartment {
+};
 
 } // namespace isecir
 } // namespace mio
