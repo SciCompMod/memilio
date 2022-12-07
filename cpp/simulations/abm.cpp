@@ -888,22 +888,22 @@ void save_result(mio::TimeSeries<double> results, size_t run_idx, const fs::path
 /**
  * Run the abm simulation
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param num_runs number of runs.
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns any io error that occurs during reading or writing of files.
  */
-mio::IOResult<void> run(const fs::path& result_dir, bool save_single_runs = true)
+mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
     auto t0         = mio::abm::TimePoint(0); // Start time (t0) per simulation
     auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // Endtime (tmax) per simulation
-    const auto num_runs     = 1; // Number of runs
     auto ensemble_results = std::vector<mio::TimeSeries<double>>{}; // Vector of collected results (TimeSeries objects)
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); //The run index
     auto save_result_result = mio::IOResult<void>(mio::success());
 
     // Loop over a number of run
-    for (size_t i = 0; i < num_runs; i++) {
+    while (run_idx <= num_runs) {
         // Create the sampled simulation with start time t0
         auto sim = create_sampled_simulation(t0);
         // Advance the world to tmax
@@ -926,12 +926,28 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
+    size_t num_runs = 1;
     bool save_single_runs = true;
 
     if (argc == 2) {
-        result_dir       = argv[1];
+        sscanf(argv[1], "%zu", &num_runs);
+        printf("Number of run is %s.\n", argv[1]);
+        printf("Saving results to the current directory (i.e. build/simulations).\n");
+    } else if (argc == 3) {
+        sscanf(argv[1], "%zu", &num_runs);
+        result_dir = argv[2];
+        printf("Number of run is %s.\n", argv[1]);
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
+    } else {
+        printf("Usage:\n");
+        printf("abm_example <num_runs>\n");
+        printf("\tRun the simulation for <num_runs> time(s).\n");
+        printf("\tStore the results in the current directory (i.e. build/simulations).\n");
+        printf("abm_example <result_dir> <num_runs>\n");
+        printf("\tRun the simulation for <num_runs> time(s).\n");
+        printf("\tStore the results in <result_dir>.\n");
+        return 0;
     }
-    printf("Saving results to \"%s\".\n", result_dir.c_str());
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
     //printf("Seeds: ");
@@ -940,7 +956,7 @@ int main(int argc, char** argv)
     //}
     //printf("\n");
 
-    auto result = run(result_dir, save_single_runs);
+    auto result = run(result_dir, num_runs, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
