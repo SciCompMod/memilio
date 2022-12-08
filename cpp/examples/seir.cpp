@@ -51,6 +51,7 @@ int main()
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 
+    model.check_constraints();
     // print_seir_params(model);
 
     auto seir = simulate(t0, tmax, dt, model);
