@@ -116,21 +116,21 @@ public:
         if (this->get<TimeExposed>() <= 0.0) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
                       this->get<TimeExposed>(), 0.0);
-            return 0;
+            return 1;
         }
         if (this->get<TimeInfected>() <= 0.0) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
                       this->get<TimeInfected>(), 0.0);
-            return 0;
+            return 1;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            return 0;
+            return 1;
         }
-        return 1;
+        return 0;
     }
 
 private:
