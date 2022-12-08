@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 project(memilio VERSION 0.1.0)
 
@@ -13,11 +13,50 @@ option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" 
 option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
+option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Please choose Release or Debug. Default is Release." FORCE)
+endif()
+
+if(MEMILIO_BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS ON)
+
+    if(MSVC)
+        # Current workaround for windows to not build shared libs as we neeed to plugin export variables
+        # TODO: add expoerts for windows files
+        message(WARNING "Building shared libs is not supported on windows. Building static libs instead.")
+        set(BUILD_SHARED_LIBS OFF)
+        set(BUILD_STATIC_LIBS ON)
+    endif()
+else()
+    set(BUILD_SHARED_LIBS OFF)
+endif()
+
+if(MEMILIO_BUILD_STATIC_LIBS)
+    set(BUILD_STATIC_LIBS ON)
+else()
+    set(BUILD_STATIC_LIBS OFF)
+endif()
+
+# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 and above
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
+include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -52,8 +91,8 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION
     endif(MEMILIO_SANITIZE_UNDEFINED)
 
     if(MEMILIO_SANITIZE_ADDRESS OR MEMILIO_SANITIZE_UNDEFINED)
-        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -fno-sanitize-recover=all")
-        string(APPEND CMAKE_LINKER_FLAGS_DEBUG " -fno-omit-frame-pointer -fno-sanitize-recover=all")
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG " -fno-omit-frame-pointer")
     endif(MEMILIO_SANITIZE_ADDRESS OR MEMILIO_SANITIZE_UNDEFINED)
 endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
 
@@ -97,9 +136,6 @@ endif()
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
-
-# install
-include(GNUInstallDirs)
 
 install(TARGETS memilio
     EXPORT memilio-targets

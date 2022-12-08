@@ -51,6 +51,7 @@ set(TESTSOURCES
     actions.h
     matchers.h
     temp_file_register.h
+    sanitizers.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
