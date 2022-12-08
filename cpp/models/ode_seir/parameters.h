@@ -109,7 +109,7 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @brief checks whether all Parameters satisfy their corresponding constraints. Logs errors and returns 0
      */
     int check_constraints() const
     {
