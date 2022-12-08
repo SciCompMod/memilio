@@ -466,9 +466,10 @@ public:
     void apply_variant(double t)
     {
         // TODO: Wachtstumsrate anpassen/ evtl als Parameter
-        auto start_day            = this->get_model().parameters.template get<StartDay>();
-        auto variant_day          = get_day_in_year(Date(2022, 11, 1));
-        auto szenario_new_variant = this->get_model().parameters.template get<SzenarioNewVariant>();
+        auto start_day                   = this->get_model().parameters.template get<StartDay>();
+        auto variant_day                 = get_day_in_year(Date(2022, 11, 1));
+        auto szenario_new_variant        = this->get_model().parameters.template get<SzenarioNewVariant>();
+        auto vacc_effectiveness_szenario = this->get_model().parameters.template get<SzenarioVaccinationCampaing>();
 
         // szenario 1 means no new variant -> BA.5 or similar variant stays
         if (start_day + t > variant_day && szenario_new_variant > 1) {
@@ -493,6 +494,27 @@ public:
                         share_new_variant *
                             this->get_model().parameters.template get<BaseSeverityNewVariant>()[(AgeGroup)i];
                     this->get_model().parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)i] = new_severtiy;
+                    if (vacc_effectiveness_szenario == 2) {
+                        // we assume that the vaccine is less effective for the new variant
+                        // hardcoded, other option is linear reduction (only when equidistant dt) or set new params
+                        this->get_model().parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.6 + share_new_variant * 0.9;
+                        this->get_model().parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.55 + share_new_variant * 0.85;
+                        this->get_model().parameters.template get<ReducInfectedSymptomsPartialImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.95 + share_new_variant * 0.99;
+                        this->get_model()
+                            .parameters.template get<ReducInfectedSymptomsImprovedImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.3 + share_new_variant * 0.6;
+                        this->get_model()
+                            .parameters.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.8 + share_new_variant * 0.95;
+                        this->get_model()
+                            .parameters.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.19 + share_new_variant * 0.39;
+                        this->get_model().parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)i] =
+                            (1 - share_new_variant) * 0.5 + share_new_variant * 0.75;
+                    }
                 }
             }
         }

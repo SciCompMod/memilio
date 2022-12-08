@@ -56,8 +56,8 @@ relative_dict['Total'] = np.sum(age_group_sizes)/base
 # Define start day and simulation period
 year, month, day = '2022', '6', '1'
 start_date = pd.Timestamp(year + '.' + month.zfill(2) + '.' + day.zfill(2))
-tmax = '10'
-daysPlot = 45
+tmax = '365'
+daysPlot = 365
 
 # Define different scenario folders that will be read and plotted
 date_str = '_' + str(year) + '_' + str(month) + '_' + str(day) + '_' + str(tmax)
@@ -89,7 +89,7 @@ def open_files(
     for scenario in scenario_list:
         files[scenario] = {}
 
-        path = "results_test2020_0_szenario_1_vacc_camp_1_vacc_eff_1"
+        path = "results_test2020_0_szenario_3_vacc_camp_1_vacc_eff_1"
 
         for p in percentiles:
             files[scenario][p] = h5py.File(
@@ -423,8 +423,8 @@ def concat_comparts(files, comparts, scenario_list, regionid='0'):
 # This Cell plots all Scenarios with combined compartments
 year, month, day = '2022', '6', '1'
 start_date = pd.Timestamp(year + '.' + month.zfill(2) + '.' + day.zfill(2))
-tmax = '10'
-daysPlot = 10
+# tmax = '100'
+# daysPlot = 100
 
 datelist = np.array(pd.date_range(
     start_date.date(),

@@ -735,6 +735,21 @@ struct SzenarioNewVariant {
     }
 };
 
+/**
+ * @brief Szenario which describes the effectiveness of vaccination against a new variant.
+ */
+struct SzenarioVaccinationCampaing {
+    using Type = int;
+    static Type get_default(AgeGroup)
+    {
+        return 1;
+    }
+    static std::string name()
+    {
+        return "SzenarioVaccinationCampaing";
+    }
+};
+
 struct BaseSeverityNewVariant {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -747,19 +762,21 @@ struct BaseSeverityNewVariant {
     }
 };
 
-using ParametersBase = ParameterSet<
-    StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
-    IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
-    TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
-    RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms, CriticalPerSevere,
-    DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity, DaysUntilEffectiveImprovedImmunity,
-    DaysUntilEffectiveBoosterImmunity, DailyFullVaccination, DailyBoosterVaccination, DailyPartialVaccination,
-    ReducExposedPartialImmunity, VaccinationTemporaryImm1, VaccinationTemporaryImm2, ReducExposedImprovedImmunity,
-    ReducInfectedSymptomsPartialImmunity, ReducInfectedSymptomsImprovedImmunity,
-    ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
-    ReducTimeInfectedMild, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant, BaseSeverity,
-    BaseSeverityNewVariant, WaningPartialImmunity, WaningImprovedImmunity, RateOfDailyPartialVaccinations,
-    RateOfDailyImprovedVaccinations, RateOfDailyBoosterVaccinations, ImmunityInterval1, ImmunityInterval2>;
+using ParametersBase =
+    ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
+                 IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
+                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
+                 RiskOfInfectionFromSymptomatic, MaxRiskOfInfectionFromSymptomatic, SeverePerInfectedSymptoms,
+                 CriticalPerSevere, DeathsPerCritical, VaccinationGap, DaysUntilEffectivePartialImmunity,
+                 DaysUntilEffectiveImprovedImmunity, DaysUntilEffectiveBoosterImmunity, DailyFullVaccination,
+                 DailyBoosterVaccination, DailyPartialVaccination, ReducExposedPartialImmunity,
+                 VaccinationTemporaryImm1, VaccinationTemporaryImm2, ReducExposedImprovedImmunity,
+                 ReducInfectedSymptomsPartialImmunity, ReducInfectedSymptomsImprovedImmunity,
+                 ReducInfectedSevereCriticalDeadPartialImmunity, ReducInfectedSevereCriticalDeadImprovedImmunity,
+                 ReducTimeInfectedMild, BaseInfectiousness, BaseInfectiousnessNewVariant, SzenarioNewVariant,
+                 SzenarioVaccinationCampaing, BaseSeverity, BaseSeverityNewVariant, WaningPartialImmunity,
+                 WaningImprovedImmunity, RateOfDailyPartialVaccinations, RateOfDailyImprovedVaccinations,
+                 RateOfDailyBoosterVaccinations, ImmunityInterval1, ImmunityInterval2>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.

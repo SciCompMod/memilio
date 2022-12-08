@@ -125,7 +125,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int vacc_effectiveness_szenario)
+mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
 {
     //times
     const double incubationTime          = 3.1; // doi.org/10.3201/eid2806.220158
@@ -192,8 +192,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     const double deathsPerCriticalMax[] = {0.10, 0.10, 0.18,
                                            0.18, 0.50, 0.7}; // improvable doi.org/10.1371/journal.pcbi.1010054
 
-    mio::unused(vacc_effectiveness_szenario);
-    // if (vacc_effectiveness_szenario == 1) {
     const double reducExposedPartialImmunityMin           = 0.569; // doi.org/10.1136/bmj-2022-071502
     const double reducExposedPartialImmunityMax           = 0.637; // doi.org/10.1136/bmj-2022-071502
     const double reducExposedImprovedImmunityMin          = 0.46; // doi.org/10.1136/bmj-2022-071502
@@ -209,7 +207,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, int
     const double reducInfectedSevereCriticalDeadImprovedImmunityMin = 0.1; // doi.org/10.1136/bmj-2022-071502
     const double reducInfectedSevereCriticalDeadImprovedImmunityMax = 0.19; // doi.org/10.1136/bmj-2022-071502
     const double temp_reducTimeInfectedMild                         = 0.5; // doi.org/10.1101/2021.09.24.21263978
-    // }
     // else {
     //     double vacc_add{0.25};
     //     const double reduc_partial_exp_min  = 0.569 + vacc_add; // doi.org/10.1136/bmj-2022-071502
@@ -720,10 +717,11 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
     //global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters params(num_age_groups);
-    params.get<mio::osecirvvs::StartDay>()           = mio::get_day_in_year(start_date);
-    params.get<mio::osecirvvs::SzenarioNewVariant>() = variant_szenario;
-    params.get_end_dynamic_npis()                    = mio::get_offset_in_days(start_date, summer_date);
-    BOOST_OUTCOME_TRY(set_covid_parameters(params, vacc_effectiveness_szenario));
+    params.get<mio::osecirvvs::StartDay>()                    = mio::get_day_in_year(start_date);
+    params.get<mio::osecirvvs::SzenarioNewVariant>()          = variant_szenario;
+    params.get<mio::osecirvvs::SzenarioVaccinationCampaing>() = vacc_effectiveness_szenario;
+    params.get_end_dynamic_npis()                             = mio::get_offset_in_days(start_date, summer_date);
+    BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
@@ -997,7 +995,7 @@ int main(int argc, char** argv)
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    int variant_szenario            = 1;
+    int variant_szenario            = 3;
     int vacc_campaign_szenario      = 1;
     int vacc_effectiveness_szenario = 1;
     if (argc == 6) {
@@ -1039,14 +1037,14 @@ int main(int argc, char** argv)
     }
 
     std::string szenario_info;
-    if (variant_szenario == 0) {
+    if (variant_szenario == 1) {
         szenario_info = "Omikron (BA5) or a very similar variant stays (none Immune escape variant, disease severity "
                         "remains the same as with omicron).";
     }
-    else if (variant_szenario == 1) {
+    else if (variant_szenario == 2) {
         szenario_info = "New variant with Immune escape but same disease severity";
     }
-    else if (variant_szenario == 2) {
+    else if (variant_szenario == 3) {
         szenario_info = "New variant with Immune escape and disease severity as delta";
     }
     else {

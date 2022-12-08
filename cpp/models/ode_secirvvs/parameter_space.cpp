@@ -155,10 +155,26 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
     double variant_fac_severity  = 1;
     if (szenario_new_variant == 2) {
         variant_fac_infection = 2;
+        for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
+            if (shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] *
+                    variant_fac_infection >
+                1) {
+                log_error("New value for transmission risk is not valid");
+            }
+        }
     }
     else if (szenario_new_variant == 3) {
         variant_fac_infection = 2;
-        variant_fac_severity  = 1.4;
+        variant_fac_severity  = 2;
+        for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
+            if (shared_params_model.parameters.template get<TransmissionProbabilityOnContact>()[i] *
+                        variant_fac_infection >
+                    1 ||
+                shared_params_model.parameters.template get<SeverePerInfectedSymptoms>()[i] * variant_fac_severity >
+                    1) {
+                log_error("New value for transmission risk or severity is not valid");
+            }
+        }
     }
 
     //infectiousness of virus variants is not sampled independently but depend on base infectiousness
