@@ -32,7 +32,7 @@ runs:
       # always run tests as cmake target coverage
       # does not return an error if a test fails
       run: |
-        cd cpp/build/tests
+        cd cpp/build/bin
         sudo chmod a+x memilio-test
         ./memilio-test  --gtest_output="xml:report.xml"      
     - name: Compute code coverage
