@@ -88,37 +88,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target)) {
                     if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
-                        if (target->get_npi_active() == false) {
-                            person->set_wear_mask(false);
-                            if (person->get_mask_compliance(target_type) > 0.) {
-                                // draw if the person wears a mask even if not required
-                                double wear_mask = UniformDistribution<double>::get_instance()();
-                                if (wear_mask < person->get_mask_compliance(target_type)) {
-                                    person->set_wear_mask(true);
-                                    person->get_mask().increase_time_used(dt);
-                                }
-                            }
-                            person->migrate_to(get_location(*person), *target);
-                        }
-                        else {
-                            person->set_wear_mask(true);
-                            if (person->get_mask_compliance(target_type) < 0.) {
-                                // draw if a person refuses to wear the required mask
-                                double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
-                                if (wear_mask > person->get_mask_compliance(target_type)) {
-                                    person->set_wear_mask(false);
-                                }
-                            }
-                            if (person->get_wear_mask()) {
-
-                                if (static_cast<int>(person->get_mask().get_type()) <
-                                    static_cast<int>(target->get_required_mask())) {
-                                    person->get_mask().change_mask(target->get_required_mask());
-                                }
-                                person->migrate_to(get_location(*person), *target);
-                                person->get_mask().increase_time_used(dt);
-                            }
-                        }
+                        person->mask_usage(*target);
+                        person->migrate_to(get_location(*person), *target);
                         break;
                     }
                 }
@@ -134,37 +105,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target)) {
-                    if (target.get_npi_active() == false) {
-                        person->set_wear_mask(false);
-                        if (person->get_mask_compliance(target.get_type()) > 0.) {
-                            // draw if the person wears a mask even if not required
-                            double wear_mask = UniformDistribution<double>::get_instance()();
-                            if (wear_mask < person->get_mask_compliance(target.get_type())) {
-                                person->set_wear_mask(true);
-                                person->get_mask().increase_time_used(dt);
-                            }
-                        }
-                        person->migrate_to(get_location(*person), target);
-                    }
-                    else {
-                        person->set_wear_mask(true);
-                        if (person->get_mask_compliance(target.get_type()) < 0.) {
-                            // draw if a person refuses to wear the required mask
-                            double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
-                            if (wear_mask > person->get_mask_compliance(target.get_type())) {
-                                person->set_wear_mask(false);
-                            }
-                        }
-                        if (person->get_wear_mask()) {
-
-                            if (static_cast<int>(person->get_mask().get_type()) <
-                                static_cast<int>(target.get_required_mask())) {
-                                person->get_mask().change_mask(target.get_required_mask());
-                            }
-                            person->migrate_to(get_location(*person), target);
-                            person->get_mask().increase_time_used(dt);
-                        }
-                    }
+                    person->mask_usage(target);
+                    person->migrate_to(get_location(*person), target);
                 }
             }
             m_trip_list.increase_index();

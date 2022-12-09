@@ -270,24 +270,6 @@ public:
     }
 
     /**
-     * @return true if the person is currently wearing a mask
-     */
-    bool get_wear_mask()
-    {
-        return m_wears_mask;
-    }
-
-    /**
-     * decide if a person is currently wearing a mask
-     * @param wear_mask if true the protection of the mask is considered when
-     * computing the exposure rate
-     */
-    void set_wear_mask(bool wear_mask)
-    {
-        m_wears_mask = wear_mask;
-    }
-
-    /**
      * get the protective factor of the mask
      */
     double get_protective_factor() const;
@@ -313,6 +295,12 @@ public:
     {
         return m_mask_compliance[static_cast<int>(location)];
     }
+
+    /**
+     * checks whether the person wears a mask at the target location
+     * @param target the target location
+     */
+    void mask_usage(Location& target);
 
 private:
     LocationId m_location_id;

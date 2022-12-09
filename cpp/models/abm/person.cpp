@@ -230,5 +230,37 @@ double Person::get_protective_factor() const
     return 0.;
 }
 
+void Person::mask_usage(Location& target)
+{
+    if (target.get_npi_active() == false) {
+        m_wears_mask = false;
+        if (get_mask_compliance(target.get_type()) > 0.) {
+            // draw if the person wears a mask even if not required
+            double wear_mask = UniformDistribution<double>::get_instance()();
+            if (wear_mask < get_mask_compliance(target.get_type())) {
+                m_wears_mask = true;
+                // m_mask.increase_time_used(dt);
+            }
+        }
+    }
+    else {
+        m_wears_mask = true;
+        if (get_mask_compliance(target.get_type()) < 0.) {
+            // draw if a person refuses to wear the required mask
+            double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+            if (wear_mask > get_mask_compliance(target.get_type())) {
+                m_wears_mask = false;
+            }
+        }
+        if (m_wears_mask == true) {
+
+            if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
+                m_mask.change_mask(target.get_required_mask());
+            }
+            // person->get_mask().increase_time_used(dt);
+        }
+    }
+}
+
 } // namespace abm
 } // namespace mio
