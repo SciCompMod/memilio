@@ -33,22 +33,36 @@ class Mask
 public:
     Mask(MaskType type);
 
+    /**
+    * get the type of the mask 
+    */
     MaskType get_type() const
     {
         return m_type;
     }
 
-    TimeSpan get_time_used()
+    /**
+    * get the time the mask was used
+    */
+    TimeSpan get_time_used() const
     {
         return m_time_used;
     }
 
+    /**
+    * @brief increase the time the mask was used by a timestep
+    * @param dt the length of the timestep
+    */
     void increase_time_used(TimeSpan dt)
     {
         m_time_used += dt;
     }
 
-    void change_mask(MaskType new_mask_type); // changes the type of the mask and sets time_used to 0
+    /**
+    * @brief change the type of the mask and reset the time it was used
+    * @param new_mask_type the type of the new mask
+    */
+    void change_mask(MaskType new_mask_type);
 
 private:
     MaskType m_type;

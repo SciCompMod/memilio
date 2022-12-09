@@ -255,6 +255,10 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
+    /**
+    * get the mask of the person
+    * @return reference to the mask 
+    */
     Mask& get_mask()
     {
         return m_mask;
@@ -265,23 +269,46 @@ public:
         return m_mask;
     }
 
+    /**
+     * @return true if the person is currently wearing a mask
+     */
     bool get_wear_mask()
     {
         return m_wears_mask;
     }
 
+    /**
+     * decide if a person is currently wearing a mask
+     * @param wear_mask if true the protection of the mask is considered when
+     * computing the exposure rate
+     */
     void set_wear_mask(bool wear_mask)
     {
         m_wears_mask = wear_mask;
     }
 
+    /**
+     * get the protective factor of the mask
+     */
     double get_protective_factor() const;
 
+    /**
+     * for every assigned location a person has a value between -1 and 1
+     * -1 corresponds to a person that ignores the mask duty at the location
+     * 1 corresponds to a person that always wears a mask even if not demanded
+     * @param preferences the vector of mask compliances
+     */
     void set_mask_preferences(std::vector<double> preferences)
     {
         m_mask_compliance = preferences;
     }
 
+    /**
+     * get the mask compliance of the person for the current location
+     * @param location the current location of the person
+     * @return the probability that the person ignores the mask duty/wears a
+     * mask even if not demanded
+     */
     double get_mask_compliance(LocationType location)
     {
         return m_mask_compliance[static_cast<int>(location)];
