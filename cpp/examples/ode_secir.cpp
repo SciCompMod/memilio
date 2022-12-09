@@ -74,12 +74,8 @@ int main()
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
-    integrator->set_dt_min(0.3);
-    integrator->set_dt_max(1.0);
-    integrator->set_rel_tolerance(1e-4);
-    integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model, integrator);
+
+    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 

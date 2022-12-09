@@ -69,10 +69,10 @@ class Test_oseir_integration(unittest.TestCase):
 
     def test_compare_seir_with_cpp(self):
         """
-        Tests the correctness of the python bindings. The result of a simulation 
+        Tests the correctness of the python bindings. The results of a simulation 
         in python get compared to the results of a cpp simulation. Cpp simulation 
         results contained in the file seir-compare.csv. 
-        If cpp model changes this test needs to be changed accordingly.
+        If cpp model changes this test needs to be adjusted accordingly.
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/seir-compare.csv'),
