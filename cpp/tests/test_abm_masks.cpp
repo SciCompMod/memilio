@@ -70,72 +70,38 @@ TEST(TestMasks, maskUsage)
 
 TEST(TestMasks, MaskProtection)
 {
-    mio::abm::AgeGroup age =
-        mio::abm::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::abm::AgeGroup::Count) - 1));
-    mio::abm::VaccinationState vaccination_state =
-        mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
-
+    mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState::Unvaccinated;
     mio::abm::GlobalInfectionParameters params;
-    params.set<mio::abm::CarrierToInfected>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CarrierToRecovered>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::DetectInfection>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::DetectInfection>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::InfectedToSevere>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::InfectedToRecovered>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::SevereToCritical>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::SevereToCritical>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::SevereToRecovered>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CriticalToDead>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::CriticalToDead>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CriticalToRecovered>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::RecoveredToSusceptible>({{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::SusceptibleToExposedByCarrier>(
-        {{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 1.;
-    params.set<mio::abm::SusceptibleToExposedByInfected>(
-        {{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 0.});
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 1.;
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(2))
-        .WillOnce(testing::Return(std::numeric_limits<int>::max()))
-        .WillOnce(testing::Return(std::numeric_limits<int>::max()));
 
     //setup location with some chance of exposure
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person1  = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, params,
-                                    vaccination_state);
-    home.add_person(person1);
-    auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, params,
-                                    vaccination_state);
-    home.add_person(person2);
-    auto infected1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, params,
-                                      vaccination_state);
-    home.add_person(infected1);
-    infected1.migrate_to(home, location);
+    auto infection_location = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto susc_person1       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
+                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+    auto susc_person2       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
+                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+    auto infected1          = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier,
+                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+    infection_location.add_person(susc_person1);
+    infection_location.add_person(susc_person2);
+    infection_location.add_person(infected1);
 
     //cache precomputed results
-    auto dt = mio::abm::seconds(8640);
-    location.begin_step(dt, params);
-    // person1 wears a mask
-    person1.set_wear_mask(true);
-    person1.migrate_to(home, location);
-    // person2 does not wear a mask
-    person2.set_wear_mask(false);
-    person2.migrate_to(home, location);
-    location.interact(person1, dt, params);
-    location.interact(person2, dt, params);
+    auto dt = mio::abm::days(1);
+    infection_location.begin_step(dt, params);
+    // susc_person1 wears a mask defualt protection is 1
+    susc_person1.set_wear_mask(true);
+    // susc_person2 does not wear a mask
+    susc_person2.set_wear_mask(false);
 
-    // The person should have full protection against an infection
-    ASSERT_EQ(person1.get_infection_state(), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(person2.get_infection_state(), mio::abm::InfectionState::Exposed);
+    //mock so every exponential distr is 1 -> everyone with a strict positiv (not zero) percantage to infect will infect, see random_events.h logic
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return((dt.days() / 2)));
+
+    auto susc_1_new_infection_state = infection_location.interact(susc_person1, dt, params);
+    auto susc_2_new_infection_state = infection_location.interact(susc_person2, dt, params);
+
+    // The person susc_person1 should have full protection against an infection, susc_person2 not
+    ASSERT_EQ(susc_1_new_infection_state, mio::abm::InfectionState::Susceptible);
+    ASSERT_EQ(susc_2_new_infection_state, mio::abm::InfectionState::Exposed);
 }
