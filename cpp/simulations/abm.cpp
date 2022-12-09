@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#define _CRT_SECURE_NO_DEPRECATE
+
 #include "abm/abm.h"
 #include "abm/age.h"
 #include "abm/household.h"
@@ -853,7 +853,7 @@ mio::abm::Simulation create_sampled_simulation(mio::abm::TimePoint& t0)
  * Save the current run result to a directory.
  * @param results the result in form of a TimeSeries object of infection_state individuals for the whole world
 */
-void save_result(mio::TimeSeries<double> results, size_t run_idx, const fs::path& result_dir) {
+void save_result(const mio::TimeSeries<double>& results, size_t run_idx, const fs::path& result_dir) {
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
@@ -932,7 +932,7 @@ int main(int argc, char** argv)
     if (argc == 2) {
         sscanf(argv[1], "%zu", &num_runs);
         printf("Number of run is %s.\n", argv[1]);
-        printf("Saving results to the current directory (i.e. build/simulations).\n");
+        printf("Saving results to the current directory (i.e. cpp/build/simulations).\n");
     } else if (argc == 3) {
         sscanf(argv[1], "%zu", &num_runs);
         result_dir = argv[2];
@@ -942,8 +942,8 @@ int main(int argc, char** argv)
         printf("Usage:\n");
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
-        printf("\tStore the results in the current directory (i.e. build/simulations).\n");
-        printf("abm_example <result_dir> <num_runs>\n");
+        printf("\tStore the results in the current directory (i.e. cpp/build/simulations).\n");
+        printf("abm_example <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
         return 0;
