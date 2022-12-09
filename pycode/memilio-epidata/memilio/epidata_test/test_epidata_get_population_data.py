@@ -17,16 +17,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import os
 import unittest
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
-import os
-import pandas as pd
-import numpy as np
-
-from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import defaultDict as dd
-from unittest.mock import patch
+from memilio.epidata import getPopulationData as gpd
 
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
@@ -122,10 +122,11 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+
     def test_get_new_counties(self):
         test = gpd.get_new_counties(self.test_old_counties)
         self.assertTrue(np.array_equal(test, self.test_new_counties))
-    
+
     @patch('memilio.epidata.getPopulationData.load_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
     def test_get_population(self, mock_data):
@@ -137,7 +138,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         # add seven to the number of test_counties as this is the current workaround to add counties which are
         # not mentioned in old data sets
         test_df = pd.read_json(os.path.join(
-            self.path, 'Germany/', 'county_current_population_dim' + str(len(self.test_counties)+7) +'.json'))
+            self.path, 'Germany/', 'county_current_population_dim' + str(len(self.test_counties)+7) + '.json'))
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(

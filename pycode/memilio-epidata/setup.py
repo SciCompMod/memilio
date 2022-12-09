@@ -1,7 +1,8 @@
-import sys
 import os
 import subprocess
-from setuptools import setup, find_packages, Command
+import sys
+
+from setuptools import Command, find_packages, setup
 
 __version__ = '0.1.0'
 
@@ -14,8 +15,8 @@ class PylintCommand(Command):
     user_options = []
 
     def initialize_options(self):
-        from pylint.reporters.text import TextReporter, ParseableTextReporter
         from pylint.reporters.json_reporter import JSONReporter
+        from pylint.reporters.text import ParseableTextReporter, TextReporter
         from pylint_json2html import JsonExtendedReporter
 
         self.lint_modules = ["memilio/"]
@@ -79,7 +80,7 @@ setup(
         'openpyxl',
         'xlrd',
         'requests',
-	    'pyxlsb',
+        'pyxlsb',
         'wget'
     ],
     extras_require={

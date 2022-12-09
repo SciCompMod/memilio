@@ -90,7 +90,7 @@ TEST(TestWorld, findLocation)
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age60to79,
-                                   world.get_global_infection_parameters());
+                                    world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& school = world.get_individualized_location(school_id);
     auto& work   = world.get_individualized_location(work_id);
@@ -149,16 +149,15 @@ TEST(TestWorld, evolveMigration)
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
             mock_uniform_dist;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-            .Times(testing::AtLeast(2))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillOnce(testing::Return(0.8))
-            .WillRepeatedly(testing::Return(1.0));
+            .Times(testing::Exactly(8))
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillOnce(testing::Return(0.8)) // draw random work group
+            .WillOnce(testing::Return(0.8)) // draw random school group
+            .WillOnce(testing::Return(0.8)) // draw random work hour
+            .WillOnce(testing::Return(0.8)); // draw random school hour
 
         auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34);
         auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
@@ -251,7 +250,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
-                                   world.get_global_infection_parameters());
+                                    world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& work   = world.get_individualized_location(work_id);
     person.set_assigned_location(home);

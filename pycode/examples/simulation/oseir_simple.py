@@ -17,11 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState, interpolate_simulation_result
-from memilio.simulation.oseir import InfectionState as State
-import numpy as np
 import argparse
+
+import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import (Model, interpolate_simulation_result,
+                                      simulate)
 
 
 def run_oseir_simulation():
@@ -58,8 +62,8 @@ def run_oseir_simulation():
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
-    # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    # Check logical constraints to parameters
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)

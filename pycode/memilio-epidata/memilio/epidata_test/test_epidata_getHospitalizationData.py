@@ -17,17 +17,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
-
 import os
 import random
-import pandas as pd
-import numpy as np
+import unittest
+from unittest.mock import call, patch
 
-from memilio.epidata import getHospitalizationData as ghd
+import numpy as np
+import pandas as pd
+from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch, call
+from memilio.epidata import getHospitalizationData as ghd
 
 
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
@@ -77,7 +77,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
     @patch('builtins.print')
     def test_divi_data_hospit_sanity_checks(self, mock_print):
         # first test
-        #test empty Dataframe
+        # test empty Dataframe
         df = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
             ghd.hospit_sanity_checks(df)

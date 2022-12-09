@@ -36,6 +36,21 @@ namespace abm
 class Person;
 
 /**
+ * LocationCapacity describes the size of a location. 
+ * It consists of a volume and a capacity in persons which is an upper bound for the number
+ * of people that can be at the location at the same time.
+ */
+struct LocationCapacity {
+    LocationCapacity()
+        : volume(0)
+        , persons(std::numeric_limits<int>::max())
+    {
+    }
+    int volume;
+    int persons;
+};
+
+/**
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
  * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
  */
@@ -178,6 +193,58 @@ public:
         return m_cells;
     }
 
+    /**
+     * get the number of persons at the location
+     * @return number of persons
+     */
+    int get_population()
+    {
+        return m_num_persons;
+    }
+
+    /**
+     * get the exposure rate of the location
+     */
+    CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    {
+        return m_cached_exposure_rate;
+    }
+
+    /**
+    * Set the capacity of the location in person and volume
+    * @param persons maximum number of people that can visit the location at the same time
+    * @param volume volume of the location in m^3
+    */
+    void set_capacity(int persons, int volume)
+    {
+        m_capacity.persons = persons;
+        m_capacity.volume  = volume;
+    }
+
+    /**
+    * @return the capacity of the location in person and volume
+    */
+    LocationCapacity get_capacity()
+    {
+        return m_capacity;
+    }
+
+    /**
+    * computes a relative transmission risk factor for the location
+    * @return the relative risk factor for the location
+    */
+    double compute_relative_transmission_risk();
+
+    /**
+    * Set the capacity adapted transmission risk flag
+    * @param consider_capacity if true considers the capacity of the location for the computation of relative 
+    * transmission risk
+    */
+    void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
+    {
+        m_capacity_adapted_transmission_risk = consider_capacity;
+    }
+
 private:
     void change_subpopulation(InfectionState s, int delta);
 
@@ -185,6 +252,8 @@ private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
+    LocationCapacity m_capacity;
+    bool m_capacity_adapted_transmission_risk;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;

@@ -29,6 +29,9 @@ target_link_libraries(graph_example PRIVATE memilio ode_seir)
 add_executable(abm_example abm.cpp)
 target_link_libraries(abm_example PRIVATE memilio abm)
 
+add_executable(abm_minimal_example abm_minimal.cpp)
+target_link_libraries(abm_minimal_example PRIVATE memilio abm)
+
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
   target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
