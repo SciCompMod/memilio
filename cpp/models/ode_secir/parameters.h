@@ -460,8 +460,9 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors and return 0,
-        if they do not. Otherwise, we return 1.
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
      */
     int check_constraints() const
     {
