@@ -194,9 +194,18 @@ public:
         return m_cells;
     }
 
+    /**
+     * get the type of mask that is demanded when entering the location
+     * @return type of the mask 
+     */
     MaskType get_required_mask() const
     {
         return m_required_mask;
+    }
+
+    void set_required_mask(MaskType type)
+    {
+        m_required_mask = type;
     }
 
     /**
@@ -251,9 +260,14 @@ public:
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
-    bool get_npi_active()
+    bool get_npi_active() const
     {
         return m_npi_active;
+    }
+
+    void set_npi_active(bool new_status)
+    {
+        m_npi_active = new_status;
     }
 
 private:

@@ -303,6 +303,24 @@ public:
      */
     void mask_usage(Location& target);
 
+    /**
+     * decide if a person is currently wearing a mask
+     * @param wear_mask if true the protection of the mask is considered when
+     * computing the exposure rate
+     */
+    void set_wear_mask(bool wear_mask)
+    {
+        m_wears_mask = wear_mask;
+    }
+
+    /**
+     * @return true if the person is currently wearing a mask
+     */
+    bool get_wear_mask()
+    {
+        return m_wears_mask;
+    }
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
