@@ -830,44 +830,44 @@ public:
             }
 
             if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
-                this->get<ReducExposedPartialImmunity>()[i] >= 1.0) {
+                this->get<ReducExposedPartialImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducExposedPartialImmunity smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }
             if (this->get<ReducExposedImprovedImmunity>()[i] <= 0.0 ||
-                this->get<ReducExposedImprovedImmunity>()[i] >= 1.0) {
+                this->get<ReducExposedImprovedImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducExposedImprovedImmunity smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }
             if (this->get<ReducInfectedSymptomsPartialImmunity>()[i] <= 0.0 ||
-                this->get<ReducInfectedSymptomsPartialImmunity>()[i] >= 1.0) {
+                this->get<ReducInfectedSymptomsPartialImmunity>()[i] > 1.0) {
                 log_error(
                     "Constraint check: Parameter ReducInfectedSymptomsPartialImmunity smaller {:d} or larger {:d}", 0,
                     1);
                 return 1;
             }
             if (this->get<ReducInfectedSymptomsImprovedImmunity>()[i] <= 0.0 ||
-                this->get<ReducInfectedSymptomsImprovedImmunity>()[i] >= 1.0) {
+                this->get<ReducInfectedSymptomsImprovedImmunity>()[i] > 1.0) {
                 log_error(
                     "Constraint check: Parameter ReducInfectedSymptomsImprovedImmunity smaller {:d} or larger {:d}", 0,
                     1);
                 return 1;
             }
             if (this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] <= 0.0 ||
-                this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] >= 1.0) {
+                this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadPartialImmunity smaller {:d} or "
                           "larger {:d}",
                           0, 1);
                 return 1;
             }
             if (this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] <= 0.0 ||
-                this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] >= 1.0) {
+                this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadImprovedImmunity smaller {:d} or "
                           "larger {:d}",
                           0, 1);
                 return 1;
             }
-            if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] >= 1.0) {
+            if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducTimeInfectedMild smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }

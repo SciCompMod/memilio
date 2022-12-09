@@ -900,7 +900,7 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(-0);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(5);
+    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(1);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
