@@ -896,15 +896,15 @@ int main(int argc, char** argv)
     mio::set_log_level(mio::LogLevel::warn);
 
     std::string result_dir = ".";
-    size_t num_runs = 1;
+    size_t num_runs;
     bool save_single_runs = true;
 
     if (argc == 2) {
-        sscanf(argv[1], "%zu", &num_runs);
+        num_runs = atoi(argv[1]);
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to the current directory.\n");
     } else if (argc == 3) {
-        sscanf(argv[1], "%zu", &num_runs);
+        num_runs = atoi(argv[1]);
         result_dir = argv[2];
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
