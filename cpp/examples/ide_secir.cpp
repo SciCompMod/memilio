@@ -49,11 +49,19 @@ int main()
     mio::isecir::Model model(std::move(result), dt, N);
 
     // Set working parameters.
-    // model.parameters.set<mio::iseir::LatencyTime>(3.3);
-    // model.parameters.set < mio::isecir::mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    // contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    // //model.parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.set<mio::isecir::TransitionDistributions>(
+        std::vector<mio::isecir::DelayDistribution>(9, mio::isecir::DelayDistribution()));
+    model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(6, 0.5));
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    model.parameters.set<mio::isecir::ContactPatterns>(1.0);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1.0);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
 
     // // Carry out simulation.
     model.simulate(tmax);
+
+    std::cout << "Ended simulation"
+              << "\n";
 }
