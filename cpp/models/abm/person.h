@@ -28,6 +28,7 @@
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/mask.h"
+#include "memilio/utils/custom_index_array.h"
 
 #include <functional>
 #include <vector>
@@ -272,15 +273,15 @@ public:
     /**
      * get the protective factor of the mask
      */
-    double get_protective_factor() const;
+    double get_protective_factor(const GlobalInfectionParameters& params) const;
 
     /**
-     * for every assigned location a person has a value between -1 and 1
+     * for every location type a person has a value between -1 and 1
      * -1 corresponds to a person that ignores the mask duty at the location
      * 1 corresponds to a person that always wears a mask even if not demanded
      * @param preferences the vector of mask compliances
      */
-    void set_mask_preferences(std::vector<double> preferences)
+    void set_mask_preferences(CustomIndexArray<double, LocationType> preferences)
     {
         m_mask_compliance = preferences;
     }
@@ -293,7 +294,7 @@ public:
      */
     double get_mask_compliance(LocationType location)
     {
-        return m_mask_compliance[static_cast<int>(location)];
+        return m_mask_compliance[location];
     }
 
     /**
@@ -318,7 +319,7 @@ private:
     TimeSpan m_time_since_negative_test;
     Mask m_mask;
     bool m_wears_mask;
-    std::vector<double> m_mask_compliance;
+    CustomIndexArray<double, LocationType> m_mask_compliance;
     uint32_t m_person_id;
     std::vector<uint32_t> m_cells;
 };

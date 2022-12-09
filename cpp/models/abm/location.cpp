@@ -50,7 +50,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
-    double mask_protection = person.get_protective_factor();
+    double mask_protection = person.get_protective_factor(global_params);
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (!person.get_cells().empty()) {

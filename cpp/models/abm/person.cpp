@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/location_type.h"
 #include "abm/mask_type.h"
+#include "abm/parameters.h"
 #include "abm/state.h"
 #include "abm/world.h"
 #include "abm/location.h"
@@ -43,7 +45,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
-    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
+    , m_mask_compliance({LocationType::Count})
     , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
@@ -213,21 +215,14 @@ const std::vector<uint32_t>& Person::get_cells() const
  * get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection
  * @return protection factor of the mask 
  */
-double Person::get_protective_factor() const
+double Person::get_protective_factor(const GlobalInfectionParameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;
     }
-    else if (m_mask.get_type() == mio::abm::MaskType::Community) {
-        return 1.;
+    else {
+        return params.get<MaskProtection>()[m_mask.get_type()];
     }
-    else if (m_mask.get_type() == mio::abm::MaskType::Surgical) {
-        return 1.;
-    }
-    else if (m_mask.get_type() == mio::abm::MaskType::FFP2) {
-        return 1.;
-    }
-    return 0.;
 }
 
 void Person::mask_usage(Location& target)
@@ -239,7 +234,6 @@ void Person::mask_usage(Location& target)
             double wear_mask = UniformDistribution<double>::get_instance()();
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
-                // m_mask.increase_time_used(dt);
             }
         }
     }
@@ -257,7 +251,6 @@ void Person::mask_usage(Location& target)
             if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
                 m_mask.change_mask(target.get_required_mask());
             }
-            // person->get_mask().increase_time_used(dt);
         }
     }
 }
