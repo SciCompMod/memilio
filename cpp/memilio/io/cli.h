@@ -238,9 +238,17 @@ namespace details
             auto parser = Json::CharReaderBuilder{}.newCharReader();
             parser->parse(&*args.begin(), &*args.end(), &js, &errors);
             // deserialize the json value to the parameter's type, then assign it
-            BOOST_OUTCOME_TRY(result, mio::deserialize_json(js, mio::Tag<typename T::Type>()));
-            parameters.template get<T>() = result;
-            return mio::success();
+            auto result = mio::deserialize_json(js, mio::Tag<typename T::Type>());
+            if (result) {
+                // assign the result to the parameter
+                parameters.template get<T>() = result.value();
+                return mio::success();
+            }
+            else { // deserialize failed
+                // insert more information to the error message
+                std::string msg = "While setting \"" + name + "\": " + result.error().message();
+                return mio::failure(result.error().code(), msg);
+            }
         }
         else {
             // try next parameter
