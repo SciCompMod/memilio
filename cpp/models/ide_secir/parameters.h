@@ -36,37 +36,31 @@ namespace isecir
     * Define Parameters of the IDE-SECIHURD model *
     *******************************************/
 
-// dummy for gamma functions
-/* Vielleicht tatsächlich einen "Oberstruct für die Gammas, und die spezifischen Gammas erben dann von dem?
-    *Whs definiert man da auch am besten den Träger irgendwie und davon wäre dann abhängig bis wie weit wir in den Summen der Diskretisierung gehen und welche Anfangsdaten wir brauchen.*/
-// Evtl macht man dann einen Array der Übergangsfunktionen, um einen Indexbasierten zugriff zu ermöglichen?
-/*Wollen wir die Ableitungen jetzt berechnen oder approxiieren?*/
-
 /**
-     * @brief Distribution of the time spent in a compartment before transiting to next compartment.
-     */
+* @brief Distribution of the time spent in a compartment before transiting to next compartment.
+*/
 struct DelayDistribution {
     DelayDistribution()
         : xright{1.0}
     {
     }
-    DelayDistribution(double init_x_right)
+    DelayDistribution(ScalarType init_x_right)
         : xright{init_x_right}
     {
     }
 
-    double Distribution(double tau)
+    ScalarType Distribution(ScalarType tau)
     {
         return smoother_cosine(tau, 0.0, xright, 1.0, 0.0);
     }
 
-    double get_xright()
+    ScalarType get_xright()
     {
         return xright;
     }
 
     //private:
-    double xright;
+    ScalarType xright;
 };
 
 struct TransitionDistributions {
@@ -86,10 +80,10 @@ struct TransitionDistributions {
 struct TransitionParameters {
     // we need to initialize transition distributions with some parameters (for now just use one parameter per distribution, i.e. xright)
     // to be able to define different transition distributions for each transition
-    using Type = std::vector<double>;
+    using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<double>(9, 1.0);
+        return std::vector<ScalarType>(9, 1.0);
     }
 
     static std::string name()
@@ -102,10 +96,10 @@ struct TransitionProbabilities {
     // we need probabilities for S->E, E->C, C->I, I->H, H->U, U->D (so 5 values) (from this we can deduce prob for c->R etc.)
     // for consistency we also define mu_S^E = \mu_E^C = 1 to be able to apply general formula to get population from flows
     // in total we need 6 values
-    using Type = std::vector<double>;
+    using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<double>(6, 0.5);
+        return std::vector<ScalarType>(6, 0.5);
     }
 
     static std::string name()
@@ -134,8 +128,8 @@ struct ContactPatterns {
 * @brief probability of getting infected from a contact
 */
 struct TransmissionProbabilityOnContact {
-    // To Do: Abhaengigkeit von tau (und t), entspricht rho
-    using Type = double;
+    // TODO: Abhaengigkeit von tau (und t), entspricht rho
+    using Type = ScalarType;
     static Type get_default()
     {
         return 1.0;
@@ -150,8 +144,8 @@ struct TransmissionProbabilityOnContact {
 * @brief the relative InfectedNoSymptoms infectability
 */
 struct RelativeTransmissionNoSymptoms {
-    // To Do: Abhaengigkeit von tau (und t), entspricht xi_C
-    using Type = double;
+    // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
+    using Type = ScalarType;
     static Type get_default()
     {
         return 1.0;
@@ -166,8 +160,8 @@ struct RelativeTransmissionNoSymptoms {
 * @brief the risk of infection from symptomatic cases in the SECIR model
 */
 struct RiskOfInfectionFromSymptomatic {
-    // To Do: Abhaengigkeit von tau (und t), entspricht xi_I
-    using Type = double;
+    // TODO: Abhaengigkeit von tau (und t), entspricht xi_I
+    using Type = ScalarType;
     static Type get_default()
     {
         return 1.0;
@@ -182,10 +176,10 @@ struct RiskOfInfectionFromSymptomatic {
 * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
 */
 struct MaxRiskOfInfectionFromSymptomatic {
-    // To Do: Dies irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
+    // TODO: Dies irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
     //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
     // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
-    using Type = double;
+    using Type = ScalarType;
     static Type get_default()
     {
         return 0.0;

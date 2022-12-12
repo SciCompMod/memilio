@@ -31,12 +31,13 @@ namespace isecir
 {
 class Model
 {
-    /* Wir brauchen: -Funktion, die aus transitions die compartements berechnet
-    -Funktion die Simuliert: in ode_secir wird die simulation glaube ich anders durchgeführt? 
-        Da gibt es in model.h eine zweite Klassen Simulation. Keine Ahnung ob das sinnvoll ist; bei ode_seir gibt es sowas nicht.
-    - evtl dann auch eine funktion, die nur "einen Zeitschritt" simuliert, die dann von der simulation aufgerufen werden kann
+    /* TODO: - Funktion, die aus transitions die compartments berechnet
+    - in parameters: unordered map statt transitions
+    - Tote als initial values einbauen und in m_SECIR speichern 
+    - Evtl. allgemeinen Integrator als non-standrd diff. scheme anstatt aktueller Approximation
+    - Eigen Indizees für zugriff auf diese Timeseries
+    - R berechnen über die Flows (für Reinfection später)
     */
-    //vllt ist simulate der rueckgabetyp ar nicht so gut, weil jedes mal ne komplette timeseries zurückgegeben wird. vllt besser typ void und funktion get_m_transitions
     using Pa = ParametersBase;
 
 public:
@@ -53,7 +54,7 @@ public:
     * @param[in] N_init The population of the considered region. 
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    Model(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
+    Model(TimeSeries<ScalarType>&& init,ScalarType Dead0, ScalarType dt_init, int N_init, Pa Parameterset_init = Pa());
 
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -71,7 +72,7 @@ public:
     Pa parameters{};
 
     // function that computes flows from one compartment to another at some time t
-    TimeSeries<double> get_flows(int t_max);
+    TimeSeries<ScalarType> get_flows(int t_max);
 
     // function that computes size of compartments from flows
     // define function more general as a sum of some \mu, some \gamma and some \sigma
@@ -82,23 +83,24 @@ private:
     // Funktion to update current value for S
     void update_susceptibles();
     void update_forceofinfection();
-    void compute_flow(int idx_InfectionTransitions, double TransitionProbability, int idx_TransitionDistribution);
+    void compute_flow(int idx_InfectionTransitions, ScalarType TransitionProbability, int idx_TransitionDistribution);
     void compute_totaldeaths();
-    void get_size_of_compartments(int idx_IncomingFlow, double TransitionProbability, int idx_TransitionDistribution,
+    void get_size_of_compartments(int idx_IncomingFlow, ScalarType TransitionProbability, int idx_TransitionDistribution,
                                   int idx_TransitionDistributionToRecov, int idx_InfectionState);
 
     // TimeSeries containing points of time and the corresponding number of transitions.
-    TimeSeries<double> m_transitions;
+    TimeSeries<ScalarType> m_transitions;
     // TimeSeries containing points of time and the corresponding number of people in defined Infectionstates.
-    TimeSeries<double> m_SECIR;
+    TimeSeries<ScalarType> m_SECIR;
+    /*Attention: m_SECIR and m_transitions do not necessarily have the same number of time points*/
 
     // Force of infection term needed for numerical scheme, corresponds to phi
-    double m_forceofinfection{0};
+    ScalarType m_forceofinfection{0};
     // current susceptibles needed for numerical scheme
-    double m_susceptibles{0};
+    ScalarType m_susceptibles{0};
 
     // Timestep used for simulation.
-    double m_dt{0};
+    ScalarType m_dt{0};
     // Population of the considered region.
     int m_N{0};
 

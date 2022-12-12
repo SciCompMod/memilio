@@ -49,7 +49,7 @@ enum class InfectionState
  * InfectionsTransitions ignores the transitions to Recovered because they are not needed for Simulation. 
  */
 enum class InfectionTransitions
-{
+{ // unordered map!
     SusceptibleToExposed                 = 0,
     ExposedToInfectedNoSymptoms          = 1,
     InfectedNoSymptomsToInfectedSymptoms = 2,
