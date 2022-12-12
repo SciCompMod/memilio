@@ -62,8 +62,8 @@ def run_oseir_simulation():
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
-    # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    # Check logical constraints to parameters
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)
