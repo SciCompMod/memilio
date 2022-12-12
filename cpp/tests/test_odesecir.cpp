@@ -814,7 +814,6 @@ TEST(Secir, check_constraints_parameters)
     model.parameters.set<mio::osecir::IncubationTime>(-2);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    model.parameters.set<mio::osecir::ICUCapacity>(2);
     model.parameters.set<mio::osecir::IncubationTime>(2);
     model.parameters.set<mio::osecir::SerialInterval>(1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);

@@ -778,7 +778,8 @@ public:
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d}", 0);
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
+                          1);
                 return 1;
             }
 
