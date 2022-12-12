@@ -169,13 +169,6 @@ public:
      */
     int get_subpopulation(InfectionState s) const;
 
-    /** 
-     * number of persons at this location for all infection states.
-     * vector is indexed by InfectionState.
-     * @return number of persons in all infection states.
-     * */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
-
     /**
      * @return parameters of the infection that are specific to this location
      */
@@ -247,10 +240,10 @@ public:
     }
 
     /**
-     * Save the current number of individuals in the each infection state at a specific time step
+     * Store the current number of individuals in the each infection state at a specific time step
      * @param t the time step to save
     */
-    void add_subpopulations_to_time_series(const TimePoint& t);
+    void store_current_population(const TimePoint& t);
 
     /**
      * Return the time series object of the current number of individuals in the each infection state
@@ -263,14 +256,12 @@ public:
 
 private:
     void change_subpopulation(InfectionState s, int delta);
-
 private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     TimeSeries<double> m_subpopulations_time_series;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;

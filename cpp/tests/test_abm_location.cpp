@@ -26,8 +26,7 @@ TEST(TestLocation, init)
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(i), 0);
     }
-    ASSERT_EQ(print_wrap(location.get_subpopulations()),
-              print_wrap(Eigen::VectorXi::Zero(Eigen::Index(mio::abm::InfectionState::Count))));
+    ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),print_wrap(mio::TimeSeries<double>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
 }
 
 TEST(TestLocation, initCell)
@@ -244,8 +243,8 @@ TEST(TestLocation, reachCapacity)
 
     ASSERT_EQ(p1.get_location_id().type, mio::abm::LocationType::School);
     ASSERT_EQ(p2.get_location_id().type, mio::abm::LocationType::Home); // p2 should not be able to enter the school
-    ASSERT_EQ(school.get_subpopulations().sum(), 1);
-    ASSERT_EQ(home.get_subpopulations().sum(), 1);
+    ASSERT_EQ(school.get_time_series_subpopulations().get_last_value().sum(), 1);
+    ASSERT_EQ(home.get_time_series_subpopulations().get_last_value().sum(), 1);
 }
 
 TEST(TestLocation, computeRelativeTransmissionRisk)
@@ -499,7 +498,7 @@ TEST(TestLocation, setCapacity)
     ASSERT_EQ(location.get_capacity().volume, 200);
 }
 
-TEST(TestLocation, saveCurrentSubpopulations)
+TEST(TestLocation, storeCurrentSubpopulations)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
     auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14, {});
@@ -509,20 +508,27 @@ TEST(TestLocation, saveCurrentSubpopulations)
     auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59, {});
     location.add_person(person3);
 
-    auto t1 = mio::abm::TimePoint(7);
-    location.add_subpopulations_to_time_series(t1);
-    auto&& v1 = location.get_time_series_subpopulations().get_last_value();
+    auto t1 = mio::abm::TimePoint(0) + mio::abm::days(7);
+    location.store_current_population(t1);
+    auto v1 = location.get_time_series_subpopulations().get_value(0);
     ASSERT_EQ(v1[3], 2); // Check whether number of infected state at the location is correct
 
-    auto t2 = mio::abm::TimePoint(8);
+    auto t2 = mio::abm::TimePoint(0) + mio::abm::days(14);
     person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
     location.changed_state(person1, mio::abm::InfectionState::Infected);
-    location.add_subpopulations_to_time_series(t2);
-    auto&& v2 = location.get_time_series_subpopulations().get_last_value();
+    location.store_current_population(t2);
+    auto v2 = location.get_time_series_subpopulations().get_value(1);
     ASSERT_EQ(v2[3], 1); // Check whether number of infected state at the location is changed. 
 
+    auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
+    person3.set_infection_state(mio::abm::InfectionState::Infected);
+    location.changed_state(person3, mio::abm::InfectionState::Exposed);
+    location.store_current_population(t3);
+    auto v3 = location.get_time_series_subpopulations().get_value(2);
+    ASSERT_EQ(v3[3], 2); // Check whether number of infected state at the location is changed. 
+
     // Check total number of subpopulation is correct. 
-    ASSERT_EQ(location.get_time_series_subpopulations().get_num_time_points(), 2);
+    ASSERT_EQ(location.get_time_series_subpopulations().get_num_time_points(), 4);
     for (auto&& v_iter : location.get_time_series_subpopulations()) {
         ASSERT_EQ(v_iter.sum(), 3);
     }

@@ -34,11 +34,11 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_index(index)
     , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
-    , m_subpopulations{}
     , m_subpopulations_time_series(Eigen::Index(InfectionState::Count))
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
 {
+    m_subpopulations_time_series.add_time_point(0);
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -190,18 +190,13 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
 
 void Location::change_subpopulation(InfectionState s, int delta)
 {
-    m_subpopulations[size_t(s)] += delta;
-    assert(m_subpopulations[size_t(s)] >= 0 && "subpopulations must be non-negative");
+    m_subpopulations_time_series.get_last_value()[size_t(s)] += delta;
+    assert(m_subpopulations_time_series.get_last_value()[size_t(s)] >= 0 && "subpopulations must be non-negative");
 }
 
 int Location::get_subpopulation(InfectionState s) const
 {
-    return m_subpopulations[size_t(s)];
-}
-
-Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
-{
-    return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
+    return m_subpopulations_time_series.get_last_value()[size_t(s)];
 }
 
 /*
@@ -220,12 +215,12 @@ double Location::compute_relative_transmission_risk()
     }
 }
 
-void Location::add_subpopulations_to_time_series(const TimePoint& t)
+void Location::store_current_population(const TimePoint& t) 
 {
     m_subpopulations_time_series.add_time_point(t.days());
     m_subpopulations_time_series.get_last_value().setZero();
-    m_subpopulations_time_series.get_last_value() +=
-        Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size()).cast<double>();
+    auto last_idx = m_subpopulations_time_series.get_num_time_points()-2;
+    m_subpopulations_time_series.get_last_value() += m_subpopulations_time_series.get_value(last_idx);
 }
 
 } // namespace abm
