@@ -249,7 +249,7 @@ public:
      * Return the time series object of the current number of individuals in the each infection state
      * @return the time series object of the current number of individuals in the each infection state
     */
-    const TimeSeries<double>& get_time_series_subpopulations() const
+    const TimeSeries<unsigned int>& get_time_series_subpopulations() const
     {
         return m_subpopulations_time_series;
     }
@@ -262,7 +262,7 @@ private:
     int m_num_persons = 0;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    TimeSeries<double> m_subpopulations_time_series;
+    TimeSeries<unsigned int> m_subpopulations_time_series;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;

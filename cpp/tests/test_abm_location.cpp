@@ -26,7 +26,7 @@ TEST(TestLocation, init)
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(i), 0);
     }
-    ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),print_wrap(mio::TimeSeries<double>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
+    ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),print_wrap(mio::TimeSeries<unsigned int>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
 }
 
 TEST(TestLocation, initCell)
@@ -513,14 +513,14 @@ TEST(TestLocation, storeCurrentSubpopulations)
     auto v1 = location.get_time_series_subpopulations().get_value(0);
     ASSERT_EQ(v1[3], 2); // Check whether number of infected state at the location is correct
 
-    auto t2 = mio::abm::TimePoint(0) + mio::abm::days(14);
+    auto t2 = mio::abm::TimePoint(0) + mio::abm::days(8);
     person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
     location.changed_state(person1, mio::abm::InfectionState::Infected);
     location.store_current_population(t2);
     auto v2 = location.get_time_series_subpopulations().get_value(1);
     ASSERT_EQ(v2[3], 1); // Check whether number of infected state at the location is changed. 
 
-    auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
+    auto t3 = mio::abm::TimePoint(0) + mio::abm::days(9);
     person3.set_infection_state(mio::abm::InfectionState::Infected);
     location.changed_state(person3, mio::abm::InfectionState::Exposed);
     location.store_current_population(t3);

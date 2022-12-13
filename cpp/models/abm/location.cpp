@@ -38,7 +38,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
 {
-    m_subpopulations_time_series.add_time_point(0);
+    m_subpopulations_time_series.add_time_point();
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -196,7 +196,7 @@ void Location::change_subpopulation(InfectionState s, int delta)
 
 int Location::get_subpopulation(InfectionState s) const
 {
-    return (int)m_subpopulations_time_series.get_last_value()[size_t(s)];
+    return m_subpopulations_time_series.get_last_value()[size_t(s)];
 }
 
 /*
