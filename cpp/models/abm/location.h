@@ -167,7 +167,7 @@ public:
      * number of persons at this location in one infection state.
      * @return number of persons at this location that are in the specified infection state
      */
-    int get_subpopulation(InfectionState s) const;
+    unsigned int get_subpopulation(InfectionState s) const;
 
     /**
      * @return parameters of the infection that are specific to this location
