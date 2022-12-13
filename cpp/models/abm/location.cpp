@@ -193,7 +193,7 @@ void Location::change_subpopulation(InfectionState s, int delta)
     m_subpopulations_time_series.get_last_value()[size_t(s)] += delta;
 }
 
-unsigned int Location::get_subpopulation(InfectionState s) const
+unsigned Location::get_subpopulation(InfectionState s) const
 {
     return m_subpopulations_time_series.get_last_value()[size_t(s)];
 }

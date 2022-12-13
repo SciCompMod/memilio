@@ -24,9 +24,10 @@ TEST(TestLocation, init)
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
-        ASSERT_EQ(location.get_subpopulation(i), 0);
+        ASSERT_EQ(location.get_subpopulation(i), (unsigned)0);
     }
-    ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),print_wrap(mio::TimeSeries<unsigned int>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
+    ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),
+              print_wrap(mio::TimeSeries<unsigned>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
 }
 
 TEST(TestLocation, initCell)
@@ -518,16 +519,16 @@ TEST(TestLocation, storeCurrentSubpopulations)
     location.changed_state(person1, mio::abm::InfectionState::Infected);
     location.store_current_population(t2);
     auto v2 = location.get_time_series_subpopulations().get_value(1);
-    ASSERT_EQ(v2[3], 1); // Check whether number of infected state at the location is changed. 
+    ASSERT_EQ(v2[3], 1); // Check whether number of infected state at the location is changed.
 
     auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
     person3.set_infection_state(mio::abm::InfectionState::Infected);
     location.changed_state(person3, mio::abm::InfectionState::Exposed);
     location.store_current_population(t3);
     auto v3 = location.get_time_series_subpopulations().get_value(2);
-    ASSERT_EQ(v3[3], 2); // Check whether number of infected state at the location is changed. 
+    ASSERT_EQ(v3[3], 2); // Check whether number of infected state at the location is changed.
 
-    // Check total number of subpopulation is correct. 
+    // Check total number of subpopulation is correct.
     ASSERT_EQ(location.get_time_series_subpopulations().get_num_time_points(), 4);
     for (auto&& v_iter : location.get_time_series_subpopulations()) {
         ASSERT_EQ(v_iter.sum(), 3);
