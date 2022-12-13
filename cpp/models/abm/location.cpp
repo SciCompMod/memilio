@@ -38,7 +38,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
 {
-    m_subpopulations_time_series.add_time_point();
+    m_subpopulations_time_series.add_time_point(0.0);
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -193,7 +193,7 @@ void Location::change_subpopulation(InfectionState s, int delta)
     m_subpopulations_time_series.get_last_value()[size_t(s)] += delta;
 }
 
-unsigned Location::get_subpopulation(InfectionState s) const
+int Location::get_subpopulation(InfectionState s) const
 {
     return m_subpopulations_time_series.get_last_value()[size_t(s)];
 }
@@ -214,9 +214,9 @@ double Location::compute_relative_transmission_risk()
     }
 }
 
-void Location::store_current_population(const TimePoint& /*t*/) 
+void Location::store_current_population(const TimePoint& t) 
 {
-    m_subpopulations_time_series.add_time_point();
+    m_subpopulations_time_series.add_time_point(t.days());
     m_subpopulations_time_series.get_last_value().setZero();
     auto last_idx = m_subpopulations_time_series.get_num_time_points()-2;
     m_subpopulations_time_series.get_last_value() += m_subpopulations_time_series.get_value(last_idx);
