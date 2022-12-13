@@ -37,7 +37,7 @@ enum class InfectionState
     InfectedNoSymptoms = 2,
     InfectedSymptoms   = 3,
     InfectedSevere     = 4,
-    InfectedCritical   = 5,
+    InfectedCritical   =    5,
     Recovered          = 6,
     Dead               = 7,
     Count              = 8

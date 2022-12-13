@@ -29,24 +29,31 @@ int main()
     using Vec = mio::TimeSeries<double>::Vector;
 
     int tmax  = 10;
-    int N     = 100;
+    size_t N     = 100;
+    size_t Dead0 = 0;
     double dt = 1;
-    mio::TimeSeries<double> result(1);
+    // for SECIHURD model we need 6 transitions for simulation
+    size_t num_transitions = 6;
+    
+    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    mio::TimeSeries<double> transitions_init(num_transitions);
+    std::cout << "time points: " << transitions_init.get_num_time_points() << ", elements: " << transitions_init.get_num_elements() << "\n";
 
-    result.add_time_point<Eigen::VectorXd>(-5.0, Vec::Constant(1, N));
-    while (result.get_last_time() < 0) {
-        result.add_time_point(result.get_last_time() + dt, Vec::Constant(1, (double)result.get_last_value()[0] - 1));
+    transitions_init.add_time_point<Eigen::VectorXd>(-5.0, Vec::Constant(num_transitions, (size_t) 5)); 
+    std::cout << "time points: " << transitions_init.get_num_time_points() << ", elements: " << transitions_init.get_num_elements() << "\n";
+    while (transitions_init.get_last_time() < 0) {
+        transitions_init.add_time_point(transitions_init.get_last_time() + dt, Vec::Constant(num_transitions, (double)transitions_init.get_last_value()[0] ));
     }
 
-    std::cout << "# time  |  number of susceptibles" << std::endl;
-    Eigen::Index num_points = result.get_num_time_points();
+    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  I -> H  |  H -> U  |  U -> D" << std::endl;
+    Eigen::Index num_points = transitions_init.get_num_time_points();
     for (Eigen::Index i = 0; i < num_points; ++i) {
-        std::cout << result.get_time(i) << "      |  " << result[i]
+        std::cout << transitions_init.get_time(i) << "      |  " << transitions_init[i][0] << "  |  " << transitions_init[i][1] << "  |  " << transitions_init[i][2] << "  |  " << transitions_init[i][3] << "  |  " << transitions_init[i][4] << "  |  " << transitions_init[i][5]
                   << std::endl; //[Eigen::Index(InfectionState::S)] << std::endl;
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(result), dt, N);
+    mio::isecir::Model model(std::move(transitions_init), dt, N, Dead0);
 
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(

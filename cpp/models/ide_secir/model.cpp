@@ -26,7 +26,7 @@ namespace mio
 namespace isecir
 {
 
-Model::Model(TimeSeries<ScalarType>&& init, ScalarType Dead0, ScalarType dt_init, int N_init, Pa Parameterset_init)
+Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, size_t Dead0, Pa Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_SECIR{TimeSeries<ScalarType>(8)}
@@ -42,6 +42,9 @@ void Model::update_susceptibles()
 {
     // using number of susceptibles from previous time step and force of infection from previous time step: compute current number of susceptibles
     m_susceptibles = m_susceptibles / (1 + m_dt * m_forceofinfection);
+
+    // store susceptibles in m_SECIR
+    m_SECIR[m_SECIR.get_num_time_points()-1][Eigen::Index(InfectionState::Susceptible)] = m_susceptibles;
 }
 
 void Model::update_forceofinfection()
@@ -50,50 +53,38 @@ void Model::update_forceofinfection()
     m_forceofinfection = 0;
     int calc_time      = 0;
     // determine the relevant calculation area; just in the support of one of the transition distributions
-    // Warum hier i=5? Haben doch 9 Verteilungen
-    // ok brauchen nur 5 verteilungen für simulation, indizes müssen eh nochmal überarbeitet werden
-    // wofür ist die if bedingung hier gut? um zu gucken ob xright >0?
-    // würde das eher unten machen, vor der for-schleife
-
-    // brauchen auch eigetnlich vector für calc-time, der die xright für die benötigten verteilungen speichert?
 
     // berechne hier calc-time, also wie viele zeitschritte wir zurückgehen müssen; hängt von xright ab
-    // for (int i = 1; i < 9; i++) {
-    //     calc_time = parameters.get<TransitionDistributions>()[i].get_xright();
-    //     std::cout << "i: " << i << "xright: " << calc_time << "\n";
-    // if (parameters.get<TransitionDistributions>()[i].get_xright()>calc_time) {
-    //     std::cout << "i" << i << "\n";
-    //     //calc_time = parameters.get<TransitionDistributions>()[i].get_xright();
-    // }
-    //}
+    for (int i = 1; i < 5; i++) {
+        if (parameters.get<TransitionDistributions>()[i].get_xright()<calc_time) {
+            std::cout << "i" << i << "\n";
+            calc_time = parameters.get<TransitionDistributions>()[i].get_xright();
+    }
+    }
 
-    // Nehme erstmal gleiche calc_time überall, muss noch verallgemeinert werden;
-    // LP: warum war das jetzt falsch was ich geschrieben hatte? da fehlte glaube ich nur das < calc_time...
-
-    calc_time = parameters.get<TransitionDistributions>()[0].get_xright();
     std::cout << calc_time << "\n";
     //determine corresponding indices
     //Achtung: Parameter müssten zum teil noch abhängig von tau und t sein, das ist in parameters aber noch nicht
     calc_time                    = (int)std::ceil((ScalarType)calc_time / m_dt); //need calc_time timesteps in sum
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
-    for (Eigen::Index i = num_time_points - calc_time; i < m_transitions.get_num_time_points() - 1; i++) {
+    for (Eigen::Index i = num_time_points - calc_time; i < num_time_points - 1; i++) {
         m_forceofinfection +=
             parameters.get<TransmissionProbabilityOnContact>() *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
             ((parameters.get<TransitionProbabilities>()[0] *
                   parameters.get<TransitionDistributions>()[1].Distribution(
-                      m_transitions.get_time(m_transitions.get_num_time_points() - 1 - i)) +
+                      m_transitions.get_time(num_time_points - 1 - i)) +
               (1 - parameters.get<TransitionProbabilities>()[0]) *
                   parameters.get<TransitionDistributions>()[2].Distribution(
-                      m_transitions.get_time(m_transitions.get_num_time_points() - 1 - i))) *
+                      m_transitions.get_time(num_time_points - 1 - i))) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>() +
              (parameters.get<TransitionProbabilities>()[1] *
                   parameters.get<TransitionDistributions>()[3].Distribution(
-                      m_transitions.get_time(m_transitions.get_num_time_points() - 1 - i)) +
+                      m_transitions.get_time(num_time_points - 1 - i)) +
               (1 - parameters.get<TransitionProbabilities>()[1]) *
                   parameters.get<TransitionDistributions>()[4].Distribution(
-                      m_transitions.get_time(m_transitions.get_num_time_points() - 1 - i))) *
+                      m_transitions.get_time(num_time_points - 1 - i))) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>());
     }
@@ -105,21 +96,26 @@ void Model::update_forceofinfection()
 // define function that defines general scheme to compute flow
 void Model::compute_flow(int idx_InfectionTransitions, ScalarType TransitionProbability, int idx_TransitionDistribution)
 {
+    std::cout << "is in compute_flow \n";
     // allowed just for idx_InfectionTransitions>=1
     ScalarType sum = 0;
-    for (int i =
-             m_transitions.get_num_time_points() -
-             (int)std::ceil(parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() / m_dt);
-         i < m_transitions.get_num_time_points() - 1; i++) {
-        //forward difference scheme to get always tau>0
+    int calc_time = (int)std::ceil(parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() / (double)m_dt);
+    Eigen::Index num_time_points = m_transitions.get_num_time_points();
+    // std::cout << "xright " << parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() << "\n";
+    // std::cout << "time -calc " << num_time_points - calc_time << "\n";
+    // std::cout << "time " << num_time_points << "\n";
+    for  (int i = num_time_points - calc_time; i < num_time_points; i++){
+        std::cout << "idx " << i << "\n";
+
+        // forward difference scheme to get always tau>0
         sum += (parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    m_transitions.get_time(m_transitions.get_num_time_points() - i + 1)) -
+                    m_transitions.get_time(num_time_points - i - 1 )) -
                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    m_transitions.get_time(m_transitions.get_num_time_points() - i))) /
+                    m_transitions.get_time(num_time_points - i))) /
                m_dt * m_transitions[i][Eigen::Index(idx_InfectionTransitions - 1)];
     }
-
-    m_transitions[m_transitions.get_num_time_points()][Eigen::Index(idx_InfectionTransitions)] =
+    // Use m_transitions[num_time_points-1] because we are accessing via index
+    m_transitions[num_time_points-1][Eigen::Index(idx_InfectionTransitions)] =
         (-1) * TransitionProbability * m_dt * sum;
 }
 
@@ -165,25 +161,35 @@ void Model::get_size_of_compartments(int idx_IncomingFlow, ScalarType Transition
 {
     ScalarType sum = 0;
 
-    for (int i =
-             m_transitions.get_num_time_points() -
-             (int)std::ceil(parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() / m_dt);
-         i < m_transitions.get_num_time_points() - 1; i++) {
-        sum +=
-            (TransitionProbability * parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                                         m_transitions.get_time(m_transitions.get_num_time_points() - i)) +
+    // TODO: calculate calc_time for right TransitionDistributions, need to iterate over right indices
+    // // berechne hier calc-time, also wie viele zeitschritte wir zurückgehen müssen; hängt von xright ab
+    // for (int i = 1; i < 5; i++) {
+    //     if (parameters.get<TransitionDistributions>()[i].get_xright()<calc_time) {
+    //         std::cout << "i" << i << "\n";
+    //         calc_time = parameters.get<TransitionDistributions>()[i].get_xright();
+    // }
+    // }
+    // this is just a dummy calc_time, see above, tbd
+    int calc_time = parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright();
+    calc_time                    = (int)std::ceil((ScalarType)calc_time / m_dt); //need calc_time timesteps in sum
+    Eigen::Index num_time_points = m_transitions.get_num_time_points();
+
+
+    for (int i = num_time_points - calc_time; i < num_time_points ; i++) {
+        sum += (TransitionProbability * parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
+                                         m_transitions.get_time(num_time_points - i)) +
              (1 - TransitionProbability) *
                  parameters.get<TransitionDistributions>()[idx_TransitionDistributionToRecov].Distribution(
-                     m_transitions.get_time(m_transitions.get_num_time_points() - i))) *
+                     m_transitions.get_time(num_time_points - i))) *
             m_transitions[i][Eigen::Index(idx_IncomingFlow)];
     }
-    std::cout << idx_InfectionState << "\n";
-    Eigen::Index num_points = m_SECIR.get_num_time_points();
-    std::cout << "num_points: " << num_points << "\n";
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        printf(" %.9f %.9f \n", m_SECIR.get_time(i), m_SECIR[i][Eigen::Index(idx_InfectionState)]);
-    }
-    m_SECIR[m_SECIR.get_num_time_points() - 1][Eigen::Index(idx_InfectionState)] = m_dt * sum;
+
+    Eigen::Index num_time_points_SECIR = m_SECIR.get_num_time_points();
+
+    // for (Eigen::Index i = 0; i < num_time_points_SECIR; ++i) {
+    //     printf(" %.9f %.9f \n", m_SECIR.get_time(i), m_SECIR[i][Eigen::Index(idx_InfectionState)]);
+    // }
+    m_SECIR[num_time_points_SECIR - 1][Eigen::Index(idx_InfectionState)] = m_dt * sum;
 }
 
 // do simulation
@@ -239,31 +245,33 @@ void Model::simulate(int t_max)
         compute_totaldeaths();
         std::cout << "Computed deaths"
                   << "\n";
-        std::cout << "m_transitions:"
-                  << "\n";
     }
 
     // at the end of simulation:
     // compute remaining compartments from flows
     // E, use dummy transitiontorecov
-    // get_size_of_compartments(1, parameters.get<TransitionProbabilities>()[0], 0, 0, 1);
-    // // C
-    // get_size_of_compartments(2, parameters.get<TransitionProbabilities>()[1], 1, 2, 2);
-    // // I
-    // get_size_of_compartments(3, parameters.get<TransitionProbabilities>()[2], 3, 4, 3);
-    // // H
-    // get_size_of_compartments(4, parameters.get<TransitionProbabilities>()[3], 5, 6, 4);
-    // // U
-    // get_size_of_compartments(5, parameters.get<TransitionProbabilities>()[4], 7, 8, 5);
-    // // R
-    // m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(6)] = m_N -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(0)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(1)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(2)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(3)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(4)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(5)] -
-    //                                                           m_SECIR[m_SECIR.get_num_time_points()][Eigen::Index(7)];
+    get_size_of_compartments(1, parameters.get<TransitionProbabilities>()[0], 0, 0, 1);
+    // C
+    get_size_of_compartments(2, parameters.get<TransitionProbabilities>()[1], 1, 2, 2);
+    // I
+    get_size_of_compartments(3, parameters.get<TransitionProbabilities>()[2], 3, 4, 3);
+    // H
+    get_size_of_compartments(4, parameters.get<TransitionProbabilities>()[3], 5, 6, 4);
+    // U
+    get_size_of_compartments(5, parameters.get<TransitionProbabilities>()[4], 7, 8, 5);
+
+    std::cout << "almost done ... \n";
+    // R
+    // needs to be updated with computation by flows
+    Eigen::Index num_points_R = m_SECIR.get_num_time_points();
+    m_SECIR[num_points_R -1 ][Eigen::Index(6)] = m_N -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(0)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(1)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(2)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(3)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(4)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(5)] -
+                                                              m_SECIR[num_points_R - 1][Eigen::Index(7)];
 }
 
 } // namespace isecir

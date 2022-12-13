@@ -31,9 +31,9 @@ namespace isecir
 {
 class Model
 {
-    /* TODO: - Funktion, die aus transitions die compartments berechnet
+    /* TODO: 
+    - Indizes in Funktionen und Output für Testbeispiel genau(!!) überprüfen
     - in parameters: unordered map statt transitions
-    - Tote als initial values einbauen und in m_SECIR speichern 
     - Evtl. allgemeinen Integrator als non-standrd diff. scheme anstatt aktueller Approximation
     - Eigen Indizees für zugriff auf diese Timeseries
     - R berechnen über die Flows (für Reinfection später)
@@ -54,7 +54,7 @@ public:
     * @param[in] N_init The population of the considered region. 
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init,ScalarType Dead0, ScalarType dt_init, int N_init, Pa Parameterset_init = Pa());
+    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, size_t Dead0, Pa Parameterset_init = Pa());
 
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -102,7 +102,7 @@ private:
     // Timestep used for simulation.
     ScalarType m_dt{0};
     // Population of the considered region.
-    int m_N{0};
+    size_t m_N{0};
 
     // Two Indices used for simulation.
     Eigen::Index m_k{0};
