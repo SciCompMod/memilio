@@ -214,9 +214,9 @@ double Location::compute_relative_transmission_risk()
     }
 }
 
-void Location::store_current_population(const TimePoint& t) 
+void Location::store_current_population(const TimePoint& /*t*/) 
 {
-    m_subpopulations_time_series.add_time_point(t.days());
+    m_subpopulations_time_series.add_time_point();
     m_subpopulations_time_series.get_last_value().setZero();
     auto last_idx = m_subpopulations_time_series.get_num_time_points()-2;
     m_subpopulations_time_series.get_last_value() += m_subpopulations_time_series.get_value(last_idx);
