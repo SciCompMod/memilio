@@ -1,8 +1,43 @@
 enable_testing()
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+# Downloads GTest and provides a helper macro to add tests. Add make check, as well, which
+# gives output on failed tests without having to set an environment variable.
 
-set(GOOGLE_TEST_INDIVIDUAL ON)
-include(AddGoogleTest)
+
+# Download and unpack googletest at configure time
+include(FetchContent)
+FetchContent_Declare(googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.13.0 )
+FetchContent_MakeAvailable(googletest)
+
+if(MSVC)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
+if(BUILD_SHARED_LIBS)
+    target_compile_options(gtest PUBLIC -DGTEST_CREATE_SHARED_LIBRARY=1)
+endif()
+
+include(GoogleTest)
+mark_as_advanced(
+    gmock_build_tests
+    gtest_build_samples
+    gtest_build_tests
+    gtest_disable_pthreads
+    gtest_force_shared_crt
+    gtest_hide_internal_symbols
+    BUILD_GMOCK
+    BUILD_GTEST
+)
+
+macro(add_gtest TESTNAME)
+    target_link_libraries(${TESTNAME} PUBLIC gmock gtest)
+
+    gtest_discover_tests(${TESTNAME}
+        TEST_PREFIX "${TESTNAME}."
+        PROPERTIES FOLDER "Tests"
+        DISCOVERY_TIMEOUT 30)
+endmacro()
 
 set(TESTSOURCES
     testmain.cpp
@@ -77,7 +112,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir abm)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files
@@ -85,4 +120,10 @@ file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)
 configure_file(test_data_dir.h.in test_data_dir.h)
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
+#compile for shared library
+if(BUILD_SHARED_LIBS)   
+    target_compile_definitions(memilio-test PRIVATE -DGTEST_LINKED_AS_SHARED_LIBRARY=1)
+endif()
+
+#add Executable to googletest
 add_gtest(memilio-test)

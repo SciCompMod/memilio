@@ -1,52 +1,38 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
+set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
+include(FetchContent)
 
 # ## SPDLOG
+
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v${MEMILIO_SPDLOG_VERSION}
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    FIND_PACKAGE_ARGS ${MEMILIO_SPDLOG_VERSION} NAMES spdlog
+)
+
 set(SPDLOG_INSTALL ON)
 
-if(MEMILIO_USE_BUNDLED_SPDLOG)
-    message(STATUS "Downloading Spdlog library")
+FetchContent_MakeAvailable(spdlog)
 
-    include(FetchContent)
-    FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v${MEMILIO_SPDLOG_VERSION}
-    )
-    FetchContent_GetProperties(spdlog)
-
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
-
-else()
-    find_package(spdlog REQUIRED)
-endif()
 
 # ## EIGEN
-if(MEMILIO_USE_BUNDLED_EIGEN)
-    message(STATUS "Downloading Eigen library")
+FetchContent_Declare(eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG ${MEMILIO_EIGEN_VERSION}
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    FIND_PACKAGE_ARGS ${MEMILIO_EIGEN_VERSION} NAMES eigen NO_MODULE
+)
+FetchContent_MakeAvailable(eigen)
 
-    include(FetchContent)
-    FetchContent_Declare(eigen
-        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-        GIT_TAG ${MEMILIO_EIGEN_VERSION})
-    FetchContent_GetProperties(eigen)
+add_library(Eigen3::Eigen ALIAS eigen)
 
-    if(NOT eigen_POPULATED)
-        FetchContent_Populate(eigen)
-    endif()
-
-    add_library(eigen INTERFACE)
-    target_include_directories(eigen INTERFACE ${eigen_SOURCE_DIR})
-    add_library(Eigen3::Eigen ALIAS eigen)
-else()
-    find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
-endif()
 
 # ## BOOST
 if(MEMILIO_USE_BUNDLED_BOOST)

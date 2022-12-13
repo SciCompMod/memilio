@@ -21,7 +21,7 @@
 #define MEMILIO_IO_EPI_DATA_H
 
 #include "memilio/config.h"
-
+#include "memilio_export.h"
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/epidemiology/age_group.h"
@@ -74,7 +74,7 @@ public:
 class ConfirmedCasesDataEntry
 {
 public:
-    static const std::array<const char*, 6> age_group_names;
+    memilio_EXPORT static const std::array<const char*, 6> age_group_names;
 
     double num_confirmed;
     double num_recovered;
@@ -223,7 +223,7 @@ IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v)
 class PopulationDataEntry
 {
 public:
-    static const std::array<const char*, 11> age_group_names;
+    memilio_EXPORT static const std::array<const char*, 11> age_group_names;
 
     CustomIndexArray<double, AgeGroup> population;
     boost::optional<regions::StateId> state_id;
@@ -376,7 +376,7 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_fo
 class VaccinationDataEntry
 {
 public:
-    static const std::array<const char*, 6> age_group_names;
+    memilio_EXPORT static const std::array<const char*, 6> age_group_names;
 
     double num_vaccinations_completed;
     Date date;

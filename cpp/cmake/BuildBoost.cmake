@@ -1,7 +1,6 @@
 set (BOOST_DIR ${PROJECT_BINARY_DIR}/boost_1_75_0)
 set (BOOST_ARCHIVE ${PROJECT_SOURCE_DIR}/thirdparty/boost_1_75_0.tar.gz)
 set (Boost_VERSION "1.75.0")
-set (BOOST_LIB_TYPE STATIC)
 
 if (NOT EXISTS ${BOOST_DIR})
     message(STATUS "Extracting boost")
@@ -22,7 +21,7 @@ add_library(boost_disable_autolink INTERFACE)
 target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
 add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
 
-add_library(boost_filesystem STATIC
+add_library(boost_filesystem 
     ${BOOST_DIR}/libs/filesystem/src/codecvt_error_category.cpp
     ${BOOST_DIR}/libs/filesystem/src/directory.cpp
     ${BOOST_DIR}/libs/filesystem/src/exception.cpp
@@ -41,10 +40,3 @@ add_library(Boost::filesystem ALIAS boost_filesystem)
 
 set(Boost_LIBRARIES Boost::boost Boost::filesystem)
 set(Boost_FOUND ON)
-
-#install (TARGETS
-#    boost
-#    boost_disable_autolink
-#    boost_filesystem
-#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#)
