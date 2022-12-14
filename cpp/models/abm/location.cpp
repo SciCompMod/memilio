@@ -193,6 +193,7 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
 void Location::change_subpopulation(InfectionState s, int delta)
 {
     m_subpopulations_time_series.get_last_value()[size_t(s)] += delta;
+    assert(m_subpopulations_time_series.get_last_value()[size_t(s)] >= 0 && "subpopulations must be non-negative");
 }
 
 int Location::get_subpopulation(InfectionState s) const

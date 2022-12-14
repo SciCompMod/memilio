@@ -5,7 +5,6 @@ set(GOOGLE_TEST_INDIVIDUAL ON)
 include(AddGoogleTest)
 
 set(TESTSOURCES
-    test_household.cpp
     testmain.cpp
     test_populations.cpp
     test_odeseir.cpp
@@ -30,6 +29,7 @@ set(TESTSOURCES
     test_abm_person.cpp
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
+    test_abm_household.cpp
     test_abm_world.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp

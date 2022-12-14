@@ -21,7 +21,26 @@
 
 TEST(TestSimulation, advance_random)
 {
+    auto world     = mio::abm::World();
+    auto location1 = world.add_location(mio::abm::LocationType::School);
+    auto location2 = world.add_location(mio::abm::LocationType::School);
+    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
+    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+    auto& p3       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto& p4       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    p1.set_assigned_location(location1);
+    p2.set_assigned_location(location1);
+    p3.set_assigned_location(location2);
+    p4.set_assigned_location(location2);
 
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
+    ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
+    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
+    for (auto&& v : sim.get_result()) {
+        ASSERT_EQ(v.sum(), 4);
+    }
 }
 
 TEST(TestDiscreteDistribution, generate)
