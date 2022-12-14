@@ -31,7 +31,7 @@
 #include "abm/location_type.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/migration_rules.h"
-#include "abm/testing_scheme.h"
+#include "abm/testing_strategy.h"
 #include "abm/infection.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"

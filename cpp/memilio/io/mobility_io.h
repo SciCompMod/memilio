@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Wadim Koslow, Martin J. Kuehn
 *
@@ -73,7 +73,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  */
 template <class Model>
 IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory,
-                            int ioflags = IOF_None)
+                           int ioflags = IOF_None)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
@@ -85,9 +85,9 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     }
     else {
         log_info("Results are stored in {:s}/results. Files from previous "
-                    "graph will be "
-                    "overwritten",
-                    mio::get_current_dir_name());
+                 "graph will be "
+                 "overwritten",
+                 mio::get_current_dir_name());
     }
 
     //write two files per node
@@ -173,7 +173,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
             if (end_node_idx >= graph.nodes().size()) {
                 log_error("EndNodeIndex not in range of number of graph nodes.");
                 return failure(StatusCode::OutOfRange,
-                                edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
+                               edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
             }
             BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
             graph.add_edge(start_node_idx, end_node_idx, parameters);

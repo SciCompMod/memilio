@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -90,7 +90,7 @@ public:
     {
         return m_level;
     }
-    
+
     /**
      * Set the damping level.
      * @param l the damping level
@@ -202,7 +202,7 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("DampingSampling");

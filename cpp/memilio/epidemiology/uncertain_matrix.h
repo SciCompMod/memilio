@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef UNCERTAINMATRIX_H
-#define UNCERTAINMATRIX_H
+#ifndef MIO_EPI_ODE_UNCERTAINMATRIX_H
+#define MIO_EPI_ODE_UNCERTAINMATRIX_H
 
 #include "memilio/utils/date.h"
 #include "memilio/epidemiology/contact_matrix.h"
@@ -144,11 +144,13 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("UncertainContactMatrix");
         obj.add_element("ContactMatrix", m_cont_freq);
+        obj.add_element("SchoolHolidayDamping", m_school_holiday_damping);
+        obj.add_list("SchoolHolidays", m_school_holidays.begin(), m_school_holidays.end());
         if (!(io.flags() & IOF_OmitDistributions)) {
             obj.add_list("Dampings", m_dampings.begin(), m_dampings.end());
         }
@@ -165,14 +167,18 @@ public:
         if (!(io.flags() & IOF_OmitDistributions)) {
             auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
             auto d = obj.expect_list("Dampings", Tag<DampingSampling>{});
+            auto e = obj.expect_element("SchoolHolidayDamping", Tag<DampingSampling>{});
+            auto f = obj.expect_list("SchoolHolidays", Tag<std::pair<SimulationTime, SimulationTime>>{});
             return apply(
                 io,
-                [](auto&& c_, auto&& d_) {
+                [](auto&& c_, auto&& d_, auto&& e_, auto&& f_) {
                     auto m           = UncertainContactMatrix{c_};
                     m.get_dampings() = d_;
+                    m.get_school_holiday_damping() = e_;
+                    m.get_school_holidays() = f_;
                     return m;
                 },
-                c, d);
+                c, d, e, f);
         }
         else {
             auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
@@ -194,4 +200,4 @@ private:
 
 } // namespace mio
 
-#endif // UNCERTAINMATRIX_H
+#endif // MIO_EPI_ODE_UNCERTAINMATRIX_H

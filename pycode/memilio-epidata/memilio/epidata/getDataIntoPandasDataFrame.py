@@ -29,14 +29,15 @@ This tool contains
 - writes pandas dataframe to file of three different formats
 """
 
-import os
-from urllib.request import urlopen
-import json
 import argparse
 import datetime
-import pandas as pd
+import json
+import os
 from io import BytesIO
+from urllib.request import urlopen
 from zipfile import ZipFile
+
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 
@@ -95,7 +96,8 @@ def loadCsv(
     """
 
     url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_default = {"sep": ',', "header": 0,
+                          "encoding": None, 'dtype': None}
 
     for k in param_dict_default:
         if k not in param_dict:
@@ -171,11 +173,12 @@ def cli(what):
     Depending on what following parser can be added:
     - start_date
     - end_date
-    - plot
-    - split_berlin
-    - moving_average
     - impute_dates
-    - rep-date
+    - moving_average
+    - make_plot
+    - split_berlin
+    - rep_date
+    - sanitize_data
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
@@ -186,16 +189,16 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "cases": ['Download case data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "jh": ['Downloads data from Johns Hopkins University'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date',
-                        'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -228,6 +231,13 @@ def cli(what):
         help='Defines if raw data will be stored for further use.',
         action='store_true')
 
+    if 'start_date' in what_list:
+        parser.add_argument(
+            '-s', '--start-date',
+            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
+            'Default is 2020-04-24',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+            default=dd.defaultDict['start_date'])
     if 'end_date' in what_list:
         parser.add_argument(
             '-e', '--end-date',
@@ -240,13 +250,13 @@ def cli(what):
             '-i', '--impute-dates',
             help='the resulting dfs contain all dates instead of'
             ' omitting dates where no data was reported', action='store_true')
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', help='Plots the data.',
-                            action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument(
             '-m', '--moving-average', type=int, default=0,
             help='Compute a moving average of N days over the time series')
+    if 'make_plot' in what_list:
+        parser.add_argument('-p', '--make-plot', help='Plots the data.',
+                            action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin',
@@ -259,13 +269,11 @@ def cli(what):
             help='If reporting date is activated, the reporting date'
             'will be prefered over possibly given dates of disease onset.',
             action='store_true')
-    if 'start_date' in what_list:
+    if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-s', '--start-date',
-            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-            'Default is 2020-04-24',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
-            default=dd.defaultDict['start_date'])
+            '-sd', '--sanitize_data', type=int, default=1,
+            help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
+        )
     args = parser.parse_args()
 
     return vars(args)
@@ -337,7 +345,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "json_timeasstring":
         if dd.EngEng['date'] in df.columns:
-            if not isinstance(df.Date.values[0], type("string")):
+            if not isinstance(df.Date.values[0], str):
                 df.Date = df.Date.dt.strftime('%Y-%m-%d')
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":

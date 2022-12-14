@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -43,8 +43,8 @@ TEST(TestRange, iterators)
 
 TEST(TestRange, reverse_iterators)
 {
-    auto v = std::vector<int>{0, 1, 2, 3, 4, 5};
-    auto r = mio::make_range(begin(v), end(v));
+    auto v  = std::vector<int>{0, 1, 2, 3, 4, 5};
+    auto r  = mio::make_range(begin(v), end(v));
     auto v2 = std::vector<int>(r.rbegin(), r.rend());
 
     EXPECT_THAT(v2, testing::ElementsAre(5, 4, 3, 2, 1, 0));
@@ -116,7 +116,7 @@ TEST(TestInsertSortedReplace, returnsValidIterator)
 
     //There is no GTEST_NO_DEATH macro so we just let the test crash.
     //If this test crashes, the function does not return a valid iterator.
-    //Dereferencing an invalid iterator is undefined behavior so the test 
+    //Dereferencing an invalid iterator is undefined behavior so the test
     //may behave unexpectedly (pass, fail, or something else) if the iterator is invalid.
     x = *mio::insert_sorted_replace(v, 5);
     x = *mio::insert_sorted_replace(v, 1);

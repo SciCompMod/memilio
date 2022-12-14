@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -47,8 +47,7 @@ public:
     {
     }
 
-    GraphSimulation(double t0, double dt, Graph&& g, const node_function& node_func,
-                    const edge_function&& edge_func)
+    GraphSimulation(double t0, double dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
         : m_t(t0)
         , m_dt(dt)
         , m_graph(std::move(g))
@@ -72,7 +71,8 @@ public:
             m_t += dt;
 
             for (auto& e : m_graph.edges()) {
-                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property, m_graph.nodes()[e.end_node_idx].property);
+                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
+                            m_graph.nodes()[e.end_node_idx].property);
             }
         }
     }
@@ -87,12 +87,12 @@ public:
         return m_graph;
     }
 
-    const Graph& get_graph() const &
+    const Graph& get_graph() const&
     {
         return m_graph;
     }
 
-    Graph&& get_graph() && 
+    Graph&& get_graph() &&
     {
         return std::move(m_graph);
     }

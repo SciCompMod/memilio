@@ -171,10 +171,12 @@ bool Person::get_tested(const TimePoint& t, const TestParameters& params)
 {
     double random = UniformDistribution<double>::get_instance()();
     if (is_infected(t)) {
+        // true positive
         if (random < params.sensitivity) {
             m_quarantine = true;
             return true;
         }
+        // false negative
         else {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
@@ -182,12 +184,15 @@ bool Person::get_tested(const TimePoint& t, const TestParameters& params)
         }
     }
     else {
+        // true negative
         if (random < params.specificity) {
             m_quarantine               = false;
             m_time_since_negative_test = days(0);
             return false;
         }
+        // false positive
         else {
+            m_quarantine = true;
             return true;
         }
     }

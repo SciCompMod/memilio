@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -119,7 +119,7 @@ struct Date {
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<Date> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Date");
@@ -160,7 +160,8 @@ inline IOResult<Date> parse_date(const std::string& date_str)
             return failure(StatusCode::OutOfRange, "Argument is not a valid date.");
         }
         return success(date);
-    } catch (const std::invalid_argument&) {
+    }
+    catch (const std::invalid_argument&) {
         return failure(StatusCode::InvalidValue, "Argument ist not a valid date string.");
     }
 }

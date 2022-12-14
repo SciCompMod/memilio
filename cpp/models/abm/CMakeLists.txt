@@ -7,6 +7,8 @@ add_library(abm
     simulation.h
     person.cpp
     person.h
+    testing_strategy.cpp
+    testing_strategy.h
     world.cpp
     world.h
     location_type.h
@@ -18,8 +20,6 @@ add_library(abm
     trip_list.h
     lockdown_rules.cpp
     lockdown_rules.h
-    testing_scheme.cpp
-    testing_scheme.h
     infection.cpp
     infection.h
     infection_state.h

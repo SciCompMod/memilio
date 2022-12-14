@@ -31,8 +31,9 @@ namespace abm
 Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
+    , m_capacity(LocationCapacity())
+    , m_capacity_adapted_transmission_risk(false)
     , m_cached_exposure_rate({AgeGroup::Count, VirusVariant::Count})
-    , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
 {
 }
@@ -118,6 +119,17 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
                     cell.m_cached_exposure_rate[{virus, age}] += inf.get_infectivity(
                         t + dt / 2); // average infectivity over the time step to second order accuracy
                 }
+                /*if (cell.num_people == 0) {
+                    cell.cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
+                }
+                else {
+                    auto relative_transmission_risk = compute_relative_transmission_risk();
+                    cell.cached_exposure_rate.array() =
+                        std::min(m_parameters.get<MaximumContacts>(), double(cell.num_people)) / cell.num_people *
+                        (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
+                         global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected) *
+                        relative_transmission_risk;
+                }*/
             }
         }
     }
@@ -163,6 +175,20 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations(TimePoint t) cons
     }
     return Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size());
 }
-
+/*
+For every location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
+the location "Home", which is 66. We multiply this rate with the factor m_capacity.persons / m_capacity.volume of the 
+considered location. For the dependency of the transmission risk on the occupancy we use a linear approximation which 
+leads to: 66 * (m_capacity.persons / m_capacity.volume) * (m_persons.size() / m_capacity.persons).
+*/
+double Location::compute_relative_transmission_risk()
+{
+    if (m_capacity.volume != 0 && m_capacity_adapted_transmission_risk) {
+        return 66.0 * m_persons.size() / m_capacity.volume;
+    }
+    else {
+        return 1.0;
+    }
+}
 } // namespace abm
 } // namespace mio

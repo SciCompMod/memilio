@@ -18,26 +18,25 @@
 # limitations under the License.
 #############################################################################
 import unittest
+
+import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import numpy as np
 
 
 class Test_ParameterStudy(unittest.TestCase):
 
     def _get_model(self):
-        model = secir.SecirModel(1)
+        model = secir.Model(1)
 
         A0 = secir.AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2
-        model.parameters.InfectiousTimeMild[A0] = 6
+        model.parameters.TimeInfectedSymptoms[A0] = 6
         model.parameters.SerialInterval[A0] = 4.2
-        model.parameters.HospitalizedToHomeTime[A0] = 12
-        model.parameters.HomeToHospitalizedTime[A0] = 5
-        model.parameters.HospitalizedToICUTime[A0] = 2
-        model.parameters.ICUToHomeTime[A0] = 8
-        model.parameters.ICUToDeathTime[A0] = 5
+        model.parameters.TimeInfectedSevere[A0] = 12
+        model.parameters.TimeInfectedCritical[A0] = 8
 
         model.parameters.ContactPatterns.cont_freq_mat[0] = mio.ContactMatrix(np.r_[
                                                                               0.5])
@@ -45,20 +44,21 @@ class Test_ParameterStudy(unittest.TestCase):
             mio.Damping(np.r_[0.7], 30.0))
 
         model.populations[A0, secir.InfectionState.Exposed] = 100
-        model.populations[A0, secir.InfectionState.Carrier] = 50
-        model.populations[A0, secir.InfectionState.Infected] = 50
-        model.populations[A0, secir.InfectionState.Hospitalized] = 20
-        model.populations[A0, secir.InfectionState.ICU] = 10
+        model.populations[A0, secir.InfectionState.InfectedNoSymptoms] = 50
+        model.populations[A0, secir.InfectionState.InfectedSymptoms] = 50
+        model.populations[A0, secir.InfectionState.InfectedSevere] = 20
+        model.populations[A0, secir.InfectionState.InfectedCritical] = 10
         model.populations[A0, secir.InfectionState.Recovered] = 10
         model.populations[A0, secir.InfectionState.Dead] = 0
-        model.populations.set_difference_from_total((A0, secir.InfectionState.Susceptible), 10000)
+        model.populations.set_difference_from_total(
+            (A0, secir.InfectionState.Susceptible), 10000)
 
-        model.parameters.InfectionProbabilityFromContact[A0] = 1.0
-        model.parameters.AsymptomaticCasesPerInfectious[A0] = 0.09
+        model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+        model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
         model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
-        model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2
-        model.parameters.ICUCasesPerHospitalized[A0] = 0.25
-        model.parameters.DeathsPerICU[A0] = 0.3
+        model.parameters.SeverePerInfectedSymptoms[A0] = 0.2
+        model.parameters.CriticalPerSevere[A0] = 0.25
+        model.parameters.DeathsPerCritical[A0] = 0.3
 
         model.apply_constraints()
         return model
@@ -105,7 +105,7 @@ class Test_ParameterStudy(unittest.TestCase):
 
     def test_graph(self):
         model = self._get_model()
-        graph = secir.SecirModelGraph()
+        graph = secir.ModelGraph()
         graph.add_node(0, model)
         graph.add_node(1, model)
         graph.add_edge(0, 1, 0.01 * np.ones(8))

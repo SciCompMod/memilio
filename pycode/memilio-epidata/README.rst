@@ -49,7 +49,7 @@ Required python packages:
 - pandas<1.2.0
 - matplotlib
 - tables
-- numpy>=1.21
+- numpy>=1.22
 - openpyxl
 - xlrd
 - requests
@@ -69,6 +69,7 @@ After installation the scripts can be run via the following entry points.
   - getcasesestimation (get case data with estimations from rki, see Results: RKI-Estimation)
   - getcommutermobility (get data about commuter mobility, see Results: BAA)
   - gettestingdata (get data about number of tests, see Results: RKI-T)
+  - gethospitalizationdata (get hospitalization data from RKI, see Results: RKI-H)
 
 For a detailed description of the run options and the resulting data files written
 see the `epidata subfolder <memilio/epidata/README.rst>`_.
@@ -79,7 +80,6 @@ Testing and Coverage
 The following packages are used by the tests:
 
 - pyfakefs (creates fake directory to test that expected folders are created and data is written)
-- freezegun (freezes the time. Thus, the call today can be changed to a specific date.)
 - coverage
 
 See Installation on how to install all these dependencies automatically.

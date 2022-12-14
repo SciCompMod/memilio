@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -72,7 +72,7 @@ public:
     Sim& get_simulation()
     {
         return m_simulation;
-    }    
+    }
     const Sim& get_simulation() const
     {
         return m_simulation;
@@ -95,7 +95,6 @@ public:
         m_last_state = m_simulation.get_result().get_last_value();
     }
 
-
 private:
     Sim m_simulation;
     Eigen::VectorXd m_last_state;
@@ -104,14 +103,14 @@ private:
 
 /**
  * time dependent migration coefficients.
- */ 
+ */
 using MigrationCoefficients = DampingMatrixExpression<VectorDampings>;
 
 /**
  * sum of time dependent migration coefficients.
  * differentiate between sources of migration.
- */ 
-using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoefficients>; 
+ */
+using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoefficients>;
 
 /**
  * parameters that influence migration.
@@ -206,7 +205,7 @@ public:
      * serialize this. 
      * @see mio::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("MigrationParameters");
@@ -218,17 +217,20 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<MigrationParameters> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("MigrationParameters");
-        auto c = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
-        auto d = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
-        return apply(io, [](auto && c_, auto&& d_) {
-            MigrationParameters params(c_);
-            params.set_dynamic_npis_infected(d_);
-            return params;
-        }, c, d);
+        auto c   = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
+        auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
+        return apply(
+            io,
+            [](auto&& c_, auto&& d_) {
+                MigrationParameters params(c_);
+                params.set_dynamic_npis_infected(d_);
+                return params;
+            },
+            c, d);
     }
 
 private:
@@ -292,7 +294,7 @@ private:
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
-    double m_t_last_dynamic_npi_check = -std::numeric_limits<double>::infinity();
+    double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
 
@@ -310,12 +312,12 @@ private:
 template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
 void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
                                  Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
-{    
+{
     auto y0 = migrated.eval();
     auto y1 = migrated;
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
-        sim.get_model().get_derivatives(total, y, t_, dydt);
+            sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
 }
@@ -407,7 +409,6 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
     return test_commuters(node.get_simulation(), migrated, time);
 }
 
-
 template <class Sim>
 void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
@@ -417,8 +418,9 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
     }
 
     auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
-    if (dyn_npis.get_thresholds().size() > 0 && floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
-        auto inf_rel            = get_infections_relative(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
+    if (dyn_npis.get_thresholds().size() > 0 &&
+        floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
+        auto inf_rel = get_infections_relative(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -442,13 +444,13 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
-            //fix by subtracting the supernumerous returns from the biggest compartment of the age group. 
+            //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
             Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
             for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
-                if (remaining_after_return(j) < 0) {                    
-                    auto num_comparts     = (Eigen::Index)Sim::Model::Compartments::Count;
-                    auto group   = Eigen::Index(j / num_comparts);
-                    auto compart = j % num_comparts;
+                if (remaining_after_return(j) < 0) {
+                    auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
+                    auto group        = Eigen::Index(j / num_comparts);
+                    auto compart      = j % num_comparts;
                     log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
                         "Underflow during migration returns at time {}, compartment {}, age group {}: {}", t, compart,
                         group, remaining_after_return(j));

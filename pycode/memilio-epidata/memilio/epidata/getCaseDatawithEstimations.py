@@ -24,24 +24,32 @@
 """
 
 import os
-from datetime import datetime
-#from datetime import timedelta
-import pandas as pd
-import numpy as np
+from datetime import date
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import requests
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
 
-def get_case_data_with_estimations(read_data=dd.defaultDict['read_data'],
-                                   file_format=dd.defaultDict['file_format'],
-                                   out_folder=dd.defaultDict['out_folder'],
-                                   no_raw=dd.defaultDict['no_raw'],
-                                   make_plot=dd.defaultDict['make_plot']):
+def get_case_data_with_estimations(
+        read_data=dd.defaultDict['read_data'],
+        file_format=dd.defaultDict['file_format'],
+        out_folder=dd.defaultDict['out_folder'],
+        no_raw=dd.defaultDict['no_raw'],
+        start_date=date(2020, 1, 1),
+        end_date=dd.defaultDict['end_date'],
+        impute_dates=dd.defaultDict['impute_dates'],
+        moving_average=dd.defaultDict['moving_average'],
+        make_plot=dd.defaultDict['make_plot'],
+        split_berlin=dd.defaultDict['split_berlin'],
+        rep_date=dd.defaultDict['rep_date']
+):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
 WARNING: This file is experimental and has not been tested.
     From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confirmed
@@ -49,28 +57,35 @@ WARNING: This file is experimental and has not been tested.
     With this fraction every existing case data from RKI is scaled.
     The new columns recovered_estimated and deaths_estimated are added.
 
-    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-    @param file_format json [Default]
-    @param out_folder Folder where data is written to.
-    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param make_plot [Optional] case data from RKI and estimated data can be compared by plots
+    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default 2020-01-01.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
+    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
     """
 
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
-        impute_dates = False
         make_plot_cases = False
-        moving_average = False
-        split_berlin = False
+        make_plot_jh = False
 
         # get case data
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, impute_dates,
-            make_plot_cases, moving_average, no_raw, split_berlin)
+            read_data, file_format, out_folder, no_raw, start_date, end_date,
+            impute_dates, moving_average, make_plot_cases, split_berlin,
+            rep_date)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, file_format, out_folder, no_raw)
+        gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
+                        start_date, end_date, impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -112,7 +127,8 @@ WARNING: This file is experimental and has not been tested.
         case_data_file = os.path.join(data_path, file_to_change + ".json")
         try:
             df_cases = pd.read_json(case_data_file)
-        except ValueError as e:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             print("WARNING: The file ", file_to_change + ".json does not exist.")
             continue
 
@@ -170,7 +186,7 @@ WARNING: This file is experimental and has not been tested.
             get_weekly_deaths_data_age_gender_resolved(
                 data_path, read_data=True)
             # df_cases[week] = df_cases[date].dt.isocalendar().week
-    #if make_plot:
+    # if make_plot:
     #    plt.show()
 
 
@@ -246,7 +262,7 @@ def compare_estimated_and_rki_deathsnumbers(
     df_real_deaths_per_week.loc[df_real_deaths_per_week.year ==
                                 2021, 'week'] += 53
 
-    #combine both dataframes to one dataframe
+    # combine both dataframes to one dataframe
     df_cases_week = df_cases_week.merge(
         df_real_deaths_per_week, how='outer', on="week")
     del df_cases_week['year']
@@ -264,7 +280,7 @@ def compare_estimated_and_rki_deathsnumbers(
 
         df_jh_week['Deaths_weekly_accumulated'] = df_jh_week['Deaths_weekly'].cumsum()
 
-        #plot
+        # plot
         df_cases_week.plot(
             x="week",
             y=["Deaths_weekly", "Deaths_estimated_weekly",

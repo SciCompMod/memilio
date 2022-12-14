@@ -22,6 +22,7 @@
 
 #include "pybind11/detail/common.h"
 #include "pybind_util.h"
+#include "utils/index.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/custom_index_array.h"
 
@@ -31,6 +32,7 @@
 
 #include "boost/optional.hpp"
 #include <type_traits>
+#include <stdexcept>
 
 namespace pymio
 {
@@ -38,23 +40,28 @@ namespace pymio
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
 template <class C>
-void bind_single_tag_template_members(pybind11::class_<C>&)
+void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>&)
 {
 }
 template <class C, class T, class... Ts>
-void bind_single_tag_template_members(pybind11::class_<C>& c)
+void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>& c)
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
 
-    bind_single_tag_template_members<C, Ts...>(c); //next Tag
+    // Catch warning ImportError: generic_type: type "" is already registered!
+    try {
+        bind_Index<T>(m, ("Index_" + tname).c_str());
+    }
+    catch (std::runtime_error& e) {
+    }
+    bind_single_tag_template_members<C, Ts...>(m, c); //next Tag
 }
 
 // Represents a python index slice, i.e. start:stop:step
 // where each argument can be None.
-template<class Index>
-struct SliceExpression
-{
+template <class Index>
+struct SliceExpression {
     boost::optional<Index> start;
     boost::optional<Index> stop;
     boost::optional<Index> step;
@@ -69,8 +76,7 @@ SliceExpression<mio::Index<Tag>> convert_to_slice_expr(const pybind11::object& o
     if (pybind11::isinstance<pybind11::slice>(obj)) {
         //convert a python slice expression
         auto slice = obj.cast<pybind11::slice>();
-        return {cast_or_none<mio::Index<Tag>>(slice.attr("start")),
-                cast_or_none<mio::Index<Tag>>(slice.attr("stop")),
+        return {cast_or_none<mio::Index<Tag>>(slice.attr("start")), cast_or_none<mio::Index<Tag>>(slice.attr("stop")),
                 cast_or_none<mio::Index<Tag>>(slice.attr("step"))};
     }
     else {
@@ -95,9 +101,9 @@ auto get_slice_of_array(C& self, S& slice, const pybind11::tuple& tup)
 {
     //normal case of recursion
     //slice along dimension I, identified by tag T
-    const auto I = C::Index::size - sizeof...(Ts) - 1;
+    const auto I          = C::Index::size - sizeof...(Ts) - 1;
     const auto slice_expr = convert_to_slice_expr<T>(tup[I]);
-    const auto size    = self.template size<T>();
+    const auto size       = self.template size<T>();
 
     const auto start = get_optional_value_or(slice_expr.start, mio::Index<T>(0));
     if (start >= size) {
@@ -117,11 +123,10 @@ auto get_slice_of_array(C& self, S& slice, const pybind11::tuple& tup)
 // self: custom index array
 // indices: python slice expression or single index
 // value: scalar value to assign
-template<class C, class T, class... Tags>
-void assign_scalar(C& self, const pybind11::object& indices, const T& value) 
+template <class C, class T, class... Tags>
+void assign_scalar(C& self, const pybind11::object& indices, const T& value)
 {
-    const auto index_tuple =
-        self.size().size == 1 ? pybind11::make_tuple(indices) : indices.cast<pybind11::tuple>();
+    const auto index_tuple = self.size().size == 1 ? pybind11::make_tuple(indices) : indices.cast<pybind11::tuple>();
     if (index_tuple.size() != self.size().size) {
         throw pybind11::index_error("Invalid number of dimensions.");
     }
@@ -130,18 +135,28 @@ void assign_scalar(C& self, const pybind11::object& indices, const T& value)
 
 // Bind members that are different for arrays with single or multi index.
 template <class C, class Tag>
-void bind_single_or_multi_index_members_CustomIndexArray(pybind11::class_<C>& c)
+void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m, pybind11::class_<C>& c,
+                                                         std::string const& name)
 {
     c.def("size", [](const C& self) {
         return self.size(); //just a single index, no tuple
     });
 }
 template <class C, class... Tags>
-std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::class_<C>& c)
+std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m,
+                                                                                            pybind11::class_<C>& c,
+                                                                                            std::string const& name)
 {
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
+
+    // Catch warning ImportError: generic_type: type "" is already registered!
+    try {
+        bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
+    }
+    catch (std::runtime_error& e) {
+    }
 }
 
 template <class Type, class... Tags>
@@ -187,11 +202,11 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
         //scalar assignment with conversion from double
         //TODO: may need SFINAE in the future, only compiles if value type is convertible from double, e.g. UncertainValue
         .def("__setitem__", &assign_scalar<C, double, Tags...>);
-        //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
-        //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
+    //TODO: __setitem__ with list or numpy array, e.g. array[AgeGroup(0):AgeGroup(3)] = [1, 2, 3]
+    //TODO: __getitem__. Is it ever necessary to store a reference to a slice?
 
-    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(c);
-    bind_single_tag_template_members<C, Tags...>(c);
+    bind_single_or_multi_index_members_CustomIndexArray<C, Tags...>(m, c, name);
+    bind_single_tag_template_members<C, Tags...>(m, c);
 }
 
 } // namespace pymio

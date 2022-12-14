@@ -192,25 +192,13 @@ struct DetectInfection {
     }
 };
 
-struct TestWhileInfected {
-    using Type = CustomIndexArray<double, VirusVariant, AgeGroup>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count}, 0.005);
-    }
-    static std::string name()
-    {
-        return "TestWhileInfected";
-    }
-};
-
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, TestWhileInfected>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
 
 struct MaximumContacts {
     using Type = double;
@@ -250,7 +238,7 @@ struct TestParameters {
     double specificity;
 };
 
-struct AntigenTest {
+struct GenericTest {
     using Type = TestParameters;
     static constexpr Type get_default()
     {
@@ -258,14 +246,33 @@ struct AntigenTest {
     }
     static std::string name()
     {
+        return "GenericTest";
+    }
+};
+
+struct AntigenTest : public GenericTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.8, 0.88};
+    }
+    static std::string name()
+    {
         return "AntigenTest";
     }
 };
 
-/**
- * parameters of the testing that are the same everywhere in the world.
- */
-using GlobalTestingParameters = ParameterSet<AntigenTest>;
+struct PCRTest : public GenericTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.9, 0.99};
+    }
+    static std::string name()
+    {
+        return "PCRTest";
+    }
+};
 
 /**
  * parameters that govern the migration between locations.

@@ -17,11 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
 import sys
+import unittest
 from unittest.mock import patch
+
+from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import cleanData as cd
 from memilio.epidata import defaultDict as dd
@@ -40,7 +41,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir_dic_all = {
             'Germany':
             ["cases_a", "a_jh", "CaseDataFull", "PopulData",
-             "county_population", "migration", "reg_key", "zensus", "FullVacc",
+             "county_population", "county_table", "reg_key", "zensus", "FullVacc",
              "all_county_vacc", "all_state_vacc", "migration_bfa_2020_dim401",
              "states_testpos", "FullData_DIVI", "county_divi"],
             'Spain': ["b_jh"],
@@ -52,7 +53,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         dir_dic_cases = {'Germany': ["cases_a", "CaseDataFull"]}
 
-        dir_dic_popul = {'Germany': ["PopulData", "county_population", "migration", "reg_key", "zensus"]}
+        dir_dic_popul = {'Germany': [
+            "PopulData", "county_population", "county_table", "reg_key", "zensus"]}
 
         dir_dic_jh = {'Germany': ["a_jh"],
                       'Spain': ["b_jh"],
@@ -144,12 +146,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -177,7 +179,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 0)
@@ -197,7 +199,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 3)
@@ -212,7 +214,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -234,12 +236,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5",
                     "a_jh.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -266,7 +268,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, False, True, False, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -288,12 +290,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "a_jh.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -335,7 +337,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             ["cases_a.json", "CaseDataFull.json"])
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -372,7 +374,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -394,7 +396,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 25)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
@@ -427,7 +429,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, False, True, False, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -453,7 +455,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -485,7 +487,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         files = os.listdir(dir_path)
 
         population_files = [
-            "PopulData.json", "county_population.json", "migration.json",
+            "PopulData.json", "county_population.json", "county_table.json",
             "reg_key.json", "zensus.json"]
         # delete all files except which will be deleted
         for item in files:
@@ -497,7 +499,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(dir_path)), len(population_files))
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -530,7 +532,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
     def test_all_false(self):
 
         cd.clean_data(False, False, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         # test if writte fct works as expected
 
@@ -556,12 +558,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 30)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -591,7 +593,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir1a = os.listdir(os.path.join(self.path, 'Germany/'))
 
         cd.clean_data(True, False, False, False, False,
-                      False, False, False, True, False, False, "/home/y")
+                      False, False, False, False, True, False, False, "/home/y")
 
         dir2 = os.listdir(self.path)
         dir2a = os.listdir(os.path.join(self.path, 'Germany/'))
@@ -606,7 +608,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -625,12 +627,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 29)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -654,7 +656,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, True, False, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
@@ -673,12 +675,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 29)
                 fakefiles = [
                     "cases_a.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "a_jh.json", "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -702,9 +704,9 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, False, True, False, self.path)
+                      False, False, False, False, False, True, False, self.path)
 
         dir_list = ['Germany']
 
@@ -722,12 +724,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 28)
                 fakefiles = [
                     "cases_a.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5", "zensus.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "cases_a.json",
                     "CaseDataFull.json", "PopulData.json",
-                    "county_population.json", "migration.json", "reg_key.json", "zensus.json", "FullVacc.json",
+                    "county_population.json", "county_table.json", "reg_key.json", "zensus.json", "FullVacc.json",
                     "all_county_vacc.json", "all_state_vacc.json",
                     "migration_bfa_2020_dim401.json", "states_testpos.json",
                     "FullData_DIVI.json", "county_divi.json"]
@@ -743,13 +745,14 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         os.makedirs(dir_path)
         with open(os.path.join(self.path, 'Germany', 'commuter_test.txt'), 'w') as f:
             f.write('foo')
-        # check if file is written 
-        self.assertEqual(os.listdir(os.path.join(self.path, 'Germany')), ['commuter_test.txt'])
+        # check if file is written
+        self.assertEqual(os.listdir(os.path.join(self.path, 'Germany')), [
+                         'commuter_test.txt'])
         # delete file and folder
-        cd.clean_data(False, False, False,False, False, False, True, False, False, False, True, self.path)
-        #check if folder is deleted
+        cd.clean_data(False, False, False, False, False, False,
+                      True, False, False, False, False, True, self.path)
+        # check if folder is deleted
         self.assertEqual(os.listdir(self.path), [])
-        
 
     def test_file_not_found_cases(self):
 
@@ -762,7 +765,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -778,7 +781,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -794,7 +797,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -810,7 +813,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, True,
-                      False, False, False, True, False, False, self.path)
+                      False, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -826,7 +829,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      True, False, False, True, False, False, self.path)
+                      True, False, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -842,7 +845,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      False, True, False, True, False, False, self.path)
+                      False, True, False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -858,7 +861,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             f.write('foo')
 
         cd.clean_data(False, False, False, False, False,
-                      False, False, True, True, False, False, self.path)
+                      False, False, True, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -871,31 +874,31 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         # no data in folder
         # jh
         cd.clean_data(False, False, True, False, False,
-                      False, False, False, True, True, True, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # population
         cd.clean_data(False, False, False, True, False,
-                      False, False, False, True, True, True, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # cases
         cd.clean_data(False, True, False, False, False,
-                      False, False, False, True, True, True, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # divi
         cd.clean_data(False, False, False, False, True,
-                      False, False, False, True, True, True, self.path)
+                      False, False, False, False, True, True, True, self.path)
 
         # vaccination
         cd.clean_data(False, False, False, False, False,
-                      True, False, False, True, True, True, self.path)
+                      True, False, False, False, True, True, True, self.path)
 
         # commuter
         cd.clean_data(False, False, False, False, False,
-                      False, True, False, True, True, True, self.path)
+                      False, True, False, False, True, True, True, self.path)
 
         # testing
         cd.clean_data(False, False, False, False, False,
-                      False, False, True, True, True, True, self.path)
+                      False, False, True, False, True, True, True, self.path)
 
     def test_cli_default(self):
 
@@ -906,7 +909,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             print([all_data, cases, jh, popul, hdf5, out_path])
 
@@ -918,6 +921,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
@@ -931,7 +935,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -941,6 +945,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
@@ -955,7 +960,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, True)
             self.assertEqual(cases, False)
@@ -965,6 +970,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
@@ -979,7 +985,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, True)
@@ -989,6 +995,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, True)
@@ -1003,7 +1010,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1013,6 +1020,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
             self.assertEqual(txt, False)
@@ -1027,7 +1035,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1037,6 +1045,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, False)
             self.assertEqual(commuter, False)
             self.assertEqual(testing, False)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, True)
             self.assertEqual(hdf5, True)
             self.assertEqual(txt, True)
@@ -1051,7 +1060,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
 
             [all_data, cases, jh, popul, divi, vacc, commuter,
-                testing, json, hdf5, txt, out_path] = cd.cli()
+                testing, hospitalization, json, hdf5, txt, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(cases, False)
@@ -1061,6 +1070,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             self.assertEqual(vacc, True)
             self.assertEqual(commuter, True)
             self.assertEqual(testing, True)
+            self.assertEqual(hospitalization, False)
             self.assertEqual(json, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(txt, False)
@@ -1072,11 +1082,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.set_dirs_and_files('all')
 
         cd.clean_data(False, False, False, False, True,
-                      True, True, True, True, False, False, self.path)
+                      True, True, True, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy',
                     'US', 'SouthKorea', 'China']
-        
+
         # Test wanted folder and file structure
 
         self.assertEqual(len(os.listdir(self.path)), 11)
@@ -1094,13 +1104,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 23)
                 fakefiles = [
                     "cases_a.h5", "a_jh.h5", "CaseDataFull.h5", "PopulData.h5",
-                    "county_population.h5", "migration.h5", "reg_key.h5",
+                    "county_population.h5", "county_table.h5", "reg_key.h5",
                     "zensus.h5", "FullVacc.h5", "FullVacc.h5",
                     "all_county_vacc.h5", "all_state_vacc.h5",
                     "migration_bfa_2020_dim401.h5", "states_testpos.h5",
                     "FullData_DIVI.h5", "county_divi.h5", "a_jh.json",
                     "PopulData.json", "cases_a.json", "county_population.json",
-                    "migration.json", "reg_key.json", "zensus.json",
+                    "county_table.json", "reg_key.json", "zensus.json",
                     "CaseDataFull.json"]
 
                 for file in fakefiles:
@@ -1119,6 +1129,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(
                     os.listdir(dir_path),
                     ["c_jh.json", "c_jh.h5"])
+
 
 if __name__ == '__main__':
     unittest.main()

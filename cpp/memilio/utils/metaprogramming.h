@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -27,10 +27,10 @@ namespace mio
 
 namespace details
 {
-    template <typename... Ts>
-    struct make_void {
-        typedef void type;
-    };
+template <typename... Ts>
+struct make_void {
+    typedef void type;
+};
 } // namespace details
 
 /**
@@ -41,13 +41,13 @@ using void_t = typename details::make_void<Ts...>::type;
 
 namespace details
 {
-    template <template <class...> class Expr, class X, class... T>
-    struct is_expression_valid : std::false_type {
-    };
+template <template <class...> class Expr, class X, class... T>
+struct is_expression_valid : std::false_type {
+};
 
-    template <template <class...> class Expr, class... T>
-    struct is_expression_valid<Expr, void_t<Expr<T...>>, T...> : std::true_type {
-    };
+template <template <class...> class Expr, class... T>
+struct is_expression_valid<Expr, void_t<Expr<T...>>, T...> : std::true_type {
+};
 } // namespace details
 
 /**
@@ -67,8 +67,7 @@ namespace details
  * @endcode
  */
 template <template <class...> class Expr, class... T>
-struct is_expression_valid : details::is_expression_valid<Expr, void, T...>
-{
+struct is_expression_valid : details::is_expression_valid<Expr, void, T...> {
 };
 
 /**
@@ -76,11 +75,10 @@ struct is_expression_valid : details::is_expression_valid<Expr, void, T...>
  * If B::value is true, then negation<B>::value is false.
  * @{
  */
-template<class Trait>
-struct negation : std::integral_constant<bool, (!Trait::value)>
-{
+template <class Trait>
+struct negation : std::integral_constant<bool, (!Trait::value)> {
 };
-template<class Trait>
+template <class Trait>
 constexpr bool negation_v = negation<Trait>::value;
 /**@}*/
 
@@ -105,18 +103,18 @@ constexpr bool conjunction_v = conjunction<Bs...>::value;
 
 namespace details
 {
-    //non-copyable but trivally constructible and moveable type
-    struct NoCopy {
-        NoCopy(const NoCopy&) = delete;
-        NoCopy()              = default;
-        NoCopy(NoCopy&&)      = default;
-        NoCopy& operator=(const NoCopy&) = delete;
-        NoCopy& operator=(NoCopy&&) = default;
-    };
+//non-copyable but trivally constructible and moveable type
+struct NoCopy {
+    NoCopy(const NoCopy&) = delete;
+    NoCopy()              = default;
+    NoCopy(NoCopy&&)      = default;
+    NoCopy& operator=(const NoCopy&) = delete;
+    NoCopy& operator=(NoCopy&&) = default;
+};
 
-    //trivially constructible, copyable, moveable type
-    struct Empty {
-    };
+//trivially constructible, copyable, moveable type
+struct Empty {
+};
 } // namespace details
 
 /**
@@ -127,16 +125,15 @@ namespace details
  * Can be used to e.g. ensure that std::is_copy_constructible and std::is_copy_assignable is true only if 
  * the type can actually be copied (Note: this is not true for some STL containers, e.g., std::vector).
  */
-template<bool Cond>
+template <bool Cond>
 using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
 
 /**
  * equivalent to not_copyable_if<Cond>::type. 
  * @see not_copyable_if
  */
-template<bool Cond>
+template <bool Cond>
 using not_copyable_if_t = typename not_copyable_if<Cond>::type;
-
 
 } // namespace mio
 

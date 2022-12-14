@@ -17,11 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import Damping
-from memilio.simulation.oseir import Model, simulate, Index_InfectionState
-from memilio.simulation.oseir import InfectionState as State
-import numpy as np
 import argparse
+
+import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.oseir import Index_InfectionState
+from memilio.simulation.oseir import InfectionState as State
+from memilio.simulation.oseir import (Model, interpolate_simulation_result,
+                                      simulate)
 
 
 def run_oseir_simulation():
@@ -39,11 +43,11 @@ def run_oseir_simulation():
     model = Model()
 
     # Compartment transition duration
-    model.parameters.LatentTime.value = 5.2
-    model.parameters.InfectiousTime.value = 6.
+    model.parameters.TimeExposed.value = 5.2
+    model.parameters.TimeInfected.value = 6.
 
     # Compartment transition propabilities
-    model.parameters.InfectionProbabilityFromContact.value = 1.
+    model.parameters.TransmissionProbabilityOnContact.value = 1.
 
     # Initial number of people in each compartment
     model.populations[Index_InfectionState(State.Exposed)] = 100
@@ -58,17 +62,20 @@ def run_oseir_simulation():
     model.parameters.ContactPatterns.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
-    # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    # Check logical constraints to parameters
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+    # interpolate results
+    result = interpolate_simulation_result(result)
+
     print(result.get_last_value())
 
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        'secir_simple', 
-        description = 'Simple example demonstrating the setup and simulation of the OSEIR model.')
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
     args = arg_parser.parse_args()
     run_oseir_simulation()
