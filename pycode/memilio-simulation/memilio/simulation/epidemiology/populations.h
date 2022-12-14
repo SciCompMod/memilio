@@ -57,12 +57,13 @@ void bind_Population(pybind11::module& m, std::string const& name, mio::Tag<mio:
 {
     using C    = mio::Populations<Cats...>;
     using Base = mio::CustomIndexArray<mio::UncertainValue, Cats...>;
-    
+
     // Catch warning ImportError: generic_type: type "" is already registered!
     try {
         bind_CustomIndexArray<mio::UncertainValue, Cats...>(m, (name + "Array").c_str());
     }
-    catch (std::runtime_error& e) {}
+    catch (std::runtime_error& e) {
+    }
 
     pybind11::class_<C, Base> c(m, name.c_str());
     c.def(pybind11::init([](mio::Index<Cats...> const& sizes, double val) {

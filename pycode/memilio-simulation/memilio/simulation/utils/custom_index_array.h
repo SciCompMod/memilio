@@ -53,7 +53,8 @@ void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>& 
     try {
         bind_Index<T>(m, ("Index_" + tname).c_str());
     }
-    catch (std::runtime_error& e) {    }
+    catch (std::runtime_error& e) {
+    }
     bind_single_tag_template_members<C, Ts...>(m, c); //next Tag
 }
 
@@ -154,7 +155,8 @@ std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_Custo
     try {
         bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
     }
-    catch (std::runtime_error& e) {    }
+    catch (std::runtime_error& e) {
+    }
 }
 
 template <class Type, class... Tags>
