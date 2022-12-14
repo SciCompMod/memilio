@@ -27,7 +27,7 @@ TEST(TestLocation, init)
         ASSERT_EQ(location.get_subpopulation(i), 0);
     }
     ASSERT_EQ(print_wrap(location.get_time_series_subpopulations().get_last_value()),
-              print_wrap(mio::TimeSeries<int>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
+              print_wrap(mio::TimeSeries<double>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
 }
 
 TEST(TestLocation, initCell)

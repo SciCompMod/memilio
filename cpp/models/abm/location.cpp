@@ -38,7 +38,8 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
 {
-    m_subpopulations_time_series.add_time_point(0);
+    // Initialise the first time point and set the subpopulation values to 0. 
+    m_subpopulations_time_series.add_time_point();
     m_subpopulations_time_series.get_last_value().setZero();
 }
 
@@ -217,10 +218,11 @@ double Location::compute_relative_transmission_risk()
 
 void Location::store_current_population(const TimePoint& t)
 {
-    m_subpopulations_time_series.add_time_point(t.seconds());
-    m_subpopulations_time_series.get_last_value().setZero();
-    auto last_idx = m_subpopulations_time_series.get_num_time_points() - 2;
-    m_subpopulations_time_series.get_last_value() += m_subpopulations_time_series.get_value(last_idx);
+    // Get the previous time point index. 
+    // Since index starts from 0, we need to -1 from the current time point. 
+    auto last_idx = m_subpopulations_time_series.get_num_time_points() - 1;
+    m_subpopulations_time_series.add_time_point(t.days());
+    m_subpopulations_time_series.get_last_value() = m_subpopulations_time_series.get_value(last_idx);
 }
 
 } // namespace abm
