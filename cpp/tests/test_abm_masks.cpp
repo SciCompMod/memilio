@@ -32,6 +32,30 @@ TEST(TestMasks, init)
     ASSERT_EQ(mask.get_time_used().seconds(), 0.);
 }
 
+TEST(TestMasks, setRequiredMasks)
+{
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    ASSERT_EQ(home.get_required_mask(), mio::abm::MaskType::Community);
+
+    home.set_required_mask(mio::abm::MaskType::FFP2);
+    ASSERT_EQ(home.get_required_mask(), mio::abm::MaskType::FFP2);
+}
+
+TEST(TestMasks, getType)
+{
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
+    auto type = mask.get_type();
+    ASSERT_EQ(type, mio::abm::MaskType::Community);
+}
+
+TEST(TestMasks, increaseTimeUsed)
+{
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
+    auto dt   = mio::abm::hours(2);
+    mask.increase_time_used(dt);
+    ASSERT_EQ(mask.get_time_used(), mio::abm::hours(2));
+}
+
 TEST(TestMasks, maskUsage)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
@@ -104,4 +128,16 @@ TEST(TestMasks, MaskProtection)
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_1_new_infection_state, mio::abm::InfectionState::Susceptible);
     ASSERT_EQ(susc_2_new_infection_state, mio::abm::InfectionState::Exposed);
+}
+
+TEST(TestMasks, setMasks)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::abm::AgeGroup::Count, {});
+
+    person.set_wear_mask(false);
+    ASSERT_FALSE(person.get_wear_mask());
+
+    person.set_wear_mask(true);
+    ASSERT_TRUE(person.get_wear_mask());
 }
