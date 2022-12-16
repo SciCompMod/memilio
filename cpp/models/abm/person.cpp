@@ -45,7 +45,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
-    , m_mask_compliance({LocationType::Count})
+    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
@@ -225,7 +225,7 @@ double Person::get_protective_factor(const GlobalInfectionParameters& params) co
     }
 }
 
-void Person::mask_usage(Location& target)
+void Person::apply_mask_intervention(const Location& target)
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;

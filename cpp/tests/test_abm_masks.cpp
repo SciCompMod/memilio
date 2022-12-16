@@ -17,28 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/location_type.h"
-#include "abm/mask.h"
-#include "abm/mask_type.h"
-#include "abm/person.h"
-#include "abm/state.h"
 #include "test_abm.h"
-#include "gmock/gmock.h"
-#include <gtest/gtest.h>
 
 TEST(TestMasks, init)
 {
     auto mask = mio::abm::Mask(mio::abm::MaskType::Count);
     ASSERT_EQ(mask.get_time_used().seconds(), 0.);
-}
-
-TEST(TestMasks, setRequiredMasks)
-{
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    ASSERT_EQ(home.get_required_mask(), mio::abm::MaskType::Community);
-
-    home.set_required_mask(mio::abm::MaskType::FFP2);
-    ASSERT_EQ(home.get_required_mask(), mio::abm::MaskType::FFP2);
 }
 
 TEST(TestMasks, getType)
@@ -56,43 +40,19 @@ TEST(TestMasks, increaseTimeUsed)
     ASSERT_EQ(mask.get_time_used(), mio::abm::hours(2));
 }
 
-TEST(TestMasks, maskUsage)
+TEST(TestMasks, changeMask)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto target = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    target.set_npi_active(true);
-    target.set_required_mask(mio::abm::MaskType::Surgical);
+    auto mask = mio::abm::Mask(mio::abm::MaskType::Community);
+    mask.increase_time_used(mio::abm::hours(2));
+    ASSERT_EQ(mask.get_type(), mio::abm::MaskType::Community);
+    ASSERT_EQ(mask.get_time_used(), mio::abm::hours(2));
 
-    auto person = mio::abm::Person(home, mio::abm::InfectionState::Count, mio::abm::AgeGroup::Count, {});
-    person.get_mask().change_mask(mio::abm::MaskType::Community);
-
-    person.mask_usage(target);
-
-    ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
-    ASSERT_TRUE(person.get_wear_mask());
-
-    target.set_npi_active(false);
-    person.mask_usage(target);
-
-    ASSERT_FALSE(person.get_wear_mask());
-
-    auto preferences = mio::CustomIndexArray<double, mio::abm::LocationType>({mio::abm::LocationType::Count}, -1.);
-    person.set_mask_preferences(preferences);
-    person.get_mask().change_mask(mio::abm::MaskType::Community);
-    person.mask_usage(target);
-
-    ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Community);
-    ASSERT_FALSE(person.get_wear_mask());
-
-    preferences = mio::CustomIndexArray<double, mio::abm::LocationType>({mio::abm::LocationType::Count}, 1.);
-    person.set_mask_preferences(preferences);
-    target.set_npi_active(false);
-    person.mask_usage(target);
-
-    ASSERT_TRUE(person.get_wear_mask());
+    mask.change_mask(mio::abm::MaskType::Surgical);
+    ASSERT_EQ(mask.get_type(), mio::abm::MaskType::Surgical);
+    ASSERT_EQ(mask.get_time_used(), mio::abm::hours(0));
 }
 
-TEST(TestMasks, MaskProtection)
+TEST(TestMasks, maskProtection)
 {
     mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState::Unvaccinated;
     mio::abm::GlobalInfectionParameters params;
@@ -100,11 +60,11 @@ TEST(TestMasks, MaskProtection)
     //setup location with some chance of exposure
     auto infection_location = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto susc_person1       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
     auto susc_person2       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
     auto infected1          = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier,
-                                               mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                      mio::abm::AgeGroup::Age15to34, params, vaccination_state);
     infection_location.add_person(susc_person1);
     infection_location.add_person(susc_person2);
     infection_location.add_person(infected1);
@@ -128,16 +88,4 @@ TEST(TestMasks, MaskProtection)
     // The person susc_person1 should have full protection against an infection, susc_person2 not
     ASSERT_EQ(susc_1_new_infection_state, mio::abm::InfectionState::Susceptible);
     ASSERT_EQ(susc_2_new_infection_state, mio::abm::InfectionState::Exposed);
-}
-
-TEST(TestMasks, setMasks)
-{
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::abm::AgeGroup::Count, {});
-
-    person.set_wear_mask(false);
-    ASSERT_FALSE(person.get_wear_mask());
-
-    person.set_wear_mask(true);
-    ASSERT_TRUE(person.get_wear_mask());
 }

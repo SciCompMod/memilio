@@ -88,7 +88,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target)) {
                     if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
-                        person->mask_usage(*target);
+                        person->apply_mask_intervention(*target);
                         person->migrate_to(get_location(*person), *target);
                         break;
                     }
@@ -105,7 +105,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target)) {
-                    person->mask_usage(target);
+                    person->apply_mask_intervention(target);
                     person->migrate_to(get_location(*person), target);
                 }
             }

@@ -44,7 +44,7 @@ public:
     /**
     * get the time the mask was used
     */
-    TimeSpan get_time_used() const
+    const TimeSpan& get_time_used() const
     {
         return m_time_used;
     }
