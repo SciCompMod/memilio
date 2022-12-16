@@ -32,6 +32,8 @@ namespace isecir
 class Model
 {
     /* TODO: 
+    - Kontaktmatrix ist nicht richtig definiert? Warum wird 0 dafür ausgegeben
+    - Beispiel läuft durch, aber Werte passen nicht; haben u.a. keine konstante Bevölkerungszahl
     - Indizes in Funktionen und Output für Testbeispiel genau(!!) überprüfen
     - in parameters: unordered map statt transitions
     - Evtl. allgemeinen Integrator als non-standrd diff. scheme anstatt aktueller Approximation
@@ -79,14 +81,19 @@ public:
     // later insert corresponding function
     void get_size_of_compartments(int t_max);
 
+    void print_transitions() const;
+    
+    void print_compartments() const;
+
 private:
     // Funktion to update current value for S
     void update_susceptibles();
     void update_forceofinfection();
     void compute_flow(int idx_InfectionTransitions, ScalarType TransitionProbability, int idx_TransitionDistribution);
     void compute_totaldeaths();
-    void get_size_of_compartments(int idx_IncomingFlow, ScalarType TransitionProbability, int idx_TransitionDistribution,
-                                  int idx_TransitionDistributionToRecov, int idx_InfectionState);
+    void get_size_of_compartments(int idx_IncomingFlow, ScalarType TransitionProbability,
+                                  int idx_TransitionDistribution, int idx_TransitionDistributionToRecov,
+                                  int idx_InfectionState);
 
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType> m_transitions;
