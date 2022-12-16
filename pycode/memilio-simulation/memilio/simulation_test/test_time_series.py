@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 import unittest
-from numpy.testing import assert_array_equal
-import memilio.simulation as mio
+
 import numpy as np
+from numpy.testing import assert_array_equal
+
+import memilio.simulation as mio
 
 
 class Test_TimeSeries(unittest.TestCase):

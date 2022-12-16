@@ -30,15 +30,16 @@ extrapolated in this script.
 
 # Imports
 import os
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from datetime import date
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
@@ -232,7 +233,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
             df['Meldedatum'])
 
-    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format="%Y-%m-%d")
+    df[dd.EngEng['date']] = pd.to_datetime(
+        df[dd.EngEng['date']], format="%Y-%m-%d")
 
     # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
@@ -472,7 +474,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if impute_dates or moving_average > 0:
         gbNFc_cs = mdfs.impute_and_reduce_df(
             gbNFc_cs,
-            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
+            {dd.EngEng["idCounty"]: sorted(
+                set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed'],
             impute='forward', moving_average=moving_average,
             min_date=start_date, max_date=end_date)
@@ -507,7 +510,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if impute_dates or moving_average > 0:
         gbAllC_cs = mdfs.impute_and_reduce_df(
             gbAllC_cs,
-            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
+            {dd.EngEng["idCounty"]: sorted(
+                set(df[dd.EngEng["idCounty"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average,
             min_date=start_date, max_date=end_date)
@@ -657,7 +661,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     if impute_dates or moving_average > 0:
         gbAllA_cs = mdfs.impute_and_reduce_df(
             gbAllA_cs,
-            {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
+            {dd.EngEng["ageRKI"]: sorted(
+                set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average,
             min_date=start_date, max_date=end_date)

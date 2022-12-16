@@ -9,7 +9,7 @@ jobs:
   build-cpp-gcc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with: 
           compiler: "gcc"
@@ -17,9 +17,9 @@ jobs:
           version: "latest"
 
   build-cpp-clang:
-    runs-on: "ubuntu-18.04"
+    runs-on: "ubuntu-20.04"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with: 
           compiler: "clang"
@@ -29,7 +29,7 @@ jobs:
   build-cpp-msvc:
     runs-on: "windows-2022"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
         with: 
           config: "Debug"
@@ -39,16 +39,16 @@ jobs:
     needs: build-cpp-gcc
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
         with: 
           build-artifact: build-cpp-linux-gcc-latest-Debug-full
 
   test-cpp-clang:
     needs: build-cpp-clang
-    runs-on: "ubuntu-18.04"
+    runs-on: "ubuntu-20.04"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
         with: 
           build-artifact: build-cpp-linux-clang-latest-Debug-full
@@ -57,7 +57,7 @@ jobs:
     needs: build-cpp-msvc
     runs-on: "windows-2022"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
         with: 
           build-artifact: build-cpp-windows-msvc-latest-Debug-full
@@ -67,7 +67,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: epidata
@@ -76,7 +76,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: epidata
@@ -105,7 +105,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: simulation
@@ -114,7 +114,7 @@ jobs:
     needs: build-py-simulation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
@@ -123,7 +123,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-pylint
         with:
           package: epidata
@@ -132,5 +132,5 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-docs

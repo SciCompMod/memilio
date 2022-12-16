@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 
-from memilio.simulation.secir import SecirPopulationArray, AgeGroupArray, AgeGroup, InfectionState
-from memilio.simulation import UncertainValue
 from unittest import TestCase, main
+
+from memilio.simulation import UncertainValue
+from memilio.simulation.secir import (AgeGroup, AgeGroupArray, InfectionState,
+                                      SecirPopulationArray)
 
 
 class TestCustomIndexArray(TestCase):

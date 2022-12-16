@@ -14,7 +14,7 @@ runs:
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
     - name: Install Python Wheels
@@ -31,7 +31,7 @@ runs:
         python setup.py pylint
         pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
     - name: Upload Pylint Report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: pylint-report
         path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html

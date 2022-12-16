@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import memilio.simulation.secir as secir
-import memilio.simulation as mio
+
 import numpy as np
+
+import memilio.simulation as mio
+import memilio.simulation.secir as secir
 
 
 class Test_Migration(unittest.TestCase):

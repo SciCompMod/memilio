@@ -17,15 +17,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result
-from memilio.simulation.secir import InfectionState as State
+import argparse
+import os
+from datetime import date, datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime, date
-import os
-import argparse
+
+from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation.secir import InfectionState as State
+from memilio.simulation.secir import (Model, Simulation,
+                                      interpolate_simulation_result, simulate)
 
 
 def run_secir_groups_simulation(show_plot=True):

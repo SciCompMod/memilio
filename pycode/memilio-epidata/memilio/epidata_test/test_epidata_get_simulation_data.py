@@ -18,11 +18,12 @@
 # limitations under the License.
 #############################################################################
 import unittest
+from unittest.mock import call, patch
+
 from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import getSimulationData as gsd
 from memilio.epidata import defaultDict as dd
-from unittest.mock import patch, call
+from memilio.epidata import getSimulationData as gsd
 
 
 class TestGetSimulationData(fake_filesystem_unittest.TestCase):
@@ -64,7 +65,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "file_format": dd.defaultDict['file_format'],
             "out_folder": self.path,
             'no_raw': dd.defaultDict["no_raw"]}
-        
+
         arg_dict_data_download = {
             "start_date": dd.defaultDict['start_date'],
             "end_date": dd.defaultDict['end_date'],
