@@ -260,40 +260,37 @@ TEST(TestPerson, interact_exposed)
     EXPECT_EQ(loc.get_subpopulation(mio::abm::InfectionState::Infected), 2);
 }
 
-TEST(TestPerson, applyMaskInterventions)
+TEST(TestPerson, applyMaskIntervention)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto target = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    target.set_npi_active(true);
-    target.set_required_mask(mio::abm::MaskType::Surgical);
-
     auto person = mio::abm::Person(home, mio::abm::InfectionState::Count, mio::abm::AgeGroup::Count, {});
     person.get_mask().change_mask(mio::abm::MaskType::Community);
 
+    target.set_npi_active(false);
+    person.apply_mask_intervention(target);
+    ASSERT_FALSE(person.get_wear_mask());
+
+    auto preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 1.);
+    person.set_mask_preferences(preferences);
+    person.apply_mask_intervention(target);
+
+    ASSERT_TRUE(person.get_wear_mask());
+
+    target.set_npi_active(true);
+    target.set_required_mask(mio::abm::MaskType::Surgical);
+    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 0.);
+    person.set_mask_preferences(preferences);
     person.apply_mask_intervention(target);
 
     ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Surgical);
     ASSERT_TRUE(person.get_wear_mask());
 
-    target.set_npi_active(false);
+    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, -1.);
+    person.set_mask_preferences(preferences);
     person.apply_mask_intervention(target);
 
     ASSERT_FALSE(person.get_wear_mask());
-
-    auto preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, -1.);
-    person.set_mask_preferences(preferences);
-    person.get_mask().change_mask(mio::abm::MaskType::Community);
-    person.apply_mask_intervention(target);
-
-    ASSERT_EQ(person.get_mask().get_type(), mio::abm::MaskType::Community);
-    ASSERT_FALSE(person.get_wear_mask());
-
-    preferences = std::vector<double>((uint32_t)mio::abm::LocationType::Count, 1.);
-    person.set_mask_preferences(preferences);
-    target.set_npi_active(false);
-    person.apply_mask_intervention(target);
-
-    ASSERT_TRUE(person.get_wear_mask());
 }
 
 TEST(TestPerson, setWearMask)
