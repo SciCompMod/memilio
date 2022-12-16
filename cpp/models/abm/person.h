@@ -270,7 +270,8 @@ public:
     }
 
     /**
-     * @brief Get the protective factor of the mask.
+     * @brief Get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection.
+     * @return The protection factor of the mask.
      */
     double get_protective_factor(const GlobalInfectionParameters& params) const;
 
@@ -300,7 +301,7 @@ public:
      * @brief Checks whether the person wears a mask at the target location.
      * @param target The target location.
      */
-    void apply_mask_intervention(const Location& target);
+    bool apply_mask_intervention(const Location& target);
 
     /**
      * @brief Decide if a person is currently wearing a mask.

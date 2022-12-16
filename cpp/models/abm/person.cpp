@@ -211,10 +211,6 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-/**
- * get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection
- * @return protection factor of the mask 
- */
 double Person::get_protective_factor(const GlobalInfectionParameters& params) const
 {
     if (m_wears_mask == false) {
@@ -225,7 +221,7 @@ double Person::get_protective_factor(const GlobalInfectionParameters& params) co
     }
 }
 
-void Person::apply_mask_intervention(const Location& target)
+bool Person::apply_mask_intervention(const Location& target)
 {
     if (target.get_npi_active() == false) {
         m_wears_mask = false;
@@ -245,6 +241,7 @@ void Person::apply_mask_intervention(const Location& target)
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }
+            return false;
         }
         if (m_wears_mask == true) {
 
@@ -253,6 +250,7 @@ void Person::apply_mask_intervention(const Location& target)
             }
         }
     }
+    return true;
 }
 
 } // namespace abm
