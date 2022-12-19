@@ -270,7 +270,7 @@ public:
     }
 
     /**
-     * @brief Get the protection of the mask. A value of 1. represents no protection and a value of 0. full protection.
+     * @brief Get the protection of the mask. A value of 1 represents full protection and a value of 0 means no protection.
      * @return The protection factor of the mask.
      */
     double get_protective_factor(const GlobalInfectionParameters& params) const;
