@@ -23,6 +23,7 @@ set(TESTSOURCES
     test_stl_util.cpp
     test_uncertain.cpp
     test_time_series.cpp
+    test_abm_household.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
@@ -30,7 +31,6 @@ set(TESTSOURCES
     test_abm_person.cpp
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
-    test_abm_household.cpp
     test_abm_world.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
