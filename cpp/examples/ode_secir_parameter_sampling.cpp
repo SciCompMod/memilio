@@ -101,6 +101,7 @@ int main()
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 
+    //Dampings are sorted automatically by time, therefore the second DampingSamping is at the first position
     printf("\n First damping at %.2f with factor %.2f\n", double(cfmat_sample[0].get_dampings()[0].get_time()),
            cfmat_sample[0].get_dampings()[0].get_coeffs()(0, 0));
 
