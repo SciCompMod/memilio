@@ -25,6 +25,8 @@ add_library(abm
     infection_state.h
     virus_variant.h
     vaccine.h
+    mask.h
+    mask.cpp
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

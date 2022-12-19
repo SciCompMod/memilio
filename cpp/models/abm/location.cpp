@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,6 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/mask_type.h"
+#include "abm/mask.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
@@ -33,15 +35,17 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_index(index)
     , m_capacity_adapted_transmission_risk(false)
     , m_cells(std::vector<Cell>(num_cells))
+    , m_required_mask(MaskType::Community)
+    , m_npi_active(false)
 {
 }
 
 VirusVariant Location::interact(const Person& person, const TimePoint& t, const TimeSpan& dt) const
 {
-    auto age = person.get_age();
+    auto age               = person.get_age();
+    double mask_protection = person.get_protective_factor(global_params);
     for (auto cell_index : person.get_cells()) { // should be changed so that persons can only be in one cell
         std::pair<VirusVariant, double> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
-
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus              = static_cast<VirusVariant>(v);
             double local_indiv_trans_prob_v = 0;

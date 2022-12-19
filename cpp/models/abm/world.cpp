@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,6 +19,7 @@
 * limitations under the License.
 */
 #include "abm/world.h"
+#include "abm/mask_type.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/migration_rules.h"
@@ -82,7 +83,7 @@ void World::set_infection_state(Person& person, const InfectionState inf_state, 
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    for (auto&& person : m_persons) {
+    for (auto& person : m_persons) {
         for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
             const auto& locs = rule.second;
@@ -95,7 +96,10 @@ void World::migration(TimePoint t, TimeSpan dt)
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target, t)) {
                     if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
-                        person->migrate_to(get_location(*person), *target);
+                        bool wears_mask = person->apply_mask_intervention(*target);
+                        if (wears_mask) {
+                            person->migrate_to(get_location(*person), *target);
+                        }
                         break;
                     }
                 }
@@ -111,6 +115,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target, t)) {
+                    person->apply_mask_intervention(target);
                     person->migrate_to(get_location(*person), target);
                 }
             }

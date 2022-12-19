@@ -21,6 +21,7 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "abm/age.h"
+#include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
@@ -192,13 +193,25 @@ struct DetectInfection {
     }
 };
 
+struct MaskProtection {
+    using Type = CustomIndexArray<double, MaskType>;
+    static auto get_default()
+    {
+        return Type({MaskType::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "MaskProtection";
+    }
+};
+
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection>;
 
 struct MaximumContacts {
     using Type = double;
