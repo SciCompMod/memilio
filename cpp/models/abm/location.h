@@ -38,12 +38,12 @@ namespace abm
 class Person;
 
 /**
- * LocationCapacity describes the size of a location. 
+ * CellCapacity describes the size of a cell. 
  * It consists of a volume and a capacity in persons which is an upper bound for the number
- * of people that can be at the location at the same time.
+ * of people that can be in the cell at the same time.
  */
-struct LocationCapacity {
-    LocationCapacity()
+struct CellCapacity {
+    CellCapacity()
         : volume(0)
         , persons(std::numeric_limits<int>::max())
     {
@@ -76,19 +76,25 @@ struct LocationId {
  */
 struct Cell {
     std::vector<Person> m_persons;
-    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate;
+    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
+    CustomIndexArray<double, VirusVariant> m_cached_exposure_rate_air;
+    CellCapacity m_capacity;
 
-    Cell(std::vector<Person> persons)
+    Cell(std::vector<Person> persons = {})
         : m_persons(std::move(persons))
-        , m_cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
+        , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
+        , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
+        , m_capacity()
     {
     }
 
-    Cell()
-        : m_persons{}
-        , m_cached_exposure_rate({{VirusVariant::Count, AgeGroup::Count}, 0.})
-    {
-    }
+    /**
+    * computes a relative cell size for the cell
+    * @return the relative cell size for the cell
+    */
+    double compute_relative_cell_size();
+
+    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
 
 }; // namespace mio
 
@@ -102,9 +108,9 @@ public:
      * construct a Location of a certain type.
      * @param type the type of the location
      * @param index the index of the location
-     * @param num_cells the number of cells in which the location is divided
+     * @param num_cells the number of cells in which the location is divided, default 1
      */
-    Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
+    Location(LocationType type, uint32_t index, uint32_t num_cells = 1);
 
     /**
      * get the type of this location.
@@ -134,8 +140,9 @@ public:
     /** 
      * add a person to the population at this location.
      * @param person the person arriving
+     * @param cell_idx index of the cell the person shall go to
     */
-    void add_person(const Person& person);
+    void add_person(const Person& person, const uint32_t cell_idx = 0);
 
     /** 
      * remove a person from the population of this location.
@@ -174,41 +181,42 @@ public:
      */
     int get_population()
     {
-        return m_persons.size();
+        return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](int sum, auto cell) {
+            return sum + cell.m_capacity.persons;
+        });
     }
 
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<double, VirusVariant, AgeGroup> get_cached_exposure_rate()
+    CustomIndexArray<double, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(const uint32_t cell_idx)
     {
-        return m_cached_exposure_rate;
+        return m_cells[cell_idx].m_cached_exposure_rate_contacts;
+    }
+
+    CustomIndexArray<double, VirusVariant> get_cached_exposure_rate_air(const uint32_t cell_idx)
+    {
+        return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
 
     /**
-    * Set the capacity of the location in person and volume
-    * @param persons maximum number of people that can visit the location at the same time
-    * @param volume volume of the location in m^3
+    * Set the capacity of a cell in the location in person and volume
+    * @param persons maximum number of people that can visit the cell at the same time
+    * @param volume volume of the cell in m^3
     */
-    void set_capacity(int persons, int volume)
+    void set_capacity(int persons, int volume, uint32_t cell_idx = 0)
     {
-        m_capacity.persons = persons;
-        m_capacity.volume  = volume;
+        m_cells[cell_idx].m_capacity.persons = persons;
+        m_cells[cell_idx].m_capacity.volume  = volume;
     }
 
     /**
-    * @return the capacity of the location in person and volume
+    * @return the capacity of a cell in person and volume
     */
-    LocationCapacity get_capacity()
+    CellCapacity get_capacity(uint32_t cell_idx = 0)
     {
-        return m_capacity;
+        return m_cells[cell_idx].m_capacity;
     }
-
-    /**
-    * computes a relative transmission risk factor for the location
-    * @return the relative risk factor for the location
-    */
-    double compute_relative_transmission_risk();
 
     /**
     * Set the capacity adapted transmission risk flag
@@ -220,20 +228,31 @@ public:
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
-    int get_subpopulation(TimePoint t, InfectionState state = InfectionState::Infected) const;
+    /**
+    * get subpopulation for one cell
+    */
+    int get_subpopulation(const TimePoint& t, const InfectionState& state, const uint32_t cell_idx) const;
 
+    /**
+    * get subpouplation for all cells
+    */
+    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+
+    /**
+     * get all subpopulations for all cells
+    */
     Eigen::Ref<const Eigen::VectorXi> get_subpopulations(TimePoint t) const;
 
+    /**
+     * get the total number of infected persons
+    */
     int get_number_infected_total(TimePoint t) const;
 
 private:
     LocationType m_type;
     uint32_t m_index;
-    LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    std::vector<Person> m_persons;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate;
     std::vector<Cell> m_cells{};
 };
 

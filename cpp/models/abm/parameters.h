@@ -224,14 +224,29 @@ struct ContactRates {
     }
     static std::string name()
     {
-        return "ContactRate";
+        return "ContactRates";
+    }
+};
+
+/**
+ * aerosol transmission rates
+*/
+struct AerosolTransmissionRates {
+    using Type = CustomIndexArray<double, VirusVariant>;
+    static Type get_default()
+    {
+        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+    }
+    static std::string name()
+    {
+        return "AerosolTransmissionRates";
     }
 };
 
 /**
  * parameters of the infection that depend on the location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
 
 struct TestParameters {
     double sensitivity;

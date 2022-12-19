@@ -84,10 +84,10 @@ public:
     /** 
      * add a location to the world.
      * @param type type of location to add
-     * @param num_cells number of cells that the location is divided into
+     * @param num_cells number of cells that the location is divided into, default 1
      * @return index and type of the newly created location
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 0);
+    LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /** add a person to the world 
      * @param id index and type of the initial location of the person
