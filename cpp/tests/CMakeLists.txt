@@ -25,6 +25,7 @@ set(TESTSOURCES
     test_time_series.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
+    test_abm_masks.cpp
     test_abm_migration_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp

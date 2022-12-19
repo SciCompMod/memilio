@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,6 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/mask_type.h"
+#include "abm/mask.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/location.h"
 #include "abm/person.h"
@@ -37,6 +39,8 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_subpopulations_time_series(Eigen::Index(InfectionState::Count))
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
+    , m_required_mask(MaskType::Community)
+    , m_npi_active(false)
 {
     // Initialise the first time point and set the subpopulation values to 0. 
     m_subpopulations_time_series.add_time_point();
@@ -49,13 +53,15 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
+    double mask_protection = person.get_protective_factor(global_params);
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (!person.get_cells().empty()) {
             for (auto cell_index : person.get_cells()) {
                 InfectionState new_state = random_transition(
                     infection_state, dt,
-                    {{InfectionState::Exposed, m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
+                    {{InfectionState::Exposed,
+                      (1 - mask_protection) * m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
                 if (new_state != infection_state) {
                     return new_state;
                 }
@@ -63,8 +69,9 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
             return infection_state;
         }
         else {
-            return random_transition(infection_state, dt,
-                                     {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
+            return random_transition(
+                infection_state, dt,
+                {{InfectionState::Exposed, (1 - mask_protection) * m_cached_exposure_rate[{age, vaccination_state}]}});
         }
     case InfectionState::Carrier:
         return random_transition(

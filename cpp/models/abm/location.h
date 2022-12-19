@@ -20,6 +20,7 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
+#include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/state.h"
 #include "abm/location_type.h"
@@ -188,6 +189,20 @@ public:
     }
 
     /**
+     * get the type of mask that is demanded when entering the location
+     * @return type of the mask 
+     */
+    MaskType get_required_mask() const
+    {
+        return m_required_mask;
+    }
+
+    void set_required_mask(MaskType type)
+    {
+        m_required_mask = type;
+    }
+
+    /**
      * get the number of persons at the location
      * @return number of persons
      */
@@ -253,6 +268,16 @@ public:
     {
         return m_subpopulations_time_series;
     }
+    
+    bool get_npi_active() const
+    {
+        return m_npi_active;
+    }
+
+    void set_npi_active(bool new_status)
+    {
+        m_npi_active = new_status;
+    }
 
 private:
     void change_subpopulation(InfectionState s, int delta);
@@ -266,6 +291,8 @@ private:
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
+    MaskType m_required_mask;
+    bool m_npi_active;
 };
 
 } // namespace abm
