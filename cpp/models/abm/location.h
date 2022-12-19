@@ -206,7 +206,7 @@ public:
      * get the number of persons at the location
      * @return number of persons
      */
-    int get_population()
+    int get_total_population_size()
     {
         return m_num_persons;
     }
@@ -264,7 +264,7 @@ public:
      * Return the time series object of the current number of individuals in the each infection state
      * @return the time series object of the current number of individuals in the each infection state
     */
-    const TimeSeries<double>& get_time_series_subpopulations() const
+    const TimeSeries<double>& get_population() const
     {
         return m_subpopulations_time_series;
     }
