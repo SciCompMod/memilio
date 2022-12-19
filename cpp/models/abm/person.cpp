@@ -77,7 +77,7 @@ void Person::interact(const TimePoint& t, const TimeSpan& dt, Location& loc, con
 {
     auto current_infection_state = get_infection_state(t);
     if (current_infection_state == InfectionState::Susceptible) { // Susceptible
-        auto virus = loc.interact(*this, t, dt);
+        auto virus = loc.interact(*this, t, dt, params);
 
         if (virus != VirusVariant::Count) {
             add_new_infection(Infection(virus, params, t));
@@ -220,7 +220,7 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-double Person::get_protective_factor(const GlobalInfectionParameters& params) const
+double Person::get_mask_protective_factor(const GlobalInfectionParameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;

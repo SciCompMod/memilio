@@ -40,10 +40,11 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-VirusVariant Location::interact(const Person& person, const TimePoint& t, const TimeSpan& dt) const
+VirusVariant Location::interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
+                                const GlobalInfectionParameters& global_params) const
 {
     auto age               = person.get_age();
-    double mask_protection = person.get_protective_factor(global_params);
+    double mask_protection = person.get_mask_protective_factor(global_params);
     for (auto cell_index : person.get_cells()) { // should be changed so that persons can only be in one cell
         std::pair<VirusVariant, double> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
@@ -54,7 +55,8 @@ VirusVariant Location::interact(const Person& person, const TimePoint& t, const 
                                                  m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] +
                                              m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
                                                  m_parameters.get<AerosolTransmissionRates>()[{virus}]) *
-                                            dt.days() / days(1).days() * person.get_protection_factor(virus, t);
+                                            (1 - mask_protection) * dt.days() / days(1).days() *
+                                            person.get_protection_factor(virus, t);
             }
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }

@@ -136,7 +136,8 @@ public:
      * @param global_params global infection parameters
      * @return new infection of the person
      */
-    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt) const;
+    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
+                          const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
