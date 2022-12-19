@@ -90,6 +90,12 @@ int main()
     params.get<mio::osecir::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
         mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.2));
 
+    params.get<mio::osecir::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
+        mio::UncertainValue(0.3), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(10.),
+        std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));
+    params.get<mio::osecir::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
+        mio::ParameterDistributionNormal(0.0, 1.0, 0.4, 0.05));
+
     draw_sample(model);
     auto& cfmat_sample = params.get<mio::osecir::ContactPatterns>().get_cont_freq_mat();
 
