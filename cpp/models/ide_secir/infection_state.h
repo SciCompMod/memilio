@@ -63,3 +63,31 @@ enum class InfectionTransitions
 } // namespace mio
 
 #endif
+
+/*
+class InfectionTransitions2
+{
+
+    InfectionTransitions2()
+    {
+
+        std::vector<std::pair<InfectionState, InfectionState>> a;
+        // map[;
+        // map[InfectionState::Exposed]            = {InfectionState::InfectedNoSymptoms};
+        // map[InfectionState::InfectedNoSymptoms] = {InfectionState::InfectedSymptoms, InfectionState::Recovered};
+    }
+
+    // size_t idx = 0;
+    // for (size_t i = 0; i < InfectionState::Count; i++) {
+    //     for (size_t j = 0; j < map[i].size(); j++) {
+    //         3 * VECTOR[idx] idx++;
+    //     }
+    // }
+
+private:
+    std::unordered_map<std::pair<InfectionState, InfectionState>, size_t> map;
+}
+
+} // namespace isecir
+} // namespace mio
+*/

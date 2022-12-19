@@ -26,27 +26,27 @@
 
 int main()
 {
-    using Vec = mio::TimeSeries<double>::Vector;
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     int tmax     = 10;
-    size_t N     = 100;
-    size_t Dead0 = 0;
+    size_t N     = 1000;
+    size_t Dead0 = 12;
     double dt    = 1;
     // for SECIHURD model we need 6 transitions for simulation
     size_t num_transitions = 6;
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-    mio::TimeSeries<double> init(num_transitions);
+    mio::TimeSeries<ScalarType> init(num_transitions);
     std::cout << "time points: " << init.get_num_time_points()
               << ", elements: " << init.get_num_elements() << "\n";
 
     // add time points for initialization
-    init.add_time_point<Eigen::VectorXd>(-5.0, Vec::Constant(num_transitions, (size_t)5));
+    init.add_time_point<Eigen::VectorXd>(-10, Vec::Constant(num_transitions, 40));
     std::cout << "time points: " << init.get_num_time_points()
               << ", elements: " << init.get_num_elements() << "\n";
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt,
-                                        Vec::Constant(num_transitions, (double)init.get_last_value()[0]+1));
+                                        Vec::Constant(num_transitions, init.get_last_value()[0]+1.0));
     }
 
     // print initial transitions
@@ -68,7 +68,7 @@ int main()
     model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(6, 0.5));
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    model.parameters.set<mio::isecir::ContactPatterns>(1.0);
+    model.parameters.get<mio::isecir::ContactPatterns>()= mio::UncertainContactMatrix(contact_matrix);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);

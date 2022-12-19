@@ -73,9 +73,6 @@ public:
     // Used Parameters for the simulation.
     Pa parameters{};
 
-    // function that computes flows from one compartment to another at some time t
-    TimeSeries<ScalarType> get_flows(int t_max);
-
     // function that computes size of compartments from flows
     // define function more general as a sum of some \mu, some \gamma and some \sigma
     // later insert corresponding function
@@ -103,8 +100,6 @@ private:
 
     // Force of infection term needed for numerical scheme, corresponds to phi
     ScalarType m_forceofinfection{0};
-    // current susceptibles needed for numerical scheme
-    ScalarType m_susceptibles{0};
 
     // Timestep used for simulation.
     ScalarType m_dt{0};

@@ -41,7 +41,7 @@ namespace isecir
 */
 struct DelayDistribution {
     DelayDistribution()
-        : xright{2.0}
+        : xright{6.0}
     {
     }
     DelayDistribution(ScalarType init_x_right)
