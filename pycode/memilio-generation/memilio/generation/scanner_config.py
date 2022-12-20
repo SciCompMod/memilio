@@ -46,7 +46,6 @@ class ScannerConfig:
             target_folder: Target folder for generated files
     """
     source_file: str
-    path_database: str
     namespace: str
     python_module_name: str
     optional: dict = field(default_factory=dict)
@@ -62,7 +61,7 @@ class ScannerConfig:
         """
         # Predefined Variables
         self.model_class = "Model"
-        self.parameterset = "Parameters"
+        self.parameterset = "ParametersBase"
 
         # Get the project path. If this is used outside of Memilio it needs to be changed.
         project_directory_path = os.path.dirname(os.path.abspath(__file__))

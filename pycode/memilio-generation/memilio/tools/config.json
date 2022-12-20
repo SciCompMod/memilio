@@ -1,20 +1,18 @@
 [
     {
         "source_file": "/cpp/models/ode_seir/model.cpp",
-        "path_database": "/build",
         "namespace": "mio::oseir::",
         "python_module_name": "test_oseir",
         "optional": {
             "libclang_library_path": "",
             "simulation_name": "",
             "age_group": false,
-            "parameterset_wrapper": false,
+            "parameterset_wrapper": true,
             "target_folder": "/pycode/memilio-generation/memilio/tools"
         }
     },
     {
         "source_file": "/cpp/models/secir/secir.cpp",
-        "path_database": "/build",
         "namespace": "mio::",
         "python_module_name": "test_secir",
         "optional": {
@@ -27,7 +25,6 @@
     },
     {
         "source_file": "/cpp/models/ode_secirvvs/model.cpp",
-        "path_database": "/build",
         "namespace": "mio::osecirvvs::",
         "python_module_name": "test_secirvvs",
         "optional": {

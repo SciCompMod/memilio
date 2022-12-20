@@ -16,7 +16,7 @@ To use the package you need a usable model including a compilation database (com
 Use the provided `setup.py` script to build and install the package. To install the package, use the command (from the directory containing `setup.py`)
 
 ```bash
-pip install .
+pip install -e .[dev]
 ```
 
 ## Usage
