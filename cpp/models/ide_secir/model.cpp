@@ -106,12 +106,13 @@ void Model::compute_flow(int idx_InfectionTransitions, ScalarType TransitionProb
         // kann man wahrscheinlich auch shiften, aber finde es so einfacher
         
         // forward difference scheme to get always tau>=0
-        // we have infection_age = num_time_points - 1 - i 
-        // thus we are computing (gamma(infection_age) - gamma(infection_age - 1)/ dt * m_transitions[...]
+        // num_time_points - 1 - i gives us number of timepoint at specific infection_age, multiply with m_dt to convert from index to actual time
+        ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
+        // thus we are computing (gamma(infection_age) - gamma(infection_age - dt)/ dt * m_transitions[...]
         sum += (parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    num_time_points - 1 - i) -
+                    infection_age) -
                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    num_time_points - 2 - i)) /
+                    infection_age - m_dt)) /
                m_dt * m_transitions[i+1][Eigen::Index(idx_InfectionTransitions - 1)];
                // müssen überlegen ob i oder i+1 für Zeitindex in m_transitions?? siehe auch Formel -> Martin
         // std::cout << "sum: " << sum << "\n";
