@@ -21,7 +21,7 @@
 #include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"

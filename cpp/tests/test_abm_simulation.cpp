@@ -24,10 +24,10 @@ TEST(TestSimulation, advance_random)
     auto world     = mio::abm::World();
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
-    auto& p3       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
-    auto& p4       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto& p1 = world.add_person(location1, mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::AgeGroup::Age5to14);
+    auto& p2 = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+    auto& p3 = world.add_person(location2, mio::abm::InfectionState::InfectedSymptoms, mio::abm::AgeGroup::Age5to14);
+    auto& p4 = world.add_person(location2, mio::abm::InfectionState::InfectedSymptoms, mio::abm::AgeGroup::Age5to14);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);

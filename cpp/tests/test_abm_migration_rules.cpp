@@ -239,17 +239,18 @@ TEST(TestMigrationRules, quarantine)
     auto work     = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0);
 
-    auto p_inf1 = mio::abm::Person(work, {mio::abm::InfectionState::Infected, true}, mio::abm::AgeGroup::Age15to34, {});
+    auto p_inf1 =
+        mio::abm::Person(work, {mio::abm::InfectionState::InfectedSymptoms, true}, mio::abm::AgeGroup::Age15to34, {});
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf1, t, dt, {}),
               mio::abm::LocationType::Home); //detected infected person quarantines at home
 
     auto p_inf2 =
-        mio::abm::Person(work, {mio::abm::InfectionState::Infected, false}, mio::abm::AgeGroup::Age15to34, {});
+        mio::abm::Person(work, {mio::abm::InfectionState::InfectedSymptoms, false}, mio::abm::AgeGroup::Age15to34, {});
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf2, t, dt, {}),
               mio::abm::LocationType::Work); //undetected infected person does not quaratine
 
-    auto p_inf3 = mio::abm::Person(hospital, {mio::abm::InfectionState::Infected_Severe, true},
-                                   mio::abm::AgeGroup::Age15to34, {});
+    auto p_inf3 =
+        mio::abm::Person(hospital, {mio::abm::InfectionState::InfectedSevere, true}, mio::abm::AgeGroup::Age15to34, {});
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf3, t, dt, {}),
               mio::abm::LocationType::Hospital); //detected infected person does not leave hospital to quarantine
 }
@@ -257,22 +258,23 @@ TEST(TestMigrationRules, quarantine)
 TEST(TestMigrationRules, hospital)
 {
     auto home  = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto p_inf = mio::abm::Person(home, mio::abm::InfectionState::Infected_Severe, mio::abm::AgeGroup::Age15to34, {});
+    auto p_inf = mio::abm::Person(home, mio::abm::InfectionState::InfectedSevere, mio::abm::AgeGroup::Age15to34, {});
     auto t     = mio::abm::TimePoint(12346);
     auto dt    = mio::abm::hours(1);
 
     ASSERT_EQ(mio::abm::go_to_hospital(p_inf, t, dt, {}), mio::abm::LocationType::Hospital);
 
-    auto p_car = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+    auto p_car = mio::abm::Person(home, mio::abm::InfectionState::InfectedSymptoms, mio::abm::AgeGroup::Age15to34, {});
     ASSERT_EQ(mio::abm::go_to_hospital(p_car, t, dt, {}), mio::abm::LocationType::Home);
 }
 
 TEST(TestMigrationRules, go_shopping)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0);
-    auto p_hosp   = mio::abm::Person(hospital, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age0to4, {});
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto p_home   = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age60to79, {});
+    auto p_hosp =
+        mio::abm::Person(hospital, mio::abm::InfectionState::InfectedSymptoms, mio::abm::AgeGroup::Age0to4, {});
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto p_home = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age60to79, {});
 
     auto t_weekday = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto t_sunday  = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9);
@@ -296,7 +298,7 @@ TEST(TestMigrationRules, shop_return)
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto shop = mio::abm::Location(mio::abm::LocationType::BasicsShop, 0);
-    auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
+    auto p    = mio::abm::Person(home, mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
     p.interact(dt, {}, shop); //person only returns home after some time passed
@@ -335,7 +337,7 @@ TEST(TestMigrationRules, event_return)
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto shop = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0);
-    auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
+    auto p    = mio::abm::Person(home, mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::AgeGroup::Age15to34, {});
     home.add_person(p);
     p.migrate_to(home, shop);
     p.interact(dt, {}, shop);
@@ -347,24 +349,23 @@ TEST(TestMigrationRules, icu)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0);
     auto p_hosp =
-        mio::abm::Person(hospital, mio::abm::InfectionState::Infected_Critical, mio::abm::AgeGroup::Age15to34, {});
+        mio::abm::Person(hospital, mio::abm::InfectionState::InfectedCritical, mio::abm::AgeGroup::Age15to34, {});
     auto t  = mio::abm::TimePoint(12346);
     auto dt = mio::abm::hours(1);
 
     ASSERT_EQ(mio::abm::go_to_icu(p_hosp, t, dt, {}), mio::abm::LocationType::ICU);
 
     auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto p_work = mio::abm::Person(work, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+    auto p_work = mio::abm::Person(work, mio::abm::InfectionState::InfectedSymptoms, mio::abm::AgeGroup::Age15to34, {});
     ASSERT_EQ(mio::abm::go_to_icu(p_work, t, dt, {}), mio::abm::LocationType::Work);
 }
 
 TEST(TestMigrationRules, recover)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0);
-    auto p_rec =
-        mio::abm::Person(hospital, mio::abm::InfectionState::Recovered_Infected, mio::abm::AgeGroup::Age60to79, {});
+    auto p_rec    = mio::abm::Person(hospital, mio::abm::InfectionState::Recovered, mio::abm::AgeGroup::Age60to79, {});
     auto p_inf =
-        mio::abm::Person(hospital, mio::abm::InfectionState::Infected_Severe, mio::abm::AgeGroup::Age60to79, {});
+        mio::abm::Person(hospital, mio::abm::InfectionState::InfectedSevere, mio::abm::AgeGroup::Age60to79, {});
     auto t  = mio::abm::TimePoint(12346);
     auto dt = mio::abm::hours(1);
 
