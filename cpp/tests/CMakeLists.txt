@@ -46,6 +46,7 @@ set(TESTSOURCES
     test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_ide_seir.cpp
+    test_ide_secir.cpp
     distributions_helpers.h
     distributions_helpers.cpp
     actions.h

@@ -20,6 +20,7 @@
 #ifndef IDESECIR_INFECTIONSTATE_H
 #define IDESECIR_INFECTIONSTATE_H
 
+#include <array>
 namespace mio
 {
 
@@ -59,35 +60,21 @@ enum class InfectionTransitions
     Count                                = 6
 };
 
+static constexpr size_t InfectionTransitionsCount = 10;
+
+static const std::array<std::pair<InfectionState, InfectionState>, InfectionTransitionsCount> InfectionTransitionsMap =
+    {std::make_pair(InfectionState::Susceptible, InfectionState::Exposed),
+     std::make_pair(InfectionState::Exposed, InfectionState::InfectedNoSymptoms),
+     std::make_pair(InfectionState::InfectedNoSymptoms, InfectionState::InfectedSymptoms),
+     std::make_pair(InfectionState::InfectedNoSymptoms, InfectionState::Recovered),
+     std::make_pair(InfectionState::InfectedSymptoms, InfectionState::InfectedSevere),
+     std::make_pair(InfectionState::InfectedSymptoms, InfectionState::Recovered),
+     std::make_pair(InfectionState::InfectedSevere, InfectionState::InfectedCritical),
+     std::make_pair(InfectionState::InfectedSevere, InfectionState::Recovered),
+     std::make_pair(InfectionState::InfectedCritical, InfectionState::Dead),
+     std::make_pair(InfectionState::InfectedCritical, InfectionState::Recovered)}; // namespace isecir
+
 } // namespace isecir
 } // namespace mio
 
 #endif
-
-/*
-class InfectionTransitions2
-{
-
-    InfectionTransitions2()
-    {
-
-        std::vector<std::pair<InfectionState, InfectionState>> a;
-        // map[;
-        // map[InfectionState::Exposed]            = {InfectionState::InfectedNoSymptoms};
-        // map[InfectionState::InfectedNoSymptoms] = {InfectionState::InfectedSymptoms, InfectionState::Recovered};
-    }
-
-    // size_t idx = 0;
-    // for (size_t i = 0; i < InfectionState::Count; i++) {
-    //     for (size_t j = 0; j < map[i].size(); j++) {
-    //         3 * VECTOR[idx] idx++;
-    //     }
-    // }
-
-private:
-    std::unordered_map<std::pair<InfectionState, InfectionState>, size_t> map;
-}
-
-} // namespace isecir
-} // namespace mio
-*/
