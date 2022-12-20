@@ -35,8 +35,8 @@ mio::abm::InfectionState determine_infection_state(double exposed, double infect
 {
     double susceptible          = 1 - exposed - infected_symptoms - infected_no_symptoms - recovered;
     std::vector<double> weights = {
-        susceptible, exposed, infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3, infected_symptoms / 3,
-        recovered,   0};
+        susceptible,           exposed,  infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3,
+        infected_symptoms / 3, recovered};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }

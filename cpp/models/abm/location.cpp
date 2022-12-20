@@ -109,14 +109,14 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
         m_cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
     }
     else if (m_cells.empty()) {
-        auto num_infected_no_symptoms   = get_subpopulation(InfectionState::InfectedNoSymptoms);
-        auto num_infected_symptoms      = get_subpopulation(InfectionState::InfectedSymptoms);
         auto relative_transmission_risk = compute_relative_transmission_risk();
-        m_cached_exposure_rate.array() =
-            relative_transmission_risk * std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
-            m_num_persons *
-            (global_params.get<SusceptibleToExposedByInfectedNoSymptoms>().array() * num_infected_no_symptoms +
-             global_params.get<SusceptibleToExposedByInfectedSymptoms>().array() * num_infected_symptoms);
+        m_cached_exposure_rate.array()  = relative_transmission_risk *
+                                         std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
+                                         m_num_persons *
+                                         (global_params.get<SusceptibleToExposedByInfectedNoSymptoms>().array() *
+                                              get_subpopulation(InfectionState::InfectedNoSymptoms) +
+                                          global_params.get<SusceptibleToExposedByInfectedSymptoms>().array() *
+                                              get_subpopulation(InfectionState::InfectedSymptoms));
     }
     else {
         for (auto& cell : m_cells) {
