@@ -22,7 +22,9 @@
 @brief Generate small pieces of the target code as strings.
 """
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
 

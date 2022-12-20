@@ -20,8 +20,8 @@
 """
 Main folder of the automatic code generation.
 """
-from .intermediate_representation import IntermediateRepresentation
+from . import utility
 from .generator import Generator
+from .intermediate_representation import IntermediateRepresentation
 from .scanner import Scanner
 from .scanner_config import ScannerConfig
-from . import utility

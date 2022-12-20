@@ -1,7 +1,8 @@
 import os
 import subprocess
 import sys
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 try:
     from skbuild import setup
@@ -25,9 +26,11 @@ setup(
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
-    install_requires=['libclang', 'clang', 'dataclasses', 'dataclasses_json', ],
+    install_requires=['libclang', 'clang',
+                      'dataclasses', 'dataclasses_json', ],
     extras_require={'dev': ['pyfakefs>=4.2.1', ], },
-    long_description='', 
+    long_description='',
     test_suite='memilio.generation_test',
-    package_data={'memilio': ['../_skbuild/linux-x86_64-3.8/cmake-build/compile_commands.json']},
+    package_data={'memilio': [
+        '../_skbuild/*/cmake-build/compile_commands.json']},
 )

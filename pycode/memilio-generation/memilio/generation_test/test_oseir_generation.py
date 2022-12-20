@@ -18,12 +18,12 @@
 # limitations under the License.
 #############################################################################
 
-from memilio.generation import Scanner, ScannerConfig, Generator
-import unittest
+import os
 import subprocess
 import tempfile
+import unittest
 
-import os
+from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 class TestOseirGeneration(unittest.TestCase):
@@ -33,10 +33,10 @@ class TestOseirGeneration(unittest.TestCase):
     project_path = here.split('/pycode')[0]
 
     # Load expected results for oseir generation.
-    with open(os.path.join(here + "/test_data/test_oseir.py.txt"), 'r') as expected:
+    with open(os.path.join(here + "/test_data/test_oseir.py.txt")) as expected:
         expected_test_oseir_py = expected.read()
 
-    with open(os.path.join(here + "/test_data/test_oseir.cpp.txt"), 'r') as expected:
+    with open(os.path.join(here + "/test_data/test_oseir.cpp.txt")) as expected:
         expected_test_oseir_cpp = expected.read()
 
     # Create a temporary directory

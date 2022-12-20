@@ -22,12 +22,14 @@
 @brief Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
 """
 from __future__ import annotations
-import string
+
 import os
+import string
 from typing import TYPE_CHECKING
-from typing_extensions import Self
 
 from memilio.generation.template import template_string as StringTemplates
+from typing_extensions import Self
+
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
 
@@ -62,7 +64,8 @@ class Generator:
         self.substitutions_cpp["model_class_name"] = intermed_repr.model_class
         self.substitutions_cpp["model_base"] = intermed_repr.model_base[0]
         self.substitutions_cpp["model_base_templates"] = intermed_repr.model_base[1][0] + \
-            ", " + intermed_repr.model_base[2][0] + ", " + intermed_repr.model_base[3][0]
+            ", " + intermed_repr.model_base[2][0] + \
+            ", " + intermed_repr.model_base[3][0]
         self.substitutions_cpp["python_module_name"] = intermed_repr.python_module_name
         self.substitutions_cpp["parameterset"] = intermed_repr.parameterset
 

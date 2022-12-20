@@ -22,16 +22,18 @@
 @brief Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
 """
 from __future__ import annotations
+
 import os
 import subprocess
-import pkg_resources
 import tempfile
-from typing import Any, Callable, TYPE_CHECKING
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
-from clang.cindex import *
 
+import pkg_resources
+from clang.cindex import *
 from memilio.generation import IntermediateRepresentation, utility
+from typing_extensions import Self
+
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
 
@@ -62,7 +64,8 @@ class Scanner:
 
         # Create the cmd arguments
         file_args = []
-        dirname, _ = os.path.split(pkg_resources.resource_filename('memilio', '../_skbuild/linux-x86_64-3.8/cmake-build/compile_commands.json'))
+        dirname, _ = os.path.split(pkg_resources.resource_filename(
+            'memilio', '../_skbuild/linux-x86_64-3.8/cmake-build/compile_commands.json'))
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(os.path.join(
             self.config.project_path + self.config.source_file))

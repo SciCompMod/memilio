@@ -21,9 +21,10 @@
 @file utility.py
 @brief Additional functions used for the code generation.
 """
-import subprocess
 import os
+import subprocess
 from typing import Any, List, TextIO
+
 from clang.cindex import Config, Cursor, Type
 
 

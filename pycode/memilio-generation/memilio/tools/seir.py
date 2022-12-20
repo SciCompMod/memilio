@@ -20,14 +20,14 @@
 """
 Example for the ode seir model.
 """
-from memilio.generation import ScannerConfig, Generator, Scanner
 import os
 
+from memilio.generation import Generator, Scanner, ScannerConfig
 
 here = os.path.dirname(os.path.abspath(__file__))
 
 # Define ScannerConfig and initialize Scanner
-with open(os.path.join(here + '/config.json'), 'r') as file:
+with open(os.path.join(here + '/config.json')) as file:
     conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
 scanner = Scanner(conf)
 
