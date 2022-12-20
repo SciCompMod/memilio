@@ -65,8 +65,11 @@ void Model::update_forceofinfection()
     // TODO: Parameter müssten zum teil noch abhängig von tau und t sein, das ist in parameters aber noch nicht
     Eigen::Index calc_time_index                 = (Eigen::Index)std::ceil(calc_time / m_dt); //need calc_time timesteps in sum
 
+    
+
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points -1 ; i++) {
+        //std::cout << "Num time points m_transitions, i+1: " << m_transitions.get_num_time_points() << ", "<< i+1 << "\n";
         m_forceofinfection +=
             parameters.get<TransmissionProbabilityOnContact>() *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
@@ -82,10 +85,11 @@ void Model::update_forceofinfection()
                   parameters.get<TransitionDistributions>()[4].Distribution(
                       m_transitions.get_time(num_time_points - 1 - i))) *
                  m_transitions[i+1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
-                 parameters.get<RiskOfInfectionFromSymptomatic>());
-    }
-    printf("Force of infection tmp: %f\n", m_forceofinfection);
+                 parameters.get<RiskOfInfectionFromSymptomatic>()); 
+
+    // printf("Force of infection tmp: %f\n", m_forceofinfection);
     m_forceofinfection = m_dt / ((ScalarType)m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)]) * m_forceofinfection;
+}
 }
 
 // define function that defines general scheme to compute flow
@@ -96,13 +100,21 @@ void Model::compute_flow(int idx_InfectionTransitions, ScalarType TransitionProb
     Eigen::Index calc_time_index  = (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() /
                                     m_dt);
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
-    for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points-1; i++) {
-        // forward difference scheme to get always tau>0
+    // std::cout << "num time points: " << num_time_points << "\n";
+    for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
+        // habe jetzt das infection age über num_time_points - 1 - i berechnet, mit m_transitions.get_time(num_time_points-i) kamen nicht die richtigen Werte raus
+        // kann man wahrscheinlich auch shiften, aber finde es so einfacher
+        
+        // forward difference scheme to get always tau>=0
+        // we have infection_age = num_time_points - 1 - i 
+        // thus we are computing (gamma(infection_age) - gamma(infection_age - 1)/ dt * m_transitions[...]
         sum += (parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    m_transitions.get_time(num_time_points - i)) -
+                    num_time_points - 1 - i) -
                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                    m_transitions.get_time(num_time_points - 1 - i))) /
-               m_dt * m_transitions[i+1][Eigen::Index(idx_InfectionTransitions - 1)];// i oder i+1?? siehe auch Formel -> Martin
+                    num_time_points - 2 - i)) /
+               m_dt * m_transitions[i+1][Eigen::Index(idx_InfectionTransitions - 1)];
+               // müssen überlegen ob i oder i+1 für Zeitindex in m_transitions?? siehe auch Formel -> Martin
+        // std::cout << "sum: " << sum << "\n";
     }
     
     m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
@@ -167,13 +179,30 @@ void Model::simulate(int t_max)
         // compute_S:
         // compute S(t_{idx}) 
         update_susceptibles();
-       
-        // compute flows:
+
         // compute sigma_E^C(t_{n+1}) and store it
         compute_flow(1, 1, 0);
 
         // compute sigma_C^I(t_{n+1}) and store it
         compute_flow(2, parameters.get<TransitionProbabilities>()[0], 1); //
+
+        // compute_phi(t):
+        update_forceofinfection();
+        
+        //calculate sigma_S^E with updatet force of infection
+        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
+             m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
+       
+        /* um sigma_E^C zu berechnen brauchen wir sigma_S^E, deswegen müssen wir doch erst die forceofinfection und damit sigma_S^E berechen
+           d.h. wir können auch erst nach der forceofinfection die Toten für den aktuellen Zeitschritt berechnen
+           also rechen wir mit phi(t_{n+1}) = 1/ (N-D(t_n))* ...
+           sehe gerade nicht wie wir das ändern können sodass wir D(t_{n+1}) in Formel für forceofinfection nutzen können
+           finde es aber tatsächlich gar nicht so schlimm, so rechnen wir ja mit der Bevölkerung die am ANfang der Berechnung zu Zeit t_{n+1} noch lebt,
+           das mMn schon Sinn...
+           */
+
+        // compute flows:
+        
     
         //sigma_I^H(t_{n+1})
         compute_flow(3, parameters.get<TransitionProbabilities>()[1], 3);
@@ -186,12 +215,6 @@ void Model::simulate(int t_max)
         // compute D
         compute_totaldeaths();
 
-        // compute_phi(t):
-        update_forceofinfection();
-        
-        //calculate sigma_S^E with updatet force of infection
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
-             m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
         
         // compute remaining compartments from flows //TODO: Why is I(0) so groß? Fehler hier?
         // E, use dummy transitiontorecov
@@ -219,12 +242,12 @@ void Model::print_transitions() const
 {
     
     // print transitions after simulation
-    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  I -> H  |  H -> U  |  U -> D" << std::endl;
+    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  I -> H  |  H -> U  |  U -> D  " << std::endl;
     Eigen::Index num_points = m_transitions.get_num_time_points();
     for (Eigen::Index i = 0; i < num_points; ++i) {
         std::cout << m_transitions.get_time(i) << "      |  " << m_transitions[i][0] << "  |  "
                   << m_transitions[i][1] << "  |  " << m_transitions[i][2] << "  |  " << m_transitions[i][3]
-                  << "  |  " << m_transitions[i][4] << "  |  " << m_transitions[i][5]
+                  << "  |  " << m_transitions[i][4] << "  |  " << m_transitions[i][5] << "  |  "
                   << std::endl; //[Eigen::Index(InfectionState::S)] << std::endl;
     }   
 }
