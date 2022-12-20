@@ -17,10 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import argparse
+
+import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import numpy as np
-import argparse
 
 
 def parameter_study():
@@ -30,7 +32,7 @@ def parameter_study():
     tmax = 50
 
     # setup basic parameters
-    model = secir.SecirModel(1)
+    model = secir.Model(1)
 
     model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
     model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2

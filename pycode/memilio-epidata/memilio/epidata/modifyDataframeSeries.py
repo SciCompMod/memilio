@@ -22,10 +22,11 @@
 @brief Tools for modifying data frame series like imputing zeros for unknown dates,
     copying previous values, and/or computing moving averages
 """
-import pandas as pd
-import numpy as np
 import itertools
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 
@@ -134,7 +135,7 @@ def impute_and_reduce_df(
                 # has to be conducted in second step to not impute 'value'
                 # at first missing value if start is present
                 for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, limit = 1, inplace=True)
+                    df_local_new[keys].fillna(vals, limit=1, inplace=True)
                 # fill remaining values (between first date and first
                 # reported date of the df_local)
                 df_local_new.fillna(method='ffill', inplace=True)

@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Carlotta Gerstein, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,29 +17,27 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef INFECTIONSTATE_H
-#define INFECTIONSTATE_H
+
+#include "abm/mask_type.h"
+#include "abm/parameters.h"
+#include "abm/mask.h"
+#include "abm/time.h"
 
 namespace mio
 {
-
-/**
- * @brief The InfectionState enum describes the possible
- * categories for the infectious state of persons
- */
-enum class InfectionState
+namespace abm
 {
-    Susceptible        = 0,
-    Exposed            = 1,
-    InfectedNoSymptoms = 2,
-    InfectedSymptoms   = 3,
-    InfectedSevere     = 4,
-    InfectedCritical   = 5,
-    Recovered          = 6,
-    Dead               = 7,
-    Count              = 8
-};
+Mask::Mask(MaskType type)
+    : m_type(type)
+    , m_time_used(TimeSpan(0))
+{
+}
 
+void Mask::change_mask(MaskType new_mask_type)
+{
+    m_type      = new_mask_type;
+    m_time_used = TimeSpan(0);
+}
+
+} // namespace abm
 } // namespace mio
-
-#endif

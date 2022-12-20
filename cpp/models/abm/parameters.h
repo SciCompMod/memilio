@@ -21,6 +21,7 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "abm/age.h"
+#include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/infection_state.h"
 #include "memilio/utils/custom_index_array.h"
@@ -191,13 +192,26 @@ struct DetectInfection {
     }
 };
 
+struct MaskProtection {
+    using Type = CustomIndexArray<double, MaskType>;
+    static auto get_default()
+    {
+        return Type({MaskType::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "MaskProtection";
+    }
+};
+
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms, InfectedNoSymptomsToSymptoms,
-                 InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
+    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
+                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
+                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
+                 RecoveredToSusceptible, DetectInfection, MaskProtection>;
 
 struct MaximumContacts {
     using Type = double;

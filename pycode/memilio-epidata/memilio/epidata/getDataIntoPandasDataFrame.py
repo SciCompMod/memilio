@@ -29,14 +29,15 @@ This tool contains
 - writes pandas dataframe to file of three different formats
 """
 
-import os
-from urllib.request import urlopen
-import json
 import argparse
 import datetime
-import pandas as pd
+import json
+import os
 from io import BytesIO
+from urllib.request import urlopen
 from zipfile import ZipFile
+
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 
@@ -95,7 +96,8 @@ def loadCsv(
     """
 
     url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_default = {"sep": ',', "header": 0,
+                          "encoding": None, 'dtype': None}
 
     for k in param_dict_default:
         if k not in param_dict:
@@ -343,7 +345,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "json_timeasstring":
         if dd.EngEng['date'] in df.columns:
-            if not isinstance(df.Date.values[0], type("string")):
+            if not isinstance(df.Date.values[0], str):
                 df.Date = df.Date.dt.strftime('%Y-%m-%d')
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_PARAMS_H
-#define SECIR_PARAMS_H
+#ifndef SECIR_PARAMETERS_H
+#define SECIR_PARAMETERS_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/uncertain_value.h"
@@ -32,6 +32,8 @@
 #include <vector>
 
 namespace mio
+{
+namespace osecir
 {
 
 /*******************************************
@@ -96,7 +98,7 @@ struct IncubationTime {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 1.);
+        return Type(size, 2.);
     }
     static std::string name()
     {
@@ -127,7 +129,7 @@ struct SerialInterval {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 1.);
+        return Type(size, 1.5);
     }
     static std::string name()
     {
@@ -332,7 +334,7 @@ struct TestAndTraceCapacity {
     }
 };
 
-using SecirParamsBase =
+using ParametersBase =
     ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfectedSymptoms,
                  IncubationTime, TimeInfectedSymptoms, SerialInterval, TimeInfectedSevere, TimeInfectedCritical,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RecoveredPerInfectedNoSymptoms,
@@ -342,11 +344,11 @@ using SecirParamsBase =
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-class SecirParams : public SecirParamsBase
+class Parameters : public ParametersBase
 {
 public:
-    SecirParams(AgeGroup num_agegroups)
-        : SecirParamsBase(num_agegroups)
+    Parameters(AgeGroup num_agegroups)
+        : ParametersBase(num_agegroups)
         , m_num_groups{num_agegroups}
     {
     }
@@ -458,16 +460,20 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
      */
-    void check_constraints() const
+    int check_constraints() const
     {
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
-            log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            return 1;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
-            log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+            log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
+            return 1;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -475,69 +481,85 @@ public:
             if (this->get<IncubationTime>()[i] < 2.0) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
                           this->get<IncubationTime>()[i], 2.0);
+                return 1;
             }
 
             if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
+                return 1;
             }
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
+                return 1;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSymptoms>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedSevere>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSevere>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedCritical>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedCritical>()[i], 1.0);
+                return 1;
             }
 
-            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d}", 0);
+            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
+                return 1;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
-                            1);
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
-                            1);
+                log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                return 1;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                return 1;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                return 1;
             }
         }
+        return 0;
     }
 
 private:
-    SecirParams(SecirParamsBase&& base)
-        : SecirParamsBase(std::move(base))
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
         , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
     {
     }
@@ -548,10 +570,10 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<SecirParams> deserialize(IOContext& io)
+    static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, SecirParamsBase::deserialize(io));
-        return success(SecirParams(std::move(base)));
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
     }
 
 private:
@@ -561,8 +583,9 @@ private:
 /**
  * @brief WIP !! TO DO: returns the actual, approximated reproduction rate 
  */
-//double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
+//double get_reprod_rate(Parameters const& params, double t, std::vector<double> const& yt);
 
+} // namespace osecir
 } // namespace mio
 
-#endif // SECIR_H
+#endif // SECIR_PARAMETERS_H

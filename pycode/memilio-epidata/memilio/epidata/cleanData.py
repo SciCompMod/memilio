@@ -115,7 +115,7 @@ def clean_data(
             if john_hopkins:
                 # TODO: make general dictionary with all countries used
                 directories = ['Germany/', 'Spain/', 'France/',
-                            'Italy/', 'US/', 'SouthKorea/', 'China/']
+                               'Italy/', 'US/', 'SouthKorea/', 'China/']
 
                 # delete files in directory
                 for cdir in directories:
@@ -128,7 +128,8 @@ def clean_data(
 
                     for item in files:
                         if item.endswith(ending) and "_jh" in item:
-                            print("Deleting file ", os.path.join(directory, item))
+                            print("Deleting file ",
+                                  os.path.join(directory, item))
                             os.remove(os.path.join(directory, item))
 
                     # delete directories
@@ -153,7 +154,7 @@ def clean_data(
                             os.remove(os.path.join(out_path, item))
 
             # other data is stored in the same folder
-        
+
             directory = os.path.join(out_path, 'Germany/')
             files = []
             try:
@@ -166,8 +167,9 @@ def clean_data(
             cases_filenames = ["cases", "Case"]
             divi_filenames = ["divi", "DIVI"]
             vaccination_filenames = ["vacc", "Vacc"]
-            population_filenames = ["Popul", "popul", "county_table", "reg_key", "zensus"]
-            commuter_filenames = ["bfa", 'commuter']            
+            population_filenames = ["Popul", "popul",
+                                    "county_table", "reg_key", "zensus"]
+            commuter_filenames = ["bfa", 'commuter']
             testing_filenames = ["testpos"]
             hospitalization_filenames = ["hospit", "Hospit"]
 
@@ -249,10 +251,10 @@ def cli():
     parser.add_argument('-ho', '--hospitalization',
                         help='Deletes just hospitalizaiton data.',
                         action='store_true')
-                        
+
     parser.add_argument('-h5', '--hdf5', help='Deletes just hdf5 files.',
                         action='store_true')
-    parser.add_argument('-js', '--json', help='Deletes json files.', 
+    parser.add_argument('-js', '--json', help='Deletes json files.',
                         action='store_true')
     parser.add_argument('-tx', '--txt', help='Deletes txt files.',
                         action='store_true')
@@ -263,9 +265,8 @@ def cli():
     args = parser.parse_args()
 
     return_args = [args.all_data, args.cases, args.john_hopkins, args.population,
-                   args.divi, args.vaccination, args.commuter, args.testing, 
+                   args.divi, args.vaccination, args.commuter, args.testing,
                    args.hospitalization, args.json, args.hdf5, args.txt, args.out_path]
-
 
     return return_args
 

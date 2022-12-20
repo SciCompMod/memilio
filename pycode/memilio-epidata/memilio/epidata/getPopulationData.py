@@ -26,11 +26,13 @@
 
 import os
 import sys
+
 import numpy as np
 import pandas as pd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def get_new_counties(data):
@@ -187,7 +189,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
-                "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding":'utf_8_sig'})
+                "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding": 'utf_8_sig'})
         except FileNotFoundError:
             error_message = "Error: The zensus file does not exist."
             raise FileNotFoundError(error_message)
@@ -430,7 +432,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             file_format=file_format)
 
         # find region keys for census population data
-        key = np.zeros((len(zensus)))
+        key = np.zeros(len(zensus))
         for i in range(len(key)):
             for j in range(len(reg_key)):
                 if zensus['Name'].values[i] == reg_key['NAME'].values.astype(
@@ -502,7 +504,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                     try:
                         if data[i, 0] == int(
                                 counties[dd.EngEng['idCounty']].values[j]):
-                            ratio[i] = counties[dd.EngEng['population']].values[j]/data[i, 1]
+                            ratio[i] = counties[dd.EngEng['population']
+                                                ].values[j]/data[i, 1]
 
                     except ValueError:
                         pass

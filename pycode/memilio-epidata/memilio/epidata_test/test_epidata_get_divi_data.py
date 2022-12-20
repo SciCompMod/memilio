@@ -17,17 +17,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
-from datetime import date
-
 import os
-import pandas as pd
+import unittest
+from datetime import date
+from unittest.mock import call, patch
 
-from memilio.epidata import getDIVIData as gdd
+import pandas as pd
+from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import modifyDataframeSeries as mdfs
-from unittest.mock import patch, call
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):

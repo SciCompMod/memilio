@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Carlotta Gerstein, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,10 +17,29 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir/analyze_result.h"
-#include "memilio/math/interpolation.h"
+
+#ifndef EPI_ABM_MASK_TYPE_H
+#define EPI_ABM_MASK_TYPE_H
+
+#include <cstdint>
 
 namespace mio
 {
+namespace abm
+{
 
+/**
+ * type of a mask
+ */
+enum class MaskType : std::uint32_t
+{
+    Community = 0,
+    Surgical,
+    FFP2,
+
+    Count
+};
+} // namespace abm
 } // namespace mio
+
+#endif

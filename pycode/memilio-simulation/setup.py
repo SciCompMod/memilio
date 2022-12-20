@@ -1,7 +1,8 @@
-import sys
 import os
 import subprocess
-from setuptools import setup, find_packages
+import sys
+
+from setuptools import find_packages, setup
 
 try:
     from skbuild import setup

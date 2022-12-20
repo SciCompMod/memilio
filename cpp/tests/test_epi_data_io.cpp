@@ -27,6 +27,7 @@
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
+#include "boost/optional/optional_io.hpp"
 #include <gmock/gmock-matchers.h>
 
 TEST(TestEpiDataIo, read_rki)

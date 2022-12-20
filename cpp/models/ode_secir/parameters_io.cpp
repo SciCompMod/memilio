@@ -24,7 +24,7 @@
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
-#include "secir/secir_parameters_io.h"
+#include "ode_secir/parameters_io.h"
 #include "memilio/utils/logging.h"
 #include <iterator>
 
@@ -53,6 +53,9 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 #include <fstream>
 
 namespace mio
+{
+
+namespace osecir
 {
 
 namespace details
@@ -214,7 +217,7 @@ IOResult<void> read_confirmed_cases_data(
     return success();
 }
 
-IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, std::vector<int> const& region,
+IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
                             Date date, const std::vector<double>& scaling_factor_inf)
 {
 
@@ -349,8 +352,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
     return success(vnum_population);
 }
 
-IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
-                                   const std::vector<int>& vregion)
+IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
 
@@ -371,7 +373,7 @@ IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::st
     return success();
 }
 
-IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path, const std::vector<int>& vregion,
+IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
     std::vector<double> sum_mu_I_U(vregion.size(), 0);
@@ -400,7 +402,7 @@ IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& 
 }
 
 } // namespace details
-
+} // namespace osecir
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

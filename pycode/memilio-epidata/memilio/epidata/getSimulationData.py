@@ -30,12 +30,10 @@ The functions which are called are:
 """
 
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getVaccinationData
-from memilio.epidata import getPopulationData
 from memilio.epidata import getCaseData
-from memilio.epidata import getDIVIData
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getDIVIData, getPopulationData, getVaccinationData
 
 
 def print_error(text):
@@ -85,10 +83,10 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_all = {
         "read_data": read_data, "file_format": file_format,
         "out_folder": out_folder, "no_raw": no_raw}
-    
+
     arg_dict_data_download = {"start_date": start_date, "end_date": end_date,
-        "impute_dates": impute_dates, "moving_average": moving_average,
-        "make_plot": make_plot}
+                              "impute_dates": impute_dates, "moving_average": moving_average,
+                              "make_plot": make_plot}
 
     arg_dict_cases = {**arg_dict_all, **arg_dict_data_download,
                       "split_berlin": split_berlin, "rep_date": rep_date}

@@ -17,15 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_PARAMETERS_IO_H
-#define SECIR_PARAMETERS_IO_H
+#ifndef ODESECIR_PARAMETERS_IO_H
+#define ODESECIR_PARAMETERS_IO_H
 
 #include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "secir/secir.h"
-#include "secir/analyze_result.h"
+#include "ode_secir/model.h"
+#include "ode_secir/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/mobility.h"
@@ -36,6 +36,9 @@
 #include "memilio/utils/date.h"
 
 namespace mio
+{
+
+namespace osecir
 {
 
 namespace details
@@ -72,7 +75,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<double>& scaling_factor_inf);
 
 /**
-     * @brief sets populations data from RKI into a SecirModel
+     * @brief sets populations data from RKI into a Model
      * @param model vector of objects in which the data is set
      * @param path Path to RKI file
      * @param region vector of keys of the region of interest
@@ -81,11 +84,11 @@ IOResult<void> read_confirmed_cases_data(
      * @param day Specifies day at which the data is read
      * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, std::vector<int> const& region,
+IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
                             Date date, const std::vector<double>& scaling_factor_inf);
 
 /**
-     * @brief reads number of ICU patients from DIVI register into SecirParams
+     * @brief reads number of ICU patients from DIVI register into Parameters
      * @param path Path to DIVI file
      * @param vregion Keys of the region of interest
      * @param year Specifies year at which the data is read
@@ -106,7 +109,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
      * @param day Specifies day at which the data is read
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
-IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path, const std::vector<int>& vregion,
+IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu);
 
 /**
@@ -123,14 +126,13 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
      * @param path Path to RKI file
      * @param vregion vector of keys of the regions of interest
      */
-IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
-                                   const std::vector<int>& vregion);
+IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion);
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-* @brief sets populations data from RKI into a SecirModel
+* @brief sets populations data from RKI into a Model
 * @param model vector of objects in which the data is set
 * @param data_dir Path to RKI files
 * @param results_dir Path to result files
@@ -216,7 +218,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
             path_join(data_dir, "cases_all_county_age_ma7.json"), region, date, num_Exposed, num_InfectedNoSymptoms,
             num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms,
             t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), region, date, num_icu));
+        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi_ma7.json"), region, date, num_icu));
         BOOST_OUTCOME_TRY(num_population,
                           details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
 
@@ -324,7 +326,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
 {
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "county_divi.json"), county, date, scaling_factor_icu));
+            details::set_divi_data(model, path_join(dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
@@ -334,9 +336,9 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
     return success();
 }
-
+} // namespace osecir
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP
 
-#endif // SECIR_PARAMETERS_IO_H
+#endif // ODESECIR_PARAMETERS_IO_H
