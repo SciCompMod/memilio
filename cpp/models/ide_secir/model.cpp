@@ -74,16 +74,15 @@ void Model::update_forceofinfection()
             parameters.get<TransmissionProbabilityOnContact>() *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
             ((parameters.get<TransitionProbabilities>()[0] * 
-                parameters.get<TransitionDistributions>()[1].Distribution(m_transitions.get_time(num_time_points - 1 - i)) +
+                parameters.get<TransitionDistributions>()[1].Distribution((num_time_points - 1 - i*m_dt)) +
               (1 - parameters.get<TransitionProbabilities>()[0]) *
-                  parameters.get<TransitionDistributions>()[2].Distribution(m_transitions.get_time(num_time_points - 1  - i))) *
+                  parameters.get<TransitionDistributions>()[2].Distribution((num_time_points - 1 - i*m_dt))) *
                  m_transitions[i+1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>() +
              (parameters.get<TransitionProbabilities>()[1] * 
-                parameters.get<TransitionDistributions>()[3].Distribution(m_transitions.get_time(num_time_points - 1 - i)) +
+                parameters.get<TransitionDistributions>()[3].Distribution((num_time_points - 1 - i*m_dt)) +
               (1 - parameters.get<TransitionProbabilities>()[1]) *
-                  parameters.get<TransitionDistributions>()[4].Distribution(
-                      m_transitions.get_time(num_time_points - 1 - i))) *
+                  parameters.get<TransitionDistributions>()[4].Distribution((num_time_points - 1 - i*m_dt))) *
                  m_transitions[i+1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>()); 
 
@@ -147,12 +146,15 @@ void Model::get_size_of_compartments(int idx_IncomingFlow, ScalarType Transition
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points -1 - calc_time_index; i < num_time_points-1; i++) {
+        // std::cout << "get time: " << m_transitions.get_time(num_time_points - 1 - i) << "\n";
+        // std::cout << "infection age: " << (num_time_points - 1 - i) * m_dt << "\n";
+        // compute infection age by (num_time_points - 1 - i)*m_dt
         sum +=
             (TransitionProbability * parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                                         m_transitions.get_time(num_time_points - 1 - i)) +
+                                         (num_time_points - 1 - i)*m_dt ) +
              (1 - TransitionProbability) *
                  parameters.get<TransitionDistributions>()[idx_TransitionDistributionToRecov].Distribution(
-                     m_transitions.get_time(num_time_points - 1 - i))) *
+                     (num_time_points - 1 - i)*m_dt)) *
             m_transitions[i+1][Eigen::Index(idx_IncomingFlow)]; // i oder i+1?? siehe auch Formel -> Martin
     }
 
@@ -180,31 +182,16 @@ void Model::simulate(int t_max)
         // compute_S:
         // compute S(t_{idx}) 
         update_susceptibles();
-
-        // compute sigma_E^C(t_{n+1}) and store it
-        compute_flow(1, 1, 0);
-
-        // compute sigma_C^I(t_{n+1}) and store it
-        compute_flow(2, parameters.get<TransitionProbabilities>()[0], 1); //
-
-        // compute_phi(t):
-        update_forceofinfection();
         
-        //calculate sigma_S^E with updatet force of infection
+        //calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
              m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
-       
-        /* um sigma_E^C zu berechnen brauchen wir sigma_S^E, deswegen müssen wir doch erst die forceofinfection und damit sigma_S^E berechen
-           d.h. wir können auch erst nach der forceofinfection die Toten für den aktuellen Zeitschritt berechnen
-           also rechen wir mit phi(t_{n+1}) = 1/ (N-D(t_n))* ...
-           sehe gerade nicht wie wir das ändern können sodass wir D(t_{n+1}) in Formel für forceofinfection nutzen können
-           finde es aber tatsächlich gar nicht so schlimm, so rechnen wir ja mit der Bevölkerung die am ANfang der Berechnung zu Zeit t_{n+1} noch lebt,
-           das mMn schon Sinn...
-           */
 
         // compute flows:
-        
-    
+        // compute sigma_E^C(t_{n+1}) and store it
+        compute_flow(1, 1, 0);
+        // compute sigma_C^I(t_{n+1}) and store it
+        compute_flow(2, parameters.get<TransitionProbabilities>()[0], 1); 
         //sigma_I^H(t_{n+1})
         compute_flow(3, parameters.get<TransitionProbabilities>()[1], 3);
         //sigma_H^U(t_{n+1})
@@ -212,9 +199,11 @@ void Model::simulate(int t_max)
         //sigma_U^D(t_{n+1})
         compute_flow(5, parameters.get<TransitionProbabilities>()[3], 7);
 
-        // Compute Compartments and phi:
         // compute D
         compute_totaldeaths();
+
+        // compute phi(t):
+        update_forceofinfection();
 
         
         // compute remaining compartments from flows //TODO: Why is I(0) so groß? Fehler hier?
@@ -230,10 +219,9 @@ void Model::simulate(int t_max)
         get_size_of_compartments(5, parameters.get<TransitionProbabilities>()[4], 7, 8, 5);
         // R
         // TODO: needs to be updated with computation by flows
-        Eigen::Index num_points_R = m_SECIR.get_num_time_points();
         m_SECIR.get_last_value()[Eigen::Index(6)] =
-            m_N - m_SECIR[num_points_R - 1][Eigen::Index(0)] - m_SECIR[num_points_R - 1][Eigen::Index(1)] -
-            m_SECIR.get_last_value()[Eigen::Index(2)] - m_SECIR[num_points_R - 1][Eigen::Index(3)] -
+            m_N - m_SECIR.get_last_value()[Eigen::Index(0)] - m_SECIR.get_last_value()[Eigen::Index(1)] -
+            m_SECIR.get_last_value()[Eigen::Index(2)] - m_SECIR.get_last_value()[Eigen::Index(3)] -
             m_SECIR.get_last_value()[Eigen::Index(4)] - m_SECIR.get_last_value()[Eigen::Index(5)] -
             m_SECIR.get_last_value()[Eigen::Index(7)];
     }       
