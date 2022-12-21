@@ -812,7 +812,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
  * Create a sampled simulation with start time t0.
  * @param t0 the start time of the simulation
 */
-mio::abm::Simulation create_sampled_simulation(mio::abm::TimePoint& t0) 
+mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
 
     // Assumed percentage of infection state at the beginning of the simulation.
@@ -845,23 +845,23 @@ mio::abm::Simulation create_sampled_simulation(mio::abm::TimePoint& t0)
 }
 
 /**
- * Run the abm simulation
- * @param result_dir directory where all results of the parameter study will be stored.
- * @param num_runs number of runs.
+ * Run the ABM simulation.
+ * @param result_dir Directory where all results of the parameter study will be stored.
+ * @param num_runs Number of runs.
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
- * @returns any io error that occurs during reading or writing of files.
+ * @returns Any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
-    auto t0         = mio::abm::TimePoint(0); // Start time (t0) per simulation
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // Endtime (tmax) per simulation
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results (TimeSeries objects)
+    auto t0         = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
-    auto run_idx            = size_t(1); //The run index
-    auto save_result_result = mio::IOResult<void>(mio::success());
+    auto run_idx            = size_t(1); // The run index
+    auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
 
-    // Loop over a number of run
+    // Loop over a number of runs
     while (run_idx <= num_runs) {
         
         // Create the sampled simulation with start time t0.
@@ -882,7 +882,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, (int)mio::abm::InfectionState::Count, result_dir_run.string()));
+            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
         ++run_idx;
     }
