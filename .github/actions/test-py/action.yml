@@ -37,11 +37,8 @@ runs:
       run: |
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          python -W ignore::DeprecationWarning -m coverage run --source=/opt/hostedtoolcache/Python/*/x64/lib/*/site-packages/memilio/epidata -m unittest
-          python -m coverage report
-          python -m coverage xml -o coverage_python.xml
-          python -m coverage html -d coverage_python
-          cp -r coverage_python ../../../../
+          cd /opt/hostedtoolcache/Python
+          ls
         else
           python -m unittest
         fi
