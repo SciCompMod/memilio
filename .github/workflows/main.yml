@@ -22,29 +22,29 @@ jobs:
         python-version: 3.8
     - uses: pre-commit/action@v3.0.0
 
-  # build-cpp-gcc_clang:
-  #   if: github.event.pull_request.draft == false
-  #   strategy:
-  #     matrix:
-  #       compiler: ["gcc", "clang"]
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "ubuntu-latest"
-  #         - version: "min"
-  #           os: "ubuntu-20.04"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ./.github/actions/linux-build
-  #       with: 
-  #         compiler: ${{ matrix.compiler }}
-  #         config: ${{ matrix.config }}
-  #         version: ${{ matrix.version }}
-  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
-  #         sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-  #         sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+  build-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-build
+        with: 
+          compiler: ${{ matrix.compiler }}
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
+          sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+          sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   # build-cpp-gcc-no-optional-deps:
   #   if: github.event.pull_request.draft == false
@@ -88,26 +88,26 @@ jobs:
   #         version: latest
   #         optional-dependencies: OFF
 
-  # test-cpp-gcc_clang:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-gcc_clang
-  #   strategy:
-  #     matrix:
-  #       compiler: ["gcc", "clang"]
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "ubuntu-latest"
-  #         - version: "min"
-  #           os: "ubuntu-20.04"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ./.github/actions/linux-test
-  #       with: 
-  #         build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
-  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
+  test-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
   
   # test-linux-no-optional-deps:
   #   if: github.event.pull_request.draft == false
