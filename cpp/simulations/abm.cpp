@@ -22,9 +22,56 @@
 #include "abm/household.h"
 #include "abm/state.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
 namespace fs = boost::filesystem;
+
+/**
+ * Set a value and distribution of an UncertainValue.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
+ * @param p uncertain value to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
+void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
+{
+    p = mio::UncertainValue(0.5 * (max + min));
+    p.set_distribution(mio::ParameterDistributionUniform(min, max));
+}
+
+/**
+ * Set a value and distribution of an array of UncertainValues.
+ * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
+ * each element i of the array.
+ * @param array array of UncertainValues to set.
+ * @param min minimum of distribution for each element of array.
+ * @param max minimum of distribution for each element of array.
+ */
+template <size_t N>
+void array_assign_uniform_distribution(mio::CustomIndexArray<double, mio::abm::AgeGroup, mio::abm::VaccinationState>& array,
+                                       const double (&min)[N], const double (&max)[N])
+{
+    assert(N == array.numel());
+    for (auto i = mio::abm::AgeGroup::Age0to4; i < mio::abm::AgeGroup::Count; i++) {
+        assign_uniform_distribution(array[{i,mio::abm::VaccinationState::Unvaccinated}], min[size_t(i)], max[size_t(i)]);
+    }
+}
+
+/**
+ * Set a value and distribution of an array of UncertainValues.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
+ * @param array array of UncertainValues to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
+// void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup>& array, double min,
+//                                        double max)
+// {
+//     for (auto i = mio::Index<mio::abm::AgeGroup>(0); i < array.size<mio::abm::AgeGroup>(); ++i) {
+//         assign_uniform_distribution(array[i], min, max);
+//     }
+// }
 
 /**
  * Determine the infection state of a person at the beginning of the simulation.
@@ -42,7 +89,6 @@ mio::abm::InfectionState determine_infection_state(double exposed, double infect
     auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
     return (mio::abm::InfectionState)state;
 }
-
 
 /**
  * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
@@ -302,6 +348,7 @@ void create_assign_locations(mio::abm::World& world)
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+
     auto probability      = 1.0;
     auto test_type        = mio::abm::AntigenTest();
 
@@ -401,10 +448,11 @@ void create_assign_locations(mio::abm::World& world)
     auto testing_criteria_school =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
 
-    testing_min_time           = mio::abm::days(7);
-    probability                = 1.0;
-    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability);
+    testing_min_time = mio::abm::days(7);
+    auto v           = mio::UncertainValue();
+    assign_uniform_distribution(v, 1.0, 1.0);
+    auto testing_scheme_school =
+        mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date, end_date, test_type, v);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
     auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
@@ -412,9 +460,9 @@ void create_assign_locations(mio::abm::World& world)
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 
     testing_min_time = mio::abm::days(1);
-    probability      = 0.5;
+    assign_uniform_distribution(v, 0.5, 0.5);
     auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, v);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
@@ -426,6 +474,7 @@ void assign_infection_state(mio::abm::World& world, double exposed_pct, double i
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
+        
         world.set_infection_state(person,
                                   determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
     }
@@ -433,8 +482,44 @@ void assign_infection_state(mio::abm::World& world, double exposed_pct, double i
 
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 {
+    //times
+    const double incubationTime            = 5.2;
+    const double serialIntervalMin         = 0.5 * 2.67 + 0.5 * 5.2;
+    const double serialIntervalMax         = 0.5 * 4.00 + 0.5 * 5.2;
+    const double timeInfectedSymptomsMin[] = {5.6255, 5.6255, 5.6646, 5.5631, 5.501, 5.465};
+    const double timeInfectedSymptomsMax[] = {8.427, 8.427, 8.4684, 8.3139, 8.169, 8.085};
+    const double timeInfectedSevereMin[]   = {3.925, 3.925, 4.85, 6.4, 7.2, 9.};
+    const double timeInfectedSevereMax[]   = {6.075, 6.075, 7., 8.7, 9.8, 13.};
+    const double timeInfectedCriticalMin[] = {4.95, 4.95, 4.86, 14.14, 14.4, 10.};
+    const double timeInfectedCriticalMax[] = {8.95, 8.95, 8.86, 20.58, 19.8, 13.2};
+
+    //probabilities
+    const double transmissionProbabilityOnContactMin[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
+    const double transmissionProbabilityOnContactMax[] = {0.04, 0.07, 0.07, 0.07, 0.10, 0.20};
+    const double relativeTransmissionNoSymptomsMin     = 1;
+    const double relativeTransmissionNoSymptomsMax     = 1;
+    // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
+    // depends on incidence and test and trace capacity
+    const double riskOfInfectionFromSymptomaticMin    = 0.1;
+    const double riskOfInfectionFromSymptomaticMax    = 0.3;
+    const double maxRiskOfInfectionFromSymptomaticMin = 0.3;
+    const double maxRiskOfInfectionFromSymptomaticMax = 0.5;
+    const double recoveredPerInfectedNoSymptomsMin[]  = {0.2, 0.2, 0.15, 0.15, 0.15, 0.15};
+    const double recoveredPerInfectedNoSymptomsMax[]  = {0.3, 0.3, 0.25, 0.25, 0.25, 0.25};
+    const double severePerInfectedSymptomsMin[]       = {0.006, 0.006, 0.015, 0.049, 0.15, 0.20};
+    const double severePerInfectedSymptomsMax[]       = {0.009, 0.009, 0.023, 0.074, 0.18, 0.25};
+    const double criticalPerSevereMin[]               = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
+    const double criticalPerSevereMax[]               = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double deathsPerCriticalMin[]               = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
+    const double deathsPerCriticalMax[]               = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
+
+    array_assign_uniform_distribution(infection_params.get<mio::abm::SusceptibleToExposedByCarrier>(),
+                                      transmissionProbabilityOnContactMin, transmissionProbabilityOnContactMax);
+
     infection_params.set<mio::abm::IncubationPeriod>(
         {{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 4.});
+
+    //array_assign_uniform_distribution(infection_params.get<mio::abm::IncubationPeriod>(), incubationTime, incubationTime);
 
     //0-4
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::AgeGroup::Age0to4,
@@ -854,8 +939,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
-    auto t0         = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto t0               = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
@@ -863,13 +948,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-        
+
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto&& locations : sim.get_world().get_locations()) {
-            for (auto location : locations){
+            for (auto location : locations) {
                 loc_ids.push_back(location.get_index());
             }
         }
@@ -903,12 +988,14 @@ int main(int argc, char** argv)
         num_runs = atoi(argv[1]);
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to the current directory.\n");
-    } else if (argc == 3) {
-        num_runs = atoi(argv[1]);
+    }
+    else if (argc == 3) {
+        num_runs   = atoi(argv[1]);
         result_dir = argv[2];
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
-    } else {
+    }
+    else {
         printf("Usage:\n");
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
@@ -932,4 +1019,3 @@ int main(int argc, char** argv)
         return -1;
     }
     return 0;
-}
