@@ -47,17 +47,20 @@ enum class InfectionState
 /**
  * @brief The InfectionTransitions enum describes the possible
  * transitions of the infectious state of persons.
- * InfectionsTransitions ignores the transitions to Recovered because they are not needed for Simulation. 
  */
 enum class InfectionTransitions
-{ // unordered map!
+{
     SusceptibleToExposed                 = 0,
     ExposedToInfectedNoSymptoms          = 1,
     InfectedNoSymptomsToInfectedSymptoms = 2,
-    InfectedSymptomsToInfectedSevere     = 3,
-    InfectedSevereToInfectedCritical     = 4,
-    InfectedCriticalToDead               = 5,
-    Count                                = 6
+    InfectedNoSymptomsToRecovered        = 3,
+    InfectedSymptomsToInfectedSevere     = 4,
+    InfectedSymptomsToRecovered          = 5,
+    InfectedSevereToInfectedCritical     = 6,
+    InfectedSevereToRecovered            = 7,
+    InfectedCriticalToDead               = 8,
+    InfectedCriticalToRecovered          = 9,
+    Count                                = 10
 };
 
 static constexpr size_t InfectionTransitionsCount = 10;

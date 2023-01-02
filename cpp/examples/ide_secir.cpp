@@ -19,6 +19,7 @@
 */
 
 #include "ide_secir/model.h"
+#include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -29,39 +30,30 @@ int main()
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     int tmax     = 10;
-    size_t N     = 1000;
+    size_t N     = 10000;
     size_t Dead0 = 12;
     double dt    = 1;
-    // for SECIHURD model we need 6 transitions for simulation
-    size_t num_transitions = 6;
+
+    int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
     mio::TimeSeries<ScalarType> init(num_transitions);
-    //std::cout << "time points: " << init.get_num_time_points() << ", elements: " << init.get_num_elements() << "\n";
 
     // add time points for initialization
-    init.add_time_point<Eigen::VectorXd>(-10, Vec::Constant(num_transitions, 40));
-    //std::cout << "time points: " << init.get_num_time_points() << ", elements: " << init.get_num_elements() << "\n";
+    Vec vec_init(num_transitions);
+    vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+    init.add_time_point(-10, vec_init);
     while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, Vec::Constant(num_transitions, init.get_last_value()[0] + 1.0));
+        init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
     }
-
-    // print initial transitions, printed at the end
-    /*std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  I -> H  |  H -> U  |  U -> D" << std::endl;
-    Eigen::Index num_points = init.get_num_time_points();
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        std::cout << init.get_time(i) << "      |  " << init[i][0] << "  |  " << init[i][1] << "  |  " << init[i][2]
-                  << "  |  " << init[i][3] << "  |  " << init[i][4] << "  |  " << init[i][5]
-                  << std::endl; //[Eigen::Index(InfectionState::S)] << std::endl;
-    }*/
 
     // Initialize model.
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
 
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(
-        std::vector<mio::isecir::DelayDistribution>(9, mio::isecir::DelayDistribution()));
-    model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(6, 0.5));
+        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+    model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(num_transitions, 0.5));
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
@@ -73,6 +65,6 @@ int main()
     model.simulate(tmax);
 
     model.print_transitions();
-    std::cout << "\n\n" << std::endl;
+    std::cout << "\n" << std::endl;
     model.print_compartments();
 }

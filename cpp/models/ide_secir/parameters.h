@@ -21,6 +21,7 @@
 #define IDE_SECIR_PARAMS_H
 
 #include "memilio/utils/parameter_set.h"
+#include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/smoother.h"
@@ -64,11 +65,12 @@ struct DelayDistribution {
 };
 
 struct TransitionDistributions {
-    //we need transition distributions for E->C, C->I, C->R, I->H, I->R, H->U,H->R, U->D,U->R (so 9 distributions)
+    /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
+    This transition is calculated in a different way. */
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
-        return std::vector<DelayDistribution>(9, DelayDistribution());
+        return std::vector<DelayDistribution>((int)InfectionTransitions::Count, DelayDistribution());
     }
 
     static std::string name()
@@ -80,10 +82,11 @@ struct TransitionDistributions {
 struct TransitionParameters {
     // we need to initialize transition distributions with some parameters (for now just use one parameter per distribution, i.e. xright)
     // to be able to define different transition distributions for each transition
+    // Here also transition S-> E is just a dummy
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<ScalarType>(9, 1.0);
+        return std::vector<ScalarType>((int)InfectionTransitions::Count, 1.0);
     }
 
     static std::string name()
@@ -93,13 +96,11 @@ struct TransitionParameters {
 };
 
 struct TransitionProbabilities {
-    // we need probabilities for S->E, E->C, C->I, I->H, H->U, U->D (so 5 values) (from this we can deduce prob for c->R etc.)
-    // for consistency we also define mu_S^E = \mu_E^C = 1 to be able to apply general formula to get population from flows
-    // in total we need 6 values
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<ScalarType>(6, 0.5);
+        return std::vector<ScalarType>((int)InfectionTransitions::Count, 0.5);
     }
 
     static std::string name()
@@ -172,11 +173,11 @@ struct RiskOfInfectionFromSymptomatic {
     }
 };
 
-/**
-* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+/* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
 */
+/*Martin sagt das sollen wir aktuell mal weglassen
 struct MaxRiskOfInfectionFromSymptomatic {
-    // TODO: Dies irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
+    // Dies könnte man irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
     //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
     // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
     using Type = ScalarType;
@@ -188,7 +189,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
     {
         return "MaxRiskOfInfectionFromSymptomatic";
     }
-};
+};*/
 
 // Define Parameterset for IDE SEIR model.
 using ParametersBase =

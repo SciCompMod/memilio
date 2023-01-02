@@ -19,6 +19,7 @@
 */
 #include "ide_secir/model.h"
 #include "infection_state.h"
+#include "memilio/utils/logging.h"
 #include <cstdio>
 #include <iostream>
 
@@ -34,6 +35,9 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, s
     , m_dt{dt_init}
     , m_N{N_init}
 {
+    if (!((int)m_transitions.get_num_elements() == (int)InfectionTransitions::Count)) {
+        log_error("Initialization failed. Number of elements in init does not match the required number.");
+    }
     m_SECIR.add_time_point(0);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = Dead0;
 }
@@ -50,16 +54,18 @@ void Model::update_susceptibles()
 void Model::update_forceofinfection()
 {
     // determine force of infection for the current last point of time in m_transitions,
-    m_forceofinfection   = 0;
-    ScalarType calc_time = 0;
+    m_forceofinfection = 0;
 
     // determine the relevant calculation area = union of the supports of the relevant transition distributions
-    // TODO: evtl gibt es eine Funktion, die das maximum aus verschiedenen Werten nimmt?
-    for (int i = 1; i < 5; i++) {
-        if (parameters.get<TransitionDistributions>()[i].get_xright() > calc_time) {
-            calc_time = parameters.get<TransitionDistributions>()[i].get_xright();
-        }
-    }
+    ScalarType calc_time = std::max(
+        {parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
+             .get_xright(),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
+             .get_xright(),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
+             .get_xright(),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
+             .get_xright()});
 
     //corresponding index
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt); //need calc_time timesteps in sum
@@ -71,16 +77,22 @@ void Model::update_forceofinfection()
         m_forceofinfection +=
             parameters.get<TransmissionProbabilityOnContact>() *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
-            ((parameters.get<TransitionProbabilities>()[0] *
-                  parameters.get<TransitionDistributions>()[1].Distribution((num_time_points - 1 - i) * m_dt) +
-              (1 - parameters.get<TransitionProbabilities>()[0]) *
-                  parameters.get<TransitionDistributions>()[2].Distribution((num_time_points - 1 - i) * m_dt)) *
+            ((parameters
+                      .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
+                  parameters
+                      .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
+                      .Distribution((num_time_points - 1 - i) * m_dt) +
+              parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
+                      .Distribution((num_time_points - 1 - i) * m_dt)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>() +
-             (parameters.get<TransitionProbabilities>()[1] *
-                  parameters.get<TransitionDistributions>()[3].Distribution((num_time_points - 1 - i) * m_dt) +
-              (1 - parameters.get<TransitionProbabilities>()[1]) *
-                  parameters.get<TransitionDistributions>()[4].Distribution((num_time_points - 1 - i) * m_dt)) *
+             (parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
+                      .Distribution((num_time_points - 1 - i) * m_dt) +
+              parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
+                      .Distribution((num_time_points - 1 - i) * m_dt)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>());
 
@@ -90,13 +102,13 @@ void Model::update_forceofinfection()
 }
 
 // define function that defines general scheme to compute flow
-void Model::compute_flow(int idx_InfectionTransitions, ScalarType TransitionProbability, int idx_TransitionDistribution)
-{ // allowed just for idx_InfectionTransitions>=1
-
+void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow)
+{
     ScalarType sum = 0;
+
     // We have Transitiondistribution(m_dt*i)=0 for all i>= calc_time_index
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
-        parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() / m_dt);
+        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() / m_dt);
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
@@ -105,51 +117,100 @@ void Model::compute_flow(int idx_InfectionTransitions, ScalarType TransitionProb
 
         // backward difference scheme to approximate first derivative
         sum +=
-            (parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(infection_age) -
-             parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(infection_age - m_dt)) /
-            m_dt * m_transitions[i + 1][Eigen::Index(idx_InfectionTransitions - 1)];
+            (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(infection_age) -
+             parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(infection_age - m_dt)) /
+            m_dt * m_transitions[i + 1][idx_IncomingFlow];
         // TODO: müssen überlegen ob i oder i+1 für Zeitindex in m_transitions?? siehe auch Formel -> Martin
     }
 
-    m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] = (-1) * TransitionProbability * m_dt * sum;
+    m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
+        (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * m_dt * sum;
 }
 
 void Model::compute_totaldeaths()
 {
     Eigen::Index num_time_points = m_SECIR.get_num_time_points();
+
     m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)] =
         m_SECIR[num_time_points - 2][Eigen::Index(InfectionState::Dead)] +
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedCriticalToDead)];
 }
 
+void Model::compute_recovered()
+{
+    Eigen::Index num_time_points = m_SECIR.get_num_time_points();
+
+    m_SECIR.get_last_value()[Eigen::Index(InfectionState::Recovered)] =
+        m_SECIR[num_time_points - 2][Eigen::Index(InfectionState::Recovered)] +
+        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedNoSymptomsToRecovered)] +
+        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedSymptomsToRecovered)] +
+        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedSevereToRecovered)] +
+        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedCriticalToRecovered)];
+}
+
 // function that actually computes size of compartments from flows (all but S and R)
-void Model::get_size_of_compartments(int idx_IncomingFlow, ScalarType TransitionProbability,
-                                     int idx_TransitionDistribution, int idx_TransitionDistributionToRecov,
-                                     int idx_InfectionState)
+void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
+                                     int idx_TransitionDistribution1, int idx_TransitionDistribution2,
+                                     size_t transitionprobability2)
 {
     ScalarType sum = 0;
 
-    // deermine relevant calculation area and corresponding index
-    ScalarType calc_time = parameters.get<TransitionDistributions>()[idx_TransitionDistributionToRecov].get_xright();
-    if (parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright() > calc_time) {
-        calc_time = parameters.get<TransitionDistributions>()[idx_TransitionDistribution].get_xright();
-    }
+    // determine relevant calculation area and corresponding index
+    ScalarType calc_time =
+        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_xright(),
+                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_xright());
+
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt);
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-        sum +=
-            (TransitionProbability * parameters.get<TransitionDistributions>()[idx_TransitionDistribution].Distribution(
-                                         (num_time_points - 1 - i) * m_dt) +
-             (1 - TransitionProbability) *
-                 parameters.get<TransitionDistributions>()[idx_TransitionDistributionToRecov].Distribution(
-                     (num_time_points - 1 - i) * m_dt)) *
-            m_transitions[i + 1][Eigen::Index(idx_IncomingFlow)];
+        sum += (parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1] *
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Distribution(
+                        (num_time_points - 1 - i) * m_dt) +
+                transitionprobability2 *
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Distribution(
+                        (num_time_points - 1 - i) * m_dt)) *
+               m_transitions[i + 1][idx_IncomingFlow];
         // TODO: i oder i+1?? siehe auch Formel -> Martin
     }
 
-    m_SECIR.get_last_value()[Eigen::Index(idx_InfectionState)] = m_dt * sum;
+    m_SECIR.get_last_value()[idx_InfectionState] = m_dt * sum;
+}
+
+void Model::update_compartments()
+{
+    // E
+    get_size_of_compartments(Eigen::Index(InfectionState::Exposed),
+                             Eigen::Index(InfectionTransitions::SusceptibleToExposed),
+                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 0, 0);
+    // C
+    get_size_of_compartments(
+        Eigen::Index(InfectionState::InfectedNoSymptoms),
+        Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms),
+        (int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
+        (int)InfectionTransitions::InfectedNoSymptomsToRecovered,
+        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]);
+    // I
+    get_size_of_compartments(
+        Eigen::Index(InfectionState::InfectedSymptoms),
+        Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms),
+        (int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
+        (int)InfectionTransitions::InfectedSymptomsToRecovered,
+        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]);
+    // H
+    get_size_of_compartments(
+        Eigen::Index(InfectionState::InfectedSevere),
+        Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere),
+        (int)InfectionTransitions::InfectedSevereToInfectedCritical,
+        (int)InfectionTransitions::InfectedSevereToRecovered,
+        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSevereToRecovered]);
+    // U
+    get_size_of_compartments(
+        Eigen::Index(InfectionState::InfectedCritical),
+        Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical),
+        (int)InfectionTransitions::InfectedCriticalToDead, (int)InfectionTransitions::InfectedCriticalToRecovered,
+        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedCriticalToRecovered]);
 }
 
 // do simulation
@@ -162,23 +223,16 @@ void Model::simulate(int t_max)
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
 
     //calculate compartment sizes for t=0
-    // E, use dummy transitiontorecov
-    get_size_of_compartments(1, parameters.get<TransitionProbabilities>()[0], 0, 0, 1);
-    // C
-    get_size_of_compartments(2, parameters.get<TransitionProbabilities>()[1], 1, 2, 2);
-    // I
-    get_size_of_compartments(3, parameters.get<TransitionProbabilities>()[2], 3, 4, 3);
-    // H
-    get_size_of_compartments(4, parameters.get<TransitionProbabilities>()[3], 5, 6, 4);
-    // U
-    get_size_of_compartments(5, parameters.get<TransitionProbabilities>()[4], 7, 8, 5);
-    // R
-    // TODO: needs to be updated with computation by flows
-    m_SECIR.get_last_value()[Eigen::Index(6)] =
-        m_N - m_SECIR.get_last_value()[Eigen::Index(0)] - m_SECIR.get_last_value()[Eigen::Index(1)] -
-        m_SECIR.get_last_value()[Eigen::Index(2)] - m_SECIR.get_last_value()[Eigen::Index(3)] -
-        m_SECIR.get_last_value()[Eigen::Index(4)] - m_SECIR.get_last_value()[Eigen::Index(5)] -
-        m_SECIR.get_last_value()[Eigen::Index(7)];
+    update_compartments();
+    //R
+    m_SECIR.get_last_value()[Eigen::Index(InfectionState::Recovered)] =
+        m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::Exposed)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedNoSymptoms)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedSymptoms)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedSevere)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedCritical)] -
+        m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
 
     // for every time step:
     while ((int)m_transitions.get_last_time() < t_max) {
@@ -195,17 +249,33 @@ void Model::simulate(int t_max)
             m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
 
         // compute flows:
-        //TODO: Hier wollten wir auch die Flows nach R berechnen
         // compute sigma_E^C
-        compute_flow(1, 1, 0);
+        compute_flow((int)InfectionTransitions::ExposedToInfectedNoSymptoms,
+                     Eigen::Index(InfectionTransitions::SusceptibleToExposed));
         // compute sigma_C^I
-        compute_flow(2, parameters.get<TransitionProbabilities>()[0], 1);
+        compute_flow((int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
+                     Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
+        //sigma_C^R
+        compute_flow((int)InfectionTransitions::InfectedNoSymptomsToRecovered,
+                     Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
         //sigma_I^H
-        compute_flow(3, parameters.get<TransitionProbabilities>()[1], 3);
+        compute_flow((int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
+                     Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
+        //sigma_I^R
+        compute_flow((int)InfectionTransitions::InfectedSymptomsToRecovered,
+                     Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
         //sigma_H^U
-        compute_flow(4, parameters.get<TransitionProbabilities>()[2], 5);
+        compute_flow((int)InfectionTransitions::InfectedSevereToInfectedCritical,
+                     Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
+        //sigma_H^R
+        compute_flow((int)InfectionTransitions::InfectedSevereToRecovered,
+                     Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
         //sigma_U^D
-        compute_flow(5, parameters.get<TransitionProbabilities>()[3], 7);
+        compute_flow((int)InfectionTransitions::InfectedCriticalToDead,
+                     Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
+        //sigma_U^R
+        compute_flow((int)InfectionTransitions::InfectedCriticalToRecovered,
+                     Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
 
         // compute D
         compute_totaldeaths();
@@ -214,23 +284,8 @@ void Model::simulate(int t_max)
         update_forceofinfection();
 
         // compute remaining compartments from flows
-        // E, use dummy transitiontorecov
-        get_size_of_compartments(1, parameters.get<TransitionProbabilities>()[0], 0, 0, 1);
-        // C
-        get_size_of_compartments(2, parameters.get<TransitionProbabilities>()[1], 1, 2, 2);
-        // I
-        get_size_of_compartments(3, parameters.get<TransitionProbabilities>()[2], 3, 4, 3);
-        // H
-        get_size_of_compartments(4, parameters.get<TransitionProbabilities>()[3], 5, 6, 4);
-        // U
-        get_size_of_compartments(5, parameters.get<TransitionProbabilities>()[4], 7, 8, 5);
-        // R
-        // TODO: needs to be updated with computation by flows
-        m_SECIR.get_last_value()[Eigen::Index(6)] =
-            m_N - m_SECIR.get_last_value()[Eigen::Index(0)] - m_SECIR.get_last_value()[Eigen::Index(1)] -
-            m_SECIR.get_last_value()[Eigen::Index(2)] - m_SECIR.get_last_value()[Eigen::Index(3)] -
-            m_SECIR.get_last_value()[Eigen::Index(4)] - m_SECIR.get_last_value()[Eigen::Index(5)] -
-            m_SECIR.get_last_value()[Eigen::Index(7)];
+        update_compartments();
+        compute_recovered();
     }
     std::cout << "Finished simulation successfully.  \n";
 }
@@ -239,27 +294,29 @@ void Model::simulate(int t_max)
 Als Übergabeparameter könte man auch String Ueberschrift oder sowas machen, damit die Form gut lesbar bleibt.*/
 void Model::print_transitions() const
 {
-
     // print transitions after simulation
-    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  I -> H  |  H -> U  |  U -> D  " << std::endl;
-    Eigen::Index num_points = m_transitions.get_num_time_points();
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        std::cout << m_transitions.get_time(i) << "      |  " << m_transitions[i][0] << "  |  " << m_transitions[i][1]
-                  << "  |  " << m_transitions[i][2] << "  |  " << m_transitions[i][3] << "  |  " << m_transitions[i][4]
-                  << "  |  " << m_transitions[i][5] << "  |  " << std::endl;
+    std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  C -> R  |  I -> H  |  I -> R  |  H -> U  |  H -> R  |  "
+                 "U -> D  |  U -> R  "
+              << std::endl;
+    for (Eigen::Index i = 0; i < m_transitions.get_num_time_points(); ++i) {
+        std::cout << m_transitions.get_time(i);
+        for (Eigen::Index j = 0; j < m_transitions.get_num_elements(); ++j) {
+            std::cout << "  |  " << m_transitions[i][j];
+        }
+        std::cout << "\n" << std::endl;
     }
 }
 
 void Model::print_compartments() const
 {
-
-    // print transitions after simulation
+    // print compartments after simulation
     std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-    Eigen::Index num_points = m_SECIR.get_num_time_points();
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        std::cout << m_SECIR.get_time(i) << "      |  " << m_SECIR[i][0] << "  |  " << m_SECIR[i][1] << "  |  "
-                  << m_SECIR[i][2] << "  |  " << m_SECIR[i][3] << "  |  " << m_SECIR[i][4] << "  |  " << m_SECIR[i][5]
-                  << "  |  " << m_SECIR[i][6] << "  |  " << m_SECIR[i][7] << "  |  " << std::endl;
+    for (Eigen::Index i = 0; i < m_SECIR.get_num_time_points(); ++i) {
+        std::cout << m_SECIR.get_time(i);
+        for (Eigen::Index j = 0; j < m_SECIR.get_num_elements(); ++j) {
+            std::cout << "  |  " << m_SECIR[i][j];
+        }
+        std::cout << "\n" << std::endl;
     }
 }
 
