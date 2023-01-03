@@ -24,9 +24,9 @@ TEST(TestLocation, init)
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
-        ASSERT_EQ(location.get_subpopulation(i), 0);
+        ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
     }
-    ASSERT_EQ(print_wrap(location.get_subpopulations()),
+    ASSERT_EQ(print_wrap(location.get_subpopulations(mio::abm::TimePoint(0))),
               print_wrap(Eigen::VectorXi::Zero(Eigen::Index(mio::abm::InfectionState::Count))));
 }
 

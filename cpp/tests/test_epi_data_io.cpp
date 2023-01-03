@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/regions.h"
 #include "memilio/io/epi_data.h"

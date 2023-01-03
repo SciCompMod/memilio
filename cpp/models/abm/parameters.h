@@ -23,7 +23,8 @@
 #include "abm/age.h"
 #include "abm/mask_type.h"
 #include "abm/time.h"
-#include "abm/state.h"
+#include "abm/virus_variant.h"
+#include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
@@ -37,10 +38,10 @@ namespace abm
 {
 
 struct IncubationPeriod {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -49,10 +50,10 @@ struct IncubationPeriod {
 };
 
 struct SusceptibleToExposedByCarrier {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -61,10 +62,10 @@ struct SusceptibleToExposedByCarrier {
 };
 
 struct SusceptibleToExposedByInfected {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -73,10 +74,10 @@ struct SusceptibleToExposedByInfected {
 };
 
 struct CarrierToInfected {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -85,10 +86,10 @@ struct CarrierToInfected {
 };
 
 struct CarrierToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -97,10 +98,10 @@ struct CarrierToRecovered {
 };
 
 struct InfectedToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -109,10 +110,10 @@ struct InfectedToRecovered {
 };
 
 struct InfectedToSevere {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -121,10 +122,10 @@ struct InfectedToSevere {
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -133,10 +134,10 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -145,10 +146,10 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -157,10 +158,10 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -169,10 +170,10 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 0.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.);
     }
     static std::string name()
     {
@@ -181,10 +182,10 @@ struct RecoveredToSusceptible {
 };
 
 struct DetectInfection {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<double, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 0.5);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.5);
     }
     static std::string name()
     {
@@ -225,9 +226,40 @@ struct MaximumContacts {
 };
 
 /**
+ * contact rates
+*/
+struct ContactRates {
+    using Type = CustomIndexArray<double, AgeGroup, AgeGroup>;
+    static Type get_default()
+    {
+        return Type({AgeGroup::Count, AgeGroup::Count},
+                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+    }
+    static std::string name()
+    {
+        return "ContactRates";
+    }
+};
+
+/**
+ * aerosol transmission rates
+*/
+struct AerosolTransmissionRates {
+    using Type = CustomIndexArray<double, VirusVariant>;
+    static Type get_default()
+    {
+        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+    }
+    static std::string name()
+    {
+        return "AerosolTransmissionRates";
+    }
+};
+
+/**
  * parameters of the infection that depend on the location.
  */
-using LocalInfectionParameters = ParameterSet<MaximumContacts>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
 
 struct TestParameters {
     double sensitivity;

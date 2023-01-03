@@ -84,17 +84,21 @@ public:
     /** 
      * add a location to the world.
      * @param type type of location to add
-     * @param num_cells number of cells that the location is divided into
+     * @param num_cells number of cells that the location is divided into, default 1
      * @return index and type of the newly created location
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 0);
+    LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /** add a person to the world 
      * @param id index and type of the initial location of the person
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(LocationId id, InfectionState infection_state, AgeGroup age = AgeGroup::Age15to34);
+    Person& add_person(const LocationId id, const Infection& infection, const AgeGroup& age = AgeGroup::Age15to34,
+                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
+
+    Person& add_person(const LocationId id, const AgeGroup& age = AgeGroup::Age15to34,
+                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
 
     /**
      * Sets the current infection state of the person.
@@ -102,7 +106,7 @@ public:
      * @param person
      * @param inf_state
      */
-    void set_infection_state(Person& person, InfectionState inf_state);
+    void set_infection_state(Person& person, const InfectionState inf_state, const TimePoint t = TimePoint(0));
 
     /**
      * get a range of all locations in the world.
@@ -147,7 +151,7 @@ public:
      * @param type specified location type
      * @return number of persons that are in the specified infection state
      */
-    int get_subpopulation_combined(InfectionState s, LocationType type) const;
+    int get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      * get migration parameters
@@ -196,7 +200,8 @@ private:
     TripList m_trip_list;
     bool m_use_migration_rules;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
-                          std::vector<LocationType>>> m_migration_rules;
+                          std::vector<LocationType>>>
+        m_migration_rules;
 };
 
 } // namespace abm

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,10 +20,12 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
+#include "abm/person.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
-#include "abm/state.h"
 #include "abm/location_type.h"
+#include "abm/infection_state.h"
+#include "abm/vaccine.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -37,12 +39,12 @@ namespace abm
 class Person;
 
 /**
- * LocationCapacity describes the size of a location. 
+ * CellCapacity describes the size of a cell. 
  * It consists of a volume and a capacity in persons which is an upper bound for the number
- * of people that can be at the location at the same time.
+ * of people that can be in the cell at the same time.
  */
-struct LocationCapacity {
-    LocationCapacity()
+struct CellCapacity {
+    CellCapacity()
         : volume(0)
         , persons(std::numeric_limits<int>::max())
     {
@@ -74,27 +76,26 @@ struct LocationId {
  * The location can be split up into several cells. This allows a finer division of the people in public transport.
  */
 struct Cell {
-    uint32_t num_people;
-    uint32_t num_carriers;
-    uint32_t num_infected;
-    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate;
+    std::vector<Person> m_persons;
+    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
+    CustomIndexArray<double, VirusVariant> m_cached_exposure_rate_air;
+    CellCapacity m_capacity;
 
-    Cell()
-        : num_people(0)
-        , num_carriers(0)
-        , num_infected(0)
-        , cached_exposure_rate({{AgeGroup::Count, VaccinationState::Count}, 0.})
+    Cell(std::vector<Person> persons = {})
+        : m_persons(std::move(persons))
+        , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
+        , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
+        , m_capacity()
     {
     }
 
-    Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate_new)
-        : num_people(num_p)
-        , num_carriers(num_c)
-        , num_infected(num_i)
-        , cached_exposure_rate(cached_exposure_rate_new)
-    {
-    }
+    /**
+    * computes a relative cell size for the cell
+    * @return the relative cell size for the cell
+    */
+    double compute_relative_cell_size();
+
+    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
 
 }; // namespace mio
 
@@ -108,9 +109,9 @@ public:
      * construct a Location of a certain type.
      * @param type the type of the location
      * @param index the index of the location
-     * @param num_cells the number of cells in which the location is divided
+     * @param num_cells the number of cells in which the location is divided, default 1
      */
-    Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
+    Location(LocationType type, uint32_t index, uint32_t num_cells = 1);
 
     /**
      * get the type of this location.
@@ -133,15 +134,17 @@ public:
      * @param person the person that interacts with the population
      * @param dt length of the current simulation time step
      * @param global_params global infection parameters
-     * @return new infection state of the person
+     * @return new infection of the person
      */
-    InfectionState interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
+                          const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
      * @param person the person arriving
+     * @param cell_idx index of the cell the person shall go to
     */
-    void add_person(const Person& person);
+    void add_person(const Person& person, const uint32_t cell_idx = 0);
 
     /** 
      * remove a person from the population of this location.
@@ -150,31 +153,11 @@ public:
     void remove_person(const Person& person);
 
     /** 
-     * notification that one person in this location changed infection state.
-     * @param person the person that changed infection state
-     * @param old_state the previous infection state of the person
-     */
-    void changed_state(const Person& person, InfectionState old_infection_state);
-
-    /** 
      * prepare the location for the next simulation step.
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
-
-    /** 
-     * number of persons at this location in one infection state.
-     * @return number of persons at this location that are in the specified infection state
-     */
-    int get_subpopulation(InfectionState s) const;
-
-    /** 
-     * number of persons at this location for all infection states.
-     * vector is indexed by InfectionState.
-     * @return number of persons in all infection states.
-     * */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
+    void begin_step(TimePoint t, TimeSpan dt);
 
     /**
      * @return parameters of the infection that are specific to this location
@@ -214,41 +197,42 @@ public:
      */
     int get_population()
     {
-        return m_num_persons;
+        return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](int sum, auto cell) {
+            return sum + cell.m_capacity.persons;
+        });
     }
 
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    CustomIndexArray<double, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(const uint32_t cell_idx)
     {
-        return m_cached_exposure_rate;
+        return m_cells[cell_idx].m_cached_exposure_rate_contacts;
+    }
+
+    CustomIndexArray<double, VirusVariant> get_cached_exposure_rate_air(const uint32_t cell_idx)
+    {
+        return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
 
     /**
-    * Set the capacity of the location in person and volume
-    * @param persons maximum number of people that can visit the location at the same time
-    * @param volume volume of the location in m^3
+    * Set the capacity of a cell in the location in person and volume
+    * @param persons maximum number of people that can visit the cell at the same time
+    * @param volume volume of the cell in m^3
     */
-    void set_capacity(int persons, int volume)
+    void set_capacity(int persons, int volume, uint32_t cell_idx = 0)
     {
-        m_capacity.persons = persons;
-        m_capacity.volume  = volume;
+        m_cells[cell_idx].m_capacity.persons = persons;
+        m_cells[cell_idx].m_capacity.volume  = volume;
     }
 
     /**
-    * @return the capacity of the location in person and volume
+    * @return the capacity of a cell in person and volume
     */
-    LocationCapacity get_capacity()
+    CellCapacity get_capacity(uint32_t cell_idx = 0)
     {
-        return m_capacity;
+        return m_cells[cell_idx].m_capacity;
     }
-
-    /**
-    * computes a relative transmission risk factor for the location
-    * @return the relative risk factor for the location
-    */
-    double compute_relative_transmission_risk();
 
     /**
     * Set the capacity adapted transmission risk flag
@@ -270,19 +254,32 @@ public:
         m_npi_active = new_status;
     }
 
-private:
-    void change_subpopulation(InfectionState s, int delta);
+    /**
+    * get subpopulation for one cell
+    */
+    int get_subpopulation(const TimePoint& t, const InfectionState& state, const uint32_t cell_idx) const;
+
+    /**
+    * get subpouplation for all cells
+    */
+    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+
+    /**
+     * get all subpopulations for all cells
+    */
+    Eigen::Ref<const Eigen::VectorXi> get_subpopulations(TimePoint t) const;
+
+    /**
+     * get the total number of infected persons
+    */
+    int get_number_infected_total(TimePoint t) const;
 
 private:
     LocationType m_type;
     uint32_t m_index;
-    int m_num_persons = 0;
-    LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
-    std::vector<Cell> m_cells;
+    std::vector<Cell> m_cells{};
     MaskType m_required_mask;
     bool m_npi_active;
 };

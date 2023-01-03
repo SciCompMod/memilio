@@ -24,6 +24,7 @@
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/location.h"
+#include "abm/time.h"
 
 namespace mio
 {
@@ -88,7 +89,7 @@ public:
      * @param p person to be checked
      * @param l location to be checked
      */
-    bool evaluate(const Person& p, const Location& l) const;
+    bool evaluate(const Person& p, const Location& l, const TimePoint& t) const;
 
 private:
     /**
@@ -107,7 +108,7 @@ private:
      * check if a person has the required infection state to get tested
      * @param p person to be checked
      */
-    bool has_requested_infection_state(const Person& p) const;
+    bool has_requested_infection_state(const Person& p, const TimePoint& t) const;
 
     std::vector<AgeGroup> m_ages;
     std::vector<LocationType> m_location_types;
@@ -136,7 +137,7 @@ public:
      * Compares two testing schemes for functional equality.
      */
     bool operator==(const TestingScheme& other) const;
-    
+
     /**
      * add a testing criteria to the set of age groups that are checked for testing
      * @param criteria testing criteria to be added
@@ -164,7 +165,7 @@ public:
      * runs the testing scheme and tests a person if necessary
      * @return if the person is allowed to enter the location
      */
-    bool run_scheme(Person& person, const Location& location) const;
+    bool run_scheme(Person& person, const Location& location, const TimePoint& t) const;
 
 private:
     std::vector<TestingCriteria> m_testing_criteria;
@@ -185,30 +186,30 @@ public:
      */
     TestingStrategy() = default;
     explicit TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
-    
+
     /**
      * add a testing scheme to the set of schemes that are checked for testing
      * @param scheme testing scheme to be added
      */
     void add_testing_scheme(const TestingScheme& scheme);
-    
+
     /**
      * remove a testing scheme from the set of schemes that are checked for testing
      * @param scheme testing scheme to be removed
      */
     void remove_testing_scheme(const TestingScheme& scheme);
-    
+
     /**
      * checks if the given time point t is within the interval of start and end date of each testing scheme and then changes the activity status for each testing scheme accordingly
      * @param t time point to check the activity status of each testing scheme
      */
     void update_activity_status(const TimePoint t);
-    
+
     /**
      * run the testing strategy and tests a person if necessary
      * @return if the person is allowed to enter the location
      */
-    bool run_strategy(Person& person, const Location& location) const;
+    bool run_strategy(Person& person, const Location& location, const TimePoint& t) const;
 
 private:
     std::vector<TestingScheme> m_testing_schemes;

@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn 
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,6 +25,8 @@
 #include "abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
+#include "abm/infection.h"
+#include "abm/vaccine.h"
 
 namespace mio
 {
@@ -39,11 +41,20 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
+Person& World::add_person(const LocationId id, const Infection& infection, const AgeGroup& age,
+                          const VaccinationState& vaccination_state)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
-                                                 VaccinationState::Unvaccinated, person_id));
+    m_persons.push_back(std::make_unique<Person>(id, age, infection, vaccination_state, person_id));
+    auto& person = *m_persons.back();
+    get_location(person).add_person(person);
+    return person;
+}
+
+Person& World::add_person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state)
+{
+    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -57,20 +68,17 @@ void World::evolve(TimePoint t, TimeSpan dt)
     migration(t, dt);
 }
 
-void World::interaction(TimePoint /*t*/, TimeSpan dt)
+void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc);
+        person->interact(t, dt, loc, m_infection_parameters);
     }
 }
 
-void World::set_infection_state(Person& person, InfectionState inf_state)
+void World::set_infection_state(Person& person, const InfectionState inf_state, const TimePoint t)
 {
-    auto& loc      = get_location(person);
-    auto old_state = person.get_infection_state();
-    person.set_infection_state(inf_state);
-    loc.changed_state(person, old_state);
+    person.add_new_infection(Infection(static_cast<VirusVariant>(0), m_infection_parameters, t, inf_state));
 }
 
 void World::migration(TimePoint t, TimeSpan dt)
@@ -86,7 +94,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
-                if (m_testing_strategy.run_strategy(*person, *target)) {
+                if (m_testing_strategy.run_strategy(*person, *target, t)) {
                     if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(*target);
                         if (wears_mask) {
@@ -106,7 +114,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, target)) {
+                if (m_testing_strategy.run_strategy(*person, target, t)) {
                     person->apply_mask_intervention(target);
                     person->migrate_to(get_location(*person), target);
                 }
@@ -116,11 +124,11 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::begin_step(TimePoint /*t*/, TimeSpan dt)
+void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location.begin_step(dt, m_infection_parameters);
+            location.begin_step(t, dt);
         }
     }
 }
@@ -163,11 +171,11 @@ Location& World::get_location(const Person& person)
     return get_individualized_location(person.get_location_id());
 }
 
-int World::get_subpopulation_combined(InfectionState s, LocationType type) const
+int World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
     return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc) {
-        return running_sum + loc.get_subpopulation(s);
+        return running_sum + loc.get_subpopulation(t, s);
     });
 }
 
