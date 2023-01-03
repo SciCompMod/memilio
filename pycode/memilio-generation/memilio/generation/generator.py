@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 class Generator:
     """
-    Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
+    Generates the model specific python bindings code with the information given by the IntermediateRepresentation.
     """
 
     def __init__(self: Self) -> None:
