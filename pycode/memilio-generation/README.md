@@ -1,7 +1,7 @@
 # MEmilio Automatic Code Generation of Python Bindings
 
 This package contains Python bindings for the MEmilio C++ library. 
-It enables the automatic generation of a part of the [Python Bindings](../memilio-simulation/README.md). It focuses on the model specific binding files e.g., for the seir model the files `oseir.cpp` and `oseir.py`.
+It enables the automatic generation of a part of the [Python Bindings](../memilio-simulation/README.md) that is common across multiple models. For a particular example, see the SEIR model with its files `oseir.cpp` and `oseir.py`.
 
 The software was developed as a part of the bachelor thesis [Automatische Codegenerierung für nutzerfreundliche mathematisch-epidemiologische Modelle](https://elib.dlr.de/). For further insigths of the concept look into chapter 5.
 
