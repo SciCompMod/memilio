@@ -550,12 +550,12 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
     ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
 
     auto num_age_groups = 6; // Data to be read requires RKI confirmed cases data age groups
-    auto model = std::vector<mio::osecirvvs::Model>({make_model(num_age_groups)});
+    auto model          = make_model(num_age_groups);
 
     // Test exporting time series
     ASSERT_THAT(mio::osecirvvs::export_input_data_county_timeseries(
-                    model, TEST_DATA_DIR, tmp_results_dir, {0}, {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
-                     1.0, 2, true),
+                    std::vector<mio::osecirvvs::Model>{model}, TEST_DATA_DIR, tmp_results_dir, {0}, {2020, 12, 01},
+                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2, true),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
