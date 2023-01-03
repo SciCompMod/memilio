@@ -12,12 +12,12 @@
         }
     },
     {
-        "source_file": "/cpp/models/secir/secir.cpp",
+        "source_file": "/cpp/models/ode_secir/model.cpp",
         "namespace": "mio::",
         "python_module_name": "test_secir",
         "optional": {
-            "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
-            "simulation_class": "SecirSimulation",
+            "libclang_library_path": "/tools/modulesystem/spack-22.2/opt/spack/linux-ubuntu20.04-x86_64_v3/gcc-9.4.0/llvm-14.0.6-u6u3nxayshaogte7pdnas4i6h4ta5ymi/lib/libclang.so",
+            "simulation_class": "Simulation",
             "age_group": true,
             "parameterset_wrapper": true,
             "target_folder": "/pycode/memilio-generation/memilio/tools"
@@ -28,7 +28,7 @@
         "namespace": "mio::osecirvvs::",
         "python_module_name": "test_secirvvs",
         "optional": {
-            "libclang_library_path": "/tools/modulesystem/spack-22.1/opt/spack/linux-ubuntu20.04-haswell/gcc-9.4.0/llvm-13.0.0-e4gcooqwzwwiiprr7u7nnorvgrqqhl63/lib/libclang.so",
+            "libclang_library_path": "",
             "simulation_class": "Simulation",
             "age_group": true,
             "parameterset_wrapper": true,

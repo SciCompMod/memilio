@@ -38,9 +38,13 @@ def try_set_libclang_path(path: str) -> None:
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path):
-        clang_cmd = ["clang", '-print-file-name=libclang.so']
+        clang_cmd = ["clang", '-print-file-name=']
         clang_cmd_result = subprocess.check_output(clang_cmd)
-        path = clang_cmd_result.rstrip()
+        path, dirname = os.path.split(clang_cmd_result)
+        while ("llvm" not in str(dirname)):
+            path, dirname = os.path.split(path)
+        path = os.path.join(path.decode(), dirname.decode(),
+                            "lib", "libclang.so")
     try:
         Config.set_library_file(path)
     except Exception as e:
