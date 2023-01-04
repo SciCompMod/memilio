@@ -334,6 +334,13 @@ public:
         return m_wears_mask;
     }
 
+    /**
+     * Give a vaccine to a person
+     * @param vaccine The vaccine given to the person
+     * @param t The time the vaccine is given
+     */
+    void add_vaccination(const Vaccine& vaccine, const TimePoint& t);
+
 private:
     struct ImmunityLevel {
         double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const;

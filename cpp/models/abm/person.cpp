@@ -257,6 +257,14 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
+void Person::add_vaccination(const Vaccine& vaccine, const TimePoint& t)
+{
+    Vaccination vaccination;
+    vaccination.vaccine = vaccine;
+    vaccination.t = t;
+    m_vaccinations.push_back(vaccination);
+}
+
 double Person::ImmunityLevel::get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
 {
     return 1.;
