@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,14 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 #include "abm/abm.h"
-#include "abm/age.h"
 #include "abm/household.h"
-#include "abm/parameters.h"
 #include "abm/state.h"
-#include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/logging.h"
-#include <cstdio>
+#include "memilio/io/result_io.h"
+#include "boost/filesystem.hpp"
+
+namespace fs = boost::filesystem;
+
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -38,9 +39,10 @@ mio::abm::InfectionState determine_infection_state(double exposed, double infect
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    uint32_t state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
     return (mio::abm::InfectionState)state;
 }
+
 
 /**
  * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
@@ -419,7 +421,6 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-
 void assign_infection_state(mio::abm::World& world, double exposed_pct, double infected_pct, double carrier_pct,
                             double recovered_pct)
 {
@@ -807,19 +808,12 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
                                                               mio::abm::VaccinationState::Vaccinated}] = 0.0;
 }
 
-int main()
+/**
+ * Create a sampled simulation with start time t0.
+ * @param t0 the start time of the simulation
+*/
+mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
-    //mio::abm::set_log_level(mio::abm::LogLevel::warn);
-
-    // Set seeds of previous run for debugging:
-    // mio::thread_local_rng().seed({...});
-
-    // Print seeds to be able to use them again for debugging:
-    printf("Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
-    }
-    printf("\n");
 
     // Assumed percentage of infection state at the beginning of the simulation.
     double exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
@@ -838,9 +832,7 @@ int main()
     // Add locations and assign locations to the people.
     create_assign_locations(world);
 
-    auto t0         = mio::abm::TimePoint(0);
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
@@ -849,35 +841,95 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
+    return sim;
+}
 
-    sim.advance(tmax);
+/**
+ * Run the ABM simulation.
+ * @param result_dir Directory where all results of the parameter study will be stored.
+ * @param num_runs Number of runs.
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
+ * @returns Any io error that occurs during reading or writing of files.
+ */
+mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+{
 
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:10 with lines title "dead"
-    // set xlabel "days"
-    // set ylabel "number of people"
-    // set title "ABM Example"
-    // set output "abm.png"
-    // set terminal png
-    // replot
-    auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
+    auto t0         = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results
+    ensemble_results.reserve(size_t(num_runs));
+    auto run_idx            = size_t(1); // The run index
+    auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+
+    // Loop over a number of runs
+    while (run_idx <= num_runs) {
+        
+        // Create the sampled simulation with start time t0.
+        auto sim = create_sampled_simulation(t0);
+        // Collect the id of location in world.
+        std::vector<int> loc_ids;
+        for (auto&& locations : sim.get_world().get_locations()) {
+            for (auto location : locations){
+                loc_ids.push_back(location.get_index());
             }
         }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
+        // Advance the world to tmax
+        sim.advance(tmax);
+        // TODO: update result of the simulation to be a vector of location result.
+        auto temp_sim_result = std::vector<mio::TimeSeries<double>>{sim.get_result()};
+        // Push result of the simulation back to the result vector
+        ensemble_results.push_back(temp_sim_result);
+        // Option to save the current run result to file
+        if (save_result_result && save_single_runs) {
+            auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
+            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
+        ++run_idx;
     }
-    fclose(f_abm);
+    BOOST_OUTCOME_TRY(save_result_result);
+    return mio::success();
+}
+
+int main(int argc, char** argv)
+{
+
+    mio::set_log_level(mio::LogLevel::warn);
+
+    std::string result_dir = ".";
+    size_t num_runs;
+    bool save_single_runs = true;
+
+    if (argc == 2) {
+        num_runs = atoi(argv[1]);
+        printf("Number of run is %s.\n", argv[1]);
+        printf("Saving results to the current directory.\n");
+    } else if (argc == 3) {
+        num_runs = atoi(argv[1]);
+        result_dir = argv[2];
+        printf("Number of run is %s.\n", argv[1]);
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
+    } else {
+        printf("Usage:\n");
+        printf("abm_example <num_runs>\n");
+        printf("\tRun the simulation for <num_runs> time(s).\n");
+        printf("\tStore the results in the current directory.\n");
+        printf("abm_example <num_runs> <result_dir>\n");
+        printf("\tRun the simulation for <num_runs> time(s).\n");
+        printf("\tStore the results in <result_dir>.\n");
+        return 0;
+    }
+
+    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
+    //printf("Seeds: ");
+    //for (auto s : mio::thread_local_rng().get_seeds()) {
+    //    printf("%u, ", s);
+    //}
+    //printf("\n");
+
+    auto result = run(result_dir, num_runs, save_single_runs);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
+    }
+    return 0;
 }

@@ -1190,6 +1190,23 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     return success();
 }
 
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&& model, const std::string& data_dir,
+                                                   const std::string& results_dir, const std::vector<int>& county,
+                                                   Date date, const std::vector<double>& scaling_factor_inf,
+                                                   double scaling_factor_icu, int num_days, bool set_vaccination_data)
+{
+    if (set_vaccination_data) {
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(data_dir, "all_county_ageinf_vacc_ma7.json"),
+                                                        date, county, num_days));
+    }
+
+    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, data_dir, results_dir, county, date,
+                                                          scaling_factor_inf, scaling_factor_icu, num_days));
+
+    return success();
+}
+
 #endif //MEMILIO_HAS_HDF5
 
 /**
@@ -1236,7 +1253,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days));
+                                                    scaling_factor_icu, num_days));
     }
 
     return success();

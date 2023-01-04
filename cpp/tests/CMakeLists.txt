@@ -8,7 +8,7 @@ set(TESTSOURCES
     test_household.cpp
     testmain.cpp
     test_populations.cpp
-    test_seir.cpp
+    test_odeseir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
@@ -26,6 +26,7 @@ set(TESTSOURCES
     test_time_series.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
+    test_abm_masks.cpp
     test_abm_migration_rules.cpp
     test_abm_person.cpp
     test_abm_simulation.cpp
@@ -51,6 +52,7 @@ set(TESTSOURCES
     actions.h
     matchers.h
     temp_file_register.h
+    sanitizers.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
