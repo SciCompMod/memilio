@@ -240,17 +240,17 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t group = 0; group < age_ranges.size(); group++) {
 
             t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)group] -
-                                      model[county].parameters.get<SerialInterval>()[(AgeGroup)group])));
+                static_cast<int>(std::round(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)group] -
+                                                 model[county].parameters.get<SerialInterval>()[(AgeGroup)group]))));
             t_Exposed[county].push_back(
-                static_cast<int>(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.get<IncubationTime>()[(AgeGroup)group]));
+                static_cast<int>(std::round(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)group] -
+                                            model[county].parameters.get<IncubationTime>()[(AgeGroup)group])));
             t_InfectedSymptoms[county].push_back(
-                static_cast<int>(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group]));
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group])));
             t_InfectedSevere[county].push_back(
-                static_cast<int>(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(model[county].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
             mu_I_H[county].push_back(model[county].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
