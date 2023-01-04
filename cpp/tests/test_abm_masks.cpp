@@ -54,17 +54,16 @@ TEST(TestMasks, changeMask)
 
 TEST(TestMasks, maskProtection)
 {
-    mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState::Unvaccinated;
     mio::abm::GlobalInfectionParameters params;
 
     //setup location with some chance of exposure
     auto infection_location = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto susc_person1       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                         mio::abm::AgeGroup::Age15to34, params);
     auto susc_person2       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible,
-                                         mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                         mio::abm::AgeGroup::Age15to34, params);
     auto infected1          = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier,
-                                      mio::abm::AgeGroup::Age15to34, params, vaccination_state);
+                                      mio::abm::AgeGroup::Age15to34, params);
     infection_location.add_person(susc_person1);
     infection_location.add_person(susc_person2);
     infection_location.add_person(infected1);

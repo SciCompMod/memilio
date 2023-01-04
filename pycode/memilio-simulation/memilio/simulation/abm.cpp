@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -52,10 +52,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Age60to79", mio::abm::AgeGroup::Age60to79)
         .value("Age80plus", mio::abm::AgeGroup::Age80plus);
 
-    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
-        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
-        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
-
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
         .value("School", mio::abm::LocationType::School)
@@ -74,9 +70,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
-    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<double, mio::abm::AgeGroup, mio::abm::VaccinationState>(
-        m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());

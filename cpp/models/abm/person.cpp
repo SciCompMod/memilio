@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -31,9 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(const LocationId id, const AgeGroup& age, const Infection& infection,
-               const VaccinationState& vaccination_state, const uint32_t person_id)
-    : Person(id, age, vaccination_state, person_id)
+Person::Person(const LocationId id, const AgeGroup& age, const Infection& infection, const uint32_t person_id)
+    : Person(id, age, person_id)
 {
     m_infections = std::vector<Infection>{infection};
     /*if (is_infected(t) && infection.is_detected()) {
@@ -41,17 +40,14 @@ Person::Person(const LocationId id, const AgeGroup& age, const Infection& infect
     }*/
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const Infection& infection,
-               const VaccinationState& vaccination_state, const uint32_t person_id)
-    : Person({location.get_index(), location.get_type()}, age, infection, vaccination_state, person_id)
+Person::Person(const Location& location, const AgeGroup& age, const Infection& infection, const uint32_t person_id)
+    : Person({location.get_index(), location.get_type()}, age, infection, person_id)
 {
 }
 
-Person::Person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state,
-               const uint32_t person_id)
+Person::Person(const LocationId id, const AgeGroup& age, const uint32_t person_id)
     : m_location_id(std::make_shared<LocationId>(id))
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
-    , m_vaccination_state(vaccination_state)
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
@@ -67,9 +63,8 @@ Person::Person(const LocationId id, const AgeGroup& age, const VaccinationState&
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const VaccinationState& vaccination_state,
-               const uint32_t person_id)
-    : Person({location.get_index(), location.get_type()}, age, vaccination_state, person_id)
+Person::Person(const Location& location, const AgeGroup& age, const uint32_t person_id)
+    : Person({location.get_index(), location.get_type()}, age, person_id)
 {
 }
 

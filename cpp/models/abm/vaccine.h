@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann
+* Authors: David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -46,19 +46,6 @@ enum class Vaccine : std::uint32_t
 struct Vaccination {
     TimePoint t;
     Vaccine vaccine;
-};
-
-// TO BE REMOVED
-/**
- * vaccination state in ABM.
- * can be used as 0-based index.
- */
-enum class VaccinationState : std::uint32_t
-{
-    Unvaccinated = 0,
-    Vaccinated,
-
-    Count //last!!
 };
 
 } // namespace abm

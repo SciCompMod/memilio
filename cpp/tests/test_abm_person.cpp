@@ -37,8 +37,7 @@ TEST(TestPerson, init)
     ASSERT_EQ(person.get_location_id().type, location.get_type());
     ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 
-    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age60to79, {},
-                                    mio::abm::VaccinationState::Unvaccinated, 0);
+    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age60to79, {}, 0);
     ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::abm::TimeSpan dt = mio::abm::hours(1);
@@ -211,7 +210,7 @@ TEST(TestPerson, interact_exposed)
 
     auto infection_parameters = mio::abm::GlobalInfectionParameters();
     infection_parameters.set<mio::abm::IncubationPeriod>(
-        {{mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 2.});
+        {{mio::abm::AgeGroup::Count}, 2.});
 
     //setup location with some chance of exposure
     auto loc = mio::abm::Location(mio::abm::LocationType::Work, 0);

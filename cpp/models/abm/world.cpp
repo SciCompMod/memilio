@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -41,20 +41,19 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId id, const Infection& infection, const AgeGroup& age,
-                          const VaccinationState& vaccination_state)
+Person& World::add_person(const LocationId id, const Infection& infection, const AgeGroup& age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, age, infection, vaccination_state, person_id));
+    m_persons.push_back(std::make_unique<Person>(id, age, infection, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
 }
 
-Person& World::add_person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state)
+Person& World::add_person(const LocationId id, const AgeGroup& age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
+    m_persons.push_back(std::make_unique<Person>(id, age, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;

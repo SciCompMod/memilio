@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -57,7 +57,6 @@ public:
      * @param person_id index of the person
      */
     Person(const LocationId id, const AgeGroup& age, const Infection& infection,
-           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
@@ -69,21 +68,18 @@ public:
      * @param person_id index of the person
      */
     Person(const Location& location, const AgeGroup& age, const Infection& infection,
-           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
     Person(const LocationId id, const AgeGroup& age,
-           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
      * create a Person without infection.
      */
     Person(const Location& location, const AgeGroup& age,
-           const VaccinationState& vaccination_state = VaccinationState::Unvaccinated,
            const uint32_t person_id                  = INVALID_PERSON_ID);
 
     /**
@@ -360,7 +356,6 @@ private:
     std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;
     ImmunityLevel m_immunity_level; // do we need this? Or can we call p.ImmunityLevel.get_...() ?
-    VaccinationState m_vaccination_state; // to be removed
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

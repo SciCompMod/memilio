@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -94,11 +94,9 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(const LocationId id, const Infection& infection, const AgeGroup& age = AgeGroup::Age15to34,
-                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
+    Person& add_person(const LocationId id, const Infection& infection, const AgeGroup& age = AgeGroup::Age15to34);
 
-    Person& add_person(const LocationId id, const AgeGroup& age = AgeGroup::Age15to34,
-                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
+    Person& add_person(const LocationId id, const AgeGroup& age = AgeGroup::Age15to34);
 
     /**
      * Sets the current infection state of the person.
