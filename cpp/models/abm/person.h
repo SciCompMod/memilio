@@ -336,11 +336,8 @@ public:
 
 private:
     struct ImmunityLevel {
-        double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-        {
-            return 1.; // put implementation in .cpp
-        }
-        double get_severity_factor(VirusVariant v, TimePoint t) const;
+        double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
+        double get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
     };
 
 public:

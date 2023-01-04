@@ -257,5 +257,15 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
+double Person::ImmunityLevel::get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+{
+    return 1.;
+}
+
+double Person::ImmunityLevel::get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+{
+    return 1.;
+}
+
 } // namespace abm
 } // namespace mio
