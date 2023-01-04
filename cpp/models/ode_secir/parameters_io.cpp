@@ -217,8 +217,9 @@ IOResult<void> read_confirmed_cases_data(
     return success();
 }
 
-IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
-                            Date date, const std::vector<double>& scaling_factor_inf)
+IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
 {
 
     std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};

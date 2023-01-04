@@ -84,7 +84,7 @@ IOResult<void> read_confirmed_cases_data(
      * @param day Specifies day at which the data is read
      * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
+IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
                             Date date, const std::vector<double>& scaling_factor_inf);
 
 /**
@@ -277,7 +277,7 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
         log_warning("No DIVI data available for this date");
     }
     BOOST_OUTCOME_TRY(
-        details::set_rki_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date, scaling_factor_inf));
+        details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
     return success();
 }
@@ -305,7 +305,7 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
     }
 
     BOOST_OUTCOME_TRY(
-        details::set_rki_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state, date, scaling_factor_inf));
+        details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
     return success();
 }
@@ -331,7 +331,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
     return success();
