@@ -264,7 +264,7 @@ public:
      * Return the time series object of the current number of individuals in the each infection state
      * @return the time series object of the current number of individuals in the each infection state
     */
-    const TimeSeries<ScalarType>& get_population() const
+    const TimeSeries<double>& get_population() const
     {
         return m_subpopulations_time_series;
     }
