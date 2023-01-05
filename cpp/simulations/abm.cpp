@@ -53,7 +53,8 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<double, mio::abm::A
                                        const double (&min)[N], const double (&max)[N])
 {
     assert(N == array.numel());
-    for (auto i = mio::abm::AgeGroup::Age0to4; i < mio::abm::AgeGroup::Count; i++) {
+    const std::vector<mio::abm::AgeGroup> v_age_groups {mio::abm::AgeGroup::Age0to4, mio::abm::AgeGroup::Age5to14, abm::AgeGroup::Age15to34, mio::abm::AgeGroup::Age35to59, mio::abm::AgeGroup::Age60to79, mio::abm::AgeGroup::Age80plus};
+    for (auto i : v_age_groups) {
         assign_uniform_distribution(array[{i,mio::abm::VaccinationState::Unvaccinated}], min[size_t(i)], max[size_t(i)]);
     }
 }
