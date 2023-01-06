@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(memilio-python-generation)
+project(memilio-python)
 
 include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
 
