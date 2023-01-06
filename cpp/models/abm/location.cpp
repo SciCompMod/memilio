@@ -53,7 +53,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
-    double mask_protection = person.get_protective_factor(global_params);
+    ScalarType mask_protection = person.get_protective_factor(global_params);
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (!person.get_cells().empty()) {
@@ -115,7 +115,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
         auto num_infected               = get_subpopulation(InfectionState::Infected);
         auto relative_transmission_risk = compute_relative_transmission_risk();
         m_cached_exposure_rate.array()  = relative_transmission_risk *
-                                         std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
+                                         std::min(m_parameters.get<MaximumContacts>(), ScalarType(m_num_persons)) /
                                          m_num_persons *
                                          (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
                                           global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
@@ -128,7 +128,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
             else {
                 auto relative_transmission_risk = compute_relative_transmission_risk();
                 cell.cached_exposure_rate.array() =
-                    std::min(m_parameters.get<MaximumContacts>(), double(cell.num_people)) / cell.num_people *
+                    std::min(m_parameters.get<MaximumContacts>(), ScalarType(cell.num_people)) / cell.num_people *
                     (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
                      global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected) *
                     relative_transmission_risk;
@@ -214,7 +214,7 @@ the location "Home", which is 66. We multiply this rate with the factor m_capaci
 considered location. For the dependency of the transmission risk on the occupancy we use a linear approximation which 
 leads to: 66 * (m_capacity.persons / m_capacity.volume) * (m_num_persons / m_capacity.persons).
 */
-double Location::compute_relative_transmission_risk()
+ScalarType Location::compute_relative_transmission_risk()
 {
     if (m_capacity.volume != 0 && m_capacity_adapted_transmission_risk) {
         return 66.0 * m_num_persons / m_capacity.volume;

@@ -242,7 +242,7 @@ public:
     * computes a relative transmission risk factor for the location
     * @return the relative risk factor for the location
     */
-    double compute_relative_transmission_risk();
+    ScalarType compute_relative_transmission_risk();
 
     /**
     * Set the capacity adapted transmission risk flag
