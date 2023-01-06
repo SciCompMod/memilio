@@ -36,15 +36,15 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_index(index)
     , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
-    , m_subpopulations_time_series(Eigen::Index(InfectionState::Count))
+    , m_subpopulations(Eigen::Index(InfectionState::Count))
     , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
     , m_cells(std::vector<Cell>(num_cells))
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
-    // Initialise the first time point and set the subpopulation values to 0. 
-    m_subpopulations_time_series.add_time_point();
-    m_subpopulations_time_series.get_last_value().setZero();
+    // Initialize the first time point and set the subpopulation values to 0. 
+    m_subpopulations.add_time_point();
+    m_subpopulations.get_last_value().setZero();
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -199,13 +199,13 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
 
 void Location::change_subpopulation(InfectionState s, int delta)
 {
-    m_subpopulations_time_series.get_last_value()[size_t(s)] += delta;
-    assert(m_subpopulations_time_series.get_last_value()[size_t(s)] >= 0 && "subpopulations must be non-negative");
+    m_subpopulations.get_last_value()[size_t(s)] += delta;
+    assert(m_subpopulations.get_last_value()[size_t(s)] >= 0 && "subpopulations must be non-negative");
 }
 
 int Location::get_subpopulation(InfectionState s) const
 {
-    return (int) m_subpopulations_time_series.get_last_value()[size_t(s)];
+    return (int) m_subpopulations.get_last_value()[size_t(s)];
 }
 
 /*
@@ -224,13 +224,13 @@ double Location::compute_relative_transmission_risk()
     }
 }
 
-void Location::store_current_population(const TimePoint& t)
+void Location::add_subpopulations_timepoint(const TimePoint& t)
 {
     // Get the previous time point index. 
     // Since index starts from 0, we need to -1 from the current time point. 
-    auto last_idx = m_subpopulations_time_series.get_num_time_points() - 1;
-    m_subpopulations_time_series.add_time_point(t.days());
-    m_subpopulations_time_series.get_last_value() = m_subpopulations_time_series.get_value(last_idx);
+    auto last_idx = m_subpopulations.get_num_time_points() - 1;
+    m_subpopulations.add_time_point(t.days());
+    m_subpopulations.get_last_value() = m_subpopulations.get_value(last_idx);
 }
 
 } // namespace abm

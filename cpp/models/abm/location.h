@@ -78,7 +78,7 @@ struct Cell {
     uint32_t num_people;
     uint32_t num_carriers;
     uint32_t num_infected;
-    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate;
 
     Cell()
         : num_people(0)
@@ -89,7 +89,7 @@ struct Cell {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate_new)
+         CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -214,7 +214,7 @@ public:
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
         return m_cached_exposure_rate;
     }
@@ -255,10 +255,10 @@ public:
     }
 
     /**
-     * Store the current number of individuals in the each infection state at a specific time step
-     * @param t the time step to save
+     * Add a timepoint to the subpopulations timeseries
+     * @param t the TimePoint to be added
     */
-    void store_current_population(const TimePoint& t);
+    void add_subpopulations_timepoint(const TimePoint& t);
 
     /**
      * Return the time series object of the current number of individuals in the each infection state
@@ -266,7 +266,7 @@ public:
     */
     const TimeSeries<ScalarType>& get_population() const
     {
-        return m_subpopulations_time_series;
+        return m_subpopulations;
     }
     
     bool get_npi_active() const
@@ -287,9 +287,9 @@ private:
     int m_num_persons = 0;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk;
-    TimeSeries<double> m_subpopulations_time_series;
+    TimeSeries<ScalarType> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
     MaskType m_required_mask;
     bool m_npi_active;

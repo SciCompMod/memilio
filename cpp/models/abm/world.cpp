@@ -116,11 +116,12 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::begin_step(TimePoint /*t*/, TimeSpan dt)
+void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
             location.begin_step(dt, m_infection_parameters);
+            location.add_subpopulations_timepoint(t);
         }
     }
 }
