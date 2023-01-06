@@ -38,7 +38,7 @@ class IntermediateRepresentation:
     parameterset: str = None
     parameterset_wrapper: str = None
     simulation_class: str = None
-    project_path: str = None
+    python_generation_module_path: str = None
     target_folder: str = None
     enum_populations: dict = field(default_factory=dict)
     model_init: list = field(default_factory=list)

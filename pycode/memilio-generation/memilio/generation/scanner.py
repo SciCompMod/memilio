@@ -67,16 +67,14 @@ class Scanner:
         dirname, _ = os.path.split(pkg_resources.resource_filename(
             'memilio', '../_skbuild/linux-x86_64-3.8/cmake-build/compile_commands.json'))
         compdb = CompilationDatabase.fromDirectory(dirname)
-        commands = compdb.getCompileCommands(os.path.join(
-            self.config.project_path + self.config.source_file))
+        commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:
             for argument in command.arguments:
                 if argument != '-Wno-unknown-warning' and argument != "--driver-mode=g++" and argument != "-O3":
                     file_args.append(argument)
         file_args = file_args[1:-4]
         clang_cmd = [
-            "clang", os.path.join(
-                self.config.project_path + self.config.source_file),
+            "clang", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
@@ -296,7 +294,8 @@ class Scanner:
         intermed_repr.set_attribute(
             "python_module_name", self.config.python_module_name)
         intermed_repr.set_attribute("target_folder", self.config.target_folder)
-        intermed_repr.set_attribute("project_path", self.config.project_path)
+        intermed_repr.set_attribute(
+            "python_generation_module_path", self.config.python_generation_module_path)
 
         # check for missing data
         intermed_repr.check_complete_data(self.config.optional)

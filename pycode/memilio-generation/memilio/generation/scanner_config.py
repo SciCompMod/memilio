@@ -39,21 +39,22 @@ class ScannerConfig:
         path_database: Path to the folder of the compile_commands.json
         namespace: C++ namespace of the model class
         python_module_name: Individual name for binded python module
+        python_generation_module_path: Path to the setup.py of the generation module
+        target_folder: Target folder for generated files
         optional: List with optional arguments
             libclang_library_path: Path to the local libclang library, if empty string path gets obtained with terminal command
             simulation_class: Name of simulation class, if not used set as empty string
             age_group: Boolean defining if model uses age groups
             parameterset_wrapper": Boelean defining if model uses wrapper for parameterset
-            target_folder: Target folder for generated files
     """
     source_file: str
     namespace: str
     python_module_name: str
+    python_generation_module_path: str
+    target_folder: str
     optional: dict = field(default_factory=dict)
     model_class: str = field(init=False)
     parameterset: str = field(init=False)
-    project_path: str = field(init=False)
-    target_folder: str = field(init=False)
 
     def __post_init__(self: Self) -> None:
         """
@@ -63,9 +64,3 @@ class ScannerConfig:
         # Predefined Variables
         self.model_class = "Model"
         self.parameterset = "ParametersBase"
-
-        # Get the project path. If this is used outside of Memilio it needs to be changed.
-        project_directory_path = os.path.dirname(os.path.abspath(__file__))
-        self.project_path = project_directory_path.split('/pycode')[0]
-        self.target_folder = self.project_path + \
-            self.optional.get("target_folder", "")

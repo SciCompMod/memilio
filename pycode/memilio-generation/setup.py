@@ -28,7 +28,7 @@ setup(
     setup_requires=['cmake'],
     install_requires=['libclang', 'clang',
                       'dataclasses', 'dataclasses_json', ],
-    extras_require={'dev': ['pyfakefs>=4.2.1', ], },
+    extras_require={},
     long_description='',
     test_suite='memilio.generation_test',
     package_data={'memilio': [

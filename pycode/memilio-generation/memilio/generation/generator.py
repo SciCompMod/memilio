@@ -105,9 +105,9 @@ class Generator:
         @param intermed_repr Dataclass holding the model features.
         """
         # read templates
-        with open(os.path.join(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_py.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path + "/memilio/generation/template/template_py.txt")) as t:
             template_py = string.Template(t.read())
-        with open(os.path.join(intermed_repr.project_path + "/pycode/memilio-generation/memilio/generation/template/template_cpp.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path + "/memilio/generation/template/template_cpp.txt")) as t:
             template_cpp = string.Template(t.read())
 
         # substitue identifiers
