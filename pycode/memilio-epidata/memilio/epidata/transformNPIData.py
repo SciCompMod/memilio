@@ -256,7 +256,8 @@ def transform_npi_data(fine_resolution=2,
                        file_format=dd.defaultDict['file_format'],
                        out_folder=dd.defaultDict['out_folder'],
                        start_date=dd.defaultDict['start_date'],
-                       end_date=dd.defaultDict['end_date']
+                       end_date=dd.defaultDict['end_date'],
+                       counties_considered=geoger.get_county_ids()
                        ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and transforms it according to the
@@ -364,13 +365,13 @@ def transform_npi_data(fine_resolution=2,
     npi_codes_prior = df_npis_desc['Variablenname']
     npi_codes_prior_desc = df_npis_desc['Variable']
 
-    # for fine_resolution == 2 deactivation of non-combinable
+    # for fine_resolution > 0 deactivation of non-combinable
     # incidence-dependent NPIs has to be conducted; therefore we defined a
     # matrix of possible combinations of NPIs (marked with an X if combinable)
     # NPIs of different main category (e.g., M01a and M04) can always be
     # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
     # other
-    if fine_resolution == 2:
+    if fine_resolution > 0:
         df_npis_combinations_pre = pd.read_excel(
             os.path.join(
                 directory, 'combination_npis.xlsx'), engine = 'openpyxl')
@@ -568,15 +569,16 @@ def transform_npi_data(fine_resolution=2,
     del npi_codes
     del npi_desc
     # remove rows and columns of unused codes
-    for code in df_npis_combinations.keys():  # does not work for fine_resolution!=2
-        local_codes_used_rows = df_npis_combinations[code][1].Code.isin(
-            npis.NPI_code)
-        local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
-            npis.NPI_code)
+    if fine_resolution > 0:
+        for code in df_npis_combinations.keys():
+            local_codes_used_rows = df_npis_combinations[code][1].Code.isin(
+                npis.NPI_code)
+            local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
+                npis.NPI_code)
 
-        # overwrite item 0 since codes are stored in *.columns
-        df_npis_combinations[code] = df_npis_combinations[code][1].loc[local_codes_used_rows,
-                                                                       local_codes_used_cols].reset_index(drop=True).copy()
+            # overwrite item 0 since codes are stored in *.columns
+            df_npis_combinations[code] = df_npis_combinations[code][1].loc[local_codes_used_rows,
+                                                                        local_codes_used_cols].reset_index(drop=True).copy()
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -649,18 +651,16 @@ def transform_npi_data(fine_resolution=2,
                 incidence_thresholds_to_npis[(
                     incval, '_' + code_considered.split('_')[2])].append(i)
 
-    # get county ids
-    unique_geo_entities = geoger.get_county_ids()
     # check if more than the county of Eisenach would be removed with
     # current county list
     counties_removed = df_npis_old[
-        ~df_npis_old[dd.EngEng['idCounty']].isin(unique_geo_entities)][
+        ~df_npis_old[dd.EngEng['idCounty']].isin(counties_considered)][
         dd.EngEng['idCounty']].unique()
     if list(counties_removed) != [16056]:
         sys.exit('Error. Other counties than that of Eisenach were removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
-        unique_geo_entities)].reset_index(drop=True)
+        counties_considered)].reset_index(drop=True)
 
     start_npi_cols = list(
         df_npis_old.columns).index(
@@ -730,7 +730,7 @@ def transform_npi_data(fine_resolution=2,
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
 
-    for countyID in unique_geo_entities:
+    for countyID in counties_considered:
         cid = 0
         countyidx += 1
 
@@ -770,14 +770,25 @@ def transform_npi_data(fine_resolution=2,
         cid += 1
 
         start_time = time.perf_counter()
-        npis_new = df_local_old.iloc[npi_rows, start_npi_cols-1:].set_index(dd.EngEng['npiCode']).transpose().reset_index(drop=True).copy()
 
-        # fill in NPI values by transposing from columns to rows
-        df_local_new[dd.EngEng['date']] = dates_new
+        # old dataframe has npi codes as columns and date values as rows
+        # new dataframe should be transposed
+        df_local_new = df_local_old.iloc[npi_rows, start_npi_cols-1:].set_index(
+            dd.EngEng['npiCode']).transpose().copy()
+        # get datetime as a column (previously index after transposing)
+        df_local_new = df_local_new.reset_index(
+            drop=False).rename(
+            columns={'index': dd.EngEng['date']})
+        # reset index name (which is dd.EngEng['npiCode'] after transposing)
+        df_local_new.rename_axis('', axis=1, inplace=True)
+        # change time format from 'dYYYYMMDD' to datetime timestamps
+        df_local_new[dd.EngEng['date']] = pd.to_datetime(
+            df_local_new[dd.EngEng['date']], format='d%Y%m%d')
+        # fill in column for county ID
         df_local_new[dd.EngEng['idCounty']] = countyID
-        # possible resorting of rows such that they are sorted according to
-        # a literal sorting of the code strings
-        df_local_new = pd.concat([df_local_new.copy(), npis_new], axis = 1)
+        # sort columns as to {Date, ID_County, npi_codes...}
+        # for now this can be done alphabetically
+        df_local_new.sort_index(axis=1, inplace=True)
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -944,12 +955,12 @@ def transform_npi_data(fine_resolution=2,
         # divide working time by completed number of counties and multiply
         # by remaining number of counties to estimate time remaining
         time_remain = sum(
-            counters) / countyidx * (len(unique_geo_entities) - countyidx)
+            counters) / countyidx * (len(counties_considered) - countyidx)
         # print progress
         if countyidx == 1 or countyidx % int(
-                len(unique_geo_entities) / 10) == 0:
+                len(counties_considered) / 10) == 0:
             print('Progress ' + str(countyidx) + ' / ' +
-                  str(len(unique_geo_entities)) +
+                  str(len(counties_considered)) +
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
 
@@ -973,7 +984,7 @@ def transform_npi_data(fine_resolution=2,
         start_date_validation = datetime(2020, 3, 1)
         end_date_validation = datetime(2022, 2, 15)
 
-        for countyID in unique_geo_entities:
+        for countyID in counties_considered:
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
@@ -992,7 +1003,7 @@ def transform_npi_data(fine_resolution=2,
         start_date_validation = datetime(2020, 3, 1)
         end_date_validation = datetime(2022, 2, 15)
 
-        for countyID in unique_geo_entities:
+        for countyID in counties_considered:
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
