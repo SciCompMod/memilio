@@ -322,7 +322,7 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
 template <class Model>
 IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                           const std::string& dir)
+                                           const std::string& dir, int num_days = 0, bool export_time_series = false)
 {
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
@@ -334,6 +334,16 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
+
+    if (export_time_series) {
+        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
+        // Run time equals run time of the previous functions times the num_days !
+        // (This only represents the vectorization of the previous function over all simulation days...)
+        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
+                    "For simulation runs over the same time period, deactivate it.");
+        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
+                                                    scaling_factor_icu, num_days));
+    }
     return success();
 }
 } // namespace osecir

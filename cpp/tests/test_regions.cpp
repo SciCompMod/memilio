@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "gtest/gtest.h"
 
 TEST(TestRegions, get_holidays)

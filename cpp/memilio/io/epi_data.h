@@ -25,7 +25,7 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"

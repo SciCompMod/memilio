@@ -17,8 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/epidemiology/regions.h"
-#include "memilio/epidemiology/holiday_data_de.ipp"
+#include "memilio/geography/regions.h"
+#include "memilio/geography/holiday_data_de.ipp"
+#include "memilio/io/epi_data.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/mobility/mobility.h"
 
 #include <tuple>
 
@@ -113,6 +116,26 @@ get_holidays(StateId state, Date start_date, Date end_date)
 }
 
 } // namespace de
+
+IOResult<std::vector<int>> get_county_ids(const std::string& path)
+{
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
+
+    std::vector<int> id;
+    id.reserve(population_data.size());
+    for (auto&& entry : population_data) {
+        if (entry.county_id) {
+            id.push_back(entry.county_id->get());
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
+        }
+    }
+    //remove duplicate county ids
+    id.erase(std::unique(id.begin(), id.end()), id.end());
+    return success(id);
+}
+
 } // namespace regions
 
 } // namespace mio
