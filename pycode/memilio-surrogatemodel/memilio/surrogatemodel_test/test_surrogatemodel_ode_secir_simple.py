@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors:
 #
@@ -22,7 +22,7 @@ from pyfakefs import fake_filesystem_unittest
 import os
 
 from memilio.surrogatemodel.ode_secir_simple import data_generation
-from memilio.surrogatemodel.ode_secir_simple import different_networks
+from memilio.surrogatemodel.ode_secir_simple import network_architectures
 from memilio.surrogatemodel.ode_secir_simple import model
 
 
@@ -96,9 +96,9 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         max_epochs = 5
 
         # models with single output
-        model_single = different_networks.single_output()
-        model_dense_multi_input = different_networks.multilayer_multi_input()
-        model_lstm_single = different_networks.lstm_network_multi_input()
+        model_single = network_architectures.single_output()
+        model_dense_multi_input = network_architectures.multilayer_multi_input()
+        model_lstm_single = network_architectures.lstm_network_multi_input()
 
         # no existing dataset
         with self.assertRaises(FileNotFoundError) as error:
@@ -115,7 +115,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         data_generation.generate_data(num_runs, self.path, input_width,
                                       label_width)
 
-        # test different models
+        # test different network_architectures
         single_output = model.network_fit(
             self.path, model=model_single, max_epochs=max_epochs, plot=False)
         self.assertEqual(
@@ -138,8 +138,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                                       label_width)
 
         # models with multiple outputs
-        model_cnn = different_networks.cnn_multi_output(label_width)
-        model_lstm = different_networks.lstm_multi_output(label_width)
+        model_cnn = network_architectures.cnn_multi_output(label_width)
+        model_lstm = network_architectures.lstm_multi_output(label_width)
 
         cnn_output = model.network_fit(
             self.path, model=model_cnn, max_epochs=max_epochs, plot=False)

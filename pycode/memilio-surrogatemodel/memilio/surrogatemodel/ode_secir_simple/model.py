@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -24,7 +24,7 @@ import pickle
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from memilio.surrogatemodel.ode_secir_simple import data_generation
-from memilio.surrogatemodel.ode_secir_simple import different_networks
+from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 
 def plotCol(
@@ -93,14 +93,14 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
     file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
 
     data = pickle.load(file)
-    data_splitted = data_generation.splitdata(data["inputs"], data["labels"])
+    data_splitted = split_data(data['inputs'], data['labels'])
 
-    train_inputs = data_splitted["train_inputs"]
-    train_labels = data_splitted["train_labels"]
-    valid_inputs = data_splitted["valid_inputs"]
-    valid_labels = data_splitted["valid_labels"]
-    test_inputs = data_splitted["test_inputs"]
-    test_labels = data_splitted["test_labels"]
+    train_inputs = data_splitted['train_inputs']
+    train_labels = data_splitted['train_labels']
+    valid_inputs = data_splitted['valid_inputs']
+    valid_labels = data_splitted['valid_labels']
+    test_inputs = data_splitted['test_inputs']
+    test_labels = data_splitted['test_labels']
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
@@ -171,6 +171,46 @@ def get_test_statistic(test_inputs, test_labels, model):
     return mean_percentage
 
 
+def split_data(inputs, labels, split_train=0.7,
+               split_valid=0.2, split_test=0.1):
+    """! Split data set in training, validation and testing data sets.
+
+   @param inputs input dataset
+   @param labels label dataset
+   @param split_train Share of training data sets.
+   @param split_valid Share of validation data sets.
+   @param split_test Share of testing data sets.
+   """
+
+    if split_train + split_valid + split_test != 1:
+        raise ValueError(
+            "Summed data set shares do not equal 1. Please adjust the values.")
+    elif inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
+        raise ValueError(
+            "Number of batches or features different for input and labels")
+
+    n = inputs.shape[0]
+    n_train = int(n * split_train)
+    n_valid = int(n * split_valid)
+    n_test = n - n_train - n_valid
+
+    inputs_train, inputs_valid, inputs_test = tf.split(
+        inputs, [n_train, n_valid, n_test], 0)
+    labels_train, labels_valid, labels_test = tf.split(
+        labels, [n_train, n_valid, n_test], 0)
+
+    data = {
+        'train_inputs': inputs_train,
+        'train_labels': labels_train,
+        'valid_inputs': inputs_valid,
+        'valid_labels': labels_valid,
+        'test_inputs': inputs_test,
+        'test_labels': labels_test
+    }
+
+    return data
+
+
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
@@ -179,11 +219,11 @@ if __name__ == "__main__":
 
     model = "LSTM"
     if model == "Dense":
-        model = different_networks.multilayer_multi_input()
+        model = network_architectures.multilayer_multi_input()
     elif model == "LSTM":
-        model = different_networks.lstm_multi_output(30)
+        model = network_architectures.lstm_multi_output(30)
     elif model == "CNN":
-        model = different_networks.cnn_multi_output(30)
+        model = network_architectures.cnn_multi_output(30)
 
     model_output = network_fit(
         path_data, model=model,

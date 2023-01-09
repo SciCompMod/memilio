@@ -17,20 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result
-from memilio.simulation.secir import InfectionState
+from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping, set_log_level, LogLevel
+from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result, InfectionState
 from datetime import date
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import pickle
 import random
 import os
 import copy
-import tensorflow as tf
-import memilio.simulation as mio
 
 
 def run_secir_simulation(days):
@@ -38,7 +36,7 @@ def run_secir_simulation(days):
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
    """
-    mio.set_log_level(mio.LogLevel.Off)
+    set_log_level(LogLevel.Off)
 
     populations = [50_000]
     start_day = 1
@@ -62,20 +60,20 @@ def run_secir_simulation(days):
 
     # Initial number of people in each compartment with random numbers
     model.populations[A0, Index_InfectionState(
-        State.Exposed)] = 60 * random.uniform(0.2, 1)
+        InfectionState.Exposed)] = 60 * random.uniform(0.2, 1)
     model.populations[A0, Index_InfectionState(
-        State.InfectedNoSymptoms)] = 55 * random.uniform(0.2, 1)
+        InfectionState.InfectedNoSymptoms)] = 55 * random.uniform(0.2, 1)
     model.populations[A0, Index_InfectionState(
-        State.InfectedSymptoms)] = 50 * random.uniform(0.2, 1)
+        InfectionState.InfectedSymptoms)] = 50 * random.uniform(0.2, 1)
     model.populations[A0, Index_InfectionState(
-        State.InfectedSevere)] = 12 * random.uniform(0.2, 1)
+        InfectionState.InfectedSevere)] = 12 * random.uniform(0.2, 1)
     model.populations[A0, Index_InfectionState(
-        State.InfectedCritical)] = 3 * random.uniform(0.2, 1)
+        InfectionState.InfectedCritical)] = 3 * random.uniform(0.2, 1)
     model.populations[A0, Index_InfectionState(
-        State.Recovered)] = 50 * random.random()
-    model.populations[A0, Index_InfectionState(State.Dead)] = 0
+        InfectionState.Recovered)] = 50 * random.random()
+    model.populations[A0, Index_InfectionState(InfectionState.Dead)] = 0
     model.populations.set_difference_from_total(
-        (A0, Index_InfectionState(State.Susceptible)), populations[0])
+        (A0, Index_InfectionState(InfectionState.Susceptible)), populations[0])
 
     # Compartment transition propabilities
     model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.5
@@ -134,6 +132,8 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
         "labels": []
     }
 
+    # The number of days is the same as the sum of input and label width.
+    # Since the first day of the input is day 0, we still need to subtract 1.
     days = input_width + label_width - 1
 
     # show progess in terminal for longer runs
@@ -141,7 +141,7 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
         data_run = run_secir_simulation(days)
-        data["inputs"].append(data_run[:input_width])
+        data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         bar.next()
     bar.finish()
@@ -171,44 +171,6 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
         # save dict to json file
         with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
             pickle.dump(data, f)
-    return data
-
-
-def split_data(inputs, labels, split_train=0.7,
-              split_valid=0.2, split_test=0.1):
-    """! Split data set in training, validation and testing data sets.
-
-   @param inputs input dataset
-   @param labels label dataset
-   @param split_train Share of training data sets.
-   @param split_valid Share of validation data sets.
-   @param split_test Share of testing data sets.
-   """
-
-    if split_train + split_valid + split_test != 1:
-        raise ValueError("Summed data set shares do not equal 1. Please adjust the values.")
-    elif inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
-        raise ValueError("Number of batches or features different for input and labels")
-
-    n = inputs.shape[0]
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = n - n_train - n_valid
-
-    inputs_train, inputs_valid, inputs_test = tf.split(
-        inputs, [n_train, n_valid, n_test], 0)
-    labels_train, labels_valid, labels_test = tf.split(
-        labels, [n_train, n_valid, n_test], 0)
-
-    data = {
-        "train_inputs": inputs_train,
-        "train_labels": labels_train,
-        "valid_inputs": inputs_valid,
-        "valid_labels": labels_valid,
-        "test_inputs": inputs_test,
-        "test_labels": labels_test
-    }
-
     return data
 
 
