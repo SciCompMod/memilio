@@ -19,5 +19,5 @@
 #############################################################################
 
 """
-ode_secir model for the simplest example to create a surrogate model.
+A surrogate model for a simple SECIR model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
 """

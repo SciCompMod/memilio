@@ -1,6 +1,6 @@
 MEmilio Surrogate Model Package
 =======================
-This package contains machine learning based surrogate models that make predictions based on the MEmilio simulation models. Currently there are only surrogate models for equation-basesd models. These ODE simulations are used for data generation. The goal is to create a powerful tool that predicts the spread of Covid19 faster than an ODE simulation while aiming for high precision. 
+This package contains machine learning based surrogate models that make predictions based on the MEmilio simulation models. Currently there are only surrogate models for ODE models. These simulations of these equation-based models are used for data generation. The goal is to create a powerful tool that predicts the dynamics faster than a simulation of an expert model, e.g., a metapopulation or agent-based model while still having acceptable errors with respect to the original simulations.
  
 ## Installation
 
@@ -17,18 +17,18 @@ For developement of code use
 pip install -e .[dev]
 ``` 
 
-Since we are running simulations to generate the data, the MEmilio `simulation <https://github.com/DLR-SC/memilio/blob/main/pycode/memilio-simulation/setup.py>`_ package also needs to be installed.
+Since we are running simulations to generate the data, the MEmilio `memilio-simulation` package (https://github.com/DLR-SC/memilio/tree/main/pycode/memilio-simulation) also needs to be installed.
 ## Usage
 The package currently provides the following modules:
 
 - `models`: models for different specific tasks
    Currently we have the following models: 
-   - `ode_secir_simple`: a very simplified model with only one population and one age group.
+   - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
 
      Each model folder contains the following files: 
-     - `data_generation`: data is generated from memilio secir simulation.
+     - `data_generation`: data generated from expert model simulation.
      - `model`: training and evaluation of the model. 
-     - `different_networks`: multiple network architectures are saved in this file.
+     - `network_architectures`: multiple network architectures are saved in this file.
 
 
 - `tests`: this file contains all tests 

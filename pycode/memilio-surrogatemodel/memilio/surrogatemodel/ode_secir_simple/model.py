@@ -78,12 +78,12 @@ def plotCol(
 
 
 def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
-    """! Training and evaluation of the model. 
+    """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
-    @param model name of the model to be loaded from the file where the model architectures are saved. 
+    @param model Keras sequential model.
     @param max_epochs int maximum number of epochs in training. 
-    @param early_stop int defines the number of epochs without significant change tolerated before forcing an early stop of training. 
+    @param early_stop Integer that forces an early stop of training if the given number of epochs does not give a significant reduction of validation loss. 
 
     """
 
@@ -146,7 +146,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     """! Calculates the mean absolute percentage error based on the test dataset.   
 
     @param test_inputs inputs from test data.
-    @param testlabels labels/outout from test data.
+    @param test_labels labels (output) from test data.
     @aram model trained model. 
 
     """

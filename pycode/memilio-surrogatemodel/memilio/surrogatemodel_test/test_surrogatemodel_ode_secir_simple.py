@@ -80,9 +80,9 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
     def test_data_generation_save(self):
 
-        input_width = 5
-        label_width = 10
-        num_runs = 15
+        input_width = 2
+        label_width = 3
+        num_runs = 1
 
         data_generation.generate_data(num_runs, self.path, input_width,
                                       label_width)

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -19,7 +19,7 @@
 #############################################################################
 from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
 from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result
-from memilio.simulation.secir import InfectionState as State
+from memilio.simulation.secir import InfectionState
 from datetime import date
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
@@ -34,11 +34,8 @@ import memilio.simulation as mio
 
 
 def run_secir_simulation(days):
-    """! Slightly modified example of Secir Simple.
-
-   Here, the initial values are choosen randomly, so the model is no longer deterministic.
-   Necessary to create the dataset for later training process.
-   This method is called within a loop in the function 'generate_data', which also sets the number of runs.
+    """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
+    Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
    """
     mio.set_log_level(mio.LogLevel.Off)
@@ -82,7 +79,7 @@ def run_secir_simulation(days):
 
     # Compartment transition propabilities
     model.parameters.RelativeTransmissionNoSymptoms[A0] = 0.5
-    model.parameters.TransmissionProbabilityOnContact[A0] = 1.0
+    model.parameters.TransmissionProbabilityOnContact[A0] = 0.1
     model.parameters.RecoveredPerInfectedNoSymptoms[A0] = 0.09
     model.parameters.RiskOfInfectionFromSymptomatic[A0] = 0.25
     model.parameters.SeverePerInfectedSymptoms[A0] = 0.2
@@ -95,7 +92,7 @@ def run_secir_simulation(days):
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
-        (num_groups, num_groups)) * 1
+        (num_groups, num_groups)) * 10
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
 
@@ -104,12 +101,12 @@ def run_secir_simulation(days):
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+    # Interpolate simulation result on days time scale
     result = interpolate_simulation_result(result)
 
-    # when directly using a list instead of an array, we get problems with references
+    # Using an array instead of a list to avoid problems with references
     result_array = result.as_ndarray()
     dataset = []
-
     # Omit first column, as the time points are not of interest here.
     for row in np.transpose(result_array[1:, :]):
         dataset.append(copy.deepcopy(row))
@@ -118,7 +115,7 @@ def run_secir_simulation(days):
 
 
 def generate_data(num_runs, path, input_width, label_width, save_data=True):
-    """! Generate dataset by calling run_secir_simulation (num_runs)-often
+    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation. Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
 
     In general, we have 8 different compartments. If we choose, 
     input_width = 5 and label_width = 20, the dataset has 
@@ -129,7 +126,8 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
    @param path Path, where the dataset is saved to.
    @param input_width Int value that defines the number of time series used for the input.
    @param label_width Int value that defines the size of the labels.
-   @param save_data Option to deactivate the save of the dataset. Per default true.
+   @param save_data [Default: true] Option to save the dataset.
+   @return Data dictionary of input and label data sets.
    """
     data = {
         "inputs": [],
@@ -176,29 +174,26 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
     return data
 
 
-def splitdata(inputs, labels, split_train=0.7,
+def split_data(inputs, labels, split_train=0.7,
               split_valid=0.2, split_test=0.1):
-    """! Split data in train, valid and test
+    """! Split data set in training, validation and testing data sets.
 
    @param inputs input dataset
    @param labels label dataset
-   @param split_train ratio of train datasets
-   @param split_valid ratio of validation datasets
-   @param split_test ratio of test datasets
+   @param split_train Share of training data sets.
+   @param split_valid Share of validation data sets.
+   @param split_test Share of testing data sets.
    """
 
     if split_train + split_valid + split_test != 1:
-        ValueError("summed Split ratios not equal 1! Please adjust the values")
+        raise ValueError("Summed data set shares do not equal 1. Please adjust the values.")
     elif inputs.shape[0] != labels.shape[0] or inputs.shape[2] != labels.shape[2]:
-        ValueError("Number of batches or features different for input and labels")
+        raise ValueError("Number of batches or features different for input and labels")
 
     n = inputs.shape[0]
     n_train = int(n * split_train)
     n_valid = int(n * split_valid)
-    n_test = int(n * split_test)
-
-    if n_train + n_valid + n_test != n:
-        n_test = n - n_train - n_valid
+    n_test = n - n_train - n_valid
 
     inputs_train, inputs_valid, inputs_test = tf.split(
         inputs, [n_train, n_valid, n_test], 0)
@@ -218,6 +213,7 @@ def splitdata(inputs, labels, split_train=0.7,
 
 
 if __name__ == "__main__":
+    # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
