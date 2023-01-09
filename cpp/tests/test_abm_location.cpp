@@ -498,3 +498,22 @@ TEST(TestLocation, setCapacity)
     ASSERT_EQ(location.get_capacity().persons, 4);
     ASSERT_EQ(location.get_capacity().volume, 200);
 }
+
+TEST(TestLocation, setRequiredMask)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
+
+    location.set_required_mask(mio::abm::MaskType::FFP2);
+    ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::FFP2);
+}
+
+TEST(TestLocation, setNPIActive)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    location.set_npi_active(false);
+    ASSERT_FALSE(location.get_npi_active());
+
+    location.set_npi_active(true);
+    ASSERT_TRUE(location.get_npi_active());
+}

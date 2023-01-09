@@ -59,22 +59,22 @@ struct Greeting {
 int main(int argc, char** argv)
 {
     // create parameter set
-    auto p = mio::ParameterSet<Name, Age, Greeting>{};
+    auto parameters = mio::ParameterSet<Name, Age, Greeting>{};
     // get command line options
-    auto r = mio::command_line_interface("cli", argc, argv, p);
+    auto result = mio::command_line_interface("cli", argc, argv, parameters);
     // catch errors
-    if (!r) {
-        std::cout << r.error().formatted_message();
-        return r.error().code().value();
+    if (!result) {
+        std::cout << result.error().formatted_message();
+        return result.error().code().value();
     }
     // do something with the parameters
-    std::cout << p.get<Greeting>() << "\n"
+    std::cout << parameters.get<Greeting>() << "\n"
               << "Name: ";
-    for (auto& name : p.get<Name>()) {
+    for (auto& name : parameters.get<Name>()) {
         std::cout << name << " ";
     }
     std::cout << "\n";
-    if (p.get<Age>() > 0) {
-        std::cout << "Age: " << p.get<Age>() << "\n";
+    if (parameters.get<Age>() > 0) {
+        std::cout << "Age: " << parameters.get<Age>() << "\n";
     }
 }
