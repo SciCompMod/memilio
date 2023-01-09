@@ -477,7 +477,6 @@ def transform_npi_data(fine_resolution=2,
                 i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
 
         # correct M05_N codes to M_05_M_N, N in {1,...,5}, M in {130,150,120,140,110,100,160}
-        # TODO: check
         for i in range(1, 6):
             npi_codes_prior[npi_codes_prior == 'M05_'+str(i)] = ['M05_130_'+str(i), 'M05_150_'+str(
                 i), 'M05_120_'+str(i), 'M05_140_'+str(i), 'M05_110_'+str(i), 'M05_100_'+str(i), 'M05_160_'+str(i)]
@@ -569,7 +568,7 @@ def transform_npi_data(fine_resolution=2,
     del npi_codes
     del npi_desc
     # remove rows and columns of unused codes
-    for code in df_npis_combinations.keys():
+    for code in df_npis_combinations.keys():  # does not work for fine_resolution!=2
         local_codes_used_rows = df_npis_combinations[code][1].Code.isin(
             npis.NPI_code)
         local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
@@ -605,23 +604,23 @@ def transform_npi_data(fine_resolution=2,
             npi_codes_aggregated)].reset_index()
     else:
         npis_final = npis
-    del npis
+
     # extract incidence-threshold for NPIs
     if fine_resolution > 0:
         npi_incid_start = dict()
-        for i in range(len(npis_final)):
+        for i in range(len(npis)):
             incid_threshold = 1e5
-            if npis_final.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
+            if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
                 # set -1 for incidence-independent NPIs
                 incid_threshold = -1
-            elif npis_final.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
+            elif npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
                 incid_threshold = int(
-                    npis_final.loc[i, dd.EngEng['desc']].split(' ')[1])
+                    npis.loc[i, dd.EngEng['desc']].split(' ')[1])
             else:
                 sys.exit(
                     'Error in description file. NPI activation can not '
                     'be computed. Exiting.')
-            npi_incid_start[npis_final.loc[i, dd.EngEng['npiCode']]
+            npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
                             ] = incid_threshold
 
         # get all incidence thresholds (This list has to be sorted)
@@ -641,8 +640,8 @@ def transform_npi_data(fine_resolution=2,
         # create hash map from thresholds to NPI indices
         incidence_thresholds_to_npis = dict(
             zip(incidence_thresholds, [[] for i in range(len(incidence_thresholds))]))
-        for i in range(len(npis_final)):
-            code_considered = npis_final.loc[i, dd.EngEng['npiCode']]
+        for i in range(len(npis)):
+            code_considered = npis.loc[i, dd.EngEng['npiCode']]
             incval = npi_incid_start[code_considered]
             if len(code_considered.split('_')) < 3:
                 incidence_thresholds_to_npis[(incval, '')].append(i)
@@ -759,7 +758,7 @@ def transform_npi_data(fine_resolution=2,
                                    == countyID].copy()
 
         # potentially remove rows if they are not in npis dict
-        npi_rows = [i in npis_final[dd.EngEng['npiCode']].values
+        npi_rows = [i in npis[dd.EngEng['npiCode']].values
                     for i in df_local_old[dd.EngEng['npiCode']]]
 
 
@@ -801,7 +800,7 @@ def transform_npi_data(fine_resolution=2,
             # get index of first NPI column in local data frame
             npis_idx_start = list(
                 df_local_new.columns).index(
-                npis_final[dd.EngEng['npiCode']][0])
+                npis[dd.EngEng['npiCode']][0])
 
             # iterate through all NPIs and activate if incidence threshold
             # is exceeded
@@ -926,7 +925,6 @@ def transform_npi_data(fine_resolution=2,
                 for main_code, codes_group in maincode_to_npicodes_map.items():
                     # group by incidence (former codes X1_Y, X1_Z were transformed
                     # to X1, X2) and write max value to main code column
-                    # TODO: check
                     df_local_new.loc[:, main_code] = df_local_new.loc[:, codes_group].max(
                         axis=1)
                 # remove subcategory columns
@@ -975,7 +973,7 @@ def transform_npi_data(fine_resolution=2,
         start_date_validation = datetime(2020, 3, 1)
         end_date_validation = datetime(2022, 2, 15)
 
-        for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+        for countyID in unique_geo_entities:
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
@@ -994,7 +992,7 @@ def transform_npi_data(fine_resolution=2,
         start_date_validation = datetime(2020, 3, 1)
         end_date_validation = datetime(2022, 2, 15)
 
-        for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+        for countyID in unique_geo_entities:
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
