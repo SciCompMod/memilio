@@ -94,6 +94,7 @@ private:
     void update_susceptibles();
     void update_forceofinfection();
     void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow);
+    void update_flows();
     void compute_totaldeaths();
     void compute_recovered();
 
@@ -114,9 +115,8 @@ private:
      *              via idx_TransitionDistribution2.
      */
     void get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                  int idx_TransitionDistribution1, int idx_TransitionDistribution2,
-                                  size_t transitionprobability2);
-    void update_compartments();
+                                  int idx_TransitionDistribution1, int idx_TransitionDistribution2);
+    void update_compartments_ECIHU();
 
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType> m_transitions;

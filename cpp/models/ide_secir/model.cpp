@@ -68,7 +68,7 @@ void Model::update_forceofinfection()
              .get_xright()});
 
     //corresponding index
-    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt); //need calc_time timesteps in sum
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt); //need calc_time_index timesteps in sum
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
@@ -127,6 +127,41 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
         (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * m_dt * sum;
 }
 
+void Model::update_flows()
+{
+    // calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
+    m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
+        m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
+    // calculate all other flows with compute_flow
+    // sigma_E^C
+    compute_flow((int)InfectionTransitions::ExposedToInfectedNoSymptoms,
+                    Eigen::Index(InfectionTransitions::SusceptibleToExposed));
+    // sigma_C^I
+    compute_flow((int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
+                    Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
+    // sigma_C^R
+    compute_flow((int)InfectionTransitions::InfectedNoSymptomsToRecovered,
+                    Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
+    // sigma_I^H
+    compute_flow((int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
+                    Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
+    // sigma_I^R
+    compute_flow((int)InfectionTransitions::InfectedSymptomsToRecovered,
+                    Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
+    // sigma_H^U
+    compute_flow((int)InfectionTransitions::InfectedSevereToInfectedCritical,
+                    Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
+    // sigma_H^R
+    compute_flow((int)InfectionTransitions::InfectedSevereToRecovered,
+                    Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
+    // sigma_U^D
+    compute_flow((int)InfectionTransitions::InfectedCriticalToDead,
+                    Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
+    // sigma_U^R
+    compute_flow((int)InfectionTransitions::InfectedCriticalToRecovered,
+                    Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
+}
+
 void Model::compute_totaldeaths()
 {
     Eigen::Index num_time_points = m_SECIR.get_num_time_points();
@@ -150,8 +185,7 @@ void Model::compute_recovered()
 
 // function that actually computes size of compartments from flows (all but S and R)
 void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                     int idx_TransitionDistribution1, int idx_TransitionDistribution2,
-                                     size_t transitionprobability2)
+                                     int idx_TransitionDistribution1, int idx_TransitionDistribution2)
 {
     ScalarType sum = 0;
 
@@ -163,12 +197,12 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt);
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
-
+    
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
         sum += (parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1] *
                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Distribution(
                         (num_time_points - 1 - i) * m_dt) +
-                transitionprobability2 *
+                parameters.get<TransitionProbabilities>()[idx_TransitionDistribution2]*
                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Distribution(
                         (num_time_points - 1 - i) * m_dt)) *
                m_transitions[i + 1][idx_IncomingFlow];
@@ -178,39 +212,36 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
     m_SECIR.get_last_value()[idx_InfectionState] = m_dt * sum;
 }
 
-void Model::update_compartments()
+void Model::update_compartments_ECIHU()
 {
     // E
     get_size_of_compartments(Eigen::Index(InfectionState::Exposed),
                              Eigen::Index(InfectionTransitions::SusceptibleToExposed),
-                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 0, 0);
+                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 0);
     // C
     get_size_of_compartments(
         Eigen::Index(InfectionState::InfectedNoSymptoms),
         Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms),
         (int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
-        (int)InfectionTransitions::InfectedNoSymptomsToRecovered,
-        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]);
+        (int)InfectionTransitions::InfectedNoSymptomsToRecovered);
     // I
     get_size_of_compartments(
         Eigen::Index(InfectionState::InfectedSymptoms),
         Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms),
         (int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
-        (int)InfectionTransitions::InfectedSymptomsToRecovered,
-        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]);
+        (int)InfectionTransitions::InfectedSymptomsToRecovered);
     // H
     get_size_of_compartments(
         Eigen::Index(InfectionState::InfectedSevere),
         Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere),
         (int)InfectionTransitions::InfectedSevereToInfectedCritical,
-        (int)InfectionTransitions::InfectedSevereToRecovered,
-        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSevereToRecovered]);
+        (int)InfectionTransitions::InfectedSevereToRecovered);
     // U
     get_size_of_compartments(
         Eigen::Index(InfectionState::InfectedCritical),
         Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical),
-        (int)InfectionTransitions::InfectedCriticalToDead, (int)InfectionTransitions::InfectedCriticalToRecovered,
-        parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedCriticalToRecovered]);
+        (int)InfectionTransitions::InfectedCriticalToDead, 
+        (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
 // do simulation
@@ -223,7 +254,7 @@ void Model::simulate(int t_max)
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
 
     //calculate compartment sizes for t=0
-    update_compartments();
+    update_compartments_ECIHU();
     //R
     m_SECIR.get_last_value()[Eigen::Index(InfectionState::Recovered)] =
         m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)] -
@@ -244,38 +275,8 @@ void Model::simulate(int t_max)
         // compute_S:
         update_susceptibles();
 
-        //calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
-        m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
-            m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
-
         // compute flows:
-        // compute sigma_E^C
-        compute_flow((int)InfectionTransitions::ExposedToInfectedNoSymptoms,
-                     Eigen::Index(InfectionTransitions::SusceptibleToExposed));
-        // compute sigma_C^I
-        compute_flow((int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
-                     Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
-        //sigma_C^R
-        compute_flow((int)InfectionTransitions::InfectedNoSymptomsToRecovered,
-                     Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
-        //sigma_I^H
-        compute_flow((int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
-                     Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
-        //sigma_I^R
-        compute_flow((int)InfectionTransitions::InfectedSymptomsToRecovered,
-                     Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
-        //sigma_H^U
-        compute_flow((int)InfectionTransitions::InfectedSevereToInfectedCritical,
-                     Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
-        //sigma_H^R
-        compute_flow((int)InfectionTransitions::InfectedSevereToRecovered,
-                     Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
-        //sigma_U^D
-        compute_flow((int)InfectionTransitions::InfectedCriticalToDead,
-                     Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
-        //sigma_U^R
-        compute_flow((int)InfectionTransitions::InfectedCriticalToRecovered,
-                     Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
+        update_flows();
 
         // compute D
         compute_totaldeaths();
@@ -284,7 +285,7 @@ void Model::simulate(int t_max)
         update_forceofinfection();
 
         // compute remaining compartments from flows
-        update_compartments();
+        update_compartments_ECIHU();
         compute_recovered();
     }
     std::cout << "Finished simulation successfully.  \n";
