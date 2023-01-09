@@ -125,37 +125,64 @@ namespace details
         }
     };
 
-    /// @brief check if the identifier is a name option
-    inline bool is_name(const std::string& identifier)
+    class Identifier : public std::string
     {
-        return (identifier.size() > 2) && (identifier.substr(0, 2) == "--");
-    }
+    public:
+        using std::string::string;
+        
+        /// @brief check if the identifier is a name option
+        inline bool is_name() const
+        {
+            return (size() > 2) && (substr(0, 2) == "--");
+        }
 
-    /// @brief check if the identifier is an alias option
-    inline bool is_alias(const std::string& identifier)
-    {
-        return (identifier.size() > 1) && (identifier[0] == '-') && (identifier[1] != '-');
-    }
+        /// @brief view only the name of the identifier
+        inline const char* get_name() const
+        {
+            assert(is_name());
+            return data() + 2;
+        }
 
-    /// @brief check if the identifier is an option
-    inline bool is_option(const std::string& identifier)
-    {
-        return is_name(identifier) || is_alias(identifier);
-    }
+        /// @brief check if the identifier is an alias option
+        inline bool is_alias() const
+        {
+            return (size() > 1) && (data()[0] == '-') && (data()[1] != '-');
+        }
 
-    /// @brief check if the identifier is an option matching the Parameter
+        /// @brief view only the alias of the identifier
+        inline const char* get_alias() const
+        {
+            assert(is_alias());
+            return data() + 1;
+        }
+
+        /// @brief check if the identifier is either a name or an alias 
+        inline bool is_option() const
+        {
+            return is_name() || is_alias();
+        }
+
+        /// @brief check if the identifier matches the Parameter
+        template <class Parameter>
+        inline bool matches_parameter() const
+        {
+            if (is_name()) { // match name without "--"
+                return Name<Parameter>::get() == substr(2);
+            }
+            else if (is_alias()) { // match alias without "-"
+                return Alias<Parameter>::get() == substr(1);
+            }
+            else { // not an option
+                return false;
+            }
+        }
+
+    };
+
+    /// @brief check if the given non-identifier string matches the Parameter by name or alias
     template <class Parameter>
-    inline bool option_matches(const std::string& identifier)
-    {
-        if (is_name(identifier)) {
-            return Name<Parameter>::get() == identifier.substr(2);
-        }
-        else if (is_alias(identifier)) {
-            return Alias<Parameter>::get() == identifier.substr(1);
-        }
-        else {
-            return false;
-        }
+    inline bool name_matches_parameter(const std::string& name) {
+        return (Name<Parameter>::get() == name) || (name.size() > 0 && Alias<Parameter>::get() == name);
     }
 
     /// @brief End recursion
@@ -220,15 +247,15 @@ namespace details
 
     /// @brief End recursion
     template <template <class> /*Field */ class, class Set>
-    mio::IOResult<void> set_param_impl(const typelist<>, Set&, const std::string& name, const std::string& /* args */)
+    mio::IOResult<void> set_param_impl(const typelist<>, Set&, const char* name, const std::string& /* args */)
     {
-        return mio::failure(mio::StatusCode::KeyNotFound, "No such option \"" + name + "\".");
+        return mio::failure(mio::StatusCode::KeyNotFound, "No such option \"" + std::string(name) + "\".");
         // end recusrion
     }
 
     /// @brief Set the parameter given by name (or alias) to the json value given by args.
     template <template <class> class Field, class T, class... Ts, class Set>
-    mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, const std::string& name,
+    mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, const char* name,
                                     const std::string& args)
     {
         if (Field<T>::get() == name) {
@@ -246,7 +273,7 @@ namespace details
             }
             else { // deserialize failed
                 // insert more information to the error message
-                std::string msg = "While setting \"" + name + "\": " + result.error().message();
+                std::string msg = "While setting \"" + std::string(name) + "\": " + result.error().message();
                 return mio::failure(result.error().code(), msg);
             }
         }
@@ -270,13 +297,13 @@ namespace details
     * @return Nothing if successfull, an error code otherwise.
     */
     template <class... T, template <class...> class Set>
-    mio::IOResult<void> set_param(Set<T...>& parameters, const std::string& identifier, const std::string& args)
+    mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifier, const std::string& args)
     {
-        if (is_name(identifier)) {
-            return set_param_impl<Name>(typelist<T...>(), parameters, identifier.substr(2), args);
+        if (identifier.is_name()) {
+            return set_param_impl<Name>(typelist<T...>(), parameters, identifier.get_name(), args);
         }
-        else if (is_alias(identifier)) {
-            return set_param_impl<Alias>(typelist<T...>(), parameters, identifier.substr(1), args);
+        else if (identifier.is_alias()) {
+            return set_param_impl<Alias>(typelist<T...>(), parameters, identifier.get_alias(), args);
         }
         else {
             return mio::failure(mio::StatusCode::KeyNotFound, "Expected an option, got \"" + identifier + "\".");
@@ -294,7 +321,7 @@ namespace details
     template <class T, class... Ts, class Set>
     mio::IOResult<Json::Value> get_param_impl(typelist<T, Ts...>, Set& parameters, const std::string& name)
     {
-        if (option_matches<T>(name)) {
+        if (name_matches_parameter<T>(name)) {
             return serialize_json(parameters.template get<T>());
         }
         else {
@@ -415,7 +442,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
     verify_options(parameters);
     // handle help option, scanning all argumemts before doing anything with them
     for (int i = 1; i < argc; i++) {
-        if (option_matches<Help>(argv[i])) {
+        if (Identifier(argv[i]).matches_parameter<Help>()) {
             // print the help dialogue and exit
             write_help(executable_name, parameters);
             std::exit(0);
@@ -423,9 +450,9 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
     }
     // handle print_option option, scanning all argumemts before doing anything with them
     for (int i = 1; i < argc; i++) {
-        if (option_matches<PrintOption>(argv[i])) {
+        if (Identifier(argv[i]).matches_parameter<PrintOption>()) {
             i++; // skip the PrintOption argument
-            for (; i < argc && argv[i][0] != '-'; i++) {
+            for (; i < argc && !Identifier(argv[i]).is_option(); i++) {
                 // try to get the parameter's json value
                 BOOST_OUTCOME_TRY(value, get_param(parameters, argv[i]));
                 // print the name (or alias) and value
@@ -438,16 +465,16 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
     // handle parameter options that require values iteratively. assign given values or return an error
     int i = 1;
     while (i < argc) {
-        const std::string identifier(argv[i]);
+        const Identifier identifier(argv[i]);
         i++; // go to first argument
         // assert that the first argument is not an identifier (i.e. name or alias)
-        if (i == argc || is_option(argv[i])) {
+        if (i == argc || Identifier(argv[i]).is_option()) {
             return mio::failure(mio::StatusCode::OutOfRange, "Missing value for option \"" + identifier + "\".");
         }
         // collect all argv's that are not identifiers and set i to the position of the next identifier
         std::string arguments(argv[i]);
         i++;
-        for (; (i < argc) && !is_option(argv[i]); i++) {
+        for (; (i < argc) && !Identifier(argv[i]).is_option(); i++) {
             arguments.append(" ").append(argv[i]);
         }
         // (try to) set the parameter, to the value given by arguments
