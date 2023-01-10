@@ -224,6 +224,70 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_delay, npi_activat
     return int_active
 
 
+def drop_codes_and_categories(npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
+    if fine_resolution > 0:
+        # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
+        # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
+        for i in range(2, 6):
+            npi_codes_prior[npi_codes_prior == 'M04_'+str(i)] = ['M04_120_'+str(
+                i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
+
+        # correct M05_N codes to M_05_M_N, N in {1,...,5}, M in {130,150,120,140,110,100,160}
+        for i in range(1, 6):
+            npi_codes_prior[npi_codes_prior == 'M05_'+str(i)] = ['M05_130_'+str(i), 'M05_150_'+str(
+                i), 'M05_120_'+str(i), 'M05_140_'+str(i), 'M05_110_'+str(i), 'M05_100_'+str(i), 'M05_160_'+str(i)]
+
+        # correct 'M16_200_2' to missing 'M16_100_2'
+        npi_codes_prior[npi_codes_prior == 'M16_200_2'] = 'M16_100_2'
+
+        # check for missing codes
+        npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
+
+        missing_codes = list(set(npi_codes_prior).difference(
+            npi_codes_prior_data))
+        if len(missing_codes) > 0:
+            # if incidence is grouped, only search for grouping codes without
+            # having a detailed "_DETAIL" naming as of MCODE_NUMBER_DETAIL
+            if fine_resolution == 1:
+                missing_grouped_codes = []
+                for mcode in missing_codes:
+                    # only consider incidence independent npis
+                    # only exit if one of these (i.e., MCODE_NUMBER) is missing
+                    if len(mcode.split('_')) != 3:
+                        missing_grouped_codes.append(mcode)
+                if len(missing_grouped_codes) > 0:  # only MCODE_NUMBER codes
+                    raise gd.DataError('Missing NPI codes: ' +
+                                str(missing_grouped_codes))
+            else:
+                raise gd.DataError('Missing NPI codes: ' + str(missing_codes))
+
+        # we dont have any explanations from "datensatzbeschreibung_massnahmen"
+        # on these codes, so drop the rows.
+        codes_dropped = list(set(npi_codes_prior_data).difference(
+            npi_codes_prior))
+        # also remove dummy 'Platzhalter' categories
+        dummy_categories = []
+        for i in range(len(npi_codes_prior)):
+            if 'Platzhalter' in npi_codes_prior_desc[i]:
+                dummy_categories.append(npi_codes_prior[i])
+        # codes without explanation and dummy categories
+        # sorting done for consistenty, maybe not necessary
+        codes_dropped = list(np.sort(codes_dropped + dummy_categories))
+        if len(codes_dropped) > 0:
+            df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
+                codes_dropped)].reset_index(drop=True)
+            # for every main code removed, all 5 subcodes have to be removed;
+            # if this is not the case, the naming of them is wrong/not consistent
+            if (len(codes_dropped) % 6) != 0:
+                raise gd.DataError('Error in NPI names, please check.')
+    else:
+        # no dropping for fine_resolution == 0
+        codes_dropped=[]
+    
+    return codes_dropped, npi_codes_prior, df_npis_old
+
+
+
 def get_npi_data(fine_resolution=2,
                  file_format=dd.defaultDict['file_format'],
                  out_folder=dd.defaultDict['out_folder'],
@@ -272,10 +336,13 @@ def get_npi_data(fine_resolution=2,
         # defines delay in number of days between exceeding
         # incidence threshold and NPI getting active
         # delay = 0 means only one day is considered (=no delay)
-        npi_activation_delay = 2
-        npi_lifting_delay = 4   # for NRW, BW
-                                # 2 for bayern
-        # we use npi_lifting_delay = 4 as this is the most common
+        npi_activation_delay = 3
+        npi_lifting_delay = 5
+        # depending on the federal state and time period, there are 
+        # huge deviations of the lifting and activation delay which was usually
+        # between 1 and 14 days
+        # we use npi_lifting_delay = 5 and npi_activation_delay = 3 
+        # as this is the most common and has at some point been used in almost every county
         print('Using a delay of NPI activation of ' +
               str(npi_activation_delay) + ' days.')
         print('Using a delay of NPI lifting of ' +
@@ -392,62 +459,8 @@ def get_npi_data(fine_resolution=2,
             writer.save()
 
     # correct differences in codes between data sheet and explanation sheet
-    codes_dropped = []  # no dropping for fine_resolution == 0
-    if fine_resolution > 0:
-        # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
-        # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
-        for i in range(2, 6):
-            npi_codes_prior[npi_codes_prior == 'M04_'+str(i)] = ['M04_120_'+str(
-                i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
-
-        # correct M05_N codes to M_05_M_N, N in {1,...,5}, M in {130,150,120,140,110,100,160}
-        for i in range(1, 6):
-            npi_codes_prior[npi_codes_prior == 'M05_'+str(i)] = ['M05_130_'+str(i), 'M05_150_'+str(
-                i), 'M05_120_'+str(i), 'M05_140_'+str(i), 'M05_110_'+str(i), 'M05_100_'+str(i), 'M05_160_'+str(i)]
-
-        # correct 'M16_200_2' to missing 'M16_100_2'
-        npi_codes_prior[npi_codes_prior == 'M16_200_2'] = 'M16_100_2'
-
-        # check for missing codes
-        npi_codes_prior_data = df_npis_old[dd.EngEng['npiCode']].unique()
-
-        missing_codes = list(set(npi_codes_prior).difference(
-            npi_codes_prior_data))
-        if len(missing_codes) > 0:
-            # if incidence is grouped, only search for grouping codes without
-            # having a detailed "_DETAIL" naming as of MCODE_NUMBER_DETAIL
-            if fine_resolution == 1:
-                missing_grouped_codes = []
-                for mcode in missing_codes:
-                    # only consider incidence independent npis
-                    # only exit if one of these (i.e., MCODE_NUMBER) is missing
-                    if len(mcode.split('_')) != 3:
-                        missing_grouped_codes.append(mcode)
-                if len(missing_grouped_codes) > 0:  # only MCODE_NUMBER codes
-                    sys.exit('Missing NPI codes: ' +
-                             str(missing_grouped_codes))
-            else:
-                sys.exit('Missing NPI codes: ' + str(missing_codes))
-
-        # we dont have any explanations from "datensatzbeschreibung_massnahmen"
-        # on these codes, so drop the rows.
-        codes_dropped = list(set(npi_codes_prior_data).difference(
-            npi_codes_prior))
-        # also remove dummy 'Platzhalter' categories
-        dummy_categories = []
-        for i in range(len(npi_codes_prior)):
-            if 'Platzhalter' in npi_codes_prior_desc[i]:
-                dummy_categories.append(npi_codes_prior[i])
-        # codes without explanation and dummy categories
-        # sorting done for consistenty, maybe not necessary
-        codes_dropped = list(np.sort(codes_dropped + dummy_categories))
-        if len(codes_dropped) > 0:
-            df_npis_old = df_npis_old[~df_npis_old[dd.EngEng['npiCode']].isin(
-                codes_dropped)].reset_index(drop=True)
-            # for every main code removed, all 5 subcodes have to be removed;
-            # if this is not the case, the naming of them is wrong/not consistent
-            if (len(codes_dropped) % 6) != 0:
-                sys.exit('Error in NPI names, please check.')
+    codes_dropped, npi_codes_prior, df_npis_old = drop_codes_and_categories(
+        npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution)
 
     # sort NPI codes according to numeric values (argsort gives indices
     # in input list to be used for sorted array)
@@ -522,7 +535,7 @@ def get_npi_data(fine_resolution=2,
         npi_codes_aggregated = []
         for main_code in maincode_to_npicodes_map.keys():
             if main_code.count('_') > 1:
-                sys.exit('Error. Subcode assigned as main code.')
+                raise gd.DataError('Error. Subcode assigned as main code.')
             npi_codes_aggregated.append(main_code)
 
         npis_final = npis[npis[dd.EngEng['npiCode']].isin(
@@ -542,7 +555,7 @@ def get_npi_data(fine_resolution=2,
                 incid_threshold = int(
                     npis.loc[i, dd.EngEng['desc']].split(' ')[1])
             else:
-                sys.exit(
+                raise gd.DataError(
                     'Error in description file. NPI activation can not '
                     'be computed. Exiting.')
             npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
@@ -560,7 +573,7 @@ def get_npi_data(fine_resolution=2,
                         (threshold, '_' + code.split('_')[2]))
         for i in range(len(incidence_thresholds)-1):
             if incidence_thresholds[i][0] > incidence_thresholds[i+1][0]:
-                sys.exit('List needs to be sorted.')
+                raise gd.DataError('List needs to be sorted.')
 
         # create hash map from thresholds to NPI indices
         incidence_thresholds_to_npis = dict(
@@ -580,7 +593,7 @@ def get_npi_data(fine_resolution=2,
         ~df_npis_old[dd.EngEng['idCounty']].isin(counties_considered)][
         dd.EngEng['idCounty']].unique()
     if list(counties_removed) != [16056]:
-        sys.exit('Error. Other counties than that of Eisenach were removed.')
+        raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
         counties_considered)].reset_index(drop=True)
@@ -606,7 +619,7 @@ def get_npi_data(fine_resolution=2,
             print(
                 "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
                 str(dates_new[i] + timedelta(date_diff[i] - 1)))
-        sys.exit('Exiting. Dates missing in data frame.')
+        raise gd.DataError('Exiting. Dates missing in data frame.')
 
     min_date = []
     max_date = []
