@@ -1,8 +1,4 @@
-numpy
-pandas
-progress
-pyfakefs
-scikit_learn
-setuptools
-tensorflow
-matplotlib
+'pyfakefs>=4.2.1',
+'coverage',
+'pylint<=2.11.1',
+'pylint_json2html<=0.3.0',

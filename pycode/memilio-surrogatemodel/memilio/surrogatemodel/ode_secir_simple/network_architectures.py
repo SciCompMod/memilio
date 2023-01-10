@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-202 German Aerospace Center (DLR-SC)
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -20,7 +20,11 @@
 import tensorflow as tf
 
 
-def multilayer_multi_input():
+def mlp_multi_input_single_output():
+    """! Simple MLP Network which takes the compartments for one single time step as input and returns the 8 compartments for one single time step.
+
+    Reshaping adds an extra dimension to the output, so the output of the shape is 1x8. This makes the shape comparable to that of the multi-output models.
+    """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(units=32, activation='relu'),
@@ -30,51 +34,50 @@ def multilayer_multi_input():
     return model
 
 
-def lstm_network_multi_input():
+def lstm_network_multi_input_single_output():
+    """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
+
+    Input and output have shape [batch, time, features].
+    """
     model = tf.keras.models.Sequential([
-        # Shape [batch, time, features] => [batch, time, lstm_units]
         tf.keras.layers.LSTM(32, return_sequences=True),
-        # Shape => [batch, time, features]
         tf.keras.layers.Dense(units=8)
     ])
     return model
 
 
-def single_output():
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(units=32, activation='relu'),
-        tf.keras.layers.Dense(units=32, activation='relu'),
-        tf.keras.layers.Dense(units=8)])
-    return model
+def cnn_multi_input_multi_output(label_width):
+    """! CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
 
+    Input and output have shape [batch, time, features].
 
-def cnn_multi_output(label_width):
+    @param label_width Number of time steps in the output.
+    """
     CONV_WIDTH = 3
     num_outputs = 8
     model = tf.keras.Sequential([
-        # Shape [batch, time, features] => [batch, CONV_WIDTH, features]
+        # Lambda layer transforms input to shape [batch, CONV_WIDTH, features]
         tf.keras.layers.Lambda(lambda x: x[:, -CONV_WIDTH:, :]),
-        # Shape => [batch, 1, conv_units]
         tf.keras.layers.Conv1D(256, activation='relu',
                                kernel_size=(CONV_WIDTH)),
-        # Shape => [batch, 1,  out_steps*features]
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
-        # Shape => [batch, out_steps, features]
         tf.keras.layers.Reshape([label_width, num_outputs])
     ])
     return model
 
 
-def lstm_multi_output(label_width):
+def lstm_multi_input_multi_output(label_width):
+    """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
+
+    Input and output have shape [batch, time, features].
+
+    @param label_width Number of time steps in the output.
+    """
     num_outputs = 8
     model = tf.keras.Sequential([
-        # Shape [batch, time, features] => [batch, lstm_units].
-        # Adding more `lstm_units` just overfits more quickly.
         tf.keras.layers.LSTM(32, return_sequences=False),
-        # Shape => [batch, out_steps*features].
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
-        # Shape => [batch, out_steps, features].
         tf.keras.layers.Reshape([label_width, num_outputs])])
     return model

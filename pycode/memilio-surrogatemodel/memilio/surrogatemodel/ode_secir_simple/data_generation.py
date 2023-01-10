@@ -17,18 +17,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping, set_log_level, LogLevel
-from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation, interpolate_simulation_result, InfectionState
+import copy
+import os
+import pickle
+import random
 from datetime import date
-from progress.bar import Bar
-from sklearn.preprocessing import FunctionTransformer
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import pickle
-import random
-import os
-import copy
+from memilio.simulation import (ContactMatrix, Damping, LogLevel,
+                                UncertainContactMatrix, set_log_level)
+from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
+                                      InfectionState, Model, Simulation,
+                                      interpolate_simulation_result, simulate)
+from progress.bar import Bar
+from sklearn.preprocessing import FunctionTransformer
 
 
 def run_secir_simulation(days):
@@ -112,8 +116,11 @@ def run_secir_simulation(days):
     return dataset
 
 
-def generate_data(num_runs, path, input_width, label_width, save_data=True):
-    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation. Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
+def generate_data(
+        num_runs, path, input_width, label_width, normalize=True,
+        save_data=True):
+    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+    Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
 
     In general, we have 8 different compartments. If we choose, 
     input_width = 5 and label_width = 20, the dataset has 
@@ -124,6 +131,7 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
    @param path Path, where the dataset is saved to.
    @param input_width Int value that defines the number of time series used for the input.
    @param label_width Int value that defines the size of the labels.
+   @param normalize [Default: true] Option to transform dataset by logarithmic normalization.
    @param save_data [Default: true] Option to save the dataset.
    @return Data dictionary of input and label data sets.
    """
@@ -146,8 +154,7 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
         bar.next()
     bar.finish()
 
-    if save_data:
-
+    if normalize:
         # logarithmic normalization
         transformer = FunctionTransformer(np.log1p, validate=True)
         inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(8, -1)
@@ -164,6 +171,7 @@ def generate_data(num_runs, path, input_width, label_width, save_data=True):
         data['inputs'] = tf.stack(scaled_inputs_list)
         data['labels'] = tf.stack(scaled_labels_list)
 
+    if save_data:
         # check if data directory exists. If necessary, create it.
         if not os.path.isdir(path):
             os.mkdir(path)
@@ -182,6 +190,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 1000
+    num_runs = 50
     data = generate_data(num_runs, path_data, input_width,
                          label_width)

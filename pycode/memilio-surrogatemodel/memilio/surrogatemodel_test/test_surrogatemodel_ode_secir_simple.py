@@ -17,13 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
+import unittest
 
-from memilio.surrogatemodel.ode_secir_simple import data_generation
-from memilio.surrogatemodel.ode_secir_simple import network_architectures
-from memilio.surrogatemodel.ode_secir_simple import model
+from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
+                                                     network_architectures)
+from pyfakefs import fake_filesystem_unittest
 
 
 class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
@@ -96,14 +95,14 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         max_epochs = 5
 
         # models with single output
-        model_single = network_architectures.single_output()
-        model_dense_multi_input = network_architectures.multilayer_multi_input()
-        model_lstm_single = network_architectures.lstm_network_multi_input()
+        model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
+        model_lstm_single = network_architectures.lstm_network_multi_input_single_output()
 
         # no existing dataset
         with self.assertRaises(FileNotFoundError) as error:
             model.network_fit(
-                self.path, model=model_single, max_epochs=max_epochs)
+                self.path, model=model_mlp_multi_input_single_output,
+                max_epochs=max_epochs)
         error_message = "[Errno 2] No such file or directory in the fake filesystem: '" + \
             self.path + "data_secir_simple.pickle'"
         self.assertEqual(str(error.exception), error_message)
@@ -116,15 +115,11 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                                       label_width)
 
         # test different network_architectures
-        single_output = model.network_fit(
-            self.path, model=model_single, max_epochs=max_epochs, plot=False)
+        mlp_output = model.network_fit(
+            self.path, model=model_mlp_multi_input_single_output,
+            max_epochs=max_epochs, plot=False)
         self.assertEqual(
-            len(single_output.history['val_loss']), max_epochs)
-        dense_output = model.network_fit(
-            self.path, model=model_dense_multi_input, max_epochs=max_epochs,
-            plot=False)
-        self.assertEqual(
-            len(dense_output.history['val_loss']), max_epochs)
+            len(mlp_output.history['val_loss']), max_epochs)
         lstm_single_output = model.network_fit(
             self.path, model=model_lstm_single, max_epochs=max_epochs, plot=False)
         self.assertEqual(
@@ -138,8 +133,10 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                                       label_width)
 
         # models with multiple outputs
-        model_cnn = network_architectures.cnn_multi_output(label_width)
-        model_lstm = network_architectures.lstm_multi_output(label_width)
+        model_cnn = network_architectures.cnn_multi_input_multi_output(
+            label_width)
+        model_lstm = network_architectures.lstm_multi_input_multi_output(
+            label_width)
 
         cnn_output = model.network_fit(
             self.path, model=model_cnn, max_epochs=max_epochs, plot=False)
