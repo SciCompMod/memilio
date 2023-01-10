@@ -62,3 +62,27 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_LE(d, 4);
     }
 }
+
+TEST(TestSimulation, advance_subpopulation)
+{
+    auto world    = mio::abm::World();
+    auto location = world.add_location(mio::abm::LocationType::School);
+    auto& school  = world.get_individualized_location(location);
+    auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14, {});
+    school.add_person(person1);
+    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+    school.add_person(person2);
+    auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59, {});
+    school.add_person(person3);
+
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
+
+    for (int i = 0; i < 50; i++) {
+        auto v = school.get_population().get_value(i);
+        // Check whether the number of persons in infected state at the location is stable
+        ASSERT_EQ(v[int(mio::abm::InfectionState::Infected)], 2);
+        // Check the time evolution is correct
+        ASSERT_EQ(school.get_population().get_time(i), i);
+    }
+}
