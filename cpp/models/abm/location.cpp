@@ -43,7 +43,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_npi_active(false)
 {
     // Initialize the first time point and set the subpopulation values to 0. 
-    m_subpopulations.add_time_point();
+    m_subpopulations.add_time_point(0);
     m_subpopulations.get_last_value().setZero();
 }
 
