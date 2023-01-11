@@ -42,7 +42,8 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
-    initialize_subpopulation(TimePoint(0));
+    m_subpopulations.add_time_point(0);
+    m_subpopulations.get_last_value().setZero();
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -233,15 +234,9 @@ void Location::add_subpopulations_timepoint(const TimePoint& t)
 
 void Location::initialize_subpopulation(const TimePoint& t)
 {
-    // If there's already a subpoulation stored, we made a copy to the new TimePoint t and delete the first TimePoint.
-    if (m_subpopulations.get_num_time_points() > 0) {
-        add_subpopulations_timepoint(t);
-        m_subpopulations.remove_time_point(0);
-    }
-    else {
-        m_subpopulations.add_time_point(t.days());
-        m_subpopulations.get_last_value().setZero();
-    }
+    // We make a copy of subpoulation to the new TimePoint t and delete the first TimePoint.
+    add_subpopulations_timepoint(t);
+    m_subpopulations.remove_time_point(0);
 }
 
 } // namespace abm
