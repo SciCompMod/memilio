@@ -39,6 +39,17 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
     """! Validates the transformed NPI data based on read in NPI data list.
     Also works for incidence-dependent NPIs as long as no activation or lifting
     delay is used.
+    @param df_npis_old Original data frame.
+    @param df_npis New NPI data frame with potential activation of incidence-
+        dependent NPIs.
+    @param df_infec_rki Case data for incidence comparison.
+    @param countyID CountyID of county to be validated.
+    @@param npiCode NPI Code of code to be validated.
+    @param start_npi_cols Index of column where NPI information start in
+        original data frame.
+    @param npi_incid_start Minimum incidence for activation of NPI codes.
+    @param start_date_validation Start date for validation.
+    @param end_date_validation End date for validation.
     """
 
     if fine_resolution == 1:
@@ -101,6 +112,7 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 
 
 def print_manual_download(filename, url):
+    """! Print download message to ask the user manually download a file. """
 
     print(
         'This script needs manual downloading of files. Please register'
@@ -109,7 +121,18 @@ def print_manual_download(filename, url):
 
 
 def read_files(directory, fine_resolution):
-    """Downloads files and stores data in dataframes named df_npis_old, df_npis_desc"""
+    """! Reads files from local directory and returns data in dataframes
+    
+    @param directory Directory where data is loaded from.
+    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+        are considered.
+        If '2' is set, all the subcategories (~1200) are considered.
+        If '1' is set, all incidence levels of subcategories are merged and
+            ~200 NPIs are considered.
+        If '0' is chosen only the main, summarizing categories (~20) are used.
+    @return Data frames df_npis_old (Decreed, encoded NPIs for all German
+        counties) and df_npis_desc (Description of NPIs)
+    """
     if fine_resolution > 0:
         try:
             df_npis_old = pd.read_csv(
@@ -167,20 +190,37 @@ def read_files(directory, fine_resolution):
 
 
 def activate_npis_based_on_incidence(local_incid, npi_lifting_delay, npi_activation_delay, incid_threshold):
-    """Warning: delay = 0 does NOT work!!!"""
-    # NPI can only be activated or liftet the day AFTER 
-    # incidence is below/over threshold for N days. The 
-    # incidence on day N only effects the NPI on day N+1 and
-    # NOT ON day N. Therefore we shift the incidence one day forward
-    # to match the indices of our dataframe df_local_new so that
-    # the NPIs can be calculated on the respective day.
+    """! 
+    Warning: delay = 0 does NOT work!!!
+    Computes an activation vector according to a given incidence threshold,
+    observed incidence and activation or lifting delays.
+
+    NPI can only be activated or lifted the day AFTER 
+    incidence is below/over threshold for N days. The 
+    incidence on day N only effects the NPI on day N+1 and
+    NOT ON day N. Therefore we shift the incidence one day forward
+    to match the indices of our dataframe df_local_new so that
+    the NPIs can be calculated on the respective day.
+    
+    Please also note that the first column will always returned as false 
+    so the dataframe should not start with dates where NPIs are implemented.
+    For the Corona Datenplattform frame which starts from 2020-03-01
+    this is no problem for the first days as there were no NPIs.
+    @param local_incid Incidence observed in local region.
+    @param npi_lifting_delay Delay in number of days when to lift a NPI if
+        threshold is no longer exceeded.
+    @param npi_activation_delay Delay in number of days when to implement a
+        NPI if threshold is exceeded.
+    @param incid_threshold Threshold to be considered.
+    """
     # 
     # Example (threshold=3.5): 
-    # local_incid=pd.Series([4,2,4,2,2,4,4,2,4,2,2,2,2])
+    # local_incid=pd.Series([2,4,2,4,2,2,4,4,2,4,2,2,2,2])
     # Yesterdays incidence is over the threshold on following days:
-    # [?,1,0,1,0,0,1,1,0,1,0,0,0]
-    # The first day is not known and always set to the first days value.
-    # [1,1,0,1,0,0,1,1,0,1,0,0,0]
+    # [?,0,1,0,1,0,0,1,1,0,1,0,0,0]
+    # Yesterday for first day is not known. Thus, first day's boolean
+    # is always set to the same boolean as second day's boolean.
+    # [0,0,1,0,1,0,0,1,1,0,1,0,0,0]
     
     # First get a Series with 0 for yesterdays incidence
     # is below threshold and 1 for incidence over threshold
@@ -192,19 +232,21 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_delay, npi_activat
     # Similarly, if incidence is below threshold for 
     # 1+npi_lifting_delay days, the NPI is lifted.
     # 
-    # Example:
+    # Example (continued):
     # With yesterdays incidence over threshold on days:
-    # [0,1,0,1,0,0,1,1,0,1,0,0,0]
+    # [0,0,1,0,1,0,0,1,1,0,1,0,0,0]
     # npi_lifting_delay=2, npi_activation_delay=1
-    # NPI should be activated on day 8 and lifted on day 13
+    # NPI should be activated on day 9 and lifted on day 14
     # int_active should then be:
-    # [0,0,0,0,0,0,0,1,1,1,1,1,0]
+    # [0,0,0,0,0,0,0,0,1,1,1,1,1,0]
     #
-    # With yesterdays incidence over threshold on days:
-    # [1,1,0,1,0,0,1,1,0,1,0,0,0] (as above)
-    # NPI should be activated on day 2 and lifted on day 13
+    # Another example: 
+    # With yesterday's incidence over threshold on days:
+    # [1,1,0,1,0,0,1,1,0,1,0,0,0,0]
+    # npi_lifting_delay=3, npi_activation_delay=1
+    # NPI should be activated on day 2 and lifted on day 14
     # int_active should then be:
-    # [0,1,1,1,1,1,1,1,1,1,1,1,0]
+    # [0,1,1,1,1,1,1,1,1,1,1,1,1,0]
 
     # get a zero filled Series with same length to be
     # filled with ones where NPI is active
@@ -212,19 +254,34 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_delay, npi_activat
     # loop over every day
     for i in range(len(yesterdays_incid_over_threshold)):
         # Set int_active=0 where last npi_lifting_delay+1 days are 0
-        if yesterdays_incid_over_threshold[i-npi_lifting_delay:i+1].values.sum() == 0:
+        if yesterdays_incid_over_threshold[max(0,i-npi_lifting_delay):i+1].values.sum() == 0:
             int_active[i] = 0
         # Set int_active=1 where last npi_activation_delay+1 days are all 1
-        elif yesterdays_incid_over_threshold[i-npi_activation_delay:i+1].values.sum() == npi_activation_delay+1:
+        elif yesterdays_incid_over_threshold[max(0,i-npi_activation_delay):i+1].values.sum() == npi_activation_delay+1:
             int_active[i] = 1
         # If no condition applies, set int_active to the value of the previous day
-        else:
+        elif i>0: # if 
             int_active[i] = int_active[i-1]
 
     return int_active
 
 
 def drop_codes_and_categories(npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
+    """! Drops codes and categories from original data frame if they are not 
+    used.
+
+    @param npi_codes_prior NPI codes read from description sheet.
+    @param npi_codes_prior_desc NPI code descriptions read from description sheet.
+    @param df_npis_old Original data frame with encoding (decreed, yes or no)
+        for different NPIs
+    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+        are considered.
+        If '2' is set, all the subcategories (~1200) are considered.
+        If '1' is set, all incidence levels of subcategories are merged and
+            ~200 NPIs are considered.
+        If '0' is chosen only the main, summarizing categories (~20) are used.
+    @return Returns dropped codes, prior codes and reduced original data frame.
+    """
     if fine_resolution > 0:
         # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
         # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
@@ -296,10 +353,19 @@ def get_npi_data(fine_resolution=2,
                  counties_considered=geoger.get_county_ids()
                  ):
     """! Loads a certain resolution of recorded NPI data from
-    the Corona Datenplattform and transforms it according to the
-    arguments given.
+    the Corona Datenplattform and extracts the counties asked for and
+    activates the NPIs if they are incidence dependent.
 
-    For full functionality, please manually download
+    Results' data frames will be stored in the directory as:
+        -fine_resolution=2: germany_counties_npi_subcat
+        -fine_resolution=1: germany_counties_npi_subcat_incgrouped
+        -fine_resolution=0: germany_counties_npi_maincat
+
+    Needs the files 'cases_all_county_all_dates_repdate.json' and 
+    'county_current_population.json' which can be created by the functions
+    getCasesData.py (with argument --rep-date) and getPopulationData.py.
+
+    Please manually download
     - kr_massnahmen_unterkategorien.csv
     - datensatzbeschreibung_massnahmen.xlsx
     from https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise
@@ -322,11 +388,12 @@ def get_npi_data(fine_resolution=2,
         of stored data frames.
     @param end_date [Default = '', taken from read data] End date of
         stored data frames.
-    @param make_plot False [Default] or True. Defines if plots are
-        generated with matplotlib.
-    @param moving_average 0 [Default] or Number>0. Defines the number of
-        days for which a centered moving average is computed.
+    @param counties_considered [Default: 'All']. Either 'All' or a list of
+        county IDs from 1001 to 16xxx.
     """
+
+    if counties_considered == 'All':
+        counties_considered = geoger.get_county_ids()
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
