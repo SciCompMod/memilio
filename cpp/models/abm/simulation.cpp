@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -31,6 +31,11 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_dt(hours(1))
 {
     store_result_at(t);
+    for (auto&& locations : m_world.get_locations()) {
+        for (auto location : locations) {
+            location.initialize_subpopulation(t);
+        }
+    }
 }
 
 void Simulation::advance(TimePoint tmax)

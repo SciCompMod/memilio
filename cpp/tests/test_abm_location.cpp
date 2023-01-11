@@ -541,6 +541,16 @@ TEST(TestLocation, addSubpopulationsTimepoint)
     ASSERT_EQ(location.get_population().get_time(3), 24);
 }
 
+TEST(TestLocation, initializeSubpopulation)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    ASSERT_EQ(location.get_population().get_time(0),0);
+
+    auto t = mio::abm::TimePoint(0) + mio::abm::days(7);
+    location.initialize_subpopulation(t);
+    ASSERT_EQ(location.get_population().get_time(0),7);
+}
+
 TEST(TestLocation, setRequiredMask)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
