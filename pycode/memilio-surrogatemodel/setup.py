@@ -19,7 +19,8 @@ setup(
         'progress',
         'numpy>=1.22',  # smaller numpy versions cause a security issue
         'tensorflow',
-        'matplotlib', ],
+        'matplotlib',
+        'sklearn', ],
     extras_require={'dev': [
         # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
         'pyfakefs>=4.2.1',
