@@ -21,6 +21,7 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 
 import pandas as pd
+import numpy as np
 
 from memilio.epidata import getNPIData as gnd
 from memilio.epidata import defaultDict as dd
@@ -31,15 +32,24 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
 
     path = '/home/NPIData'
 
+    threshold = 1.5
     incid = pd.Series(
         [1, 2, 3, 4, 1, 1, 0, 5, 0, 1, 2, 3, 5, 1, 0, 2, 4, 5, 6])
-    active = pd.Series(
-        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1])
+    active_11 = pd.Series(
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1])
+    active_32 = pd.Series(
+        [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
+    active_35 = pd.Series(
+        [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
     incid_start_above_threshold = pd.Series(
         [2, 2, 3, 4, 1, 1, 0, 5, 0, 1, 2, 3, 5, 1, 0, 2, 4, 5, 6])
-    active_start_above_threshold = pd.Series(
-        [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1])
+    active_start_above_threshold_11 = pd.Series(
+        [0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1])
+    active_start_above_threshold_32 = pd.Series(
+        [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0])
+    active_start_above_threshold_35 = pd.Series(
+        [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
     codes_to_correct = [    # should be renamed:
         'M04_2', 'M04_2', 'M04_2', 'M04_2', 'M04_2',
@@ -98,26 +108,52 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def test_activate_npis_based_on_threshold(self):
-        threshold = 1.5
-        # test with delay = 1 ; int should be active two days after incid > 1.5
-        # should start with 0 since first value of incid_delay_1 = 1 < 1.5
-        npi_activation_delay = 1
-        npi_lifting_delay = 1
+        
+        # test with delay = 1; should be active two days after incid > 1.5
+        npi_activation_days = 1
+        npi_lifting_days = 1
         int_active = gnd.activate_npis_based_on_incidence(
-            self.incid, npi_lifting_delay, npi_activation_delay, threshold)
+            self.incid, npi_lifting_days, npi_activation_days, self.threshold)
         self.assertEqual(
             int_active.to_list(),
-            self.active.to_list())
+            self.active_11.to_list())
 
         # test same data set with first value of incid_delay_1 = 2 > 1.5
         int_active_start_above_threshold = gnd.activate_npis_based_on_incidence(
-            self.incid_start_above_threshold, npi_lifting_delay,
-            npi_activation_delay, threshold)
+            self.incid_start_above_threshold, npi_lifting_days,
+            npi_activation_days, self.threshold)
         self.assertEqual(
             int_active_start_above_threshold.to_list(),
-            self.active_start_above_threshold.to_list())
+            self.active_start_above_threshold_11.to_list())
         
-        # TODO maybe test bigger data sets and npi_activation_delay != npi_lifting_delay but both >= 3
+        # # tests with day values larger 1
+        npi_activation_days = 3
+        npi_lifting_days = 2
+        int_active = gnd.activate_npis_based_on_incidence(
+            self.incid, npi_lifting_days, npi_activation_days, self.threshold)
+        self.assertEqual(
+            int_active.to_list(),
+            self.active_32.to_list())
+        int_active_start_above_threshold = gnd.activate_npis_based_on_incidence(
+            self.incid_start_above_threshold, npi_lifting_days,
+            npi_activation_days, self.threshold)
+        self.assertEqual(
+            int_active_start_above_threshold.to_list(),
+            self.active_start_above_threshold_32.to_list())
+
+        npi_activation_days = 3
+        npi_lifting_days = 5
+        int_active = gnd.activate_npis_based_on_incidence(
+            self.incid, npi_lifting_days, npi_activation_days, self.threshold)
+        self.assertEqual(
+            int_active.to_list(),
+            self.active_35.to_list())
+        int_active_start_above_threshold = gnd.activate_npis_based_on_incidence(
+            self.incid_start_above_threshold, npi_lifting_days,
+            npi_activation_days, self.threshold)
+        self.assertEqual(
+            int_active_start_above_threshold.to_list(),
+            self.active_start_above_threshold_35.to_list())
 
     def test_drop_codes_and_categories(self):
         # test with no dropped codes or categories
@@ -178,7 +214,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
             codes_dropped, npi_codes_prior, df_npis_old = gnd.drop_codes_and_categories(
             npi_codes_prior_test_mc.copy(), npi_codes_prior_desc_test_mc.copy(), df_npis_old_test.copy(), fine_resolution)
 
-        # fine_resolution = 1 should handle missing codes and 
+        # fine_resolution = 1 should handle missing codes  
         fine_resolution=1
         codes_dropped, npi_codes_prior, df_npis_old = gnd.drop_codes_and_categories(
             npi_codes_prior_test_mc.copy(), npi_codes_prior_desc_test_mc.copy(), df_npis_old_test.copy(), fine_resolution)
@@ -192,7 +228,24 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         # dataframe should not have changed
         pd.testing.assert_frame_equal(df_npis_old, df_npis_old_test)
 
-        # TODO test Platzhalter
+
+        # create dataframe with Platzhalter categories
+        npi_codes_prior_test = pd.Series(self.corrected_codes[0:12])
+        df_npis_old_test = pd.DataFrame(
+            columns=[dd.EngEng['npiCode']],
+            data=self.corrected_codes[0:12])
+        # for this test no categories should be removed
+        # no 'Platzhalter' in the description
+        npi_codes_prior_desc_test = pd.Series(
+            ['-' for i in range(len(self.corrected_codes[0:12]))])
+        npi_codes_prior_desc_test[0:12:2] = 'Platzhalter'
+        # work with copies to not change the original data
+        codes_dropped, npi_codes_prior, df_npis_old = gnd.drop_codes_and_categories(
+            npi_codes_prior_test.copy(), npi_codes_prior_desc_test.copy(), df_npis_old_test.copy(), fine_resolution)
+        # no codes should be dropped
+        self.assertEqual(codes_dropped, np.sort(self.corrected_codes[0:12:2]).tolist())
+        # codes should now be corrected
+        self.assertEqual(df_npis_old[dd.EngEng['npiCode']].tolist(), self.corrected_codes[1:12:2])
 
 
 if __name__ == '__main__':
