@@ -21,9 +21,10 @@ import os
 import unittest
 
 import numpy as np
+from pyfakefs import fake_filesystem_unittest
+
 from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
                                                      network_architectures)
-from pyfakefs import fake_filesystem_unittest
 
 
 class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):

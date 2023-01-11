@@ -26,13 +26,14 @@ from datetime import date
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from progress.bar import Bar
+from sklearn.preprocessing import FunctionTransformer
+
 from memilio.simulation import (ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
 from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       InfectionState, Model, Simulation,
                                       interpolate_simulation_result, simulate)
-from progress.bar import Bar
-from sklearn.preprocessing import FunctionTransformer
 
 
 def run_secir_simulation(days):
