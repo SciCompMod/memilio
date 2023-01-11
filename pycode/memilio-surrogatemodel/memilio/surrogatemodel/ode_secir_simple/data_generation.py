@@ -110,10 +110,9 @@ def run_secir_simulation(days):
     result_array = result.as_ndarray()
     dataset = []
     # Omit first column, as the time points are not of interest here.
-    for row in np.transpose(result_array[1:, :]):
-        dataset.append(copy.deepcopy(row))
+    dataset_entries = copy.deepcopy(result_array[1:, :].transpose())
 
-    return dataset
+    return dataset_entries.tolist()
 
 
 def generate_data(
@@ -190,6 +189,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 50
+    num_runs = 1000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)

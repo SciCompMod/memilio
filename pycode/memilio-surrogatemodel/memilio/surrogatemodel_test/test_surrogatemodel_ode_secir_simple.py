@@ -20,6 +20,7 @@
 import os
 import unittest
 
+import numpy as np
 from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
                                                      network_architectures)
 from pyfakefs import fake_filesystem_unittest
@@ -89,6 +90,43 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(os.listdir(self.path),
                          ['data_secir_simple.pickle'])
+
+    def test_structures_networks(self):
+
+        model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
+        self.assertEqual(len(model_mlp_multi_input_single_output.layers), 5)
+        input_zero = np.zeros((1, 5, 8))
+        output_zeros = model_mlp_multi_input_single_output(input_zero)
+        self.assertEqual(output_zeros[0], 1)
+        self.assertEqual(output_zeros[1], 1)
+        self.assertEqual(output_zeros[2], 8)
+
+        model_lstm_single = network_architectures.lstm_network_multi_input_single_output()
+        self.assertEqual(len(model_lstm_single.layers), 2)
+        input_zero = np.zeros((1, 1, 8))
+        output_zeros = model_lstm_single(input_zero)
+        self.assertEqual(output_zeros[0], 1)
+        self.assertEqual(output_zeros[1], 1)
+        self.assertEqual(output_zeros[2], 8)
+
+        label_width = 5
+        model_cnn = network_architectures.cnn_multi_input_multi_output(
+            label_width)
+        self.assertEqual(len(model_cnn.layers), 4)
+        input_zero = np.zeros((1, 5, 8))
+        output_zeros = model_cnn(input_zero)
+        self.assertEqual(output_zeros[0], 1)
+        self.assertEqual(output_zeros[1], 5)
+        self.assertEqual(output_zeros[2], 8)
+
+        model_lstm_multi = network_architectures.lstm_multi_input_multi_output(
+            label_width)
+        self.assertEqual(len(model_lstm_multi.layers), 3)
+        input_zero = np.zeros((1, 5, 8))
+        output_zeros = model_lstm_multi(input_zero)
+        self.assertEqual(output_zeros[0], 1)
+        self.assertEqual(output_zeros[1], 5)
+        self.assertEqual(output_zeros[2], 8)
 
     def test_network_fit(self):
 

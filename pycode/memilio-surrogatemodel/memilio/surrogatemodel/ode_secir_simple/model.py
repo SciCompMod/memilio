@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from memilio.simulation.secir import InfectionState
 from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 
@@ -45,15 +46,16 @@ def plot_compartment_prediction_model(
     label_width = labels.shape[1]
 
     plt.figure(figsize=(12, 8))
-    cols = np.array([
-        'Susceptible', 'Exposed', 'InfectedNoSymptoms', 'InfectedSymptoms',
-        'InfectedSevere', 'InfectedCritical', 'Recovered', 'Dead'])
-    plot_compartment_index = np.where(cols == plot_compartment)[0][0]
+    plot_compartment_index = 0
+    for compartment in InfectionState.values():
+        if compartment.name == plot_compartment:
+            break
+        plot_compartment_index += 1
     max_n = min(max_subplots, inputs.shape[0])
 
     for n in range(max_n):
         plt.subplot(max_n, 1, n+1)
-        plt.ylabel(f'{plot_compartment}')
+        plt.ylabel(plot_compartment)
 
         input_array = inputs[n].numpy()
         label_array = labels[n].numpy()
@@ -123,7 +125,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
         plot_losses(history)
         plot_compartment_prediction_model(
             test_inputs, test_labels, model=model,
-            plot_compartment='InfectedSymptoms', max_subplots=6)
+            plot_compartment='InfectedSymptoms', max_subplots=3)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
     return history
@@ -164,15 +166,12 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err = (abs(diff))/abs(test_labels)
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
-    df = pd.DataFrame(data=relative_err_transformed)
-    df = df.transpose()
-
+    relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
     mean_percentage = pd.DataFrame(
-        data=(df.mean().values) * 100,
+        data=relative_err_means_percentage,
         index=['Susceptible', 'Exposed', 'InfectedNoSymptoms',
                'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical',
-               'Recovered'
-               'Dead'],
+               'Recovered', 'Dead'],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -222,7 +221,7 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 5
+    max_epochs = 400
 
     model = "LSTM"
     if model == "Dense":
