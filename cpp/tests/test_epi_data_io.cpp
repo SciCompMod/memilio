@@ -20,7 +20,7 @@
 
 #include "abm/state.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
 #include "memilio/io/io.h"

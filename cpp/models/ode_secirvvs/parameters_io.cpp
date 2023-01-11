@@ -19,7 +19,7 @@
 */
 
 #include "ode_secirvvs/parameters_io.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
