@@ -509,13 +509,13 @@ TEST(TestLocation, addSubpopulationsTimepoint)
     auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59, {});
     location.add_person(person3);
 
-    auto t1 = mio::abm::TimePoint(0) + mio::abm::hours(7);
+    auto t1 = mio::abm::TimePoint(0) + mio::abm::days(7);
     location.add_subpopulations_timepoint(t1);
     auto v1 = location.get_population().get_value(1);
     // Check whether the number of persons in infected state at the location is correct
     ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Infected)], 2);
 
-    auto t2 = mio::abm::TimePoint(0) + mio::abm::hours(14);
+    auto t2 = mio::abm::TimePoint(0) + mio::abm::days(14);
     person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
     location.changed_state(person1, mio::abm::InfectionState::Infected);
     location.add_subpopulations_timepoint(t2);
@@ -523,7 +523,7 @@ TEST(TestLocation, addSubpopulationsTimepoint)
     // Check whether the number of persons in infected state at the location is correct
     ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Infected)], 1);
 
-    auto t3 = mio::abm::TimePoint(0) + mio::abm::hours(24);
+    auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
     person3.set_infection_state(mio::abm::InfectionState::Infected);
     location.changed_state(person3, mio::abm::InfectionState::Exposed);
     location.add_subpopulations_timepoint(t3);

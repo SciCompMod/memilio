@@ -81,8 +81,8 @@ TEST(TestSimulation, advance_subpopulation)
     for (int i = 0; i < 50; i++) {
         auto v = school.get_population().get_value(i);
         // Check whether the number of persons in infected state at the location is stable
-        ASSERT_EQ(v[int(mio::abm::InfectionState::Infected)], 2);
+        ASSERT_EQ(v[size_t(mio::abm::InfectionState::Infected)], 2);
         // Check the time evolution is correct
-        ASSERT_EQ(school.get_population().get_time(i), i);
+        ASSERT_EQ(school.get_population().get_time(i), ScalarType(i)/24);
     }
 }

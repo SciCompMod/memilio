@@ -229,7 +229,7 @@ void Location::add_subpopulations_timepoint(const TimePoint& t)
     // Get the previous time point index. 
     // Since index starts from 0, we need to -1 from the current time point. 
     auto last_idx = m_subpopulations.get_num_time_points() - 1;
-    m_subpopulations.add_time_point(t.hours());
+    m_subpopulations.add_time_point(t.days());
     m_subpopulations.get_last_value() = m_subpopulations.get_value(last_idx);
 }
 
