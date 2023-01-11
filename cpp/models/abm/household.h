@@ -38,17 +38,21 @@ namespace abm
  * A HouseholdMember has a vector with weighted age distribution from which the age can be calculated.
  * A Household holds a vector with HouseholdMembers.
  * A HouseholdGroup holds a vector with a tuple of a Household and the amount of times the Household is in the group.
- * E.g. if 10 households hold a member of "child and parent" and that household would be parentAndChildHousehold the vector would contain <parentAndChildHousehold, 10>. parentAndChildHousehold would consist of a vector with the members parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with resprect to the AgeGroup class. The child would have, for example, {1,1,0,0,0}, meaning that the age group 0-4 and 5-14 are the only possible ages and are both equally likely.
+ * E.g. if 10 households hold a member of "child and parent" and that Household would be parentAndChildHousehold the
+ * vector would contain <parentAndChildHousehold, 10>. parentAndChildHousehold would consist of a vector with the
+ * HouseholdMembers parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with respect to the 
+ * AgeGroup class. The child would have, for example, {1,1,0,0,0}, meaning that the AgeGroups 0-4 and 5-14 are the only
+ * possible ages and are both equally likely.
  */
 
 /**
- * A HouseholdMember represented by a weighted age distribution.
+ * @brief A HouseholdMember represented by a weighted age distribution.
  */
 class HouseholdMember
 {
 public:
     /**
-     * Constructs a new HouseholdMember.
+     * @brief Constructs a new HouseholdMember.
      */
     HouseholdMember()
         : m_age_weights({AgeGroup::Count}, 0)
@@ -57,8 +61,9 @@ public:
 
     /**
      * @brief Sets the weight of an AgeGroup.
-     * @param age_group The AgeGroup.
-     * @param weight The weight of the AgeGroup.
+     * @todo detailed description 
+     * @param[in] age_group The AgeGroup.
+     * @param[in] weight The weight of the AgeGroup.
      */
     void set_age_weight(AgeGroup age_group, int weight)
     {
@@ -66,8 +71,8 @@ public:
     }
 
     /**
-     * @brief Returns the Array with the weight of each AgeGroup.
-     * @returns An CustomIndexArray with the integer weights of the age groups.
+     * @brief Returns the array with the weight of each AgeGroup.
+     * @returns A CustomIndexArray with the integer weights of the AgeGroups.
      */
     const CustomIndexArray<int, AgeGroup>& get_age_weights() const
     {
@@ -96,8 +101,9 @@ public:
     }
 
     /**
-     * @brief Returns the number of members in the Household.
+     * @brief Returns the number of members, i.e.\ Persons in the Household.
      * @return Integer of number of members.
+     * @todo rework, members are not HouseholdMembers in this context right?
      */
     int get_total_number_of_members() const
     {
@@ -106,7 +112,8 @@ public:
 
     /**
      * @brief Set the space per member that is used to compute the LocationCapacity of the Household.
-     * @param space_per_member space per member in cubic meters.
+     * @param[in] space_per_member space per member in cubic meters.
+     * @todo rework, members are not HouseholdMembers in this context
      */
     void set_space_per_member(int space_per_member)
     {
@@ -116,6 +123,7 @@ public:
     /**
      * @brief Get the space per member of the Household.
      * @return Integer of space per member in cubic meters.
+     * @todo rework, members are not HouseholdMembers in this context
      */
     int get_space_per_member() const
     {
@@ -123,8 +131,8 @@ public:
     }
 
     /**
-     * @brief Returns the members of the Household.
-     * @return List of members of the Household.
+     * @brief Returns the HouseholdMembers of the Household.
+     * @return List of HouseholdMembers of the Household.
      */
     const std::vector<std::tuple<HouseholdMember, int>>& get_members() const
     {
@@ -132,28 +140,28 @@ public:
     }
 
     /**
-     * @brief Adds a number of the same members to a Household.
-     * @param household_member A HouseholdMember.
-     * @param number_of_members The amount of members to be added.
+     * @brief Adds a number of the same Householdmembers to a Household.
+     * @param[in] household_member A HouseholdMember.
+     * @param[in] number_of_members The amount of members to be added.
      */
     void add_members(HouseholdMember household_member, int number_of_members);
 
 private:
     int m_number_of_members;
-    int m_space_per_member; /**space per person in cubic meters*/
+    int m_space_per_member; ///<space per person in cubic meters
     std::vector<std::tuple<HouseholdMember, int>> m_household_member_list;
 };
 
 /**
- * A HouseholdGroup represented by different households.
- * The group may contain multiple households of the same type.
+ * @brief A HouseholdGroup represented by different Households.
+ * The group may contain multiple Households of the same type.
  */
 
 class HouseholdGroup
 {
 public:
     /**
-     * Constructs a new HouseholdGroup.
+     * @brief Constructs a new HouseholdGroup.
      */
     HouseholdGroup()
         : m_household_list()
@@ -180,9 +188,9 @@ public:
     }
 
     /**
-     * @brief Adds a number of households of the same kind, e.g.\ same members, to a HouseholdGroup.
-     * @param household A Household.
-     * @param number_of_households The amount of times that Household is in the group.
+     * @brief Adds a number of Households of the same kind, e.g.\ same members, to a HouseholdGroup.
+     * @param[in] household A Household.
+     * @param[in] number_of_households The amount of times that Household is in the group.
      */
     void add_households(Household household, int number_of_households);
 
@@ -192,16 +200,16 @@ private:
 };
 
 /**
- * Adds a specific Household to the World.
+ * @brief Adds a specific Household to the World.
  * @param world The World to which the Household has to be added.
  * @param household The Household to add to World.
  */
 void add_household_to_world(World& world, const Household& household);
 
 /**
- * Adds households from a HouseholdGroup to the World.
- * @param world The World to which the group has to be added.
- * @param household_group The HouseholdGroup to add.
+ * @brief Adds Households from a HouseholdGroup to the World.
+ * @param[out] world The World to which the group has to be added.
+ * @param[in] household_group The HouseholdGroup to add.
  */
 void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
 

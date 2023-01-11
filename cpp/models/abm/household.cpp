@@ -30,7 +30,7 @@ namespace abm
 namespace
 {
 /**
- * Picks an age from a custom index array with a weight for each age group according to a discrete distribution.
+ * @brief Picks an age from a custom index array with a weight for each AgeGroup according to a discrete distribution.
  * @param age_groups A custom index array with the weights.
  * @return The picked age group.
  */
