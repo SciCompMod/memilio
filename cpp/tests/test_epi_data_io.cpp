@@ -188,7 +188,7 @@ TEST(TestEpiDataIo, read_population_error_age)
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::KeyNotFound));
 }
 
-TEST(TestEpiDataIo, get_county_ids)
+TEST(TestEpiDataIo, read_county_ids)
 {
     std::vector<int> true_ids = {
         1001,  1002,  1003,  1004,  1051,  1053,  1054,  1055,  1056,  1057,  1058,  1059,  1060,  1061,  1062,  2000,
