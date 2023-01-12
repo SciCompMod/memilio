@@ -224,13 +224,15 @@ public:
     CustomIndexArray<double, AgeGroup> population;
     boost::optional<regions::de::StateId> state_id;
     boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
-        auto obj       = io.expect_object("PopulationDataEntry");
-        auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto obj         = io.expect_object("PopulationDataEntry");
+        auto state_id    = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
+        auto county_id   = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         std::vector<IOResult<double>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
@@ -239,11 +241,11 @@ public:
                        });
         return apply(
             io,
-            [](auto&& ag, auto&& sid, auto&& cid) {
+            [](auto&& ag, auto&& sid, auto&& cid, auto&& did) {
                 return PopulationDataEntry{
-                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), sid, cid};
+                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), sid, cid, did};
             },
-            details::unpack_all(age_groups), state_id, county_id);
+            details::unpack_all(age_groups), state_id, county_id, district_id);
     }
 };
 
@@ -362,6 +364,14 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
  * @return list of county ids.
  */
 IOResult<std::vector<int>> get_county_ids(const std::string& path);
+
+/**
+ * @brief returns a vector with the ids of all nodes.
+ * @param path directory to population data
+ * @param node_id integer specifying whether the nodes should be counties or districts
+ * @return list of node ids.
+ */
+IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id);
 
 /**
  * Represents an entry in a vaccination data file.

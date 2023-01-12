@@ -225,6 +225,22 @@ TEST(TestEpiDataIo, get_county_ids)
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));
 }
 
+TEST(TestEpiDataIo, get_node_ids)
+{
+    std::vector<int> true_ids_district = {1234, 1235};
+
+    std::vector<int> true_ids_county = {1001};
+
+    std::string path = "C:/Users/bick_ju/Documents/repos/memilio-525/data/pydata/Dummy/dummy_current_population.json";
+    auto read_ids_district = mio::get_node_ids(path, 1);
+    auto read_ids_county   = mio::get_node_ids(path, 0);
+    ASSERT_THAT(print_wrap(read_ids_district), IsSuccess());
+    ASSERT_THAT(print_wrap(read_ids_county), IsSuccess());
+
+    EXPECT_THAT(read_ids_district.value(), testing::ElementsAreArray(true_ids_district));
+    EXPECT_THAT(read_ids_county.value(), testing::ElementsAreArray(true_ids_county));
+}
+
 TEST(TestEpiData, vaccination_data)
 {
     auto js                 = Json::Value(Json::arrayValue);
