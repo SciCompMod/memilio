@@ -550,9 +550,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     const auto& read_function = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>;
     const auto& create_graph_function =
-        mio::regions::create_graph<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns,
-                                   ContactLocation, mio::osecirvvs::InfectionState, mio::osecirvvs::Model,
-                                   mio::osecirvvs::Parameters, decltype(read_function)>;
+        mio::create_graph<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, ContactLocation,
+                          mio::osecirvvs::InfectionState, mio::osecirvvs::Model, mio::osecirvvs::Parameters,
+                          decltype(read_function)>;
     BOOST_OUTCOME_TRY(create_graph_function(params_graph, params, start_date, end_date, data_dir, read_function,
                                             scaling_factor_infected, 1.0, 1.43 / 100000., migrating_compartments,
                                             contact_locations.size(), mio::get_offset_in_days(end_date, start_date),

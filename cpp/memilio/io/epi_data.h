@@ -361,24 +361,7 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
  * @param path directory to population data
  * @return list of county ids.
  */
-IOResult<std::vector<int>> get_county_ids(const std::string& path)
-{
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
-
-    std::vector<int> id;
-    id.reserve(population_data.size());
-    for (auto&& entry : population_data) {
-        if (entry.county_id) {
-            id.push_back(entry.county_id->get());
-        }
-        else {
-            return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
-        }
-    }
-    //remove duplicate county ids
-    id.erase(std::unique(id.begin(), id.end()), id.end());
-    return success(id);
-}
+IOResult<std::vector<int>> get_county_ids(const std::string& path);
 
 /**
  * Represents an entry in a vaccination data file.

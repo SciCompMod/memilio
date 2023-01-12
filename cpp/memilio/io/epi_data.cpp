@@ -34,6 +34,25 @@ const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
 const std::array<const char*, 6> VaccinationDataEntry::age_group_names = {"0-4",   "5-14",  "15-34",
                                                                           "35-59", "60-79", "80-99"};
 
+IOResult<std::vector<int>> get_county_ids(const std::string& path)
+{
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
+
+    std::vector<int> id;
+    id.reserve(population_data.size());
+    for (auto&& entry : population_data) {
+        if (entry.county_id) {
+            id.push_back(entry.county_id->get());
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
+        }
+    }
+    //remove duplicate county ids
+    id.erase(std::unique(id.begin(), id.end()), id.end());
+    return success(id);
+}
+
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

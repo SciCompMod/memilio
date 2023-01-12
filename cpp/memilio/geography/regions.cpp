@@ -19,7 +19,6 @@
 */
 #include "memilio/geography/regions.h"
 #include "memilio/geography/holiday_data_de.ipp"
-#include "memilio/io/epi_data.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/mobility.h"
 

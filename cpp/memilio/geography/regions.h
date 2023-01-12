@@ -98,6 +98,8 @@ get_holidays(StateId state, Date start_date, Date end_date);
 
 } // namespace de
 
+} // namespace regions
+
 template <typename TestNTrace, typename ContactPattern, class Model, class Parameters, class ReadFunction>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          Graph<Model, MigrationParameters>& params_graph, ReadFunction&& read_func,
@@ -123,8 +125,8 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         //holiday periods
-        auto holiday_periods =
-            de::get_holidays(de::get_state_id(de::CountyId(county_ids[county_idx])), start_date, end_date);
+        auto holiday_periods = regions::de::get_holidays(
+            regions::de::get_state_id(regions::de::CountyId(county_ids[county_idx])), start_date, end_date);
         auto& contacts = counties[county_idx].parameters.get<ContactPattern>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
@@ -231,7 +233,6 @@ create_graph(Graph<Model, MigrationParameters>& params_graph, const Parameters& 
     return success(params_graph);
 }
 
-} // namespace regions
 } // namespace mio
 
 #endif //MIO_EPI_REGIONS_H
