@@ -74,25 +74,28 @@ void Model::update_forceofinfection()
 
     // TODO: Parameter müssten zum teil noch abhängig von tau und t sein, das ist in parameters aber noch nicht
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
+
+        ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
+        
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>() *
+            parameters.get<TransmissionProbabilityOnContact>().Function(infection_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
                   parameters
                       .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
-                      .Distribution((num_time_points - 1 - i) * m_dt) +
+                      .Distribution(infection_age ) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
-                      .Distribution((num_time_points - 1 - i) * m_dt)) *
+                      .Distribution(infection_age )) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>() +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
-                      .Distribution((num_time_points - 1 - i) * m_dt) +
+                      .Distribution(infection_age ) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
-                      .Distribution((num_time_points - 1 - i) * m_dt)) *
+                      .Distribution(infection_age )) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>());
 

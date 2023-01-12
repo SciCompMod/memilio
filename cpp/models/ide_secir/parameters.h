@@ -50,9 +50,9 @@ struct DelayDistribution {
     {
     }
 
-    ScalarType Distribution(ScalarType tau)
+    ScalarType Distribution(ScalarType infection_age)
     {
-        return smoother_cosine(tau, 0.0, xright, 1.0, 0.0);
+        return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
     }
 
     ScalarType get_xright()
@@ -125,21 +125,46 @@ struct ContactPatterns {
     }
 };
 
+struct ExponentialDecay{
+    ExponentialDecay()
+        : funcparam{0.0}
+    {
+    }
+
+    ExponentialDecay(ScalarType init_funcparam)
+        : funcparam{init_funcparam}
+    {
+    }
+
+    ScalarType Function(ScalarType infection_age)
+    {
+        return std::exp(- funcparam * infection_age);
+    }
+
+    ScalarType get_funcparam()
+    {
+        return funcparam;
+    }
+    
+    ScalarType funcparam{};
+
+ };
 /**
 * @brief probability of getting infected from a contact
 */
 struct TransmissionProbabilityOnContact {
     // TODO: Abhaengigkeit von tau (und t), entspricht rho
-    using Type = ScalarType;
+    using Type = ExponentialDecay;
     static Type get_default()
-    {
-        return 1.0;
+    {   
+        return ExponentialDecay();
     }
     static std::string name()
     {
         return "TransmissionProbabilityOnContact";
     }
 };
+
 
 /**
 * @brief the relative InfectedNoSymptoms infectability
@@ -156,6 +181,44 @@ struct RelativeTransmissionNoSymptoms {
         return "RelativeTransmissionNoSymptoms";
     }
 };
+
+// try with std::function, not working like this
+// /**
+// * @brief the relative InfectedNoSymptoms infectability
+// */
+// struct RelativeTransmissionNoSymptoms {
+//     // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
+//     using Type = std::function<ScalarType(ScalarType)>;
+//     RelativeTransmissionNoSymptoms()
+//         :   func{&expdecay}
+//     {
+//     }
+
+//     RelativeTransmissionNoSymptoms(Type init_func)
+//         :   func{init_func}
+//     {
+//     }
+
+//     void set_func(Type init_function)
+//     {
+//         func = init_function;
+//     }
+
+//     ScalarType Function(ScalarType infection_age)
+//     {
+//         return func(-infection_age);
+//     }
+//     static std::string name()
+//     {
+//         return "RelativeTransmissionNoSymptoms";
+//     }
+
+//     ScalarType expdecay(ScalarType infection_age)
+//     {
+//         return std::exp(-infection_age);
+//     }
+//     Type func;
+// };
 
 /**
 * @brief the risk of infection from symptomatic cases in the SECIR model
