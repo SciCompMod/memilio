@@ -32,7 +32,7 @@
 
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
 namespace py = pybind11;
