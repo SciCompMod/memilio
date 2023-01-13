@@ -152,12 +152,13 @@ struct ExponentialDecay{
 /**
 * @brief probability of getting infected from a contact
 */
+template <class TransmissionProbabilityDecayFunction>
 struct TransmissionProbabilityOnContact {
     // TODO: Abhaengigkeit von tau (und t), entspricht rho
-    using Type = ExponentialDecay;
+    using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {   
-        return ExponentialDecay();
+        return TransmissionProbabilityDecayFunction();
     }
     static std::string name()
     {
@@ -169,12 +170,13 @@ struct TransmissionProbabilityOnContact {
 /**
 * @brief the relative InfectedNoSymptoms infectability
 */
+template <class TransmissionProbabilityDecayFunction>
 struct RelativeTransmissionNoSymptoms {
     // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
-    using Type = ScalarType;
+    using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
-        return 1.0;
+        return TransmissionProbabilityDecayFunction();
     }
     static std::string name()
     {
@@ -182,53 +184,17 @@ struct RelativeTransmissionNoSymptoms {
     }
 };
 
-// try with std::function, not working like this
-// /**
-// * @brief the relative InfectedNoSymptoms infectability
-// */
-// struct RelativeTransmissionNoSymptoms {
-//     // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
-//     using Type = std::function<ScalarType(ScalarType)>;
-//     RelativeTransmissionNoSymptoms()
-//         :   func{&expdecay}
-//     {
-//     }
-
-//     RelativeTransmissionNoSymptoms(Type init_func)
-//         :   func{init_func}
-//     {
-//     }
-
-//     void set_func(Type init_function)
-//     {
-//         func = init_function;
-//     }
-
-//     ScalarType Function(ScalarType infection_age)
-//     {
-//         return func(-infection_age);
-//     }
-//     static std::string name()
-//     {
-//         return "RelativeTransmissionNoSymptoms";
-//     }
-
-//     ScalarType expdecay(ScalarType infection_age)
-//     {
-//         return std::exp(-infection_age);
-//     }
-//     Type func;
-// };
 
 /**
 * @brief the risk of infection from symptomatic cases in the SECIR model
 */
+template <class TransmissionProbabilityDecayFunction>
 struct RiskOfInfectionFromSymptomatic {
     // TODO: Abhaengigkeit von tau (und t), entspricht xi_I
-    using Type = ScalarType;
+    using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
-        return 1.0;
+        return TransmissionProbabilityDecayFunction();
     }
     static std::string name()
     {
@@ -257,7 +223,9 @@ struct MaxRiskOfInfectionFromSymptomatic {
 // Define Parameterset for IDE SEIR model.
 using ParametersBase =
     ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+                 TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>, 
+                 RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>, 
+                 RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
 
 } // namespace isecir
 } // namespace mio

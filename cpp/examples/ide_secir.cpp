@@ -25,6 +25,12 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <iostream>
 
+// Define std::function for parameter
+ScalarType expdecay(ScalarType infection_age)
+{
+    return std::exp(-infection_age);
+}
+
 int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -50,11 +56,7 @@ int main()
     // Initialize model.
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
 
-    // Define std::function for parameter
-    ScalarType expdecay(ScalarType infection_age)
-    {
-        return std::exp(-infection_age);
-    }
+
 
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(
@@ -63,9 +65,9 @@ int main()
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.0);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(1.0);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     // // Carry out simulation.
     model.simulate(tmax);

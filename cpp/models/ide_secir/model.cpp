@@ -76,9 +76,11 @@ void Model::update_forceofinfection()
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
 
         ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
-        
+        // std::cout << "ProbOnCont: " 
+        //           << parameters.get<TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>().Function(infection_age)
+        //           << "\n";
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>().Function(infection_age) *
+            parameters.get<TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>().Function(infection_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
@@ -89,7 +91,7 @@ void Model::update_forceofinfection()
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
                       .Distribution(infection_age )) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
-                 parameters.get<RelativeTransmissionNoSymptoms>() +
+                 parameters.get<RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>().Function(infection_age) +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
                       .Distribution(infection_age ) +
@@ -97,7 +99,7 @@ void Model::update_forceofinfection()
                   parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
                       .Distribution(infection_age )) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
-                 parameters.get<RiskOfInfectionFromSymptomatic>());
+                 parameters.get<RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>().Function(infection_age));
 
         m_forceofinfection = m_dt / ((ScalarType)m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)]) *
                              m_forceofinfection;
