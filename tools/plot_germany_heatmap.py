@@ -19,6 +19,8 @@
 #############################################################################
 # import matplotlib.pyplot as plt
 from gc import get_count
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 import matplotlib.colors as pclrs
 import pandas as pd
 import datetime as dt
@@ -90,7 +92,7 @@ def read_data(
         criterion or value.
     @param file_format File format; either json or h5.
     """
-    input_file = os.path.join(os.getcwd(), file[1])
+    input_file = os.path.join(os.getcwd(), str(file))
     if file_format == 'json':
         df = pd.read_json(input_file + '.' + file_format)
 
@@ -102,8 +104,7 @@ def read_data(
                 if df['Date'].nunique() > 1:
                     df = df[df['Date'] == date_str]
             else:
-                print('Error.')
-                # raise gd.DataError(Please provide date column.)   
+                raise gd.DataError('Please provide date column.')   
 
 
         # Filter data frame according to filter criterion provided 
@@ -116,16 +117,16 @@ def read_data(
                 
 
         # Aggregated or matrix output
+        df.rename(columns={column : 'Count'}, inplace=True)
         if output == 'sum':
-            return df[dffilter].groupby(region_spec).agg({column : sum}).reset_index()
+            return df[dffilter].groupby(region_spec).agg({'Count' : sum}).reset_index()
         elif output == 'matrix':
             if filters != None:
-                return df[dffilter].loc[:,[region_spec] +  list(filters.keys()) + [column]]
+                return df[dffilter].loc[:,[region_spec] +  list(filters.keys()) + ['Count']]
             else:
                 return df
         else:
-            print('Error')
-            # raise gd.DataError("Chose output form.")
+            raise gd.DataError("Chose output form.")
 
     elif file_format == 'h5':
         h5file = h5py.File(input_file + '.' + file_format, 'r')
@@ -179,62 +180,71 @@ def read_data(
                     
                     k += 1               
             else:
-                print('Error')
-                #raise gd.ValueError("Time point not found for region " + str(regions[i]) + ".")                
+                raise gd.ValueError("Time point not found for region " + str(regions[i]) + ".")                
 
         
         # Aggregated or matrix output
         if output == 'sum':
-            df.groupby('Region').agg({'Count' : sum}).reset_index()
+            return df.groupby('Region').agg({'Count' : sum}).reset_index()
         elif output == 'matrix':
             return df
         else:
-            print('Error')
-            # raise gd.DataError("Chose output form.")
+            raise gd.DataError("Chose output form.")
             
     else:
-        print('Error')
-        # raise gd.DataError("Data could not be read in.")
+        raise gd.DataError("Data could not be read in.")
 
-    # raise gd.DataError('No data frame can be returned.')
+    raise gd.DataError('No data frame can be returned.')
     return pd.DataFrame()
 
+def scale_data_relative(df, path_population):
+    """! Scales a population-related data frame relative to the size of the  
+    local populations or subpopulations (e.g., if not all age groups are
+    considered).
+
+    The first column in the input data frame and the population data frame to
+    be read need to be named according to the region identifiers. All regions
+    of the data frame to be scaled need to be available in the population
+    data set.
+
+    @param df Data frame with population-related information. 
+    @param path_population Relative path to population data set.
+    @param 
+    @return Scaled data set.
+    """
+
+    pop_data = pd.read_json(os.path.join(os.getcwd(), path_population))
+
+    # Merge population data of Eisenach (if counted separately) with Wartburgkreis
+    if 16063 in pop_data[df.columns[0]].values:
+        for i in range(1, len(pop_data.columns)):
+            pop_data.loc[pop_data[df.columns[0]] == 16063, pop_data.columns[i]
+                         ] += pop_data.loc[pop_data.ID_County == 16056, pop_data.columns[i]]
+        pop_data = pop_data[pop_data.ID_County != 16056]   
+
+
+    return df 
+
 def plot(
-    files : list,
-    region_spec : str,
-    column : str,
-    date,
-    filters = None,
-    file_format = 'json',
-    relative = True
+    data : pd.DataFrame,
+    xlabel : str,
+    ylabel : str
 ):
-
-
-    df = []
-    for file in files.items():
-        df.append(read_data(file, region_spec=region_spec, column=column, date=date, filters=filters, file_format=file_format))
-        df[-1].rename(columns={column : 'Count'}, inplace=True)
-
     # read and filter population data
-    if relative:
-        pop_data = pd.read_json(os.path.join(os.getcwd(), 'tools/data/county_current_population_dim401.json'))
-        if 'Age_RKI' in filters.keys() and filters['Age_RKI'] != None:
-            print('Error. Functionality needs to be implemented.')
+    # if relative:
         # TODO: 
         # Use create_intervals_mapping() (extract first) and 
         # functionality from get_vaccination_data()
 
-        # merge Eisenach
-        # TODO: change back to .values addition for more age groups!
-        pop_data = pop_data[['ID_County', 'Population']]
-        pop_data.loc[pop_data['ID_County']==16063, 'Population'] += pop_data.loc[pop_data.ID_County==16056, 'Population'] 
-        pop_data = pop_data[pop_data.ID_County != 16056]
     
     #read and filter map data
-    try:
-        map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/shapes/vg2500_01-01.utm32s.shape/vg2500/vg2500_krs.shp'))
-    except FileNotFoundError:
-        print_manual_download('Georeferenzierung: UTM32s, Format: shape (ZIP, 3 MB)', 'https://gdz.bkg.bund.de/index.php/default/digitale-geodaten/verwaltungsgebiete/verwaltungsgebiete-1-2-500-000-stand-01-01-vg2500.html')
+    if data.iloc[:, 0].isin(geoger.get_county_ids()).all():
+        try:
+            map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/shapes/vg2500_01-01.utm32s.shape/vg2500/vg2500_krs.shp'))
+        except FileNotFoundError:
+            print_manual_download('Georeferenzierung: UTM32s, Format: shape (ZIP, 3 MB)', 'https://gdz.bkg.bund.de/index.php/default/digitale-geodaten/verwaltungsgebiete/verwaltungsgebiete-1-2-500-000-stand-01-01-vg2500.html')
+    else:
+        gd.raiseDataError('Provide shape files regions to be plotted.')
     
     map_data = merge_eisenach(map_data)
     
@@ -341,13 +351,35 @@ def plot(
 
 if __name__ == '__main__':
 
-    files_vacc = {'Reported data' : 'tools/raw/test', 'Sanitized data' : 'tools/raw/test_copy'}
+    files_input = {'Reported data' : 'tools/raw/test', 'Sanitized data' : 'tools/raw/test_copy'}
     age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
+    relative = True
 
-    for vacc in ['Vacc_partially']:
-        for state in [None]: #[None, 9]:
-            # plot(files_vacc, dt.date(2021, 11, 18), column = vacc, filters={'ID_State' : [1], 'Age_RKI' : ['05-11','12-17']})
-            plot(files_vacc, region_spec=None, column=None, date=1, filters={'Group': ['Group1' , 'Group2'], 'InfectionState': [3,4]}, file_format='h5')
-            # plot(files_vacc, region_spec='ID_County', column=vacc, date=dt.date(
-            #     2021, 11, 18), filters={'ID_State': [1], 'Age_RKI': None}, file_format='h5')
+    i = 0
+    for file in files_input.values():
+        # df.append(read_data(file, region_spec=None, column=None, date=1, filters={
+        #           'Group': ['Group1', 'Group2'], 'InfectionState': [3, 4]}, file_format='h5'))
+        df = read_data(
+            file, region_spec='ID_County',
+            column='Vacc_partially',
+            date=dt.date(2021, 11, 18),
+            filters={'ID_State': [1],
+                     'Age_RKI': None},
+                file_format='json')
+
+        if relative:
+            df = scale_data_relative(df, 'tools/raw/county_current_population.json')
+
+        if i == 0:
+            dfs_all = pd.DataFrame(df.iloc[:, 0])
+
+        dfs_all['Count ' + str(i)] = df['Count']
+
+
+    x=15
+    # for vacc in ['Vacc_partially']:
+    #     for state in [None]: #[None, 9]:
+    #         # plot(files_vacc, dt.date(2021, 11, 18), column = vacc, filters={'ID_State' : [1], 'Age_RKI' : ['05-11','12-17']})
+    #         plot(files_vacc, region_spec=None, column=None, date=1, filters={'Group': ['Group1' , 'Group2'], 'InfectionState': [3,4]}, file_format='h5')
+    #         plot(files_vacc, region_spec='ID_County', column=vacc, date=dt.date(2021, 11, 18), filters={'ID_State': [1], 'Age_RKI': None}, file_format='h5')
 
