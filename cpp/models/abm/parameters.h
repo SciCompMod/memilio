@@ -21,6 +21,7 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "abm/age.h"
+#include "abm/mask_type.h"
 #include "abm/time.h"
 #include "abm/state.h"
 #include "memilio/utils/custom_index_array.h"
@@ -191,15 +192,15 @@ struct DetectInfection {
     }
 };
 
-struct TestWhileInfected {
-    using Type = CustomIndexArray<double, AgeGroup>;
-    static Type get_default()
+struct MaskProtection {
+    using Type = CustomIndexArray<double, MaskType>;
+    static auto get_default()
     {
-        return Type({AgeGroup::Count}, 0.005);
+        return Type({MaskType::Count}, 1.);
     }
     static std::string name()
     {
-        return "TestWhileInfected";
+        return "MaskProtection";
     }
 };
 
@@ -209,7 +210,7 @@ struct TestWhileInfected {
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, TestWhileInfected>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection>;
 
 struct MaximumContacts {
     using Type = double;
@@ -233,7 +234,7 @@ struct TestParameters {
     double specificity;
 };
 
-struct AntigenTest {
+struct GenericTest {
     using Type = TestParameters;
     static constexpr Type get_default()
     {
@@ -241,14 +242,33 @@ struct AntigenTest {
     }
     static std::string name()
     {
+        return "GenericTest";
+    }
+};
+
+struct AntigenTest : public GenericTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.8, 0.88};
+    }
+    static std::string name()
+    {
         return "AntigenTest";
     }
 };
 
-/**
- * parameters of the testing that are the same everywhere in the world.
- */
-using GlobalTestingParameters = ParameterSet<AntigenTest>;
+struct PCRTest : public GenericTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.9, 0.99};
+    }
+    static std::string name()
+    {
+        return "PCRTest";
+    }
+};
 
 /**
  * parameters that govern the migration between locations.

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -29,18 +29,17 @@ namespace mio
 {
 
 namespace details
-{  
+{
 
-    //helpers for get_default
-    template <class X, class = void, class... Args>
-    struct has_get_default_member_function
-        : std::false_type
-    {};
+//helpers for get_default
+template <class X, class = void, class... Args>
+struct has_get_default_member_function : std::false_type {
+};
 
-    template <class T, class... Args>
-    struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
-        : std::true_type
-    {};
+template <class T, class... Args>
+struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
+    : std::true_type {
+};
 
 } // namespace details
 
@@ -73,109 +72,108 @@ struct ParameterTagTraits {
     {
         return Type{};
     }
-
 };
 
 namespace details
 {
-    //stores a parameter and tags it so it can be unambiguously found in a tuple
-    template <class TagT>
-    class TaggedParameter
+//stores a parameter and tags it so it can be unambiguously found in a tuple
+template <class TagT>
+class TaggedParameter
+{
+public:
+    using Tag    = TagT;
+    using Traits = ParameterTagTraits<Tag>;
+    using Type   = typename Traits::Type;
+
+    template <class... Ts, class Dummy1 = void,
+              class = std::enable_if_t<std::is_constructible<Type, Ts...>::value, Dummy1>>
+    TaggedParameter(Ts&&... args)
+        : m_value(std::forward<Ts>(args)...)
     {
-    public:
-        using Tag    = TagT;
-        using Traits = ParameterTagTraits<Tag>;
-        using Type   = typename Traits::Type;
+    }
 
-        template <class... Ts, class Dummy1 = void,
-                  class = std::enable_if_t<std::is_constructible<Type, Ts...>::value, Dummy1>>
-        TaggedParameter(Ts&&... args)
-            : m_value(std::forward<Ts>(args)...)
-        {
-        }
-
-        operator Type&()
-        {
-            return get();
-        }
-
-        operator const Type&() const
-        {
-            return get();
-        }
-
-        const Type& get() const
-        {
-            return m_value;
-        }
-
-        Type& get()
-        {
-            return m_value;
-        }
-
-        template<class T>
-        bool operator==(const TaggedParameter<T>& other) const
-        {
-            return m_value == other.m_value;
-        }
-
-        template<class T>
-        bool operator!=(const TaggedParameter<T>& other) const
-        {
-            return m_value != other.m_value;
-        }
-
-    private:
-        Type m_value;
-    };
-
-    //defines value = true if predicate defines value=true for all types in parameter pack
-    template <template <class...> class Pred, class... Tail>
-    struct AllOf;
-
-    template <template <class...> class Pred>
-    struct AllOf<Pred> : public std::true_type {
-    };
-
-    template <template <class...> class Pred, class Head, class... Tail>
-    struct AllOf<Pred, Head, Tail...> {
-        static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
-    };
-
-    //defines value = true if predicate defines value=true for any type in parameter pack
-    template <template <class...> class Pred, class... Tail>
-    struct AnyOf;
-
-    template <template <class...> class Pred>
-    struct AnyOf<Pred> : public std::false_type {
-    };
-
-    template <template <class...> class Pred, class Head, class... Tail>
-    struct AnyOf<Pred, Head, Tail...> {
-        static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
-    };
-
-    //for X = template<T1, T2> X => BindTail<X, A>::type<B> = X<B, A>
-    template<template<class...> class F, class... Tail>
-    struct BindTail
+    operator Type&()
     {
-        template<class... Head>
-        struct type : F<Head..., Tail...> {};
-        //according to the standard, this must be a real type, can't be an alias of F.
-        //An alias is immediately replaced and discarded when the compiler sees it, but this could leave the template F with some 
-        //parameters bound and some free, which is not allowed. A struct that derives from F is persistent during compilation.
-    };
+        return get();
+    }
 
-    //for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
-    template<template<class...> class F, class... Head>
-    struct BindHead
+    operator const Type&() const
     {
-        template<class... Tail>
-        struct type : F<Head..., Tail...> {};
-        //can't be an alias, see BindTail
+        return get();
+    }
+
+    const Type& get() const
+    {
+        return m_value;
+    }
+
+    Type& get()
+    {
+        return m_value;
+    }
+
+    template <class T>
+    bool operator==(const TaggedParameter<T>& other) const
+    {
+        return m_value == other.m_value;
+    }
+
+    template <class T>
+    bool operator!=(const TaggedParameter<T>& other) const
+    {
+        return m_value != other.m_value;
+    }
+
+private:
+    Type m_value;
+};
+
+//defines value = true if predicate defines value=true for all types in parameter pack
+template <template <class...> class Pred, class... Tail>
+struct AllOf;
+
+template <template <class...> class Pred>
+struct AllOf<Pred> : public std::true_type {
+};
+
+template <template <class...> class Pred, class Head, class... Tail>
+struct AllOf<Pred, Head, Tail...> {
+    static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
+};
+
+//defines value = true if predicate defines value=true for any type in parameter pack
+template <template <class...> class Pred, class... Tail>
+struct AnyOf;
+
+template <template <class...> class Pred>
+struct AnyOf<Pred> : public std::false_type {
+};
+
+template <template <class...> class Pred, class Head, class... Tail>
+struct AnyOf<Pred, Head, Tail...> {
+    static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
+};
+
+//for X = template<T1, T2> X => BindTail<X, A>::type<B> = X<B, A>
+template <template <class...> class F, class... Tail>
+struct BindTail {
+    template <class... Head>
+    struct type : F<Head..., Tail...> {
     };
-    
+    //according to the standard, this must be a real type, can't be an alias of F.
+    //An alias is immediately replaced and discarded when the compiler sees it, but this could leave the template F with some
+    //parameters bound and some free, which is not allowed. A struct that derives from F is persistent during compilation.
+};
+
+//for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
+template <template <class...> class F, class... Head>
+struct BindHead {
+    template <class... Tail>
+    struct type : F<Head..., Tail...> {
+    };
+    //can't be an alias, see BindTail
+};
+
 } // namespace details
 
 /**
@@ -235,10 +233,10 @@ public:
      * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
      * Arguments get forwarded to get_default of parameters.
      */
-    template <
-        class T1, class... TN,
-        class = std::enable_if_t<details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
-                                                ParameterTagTraits<Tags>...>::value>>
+    template <class T1, class... TN,
+              class = std::enable_if_t<
+                  details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                 ParameterTagTraits<Tags>...>::value>>
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
@@ -293,8 +291,7 @@ public:
      *
      * @tparam Tag the parameter
      */
-    template <class Tag,
-              class... T>
+    template <class Tag, class... T>
     std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>, T...>::value, void> set_default(T&&... ts)
     {
         get<Tag>() = ParameterTagTraits<Tag>::get_default(std::forward<T>(ts)...);
@@ -309,12 +306,12 @@ public:
         return sizeof...(Tags);
     }
 
-    bool operator==(const ParameterSet& b) const 
+    bool operator==(const ParameterSet& b) const
     {
-        return m_tup == b.m_tup; 
+        return m_tup == b.m_tup;
     }
 
-    bool operator!=(const ParameterSet& b) const 
+    bool operator!=(const ParameterSet& b) const
     {
         return m_tup != b.m_tup;
     }
@@ -330,7 +327,8 @@ public:
         foreach (*this, [&obj](auto& p, auto t) mutable {
             using Tag = decltype(t);
             obj.add_element(Tag::name(), p);
-        });
+        })
+            ;
     }
 
 private:
@@ -362,20 +360,19 @@ private:
 
 namespace details
 {
-    //helpers for ParameterTag
-    template <size_t I, class ParamSet>
-    struct ParameterTag;
+//helpers for ParameterTag
+template <size_t I, class ParamSet>
+struct ParameterTag;
 
-    template <size_t I, class Head, class... Tail>
-    struct ParameterTag<I, ParameterSet<Head, Tail...>> : public ParameterTag<I - 1, ParameterSet<Tail...>> {
-    };
+template <size_t I, class Head, class... Tail>
+struct ParameterTag<I, ParameterSet<Head, Tail...>> : public ParameterTag<I - 1, ParameterSet<Tail...>> {
+};
 
-    template <class Head, class... Tail>
-    struct ParameterTag<0, ParameterSet<Head, Tail...>> {
-        using Type = Head;
-    };
+template <class Head, class... Tail>
+struct ParameterTag<0, ParameterSet<Head, Tail...>> {
+    using Type = Head;
+};
 } // namespace details
-
 
 /**
  * @brief get the the tag of the I-th parameter in a set
@@ -388,30 +385,30 @@ using ParameterTagT = typename ParameterTag<I, ParamSet>::Type;
 
 namespace details
 {
-    //helpers for foreach
-    template <class... Tail, class Params, class F>
-    std::enable_if_t<sizeof...(Tail) == 0, void> foreach_impl(Params&&, F)
-    {
-    }
+//helpers for foreach
+template <class... Tail, class Params, class F>
+std::enable_if_t<sizeof...(Tail) == 0, void> foreach_impl(Params&&, F)
+{
+}
 
-    template <class Head, class... Tail, class Params, class F>
-    void foreach_impl(Params&& p, F f)
-    {
-        f(p.template get<Head>(), Head{});
-        foreach_impl<Tail...>(p, f);
-    }
+template <class Head, class... Tail, class Params, class F>
+void foreach_impl(Params&& p, F f)
+{
+    f(p.template get<Head>(), Head{});
+    foreach_impl<Tail...>(p, f);
+}
 
-    template <class Params, size_t... Tail, class F>
-    std::enable_if_t<sizeof...(Tail) == 0, void> foreach_tag_impl(F, std::index_sequence<Tail...>)
-    {
-    }
+template <class Params, size_t... Tail, class F>
+std::enable_if_t<sizeof...(Tail) == 0, void> foreach_tag_impl(F, std::index_sequence<Tail...>)
+{
+}
 
-    template <class Params, size_t Head, size_t... Tail, class F>
-    void foreach_tag_impl(F f, std::index_sequence<Head, Tail...>)
-    {
-        f(ParameterTagT<Head, Params>{});
-        foreach_tag_impl<Params, Tail...>(f, std::index_sequence<Tail...>{});
-    }
+template <class Params, size_t Head, size_t... Tail, class F>
+void foreach_tag_impl(F f, std::index_sequence<Head, Tail...>)
+{
+    f(ParameterTagT<Head, Params>{});
+    foreach_tag_impl<Params, Tail...>(f, std::index_sequence<Tail...>{});
+}
 } // namespace details
 
 /**

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -63,13 +63,15 @@ public:
      * @see make_transform_iterator for a factory function with template argument deduction.
      * @{
      */
-    template<class DTransform = Transform, std::enable_if_t<std::is_default_constructible<DTransform>::value, void*> = nullptr>
+    template <class DTransform                                                          = Transform,
+              std::enable_if_t<std::is_default_constructible<DTransform>::value, void*> = nullptr>
     explicit TransformIterator(UnderlyingIter underlying_iter, Transform transform = Transform{})
         : m_underlying_iter(underlying_iter)
         , m_transform(std::move(transform))
     {
     }
-    template<class DTransform = Transform, std::enable_if_t<!std::is_default_constructible<DTransform>::value, void*> = nullptr>
+    template <class DTransform                                                           = Transform,
+              std::enable_if_t<!std::is_default_constructible<DTransform>::value, void*> = nullptr>
     TransformIterator(UnderlyingIter underlying_iter, Transform transform)
         : m_underlying_iter(underlying_iter)
         , m_transform(std::move(transform))
@@ -201,7 +203,8 @@ public:
 template <class Iter, class Transform>
 auto make_transform_iterator(Iter&& iter, Transform&& transform)
 {
-    return TransformIterator<std::decay_t<Iter>, std::decay_t<Transform>>(std::forward<Iter>(iter), std::forward<Transform>(transform));
+    return TransformIterator<std::decay_t<Iter>, std::decay_t<Transform>>(std::forward<Iter>(iter),
+                                                                          std::forward<Transform>(transform));
 }
 
 } // namespace mio

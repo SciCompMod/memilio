@@ -20,14 +20,17 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
+#include "abm/location_type.h"
+#include "abm/mask_type.h"
 #include "abm/state.h"
 #include "abm/age.h"
 #include "abm/time.h"
 #include "abm/parameters.h"
-#include "abm/world.h"
-#include "abm/time.h"
+#include "abm/location.h"
+#include "abm/mask.h"
 
 #include <functional>
+#include <vector>
 
 namespace mio
 {
@@ -97,8 +100,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc,
-                  const GlobalTestingParameters& global_testing_params);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc);
 
     /** 
      * migrate to a different location.
@@ -253,6 +255,72 @@ public:
 
     const std::vector<uint32_t>& get_cells() const;
 
+    /**
+     * @brief Get the mask of the person.
+     * @return Current mask of the person.
+     */
+    Mask& get_mask()
+    {
+        return m_mask;
+    }
+
+    const Mask& get_mask() const
+    {
+        return m_mask;
+    }
+
+    /**
+     * @brief Get the protection of the mask. A value of 1 represents full protection and a value of 0 means no protection.
+     * @return The protection factor of the mask.
+     */
+    double get_protective_factor(const GlobalInfectionParameters& params) const;
+
+    /**
+     * @brief For every LocationType a person has a compliance value between -1 and 1.
+     * -1 means that the Person never complies to any mask duty at the given LocationType.
+     * 1 means that the Person always wears a Mask a the LocationType even if it is not required.
+     * @param preferences The vector of mask compliance values for all LocationTypes.
+     */
+    void set_mask_preferences(std::vector<double> preferences)
+    {
+        m_mask_compliance = preferences;
+    }
+
+    /**
+     * @brief Get the mask compliance of the person for the current location.
+     * @param location the current location of the person
+     * @return The probability that the person does not comply to any mask duty/wears a
+     * mask even if it is not required.
+     */
+    double get_mask_compliance(LocationType location) const
+    {
+        return m_mask_compliance[static_cast<int>(location)];
+    }
+
+    /**
+     * @brief Checks whether the person wears a mask at the target location.
+     * @param target The target location.
+     */
+    bool apply_mask_intervention(const Location& target);
+
+    /**
+     * @brief Decide if a person is currently wearing a mask.
+     * @param wear_mask if true the protection of the mask is considered when
+     * computing the exposure rate
+     */
+    void set_wear_mask(bool wear_mask)
+    {
+        m_wears_mask = wear_mask;
+    }
+
+    /**
+     * @return true if the person is currently wearing a mask
+     */
+    bool get_wear_mask() const
+    {
+        return m_wears_mask;
+    }
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -267,6 +335,9 @@ private:
     double m_random_goto_work_hour;
     double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
+    Mask m_mask;
+    bool m_wears_mask;
+    std::vector<double> m_mask_compliance;
     uint32_t m_person_id;
     std::vector<uint32_t> m_cells;
 };

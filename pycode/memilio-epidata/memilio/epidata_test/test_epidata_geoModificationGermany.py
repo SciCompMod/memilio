@@ -18,9 +18,11 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import pandas as pd
 from unittest.mock import patch
+
+import pandas as pd
 from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import geoModificationGermany as geoger
 
 
@@ -387,20 +389,16 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         county_table = geoger.get_official_county_table()
         # test headers of df
         for name in self.county_table_test_headers:
-            if(name not in county_table.columns.tolist()):
+            if (name not in county_table.columns.tolist()):
                 self.assertFalse("headers have changed.")
 
-    @patch('builtins.print')
-    def test_get_nuts3_county_id_map(self, mock_print):
-        # merge_berlin = True, merge_eisenach = False
+    def test_get_nuts3_county_id_map(self):
+        # [merge_berlin = True], merge_eisenach = True (Eisenach not anymore in official table)
         nuts_key_dict = geoger.get_nuts3_county_id_map()
-        assert 16056 in nuts_key_dict.values()
+        assert 16056 not in nuts_key_dict.values()
         assert 11000 in nuts_key_dict.values()
         for id in self.merge_berlin_ids:
             assert int(id) not in nuts_key_dict.values()
-        mock_print.assert_called_with(
-            'Source data frame contains more counties than official'
-            ' county list. This could be OK, please verify yourself.')
 
     def test_get_intermediateregion_IDs(self):
         # Ulm is merged with StuttgartRegion, zfill is false
@@ -546,8 +544,10 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             test_df, 16063, [16063, 16056], group_columns, group_columns)
         pd.testing.assert_frame_equal(result_df, self.eisenach_merged_df)
         # the test dataframe should be unchanged as it is the input of the function
+        # avoid error due to comparison of int32 and int64 columns.
         pd.testing.assert_frame_equal(
-            test_df, pd.DataFrame(self.eisenach_unmerged_data), check_dtype = False)
+            test_df.astype(dtype={'ID_County': "int64"}),
+            pd.DataFrame(self.eisenach_unmerged_data).astype(dtype={'ID_County': "int64"}))
 
 
 if __name__ == '__main__':

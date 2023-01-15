@@ -1,7 +1,8 @@
-import sys
 import os
 import subprocess
-from setuptools import setup, find_packages
+import sys
+
+from setuptools import find_packages, setup
 
 try:
     from skbuild import setup
@@ -26,7 +27,7 @@ setup(
     setup_requires=['cmake'],
     install_requires=[],
     extras_require={
-        'dev': ['numpy >= 1.21'],
+        'dev': ['numpy >= 1.22'],
     },
     long_description='',
     test_suite='memilio.simulation_test',

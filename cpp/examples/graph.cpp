@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -33,9 +33,9 @@ int main(int argc, char** argv)
 
     mio::oseir::Model model;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 10000;
-    model.parameters.set<mio::oseir::LatentTime>(1);
+    model.parameters.set<mio::oseir::TimeExposed>(1);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
-    model.parameters.set<mio::oseir::InfectiousTime>(1);
+    model.parameters.set<mio::oseir::TimeInfected>(1);
 
     //two mostly identical groups
     auto model_group1 = model;

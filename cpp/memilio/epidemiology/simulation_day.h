@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_EPIDEMIOLOGY_SIMULATION_DAY_H
-#define MIO_EPIDEMIOLOGY_SIMULATION_DAY_H
+#ifndef MIO_EPI_SIMULATION_DAY_H
+#define MIO_EPI_SIMULATION_DAY_H
 
 #include "memilio/utils/index.h"
 
@@ -34,6 +34,6 @@ public:
     using Index<SimulationDay>::Index;
 };
 
-}
+} // namespace mio
 
-#endif //MIO_EPIDEMIOLOGY_SIMULATION_DAY_H
+#endif //MIO_EPI_SIMULATION_DAY_H

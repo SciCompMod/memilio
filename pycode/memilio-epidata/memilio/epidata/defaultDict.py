@@ -144,7 +144,8 @@ GerEng = {
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'],
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],
@@ -688,4 +689,4 @@ def invert_dict(dict_to_invert):
     @param dict_to_invert Dictionary.
     @return Inverted dictionary.
     """
-    return dict([(val, key) for key, val in dict_to_invert.items()])
+    return {val: key for key, val in dict_to_invert.items()}

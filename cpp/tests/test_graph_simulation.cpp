@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -139,13 +139,13 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
         ++n2;
     };
 
-    auto t0 = 0;
-    auto dt = 1;
+    auto t0       = 0;
+    auto dt       = 1;
     auto sim      = mio::make_graph_sim(t0, dt, g, node_func, edge_func);
     int num_steps = 2;
     sim.advance(t0 + num_steps * dt);
 
-    std::vector<mio::Node<int>> v_n = {{0, 6 + num_steps}, {1, 4 + 2*num_steps}, {2, 8 + 3* num_steps}};
+    std::vector<mio::Node<int>> v_n = {{0, 6 + num_steps}, {1, 4 + 2 * num_steps}, {2, 8 + 3 * num_steps}};
     EXPECT_THAT(sim.get_graph().nodes(), testing::ElementsAreArray(v_n));
     std::vector<mio::Edge<int>> v_e = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
     EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v_e));

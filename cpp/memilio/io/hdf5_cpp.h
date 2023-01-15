@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -88,11 +88,11 @@ struct H5DataSet {
  * MEMILIO_H5_CHECK(id, StatusCode::FileNotFound); // returns mio::failure(StatusCode::FileNotFound) if error
  * MEMILIO_H5_CHECK(id, StatusCode::FileNotFound, filename) // returns mio::failure(StatusCode::FileNotFound, filename) if error
  */
-#define MEMILIO_H5_CHECK(id, ...) \
-    do { \
-        if (id < 0) { \
-            return ::mio::failure(__VA_ARGS__); \
-        } \
+#define MEMILIO_H5_CHECK(id, ...)                                                                                      \
+    do {                                                                                                               \
+        if (id < 0) {                                                                                                  \
+            return ::mio::failure(__VA_ARGS__);                                                                        \
+        }                                                                                                              \
     } while (0)
 
 } // namespace mio

@@ -25,14 +25,15 @@
 
 import os
 from datetime import date
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import requests
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
 
@@ -48,7 +49,7 @@ def get_case_data_with_estimations(
         make_plot=dd.defaultDict['make_plot'],
         split_berlin=dd.defaultDict['split_berlin'],
         rep_date=dd.defaultDict['rep_date']
-        ):
+):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
 WARNING: This file is experimental and has not been tested.
     From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confirmed
@@ -84,7 +85,7 @@ WARNING: This file is experimental and has not been tested.
 
         # get data from John Hopkins University
         gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
-            start_date, end_date, impute_dates, moving_average, make_plot_jh)
+                        start_date, end_date, impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -126,7 +127,8 @@ WARNING: This file is experimental and has not been tested.
         case_data_file = os.path.join(data_path, file_to_change + ".json")
         try:
             df_cases = pd.read_json(case_data_file)
-        except ValueError as e:
+        # pandas>1.5 raise FileNotFoundError instead of ValueError
+        except (ValueError, FileNotFoundError):
             print("WARNING: The file ", file_to_change + ".json does not exist.")
             continue
 
@@ -184,7 +186,7 @@ WARNING: This file is experimental and has not been tested.
             get_weekly_deaths_data_age_gender_resolved(
                 data_path, read_data=True)
             # df_cases[week] = df_cases[date].dt.isocalendar().week
-    #if make_plot:
+    # if make_plot:
     #    plt.show()
 
 
@@ -260,7 +262,7 @@ def compare_estimated_and_rki_deathsnumbers(
     df_real_deaths_per_week.loc[df_real_deaths_per_week.year ==
                                 2021, 'week'] += 53
 
-    #combine both dataframes to one dataframe
+    # combine both dataframes to one dataframe
     df_cases_week = df_cases_week.merge(
         df_real_deaths_per_week, how='outer', on="week")
     del df_cases_week['year']
@@ -278,7 +280,7 @@ def compare_estimated_and_rki_deathsnumbers(
 
         df_jh_week['Deaths_weekly_accumulated'] = df_jh_week['Deaths_weekly'].cumsum()
 
-        #plot
+        # plot
         df_cases_week.plot(
             x="week",
             y=["Deaths_weekly", "Deaths_estimated_weekly",

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -24,7 +24,7 @@ namespace mio
 namespace osecirvvs
 {
 
-    /**
+/**
     * @brief The InfectionState enum describes the possible
     * categories for the infectious state of persons.
     * Enum is usable as an index, e.g. in CustomIndexArray.
@@ -33,37 +33,39 @@ namespace osecirvvs
     * Suffix `ImprovedImmunity` means vaccinated twice or recovered from infection.
     * Suffix `Confirmed` means infection has been confirmed by a test, e.g. during commute.
     */
-    enum class InfectionState
-    {
-        SusceptibleNaive = 0,
-        SusceptiblePartialImmunity, //ImprovedImmunity is included in Recovered
-        ExposedNaive,
-        ExposedPartialImmunity,
-        ExposedImprovedImmunity,
-        CarrierNaive,
-        CarrierPartialImmunity,
-        CarrierImprovedImmunity ,
-        CarrierNaiveConfirmed,
-        CarrierPartialImmunityConfirmed,
-        CarrierImprovedImmunityConfirmed,
-        InfectedNaive,
-        InfectedPartialImmunity,
-        InfectedImprovedImmunity,
-        InfectedNaiveConfirmed,
-        InfectedPartialImmunityConfirmed,
-        InfectedImprovedImmunityConfirmed,
-        HospitalizedNaive,
-        HospitalizedPartialImmunity,
-        HospitalizedImprovedImmunity,
-        ICUNaive,
-        ICUPartialImmunity,
-        ICUImprovedImmunity,
-        Recovered, //includes all with improved immunity, either through infection or at least two vaccinations
-        Dead, //no division by immunity
-        TotalInfections, //total number of infections during the simulation, for data tracking only, does not contribute to simulation
-        
-        Count
-    };
+enum class InfectionState
+{
+    SusceptibleNaive = 0,
+    SusceptiblePartialImmunity,
+    ExposedNaive,
+    ExposedPartialImmunity,
+    ExposedImprovedImmunity,
+    InfectedNoSymptomsNaive,
+    InfectedNoSymptomsPartialImmunity,
+    InfectedNoSymptomsImprovedImmunity,
+    InfectedNoSymptomsNaiveConfirmed,
+    InfectedNoSymptomsPartialImmunityConfirmed,
+    InfectedNoSymptomsImprovedImmunityConfirmed,
+    InfectedSymptomsNaive,
+    InfectedSymptomsPartialImmunity,
+    InfectedSymptomsImprovedImmunity,
+    InfectedSymptomsNaiveConfirmed,
+    InfectedSymptomsPartialImmunityConfirmed,
+    InfectedSymptomsImprovedImmunityConfirmed,
+    InfectedSevereNaive,
+    InfectedSeverePartialImmunity,
+    InfectedSevereImprovedImmunity,
+    InfectedCriticalNaive,
+    InfectedCriticalPartialImmunity,
+    InfectedCriticalImprovedImmunity,
+    SusceptibleImprovedImmunity, //includes all with improved immunity, either through infection or at least two vaccinations
+    DeadNaive,
+    DeadPartialImmunity,
+    DeadImprovedImmunity,
+    TotalInfections, //total number of infections during the simulation, for data tracking only, does not contribute to simulation
+
+    Count
+};
 
 } // namespace osecirvvs
 } // namespace mio

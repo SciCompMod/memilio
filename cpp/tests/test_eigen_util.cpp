@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -68,12 +68,14 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
 {
     TypeParam A(2, 3), B(1, 6), C(3, 2), D(6, 1);
     A << 0, 1, 2, 3, 4, 5;
-    IF_CONSTEXPR(TypeParam::IsRowMajor) {
+    IF_CONSTEXPR(TypeParam::IsRowMajor)
+    {
         B << 0, 1, 2, 3, 4, 5;
         C << 0, 1, 2, 3, 4, 5;
         D << 0, 1, 2, 3, 4, 5;
     }
-    else {
+    else
+    {
         B << 0, 3, 1, 4, 2, 5;
         C << 0, 4, 3, 2, 1, 5;
         D << 0, 3, 1, 4, 2, 5;
@@ -131,7 +133,7 @@ TEST(TestRowMajorIterator, operators)
     EXPECT_TRUE(e > b);
     EXPECT_TRUE(e >= b);
     EXPECT_TRUE(e - 6 >= b);
-    
+
     EXPECT_EQ(b + 6, e);
     EXPECT_NE(b + 5, e);
 }

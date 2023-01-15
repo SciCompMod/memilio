@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -31,71 +31,128 @@ namespace mio
 namespace oseir
 {
 
-    /*******************************************
+/*******************************************
       * Define Parameters of the SEIR model *
     *******************************************/
 
-    /**
+/**
      * @brief probability of getting infected from a contact
      */
-    struct InfectionProbabilityFromContact {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(1.0);
-        }
-        static std::string name()
-        {
-            return "InfectionProbabilityFromContact";
-        }
-    };
+struct TransmissionProbabilityOnContact {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(1.0);
+    }
+    static std::string name()
+    {
+        return "TransmissionProbabilityOnContact";
+    }
+};
 
-    /**
+/**
      * @brief the latent time in day unit
      */
-    struct LatentTime {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(5.2);
-        }
-        static std::string name()
-        {
-            return "LatentTime";
-        }
-    };
+struct TimeExposed {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(5.2);
+    }
+    static std::string name()
+    {
+        return "TimeExposed";
+    }
+};
 
-    /**
+/**
      * @brief the infectious time in day unit
      */
-    struct InfectiousTime {
-        using Type = UncertainValue;
-        static Type get_default()
-        {
-            return Type(6.0);
-        }
-        static std::string name()
-        {
-            return "InfectiousTime";
-        }
-    };
+struct TimeInfected {
+    using Type = UncertainValue;
+    static Type get_default()
+    {
+        return Type(6.0);
+    }
+    static std::string name()
+    {
+        return "TimeInfected";
+    }
+};
 
-    /**
+/**
      * @brief the contact patterns within the society are modelled using a ContactMatrix
      */
-    struct ContactPatterns {
-        using Type = ContactMatrix;
-        static Type get_default()
-        {
-            return Type{1};
-        }
-        static std::string name()
-        {
-            return "ContactPatterns";
-        }
-    };
+struct ContactPatterns {
+    using Type = ContactMatrix;
+    static Type get_default()
+    {
+        return Type{1};
+    }
+    static std::string name()
+    {
+        return "ContactPatterns";
+    }
+};
 
-    using Parameters = ParameterSet<InfectionProbabilityFromContact, LatentTime, InfectiousTime, ContactPatterns>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+
+/**
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     */
+    int check_constraints() const
+    {
+        if (this->get<TimeExposed>() <= 0.0) {
+            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
+                      this->get<TimeExposed>(), 0.0);
+            return 1;
+        }
+        if (this->get<TimeInfected>() <= 0.0) {
+            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
+                      this->get<TimeInfected>(), 0.0);
+            return 1;
+        }
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_error(
+                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
+                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+            return 1;
+        }
+        return 0;
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+};
 
 } // namespace oseir
 } // namespace mio
