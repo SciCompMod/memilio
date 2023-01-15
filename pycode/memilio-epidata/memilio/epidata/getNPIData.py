@@ -986,12 +986,16 @@ def get_npi_data(fine_resolution=2,
         filename = 'germany_counties_npi_maincat'
     gd.write_dataframe(df_npis, directory, filename, file_format)
 
+    return df_npis
+
 
 def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    get_npi_data(fine_resolution=2)
+    df = get_npi_data(fine_resolution=2, file_format='csv')
+
+    
 
 
 if __name__ == "__main__":

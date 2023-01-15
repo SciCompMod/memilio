@@ -292,8 +292,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
     - json
     - json_timeasstring [Default]
     - hdf5
+    - csv
     The file_type defines the file format and thus also the file ending.
-    The file format can be json or hdf5.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
@@ -305,7 +305,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
 
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
-               'hdf5': [".h5", {"key": "data"}]}
+               'hdf5': [".h5", {"key": "data"}],
+               'csv' : [".csv", {}]}
 
     try:
         outFormEnd = outForm[file_type][0]
@@ -313,7 +314,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring or hdf5.")
+            " does not exist. Use json, json_timeasstring, hdf5 or csv.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -326,6 +327,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
+    elif file_type == 'csv':
+        df.to_csv(out_path)
 
     print("Information: Data has been written to", out_path)
 

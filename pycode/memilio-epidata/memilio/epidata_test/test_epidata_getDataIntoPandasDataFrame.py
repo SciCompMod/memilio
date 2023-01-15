@@ -473,14 +473,21 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
         df = pd.DataFrame(data=d)
 
-        gd.write_dataframe(df, self.path, "test_json", 'json')
+        gd.write_dataframe(df, self.path, "test_csv", 'csv')
 
-        file = "test_json.json"
+        file0 = "test_csv.json"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(os.listdir(self.path), [file])
+        self.assertEqual(os.listdir(self.path), [file0])        
 
-        file_with_path = os.path.join(self.path, file)
+        gd.write_dataframe(df, self.path, "test_json", 'json')
+
+        file1 = "test_json.json"
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), [file0, file1])
+
+        file_with_path = os.path.join(self.path, file1)
         f = open(file_with_path, "r")
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
@@ -497,8 +504,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         file2 = "test_json_timeasstring.json"
 
-        self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path).sort(), [file, file2].sort())
+        self.assertEqual(len(os.listdir(self.path)), 3)
+        self.assertEqual(os.listdir(self.path).sort(), [file0, file1, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
         f = open(file_with_path, "r")
