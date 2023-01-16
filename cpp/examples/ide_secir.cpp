@@ -25,11 +25,6 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <iostream>
 
-// Define std::function for parameter
-ScalarType expdecay(ScalarType infection_age)
-{
-    return std::exp(-infection_age);
-}
 
 int main()
 {

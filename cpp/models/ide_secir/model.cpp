@@ -76,9 +76,9 @@ void Model::update_forceofinfection()
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
 
         ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
-        // std::cout << "ProbOnCont: " 
-        //           << parameters.get<TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>().Function(infection_age)
-        //           << "\n";
+        std::cout << "ProbOnCont: " 
+                  << parameters.get<TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>().Function(infection_age)
+                  << "\n";
         m_forceofinfection +=
             parameters.get<TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>().Function(infection_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(m_transitions.get_last_time())(0, 0) *
@@ -207,7 +207,7 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
         sum += (parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1] *
                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Distribution(
                         (num_time_points - 1 - i) * m_dt) +
-                parameters.get<TransitionProbabilities>()[idx_TransitionDistribution2]*
+                (1-parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1])*
                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Distribution(
                         (num_time_points - 1 - i) * m_dt)) *
                m_transitions[i + 1][idx_IncomingFlow];
@@ -222,7 +222,8 @@ void Model::update_compartments_ECIHU()
     // E
     get_size_of_compartments(Eigen::Index(InfectionState::Exposed),
                              Eigen::Index(InfectionTransitions::SusceptibleToExposed),
-                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 0);
+                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 
+                             0);
     // C
     get_size_of_compartments(
         Eigen::Index(InfectionState::InfectedNoSymptoms),

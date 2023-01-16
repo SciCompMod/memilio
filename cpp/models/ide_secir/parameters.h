@@ -112,6 +112,7 @@ struct TransitionProbabilities {
 /**
  * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
  */
+ // TODO: Dependeny on infection age
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
 
@@ -127,7 +128,7 @@ struct ContactPatterns {
 
 struct ExponentialDecay{
     ExponentialDecay()
-        : funcparam{0.0}
+        : funcparam{1.0}
     {
     }
 
@@ -146,6 +147,7 @@ struct ExponentialDecay{
         return funcparam;
     }
     
+    private:
     ScalarType funcparam{};
 
  };

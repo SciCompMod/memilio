@@ -32,9 +32,8 @@ namespace isecir
 class Model
 {
     /* TODO: 
-    - in parameters muessen einige Parameter noch von tau abhaengig gemacht werden
+    - in parameters muessen einige Parameter noch von tau abhaengig gemacht werden (ContactMatrix)
     - die Dokumentationen der Funktionen sind unvollstaendig
-    - evtl gibt es für get_size_of_compartments statt transitionprobability2 eine elegantere alternative?
     - i oder i+1 in numerischer Integration
     -ueberlegen ob eine allgemeine print -funktion fuer timeSeries Sinn ergibt. aktuell haben wir hier 2 mal und in SEIR nochmal dieselbe print-Funktion
     - wir sollten eine "constraint check"- Funktion in Parameters schreiben, die zB prüft od Probability C->I =1- Prob C->R ist.
