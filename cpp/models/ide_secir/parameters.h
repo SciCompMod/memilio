@@ -156,7 +156,7 @@ struct ExponentialDecay{
 */
 template <class TransmissionProbabilityDecayFunction>
 struct TransmissionProbabilityOnContact {
-    // TODO: Abhaengigkeit von tau (und t), entspricht rho
+    // corresponds to rho, depends on infection_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {   
@@ -174,7 +174,7 @@ struct TransmissionProbabilityOnContact {
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RelativeTransmissionNoSymptoms {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
+    // correspond to xi_C, depends on infection_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
@@ -192,7 +192,7 @@ struct RelativeTransmissionNoSymptoms {
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RiskOfInfectionFromSymptomatic {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_I
+    // corresponds to xi_I, depends on infection_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
