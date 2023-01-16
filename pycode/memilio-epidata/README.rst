@@ -136,7 +136,7 @@ If a new functionality shall be added please stick to the following instructions
 When you start creating a new script:
 
 - have a look into getDataIntoPandasDataFrame.py there the main functionality which should be used is implemented.
-   - loadCsv or loadGeoJson are used to read in data
+   - get_file is used to read in data
    - use the dictionaries in defaultDict.py to rename the existing columns of you data
       - add new column names to one of the existing languages; english, german and spanish translation exists at the moment.
       - for non-english languages always use the EngEng dictionary as the key, thus we can easily change names with just changing one line.

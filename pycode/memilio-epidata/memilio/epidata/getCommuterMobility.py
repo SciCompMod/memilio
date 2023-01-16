@@ -24,10 +24,8 @@
 """
 import collections
 import os
-import wget
 import numpy as np
 import pandas as pd
-from zipfile import ZipFile
 from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
@@ -66,8 +64,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     if verify_sorted(countykey_list) == False:
         raise gd.DataError("Error. Input list not sorted.")
 
-    # Create list of government regions with lists of counties that belong to them and list of states with government
-    # regions that belong to them; only works with sorted lists of keys.
+    # Create list of government regions with lists of counties that belong to them and list of states with government regions that belong to them; only works with sorted lists of keys.
     gov_county_table = []
 
     gov_index = 0
@@ -206,22 +203,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
         # This File is in a zip folder so it has to be unzipped first before it can be read.
         param_dict={"sheet_name": 3, "engine": "pyxlsb"}
-        filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
-        # Unzip it
-        zipfile = wget.download(url, filepath)
-        with ZipFile(zipfile, 'r') as zipObj:
-            zipObj.extractall(path = filepath)
-        # Read the file
-        filename = item.split('-20')[0] + '.xlsb'
-        file = filename.replace('-','_')
-        commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
-        # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
-        # delete zip folder after extracting
-        os.remove(os.path.join(filepath, item))
-        # delete file after reading
-        os.remove(os.path.join(filepath, file))
+        commuter_migration_file = gd.get_file('', url, False, param_dict)
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from

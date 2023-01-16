@@ -34,9 +34,9 @@ def getMobilityFromFile(directory, mobility_file):
     @param mobility_file Mobility matrix file which has to be updated.
     @return Mobility matrix data frame.
     """
-    mobility_matrix = gd.loadCsv(
-        '', directory + mobility_file, extension='.txt',
-        param_dict={'sep': ' ', 'header': None})
+    mobility_matrix = pd.read_csv(
+        os.path.join(directory + mobility_file + '.txt'),
+        sep=' ', header=None)
 
     return mobility_matrix
 

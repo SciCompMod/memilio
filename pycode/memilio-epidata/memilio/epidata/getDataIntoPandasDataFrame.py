@@ -22,7 +22,7 @@
 @brief Tools to convert data to pandas dataframes
 
 This tool contains
-- load geojson format
+- load excel format
 - load csv format
 - organizes the command line interface
 - check if directory exists and if not creates it
@@ -30,13 +30,13 @@ This tool contains
 """
 
 import os
-from urllib.request import urlopen
-import json
 import argparse
 import datetime
 import requests
+import magic
 import pandas as pd
-from io import BytesIO, StringIO
+import numpy as np
+from io import BytesIO
 from zipfile import ZipFile
 
 from memilio.epidata import defaultDict as dd
@@ -82,121 +82,87 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None):
     # return the downloaded content as file like object
     return BytesIO(file)
 
+def extract_zip(file, **param_dict):
+    """! """
 
-def loadGeojson(
-        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='geojson'):
-    """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
-    This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
-    data item ID into a pandas DataFrame and returns the DataFrame. Trivial
-    information gets removed by JSON normalization and dropping of always
-    constant data fields.
+    # extract zip file in current working directory
+    with ZipFile(file, 'r') as zipObj:
+        names=zipObj.namelist()
+        all_dfs=[[] for i in range(len(names))]
+        for i in range(len(names)):
+            with zipObj.open(names[i]) as file2:
+                try:
+                    all_dfs[i]=pd.read_excel(file2.read(), **param_dict)
+                except:
+                    pass
+    if len(all_dfs)==1:
+        all_dfs=all_dfs[0]
+    return all_dfs
 
-    @param targetFileName -- File name without ending, for ArcGIS use public data item ID (string)
-    @param apiUrl -- URL to file (default: ArcGIS data sets API URL (string, default
-              'https://opendata.arcgis.com/datasets/'))
-    @param extension -- Data format extension (string, default 'geojson')
-    return dataframe
+def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_dict={}):
+    """! Loads data from filepath and stores it in a pandas dataframe.
+    If data can't be read from given filepath the user is asked wether the file should be downloaded from the given url or not.
+    Uses the progress indicator to give feedback.
+
+    @param filepath String. Filepath where data es read from.
+    @param url String. URL to download the dataset.
+    @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
+    @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+
+    @return pandas dataframe
     """
-    url = apiUrl + targetFileName + '.' + extension
+    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_zip={}
 
+    filetype_dict = {'text':pd.read_csv, 'Composite Document File V2 Document':pd.read_excel, 'Excel':pd.read_excel, 'Zip':extract_zip}
+    dict_dict = {pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
+
+    if read_data:
+        try:
+            pd.read_json(filepath)
+        except FileNotFoundError:
+            user_input = input("Warning: The file: " + filepath + \
+                " does not exist in the directory. Do you want to download " + \
+                "the file from " + url +" (y/n)? \n")
+            if user_input == 'y' or user_input == 'Y':
+                df = get_file(filename=filepath, url=url, read_data=False, param_dict={})
+            if user_input == 'n' or user_input == 'N':
+                error_message = "Error: The file from " + filepath + \
+                "could not be read. Call program without -r flag to get it."
+                raise FileNotFoundError(error_message)
+    else:
+
+        try:
+            try: # to download file from url and show download progress
+                with progress_indicator.Percentage(message="Downloading " + url) as p:
+                    file = download_file(url, 1024, None, p.set_progress)
+                    # read first 2048 bytes to find file type
+                    ftype=magic.from_buffer(file.read(2048))
+                    # set pointer back to starting position
+                    file.seek(0)
+                    # find file type in dict and use function to read
+                    func_to_use=[val for key, val in filetype_dict.items() if key in ftype]
+                    # use different default dict for different functions
+                    dict_to_use=dict_dict[func_to_use[0]]
+                    # adjust dict
+                    for k in dict_to_use:
+                        if k not in param_dict:
+                            param_dict[k] = dict_to_use[k]
+                    # create dataframe
+                    df=func_to_use[0](file, **param_dict)
+            except requests.exceptions.RequestException:
+                raise FileNotFoundError('Sorry')
+        except OSError:
+            raise FileNotFoundError("Error: URL " + url + " could not be opened.")
     try:
-        with urlopen(url) as res:
-            data = json.loads(res.read().decode())
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
-
-    # Shape data:
-    df = pd.json_normalize(data, 'features')
-
-    # Make-up (removing trivial information):
-    df.drop(columns=['type', 'geometry'], inplace=True)
-    df.rename(columns=lambda s: s[11:], inplace=True)
-
+        if df.empty:
+            raise DataError("Dataframe is empty")
+    except AttributeError:
+        for i in range(len(df)):
+            if df[i].empty:
+                raise DataError("Dataframe is empty")
     return df
-
-
-def loadCsv(
-        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='.csv', param_dict={}, encoding=None):
-    """! Loads data sets in CSV format. (pandas DataFrame)
-    This routine loads data sets (default from ArcGIS) in CSV format of the given public data
-    item ID into a pandas DataFrame and returns the DataFrame.
-
-    @param targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
-    @param apiUrl -- API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    @param extension -- Data format extension (string, default '.csv')
-    @param param_dict -- Defines the parameter for read_csv:
-            "sep": Delimiter to use (string, default ',')
-            "header": Row to use for column labels (Use None if there is no header) (int, default 0)
-            "encoding": Encoding to use for UTF when reading (string, default None)
-            "dtype": Data type for data or column (dict of column -> type, default None)
-    @return dataframe 
-    """
-
-    url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0, "encoding": encoding, 'dtype': None}
-
-    for k in param_dict_default:
-        if k not in param_dict:
-            param_dict[k] = param_dict_default[k]
-
-    try:
-        try: # to download file from url and show download progress
-            with progress_indicator.Percentage(message="Downloading " + url) as p:
-                file = download_file(url, 1024, None, p.set_progress)
-            df = pd.read_csv(file, **param_dict)
-        except requests.exceptions.RequestException:
-            df = pd.read_csv(url, **param_dict)
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
-
-    return df
-
-
-def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-              extension='.xls', param_dict={}):
-    """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
-
-    This routine loads data sets (default from ArcGIS) in Excel format of the given public data
-    item ID into a pandas DataFrame and returns the DataFrame.
-
-    Keyword arguments:
-    targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
-    apiUrl -- API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default '.xls')
-    param_dict -- Defines the parameter for read_excel:
-            "sheetname": sheet from Excel file which should be in DataFrame
-            (string (sheetname) or integer (zero-indexed sheet position), default 0)
-            "header": row to use for column labels (Use None if there is no header) (int, default 0)
-            "engine": defines engine for reading (str, default 'openpyxl')
-    """
-    url = apiUrl + targetFileName + extension
-    param_dict_default = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
-
-    for k in param_dict_default:
-        if k not in param_dict:
-            param_dict[k] = param_dict_default[k]
-
-    try:
-        if extension == '.zip':
-            file_compressed = ZipFile(
-                BytesIO(urlopen(url).read())).filelist[0].filename
-            df = pd.read_excel(
-                ZipFile(BytesIO(urlopen(url).read())).open(file_compressed),
-                **param_dict)
-        else:
-            df = pd.read_excel(url, **param_dict)
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
-
-    return df
-
 
 def cli(what):
     """! Defines command line interface

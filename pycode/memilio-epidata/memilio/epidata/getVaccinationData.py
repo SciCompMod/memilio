@@ -31,30 +31,6 @@ from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
 
-# Downloads vaccination data from RKI
-
-
-def download_vaccination_data():
-    # RKI content from github
-    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
-    # empty data frame to return if not read correctly
-    df = pd.DataFrame()
-    # try to read csv
-    try:
-        df = gd.loadCsv(
-            '', url, '',
-            param_dict={
-                'dtype':
-                {'LandkreisId_Impfort': "string",
-                 'Altersgruppe': "string", 'Impfschutz': int,
-                 'Anzahl': int}})
-    except Exception:
-        print("Error in reading csv while downloading vaccination data.")
-        raise
-    sanity_checks(df)
-
-    return df
-
 
 def sanity_checks(df):
     # test if dataframe is empty
@@ -525,10 +501,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
-    df_data = download_vaccination_data()
+    filename = "RKIVaccFull"
+    url="https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
+    path = os.path.join(directory + filename + ".csv")
+    df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
+                         'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}})
 
     if not no_raw:
-        gd.write_dataframe(df_data, directory, "RKIVaccFull", "json")
+        gd.write_dataframe(df_data, directory, filename, "json")
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 

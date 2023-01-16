@@ -126,75 +126,52 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
     filename = "CaseDataFull"
 
-    if read_data:
-        # if once dowloaded just read json file
-        file_in = os.path.join(directory, filename + ".json")
-        try:
-            df = pd.read_json(file_in)
-        # pandas>1.5 raise FileNotFoundError instead of ValueError
-        except (ValueError, FileNotFoundError) as err:
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist. Call program without -r flag to get it.") \
-                from err
-    else:
-        # download data
-        df = pd.DataFrame()
+    complete = False
+    filename = "CaseDataFull"
+    path = os.path.join(directory + filename + ".csv")
+    try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
-              "SARS-CoV-2-Infektionen_in_Deutschland/main/"
-        source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
-        try:
-            df = gd.loadCsv(targetFileName=source_filename, apiUrl=url,
-                            extension=".csv")
-        except FileNotFoundError:
-            pass
+            "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+        df = gd.get_file(path, url, read_data, param_dict={})
         complete = check_for_completeness(df, merge_eisenach=True)
-        if complete:
+    except:
+        pass
+    if complete:
+        if not read_data:
             # add column with state ids
             county_to_state_map = geoger.get_countyid_to_stateid_map(
                 merge_berlin=False)
             df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
-        else:
-            # try another possibility if df was empty or incomplete
-            print("Note: Case data is incomplete. Trying another source.")
-            # ArcGIS public data item ID:
-            itemId = '66876b81065340a4a48710b062319336_0'
-            try:
-                # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
-                # utf_8_sig can identify those bytes as one sign and display it correctly
-                df = gd.loadCsv(
-                    targetFileName=itemId,
-                    param_dict={"encoding": 'utf_8_sig'})
-            except FileNotFoundError:
-                pass
+    else:
+        # try another possibility if df was empty or incomplete
+        print("Note: Case data is incomplete. Trying another source.")
+        try:
+            url="https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
+            # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
+            # utf_8_sig can identify those bytes as one sign and display it correctly
+            df = gd.get_file(path, url, False, param_dict={"encoding": 'utf_8_sig'})
             complete = check_for_completeness(df, merge_eisenach=True)
-
-            if not complete:
-                print("Note: Case data is still incomplete. Trying a thrid source.")
-                try:
-                    # If the data on github is not available we download the case data from rki from covid-19 datahub
-                    df = gd.loadCsv(
-                        apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
-                        targetFileName="f10774f1c63e40168479a1feb6c7ca74/data",
-                        extension="", param_dict={"encoding": 'utf_8_sig'})
-                    df.rename(columns={'FID': "OBJECTID"}, inplace=True)
-                except FileNotFoundError:
-                    pass
+        except:
+            pass
+        if not complete:
+            print("Note: Case data is still incomplete. Trying a thrid source.")
+            try:
+                # If the data on github is not available we download the case data from rki from covid-19 datahub
+                url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
+                    "items/f10774f1c63e40168479a1feb6c7ca74/data"
+                df = gd.get_file(path, url, False, param_dict={
+                                 "encoding": 'utf_8_sig'})
+                df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(df, merge_eisenach=True)
+            except:
+                pass
+        if not complete:
+            raise FileNotFoundError('Sorry')
+        
+        # drop columns that do not exist in data from github
+        df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
+                    "Bundesland", "Landkreis"], axis=1)
 
-            if not complete:
-                print("Information: dataframe was incomplete for csv. Trying geojson.")
-                try:
-                    df = gd.loadGeojson(itemId)
-                except FileNotFoundError:
-                    pass
-                complete = check_for_completeness(df, merge_eisenach=True)
-                if df.empty or not complete:
-                    raise FileNotFoundError(
-                        "Something went wrong, " +
-                        "dataframe is empty for csv and geojson!")
-            # drop columns that do not exist in data from github
-            df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
-                          "Bundesland", "Landkreis"], axis=1)
     df = df.convert_dtypes()
 
     # output data to not always download it

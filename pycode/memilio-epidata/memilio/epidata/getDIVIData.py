@@ -91,27 +91,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
-
-    if read_data:
-        # read json file for already downloaded data
-        file_in = os.path.join(directory, filename + ".json")
-
-        try:
-            df_raw = pd.read_json(file_in)
-        # pandas>1.5 raise FileNotFoundError instead of ValueError
-        except (ValueError, FileNotFoundError):
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist. Call program without"
-                                    " -r flag to get it.")
-    else:
-        try:
-            df_raw = gd.loadCsv(
-                'zeitreihe-tagesdaten',
-                apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
-                extension='.csv')
-        except FileNotFoundError as err:
-            raise FileNotFoundError(
-                "Error: Download link for Divi data has changed.") from err
+    url="https://diviexchange.blob.core.windows.net/%24web/zeitreihe-tagesdaten.csv"
+    path = os.path.join(directory + filename + ".csv")
+    df_raw = gd.get_file(path, url, read_data, param_dict={})
 
     if not df_raw.empty:
         if not no_raw:
