@@ -53,7 +53,7 @@ int main()
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(
         std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-    model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(num_transitions, 0.5));
+    model.parameters.set<mio::isecir::TransitionProbabilities>(mio::isecir::TransitionProbabilities().get_default());
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);

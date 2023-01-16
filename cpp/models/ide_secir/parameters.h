@@ -33,9 +33,9 @@ namespace mio
 namespace isecir
 {
 
-/*******************************************
-    * Define Parameters of the IDE-SECIHURD model *
-    *******************************************/
+/**********************************************
+* Define Parameters of the IDE-SECIHURD model *
+**********************************************/
 
 /**
 * @brief Distribution of the time spent in a compartment before transiting to next compartment.
@@ -96,11 +96,15 @@ struct TransitionParameters {
 };
 
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions.*/
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions. 
+    Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<ScalarType>((int)InfectionTransitions::Count, 0.5);
+        std::vector<ScalarType> probs((int)InfectionTransitions::Count, 0.5);
+        probs[Eigen::Index(InfectionTransitions::SusceptibleToExposed)]        = 1;
+        probs[Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
+        return probs;
     }
 
     static std::string name()
