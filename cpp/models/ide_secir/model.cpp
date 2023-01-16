@@ -42,7 +42,7 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, s
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = Dead0;
 }
 
-void Model::update_susceptibles()
+void Model::compute_susceptibles()
 {
     Eigen::Index num_time_points = m_SECIR.get_num_time_points();
     // using number of susceptibles from previous time step and force of infection from previous time step:
@@ -53,7 +53,6 @@ void Model::update_susceptibles()
 
 void Model::update_forceofinfection()
 {
-    // determine force of infection for the current last point of time in m_transitions,
     m_forceofinfection = 0;
 
     // determine the relevant calculation area = union of the supports of the relevant transition distributions
@@ -101,7 +100,6 @@ void Model::update_forceofinfection()
     }
 }
 
-// define function that defines general scheme to compute flow
 void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow)
 {
     ScalarType sum = 0;
@@ -127,7 +125,7 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
         (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * m_dt * sum;
 }
 
-void Model::update_flows()
+void Model::flows_current_timestep()
 {
     // calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
     m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
@@ -183,7 +181,6 @@ void Model::compute_recovered()
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedCriticalToRecovered)];
 }
 
-// function that actually computes size of compartments from flows (all but S and R)
 void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
                                      int idx_TransitionDistribution1, int idx_TransitionDistribution2)
 {
@@ -212,7 +209,7 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
     m_SECIR.get_last_value()[idx_InfectionState] = m_dt * sum;
 }
 
-void Model::update_compartments_ECIHU()
+void Model::compartments_current_timestep_ECIHU()
 {
     // E
     get_size_of_compartments(Eigen::Index(InfectionState::Exposed),
@@ -240,7 +237,6 @@ void Model::update_compartments_ECIHU()
                              (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
-// do simulation
 void Model::simulate(int t_max)
 {
     std::cout << "Starting simulation:  \n";
@@ -250,8 +246,9 @@ void Model::simulate(int t_max)
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
 
     //calculate compartment sizes for t=0
-    update_compartments_ECIHU();
-    //R
+    compartments_current_timestep_ECIHU();
+
+    //R; need an initial value for R, therefore do not calculate via compute_recovered()
     m_SECIR.get_last_value()[Eigen::Index(InfectionState::Recovered)] =
         m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)] -
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::Exposed)] -
@@ -269,10 +266,10 @@ void Model::simulate(int t_max)
         m_SECIR.add_time_point(m_SECIR.get_last_time() + m_dt);
 
         // compute_S:
-        update_susceptibles();
+        compute_susceptibles();
 
         // compute flows:
-        update_flows();
+        flows_current_timestep();
 
         // compute D
         compute_totaldeaths();
@@ -281,7 +278,7 @@ void Model::simulate(int t_max)
         update_forceofinfection();
 
         // compute remaining compartments from flows
-        update_compartments_ECIHU();
+        compartments_current_timestep_ECIHU();
         compute_recovered();
     }
     std::cout << "Finished simulation successfully.  \n";

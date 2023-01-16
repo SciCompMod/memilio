@@ -33,8 +33,6 @@ class Model
 {
     /* TODO: 
     - in parameters muessen einige Parameter noch von tau abhaengig gemacht werden
-    - die Dokumentationen der Funktionen sind unvollstaendig
-    - evtl gibt es für get_size_of_compartments statt transitionprobability2 eine elegantere alternative?
     - i oder i+1 in numerischer Integration
     -ueberlegen ob eine allgemeine print -funktion fuer timeSeries Sinn ergibt. aktuell haben wir hier 2 mal und in SEIR nochmal dieselbe print-Funktion
     - wir sollten eine "constraint check"- Funktion in Parameters schreiben, die zB prüft od Probability C->I =1- Prob C->R ist.
@@ -56,6 +54,7 @@ public:
     *   The last time point in this vector should be a time 0.
     * @param[in] dt_init The size of the time step used for numerical simulation.
     * @param[in] N_init The population of the considered region. 
+    * @param[in] Dead0 The total number of deaths at initial time 0.
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, size_t Dead0, Pa Parameterset_init = Pa());
@@ -72,11 +71,12 @@ public:
     *       associated number of susceptibles.
     */
     void simulate(int t_max);
+
     // Used Parameters for the simulation.
     Pa parameters{};
 
     /**
-     * @brief print the transition part of the simulation result.
+     * @brief Print the transition part of the simulation result.
      * 
      * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
      * simulation are printed. 
@@ -84,39 +84,90 @@ public:
     void print_transitions() const;
 
     /**
-     * @brief print the simulated numbers of individuals in each compartment for each time step.
+     * @brief Print the simulated numbers of individuals in each compartment for each time step.
      * 
      * The TimeSeries m_SECIR with simulated numbers of individuals in each compartment for each time step are printed. 
      */
     void print_compartments() const;
 
 private:
-    void update_susceptibles();
+    /**
+    * @brief Computes number of Susceptibles for the current last time in m_SECIR.
+    *
+    * Number is computet using previous number of Susceptibles and the force of infection (also from previous timestep).
+    * Number is stored at the matching index in m_SECIR.
+    */
+    void compute_susceptibles();
+
+    /**
+     * @brief Computes force of infection for the current last time in m_transitions.
+     * 
+     * Computed value is stored in m_forceofinfection.
+     */
     void update_forceofinfection();
+
+    /**
+     * @brief Computes size of a flow.
+     * 
+     * Computes size of one flow from InfectionTransitions, specified in idx_InfectionTransitions, for the current 
+     * last timevalue in m_transitions.
+     *
+     * @param[in] idx_InfectionTransitions Specifies the considered flow from InfectionTransitions.
+     * @param[in] idx_IncomingFlow Index of the flow in InfectionTransitions, which goes to the considered starting
+     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
+     *      the value of this incoming flow.
+     */
     void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow);
-    void update_flows();
+
+    /**
+     * @brief Sets all required flows for the current last timestep in m_transitions.
+     *
+     * New values are stored in m_transitions. Most values are computed via the function compute_flow().
+     * 
+     */
+    void flows_current_timestep();
+
+    /**
+     * @brief Computes total number of Deaths for the current last time in m_SECIR.
+     * 
+     * Number is stored in m_SECIR.
+     *
+     */
     void compute_totaldeaths();
+
+    /**
+     * @brief Computes total number of Recovered for the current last time in m_SECIR.
+     * 
+     * Number is stored in m_SECIR.
+     *
+     */
     void compute_recovered();
 
     /**
      * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_SECIR.
      * 
-     * @param[in] idx_InfectionState specifies the considered InfectionState
-     * @param[in] idx_IncomingFlow specifies the index of the infoming flow to InfectionState in m_transitions. 
-     * @param[in] idx_TransitionDistribution1 specifies the index of the first relevant transitiondistribution, 
+     * Calculation is reasonable for all compartments except S, R, D. 
+     * Therefore, we have alternative funtions for those compartments.
+     *
+     * @param[in] idx_InfectionState Specifies the considered InfectionState
+     * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to InfectionState in m_transitions. 
+     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant transitiondistribution, 
      *              related to a flow from the considered InfectionState to any other State.
      *              This index is also used for related Probability.
-     * @param[in] idx_TransitionDistribution2 specifies the index of the second relevant transitiondistribution, 
+     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant transitiondistribution, 
      *              related to a flow from the considered InfectionState to any other State (in most cases to Recovered). 
-     * @param[in] transitionprobability2 transitionsprobability related to idx_TransitionDistribution2.
-     *              This is just an extra parameter to give the opportunity that a compartment only have one outgoing 
-     *              flow (eg as E). In this case this probability has to be set to 0.
-     *              If the InfectionState has two outgoing flows, one could also get this related probability 
-     *              via idx_TransitionDistribution2.
+     *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      */
     void get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
                                   int idx_TransitionDistribution1, int idx_TransitionDistribution2);
-    void update_compartments_ECIHU();
+
+    /**
+     * @brief Sets all values of remaining compartments ECIHU for the current last timestep in m_SECIR.
+     *
+     * New values are stored in m_SECIR. Most values are computed via the function get_size_of_compartments().
+     * 
+     */
+    void compartments_current_timestep_ECIHU();
 
     // TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType> m_transitions;
