@@ -35,11 +35,6 @@ runs:
     - name: Run unit tests
       shell: bash
       run: |
-        if [[ "${{ inputs.package }}" == "surrogatemodel" ]]; then
-          cd pycode/memilio-simulation
-          pip install .
-          cd ../..
-        fi
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
           python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest

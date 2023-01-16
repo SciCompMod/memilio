@@ -111,7 +111,7 @@ jobs:
           package: surrogatemodel
 
   test-py-surrogatemodel:
-    needs: build-py-surrogatemodel
+    needs: build-py-surrogatemodel, build-py-simulation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
