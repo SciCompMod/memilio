@@ -469,7 +469,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-    const auto& read_function = mio::osecir::read_population_data_county<mio::osecir::Model>;
+    const auto& read_function = mio::osecir::read_input_data_county<mio::osecir::Model>;
     const auto& create_graph_function =
         mio::create_graph<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, ContactLocation,
                           mio::osecir::InfectionState, mio::osecir::Model, mio::osecir::Parameters,

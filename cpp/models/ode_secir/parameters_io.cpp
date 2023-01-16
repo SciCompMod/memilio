@@ -60,12 +60,14 @@ namespace osecir
 
 namespace details
 {
-//county or state id of a data entry if available, 0 (for whole country) otherwise
+//district, county or state id of a data entry if available, 0 (for whole country) otherwise
 //used to compare data entries to integer ids in STL algorithms
 template <class EpiDataEntry>
 int get_region_id(const EpiDataEntry& entry)
 {
-    return entry.county_id ? entry.county_id->get() : (entry.state_id ? entry.state_id->get() : 0);
+    return entry.county_id
+               ? entry.county_id->get()
+               : (entry.state_id ? entry.state_id->get() : (entry.district_id ? entry.district_id->get() : 0));
 }
 //overload for integers, so the comparison of data entry to integers is symmetric (required by e.g. equal_range)
 int get_region_id(int id)

@@ -241,6 +241,66 @@ TEST(TestEpiDataIo, get_node_ids)
     EXPECT_THAT(read_ids_county.value(), testing::ElementsAreArray(true_ids_county));
 }
 
+TEST(TestEpiDataIo, read_divi_data)
+{
+    std::string path = "C:/Users/bick_ju/Documents/repos/memilio-525/data/pydata/Dummy/dummy_county_divi.json";
+
+    auto divi_data = mio::read_divi_data(path).value();
+
+    ASSERT_EQ(divi_data.size(), 4);
+
+    ASSERT_EQ(divi_data[0].district_id, mio::regions::de::DistrictId(1234));
+    ASSERT_EQ(divi_data[0].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(divi_data[0].num_icu, 0.5437);
+
+    ASSERT_EQ(divi_data[1].district_id, mio::regions::de::DistrictId(1234));
+    ASSERT_EQ(divi_data[1].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(divi_data[1].num_icu, 0.64532);
+
+    ASSERT_EQ(divi_data[2].district_id, mio::regions::de::DistrictId(1235));
+    ASSERT_EQ(divi_data[2].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(divi_data[2].num_icu, 0.3574);
+
+    ASSERT_EQ(divi_data[3].district_id, mio::regions::de::DistrictId(1235));
+    ASSERT_EQ(divi_data[3].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(divi_data[3].num_icu, 0.35437);
+}
+
+TEST(TestEpiDataIo, read_confirmed_cases_data)
+{
+    std::string path = "C:/Users/bick_ju/Documents/repos/memilio-525/data/pydata/Dummy/dummy_cases_all_age.json";
+    auto case_data   = mio::read_confirmed_cases_data(path).value();
+
+    ASSERT_EQ(case_data.size(), 3);
+
+    ASSERT_EQ(case_data[0].age_group, mio::AgeGroup(0));
+    ASSERT_EQ(case_data[0].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(case_data[0].num_confirmed, 1);
+    ASSERT_EQ(case_data[0].num_deaths, 0);
+    ASSERT_EQ(case_data[0].num_recovered, 0);
+    ASSERT_EQ(case_data[0].district_id, mio::regions::de::DistrictId(1234));
+    ASSERT_EQ(case_data[0].county_id, boost::none);
+    ASSERT_EQ(case_data[0].state_id, boost::none);
+
+    ASSERT_EQ(case_data[1].age_group, mio::AgeGroup(2));
+    ASSERT_EQ(case_data[1].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(case_data[1].num_confirmed, 20);
+    ASSERT_EQ(case_data[1].num_deaths, 1);
+    ASSERT_EQ(case_data[1].num_recovered, 5);
+    ASSERT_EQ(case_data[1].district_id, mio::regions::de::DistrictId(1234));
+    ASSERT_EQ(case_data[1].county_id, boost::none);
+    ASSERT_EQ(case_data[1].state_id, boost::none);
+
+    ASSERT_EQ(case_data[2].age_group, mio::AgeGroup(5));
+    ASSERT_EQ(case_data[2].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(case_data[2].num_confirmed, 15);
+    ASSERT_EQ(case_data[2].num_deaths, 3);
+    ASSERT_EQ(case_data[2].num_recovered, 2);
+    ASSERT_EQ(case_data[2].district_id, mio::regions::de::DistrictId(1235));
+    ASSERT_EQ(case_data[2].county_id, boost::none);
+    ASSERT_EQ(case_data[2].state_id, boost::none);
+}
+
 TEST(TestEpiData, vaccination_data)
 {
     auto js                 = Json::Value(Json::arrayValue);
