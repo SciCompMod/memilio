@@ -51,17 +51,11 @@ int main()
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
 
     // Set working parameters.
-    model.parameters.set<mio::isecir::TransitionDistributions>(
-        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-    model.parameters.set<mio::isecir::TransitionProbabilities>(mio::isecir::TransitionProbabilities().get_default());
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1.0);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
 
-    // // Carry out simulation.
+    // Carry out simulation.
     model.simulate(tmax);
 
     model.print_transitions();
