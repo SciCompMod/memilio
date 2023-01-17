@@ -21,7 +21,7 @@ runs:
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
         /opt/python/cp310-cp310/bin/python setup.py bdist_wheel
-        if [[ -f "CMakeLists.txt" ]] && [${{ inputs.package }} != generation]; then 
+        if [[ -f "CMakeLists.txt" ]] && [ ${{ inputs.package }} -ne generation ]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done
         else
