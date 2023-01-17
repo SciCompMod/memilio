@@ -270,7 +270,7 @@ public:
     }
 
     /**
-     * Initialize the first TimePoint in subpopulation and set its values to 0. 
+     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
      * @param t The first TimePoint in subpopulation
     */
     void initialize_subpopulation(const TimePoint& t);
