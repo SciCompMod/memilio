@@ -102,7 +102,7 @@ public:
      * Warning: Use only during setup, may distort the simulation results!
      * @param[in,out] person Person to set infection state.
      * @param[in] inf_state Infection state to set.
-     * @param[in] t [default = 0] TimePoint of initialization of the infection.
+     * @param[in] t [Default: 0] TimePoint of initialization of the infection.
      */
     void set_infection_state(Person& person, InfectionState inf_state, TimePoint t = TimePoint(0));
 

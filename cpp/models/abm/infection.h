@@ -114,7 +114,7 @@ private:
      * @brief Determine viral load course and infection course.
      * @param[in] start_date Start date of the Infection.
      * @param[in] params Global infection parameters.
-     * @param[in] start_state [default = InfectionState::Exposed] Start state of the Infection.
+     * @param[in] start_state [Default: InfectionState::Exposed] Start state of the Infection.
      */
     void draw_infection_course(TimePoint start_date, const GlobalInfectionParameters& params,
                                InfectionState start_state = InfectionState::Exposed);

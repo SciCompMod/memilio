@@ -110,19 +110,26 @@ void Location::remove_person(const Person& p)
     }
 }
 
-int Cell::get_subpopulation(TimePoint t, InfectionState state) const
+uint32_t Location::get_population()
+{
+    return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](uint32_t sum, auto cell) {
+        return sum + cell.m_persons.size();
+    });
+}
+
+uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
         return p->get_infection_state(t) == state;
     });
 }
 
-int Location::get_subpopulation(TimePoint t, InfectionState state, const uint32_t cell_idx) const
+uint32_t Location::get_subpopulation_cell(TimePoint t, InfectionState state, const uint32_t cell_idx) const
 {
     return m_cells[cell_idx].get_subpopulation(t, state);
 }
 
-int Location::get_subpopulation(TimePoint t, InfectionState state) const
+uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     int n_persons = 0;
     for (auto&& cell : m_cells) {
@@ -131,26 +138,19 @@ int Location::get_subpopulation(TimePoint t, InfectionState state) const
     return n_persons;
 }
 
-int Location::get_number_infected_total(TimePoint t) const
-{
-    return get_subpopulation(t, InfectionState::Carrier) + get_subpopulation(t, InfectionState::Infected) +
-           get_subpopulation(t, InfectionState::Infected_Critical) +
-           get_subpopulation(t, InfectionState::Infected_Severe);
-}
-
 Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations(TimePoint t) const
 {
     std::array<int, size_t(InfectionState::Count)> subpopulations;
     for (uint32_t i = 0; i < subpopulations.size(); ++i) {
         for (auto&& cell : m_cells) {
-            subpopulations[i] = cell.get_subpopulation(t, static_cast<InfectionState>(i));
+            subpopulations[i] += cell.get_subpopulation(t, static_cast<InfectionState>(i));
         }
     }
     return Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size());
 }
 /*
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
-the location "Home", which is 66. We multiply this rate with the individul size of each cell to obtain a "space per person" factor.
+the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
 */
 double Cell::compute_space_per_person_relative()
 {
