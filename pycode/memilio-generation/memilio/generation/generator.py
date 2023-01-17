@@ -105,9 +105,9 @@ class Generator:
         @param intermed_repr Dataclass holding the model features.
         """
         # read templates
-        with open(os.path.join(intermed_repr.python_generation_module_path + "/memilio/generation/template/template_py.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path, "memilio/generation/template/template_py.txt")) as t:
             template_py = string.Template(t.read())
-        with open(os.path.join(intermed_repr.python_generation_module_path + "/memilio/generation/template/template_cpp.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path, "memilio/generation/template/template_cpp.txt")) as t:
             template_cpp = string.Template(t.read())
 
         # substitue identifiers
@@ -115,9 +115,9 @@ class Generator:
         output_cpp = template_cpp.safe_substitute(**self.substitutions_cpp)
 
         # print code into files
-        py_filename = "/" + intermed_repr.python_module_name + ".py"
-        cpp_filename = "/" + intermed_repr.python_module_name + ".cpp"
-        with open(os.path.join(intermed_repr.target_folder + py_filename), "w") as output:
+        py_filename = intermed_repr.python_module_name + ".py"
+        cpp_filename = intermed_repr.python_module_name + ".cpp"
+        with open(os.path.join(intermed_repr.target_folder, py_filename), "w") as output:
             output.write(output_py)
-        with open(os.path.join(intermed_repr.target_folder + cpp_filename), "w") as output:
+        with open(os.path.join(intermed_repr.target_folder, cpp_filename), "w") as output:
             output.write(output_cpp)

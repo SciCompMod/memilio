@@ -49,15 +49,20 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
 
 
 
-    
-    pymio::bind_ParameterSet<mio::oseir::Parameters>(m, "Parameters");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
-    
+    pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
+
+    py::class_<mio::oseir::Parameters, mio::oseir::ParametersBase>(m, "Parameters")
+	.def(py::init<mio::AgeGroup>())
+	.def("check_constraints", &mio::oseir::Parameters::check_constraints)
+	.def("apply_constraints", &mio::oseir::Parameters::apply_constraints);
+
     using Populations = mio::Populations<mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
-    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::TransmissionProbabilityOnContact, mio::oseir::TimeExposed, mio::oseir::TimeInfected, mio::oseir::ContactPatterns>>(m, "ModelBase");
-    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::ParameterSet<mio::oseir::TransmissionProbabilityOnContact, mio::oseir::TimeExposed, mio::oseir::TimeInfected, mio::oseir::ContactPatterns>>>(m, "Model")
+    pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters>(m, "ModelBase");
+    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters>>(m, "Model")
         .def(py::init<>());
 
 

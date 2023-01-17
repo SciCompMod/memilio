@@ -25,11 +25,12 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
 
-import pkg_resources
+import importlib_resources
 from clang.cindex import *
 from memilio.generation import IntermediateRepresentation, utility
 from typing_extensions import Self
@@ -64,8 +65,9 @@ class Scanner:
 
         # Create the cmd arguments
         file_args = []
-        dirname, _ = os.path.split(pkg_resources.resource_filename(
-            'memilio', '../_skbuild/linux-x86_64-3.8/cmake-build/compile_commands.json'))
+        pkg = importlib_resources.files("memilio")
+        with importlib_resources.as_file(pkg.joinpath("generation/compile_commands.json")) as path:
+            dirname, _ = os.path.split(path)
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:

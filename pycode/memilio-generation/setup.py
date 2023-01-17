@@ -27,10 +27,10 @@ setup(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
     install_requires=['libclang', 'clang',
-                      'dataclasses', 'dataclasses_json', ],
-    extras_require={},
+                      'dataclasses', 'dataclasses_json', 'importlib-resources>=1.1.0; python_version < \'3.9\''],
+    extras_require={'dev': []},
     long_description='',
     test_suite='memilio.generation_test',
     package_data={'memilio': [
-        '../_skbuild/*/cmake-build/compile_commands.json']},
+        'generation/compile_commands.json']},
 )

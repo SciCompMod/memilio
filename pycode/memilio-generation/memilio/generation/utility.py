@@ -42,7 +42,7 @@ def try_set_libclang_path(path: str) -> None:
         clang_cmd_result = subprocess.check_output(clang_cmd)
         path, dirname = os.path.split(clang_cmd_result)
         while ("llvm" not in str(dirname)):
-            path, dirname = os.path.split("")
+            path, dirname = os.path.split(path)
             if str(path) == '':
                 print("Error: define libclang path in config.json")
                 raise (Exception)
