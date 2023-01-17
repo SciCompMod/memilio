@@ -195,7 +195,7 @@ jobs:
 
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
-    needs: build-py-surrogatemodel, build-py-simulation
+    needs: [build-py-surrogatemodel, build-py-simulation]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
