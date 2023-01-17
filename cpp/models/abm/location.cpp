@@ -40,8 +40,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
-VirusVariant Location::interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
-                                const GlobalInfectionParameters& global_params) const
+void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
     auto age               = person.get_age();
     double mask_protection = person.get_mask_protective_factor(global_params);
@@ -61,11 +60,14 @@ VirusVariant Location::interact(const Person& person, const TimePoint& t, const 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
 
-        return random_transition(VirusVariant::Count, dt,
-                                 local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+        VirusVariant virus =
+            random_transition(VirusVariant::Count, dt,
+                              local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+        if (virus != VirusVariant::Count) {
+            person.add_new_infection(Infection(virus, global_params, t));
+        }
     }
     // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
-    return VirusVariant::Count;
 }
 
 void Location::begin_step(TimePoint t, TimeSpan dt)
@@ -75,7 +77,7 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
     for (auto& cell : m_cells) {
         cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup::Count}, 0.};
         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
-        for (auto&& p = cell.m_persons.begin(); p != cell.m_persons.end(); ++p) {
+        for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
                 auto inf   = p->get_infection();
                 auto virus = inf.get_virus_variant();
@@ -88,37 +90,39 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
             }
         }
         if (m_capacity_adapted_transmission_risk) {
-            cell.m_cached_exposure_rate_air.array() *= cell.compute_relative_cell_size();
+            cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
         }
     }
 }
 
-void Location::add_person(const Person& p, const uint32_t cell_idx)
+void Location::add_person(const Person& p, uint32_t cell_idx)
 {
-    m_cells[cell_idx].m_persons.push_back(p);
+    m_cells[cell_idx].m_persons.emplace_back(std::make_shared<Person>(p));
 }
 
 void Location::remove_person(const Person& p)
 {
     for (auto&& cell : m_cells) {
-        auto it = std::remove(cell.m_persons.begin(), cell.m_persons.end(), p);
+        auto it = std::remove_if(cell.m_persons.begin(), cell.m_persons.end(), [&](std::shared_ptr<Person> other) {
+            return *other == p;
+        });
         cell.m_persons.erase(it, cell.m_persons.end());
     }
 }
 
-int Cell::get_subpopulation(const TimePoint& t, const InfectionState& state) const
+int Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    return count_if(m_persons.begin(), m_persons.end(), [&](Person p) {
-        return p.get_infection_state(t) == state;
+    return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
+        return p->get_infection_state(t) == state;
     });
 }
 
-int Location::get_subpopulation(const TimePoint& t, const InfectionState& state, const uint32_t cell_idx) const
+int Location::get_subpopulation(TimePoint t, InfectionState state, const uint32_t cell_idx) const
 {
     return m_cells[cell_idx].get_subpopulation(t, state);
 }
 
-int Location::get_subpopulation(const TimePoint& t, const InfectionState& state) const
+int Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     int n_persons = 0;
     for (auto&& cell : m_cells) {
@@ -148,7 +152,7 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations(TimePoint t) cons
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
 the location "Home", which is 66. We multiply this rate with the individul size of each cell to obtain a "space per person" factor.
 */
-double Cell::compute_relative_cell_size()
+double Cell::compute_space_per_person_relative()
 {
     if (m_capacity.volume != 0) {
         return 66.0 / m_capacity.volume;

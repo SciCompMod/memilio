@@ -90,7 +90,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
     m_infection_states.erase(last, m_infection_states.end());
 }
 
-bool TestingCriteria::evaluate(const Person& p, const Location& l, const TimePoint& t) const
+bool TestingCriteria::evaluate(const Person& p, const Location& l, TimePoint t) const
 {
     return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p, t);
 }
@@ -111,7 +111,7 @@ bool TestingCriteria::is_requested_location_type(const Location& l) const
     return std::find(m_location_types.begin(), m_location_types.end(), l.get_type()) != m_location_types.end();
 }
 
-bool TestingCriteria::has_requested_infection_state(const Person& p, const TimePoint& t) const
+bool TestingCriteria::has_requested_infection_state(const Person& p, TimePoint t) const
 {
     if (m_infection_states.empty()) {
         return true; // no condition on infection state
@@ -160,12 +160,12 @@ bool TestingScheme::is_active() const
 {
     return m_is_active;
 }
-void TestingScheme::update_activity_status(const TimePoint t)
+void TestingScheme::update_activity_status(TimePoint t)
 {
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::run_scheme(Person& person, const Location& location, const TimePoint& t) const
+bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
         double random = UniformDistribution<double>::get_instance()();
@@ -199,14 +199,14 @@ void TestingStrategy::remove_testing_scheme(const TestingScheme& scheme)
     m_testing_schemes.erase(last, m_testing_schemes.end());
 }
 
-void TestingStrategy::update_activity_status(const TimePoint t)
+void TestingStrategy::update_activity_status(TimePoint t)
 {
     for (auto& ts : m_testing_schemes) {
         ts.update_activity_status(t);
     }
 }
 
-bool TestingStrategy::run_strategy(Person& person, const Location& location, const TimePoint& t) const
+bool TestingStrategy::run_strategy(Person& person, const Location& location, TimePoint t) const
 {
     // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
     if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {

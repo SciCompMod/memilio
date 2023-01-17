@@ -89,7 +89,7 @@ public:
      * @param p person to be checked
      * @param l location to be checked
      */
-    bool evaluate(const Person& p, const Location& l, const TimePoint& t) const;
+    bool evaluate(const Person& p, const Location& l, TimePoint t) const;
 
 private:
     /**
@@ -108,7 +108,7 @@ private:
      * check if a person has the required infection state to get tested
      * @param p person to be checked
      */
-    bool has_requested_infection_state(const Person& p, const TimePoint& t) const;
+    bool has_requested_infection_state(const Person& p, TimePoint t) const;
 
     std::vector<AgeGroup> m_ages;
     std::vector<LocationType> m_location_types;
@@ -159,13 +159,13 @@ public:
      * checks if the scheme is active at a given time and updates activity status
      * @param t time to be updated at
      */
-    void update_activity_status(const TimePoint t);
+    void update_activity_status(TimePoint t);
 
     /**
      * runs the testing scheme and tests a person if necessary
      * @return if the person is allowed to enter the location
      */
-    bool run_scheme(Person& person, const Location& location, const TimePoint& t) const;
+    bool run_scheme(Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingCriteria> m_testing_criteria;
@@ -203,13 +203,13 @@ public:
      * checks if the given time point t is within the interval of start and end date of each testing scheme and then changes the activity status for each testing scheme accordingly
      * @param t time point to check the activity status of each testing scheme
      */
-    void update_activity_status(const TimePoint t);
+    void update_activity_status(TimePoint t);
 
     /**
      * run the testing strategy and tests a person if necessary
      * @return if the person is allowed to enter the location
      */
-    bool run_strategy(Person& person, const Location& location, const TimePoint& t) const;
+    bool run_strategy(Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingScheme> m_testing_schemes;

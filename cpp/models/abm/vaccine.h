@@ -35,7 +35,7 @@ namespace abm
  */
 enum class Vaccine : std::uint32_t
 {
-    Moderna = 0,
+    Generic = 0,
 
     Count //last!!
 };

@@ -73,15 +73,16 @@ struct LocationId {
 };
 
 /**
- * The location can be split up into several cells. This allows a finer division of the people in public transport.
+ * @brief The location can be split up into several cells. This allows a finer division of the people in public transport.
+ * By default, each location consists of one cell.
  */
 struct Cell {
-    std::vector<Person> m_persons;
+    std::vector<std::shared_ptr<Person>> m_persons;
     CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<double, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    Cell(std::vector<Person> persons = {})
+    explicit Cell(std::vector<std::shared_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -93,9 +94,9 @@ struct Cell {
     * computes a relative cell size for the cell
     * @return the relative cell size for the cell
     */
-    double compute_relative_cell_size();
+    double compute_space_per_person_relative();
 
-    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+    int get_subpopulation(TimePoint t, InfectionState state) const;
 
 }; // namespace mio
 
@@ -134,17 +135,15 @@ public:
      * @param person the person that interacts with the population
      * @param dt length of the current simulation time step
      * @param global_params global infection parameters
-     * @return new infection of the person
      */
-    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
-                          const GlobalInfectionParameters& global_params) const;
+    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
      * @param person the person arriving
      * @param cell_idx index of the cell the person shall go to
     */
-    void add_person(const Person& person, const uint32_t cell_idx = 0);
+    void add_person(const Person& person, uint32_t cell_idx = 0);
 
     /** 
      * remove a person from the population of this location.
@@ -172,6 +171,9 @@ public:
         return m_parameters;
     }
 
+    /**
+     * @return All cells of the location.
+    */
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
@@ -203,14 +205,21 @@ public:
     }
 
     /**
-     * get the exposure rate of the location
+     * @brief Get the contact exposure rate in the cell.
+     * @param[in] cell_idx CellIndex of interest.
+     * @returns Air exposure rate in the cell.
      */
-    CustomIndexArray<double, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(const uint32_t cell_idx)
+    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx)
     {
         return m_cells[cell_idx].m_cached_exposure_rate_contacts;
     }
 
-    CustomIndexArray<double, VirusVariant> get_cached_exposure_rate_air(const uint32_t cell_idx)
+    /**
+     * @brief Get the air exposure rate in the cell.
+     * @param[in] cell_idx CellIndex of interest.
+     * @returns Contact exposure rate in the cell.
+     */
+    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx)
     {
         return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
@@ -257,12 +266,12 @@ public:
     /**
     * get subpopulation for one cell
     */
-    int get_subpopulation(const TimePoint& t, const InfectionState& state, const uint32_t cell_idx) const;
+    int get_subpopulation(TimePoint t, InfectionState state, uint32_t cell_idx) const;
 
     /**
     * get subpouplation for all cells
     */
-    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+    int get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
      * get all subpopulations for all cells

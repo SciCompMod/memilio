@@ -41,20 +41,10 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
     return {index, type};
 }
 
-Person& World::add_person(const LocationId id, const Infection& infection, const AgeGroup& age,
-                          const VaccinationState& vaccination_state)
+Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, age, infection, vaccination_state, person_id));
-    auto& person = *m_persons.back();
-    get_location(person).add_person(person);
-    return person;
-}
-
-Person& World::add_person(const LocationId id, const AgeGroup& age, const VaccinationState& vaccination_state)
-{
-    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, age, vaccination_state, person_id));
+    m_persons.push_back(std::make_shared<Person>(id, age, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -76,7 +66,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::set_infection_state(Person& person, const InfectionState inf_state, const TimePoint t)
+void World::set_infection_state(Person& person, InfectionState inf_state, TimePoint t)
 {
     person.add_new_infection(Infection(static_cast<VirusVariant>(0), m_infection_parameters, t, inf_state));
 }

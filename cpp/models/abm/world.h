@@ -45,10 +45,10 @@ namespace abm
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
+    using LocationIterator      = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::iterator>;
+    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::const_iterator>;
+    using PersonIterator        = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::iterator>;
+    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::const_iterator>;
 
     /**
      * create a World.
@@ -82,31 +82,29 @@ public:
     void evolve(TimePoint t, TimeSpan dt);
 
     /** 
-     * add a location to the world.
-     * @param type type of location to add
-     * @param num_cells number of cells that the location is divided into, default 1
-     * @return index and type of the newly created location
+     * Add a location to the world.
+     * @param type Type of location to add.
+     * @param num_cells [Default: 1] Number of cells that the location is divided into.
+     * @return Index and type of the newly created location.
      */
     LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
-    /** add a person to the world 
-     * @param id index and type of the initial location of the person
-     * @param state initial infection state of the person
-     * @return reference to the newly created person
+    /** 
+     * @brief Add a person to the world.
+     * @param id Index and type of the initial location of the person.
+     * @param age AgeGroup of the person.
+     * @return Reference to the newly created person.
      */
-    Person& add_person(const LocationId id, const Infection& infection, const AgeGroup& age = AgeGroup::Age15to34,
-                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
-
-    Person& add_person(const LocationId id, const AgeGroup& age = AgeGroup::Age15to34,
-                       const VaccinationState& vaccination_state = VaccinationState::Unvaccinated);
+    Person& add_person(const LocationId id, AgeGroup age);
 
     /**
      * Sets the current infection state of the person.
-     * Use only during setup, may distort the simulation results
-     * @param person
-     * @param inf_state
+     * Warning: Use only during setup, may distort the simulation results!
+     * @param[in,out] person Person to set infection state.
+     * @param[in] inf_state Infection state to set.
+     * @param[in] t [default = 0] TimePoint of initialization of the infection.
      */
-    void set_infection_state(Person& person, const InfectionState inf_state, const TimePoint t = TimePoint(0));
+    void set_infection_state(Person& person, InfectionState inf_state, TimePoint t = TimePoint(0));
 
     /**
      * get a range of all locations in the world.
@@ -192,7 +190,7 @@ private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::unique_ptr<Person>> m_persons;
+    std::vector<std::shared_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
