@@ -31,15 +31,6 @@ namespace isecir
 {
 class Model
 {
-    /* TODO: 
-    - in parameters muessen einige Parameter noch von tau abhaengig gemacht werden
-    - i oder i+1 in numerischer Integration
-    -ueberlegen ob eine allgemeine print -funktion fuer timeSeries Sinn ergibt. aktuell haben wir hier 2 mal und in SEIR nochmal dieselbe print-Funktion
-    - wir sollten eine "constraint check"- Funktion in Parameters schreiben, die zB prüft od Probability C->I =1- Prob C->R ist.
-    In der könnte man auch S->E auf 1 setzen oder die dummys generell auf 0/1/NaN. 
-    evtl ist dafür dieses Array in Infection state gar nicht so schlecht, weil man darüber sehen kann, wie viele flows von einem Kompartiment ausgehen. die summe der zugehoerigen Wahrscheinlichkeiten muss 1 sein
-    - Evtl. allgemeinen Integrator als non-standrd diff. scheme anstatt aktueller Approximation
-    */
     using Pa = ParametersBase;
 
 public:
@@ -158,8 +149,8 @@ private:
      *              related to a flow from the considered InfectionState to any other State (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      */
-    void get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                  int idx_TransitionDistribution1, int idx_TransitionDistribution2);
+    void compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
+                             int idx_TransitionDistribution1, int idx_TransitionDistribution2);
 
     /**
      * @brief Sets all values of remaining compartments ECIHU for the current last timestep in m_SECIR.

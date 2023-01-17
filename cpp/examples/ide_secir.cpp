@@ -49,12 +49,7 @@ int main()
 
     // Initialize model.
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
-
-    // Set working parameters.
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
+    
     // Carry out simulation.
     model.simulate(tmax);
 

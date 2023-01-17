@@ -121,7 +121,9 @@ struct ContactPatterns {
 
     static Type get_default()
     {
-        return Type(1, static_cast<Eigen::Index>((size_t)1));
+        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
+        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        return Type(contact_matrix);
     }
     static std::string name()
     {

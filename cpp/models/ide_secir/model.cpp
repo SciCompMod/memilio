@@ -71,7 +71,6 @@ void Model::update_forceofinfection()
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
-    // TODO: Parameter müssten zum teil noch abhängig von tau und t sein, das ist in parameters aber noch nicht
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
         m_forceofinfection +=
             parameters.get<TransmissionProbabilityOnContact>() *
@@ -118,7 +117,6 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
             (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(infection_age) -
              parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(infection_age - m_dt)) /
             m_dt * m_transitions[i + 1][idx_IncomingFlow];
-        // TODO: müssen überlegen ob i oder i+1 für Zeitindex in m_transitions?? siehe auch Formel -> Martin
     }
 
     m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
@@ -181,8 +179,8 @@ void Model::compute_recovered()
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedCriticalToRecovered)];
 }
 
-void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                                     int idx_TransitionDistribution1, int idx_TransitionDistribution2)
+void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
+                                int idx_TransitionDistribution1, int idx_TransitionDistribution2)
 {
     ScalarType sum = 0;
 
@@ -203,7 +201,6 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
                     parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Distribution(
                         (num_time_points - 1 - i) * m_dt)) *
                m_transitions[i + 1][idx_IncomingFlow];
-        // TODO: i oder i+1?? siehe auch Formel -> Martin
     }
 
     m_SECIR.get_last_value()[idx_InfectionState] = m_dt * sum;
@@ -212,29 +209,30 @@ void Model::get_size_of_compartments(Eigen::Index idx_InfectionState, Eigen::Ind
 void Model::compartments_current_timestep_ECIHU()
 {
     // E
-    get_size_of_compartments(Eigen::Index(InfectionState::Exposed),
-                             Eigen::Index(InfectionTransitions::SusceptibleToExposed),
-                             (int)InfectionTransitions::ExposedToInfectedNoSymptoms, 0);
+    compute_compartment(Eigen::Index(InfectionState::Exposed), Eigen::Index(InfectionTransitions::SusceptibleToExposed),
+                        (int)InfectionTransitions::ExposedToInfectedNoSymptoms,
+                        0); // this is a dummy index as there is no transition from E to R in our model,
+    // write any transition here as probability from E to R is 0
     // C
-    get_size_of_compartments(Eigen::Index(InfectionState::InfectedNoSymptoms),
-                             Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms),
-                             (int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
-                             (int)InfectionTransitions::InfectedNoSymptomsToRecovered);
+    compute_compartment(Eigen::Index(InfectionState::InfectedNoSymptoms),
+                        Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms),
+                        (int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
+                        (int)InfectionTransitions::InfectedNoSymptomsToRecovered);
     // I
-    get_size_of_compartments(Eigen::Index(InfectionState::InfectedSymptoms),
-                             Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms),
-                             (int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
-                             (int)InfectionTransitions::InfectedSymptomsToRecovered);
+    compute_compartment(Eigen::Index(InfectionState::InfectedSymptoms),
+                        Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms),
+                        (int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
+                        (int)InfectionTransitions::InfectedSymptomsToRecovered);
     // H
-    get_size_of_compartments(Eigen::Index(InfectionState::InfectedSevere),
-                             Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere),
-                             (int)InfectionTransitions::InfectedSevereToInfectedCritical,
-                             (int)InfectionTransitions::InfectedSevereToRecovered);
+    compute_compartment(Eigen::Index(InfectionState::InfectedSevere),
+                        Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere),
+                        (int)InfectionTransitions::InfectedSevereToInfectedCritical,
+                        (int)InfectionTransitions::InfectedSevereToRecovered);
     // U
-    get_size_of_compartments(Eigen::Index(InfectionState::InfectedCritical),
-                             Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical),
-                             (int)InfectionTransitions::InfectedCriticalToDead,
-                             (int)InfectionTransitions::InfectedCriticalToRecovered);
+    compute_compartment(Eigen::Index(InfectionState::InfectedCritical),
+                        Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical),
+                        (int)InfectionTransitions::InfectedCriticalToDead,
+                        (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
 void Model::simulate(int t_max)
@@ -284,8 +282,6 @@ void Model::simulate(int t_max)
     std::cout << "Finished simulation successfully.  \n";
 }
 
-/*TODO: maybe add a print function to Timeseries class instead of writing for each timeseries a new one
-Als Übergabeparameter könte man auch String Ueberschrift oder sowas machen, damit die Form gut lesbar bleibt.*/
 void Model::print_transitions() const
 {
     // print transitions after simulation
