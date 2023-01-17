@@ -17,13 +17,18 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
-    - name: Download Python Wheels
-      uses: actions/download-artifact@v2
+    - name: Download Python Wheels for surrogatemodel
+      uses: actions/download-artifact@v3
+      if:  inputs.package != 'surrogatemodel'
       with:
-        - name: python-wheels-${{ inputs.package }}
-        - if: ${{inputs.package == 'surrogatemodel'}}
-        - name: python-wheels-simulation
-        - path: pycode/wheelhouse
+        name: python-wheels-${{ inputs.package }}
+        path: pycode/wheelhouse
+    - name: Download Python Wheels for surrogatemodel
+      uses: actions/download-artifact@v3
+      if:  inputs.package == 'surrogatemodel'
+      with:
+        name: python-wheels-${{ inputs.package }}
+        path: pycode/wheelhouse
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
