@@ -20,14 +20,10 @@ runs:
     - name: Download Python Wheels
       uses: actions/download-artifact@v2
       with:
-        name: python-wheels-${{ inputs.package }}
-        path: pycode/wheelhouse
-    - ${{ if eq( inputs.package, 'surrogatemodel') }}:
-      - name: Download Python Wheels
-        uses: actions/download-artifact@v2
-        with:
-          name: python-wheels-simulation
-          path: pycode/wheelhouse
+        - name: python-wheels-${{ inputs.package }}
+        - if: ${{inputs.package == 'surrogatemodel'}}
+        - name: python-wheels-simulation
+        - path: pycode/wheelhouse
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
