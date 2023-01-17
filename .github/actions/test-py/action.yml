@@ -21,8 +21,8 @@ runs:
       uses: actions/download-artifact@v2
       with:
         - name: python-wheels-${{ inputs.package }}
-        {{ if inputs.package == "surrogatemodel" }}
-        - name: python-wheels-simulation
+        {{ if eq inputs.package "surrogatemodel" }}
+        - name: 'simulation'
         {{ end }}
         path: pycode/wheelhouse
     - name: Set up Python 3.8
