@@ -23,7 +23,7 @@ runs:
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Download Python Wheels for surrogatemodel
+    - name: Download Python Wheels
       uses: actions/download-artifact@v3
       if:  inputs.package == 'surrogatemodel'
       with:
