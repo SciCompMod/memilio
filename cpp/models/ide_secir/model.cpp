@@ -19,6 +19,7 @@
 */
 #include "ide_secir/model.h"
 #include "infection_state.h"
+#include "memilio/config.h"
 #include "memilio/utils/logging.h"
 #include <cstdio>
 #include <iostream>
@@ -28,7 +29,8 @@ namespace mio
 namespace isecir
 {
 
-Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, size_t Dead0, Pa Parameterset_init)
+Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
+             Pa Parameterset_init)
     : parameters{std::move(Parameterset_init)}
     , m_transitions{std::move(init)}
     , m_SECIR{TimeSeries<ScalarType>((double)InfectionState::Count)}
@@ -235,7 +237,7 @@ void Model::compartments_current_timestep_ECIHU()
                         (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
-void Model::simulate(int t_max)
+void Model::simulate(ScalarType t_max)
 {
     std::cout << "Starting simulation:  \n";
     // compute S(0) and phi(0) as initial values for discretization scheme

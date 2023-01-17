@@ -20,6 +20,7 @@
 #ifndef IDESECIR_INFECTIONSTATE_H
 #define IDESECIR_INFECTIONSTATE_H
 
+#include <cstddef>
 #include <array>
 namespace mio
 {

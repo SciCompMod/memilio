@@ -20,6 +20,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -29,10 +30,10 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    int tmax     = 10;
-    size_t N     = 10000;
-    size_t Dead0 = 12;
-    double dt    = 1;
+    ScalarType tmax  = 10;
+    ScalarType N     = 10000;
+    ScalarType Dead0 = 12;
+    ScalarType dt    = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
@@ -49,7 +50,7 @@ int main()
 
     // Initialize model.
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
-    
+
     // Carry out simulation.
     model.simulate(tmax);
 

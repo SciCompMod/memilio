@@ -23,6 +23,7 @@
 
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
+#include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio
@@ -48,7 +49,8 @@ public:
     * @param[in] Dead0 The total number of deaths at initial time 0.
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, size_t N_init, size_t Dead0, Pa Parameterset_init = Pa());
+    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
+          Pa Parameterset_init = Pa());
 
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -61,7 +63,7 @@ public:
     * @return The result of the simulation, stored in a TimeSeries with simulation time and 
     *       associated number of susceptibles.
     */
-    void simulate(int t_max);
+    void simulate(ScalarType t_max);
 
     // Used Parameters for the simulation.
     Pa parameters{};
@@ -172,7 +174,7 @@ private:
     // Timestep used for simulation.
     ScalarType m_dt{0};
     // Population of the considered region.
-    size_t m_N{0};
+    ScalarType m_N{0};
 };
 
 } // namespace isecir
