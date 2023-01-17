@@ -22,7 +22,7 @@ runs:
       with:
         - name: python-wheels-${{ inputs.package }}
         {{ if eq inputs.package "surrogatemodel" }}
-        - name: 'simulation'
+        - name: python-wheels-simulation
         {{ end }}
         path: pycode/wheelhouse
     - name: Set up Python 3.8
