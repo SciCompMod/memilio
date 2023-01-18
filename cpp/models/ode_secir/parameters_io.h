@@ -360,9 +360,9 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 template <class Model>
 IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::vector<int>& node_ids,
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                               const std::string& divi_data_path, const std::string& confirmed_cases_path,
-                               const std::string& population_data_path, const std::string& dir, int num_days = 0,
-                               bool export_time_series = false)
+                               const std::string& dir, const std::string& divi_data_path,
+                               const std::string& confirmed_cases_path, const std::string& population_data_path,
+                               int num_days = 0, bool export_time_series = false)
 {
     //TODO: adjust date?
     if (date > Date(2022, 12, 31)) {

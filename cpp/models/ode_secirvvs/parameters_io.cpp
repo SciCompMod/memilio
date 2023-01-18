@@ -413,7 +413,8 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
             return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(r)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(r));
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(r) ||
+                    vacc_data_entry.district_id && vacc_data_entry.district_id == regions::de::DistrictId(r));
         });
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
@@ -491,6 +492,12 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 }
             }
         }
+    }
+    for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
+        auto a = model[0].parameters.template get<DailyFirstVaccination>()[{(AgeGroup)0, SimulationDay(d)}];
+        auto b = model[0].parameters.template get<DailyFullVaccination>()[{(AgeGroup)0, SimulationDay(d)}];
+        std::cout << a;
+        std::cout << b;
     }
     return success();
 }

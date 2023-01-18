@@ -524,6 +524,7 @@ public:
     AgeGroup age_group;
     boost::optional<regions::de::StateId> state_id;
     boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
@@ -532,11 +533,12 @@ public:
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
+        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
         auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id                = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         return mio::apply(
             io,
-            [](auto nf, auto d, auto&& a_str, auto sid, auto cid) -> IOResult<VaccinationDataEntry> {
+            [](auto nf, auto d, auto&& a_str, auto sid, auto cid, auto did) -> IOResult<VaccinationDataEntry> {
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
                 auto a  = AgeGroup(0);
                 if (it != age_group_names.end()) {
@@ -545,9 +547,9 @@ public:
                 else {
                     return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
                 }
-                return success(VaccinationDataEntry{nf, d, a, sid, cid});
+                return success(VaccinationDataEntry{nf, d, a, sid, cid, did});
             },
-            num_vaccinations_completed, date, age_group_str, state_id, county_id);
+            num_vaccinations_completed, date, age_group_str, state_id, county_id, district_id);
     }
 };
 

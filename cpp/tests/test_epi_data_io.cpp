@@ -28,6 +28,8 @@
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
+#include "ode_secirvvs/model.h"
+#include "ode_secirvvs/parameters_io.h"
 #include "boost/optional/optional_io.hpp"
 #include <gmock/gmock-matchers.h>
 
@@ -299,6 +301,41 @@ TEST(TestEpiDataIo, read_confirmed_cases_data)
     ASSERT_EQ(case_data[2].district_id, mio::regions::de::DistrictId(1235));
     ASSERT_EQ(case_data[2].county_id, boost::none);
     ASSERT_EQ(case_data[2].state_id, boost::none);
+}
+
+TEST(TestEpiDataIO, read_vaccination_data)
+{
+    std::string path = "C:/Users/bick_ju/Documents/repos/memilio-525/data/pydata/Dummy/dummy_all_ageinf_vacc.json";
+
+    auto vacc_data = mio::read_vaccination_data(path).value();
+
+    ASSERT_EQ(vacc_data.size(), 2);
+
+    ASSERT_EQ(vacc_data[0].date, mio::Date(2022, 4, 12));
+    ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(0));
+    ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(vacc_data[0].district_id, mio::regions::de::DistrictId(1234));
+    ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 5.0);
+
+    ASSERT_EQ(vacc_data[1].date, mio::Date(2022, 4, 15));
+    ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(2));
+    ASSERT_EQ(vacc_data[1].county_id, boost::none);
+    ASSERT_EQ(vacc_data[1].district_id, mio::regions::de::DistrictId(1235));
+    ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 1.0);
+}
+
+TEST(TestEpiData, set_vaccination_data)
+{
+    std::string path = "C:/Users/bick_ju/Documents/repos/memilio-525/data/pydata/Dummy/vaccination_test.json";
+
+    std::vector<int> county_ids = {1001};
+    mio::osecirvvs::Model model(1);
+    model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
+    std::vector<mio::osecirvvs::Model> model_vector{model};
+
+    auto f = mio::osecirvvs::details::set_vaccination_data(model_vector, path, mio::Date(2022, 4, 15), county_ids, 10);
 }
 
 TEST(TestEpiData, vaccination_data)
