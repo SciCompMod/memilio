@@ -593,7 +593,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         temp_date = mio::Date(2021, 6, 6);
     }
     const auto start_date   = temp_date;
-    const auto num_days_sim = 20.0;
+    const auto num_days_sim = 90.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 500;
 
