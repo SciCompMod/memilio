@@ -74,10 +74,10 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
         .def(
             "run",

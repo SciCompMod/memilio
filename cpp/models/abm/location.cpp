@@ -42,17 +42,16 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
-    // Initialize the first time point and set the subpopulation values to 0. 
-    m_subpopulations.add_time_point();
+    m_subpopulations.add_time_point(0);
     m_subpopulations.get_last_value().setZero();
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
                                   const GlobalInfectionParameters& global_params) const
 {
-    auto infection_state   = person.get_infection_state();
-    auto vaccination_state = person.get_vaccination_state();
-    auto age               = person.get_age();
+    auto infection_state       = person.get_infection_state();
+    auto vaccination_state     = person.get_vaccination_state();
+    auto age                   = person.get_age();
     ScalarType mask_protection = person.get_protective_factor(global_params);
     switch (infection_state) {
     case InfectionState::Susceptible:
@@ -205,7 +204,7 @@ void Location::change_subpopulation(InfectionState s, int delta)
 
 int Location::get_subpopulation(InfectionState s) const
 {
-    return (int) m_subpopulations.get_last_value()[size_t(s)];
+    return (int)m_subpopulations.get_last_value()[size_t(s)];
 }
 
 /*
@@ -226,11 +225,18 @@ ScalarType Location::compute_relative_transmission_risk()
 
 void Location::add_subpopulations_timepoint(const TimePoint& t)
 {
-    // Get the previous time point index. 
-    // Since index starts from 0, we need to -1 from the current time point. 
+    // Get the previous time point index.
+    // Since index starts from 0, we need to -1 from the current time point.
     auto last_idx = m_subpopulations.get_num_time_points() - 1;
     m_subpopulations.add_time_point(t.days());
     m_subpopulations.get_last_value() = m_subpopulations.get_value(last_idx);
+}
+
+void Location::initialize_subpopulation(const TimePoint& t)
+{
+    // We make a copy of subpoulation to the new TimePoint t and delete the first TimePoint.
+    add_subpopulations_timepoint(t);
+    m_subpopulations.remove_time_point(0);
 }
 
 } // namespace abm

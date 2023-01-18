@@ -499,7 +499,7 @@ TEST(TestLocation, setCapacity)
     ASSERT_EQ(location.get_capacity().volume, 200);
 }
 
-TEST(TestLocation, storeCurrentSubpopulations)
+TEST(TestLocation, addSubpopulationsTimepoint)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
     auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14, {});
@@ -511,28 +511,44 @@ TEST(TestLocation, storeCurrentSubpopulations)
 
     auto t1 = mio::abm::TimePoint(0) + mio::abm::days(7);
     location.add_subpopulations_timepoint(t1);
-    auto v1 = location.get_population().get_value(0);
-    ASSERT_EQ(v1[mio::abm::InfectionState::Infected], 2); // Check whether the number of persons in infected state at the location is correct
+    auto v1 = location.get_population().get_value(1);
+    // Check whether the number of persons in infected state at the location is correct
+    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Infected)], 2);
 
     auto t2 = mio::abm::TimePoint(0) + mio::abm::days(14);
     person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
     location.changed_state(person1, mio::abm::InfectionState::Infected);
     location.add_subpopulations_timepoint(t2);
-    auto v2 = location.get_population().get_value(1);
-    ASSERT_EQ(v2[mio::abm::InfectionState::Infected], 1); // Check whether the number of persons in infected state at the location is correct
+    auto v2 = location.get_population().get_value(2);
+    // Check whether the number of persons in infected state at the location is correct
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Infected)], 1);
 
     auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
     person3.set_infection_state(mio::abm::InfectionState::Infected);
     location.changed_state(person3, mio::abm::InfectionState::Exposed);
     location.add_subpopulations_timepoint(t3);
-    auto v3 = location.get_population().get_value(2);
-    ASSERT_EQ(v3[mio::abm::InfectionState::Infected], 2); // Check whether the number of persons in infected state at the location is correct
+    auto v3 = location.get_population().get_value(3);
+    // Check whether the number of persons in infected state at the location is correct
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Infected)], 2);
 
     // Check total number of subpopulation is correct.
     ASSERT_EQ(location.get_population().get_num_time_points(), 4);
     for (auto&& v_iter : location.get_population()) {
         ASSERT_EQ(v_iter.sum(), 3);
     }
+    ASSERT_EQ(location.get_population().get_time(1), 7);
+    ASSERT_EQ(location.get_population().get_time(2), 14);
+    ASSERT_EQ(location.get_population().get_time(3), 24);
+}
+
+TEST(TestLocation, initializeSubpopulation)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    ASSERT_EQ(location.get_population().get_time(0), 0);
+
+    auto t = mio::abm::TimePoint(0) + mio::abm::days(7);
+    location.initialize_subpopulation(t);
+    ASSERT_EQ(location.get_population().get_time(0), 7);
 }
 
 TEST(TestLocation, setRequiredMask)
