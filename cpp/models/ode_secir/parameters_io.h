@@ -318,6 +318,8 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
  * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
  * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
+ * @param num_days Number of days to be simulated; required to extrapolate real data
+ * @param export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class Model>
 IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
@@ -342,7 +344,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
-                                                    scaling_factor_icu, num_days));
+                                                              scaling_factor_icu, num_days));
     }
     return success();
 }

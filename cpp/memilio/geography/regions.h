@@ -28,6 +28,7 @@
 
 #include "boost/filesystem.hpp"
 
+//is used to provide some paths as function arguments
 namespace fs = boost::filesystem;
 
 namespace mio

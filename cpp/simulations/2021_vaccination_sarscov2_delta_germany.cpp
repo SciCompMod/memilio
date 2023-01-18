@@ -532,6 +532,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 1.43 / 100000.;
     auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                     mio::osecirvvs::InfectionState::ExposedNaive,
                                     mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
@@ -554,9 +556,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
                           mio::osecirvvs::InfectionState, mio::osecirvvs::Model, mio::osecirvvs::Parameters,
                           decltype(read_function)>;
     BOOST_OUTCOME_TRY(create_graph_function(params_graph, params, start_date, end_date, data_dir, read_function,
-                                            scaling_factor_infected, 1.0, 1.43 / 100000., migrating_compartments,
-                                            contact_locations.size(), mio::get_offset_in_days(end_date, start_date),
-                                            false));
+                                            scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
+                                            migrating_compartments, contact_locations.size(),
+                                            mio::get_offset_in_days(end_date, start_date), false));
 
     return mio::success(params_graph);
 }
