@@ -52,7 +52,7 @@ public:
 
     /**
      * @brief Gets the viral load of the infection at a given TimePoint.
-     * @param[in] params TimePoint of querry.
+     * @param[in] t TimePoint of querry.
      */
     ScalarType get_viral_load(TimePoint t) const;
 
@@ -69,38 +69,39 @@ class Infection
 
 public:
     /**
-     * @brief Create an infection for a single person.
-     * @param virus virus type of the infection
-     * @param start_date starting date of the infection
-     * @param start_state starting infection state of the person, default susceptible. Only for initialization.
+     * @brief Create an Infection for a single Person.
+     * @param virus Virus type of the Infection.
+     * @param start_date Starting date of the Infection.
+     * @param start_state [Default: InfectionState::Susceptible] Starting InfectionState of the Person. Only for initialization.
+     * @param detected [Default: false] If the Infection is detected.
      */
     explicit Infection(VirusVariant virus, const GlobalInfectionParameters& params, TimePoint start_date,
                        InfectionState start_state = InfectionState::Exposed, bool detected = false);
 
     /**
      * @brief Get infectivity at a given time.
-     * @param[in] t time point of the querry
-     * @return infectivity at given time point.
+     * @param[in] t TimePoint of the querry.
+     * @return Infectivity at given time point.
      * Computed depending on current viral load and individual invlogit function of each person
      * corresponding to https://www.science.org/doi/full/10.1126/science.abi5273
      */
     ScalarType get_infectivity(TimePoint t) const;
 
     /**
-     * @brief: Get virus type.
-     * @return Virus type of the infection.
+     * @brief: Get VirusVariant.
+     * @return VirusVariant of the Infection.
      */
     const VirusVariant& get_virus_variant() const;
 
     /**
-     * @brief Get the infection state of the infection.
+     * @brief Get the InfectionState of the Infection.
      * @param[in] t TimePoint of the querry.
      * @return InfectionState at the given TimePoint.
      */
     const InfectionState& get_infection_state(TimePoint t) const;
 
     /**
-     * @brief Set the infection to detected.
+     * @brief Set the Infection to detected.
     */
     void set_detected();
 
@@ -111,9 +112,9 @@ public:
 
 private:
     /**
-     * @brief Determine viral load course and infection course.
+     * @brief Determine ViralLoad course and Infection course.
      * @param[in] start_date Start date of the Infection.
-     * @param[in] params Global infection parameters.
+     * @param[in] params GlobalInfectionParameters.
      * @param[in] start_state [Default: InfectionState::Exposed] Start state of the Infection.
      */
     void draw_infection_course(TimePoint start_date, const GlobalInfectionParameters& params,
