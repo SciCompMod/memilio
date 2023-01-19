@@ -41,46 +41,6 @@ void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
 }
 
 /**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
- * each element i of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution for each element of array.
- * @param max minimum of distribution for each element of array.
- */
-template <size_t N>
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup, mio::abm::VaccinationState>& array,
-                                       const double (&min)[N], const double (&max)[N])
-{
-    assert(N == array.numel());
-    const std::vector<mio::abm::AgeGroup> v_age_groups{mio::abm::AgeGroup::Age0to4,   mio::abm::AgeGroup::Age5to14,
-                                                       mio::abm::AgeGroup::Age15to34, mio::abm::AgeGroup::Age35to59,
-                                                       mio::abm::AgeGroup::Age60to79, mio::abm::AgeGroup::Age80plus};
-    for (auto i : v_age_groups) {
-        assign_uniform_distribution(array[{i, mio::abm::VaccinationState::Unvaccinated}], min[size_t(i)],
-                                    max[size_t(i)]);
-    }
-}
-
-/**
- * Set a value and distribution of an array of UncertainValues.
- * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
- * @param array array of UncertainValues to set.
- * @param min minimum of distribution.
- * @param max minimum of distribution.
- */
-void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup, mio::abm::VaccinationState>& array, double min,
-                                       double max)
-{
-    const std::vector<mio::abm::AgeGroup> v_age_groups{mio::abm::AgeGroup::Age0to4,   mio::abm::AgeGroup::Age5to14,
-                                                       mio::abm::AgeGroup::Age15to34, mio::abm::AgeGroup::Age35to59,
-                                                       mio::abm::AgeGroup::Age60to79, mio::abm::AgeGroup::Age80plus};
-    for (auto i : v_age_groups) {
-        assign_uniform_distribution(array[{i, mio::abm::VaccinationState::Unvaccinated}], min, max);
-    }
-}
-
-/**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
@@ -89,7 +49,7 @@ mio::abm::InfectionState determine_infection_state(mio::UncertainValue exposed, 
                                                    mio::UncertainValue carrier, mio::UncertainValue recovered)
 {
     mio::UncertainValue susceptible = 1 - exposed - infected - carrier - recovered;
-    std::vector<double> weights     = {susceptible,  exposed,      carrier,       infected / 3,
+    std::vector<ScalarType> weights     = {susceptible,  exposed,      carrier,       infected / 3,
                                        infected / 3, infected / 3, recovered / 2, recovered / 2};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
@@ -357,7 +317,8 @@ void create_assign_locations(mio::abm::World& world)
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
-    auto probability = 1.0;
+    auto probability = mio::UncertainValue();
+    assign_uniform_distribution(probability, 1.0, 1.0);
     auto test_type   = mio::abm::AntigenTest();
 
     auto testing_scheme =
