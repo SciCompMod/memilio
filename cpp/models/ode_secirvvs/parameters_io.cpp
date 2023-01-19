@@ -441,7 +441,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
                 auto offset_first_date =
                     offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
-                if (max_full_date >= offset_first_date) {
+                if (max_date >= offset_first_date) {
                     // Option 1: considered offset_first_date is available in input data frame
                     if (date_df == offset_first_date) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] =
@@ -457,11 +457,11 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                     days_plus = get_offset_in_days(offset_first_date, max_date);
                     if (date_df == offset_date_by_days(max_date, -1)) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
-                            (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
                     }
                     else if (date_df == max_date) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
-                            days_plus * vacc_data_entry.num_vaccinations_completed;
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
 
@@ -471,7 +471,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
                 // N susceptible, partially vaccinated individuals to 'SusceptibleImprovedImmunity' state at day d; see secir_vaccinated.h
                 auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
-                if (max_full_date >= offset_full_date) {
+                if (max_date >= offset_full_date) {
                     // Option 1: considered offset_full_date is available in input data frame
                     if (date_df == offset_full_date) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
@@ -481,23 +481,17 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 else { // offset_full_date > max_full_date
                     // Option 2: considered offset_full_date is NOT available in input data frame
                     days_plus = get_offset_in_days(offset_full_date, max_date);
-                    if (date_df == offset_date_by_days(max_full_date, -1)) {
+                    if (date_df == offset_date_by_days(max_date, -1)) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
-                            (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
-                    }
-                    else if (date_df == max_full_date) {
-                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
                             days_plus * vacc_data_entry.num_vaccinations_completed;
+                    }
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
             }
         }
-    }
-    for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
-        auto a = model[0].parameters.template get<DailyFirstVaccination>()[{(AgeGroup)0, SimulationDay(d)}];
-        auto b = model[0].parameters.template get<DailyFullVaccination>()[{(AgeGroup)0, SimulationDay(d)}];
-        std::cout << a;
-        std::cout << b;
     }
     return success();
 }
