@@ -23,19 +23,20 @@
 """
 import os
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
-matplotlib.use('Agg')
+mpl.use('Agg')
 
 
 def plotList(
         x, y, legend, title='', xlabel='', ylabel='', linewidth=1,
-        xticks_idx='default', loc_legend='upper_left', fig_size=(10, 6), fig_name='customPlot', dpi=300, outercolor='white', innercolor='white'):
+        xticks_idx='default', loc_legend='upper_left', fig_size=(10, 6), fig_name='customPlot',
+        path_rel='figures/', dpi=300, outercolor='white', innercolor='white'):
     """! Plots time series data.
 
     @param x x values to plot.
@@ -86,6 +87,5 @@ def plotList(
 
     fig.subplots_adjust(bottom=0.2)  # adjust to show full xlabel information
 
-    if not os.path.exists('figures'):
-        os.makedirs('figures')
-    plt.savefig('figures/' + fig_name + '.png', bbox_inches='tight', dpi=dpi)
+    gd.check_dir(path_rel)
+    plt.savefig(path_rel + fig_name + '.png', bbox_inches='tight', dpi=dpi)

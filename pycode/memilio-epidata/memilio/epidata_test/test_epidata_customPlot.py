@@ -28,15 +28,15 @@ from memilio.epidata import customPlot
 
 class Test_customPlot(fake_filesystem_unittest.TestCase):
 
-    path = 'figures'
+    path = '/home/figures/'
 
     def setUp(self):
         self.setUpPyfakefs()
 
-    @patch('memilio.epidata.customPlot.plt.subplots')
-    def test_plot_list(self, mock_plt_subplots):
+    @patch('memilio.epidata.customPlot.plt')
+    def test_plot_list(self, mock_plt):
 
-        mock_plt_subplots.return_value = (MagicMock(), MagicMock())
+        mock_plt.subplots.return_value = (MagicMock(), MagicMock())
 
         xvals = [i for i in range(100)]
         yvals = [xvals for i in range(3)]
@@ -44,10 +44,13 @@ class Test_customPlot(fake_filesystem_unittest.TestCase):
         customPlot.plotList(xvals, yvals, ['yvals' + str(i)
                                            for i in range(len(yvals))], title='Test', xlabel='Date',
                             ylabel='Number of Test', xticks_idx=[0, 17, 47, 66, 99], linewidth=2,
-                            loc_legend='upper right', fig_size=(9, 6), fig_name='Test', dpi=50,
+                            loc_legend='upper right', fig_size=(9, 6), fig_name='Test', path_rel=self.path, dpi=50,
                             outercolor=[0.3, 0.5, 0.3], innercolor=[1, 1, 1])
 
-        self.assertEqual(len(os.listdir(self.path)), 1)
+        mock_plt.subplots.assert_called_once_with(
+            figsize=(9, 6), facecolor=[0.3, 0.5, 0.3])
+        mock_plt.savefig.assert_called_once_with(
+            self.path + 'Test' + '.png', bbox_inches='tight', dpi=50)
 
 
 if __name__ == '__main__':
