@@ -32,8 +32,9 @@ from warnings import catch_warnings
 
 import importlib_resources
 from clang.cindex import *
-from memilio.generation import IntermediateRepresentation, utility
 from typing_extensions import Self
+
+from memilio.generation import IntermediateRepresentation, utility
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig

@@ -24,12 +24,11 @@ import argparse
 import os
 
 import importlib_resources
+
 from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 def run_memilio_generation(print_ast=False):
-    here = os.path.dirname(os.path.abspath(__file__))
-
     # Define ScannerConfig and initialize Scanner
     pkg = importlib_resources.files("memilio")
     with importlib_resources.as_file(pkg.joinpath('tools/config.json')) as path:

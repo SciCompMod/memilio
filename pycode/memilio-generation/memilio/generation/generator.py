@@ -27,8 +27,9 @@ import os
 import string
 from typing import TYPE_CHECKING
 
-from memilio.generation.template import template_string as StringTemplates
 from typing_extensions import Self
+
+from memilio.generation.template import template_string as StringTemplates
 
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
