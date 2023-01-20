@@ -24,6 +24,7 @@ import subprocess
 import tempfile
 import unittest
 
+import importlib_resources
 from memilio.generation import Generator, Scanner, ScannerConfig
 
 
@@ -44,8 +45,10 @@ class TestOseirGeneration(unittest.TestCase):
     test_dir = tempfile.TemporaryDirectory(dir=project_path)
 
     # load config.json
-    with open(os.path.join(project_path, "pycode/memilio-generation/memilio/tools/config.json")) as file:
-        loaded_config_json = json.load(file)
+    pkg = importlib_resources.files("memilio")
+    with importlib_resources.as_file(pkg.joinpath("tools/config.json")) as path:
+        with open(path) as file:
+            loaded_config_json = json.load(file)
 
     def setUp(self):
         config_json = {
