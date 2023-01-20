@@ -26,6 +26,8 @@ from gc import get_count
 # https://stackoverflow.com/questions/69521550/importerror-the-read-file-function-requires-the-fiona-package-but-it-is-no
 import geopandas as gpd
 import h5py
+from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
 import matplotlib.colors as pclrs
 import numpy as np
 import pandas as pd
@@ -201,24 +203,6 @@ def read_data(
     else:
         raise gd.DataError("Data could not be read in.")
 
-    raise gd.DataError('No data frame can be returned.')
-    return pd.DataFrame()
-
-
-def get_plot_data(e):
-    if relative:
-        pop = pop_data.loc[pop_data['ID_County']
-                           == int(e.ARS), 'Population'].values[0]
-    local_out = []
-    for i in range(len(files.items())):
-        local_abs = df[i].loc[df[i]['ID_County'] == int(e.ARS), 'Count'].sum()
-        if not relative:
-            local_out.append(local_abs)
-        else:
-            local_out.append(local_abs / pop)
-
-    return local_out
-
 
 def scale_dataframe_relative(df, age_groups, path_population):
     """! Scales a population-related data frame relative to the size of the  
@@ -252,56 +236,59 @@ def scale_dataframe_relative(df, age_groups, path_population):
         df_population_agegroups.loc[len(df_population_agegroups.index), :] = [region_id] + list(
             mdfs.fit_age_group_intervals(df_population[df_population.iloc[:, 0] == region_id].iloc[:, 2:], age_groups))
 
-    df
+    def scale_row(elem):
+        population_local_sum = df_population_agegroups[
+            df_population_agegroups[df.columns[0]] == elem[0]].iloc[
+                :, 1:].sum(axis=1)
+        return elem['Count'] / population_local_sum.values[0]
 
-    return df_population_agegroups
+    df_population_agegroups.loc[:,age_groups].sum(axis=1)
+
+    df['Count (rel)'] = df.apply(scale_row, axis=1)
+
+    return df
 
 
 def plot(
     data: pd.DataFrame,
-    xlabel: str,
-    ylabel: str
+    scale_colors: np.array([0,1]),
+    legend: list=[], 
+    title: str='',
+    xlabel: str='',
+    ylabel: str='',
+    fig_size: tuple=(10,6), 
+    fig_name: str='customPlot',
+    dpi: int=300,
+    outercolor='white',
+    innercolor='white'
 ):
+    region_classifier = data.columns[0]
+
+    data_columns = data.columns[1:]
     # Read and filter map data
-    if data.iloc[:, 0].isin(geoger.get_county_ids()).all():
+    if data[region_classifier].isin(geoger.get_county_ids()).all():
         try:
             map_data = gpd.read_file(os.path.join(
                 os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
+            if '16056' in map_data.ARS.values:
+                map_data = merge_eisenach(map_data)
+            # remove information for plot
+            map_data = map_data[['ARS','GEN','NUTS', 'geometry']]
+            # use string values as in shape data file
+            data[region_classifier] = data[region_classifier].astype('str').str.zfill(5)
         except FileNotFoundError:
             print_manual_download('Georeferenzierung: UTM32s, Format: shape (ZIP, 5 MB)',
                                   'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-2-500-000-stand-31-12-vg2500-12-31.html')
     else:
         gd.raiseDataError('Provide shape files regions to be plotted.')
 
-    map_data = merge_eisenach(map_data)
+    # remove regions that are not input data table
+    map_data = map_data[map_data.ARS.isin(data[region_classifier])]
 
-    map_filter = pd.Series(
-        [False for i in range(len(map_data))], index=map_data.index)
-    if 'ID_State' in filters.keys() and filters['ID_State'] != None:
-        for state in filters['ID_State']:
-            map_filter = map_filter | (
-                map_data.ARS.str.startswith(f'{state:02}'))
-    map_data = map_data[map_filter]
-
-    def get_plot_data(e):
-        if relative:
-            pop = pop_data.loc[pop_data['ID_County']
-                               == int(e.ARS), 'Population'].values[0]
-        local_out = []
-        for i in range(len(files.items())):
-            local_abs = df[i].loc[df[i]['ID_County']
-                                  == int(e.ARS), 'Count'].sum()
-            if not relative:
-                local_out.append(local_abs)
-            else:
-                local_out.append(local_abs / pop)
-
-        return local_out
-    map_data[list(files.keys())] = map_data.apply(
-        get_plot_data, axis=1, result_type='expand')
+    map_data[data_columns] = data.loc[:,data_columns]
 
     # calc min and max and map to non-uniform scale
-    map_data_columns = map_data[list(files.keys())]
+    map_data_columns = map_data[data.columns[1:]]
     min_value = min(map_data_columns.min().values)
     max_value = max(map_data_columns.max().values)
     s = 0.7
@@ -351,43 +338,35 @@ def plot(
         y = normalize_lin(y, (-np.pi/2, np.pi/2), (min_value, max_value))
         return y
 
+    # Save interactive html files.
+    def save_interactive(col, filename):
+        map_data.explore(col, legend=True, vmin=min_value,
+                         vmax=max_value).save(filename)
+
+    for i in range(len(data_columns)):
+        save_interactive(data[data_columns[i]], str(legend[i].replace(' ', '_')) + '.html')
+
+    
+    
     color_norm = pclrs.FuncNorm((np.vectorize(normalize_sine), np.vectorize(
         normalize_sine_inv)), vmin=min_value, vmax=max_value)
 
-    # file name extensions for filters
-    part_filename_age = 'allages'
-    if not filter_agegroup is None:
-        part_filename_age = f'age{filter_agegroup}'
-    part_filename_state = 'allstates'
-    if not filter_state is None:
-        part_filename_state = f'state{filter_state}'
-    part_filename_vacc = f'vacc{filter_vacc_state}'
-    part_filename_date = date.strftime('%Y%m%d')
-    part_filename = f'{part_filename_date}_{part_filename_vacc}_{part_filename_age}_{part_filename_state}'
-
-    # interactive html files
-    def save_interactive(col, filename):
-        map_data.explore(col, legend=True, vmin=min_value,
-                         vmax=max_value).save(filename)  # TODO: norm
-
-    save_interactive('VaccRateRKI', f'vaccrate_{part_filename}_rki.html')
-    save_interactive('VaccRateNew', f'vaccrate_{part_filename}_new.html')
-
-    from matplotlib.gridspec import GridSpec
     fig = plt.figure(constrained_layout=True)
     gs = GridSpec(3, 3, figure=fig, wspace=0.1, width_ratios=[
-                  0.05, 1, 1], height_ratios=[0.15, 1, 0.15])
-    cax = fig.add_subplot(gs[1, 0])
-    ax1 = fig.add_subplot(gs[:, 1])
-    ax2 = fig.add_subplot(gs[:, 2])
-    map_data.plot('VaccRateRKI', ax=ax1, cax=cax, legend=True,
-                  vmin=min_value, vmax=max_value, norm=color_norm)
-    ax1.set_axis_off()
-    map_data.plot('VaccRateNew', ax=ax2, legend=False,
-                  vmin=min_value, vmax=max_value, norm=color_norm)
-    ax2.set_axis_off()
+                0.05, 1, 1], height_ratios=[0.15, 1, 0.15])   
 
-    plt.savefig('vaccrate_' + part_filename + "_compare.svg")
+    for i in range(len(data_columns)):
+        cax = fig.add_subplot(gs[1, 0])
+        ax1 = fig.add_subplot(gs[:, 1])
+        ax2 = fig.add_subplot(gs[:, 2])
+        map_data.plot('VaccRateRKI', ax=ax1, cax=cax, legend=True,
+                    vmin=min_value, vmax=max_value, norm=color_norm)
+        ax1.set_axis_off()
+        map_data.plot('VaccRateNew', ax=ax2, legend=False,
+                    vmin=min_value, vmax=max_value, norm=color_norm)
+        ax2.set_axis_off()
+
+    plt.savefig(title + '_compare.svg')
 
     # plt.show()
 
@@ -437,7 +416,14 @@ if __name__ == '__main__':
         if i == 0:
             dfs_all = pd.DataFrame(df.iloc[:, 0])
 
-        dfs_all['Count ' + str(i)] = df['Count']
+        dfs_all[df.columns[-1]  + ' ' + str(i)] = df[df.columns[-1]]
+        i += 1
+
+    min_val = dfs_all[dfs_all.columns[1:]].min().min()
+    max_val = dfs_all[dfs_all.columns[1:]].max().max()
+
+    plot(dfs_all, scale_colors=np.array([min_val, max_val]), legend=['a','b'], title='', xlabel='XXXXXX', ylabel='YYYYYYY',  
+         fig_size=(10,6), fig_name='customPlot', dpi=300, outercolor='white', innercolor='white')
 
     x = 15
     # for vacc in ['Vacc_partially']:
