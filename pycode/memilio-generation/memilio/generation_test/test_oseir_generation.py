@@ -59,7 +59,7 @@ class TestOseirGeneration(unittest.TestCase):
             "python_generation_module_path": self.loaded_config_json[0]['python_generation_module_path'],
             "target_folder": self.test_dir.name,
             "optional": {
-                "libclang_library_path": self.loaded_config_json[0]['optional']['libclang_library_path'],
+                "libclang_library_path": "",
                 "simulation_name": "",
                 "age_group": False,
                 "parameterset_wrapper": True
