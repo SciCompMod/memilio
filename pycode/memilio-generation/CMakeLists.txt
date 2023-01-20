@@ -18,4 +18,3 @@ FIND_LIBRARY(LIBCLANG_PATH
     clang HINTS ${CMAKE_CXX_COMPILER}/../../
 )
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/memilio/tools/config.json.txt ${CMAKE_CURRENT_SOURCE_DIR}/memilio/tools/config.json)
-configure_file(${memilio-python_BINARY_DIR}/compile_commands.json ${memilio-python-generation_SOURCE_DIR}/memilio/generation/compile_commands.json COPYONLY)  

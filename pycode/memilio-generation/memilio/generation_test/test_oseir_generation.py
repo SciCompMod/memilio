@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 
+import json
 import os
 import subprocess
 import tempfile
@@ -42,15 +43,20 @@ class TestOseirGeneration(unittest.TestCase):
     # Create a temporary directory
     test_dir = tempfile.TemporaryDirectory(dir=project_path)
 
+    # load config.json
+    with open(os.path.join(project_path, "pycode/memilio-generation/memilio/tools/config.json")) as file:
+        loaded_config_json = json.load(file)
+
     def setUp(self):
         config_json = {
-            "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
+            "source_file": self.loaded_config_json[0]['source_file'],
             "namespace": "mio::oseir::",
             "python_module_name": "test_oseir",
-            "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
+            "skbuild_path_to_database": self.loaded_config_json[0]['skbuild_path_to_database'],
+            "python_generation_module_path": self.loaded_config_json[0]['python_generation_module_path'],
             "target_folder": self.test_dir.name,
             "optional": {
-                "libclang_library_path": "",
+                "libclang_library_path": self.loaded_config_json[0]['optional']['libclang_library_path'],
                 "simulation_name": "",
                 "age_group": False,
                 "parameterset_wrapper": True

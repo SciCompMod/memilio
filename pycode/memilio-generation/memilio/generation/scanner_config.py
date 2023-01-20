@@ -40,6 +40,7 @@ class ScannerConfig:
         namespace: C++ namespace of the model class
         python_module_name: Individual name for binded python module
         python_generation_module_path: Path to the setup.py of the generation module
+        skbuild_path_to_database: Path to compile_commands.json
         target_folder: Target folder for generated files
         optional: List with optional arguments
             libclang_library_path: Path to the local libclang library, if empty string path gets obtained with terminal command
@@ -51,6 +52,7 @@ class ScannerConfig:
     namespace: str
     python_module_name: str
     python_generation_module_path: str
+    skbuild_path_to_database: str
     target_folder: str
     optional: dict = field(default_factory=dict)
     model_class: str = field(init=False)
