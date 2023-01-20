@@ -47,6 +47,7 @@ namespace abm
 
 /**
  * @brief A HouseholdMember represented by a weighted age distribution.
+ * For every AgeGroup there is a weight which is used to calculate the age of the Person living in this Household.
  */
 class HouseholdMember
 {
@@ -61,7 +62,7 @@ public:
 
     /**
      * @brief Sets the weight of an AgeGroup.
-     * @todo detailed description 
+     * The weights correspond to the probability that a Person has the corresponding age.
      * @param[in] age_group The AgeGroup.
      * @param[in] weight The weight of the AgeGroup.
      */
@@ -72,7 +73,7 @@ public:
 
     /**
      * @brief Returns the array with the weight of each AgeGroup.
-     * @returns A CustomIndexArray with the integer weights of the AgeGroups.
+     * @returns A CustomIndexArray with the integer weights of the AgeGroup%s.
      */
     const CustomIndexArray<int, AgeGroup>& get_age_weights() const
     {
@@ -80,11 +81,11 @@ public:
     }
 
 private:
-    CustomIndexArray<int, AgeGroup> m_age_weights;
+    CustomIndexArray<int, AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
 };
 
 /**
- * @brief A Household represented by a vector with HouseholdMembers.
+ * @brief A Household represented by a vector with HouseholdMember%s.
  * The Household may contain multiple members of the same type.
  */
 class Household
@@ -101,9 +102,8 @@ public:
     }
 
     /**
-     * @brief Returns the number of members, i.e.\ Persons in the Household.
+     * @brief Returns the number of members, i.e.\ Person%s in the Household.
      * @return Integer of number of members.
-     * @todo rework, members are not HouseholdMembers in this context right?
      */
     int get_total_number_of_members() const
     {
@@ -111,9 +111,8 @@ public:
     }
 
     /**
-     * @brief Set the space per member that is used to compute the LocationCapacity of the Household.
-     * @param[in] space_per_member space per member in cubic meters.
-     * @todo rework, members are not HouseholdMembers in this context
+     * @brief Set the space per member for the computation of the LocationCapacity of the Household.
+     * @param[in] space_per_member Space per member in cubic meters.
      */
     void set_space_per_member(int space_per_member)
     {
@@ -123,7 +122,6 @@ public:
     /**
      * @brief Get the space per member of the Household.
      * @return Integer of space per member in cubic meters.
-     * @todo rework, members are not HouseholdMembers in this context
      */
     int get_space_per_member() const
     {
@@ -131,8 +129,8 @@ public:
     }
 
     /**
-     * @brief Returns the HouseholdMembers of the Household.
-     * @return List of HouseholdMembers of the Household.
+     * @brief Returns the HouseholdMember%s of the Household.
+     * @return List of HouseholdMember%s of the Household.
      */
     const std::vector<std::tuple<HouseholdMember, int>>& get_members() const
     {
@@ -140,23 +138,23 @@ public:
     }
 
     /**
-     * @brief Adds a number of the same Householdmembers to a Household.
+     * @brief Adds a number of the same HouseholdMember%s to a Household.
      * @param[in] household_member A HouseholdMember.
      * @param[in] number_of_members The amount of members to be added.
      */
     void add_members(HouseholdMember household_member, int number_of_members);
 
 private:
-    int m_number_of_members;
-    int m_space_per_member; ///<space per person in cubic meters
-    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list;
+    int m_number_of_members; ///< Total number of Person%s in the Household.
+    int m_space_per_member; ///< Space per Person in cubic meters (constant maximal capacity over time).
+    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list; /**< HouseholdMember%s of the Household and 
+    the respective number of Person%s*/
 };
 
 /**
- * @brief A HouseholdGroup represented by different Households.
- * The group may contain multiple Households of the same type.
+ * @brief A HouseholdGroup represented by different Household%s.
+ * The group may contain multiple Household%s of the same type.
  */
-
 class HouseholdGroup
 {
 public:
@@ -170,8 +168,8 @@ public:
     }
 
     /**
-     * @brief Returns the number of Households in the HouseholdGroup.
-     * @return Integer of number of Households.
+     * @brief Returns the number of Household%s in the HouseholdGroup.
+     * @return Integer of number of Household%s.
      */
     int get_total_number_of_households() const
     {
@@ -179,8 +177,8 @@ public:
     }
 
     /**
-     * @brief Returns the Households of the HouseholdGroup.
-     * @return a vector of tuples that contains the Houshold and the amount of times that Household is in the group.
+     * @brief Returns the Household%s of the HouseholdGroup.
+     * @return A vector of tuples that contains the Houshold and the amount of times that Household is in the group.
      */
     const std::vector<std::tuple<Household, int>>& get_households() const
     {
@@ -188,26 +186,26 @@ public:
     }
 
     /**
-     * @brief Adds a number of Households of the same kind, e.g.\ same members, to a HouseholdGroup.
+     * @brief Adds a number of Household%s of the same kind, e.g.\ same members, to a HouseholdGroup.
      * @param[in] household A Household.
      * @param[in] number_of_households The amount of times that Household is in the group.
      */
     void add_households(Household household, int number_of_households);
 
 private:
-    int m_number_of_households;
+    int m_number_of_households; ///< Number of Household%s in this group.
     std::vector<std::tuple<Household, int>> m_household_list;
 };
 
 /**
  * @brief Adds a specific Household to the World.
- * @param world The World to which the Household has to be added.
- * @param household The Household to add to World.
+ * @param[out] world The World to which the Household has to be added.
+ * @param[in] household The Household to add to World.
  */
 void add_household_to_world(World& world, const Household& household);
 
 /**
- * @brief Adds Households from a HouseholdGroup to the World.
+ * @brief Adds Household%s from a HouseholdGroup to the World.
  * @param[out] world The World to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */

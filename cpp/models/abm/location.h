@@ -37,9 +37,9 @@ namespace abm
 class Person;
 
 /**
- * LocationCapacity describes the size of a location. 
- * It consists of a volume and a capacity in persons which is an upper bound for the number
- * of people that can be at the location at the same time.
+ * @brief LocationCapacity describes the size of a Location. 
+ * It consists of a volume and a capacity in Person%s which is an upper bound for the number
+ * of Person%s that can be at the Location at the same time.
  */
 struct LocationCapacity {
     LocationCapacity()
@@ -47,17 +47,18 @@ struct LocationCapacity {
         , persons(std::numeric_limits<int>::max())
     {
     }
-    int volume;
-    int persons;
+    int volume; ///< Capacity in volume.
+    int persons; ///< Capactiy in Person%s.
 };
 
 /**
- * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
- * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
+ * @brief LocationId identifies a Location uniquely.
+ * It consists of the LocationType of the Location and an Index. The index corresponds to the index into the structure
+ * m_locations from World, where all Location%s are saved.
  */
 struct LocationId {
-    uint32_t index;
-    LocationType type;
+    uint32_t index; ///< Unique index of the Location.
+    LocationType type; ///< Type of the Location.
 
     bool operator==(const LocationId& rhs) const
     {
@@ -71,13 +72,15 @@ struct LocationId {
 };
 
 /**
- * The location can be split up into several cells. This allows a finer division of the people in public transport.
+ * @brief A finer division of the Location.
+ * The Location can be split up into several Cell%s. This allows a finer division of the people at the Location.
  */
 struct Cell {
-    uint32_t num_people;
-    uint32_t num_carriers;
-    uint32_t num_infected;
-    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate;
+    uint32_t num_people; ///< Number of Person%s in the Cell.
+    uint32_t num_carriers; ///< Number of pre- and asymptomatic Person%s in the Cell.
+    uint32_t num_infected; ///< Number of symptomatic Person%s in the Cell.
+    /** @todo describe exposure rate*/
+    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate; ///<
 
     Cell()
         : num_people(0)
@@ -99,21 +102,22 @@ struct Cell {
 }; // namespace mio
 
 /**
- * all locations in the simulated world where persons gather.
+ * All Location%s in the simulated World where Person%s gather.
  */
 class Location
 {
 public:
     /**
-     * construct a Location of a certain type.
-     * @param type the type of the location
-     * @param index the index of the location
-     * @param num_cells the number of cells in which the location is divided
+     * @brief Construct a Location of a certain type.
+     * @param[in] type The type of the Location.
+     * @param[in] index The index of the Location.
+     * @param[in] num_cells The number of Cell%s in which the Location is divided.
      */
     Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
 
     /**
-     * get the type of this location.
+     * @brief Get the type of this Location.
+     * @return The type of this Location.
      */
     LocationType get_type() const
     {
@@ -121,7 +125,8 @@ public:
     }
 
     /**
-     *get the index of this location.
+     * @brief Get the index of this Location.
+     * @return The index of this Location.
      */
     unsigned get_index() const
     {
@@ -129,55 +134,56 @@ public:
     }
 
     /** 
-     * a person interacts with the population at this location, may change infection state.
-     * @param person the person that interacts with the population
-     * @param dt length of the current simulation time step
-     * @param global_params global infection parameters
-     * @return new infection state of the person
+     * @brief A Person interacts with the population at this Location which may change the #InfectionState.
+     * @param[in] person The Person that interacts with the population.
+     * @param[in] dt Length of the current Simulation time step.
+     * @param[in] global_params Infection parameters that are the same everywhere in the World.
+     * @return New #InfectionState of the Person.
      */
     InfectionState interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
-     * add a person to the population at this location.
-     * @param person the person arriving
+     * @brief Add a Person to the population at this Location.
+     * @param[in] person The Person arriving.
     */
     void add_person(const Person& person);
 
     /** 
-     * remove a person from the population of this location.
-     * @param person the person leaving
+     * @brief Remove a Person from the population of this Location.
+     * @param[in] person The Person leaving.
      */
     void remove_person(const Person& person);
 
     /** 
-     * notification that one person in this location changed infection state.
-     * @param person the person that changed infection state
-     * @param old_state the previous infection state of the person
+     * @brief Notification that one Person in this Location changed the #InfectionState.
+     * @param[in] person The Person that changed the #InfectionState.
+     * @param[in] old_state The previous #InfectionState of the Person.
      */
     void changed_state(const Person& person, InfectionState old_infection_state);
 
     /** 
-     * prepare the location for the next simulation step.
-     * @param dt the duration of the simulation step
-     * @param global_params global infection parameters
+     * @brief Prepare the Location for the next Simulation step.
+     * @param[in] dt The duration of the Simulation step.
+     * @param[in] global_params Infection parameters that are the same everywhere in the World.
      */
     void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
 
     /** 
-     * number of persons at this location in one infection state.
-     * @return number of persons at this location that are in the specified infection state
+     * @brief Get the number of Person%s at this Location in one #InfectionState.
+     * @return The number of Person%s at this Location that are in the specified #InfectionState.
      */
     int get_subpopulation(InfectionState s) const;
 
     /** 
-     * number of persons at this location for all infection states.
-     * vector is indexed by InfectionState.
-     * @return number of persons in all infection states.
+     * @brief Get the number of Person%s at this Location for all #InfectionState%s.
+     * The vector is indexed by #InfectionState.
+     * @return The number of Person%s in all #InfectionState%s.
      * */
     Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
 
     /**
-     * @return parameters of the infection that are specific to this location
+     * @brief Get the Location specific infection parameters.
+     * @return parameters of the infection that are specific to this Location.
      */
     LocalInfectionParameters& get_infection_parameters()
     {
@@ -189,28 +195,36 @@ public:
         return m_parameters;
     }
 
+    /**
+     * @brief Get the Cell%s of this Location.
+     * @return A vector with the Cell%s.
+     */
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
     }
 
     /**
-     * get the type of mask that is demanded when entering the location
-     * @return type of the mask 
+     * @brief Get the type of Mask that is demanded when entering this Location.
+     * @return The type of the Mask.
      */
     MaskType get_required_mask() const
     {
         return m_required_mask;
     }
 
+    /**
+     * @brief Set the required type of Mask for entering this Location.
+     * @param[in] type The type of the Mask.
+     */
     void set_required_mask(MaskType type)
     {
         m_required_mask = type;
     }
 
     /**
-     * get the number of persons at the location
-     * @return number of persons
+     * @brief Get the number of Person%s at this Location.
+     * @return The number of Person%s.
      */
     int get_population()
     {
@@ -218,7 +232,8 @@ public:
     }
 
     /**
-     * get the exposure rate of the location
+     * @brief Get the exposure rate of the Location.
+     * @return The exposure rate for every #AgeGroup and #VaccinationState.
      */
     CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
@@ -226,10 +241,10 @@ public:
     }
 
     /**
-    * Set the capacity of the location in person and volume
-    * @param persons maximum number of people that can visit the location at the same time
-    * @param volume volume of the location in m^3
-    */
+     * @brief Set the capacity of the Location in Person and volume.
+     * @param[in] persons The maximum number of Person%s that can visit the Location at the same time.
+     * @param[in] volume The volume of the Location in m^3.
+     */
     void set_capacity(int persons, int volume)
     {
         m_capacity.persons = persons;
@@ -237,40 +252,55 @@ public:
     }
 
     /**
-    * @return the capacity of the location in person and volume
-    */
+     * @brief Get the capacity of the Location in Person and volume.
+     * @return The capacity in Person and volume.
+     */
     LocationCapacity get_capacity()
     {
         return m_capacity;
     }
 
     /**
-    * computes a relative transmission risk factor for the location
-    * @return the relative risk factor for the location
-    */
+     * @brief Computes a relative transmission risk factor for the Location.
+     * @return The relative risk factor for the Location.
+     */
     double compute_relative_transmission_risk();
 
     /**
-    * Set the capacity adapted transmission risk flag
-    * @param consider_capacity if true considers the capacity of the location for the computation of relative 
-    * transmission risk
-    */
+     * @brief Set the capacity adapted transmission risk flag.
+     * @param[in] consider_capacity If true considers the capacity of the location for the computation of relative 
+     * transmission risk.
+     */
     void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
+    /**
+     * @brief Get the information if NPIs are active at this Location.
+     * If true requires e.g. Mask%s when entering a Location.
+     * @return True if NPIs are active.
+     */
     bool get_npi_active() const
     {
         return m_npi_active;
     }
 
+    /**
+     * @brief Activate or deactivate NPIs at this Location.
+     * @param[in] new_status Status of NPIs.
+     */
     void set_npi_active(bool new_status)
     {
         m_npi_active = new_status;
     }
 
 private:
+    /**
+     * @brief Update the number of Person%s in an #InfectionState at this Location.
+     * @param[in] s The #InfectionState of which the number of Person%s has changed.
+     * @param[in] delta The change in number of Person%s.
+     */
     void change_subpopulation(InfectionState s, int delta);
 
 private:

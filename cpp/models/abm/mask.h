@@ -31,27 +31,33 @@ namespace abm
 class Mask
 {
 public:
+    /**
+     * @brief Construct a new Mask of a certain type.
+     * @param type The type of the Mask.
+     */
     Mask(MaskType type);
 
     /**
-    * get the type of the mask 
-    */
+     * @brief Get the type of this Mask.
+     * @return The type of this Mask. 
+     */
     MaskType get_type() const
     {
         return m_type;
     }
 
     /**
-    * get the time the mask was used
-    */
+     * @brief Get the length of time this Mask has been used.
+     * @return The TimeSpan this Mask has been used.
+     */
     const TimeSpan& get_time_used() const
     {
         return m_time_used;
     }
 
     /**
-    * @brief increase the time the mask was used by a timestep
-    * @param dt the length of the timestep
+    * @brief Increase the time this Mask was used by a timestep.
+    * @param dt The length of the timestep.
     */
     void increase_time_used(TimeSpan dt)
     {
@@ -59,8 +65,8 @@ public:
     }
 
     /**
-    * @brief change the type of the mask and reset the time it was used
-    * @param new_mask_type the type of the new mask
+    * @brief Change the type of the Mask and reset the time it was used.
+    * @param new_mask_type the type of the new Mask.
     */
     void change_mask(MaskType new_mask_type);
 
