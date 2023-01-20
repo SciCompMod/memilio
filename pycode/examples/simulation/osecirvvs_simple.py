@@ -1,0 +1,110 @@
+#############################################################################
+# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+#
+# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
+import argparse
+from datetime import date, datetime
+
+import numpy as np
+
+from memilio.simulation import Damping
+from memilio.simulation.test_secirvvs import AgeGroup, Index_InfectionState
+from memilio.simulation.test_secirvvs import InfectionState as State
+from memilio.simulation.test_secirvvs import Model, simulate
+
+
+def run_oseir_simulation():
+    """
+    Runs the c++ oseir model
+    """
+
+    # Define population of age groups
+    populations = [83000]
+
+    days = 100  # number of days to simulate
+    start_day = 1
+    start_month = 1
+    start_year = 2019
+    dt = 1
+    num_groups = 1
+
+    # Initialize Parameters
+    model = Model(1)
+
+    A0 = AgeGroup(0)
+
+    # Set parameters
+
+    # Compartment transition duration
+    model.parameters.IncubationTime[A0] = 5.2  # R_2^(-1)+R_3^(-1)
+    model.parameters.InfectiousTimeMild[A0] = 6.  # 4-14  (=R4^(-1))
+    # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+    model.parameters.SerialInterval[A0] = 4.2
+    model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
+    model.parameters.HomeToHospitalizedTime[A0] = 5.  # 2.5-7 (=R6^(-1))
+    model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
+    model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
+    model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
+
+    # Initial number of people in each compartment
+    model.populations[A0, State.ExposedNaive] = 100
+    model.populations[A0, State.CarrierNaive] = 50
+    model.populations[A0, State.InfectedNaive] = 50
+    model.populations[A0, State.HospitalizedNaive] = 20
+    model.populations[A0, State.ICUNaive] = 10
+    model.populations[A0, State.Recovered] = 10
+    model.populations[A0, State.Dead] = 0
+    model.populations.set_difference_from_total(
+        (A0, State.SusceptibleNaive), populations[0])
+
+    # Compartment transition propabilities
+    model.parameters.RelativeCarrierInfectability[A0] = 0.67
+    model.parameters.InfectionProbabilityFromContact[A0] = 1.0
+    model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+    model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
+    model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
+    model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
+    model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
+    # twice the value of RiskOfInfectionFromSymptomatic
+    model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5
+
+    model.parameters.StartDay = (
+        date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
+
+    # model.parameters.ContactPatterns.cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
+    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+        (num_groups, num_groups)) * 1
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
+        (num_groups, num_groups)) * 0
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+        Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
+
+    # Apply mathematical constraints to parameters
+    model.apply_constraints()
+
+    # Run Simulation
+    result = simulate(0, days, dt, model)
+    print(result.get_last_value())
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        'secir_simple',
+        description='Simple example demonstrating the setup and simulation of the OSEIR model.')
+    args = arg_parser.parse_args()
+    run_oseir_simulation()
