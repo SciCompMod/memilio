@@ -144,10 +144,11 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
 */
 template <class Model>
-IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, const std::string& data_dir,
-                                                   const std::string& results_dir, std::vector<int> const& region,
-                                                   Date date, const std::vector<double>& scaling_factor_inf,
-                                                   double scaling_factor_icu, int num_days)
+IOResult<void>
+export_input_data_county_timeseries(std::vector<Model>& model, const std::string& dir, std::vector<int> const& region,
+                                    Date date, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                    int num_days, const std::string& divi_data_path,
+                                    const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
     std::vector<std::vector<int>> t_Exposed{model.size()};
@@ -216,12 +217,11 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
         std::vector<double> num_icu(model.size(), 0.0);
 
         BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
-            path_join(data_dir, "cases_all_county_age_ma7.json"), region, date, num_Exposed, num_InfectedNoSymptoms,
-            num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms,
-            t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi_ma7.json"), region, date, num_icu));
-        BOOST_OUTCOME_TRY(num_population,
-                          details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
+            confirmed_cases_path, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
+            num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms,
+            t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::read_divi_data(divi_data_path, region, date, num_icu));
+        BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data_path, region));
 
         for (size_t i = 0; i < region.size(); i++) {
             for (size_t age = 0; age < ConfirmedCasesDataEntry::age_group_names.size(); age++) {
@@ -247,10 +247,10 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
         date = offset_date_by_days(date, 1);
     }
     auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(results_dir, "Results_rki.h5")));
+    BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(dir, "Results_rki.h5")));
 
     auto rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
-    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(results_dir, "Results_rki_sum.h5")));
+    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(dir, "Results_rki_sum.h5")));
 
     return success();
 }
@@ -342,8 +342,10 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days));
+        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
+            model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
+            path_join(dir, "county_divi_ma7.json"), path_join(dir, "cases_all_county_age_ma7.json"),
+            path_join(dir, "county_current_population.json")));
     }
     return success();
 }
@@ -381,8 +383,9 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, node_ids, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days));
+        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, node_ids, date, scaling_factor_inf,
+                                                              scaling_factor_icu, num_days, divi_data_path,
+                                                              confirmed_cases_path, population_data_path));
     }
     return success();
 }

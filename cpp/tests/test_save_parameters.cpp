@@ -622,7 +622,10 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
     auto extrapolate_result = mio::osecir::export_input_data_county_timeseries(
-        model, TEST_DATA_DIR, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1);
+        model, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1,
+        mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
+        mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
+        mio::path_join(TEST_DATA_DIR, "county_current_population.json"));
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
     auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));

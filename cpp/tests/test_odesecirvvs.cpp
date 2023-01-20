@@ -554,8 +554,12 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
 
     // Test exporting time series
     ASSERT_THAT(mio::osecirvvs::export_input_data_county_timeseries(
-                    std::vector<mio::osecirvvs::Model>{model}, TEST_DATA_DIR, tmp_results_dir, {0}, {2020, 12, 01},
-                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2, true),
+                    std::vector<mio::osecirvvs::Model>{model}, tmp_results_dir, {0}, {2020, 12, 01},
+                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
+                    mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
+                    mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
+                    mio::path_join(TEST_DATA_DIR, "all_county_ageinf_vacc_ma7.json")),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
