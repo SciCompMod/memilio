@@ -52,11 +52,11 @@ class TestOseirGeneration(unittest.TestCase):
 
     def setUp(self):
         config_json = {
-            "source_file": self.loaded_config_json[0]['source_file'],
+            "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
             "namespace": "mio::oseir::",
             "python_module_name": "test_oseir",
             "skbuild_path_to_database": self.loaded_config_json[0]['skbuild_path_to_database'],
-            "python_generation_module_path": self.loaded_config_json[0]['python_generation_module_path'],
+            "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
             "target_folder": self.test_dir.name,
             "optional": {
                 "libclang_library_path": "",
