@@ -20,23 +20,41 @@
 """
 Example for the ode seir model.
 """
+import argparse
 import os
 
+import importlib_resources
 from memilio.generation import Generator, Scanner, ScannerConfig
 
-here = os.path.dirname(os.path.abspath(__file__))
 
-# Define ScannerConfig and initialize Scanner
-with open(os.path.join(here + '/config.json')) as file:
-    conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
-scanner = Scanner(conf)
+def run_memilio_generation(print_ast=False):
+    here = os.path.dirname(os.path.abspath(__file__))
 
-# Extract results of Scanner into a intermed_repr
-intermed_repr = scanner.extract_results()
+    # Define ScannerConfig and initialize Scanner
+    pkg = importlib_resources.files("memilio")
+    with importlib_resources.as_file(pkg.joinpath('tools/config.json')) as path:
+        with open(path) as file:
+            conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
+    scanner = Scanner(conf)
 
-# Generate code
-generator = Generator()
-generator.create_substitutions(intermed_repr)
-generator.generate_files(intermed_repr)
+    # Extract results of Scanner into a intermed_repr
+    intermed_repr = scanner.extract_results()
 
-# scanner.output_ast_file()
+    # Generate code
+    generator = Generator()
+    generator.create_substitutions(intermed_repr)
+    generator.generate_files(intermed_repr)
+
+    # Print the ast to a file
+    if (print_ast):
+        scanner.output_ast_file()
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        'memilio_generation',
+        description='Simple example demonstrating the memilio-generation package.')
+    arg_parser.add_argument('-p', '--print_ast',
+                            action='store_const', const=True, default=False)
+    args = arg_parser.parse_args()
+    run_memilio_generation(**args.__dict__)

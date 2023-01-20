@@ -9,14 +9,20 @@ This generating software was developed as a part of the Bachelor thesis [Automat
 
 The package uses the [Clang C++ library](https://clang.llvm.org/) and the [LibClang Python library](https://libclang.readthedocs.io/en/latest/index.html) to analyze the C++ code of a model. Both need to be installed and share the same version.
 
-To use the package you need a usable model including a compilation database (compile_commands.json). For models of the C++ library the compilation database is generated when building the [C++ Library](../../cpp/README.md).
-
 ## Installation
 
 Use the provided `setup.py` script to build and install the package. To install the package, use the command (from the directory containing `setup.py`)
 
 ```bash
 pip install -e .[dev]
+```
+
+During this step the package creates a compilation database (compile_commands.json) for the models of the C++ library[C++ Library](../../cpp/README.md).
+
+Afterwards you can use the following command to make a full installation of the package (not necessary for usage)
+
+```bash
+pip install .
 ```
 
 ## Usage
@@ -37,7 +43,7 @@ When working on a new model you can copy the example script and add an additiona
 
 ## Testing
 
-The package provides a test suite in `memilio/generation_test`. To run the tests, simply run the following command
+The package provides a test suite in `memilio/generation_test`. To run the tests, simply run the following command:
 
 ```bash
 python -m unittest
@@ -46,7 +52,7 @@ python -m unittest
 ## Development
 
 When implementing new model features you can follow these steps:
-- Add necessary configurations to [config file](./memilio/tools/config.json) and add corresponding attributes to the [ScannerConfig class](./memilio/generation/scanner_config.py).
+- Add necessary configurations to [config txt-file](./memilio/tools/config.json.txt) and add corresponding attributes to the [ScannerConfig class](./memilio/generation/scanner_config.py).
 - Find the nodes in the abstract syntax tree (AST) with the features you want to implement (use method Scanner.output_ast_file()).
 - Add the extraction of those features. Therefore you need to change the "check_*"-methods corresponding to the CursorKind of your nodes in the [Scanner class](./memilio/generation/scanner.py). If there is no corresponding "check_*"-method you need to write a new one and add it to the switch-method (scanner.switch_node_kind()).
 - Extend the [IntermediateRepresentation](./memilio/generation/intermediate_representation.py) for the new model features.
