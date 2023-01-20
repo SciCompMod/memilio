@@ -18,13 +18,11 @@
 # limitations under the License.
 #############################################################################
 
-import json
 import os
 import subprocess
 import tempfile
 import unittest
 
-import importlib_resources
 from memilio.generation import Generator, Scanner, ScannerConfig
 
 
@@ -43,19 +41,22 @@ class TestOseirGeneration(unittest.TestCase):
 
     # Create a temporary directory
     test_dir = tempfile.TemporaryDirectory(dir=project_path)
+    build_dir = tempfile.TemporaryDirectory(dir=test_dir.name)
 
-    # load config.json
-    pkg = importlib_resources.files("memilio")
-    with importlib_resources.as_file(pkg.joinpath("tools/config.json")) as path:
-        with open(path) as file:
-            loaded_config_json = json.load(file)
+    # run cmake
+    cmake_cmd = ["cmake", os.path.join(
+        project_path, "pycode/memilio-generation"), "-Wno-dev"]
+
+    cmake_cmd_result = subprocess.run(
+        cmake_cmd, stdout=subprocess.PIPE, cwd=build_dir.name)
+    cmake_cmd_result.check_returncode()
 
     def setUp(self):
         config_json = {
             "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
             "namespace": "mio::oseir::",
             "python_module_name": "test_oseir",
-            "skbuild_path_to_database": self.loaded_config_json[0]['skbuild_path_to_database'],
+            "skbuild_path_to_database": self.build_dir.name,
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
             "target_folder": self.test_dir.name,
             "optional": {
