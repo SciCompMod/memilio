@@ -366,8 +366,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
                                const std::string& confirmed_cases_path, const std::string& population_data_path,
                                int num_days = 0, bool export_time_series = false)
 {
-    //TODO: adjust date?
-    if (date > Date(2022, 12, 31)) {
+
+    if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(details::set_divi_data(model, divi_data_path, node_ids, date, scaling_factor_icu));
     }
     else {

@@ -1289,8 +1289,9 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    if (date > Date(2022, 12, 31)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, divi_data_path, node_ids, date, scaling_factor_icu));
+    if (date > Date(2020, 4, 23)) {
+        BOOST_OUTCOME_TRY(
+            details::set_divi_data(model, path_join(dir, "county_divi_ma7.json"), node_ids, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
