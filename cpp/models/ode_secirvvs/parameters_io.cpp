@@ -70,7 +70,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
     const std::vector<double>& scaling_factor_inf)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
     return read_confirmed_cases_data(rki_data, vregion, date, vnum_Exposed, vnum_InfectedNoSymptoms,
                                      vnum_InfectedSymptoms, vnum_InfectedSevere, vnum_icu, vnum_death, vnum_rec,
                                      vt_Exposed, vt_InfectedNoSymptoms, vt_InfectedSymptoms, vt_InfectedSevere,
@@ -228,7 +228,7 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, 
                                                        Date date, std::vector<std::vector<double>>& vnum_rec,
                                                        double delay)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
     return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, delay);
 }
 
@@ -302,7 +302,7 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
-    BOOST_OUTCOME_TRY(divi_data, mio::read_divi_data(path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
     return read_divi_data(divi_data, vregion, date, vnum_icu);
 }
 
@@ -339,7 +339,7 @@ IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
     return read_population_data(population_data, vregion);
 }
 
@@ -377,7 +377,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string& path, Date date,
                                     const std::vector<int>& vregion, int num_days)
 {
-    BOOST_OUTCOME_TRY(vacc_data, read_vaccination_data(path));
+    BOOST_OUTCOME_TRY(auto&& vacc_data, read_vaccination_data(path));
 
     auto num_groups = model[0].parameters.get_num_groups();
 

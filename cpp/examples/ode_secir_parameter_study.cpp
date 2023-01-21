@@ -35,7 +35,7 @@ write_single_run_result(const int run,
                         const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
-    BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
+    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
@@ -48,7 +48,7 @@ write_single_run_result(const int run,
     //omit edges to save space as they are not sampled
     int inode = 0;
     for (auto&& node : graph.nodes()) {
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(auto&& js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;
         js_node["Model"]   = js_node_model;

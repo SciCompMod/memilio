@@ -312,7 +312,7 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * 
  * When nesting functions that return IOResult, it is also possible to unpack the value
  * and forward errors using the macro BOOST_OUTCOME_TRY. 
- * The statement `BOOST_OUTCOME_TRY(x, try_get_x());` is equivalent to the statements
+ * The statement `BOOST_OUTCOME_TRY(auto&& x, try_get_x());` is equivalent to the statements
  * ```
  * auto result = try_get_x();
  * if (!result) {
@@ -326,7 +326,7 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * extern void use_int(int i);
  * IOResult<void> parse_and_use_int(const std::string& s)
  * {
- *   BOOST_OUTCOME_TRY(i, parse_int(s));
+ *   BOOST_OUTCOME_TRY(auto&& i, parse_int(s));
  *   use_int(i);
  *   return success();
  * }
@@ -652,7 +652,7 @@ void serialize_internal(IOContext& io, E e)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
-    BOOST_OUTCOME_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
+    BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
 
@@ -707,6 +707,9 @@ namespace details
 //proper implementation.
 template <class C>
 using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::declval<const C&>().end());
+
+template <class C>
+using insert_t = decltype(std::declval<C&>().insert(std::declval<typename C::iterator>(), std::declval<typename C::value_type>()));
 } // namespace details
 
 /**
@@ -716,7 +719,7 @@ using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::de
  * @tparam C any type.
  */
 template <class C>
-using is_container = is_expression_valid<details::compare_iterators_t, C>;
+using is_container = conjunction<is_expression_valid<details::compare_iterators_t, C>, is_expression_valid<details::insert_t, C>>;
 
 /**
  * serialize an STL compatible container.

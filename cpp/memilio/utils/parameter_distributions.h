@@ -448,11 +448,11 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     auto type = obj.expect_element("Type", Tag<std::string>{});
     if (type) {
         if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize(io));
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionUniform::deserialize(io));
             return std::make_shared<ParameterDistributionUniform>(r);
         }
         else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize(io));
+            BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionNormal::deserialize(io));
             return std::make_shared<ParameterDistributionNormal>(r);
         }
         else {

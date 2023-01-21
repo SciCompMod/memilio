@@ -123,8 +123,8 @@ mio::IOResult<void> print_json()
     //If the operation failed, the error is returned immediately.
     //If the operation was succesful, the result is unpacked and assigned to a new variable.
     //e.g.
-    BOOST_OUTCOME_TRY(js, rslt);
-    //could also be BOOST_OUTCOME_TRY(js, mio::serialize_json(b)) in one line
+    BOOST_OUTCOME_TRY(auto&& js, rslt);
+    //could also be BOOST_OUTCOME_TRY(auto&& js, mio::serialize_json(b)) in one line
 
     //print json (Json::Value) to console
     //could also write to file or do anything else.

@@ -249,7 +249,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(baseline,
+        BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
 
@@ -524,7 +524,7 @@ mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Dat
 {
     namespace de = mio::regions::de;
 
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    BOOST_OUTCOME_TRY(auto&& county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<mio::osecirvvs::Model> counties(county_ids.size(),
                                                 mio::osecirvvs::Model((int)size_t(params.get_num_groups())));
     for (auto& county : counties) {
@@ -583,9 +583,9 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     // mobility between nodes
-    BOOST_OUTCOME_TRY(mobility_data_commuter,
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
                       mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(mobility_data_twitter,
+    BOOST_OUTCOME_TRY(auto&& mobility_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
@@ -724,12 +724,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
+        BOOST_OUTCOME_TRY(auto&& created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
+        BOOST_OUTCOME_TRY(auto&& loaded, mio::read_graph<mio::osecirvvs::Model>(save_dir.string()));
         params_graph = loaded;
     }
 

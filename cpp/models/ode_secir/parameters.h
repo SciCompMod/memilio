@@ -572,7 +572,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 

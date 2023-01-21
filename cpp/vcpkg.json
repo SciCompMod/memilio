@@ -1,0 +1,23 @@
+{
+    "name": "memilio",
+    "version": "0.0.1",
+    "dependencies": [
+        "eigen3",
+        "spdlog",
+        "boost"
+    ],
+    "features": {
+        "io": {
+            "description": "Build multisar with IO.",
+            "dependencies": [
+                "hdf5", "jsoncpp"
+            ]
+        },
+        "tests": {
+            "description": "Build multisar tests.",
+            "dependencies": [
+                "gtest"
+            ]
+        }
+    }
+}

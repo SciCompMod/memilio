@@ -219,7 +219,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
             num_InfectedSymptoms, num_InfectedSevere, dummy_icu, num_death, num_rec, t_Exposed, t_InfectedNoSymptoms,
             t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi_ma7.json"), region, date, num_icu));
-        BOOST_OUTCOME_TRY(num_population,
+        BOOST_OUTCOME_TRY(auto&& num_population,
                           details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
 
         for (size_t i = 0; i < region.size(); i++) {

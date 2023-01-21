@@ -36,7 +36,7 @@ const std::array<const char*, 6> VaccinationDataEntry::age_group_names = {"0-4",
 
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(path_join(path, "county_current_population.json")));
 
     std::vector<int> id;
     id.reserve(population_data.size());

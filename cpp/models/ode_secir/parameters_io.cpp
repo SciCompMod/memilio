@@ -84,7 +84,7 @@ IOResult<void> read_confirmed_cases_data(
     const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
     const std::vector<double>& scaling_factor_inf)
 {
-    BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+    BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path));
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
@@ -298,7 +298,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<double>& vnum_icu)
 {
-    BOOST_OUTCOME_TRY(divi_data, mio::read_divi_data(path));
+    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
 
     auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -330,7 +330,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion)
 {
-    BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
 
     std::vector<std::vector<double>> vnum_population(
         vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
@@ -355,7 +355,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
 
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion)
 {
-    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion));
 
     for (size_t region = 0; region < vregion.size(); region++) {
         if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {

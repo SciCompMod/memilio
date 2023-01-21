@@ -58,7 +58,7 @@ public:
         return apply(
             io,
             [](auto&& str_) -> IOResult<StringDate> {
-                BOOST_OUTCOME_TRY(date, parse_date(str_));
+                BOOST_OUTCOME_TRY(auto&& date, parse_date(str_));
                 return success(date);
             },
             str);
@@ -123,7 +123,7 @@ public:
  */
 inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_cases_data(const Json::Value& jsvalue)
 {
-    BOOST_OUTCOME_TRY(cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
+    BOOST_OUTCOME_TRY(auto&& cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
     //filter entries with unknown age group
     auto it = std::remove_if(cases_data.begin(), cases_data.end(), [](auto&& rki_entry) {
         return rki_entry.age_group >= AgeGroup(ConfirmedCasesDataEntry::age_group_names.size());
@@ -139,7 +139,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_case
  */
 inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_confirmed_cases_data(jsvalue);
 }
 
@@ -203,7 +203,7 @@ IOResult<std::vector<T>> unpack_all(const std::vector<IOResult<T>>& v)
     std::vector<T> w;
     w.reserve(v.size());
     for (auto&& r : v) {
-        BOOST_OUTCOME_TRY(t, r);
+        BOOST_OUTCOME_TRY(auto&& t, r);
         w.push_back(t);
     }
     return success(w);
@@ -340,7 +340,7 @@ interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population
  */
 inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue)
 {
-    BOOST_OUTCOME_TRY(population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
+    BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
     return success(details::interpolate_to_rki_age_groups(population_data));
 }
 
@@ -352,7 +352,7 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  */
 inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue);
 }
 
@@ -420,7 +420,7 @@ inline IOResult<std::vector<VaccinationDataEntry>> deserialize_vaccination_data(
  */
 inline IOResult<std::vector<VaccinationDataEntry>> read_vaccination_data(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_vaccination_data(jsvalue);
 }
 

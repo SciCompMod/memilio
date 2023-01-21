@@ -1,22 +1,36 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(memilio VERSION 0.1.0)
-
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
-option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
-option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
-option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." OFF)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
-
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+
+#before project!
+if (MEMILIO_BUILD_TESTS)
+    list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+endif()
+list(APPEND VCPKG_MANIFEST_FEATURES "io")
+
+#activates vcpkg
+project(memilio VERSION 0.1.0)
+
+#after project!
+find_package(spdlog REQUIRED CONFIG)
+set(Boost_NO_WARN_NEW_VERSIONS ON)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Eigen3 REQUIRED CONFIG)
+find_package(hdf5 REQUIRED CONFIG)
+find_package(jsoncpp REQUIRED CONFIG)
+find_package(GTest REQUIRED CONFIG)
+
+set(MEMILIO_HAS_JSONCPP ON)
+set(MEMILIO_HAS_HDF5 ON)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -110,7 +124,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 # add parts of the project
-include(thirdparty/CMakeLists.txt)
+# include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
