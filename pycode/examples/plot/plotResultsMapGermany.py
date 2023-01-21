@@ -17,10 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import memilio.plot.plotMap as pm
-import pandas as pd
-import numpy as np
 import datetime as dt
+
+import numpy as np
+import pandas as pd
+
+import memilio.plot.plotMap as pm
 
 if __name__ == '__main__':
 

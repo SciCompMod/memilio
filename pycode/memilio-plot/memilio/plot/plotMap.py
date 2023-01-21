@@ -25,10 +25,11 @@ from gc import get_count
 # https://stackoverflow.com/questions/69521550/importerror-the-read-file-function-requires-the-fiona-package-but-it-is-no
 import geopandas as gpd
 import h5py
-from matplotlib import pyplot as plt
-from matplotlib.gridspec import GridSpec
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
+
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
