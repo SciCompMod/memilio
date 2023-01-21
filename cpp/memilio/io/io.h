@@ -747,7 +747,7 @@ void serialize_internal(IOContext& io, const Container& container)
  */
 template <
     class IOContext, class Container,
-    std::enable_if_t<(is_container<Container>::value && !is_expression_valid<serialize_t, IOContext, Container>::value),
+    std::enable_if_t<conjunction_v<is_container<Container>, negation<is_expression_valid<serialize_t, IOContext, Container>>>,
                      void*> = nullptr>
 IOResult<Container> deserialize_internal(IOContext& io, Tag<Container> /*tag*/)
 {

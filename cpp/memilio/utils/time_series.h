@@ -25,6 +25,7 @@
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/io/io.h"
 
 #include <iterator>
 #include <vector>
@@ -448,6 +449,13 @@ public:
     friend void PrintTo(const TimeSeries& self, std::ostream* os)
     {
         *os << '\n' << self.get_valid_block();
+    }
+
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TimeSeries");
+        obj.add_list("Values", begin(), end());
     }
 
 private:
