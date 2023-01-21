@@ -81,11 +81,7 @@ setup(
         'xlrd',
         'requests',
         'pyxlsb',
-        'wget',
-        'folium',
-        'matplotlib', 
-        'mapclassify',
-        'geopandas'
+        'wget'
     ],
     extras_require={
         'dev': [
