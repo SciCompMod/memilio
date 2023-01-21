@@ -4,7 +4,9 @@
     "dependencies": [
         "eigen3",
         "spdlog",
-        "boost"
+        "boost-optional",
+        "boost-outcome",
+        "boost-filesystem"
     ],
     "features": {
         "io": {
