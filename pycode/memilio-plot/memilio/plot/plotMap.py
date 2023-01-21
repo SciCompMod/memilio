@@ -25,10 +25,10 @@ from gc import get_count
 # https://stackoverflow.com/questions/69521550/importerror-the-read-file-function-requires-the-fiona-package-but-it-is-no
 import geopandas as gpd
 import h5py
-from matplotlib import pyplot as plt
-from matplotlib.gridspec import GridSpec
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
@@ -37,8 +37,8 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 def print_manual_download(filename, url):
     """! Prints message to ask the user to manually download a file.
 
-    @param filename Filename of file needed.
-    @param url URL to file.
+    @param[in] filename Filename of file needed.
+    @param[in] url URL to file.
     """
     print(
         'This script needs manual downloading of files. Please download '
@@ -50,7 +50,7 @@ def merge_eisenach(map_data: gpd.GeoDataFrame):
     """! Merges geometries for Eisenach with Wartburgkreis of Geopandas 
     dataframe.
 
-    @param map_data GeoPandasDataFrame from county shape file
+    @param[in,out] map_data GeoPandasDataFrame from county shape file.
     @return Frame with Wartburgkreis and Eisenach merged. 
     """
     wartburg = map_data.ARS == '16063'
@@ -72,28 +72,29 @@ def extract_data(
     If the file contains multiple features per region,
     particular columns need to be specified.
 
-    @param file Path and filename of file to be read in, relative from current
+    @param[in] file Path and filename of file to be read in, relative from current
         directory.
-    @param region_spec Specificier for region, for json, e.g., column name
+    @param[in] region_spec Specificier for region, for json, e.g., column name
         of county IDs for hdf5 level of nesting X where to retrieve
         fileX.keys(), X could either by empty, such that file.keys() is taken
         or a list of nested keys [X0, X1, ...] such that 
         file[X0][X1][...].keys()
-    @param column Column with values that will be plotted.
-    @param data Date to be extracted from data frame if it contains a time 
+    @param[in] column Column with values that will be plotted.
+    @param[in] data Date to be extracted from data frame if it contains a time 
         series or if single or no date information is in the input table, 
         provide date=None. For json, pd.date Objects need to be used, for
         h5, provide an integer from the beginning of the time series.
-    @param filters Dictionary with columns and values for filtering rows.
+    @param[in] filters Dictionary with columns and values for filtering rows.
         None for a column or all filters means that all values are taken. 
         For MEmilio h5 Files only 'Group' (AgeGroups from 'Group1' to 'Total') 
         and 'InfectionState' (from 0 to InfetionState::Count-1) can be filtered.
-    @param output [Either 'sum' or 'matrix'] If 'sum' is chosen all selected 
+    @param[in] output [Either 'sum' or 'matrix'] If 'sum' is chosen all selected 
         values for one county will be summed up and only 'column' is returned
         for each county. If 'matrix' is chosen, then also the filter columns
         will be returned with the corresponding entries for each selected 
         criterion or value.
-    @param file_format File format; either json or h5.
+    @param[in] file_format File format; either json or h5.
+    @return Extracted data set.
     """
     input_file = os.path.join(os.getcwd(), str(file))
     if file_format == 'json':
@@ -207,7 +208,7 @@ def extract_data(
         raise gd.DataError("Data could not be read in.")
 
 
-def scale_dataframe_relative(df, age_groups, path_population):
+def scale_dataframe_relative(df, age_groups, df_population):
     """! Scales a population-related data frame relative to the size of the  
     local populations or subpopulations (e.g., if not all age groups are
     considered).
@@ -217,13 +218,12 @@ def scale_dataframe_relative(df, age_groups, path_population):
     of the data frame to be scaled need to be available in the population
     data set.
 
-    @param df Data frame with population-related information. 
-    @param path_population Relative path to population data set.
-    @param 
+    @param[in,out] df Data frame with population-related information. 
+    @param[in] age_groups Considered age groups of population data taken into 
+        summation.
+    @param[in] df_population Data frame with population data set.
     @return Scaled data set.
     """
-
-    df_population = pd.read_json(os.path.join(os.getcwd(), path_population))
 
     # Merge population data of Eisenach (if counted separately) with Wartburgkreis.
     if 16056 in df_population[df.columns[0]].values:
@@ -243,8 +243,6 @@ def scale_dataframe_relative(df, age_groups, path_population):
         population_local_sum = df_population_agegroups[
             df_population_agegroups[df.columns[0]] == elem[0]].iloc[
                 :, 1:].sum(axis=1)
-        if population_local_sum.values[0] == 0:
-            x = 12
         return elem['Count'] / population_local_sum.values[0]
 
     df_population_agegroups.loc[:, age_groups].sum(axis=1)
@@ -254,16 +252,31 @@ def scale_dataframe_relative(df, age_groups, path_population):
     return df
 
 
-def plot_map(
-    data: pd.DataFrame,
-    scale_colors: np.array([0, 1]),
-    legend: list = [],
-    title: str = '',
-    plot_colorbar: bool = True,
-    fig_name: str = 'customPlot',
-    dpi: int = 300,
-    outercolor='white',
-):
+def plot_map(data: pd.DataFrame,
+             scale_colors: np.array([0, 1]),
+             legend: list = [],
+             title: str = '',
+             plot_colorbar: bool = True,
+             output_path: str = '',
+             fig_name: str = 'customPlot',
+             dpi: int = 300,
+             outercolor='white'):
+    """! Plots region-specific information onto a interactive html map and
+    returning svg and png image. Allows the comparisons of a variable list of
+    data sets.
+
+    @param[in] data Data to be plotted. First column must contain regional 
+        specifier, following columns will be plotted for comparison.
+    @param[in] scale_colors Array of min-max-values to scale colorbar.
+    @param[in] legend List subtitles for different columns. Can be list of 
+        empty strings.
+    @param[in] title Title of the plot.
+    @param[in] plot_colorbar Defines if colorbar will be plotted.
+    @param[in] output_path Output path for figure.   
+    @param[in] fig_name Name of figure created.
+    @param[in] dpi Dots-per-inch value for exported figures.
+    @param[in] outercolor Background color of plot image.
+    """
     region_classifier = data.columns[0]
 
     data_columns = data.columns[1:]
@@ -299,8 +312,8 @@ def plot_map(
                          vmax=scale_colors[1]).save(filename)
 
     for i in range(len(data_columns)):
-        save_interactive(data[data_columns[i]], str(
-            legend[i].replace(' ', '_')) + '.html')
+        save_interactive(data[data_columns[i]], os.path.join(output_path, str(
+            legend[i].replace(' ', '_')) + '.html'))
 
     fig = plt.figure(figsize=(4 * len(data_columns), 6), facecolor=outercolor)
     # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
@@ -341,7 +354,7 @@ def plot_map(
 
     plt.subplots_adjust(bottom=0.1)
 
-    plt.savefig(fig_name + '.png', dpi=dpi)
-    plt.savefig(fig_name + '.svg', dpi=dpi)
+    plt.savefig(os.path.join(output_path, fig_name + '.png'), dpi=dpi)
+    plt.savefig(os.path.join(output_path, fig_name + '.svg'), dpi=dpi)
 
     plt.show()

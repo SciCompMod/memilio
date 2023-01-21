@@ -17,15 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import memilio.plot.plotMap as pm
-import pandas as pd
-import numpy as np
 import datetime as dt
+import os.path
+
+import memilio.epidata.getPopulationData as gpd
+import memilio.plot.plotMap as pm
+import numpy as np
+import pandas as pd
 
 if __name__ == '__main__':
 
-    files_input = {'Data set 1': 'PATH_TO_FILE_1',
-                   'Data set 2': 'PATH_TO_FILE_2'}
+    files_input = {'Data set 1': 'pycode/examples/plot/Synthetic_data_counties_sh',
+                   'Data set 2 (plot set 1 again...)': 'pycode/examples/plot/Synthetic_data_counties_sh'}
     file_format = 'json'
     # Define age groups which will be considered through filtering
     # Keep keys and values as well as its assignment constant, remove entries
@@ -51,23 +54,32 @@ if __name__ == '__main__':
         #     file, region_spec=None, column=None, date=1,
         #     filters={'Group': filter_age, 'InfectionState': [3, 4]},
         #     file_format=file_format)
-        # MEmilio epidata vaccination data json example
+        # MEmilio epidata json example
         df = pm.extract_data(
             file, region_spec='ID_County',
-            column='Vacc_partially',
+            column='Synthetic data',
             date=dt.date(2021, 11, 18),
             filters={'ID_State': None,
                      'Age_RKI': filter_age},
             file_format=file_format)
 
         if relative:
+
+            try:
+                population = pd.read_json(
+                    'data/pydata/Germany/county_current_population.json')
+            # pandas>1.5 raise FileNotFoundError instead of ValueError
+            except (ValueError, FileNotFoundError):
+                print("Population data was not found. Download it from the internet.")
+                population = gpd.get_population_data(
+                    read_data=False, file_format=file_format, out_folder='data/pydata/Germany/',
+                    no_raw=True, split_gender=False, merge_eisenach=True)
+
             # For fitting of different age groups we need format ">X".
             age_group_values = list(age_groups.values())
             age_group_values[-1] = age_group_values[-1].replace('80+', '>79')
             # scale data
-            df = pm.scale_dataframe_relative(
-                df, age_group_values,
-                'PATH_TO_POPULATION_DATA_FILE.json')
+            df = pm.scale_dataframe_relative(df, age_group_values, population)
 
         if i == 0:
             dfs_all = pd.DataFrame(df.iloc[:, 0])
@@ -80,7 +92,8 @@ if __name__ == '__main__':
 
     pm.plot_map(
         dfs_all, scale_colors=np.array([min_val, max_val]),
-        legend=['Label 1', 'Label 2'],
-        title='Title', plot_colorbar=True,
-        fig_name='Plot name', dpi=300,
+        legend=['', ''],
+        title='Synthetic data (relative)', plot_colorbar=True,
+        output_path=os.path.dirname(__file__),
+        fig_name='customPlot', dpi=300,
         outercolor=[205 / 255, 238 / 255, 251 / 255])

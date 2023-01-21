@@ -72,7 +72,7 @@ setup(
         'pyxlsb',
         'wget',
         'folium',
-        'matplotlib', 
+        'matplotlib',
         'mapclassify',
         'geopandas',
         'h5py'
