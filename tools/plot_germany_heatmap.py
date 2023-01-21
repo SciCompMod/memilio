@@ -28,7 +28,6 @@ import geopandas as gpd
 import h5py
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
-import matplotlib.colors as pclrs
 import numpy as np
 import pandas as pd
 from memilio.epidata import geoModificationGermany as geoger
@@ -122,10 +121,12 @@ def read_data(
         # Aggregated or matrix output
         df.rename(columns={column: 'Count'}, inplace=True)
         if output == 'sum':
-            return df[dffilter].groupby(region_spec).agg({'Count': sum}).reset_index()
+            return df[dffilter].groupby(region_spec).agg(
+                {'Count': sum}).reset_index()
         elif output == 'matrix':
             if filters != None:
-                return df[dffilter].loc[:, [region_spec] + list(filters.keys()) + ['Count']]
+                return df[dffilter].loc[:, [region_spec] +
+                                        list(filters.keys()) + ['Count']]
             else:
                 return df
         else:
@@ -153,8 +154,11 @@ def read_data(
         # Create data frame to store results to plot
         df = pd.DataFrame(
             columns=['Time', 'Region', 'Group', 'InfectionState', 'Count'])
-        df['Time'] = np.array([date for j in
-                               range(len(regions) * len(filters['Group']) * len(InfectionStateList))])
+        df['Time'] = np.array(
+            [date
+             for j in range(
+                 len(regions) * len(filters['Group'])
+                 * len(InfectionStateList))])
 
         for i in range(len(regions)):
             # set region identifier in data frame
@@ -223,7 +227,7 @@ def scale_dataframe_relative(df, age_groups, path_population):
     df_population = pd.read_json(os.path.join(os.getcwd(), path_population))
 
     # Merge population data of Eisenach (if counted separately) with Wartburgkreis
-    if 16063 in df_population[df.columns[0]].values:
+    if 16056 in df_population[df.columns[0]].values:
         for i in range(1, len(df_population.columns)):
             df_population.loc[df_population[df.columns[0]] == 16063, df_population.columns[i]
                               ] += df_population.loc[df_population.ID_County == 16056, df_population.columns[i]]
@@ -240,9 +244,11 @@ def scale_dataframe_relative(df, age_groups, path_population):
         population_local_sum = df_population_agegroups[
             df_population_agegroups[df.columns[0]] == elem[0]].iloc[
                 :, 1:].sum(axis=1)
+        if population_local_sum.values[0] == 0:
+            x = 12
         return elem['Count'] / population_local_sum.values[0]
 
-    df_population_agegroups.loc[:,age_groups].sum(axis=1)
+    df_population_agegroups.loc[:, age_groups].sum(axis=1)
 
     df['Count (rel)'] = df.apply(scale_row, axis=1)
 
@@ -251,16 +257,13 @@ def scale_dataframe_relative(df, age_groups, path_population):
 
 def plot(
     data: pd.DataFrame,
-    scale_colors: np.array([0,1]),
-    legend: list=[], 
-    title: str='',
-    xlabel: str='',
-    ylabel: str='',
-    fig_size: tuple=(10,6), 
-    fig_name: str='customPlot',
-    dpi: int=300,
+    scale_colors: np.array([0, 1]),
+    legend: list = [],
+    title: str = '',
+    plot_colorbar: bool = True,
+    fig_name: str = 'customPlot',
+    dpi: int = 300,
     outercolor='white',
-    innercolor='white'
 ):
     region_classifier = data.columns[0]
 
@@ -268,113 +271,89 @@ def plot(
     # Read and filter map data
     if data[region_classifier].isin(geoger.get_county_ids()).all():
         try:
-            map_data = gpd.read_file(os.path.join(
-                os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
+            map_data = gpd.read_file(
+                os.path.join(
+                    os.getcwd(),
+                    'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
             if '16056' in map_data.ARS.values:
                 map_data = merge_eisenach(map_data)
             # remove information for plot
-            map_data = map_data[['ARS','GEN','NUTS', 'geometry']]
+            map_data = map_data[['ARS', 'GEN', 'NUTS', 'geometry']]
             # use string values as in shape data file
-            data[region_classifier] = data[region_classifier].astype('str').str.zfill(5)
+            data[region_classifier] = data[region_classifier].astype(
+                'str').str.zfill(5)
         except FileNotFoundError:
-            print_manual_download('Georeferenzierung: UTM32s, Format: shape (ZIP, 5 MB)',
-                                  'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-2-500-000-stand-31-12-vg2500-12-31.html')
+            print_manual_download(
+                'Georeferenzierung: UTM32s, Format: shape (ZIP, 5 MB)',
+                'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-2-500-000-stand-31-12-vg2500-12-31.html')
     else:
         gd.raiseDataError('Provide shape files regions to be plotted.')
 
     # remove regions that are not input data table
     map_data = map_data[map_data.ARS.isin(data[region_classifier])]
 
-    map_data[data_columns] = data.loc[:,data_columns]
-
-    # calc min and max and map to non-uniform scale
-    map_data_columns = map_data[data.columns[1:]]
-    min_value = min(map_data_columns.min().values)
-    max_value = max(map_data_columns.max().values)
-    s = 0.7
-
-    def normalize_lin(x, src, dest):
-        return (x - src[0]) / (src[1] - src[0]) * (dest[1] - dest[0]) + dest[0]
-
-    def normalize_sine(x):
-        if (x < s):
-            i = [min_value, s]
-            j = [-np.pi / 2, 0]
-        else:
-            i = [s, max_value]
-            j = [0, np.pi / 2]
-        map_x = normalize_lin(x, i, j)
-        sin_map_x = np.sin(map_x)
-        y = normalize_lin(sin_map_x, [-1, 1], [0, 1])
-        return y
-
-    def normalize_sine_inv(y):
-        map_y = normalize_lin(y, [0, 1], [-1, 1])
-        asin_map_y = np.arcsin(map_y)
-        if (asin_map_y < 0):
-            i = [min_value, s]
-            j = [-np.pi / 2, 0]
-        else:
-            i = [s, max_value]
-            j = [0, np.pi / 2]
-        x = normalize_lin(asin_map_y, j, i)
-        return x
-    e = 2
-
-    def normalize_skewed_sine(x):
-        x = normalize_lin(x, (min_value, max_value), (-np.pi/2, np.pi/2))
-        x = np.sin(x)
-
-        def p(x):
-            return (-1)**(e-1) * (0.5**e) * (x - 1)**e + 1
-        x = p(x)
-        return x
-
-    def normalize_skewed_sine_inv(y):
-        def p_inv(y):
-            return -((-1)**e * (1-y) / (0.5**e))**(1/e) + 1
-        y = p_inv(y)
-        y = np.arcsin(y)
-        y = normalize_lin(y, (-np.pi/2, np.pi/2), (min_value, max_value))
-        return y
+    map_data[data_columns] = data.loc[:, data_columns]
 
     # Save interactive html files.
     def save_interactive(col, filename):
-        map_data.explore(col, legend=True, vmin=min_value,
-                         vmax=max_value).save(filename)
+        map_data.explore(col, legend=True, vmin=scale_colors[0],
+                         vmax=scale_colors[1]).save(filename)
 
     for i in range(len(data_columns)):
-        save_interactive(data[data_columns[i]], str(legend[i].replace(' ', '_')) + '.html')
+        save_interactive(data[data_columns[i]], str(
+            legend[i].replace(' ', '_')) + '.html')
 
-    
-    
-    color_norm = pclrs.FuncNorm((np.vectorize(normalize_sine), np.vectorize(
-        normalize_sine_inv)), vmin=min_value, vmax=max_value)
+    fig = plt.figure(figsize=(4 * len(data_columns), 6), facecolor=outercolor)
+    # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
+    # n+2 rows where the top row is used for a potential title, the second row
+    # for the content and all other rows have height zero.
+    height_ratios = [0.05, 1, 0]
+    if len(data_columns) > 1:
+        height_ratios = height_ratios + [
+            0.0 for i in range(len(data_columns)-1)]
+    gs = GridSpec(
+        len(data_columns) + 2, len(data_columns) + 2, figure=fig, wspace=0.1,
+        width_ratios=[0.05, 0.05] + [1 for i in range(len(data_columns))],
+        height_ratios=height_ratios)
 
-    fig = plt.figure(constrained_layout=True)
-    gs = GridSpec(3, 3, figure=fig, wspace=0.1, width_ratios=[
-                0.05, 1, 1], height_ratios=[0.15, 1, 0.15])   
-
-    for i in range(len(data_columns)):
+    # Use top row for title.
+    tax = fig.add_subplot(gs[0, :])
+    tax.set_axis_off()
+    tax.set_title(title, fontsize=18)
+    if plot_colorbar:
+        # Prepare colorbar.
         cax = fig.add_subplot(gs[1, 0])
-        ax1 = fig.add_subplot(gs[:, 1])
-        ax2 = fig.add_subplot(gs[:, 2])
-        map_data.plot('VaccRateRKI', ax=ax1, cax=cax, legend=True,
-                    vmin=min_value, vmax=max_value, norm=color_norm)
-        ax1.set_axis_off()
-        map_data.plot('VaccRateNew', ax=ax2, legend=False,
-                    vmin=min_value, vmax=max_value, norm=color_norm)
-        ax2.set_axis_off()
+    else:
+        cax = None
 
-    plt.savefig(title + '_compare.svg')
+    for i in range(len(data_columns)):
 
-    # plt.show()
+        ax = fig.add_subplot(gs[:, i+2])
+        if cax is not None:
+            map_data.plot(data_columns[i], ax=ax, cax=cax, legend=True,
+                          vmin=scale_colors[0], vmax=scale_colors[1])
+        else:
+            # Do not plot colorbar.
+            map_data.plot(data_columns[i], ax=ax, legend=False,
+                          vmin=scale_colors[0], vmax=scale_colors[1])
+
+        ax.set_title(legend[i], fontsize=12)
+        ax.set_axis_off()
+
+    plt.subplots_adjust(bottom=0.1)
+
+    plt.savefig(fig_name + '.png', dpi=dpi)
+    plt.savefig(fig_name + '.svg', dpi=dpi)
+
+    plt.show()
 
 
 if __name__ == '__main__':
 
     files_input = {'Reported data': 'tools/raw/test',
-                   'Sanitized data': 'tools/raw/test_copy'}
+                   'Reporsted data': 'tools/raw/test',
+                   'Reported ad': 'tools/raw/test',
+                   'Reported d': 'tools/raw/test'}
     file_format = 'json'
     # Define age groups which will be considered through filtering
     # Keep keys and values as well as its assignment constant, remove entries
@@ -401,7 +380,7 @@ if __name__ == '__main__':
             file, region_spec='ID_County',
             column='Vacc_partially',
             date=dt.date(2021, 11, 18),
-            filters={'ID_State': [1],
+            filters={'ID_State': None,
                      'Age_RKI': filter_age},
             file_format=file_format)
 
@@ -411,23 +390,21 @@ if __name__ == '__main__':
             age_group_values[-1] = age_group_values[-1].replace('80+', '>79')
             # scale data
             df = scale_dataframe_relative(
-                df, age_group_values, 'tools/raw/county_current_population.json')
+                df, age_group_values,
+                'tools/raw/county_current_population.json')
 
         if i == 0:
             dfs_all = pd.DataFrame(df.iloc[:, 0])
 
-        dfs_all[df.columns[-1]  + ' ' + str(i)] = df[df.columns[-1]]
+        dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
         i += 1
 
     min_val = dfs_all[dfs_all.columns[1:]].min().min()
     max_val = dfs_all[dfs_all.columns[1:]].max().max()
-
-    plot(dfs_all, scale_colors=np.array([min_val, max_val]), legend=['a','b'], title='', xlabel='XXXXXX', ylabel='YYYYYYY',  
-         fig_size=(10,6), fig_name='customPlot', dpi=300, outercolor='white', innercolor='white')
-
-    x = 15
-    # for vacc in ['Vacc_partially']:
-    #     for state in [None]: #[None, 9]:
-    #         # plot(files_vacc, dt.date(2021, 11, 18), column = vacc, filters={'ID_State' : [1], 'Age_RKI' : ['05-11','12-17']})
-    #         plot(files_vacc, region_spec=None, column=None, date=1, filters={'Group': ['Group1' , 'Group2'], 'InfectionState': [3,4]}, file_format='h5')
-    #         plot(files_vacc, region_spec='ID_County', column=vacc, date=dt.date(2021, 11, 18), filters={'ID_State': [1], 'Age_RKI': None}, file_format='h5')
+# ['a','b']
+    plot(
+        dfs_all, scale_colors=np.array([min_val, max_val]),
+        legend=['', '', ''],
+        title='Administered vaccinations (relative)', plot_colorbar=True,
+        fig_name='customPlot', dpi=300,
+        outercolor=[205 / 255, 238 / 255, 251 / 255])
