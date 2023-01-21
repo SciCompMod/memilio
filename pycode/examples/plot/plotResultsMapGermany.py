@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele, Martin J. Kuehn
+# Authors: Martin J. Kuehn
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -17,15 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import memilio.epidata.customPlot as cp
+import memilio.plot.plotMap as pm
 import pandas as pd
+import numpy as np
 import datetime as dt
 
 if __name__ == '__main__':
 
-    files_input = {'Reported data': 'tools/raw/test',
-                   'Reporsted data': 'tools/raw/test',
-                   'Reported d': 'tools/raw/test'}
+    files_input = {'Data set 1': 'PATH_TO_FILE_1',
+                   'Data set 2': 'PATH_TO_FILE_2'}
     file_format = 'json'
     # Define age groups which will be considered through filtering
     # Keep keys and values as well as its assignment constant, remove entries
@@ -47,12 +47,12 @@ if __name__ == '__main__':
     i = 0
     for file in files_input.values():
         # MEmilio backend hdf5 example
-        # df = cp.read_map_data(
+        # df = pm.extract_data(
         #     file, region_spec=None, column=None, date=1,
         #     filters={'Group': filter_age, 'InfectionState': [3, 4]},
         #     file_format=file_format)
-        # MEmilio epidata json example
-        df = cp.read_map_data(
+        # MEmilio epidata vaccination data json example
+        df = pm.extract_data(
             file, region_spec='ID_County',
             column='Vacc_partially',
             date=dt.date(2021, 11, 18),
@@ -65,9 +65,9 @@ if __name__ == '__main__':
             age_group_values = list(age_groups.values())
             age_group_values[-1] = age_group_values[-1].replace('80+', '>79')
             # scale data
-            df = cp.scale_dataframe_relative(
+            df = pm.scale_dataframe_relative(
                 df, age_group_values,
-                'tools/raw/county_current_population.json')
+                'PATH_TO_POPULATION_DATA_FILE.json')
 
         if i == 0:
             dfs_all = pd.DataFrame(df.iloc[:, 0])
@@ -78,9 +78,9 @@ if __name__ == '__main__':
     min_val = dfs_all[dfs_all.columns[1:]].min().min()
     max_val = dfs_all[dfs_all.columns[1:]].max().max()
 
-    cp.plot_map(
+    pm.plot_map(
         dfs_all, scale_colors=np.array([min_val, max_val]),
-        legend=['', '', ''],
-        title='Administered vaccinations (relative)', plot_colorbar=True,
-        fig_name='customPlot', dpi=300,
+        legend=['Label 1', 'Label 2'],
+        title='Title', plot_colorbar=True,
+        fig_name='Plot name', dpi=300,
         outercolor=[205 / 255, 238 / 255, 251 / 255])

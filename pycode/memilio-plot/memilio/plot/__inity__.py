@@ -19,7 +19,5 @@
 #############################################################################
 
 """
-MEmilio main namespace package.
+Functions to plot and visualize map data and simulation trajectories.
 """
-
-__path__ = __import__('pkgutil').extend_path(__path__, __name__)

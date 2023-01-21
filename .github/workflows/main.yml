@@ -190,7 +190,29 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
-          
+
+  build-py-plot:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-py
+        with:
+          package: plot
+
+  test-py-plot:
+    if: github.event.pull_request.draft == false
+    needs: build-py-plot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with: 
+          package: plot
+          coverage: ON 
+
   test-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -207,6 +229,15 @@ jobs:
       - uses: ./.github/actions/test-pylint
         with:
           package: epidata
+
+  test-pylint-plot:
+    needs: build-py-plot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-pylint
+        with:
+          package: plot          
 
   download-data:
     if: github.event.pull_request.draft == false
