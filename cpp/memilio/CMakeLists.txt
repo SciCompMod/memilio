@@ -101,5 +101,5 @@ if (MEMILIO_HAS_JSONCPP)
 endif()
 
 if (MEMILIO_HAS_MPI)
-    target_link_libraries(memilio PUBLIC ${MPI_CXX_LIBRARIES})
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
 endif()

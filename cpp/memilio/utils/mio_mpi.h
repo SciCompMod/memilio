@@ -3,7 +3,11 @@
 
 #include "memilio/config.h"
 #ifdef MEMILIO_HAS_MPI
+#include "memilio/utils/compiler_diagnostics.h"
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wcast-function-type") //ignore safe warning, see https://github.com/open-mpi/ompi/issues/5157
 #include "mpi.h"
+GCC_CLANG_DIAGNOSTIC(pop)
 
 #include <cstdint>
 #include <climits>
