@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
+
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs

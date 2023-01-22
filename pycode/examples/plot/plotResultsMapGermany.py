@@ -20,10 +20,11 @@
 import datetime as dt
 import os.path
 
-import memilio.epidata.getPopulationData as gpd
-import memilio.plot.plotMap as pm
 import numpy as np
 import pandas as pd
+
+import memilio.epidata.getPopulationData as gpd
+import memilio.plot.plotMap as pm
 
 if __name__ == '__main__':
 
@@ -72,8 +73,9 @@ if __name__ == '__main__':
             except (ValueError, FileNotFoundError):
                 print("Population data was not found. Download it from the internet.")
                 population = gpd.get_population_data(
-                    read_data=False, file_format=file_format, out_folder='data/pydata/Germany/',
-                    no_raw=True, split_gender=False, merge_eisenach=True)
+                    read_data=False, file_format=file_format,
+                    out_folder='data/pydata/Germany/', no_raw=True,
+                    split_gender=False, merge_eisenach=True)
 
             # For fitting of different age groups we need format ">X".
             age_group_values = list(age_groups.values())
