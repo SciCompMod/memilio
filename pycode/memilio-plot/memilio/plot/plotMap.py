@@ -315,7 +315,8 @@ def plot_map(data: pd.DataFrame,
             fname = 'data_column_' + str(i)
         else:
             fname = str(legend[i].replace(' ', '_'))
-        save_interactive(data[data_columns[i]], os.path.join(output_path, fname) + '.html')
+        save_interactive(data[data_columns[i]], os.path.join(
+            output_path, fname) + '.html')
 
     fig = plt.figure(figsize=(4 * len(data_columns), 6), facecolor=outercolor)
     # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
