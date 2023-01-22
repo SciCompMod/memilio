@@ -92,7 +92,12 @@ target_compile_options(memilio
 )
 
 if (MEMILIO_HAS_HDF5)
-    target_link_libraries(memilio PUBLIC hdf5::hdf5-static)
+    if (TARGET hdf5::hdf5-static)
+        set(hdf5_target hdf5-static)
+    else()
+        set(hdf5_target hdf5-shared)
+    endif()        
+    target_link_libraries(memilio PUBLIC hdf5::${hdf5_target})
 endif()
 
 if (MEMILIO_HAS_JSONCPP)

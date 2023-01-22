@@ -6,7 +6,8 @@
         "spdlog",
         "boost-optional",
         "boost-outcome",
-        "boost-filesystem"
+        "boost-filesystem",
+        "boost-odeint"
     ],
     "features": {
         "io": {

@@ -83,6 +83,6 @@ TEST(TestSimulation, advance_subpopulation)
         // Check whether the number of persons in infected state at the location is consistent
         ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
         // Check the time evolution is correct
-        ASSERT_EQ(school.get_population().get_time(i), ScalarType(i) / 24);
+        ASSERT_EQ(school.get_population().get_time(i), mio::ScalarType(i) / 24);
     }
 }

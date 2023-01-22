@@ -82,7 +82,7 @@ TEST(TestCompartmentalModel, secir)
     // These are internally added to a compile time map for fast lookup
 
     struct IncubationTime {
-        using Type = ScalarType;
+        using Type = mio::ScalarType;
         static constexpr Type get_default()
         {
             return 1.0;
@@ -94,7 +94,7 @@ TEST(TestCompartmentalModel, secir)
     };
 
     struct SerialInterval {
-        using Type = ScalarType;
+        using Type = mio::ScalarType;
         static constexpr Type get_default()
         {
             return 1.0;

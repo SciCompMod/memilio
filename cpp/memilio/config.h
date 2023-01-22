@@ -27,6 +27,9 @@
 
 #include "memilio/config_internal.h"
 
+namespace mio
+{
 using ScalarType = double;
+}
 
 #endif
