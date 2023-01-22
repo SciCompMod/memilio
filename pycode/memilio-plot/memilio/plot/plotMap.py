@@ -17,9 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import datetime as dt
 import os
-from gc import get_count
 
 # in case of a necessary manual installation of GDAL and Fiona on Windows, see
 # https://stackoverflow.com/questions/69521550/importerror-the-read-file-function-requires-the-fiona-package-but-it-is-no

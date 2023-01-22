@@ -23,11 +23,12 @@ import os.path
 import unittest
 from unittest.mock import patch
 
-import memilio.epidata.getPopulationData as gpd
-import memilio.plot.plotMap as pm
 import numpy as np
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
+
+import memilio.epidata.getPopulationData as gpd
+import memilio.plot.plotMap as pm
 
 
 @unittest.skip
