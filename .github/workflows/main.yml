@@ -313,7 +313,7 @@ jobs:
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
-          cp ci_index/main_index.html public/index.html
+          cp docs/main_index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
