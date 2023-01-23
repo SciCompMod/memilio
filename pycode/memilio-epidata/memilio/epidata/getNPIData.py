@@ -18,19 +18,15 @@
 # limitations under the License.
 #############################################################################
 from datetime import datetime, timedelta
-import sys
 import time
 import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.spatial.distance import pdist
-from scipy.cluster import hierarchy
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import customPlot
+from memilio.epidata import getPopulationData as gpd
 
 
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
@@ -163,7 +159,7 @@ def read_files(directory, fine_resolution):
                 directory, 'kr_massnahmen_oberkategorien.csv'))
         except FileNotFoundError:
             print_manual_download(
-                'datensatzbeschreibung_massnahmen.xlsx',
+                'kr_massnahmen_oberkategorien.csv',
                 'https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise')
             raise FileNotFoundError
         df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
@@ -185,8 +181,18 @@ def read_files(directory, fine_resolution):
             'datensatzbeschreibung_massnahmen.xlsx',
             'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
         raise FileNotFoundError
+    
+    # download combinations of npis
+    try:
+        if fine_resolution > 0:
+            df_npis_combinations_pre = pd.read_excel(
+                os.path.join(
+                    directory, 'combination_npis.xlsx'), engine = 'openpyxl')
+    except FileNotFoundError:
+        print('File not found.')
+        raise FileNotFoundError
 
-    return df_npis_old, df_npis_desc
+    return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
 
 def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, npi_activation_days_threshold, incid_threshold):
@@ -269,6 +275,7 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
         # If no condition applies, set int_active to the value of the previous day
         elif i>0: # for i=0, int_active always will be zero (see comment above)
             int_active[i] = int_active[i-1]
+        # elif i==0 int active is 0
 
     return int_active
 
@@ -357,7 +364,9 @@ def get_npi_data(fine_resolution=2,
                  out_folder=dd.defaultDict['out_folder'],
                  start_date=dd.defaultDict['start_date'],
                  end_date=dd.defaultDict['end_date'],
-                 counties_considered=geoger.get_county_ids()
+                 counties_considered=geoger.get_county_ids(),
+                 npi_activation_days_threshold = 3,    
+                 npi_lifting_days_threshold = 5
                  ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
@@ -397,7 +406,17 @@ def get_npi_data(fine_resolution=2,
         stored data frames.
     @param counties_considered [Default: 'All']. Either 'All' or a list of
         county IDs from 1001 to 16xxx.
+    @param npi_activation_days_threshold [Default: 5]. Defines days of 
+        exceeding inidence threshold to activate NPIs.
+    @param npi_alifting_days_threshold [Default: 5]. Defines days of 
+        falling below inidence threshold to lift NPIs.
     """
+
+    # depending on the federal state and time period, there are 
+    # huge deviations of the lifting and activation delay which was usually
+    # between 1 and 14 days
+    # we use npi_lifting_days_threshold = 5 and npi_activation_days_threshold = 3 as default
+    # as this is the most common and has at some point been used in almost every county
 
     if counties_considered == 'All':
         counties_considered = geoger.get_county_ids()
@@ -406,24 +425,8 @@ def get_npi_data(fine_resolution=2,
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    if fine_resolution > 0:
-        # defines delay in number of days between exceeding
-        # incidence threshold and NPI getting active
-        # delay = 0 means only one day is considered (=no delay)
-        npi_activation_days_threshold = 3
-        npi_lifting_days_threshold = 5
-        # depending on the federal state and time period, there are 
-        # huge deviations of the lifting and activation delay which was usually
-        # between 1 and 14 days
-        # we use npi_lifting_days_threshold = 5 and npi_activation_days_threshold = 3 
-        # as this is the most common and has at some point been used in almost every county
-        print('Using a delay of NPI activation of ' +
-              str(npi_activation_days_threshold) + ' days.')
-        print('Using a delay of NPI lifting of ' +
-              str(npi_lifting_days_threshold) + ' days.')
-
     # read manual downloaded files from directory
-    df_npis_old, df_npis_desc = read_files(directory, fine_resolution)
+    df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(directory, fine_resolution)
 
     # get existing codes that are used (in df_npis_old M22-M24 are empty)
     npi_codes_prior = df_npis_desc['Variablenname']
@@ -436,10 +439,6 @@ def get_npi_data(fine_resolution=2,
     # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
     # other
     if fine_resolution > 0:
-        df_npis_combinations_pre = pd.read_excel(
-            os.path.join(
-                directory, 'combination_npis.xlsx'), engine = 'openpyxl')
-
         # rename essential columns and throw away others
         column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
@@ -530,7 +529,7 @@ def get_npi_data(fine_resolution=2,
                     writer, sheet_name=npi_groups_combinations_unique[i])
             del df_out
         if write_file:
-            writer.save()
+            writer.close()
 
     # correct differences in codes between data sheet and explanation sheet
     codes_dropped, npi_codes_prior, df_npis_old = drop_codes_and_categories(
@@ -666,8 +665,12 @@ def get_npi_data(fine_resolution=2,
     counties_removed = df_npis_old[
         ~df_npis_old[dd.EngEng['idCounty']].isin(counties_considered)][
         dd.EngEng['idCounty']].unique()
-    if list(counties_removed) != [16056]:
-        raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
+    if 16056 in counties_considered:
+        if list(counties_removed) != [16056]:
+            raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
+    else:
+        if counties_removed.size > 0:
+            raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
         counties_considered)].reset_index(drop=True)
@@ -705,8 +708,11 @@ def get_npi_data(fine_resolution=2,
             directory, 'cases_all_county_all_dates_repdate.json'))
         df_infec_rki[dd.EngEng['date']] = pd.to_datetime(
             df_infec_rki[dd.EngEng['date']])
-        df_population = pd.read_json(
-            directory + "county_current_population.json")
+        try:
+            df_population = pd.read_json(
+                directory + "county_current_population.json")
+        except:
+            df_population=gpd.get_population_data()
         min_date.append(
             df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
         max_date.append(
@@ -739,6 +745,7 @@ def get_npi_data(fine_resolution=2,
     # replace -99 ("not used anymore") by 0 ("not used")
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+    counterdb = 0
 
     for countyID in counties_considered:
         cid = 0
@@ -761,6 +768,11 @@ def get_npi_data(fine_resolution=2,
             # cut infection information at start_date_new and end_date_new
             df_infec_local = df_infec_local[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
                 df_infec_local[dd.EngEng['date']] <= end_date_new)].reset_index()
+
+            
+            local_incid = df_infec_local['Incidence'].copy()
+            if local_incid[0]>0:
+                counterdb += 1
 
         # get county-local data frame
         start_time = time.perf_counter()
@@ -827,7 +839,6 @@ def get_npi_data(fine_resolution=2,
             # is exceeded
             for level, npi_indices in incidence_thresholds_to_npis.items():
                 if level[0] >= 0:  # level[0] = incidvalthrsh
-                    local_incid = df_infec_local['Incidence'].copy()
 
                     # get days where npis are active as int (1/0)
                     int_active = activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, npi_activation_days_threshold, level[0])
@@ -924,6 +935,8 @@ def get_npi_data(fine_resolution=2,
                   str(len(counties_considered)) +
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
+    if counterdb >= len(counties_considered)*0.05:
+        print('WARNING: DataFrame starts with incidence > 0, thus incidence dependent NPIs could not be activated correctly. Please consider a start date 1 or 2 weeks ahead of your analysis.')
 
     # print sub counters
     print('Sub task counters are: ')
