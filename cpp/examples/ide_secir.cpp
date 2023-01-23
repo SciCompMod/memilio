@@ -51,10 +51,35 @@ int main()
     // Initialize model.
     mio::isecir::Model model(std::move(init), dt, N, Dead0);
 
+    // Set working parameters.
+    // If we only comment out Transition Distributions we get a Segmentation fault
+    model.parameters.set<mio::isecir::TransitionDistributions>(
+        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+    // if we comment out only TransitionProbablities we get Segmentation fault
+    model.parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(num_transitions, 0.5));
+    // if we comment out lines for ContactPatterns no Segmentation fault but nans
+    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    // if we comment out these no Segmentation fault but only get nan in simulation
+    std::cout << "Before \n";
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
+    std::cout << "After \n";
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+
     // Carry out simulation.
-    model.simulate(tmax);
+    mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
 
     model.print_transitions();
     std::cout << "\n" << std::endl;
     model.print_compartments();
+
+    ScalarType num_persons = 0.0;
+
+    for (auto i = 0; i < compartments.get_last_value().size(); i++) {
+        std::cout << compartments.get_last_value()[i] << "\n";
+        num_persons += compartments.get_last_value()[i];
+    }
+    std::cout << num_persons << "\n";
 }

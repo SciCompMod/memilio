@@ -139,7 +139,7 @@ struct TransmissionProbabilityOnContact {
     using Type = ScalarType;
     static Type get_default()
     {
-        return 1.0;
+        return 0.5;
     }
     static std::string name()
     {
@@ -155,7 +155,7 @@ struct RelativeTransmissionNoSymptoms {
     using Type = ScalarType;
     static Type get_default()
     {
-        return 1.0;
+        return 0.5;
     }
     static std::string name()
     {
@@ -171,7 +171,7 @@ struct RiskOfInfectionFromSymptomatic {
     using Type = ScalarType;
     static Type get_default()
     {
-        return 1.0;
+        return 0.5;
     }
     static std::string name()
     {

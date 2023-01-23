@@ -63,7 +63,7 @@ public:
     * @return The result of the simulation, stored in a TimeSeries with simulation time and 
     *       associated number of susceptibles.
     */
-    void simulate(ScalarType t_max);
+    TimeSeries<ScalarType> const& simulate(ScalarType t_max);
 
     // Used Parameters for the simulation.
     Pa parameters{};

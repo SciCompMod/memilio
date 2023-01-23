@@ -31,9 +31,9 @@ namespace isecir
 
 Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
              Pa Parameterset_init)
-    : parameters{std::move(Parameterset_init)}
+    : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
-    , m_SECIR{TimeSeries<ScalarType>((double)InfectionState::Count)}
+    , m_SECIR{TimeSeries<ScalarType>((ScalarType)InfectionState::Count)}
     , m_dt{dt_init}
     , m_N{N_init}
 {
@@ -237,7 +237,7 @@ void Model::compartments_current_timestep_ECIHU()
                         (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
-void Model::simulate(ScalarType t_max)
+TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
 {
     std::cout << "Starting simulation:  \n";
     // compute S(0) and phi(0) as initial values for discretization scheme
@@ -282,6 +282,8 @@ void Model::simulate(ScalarType t_max)
         compute_recovered();
     }
     std::cout << "Finished simulation successfully.  \n";
+
+    return m_SECIR;
 }
 
 void Model::print_transitions() const
