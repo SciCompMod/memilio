@@ -89,12 +89,12 @@ TimeSeries<double> const& IdeSeirModel::simulate(int t_max)
         Eigen::Index idx = m_result.get_num_time_points();
 
         // R0t is the effective reproduction number at time t
-        auto R0t1 =
-            parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
-            parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
-        auto R0t2 =
-            parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
-            parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
+        auto R0t1 = 2;
+        // parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
+        // parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
+        auto R0t2 = 2;
+        // parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
+        // parameters.get<TransmissionRisk>() * parameters.get<InfectiousTime>();
 
         m_result.get_last_value() =
             Vec::Constant(1, m_result[idx - 2][0] * exp(m_dt * (0.5 * 1 / m_N) *

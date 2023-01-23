@@ -212,6 +212,8 @@ public:
         class = std::enable_if_t<details::AllOf<std::is_default_constructible, typename Tags::Type...>::value, Dummy>>
     explicit ParameterSet(NoDefaultInit)
     {
+        int a = 0;
+        unused(a);
     }
 
     /**
@@ -225,6 +227,8 @@ public:
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
+        int a = 0;
+        unused(a);
     }
 
     /**
@@ -240,8 +244,33 @@ public:
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
+        int a = 0;
+        unused(a);
     }
 
+    ParameterSet(const ParameterSet&)
+    {
+        int a = 0;
+        unused(a);
+    }
+    ParameterSet(ParameterSet&&)
+    {
+        int a = 0;
+        unused(a);
+    }
+    ParameterSet& operator=(const ParameterSet&)
+    {
+        int a = 0;
+        unused(a);
+        return *this;
+    }
+    ParameterSet& operator=(ParameterSet&&)
+    {
+        int a = 0;
+        unused(a);
+        return *this;
+    }
+    virtual ~ParameterSet() = default;
     /**
      * @brief get value of a parameter
      * @tparam Tag the queried parameter
