@@ -1197,7 +1197,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>&& model, c
                                                    double scaling_factor_icu, int num_days, bool set_vaccination_data)
 {
     if (set_vaccination_data) {
-        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(data_dir, "all_county_ageinf_vacc_ma7.json"),
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(data_dir, "vacc_county_ageinf_ma7.json"),
                                                         date, county, num_days));
     }
 
@@ -1228,7 +1228,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                       const std::string& dir, int num_days, bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date,
+    BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(dir, "vacc_county_ageinf_ma7.json"), date,
                                                     county, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.

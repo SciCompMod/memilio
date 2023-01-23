@@ -835,14 +835,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             population_old_ages, merge_2022=True)
 
     # store data for all counties
-    filename = 'all_county_agevacc_vacc'
+    filename = 'vacc_county_agevacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_agevacc_county_cs,
                        directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_agevacc_vacc'
+    filename = 'vacc_states_agevacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_agevacc_state_cs = df_data_agevacc_county_cs.groupby(
         [dd.EngEng['date'],
@@ -894,13 +894,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         {col_new: sum for col_new in vacc_column_names}).reset_index()
 
     # store data for all counties
-    filename = 'all_county_vacc'
+    filename = 'vacc_county'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_county_cs, directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_vacc'
+    filename = 'vacc_states'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_state_cs = df_data_county_cs.groupby(
         [dd.EngEng['date'],
@@ -923,14 +923,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     df_data_ageinf_county_cs = df_data_ageinf_county_cs.reset_index(drop=True)
 
     # store data for all counties
-    filename = 'all_county_ageinf_vacc'
+    filename = 'vacc_county_ageinf'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_ageinf_county_cs,
                        directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_ageinf_vacc'
+    filename = 'vacc_states_ageinf'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_ageinf_state_cs = df_data_ageinf_county_cs.groupby(
         [dd.EngEng['date'],
