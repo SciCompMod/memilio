@@ -10,7 +10,6 @@ body:
 - type: textarea
   id: doc-description
   attributes:
-    label: "Provide a description of requested documentation changes"
-    description: "Briefly describe the requested documentation changes."
+    label: "Provide a description of requested documentation changes."
   validations:
     required: true

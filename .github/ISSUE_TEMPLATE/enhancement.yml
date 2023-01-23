@@ -19,20 +19,18 @@ body:
     description: "Describe the enhancement."
   validations:
     required: true
-
 - type: textarea
   id: -context
   attributes:
     label: "Additional context"
     description: "Code location/examples, Papers, Mathematics, put them here."
-
- - type: checkboxes
-    id: checks
-    attributes:
-      label: Checklist
-      description: Add Labels and add this issue to a project.
-      options:
-        - label: Attached labels
-          required: false
-        - label: Linked to project
-          required: false
+- type: checkboxes
+  id: checks
+  attributes:
+    label: Checklist
+    description: Add Labels and add this issue to a project.
+    options:
+      - label: Attached labels
+        required: false
+      - label: Linked to project
+        required: false
