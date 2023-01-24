@@ -18,10 +18,14 @@
 * limitations under the License.
 */
 #include "abm/person.h"
+#include "abm/location_type.h"
+#include "abm/mask_type.h"
+#include "abm/parameters.h"
 #include "abm/state.h"
 #include "abm/world.h"
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
+#include <vector>
 
 namespace mio
 {
@@ -39,6 +43,9 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
+    , m_mask(Mask(MaskType::Community))
+    , m_wears_mask(false)
+    , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
@@ -202,6 +209,48 @@ std::vector<uint32_t>& Person::get_cells()
 const std::vector<uint32_t>& Person::get_cells() const
 {
     return m_cells;
+}
+
+double Person::get_protective_factor(const GlobalInfectionParameters& params) const
+{
+    if (m_wears_mask == false) {
+        return 0.;
+    }
+    else {
+        return params.get<MaskProtection>()[m_mask.get_type()];
+    }
+}
+
+bool Person::apply_mask_intervention(const Location& target)
+{
+    if (target.get_npi_active() == false) {
+        m_wears_mask = false;
+        if (get_mask_compliance(target.get_type()) > 0.) {
+            // draw if the person wears a mask even if not required
+            double wear_mask = UniformDistribution<double>::get_instance()();
+            if (wear_mask < get_mask_compliance(target.get_type())) {
+                m_wears_mask = true;
+            }
+        }
+    }
+    else {
+        m_wears_mask = true;
+        if (get_mask_compliance(target.get_type()) < 0.) {
+            // draw if a person refuses to wear the required mask
+            double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+            if (wear_mask > get_mask_compliance(target.get_type())) {
+                m_wears_mask = false;
+            }
+            return false;
+        }
+        if (m_wears_mask == true) {
+
+            if (static_cast<int>(m_mask.get_type()) < static_cast<int>(target.get_required_mask())) {
+                m_mask.change_mask(target.get_required_mask());
+            }
+        }
+    }
+    return true;
 }
 
 } // namespace abm

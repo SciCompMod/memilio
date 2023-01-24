@@ -6,23 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-cpp-gcc:
+  build-cpp-gcc_clang:
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]  
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with: 
-          compiler: "gcc"
-          config: "Debug"
-          version: "latest"
-
-  build-cpp-clang:
-    runs-on: "ubuntu-20.04"
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/linux-build
-        with: 
-          compiler: "clang"
+          compiler: ${{ matrix.compiler }}
           config: "Debug"
           version: "latest"
 
@@ -35,23 +28,17 @@ jobs:
           config: "Debug"
           version: "latest"
 
-  test-cpp-gcc:
-    needs: build-cpp-gcc
+  test-cpp-gcc_clang:
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]      
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-gcc-latest-Debug-full
-
-  test-cpp-clang:
-    needs: build-cpp-clang
-    runs-on: "ubuntu-20.04"
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/linux-test
-        with: 
-          build-artifact: build-cpp-linux-clang-latest-Debug-full
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-latest-Debug-full
 
   test-cpp-msvc:
     needs: build-cpp-msvc
