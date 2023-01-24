@@ -21,7 +21,7 @@
 #define MEMILIO_DATA_ANALYZE_RESULT_H
 
 #include "memilio/utils/time_series.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 
 #include <functional>
 #include <vector>

@@ -29,7 +29,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -359,8 +359,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
-                    regions::de::StateId(r) == regions::de::get_state_id(*county_entry.county_id)) ||
-                   (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id);
+                    regions::StateId(r) == regions::get_state_id(*county_entry.county_id)) ||
+                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());
@@ -412,8 +412,8 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
-            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(r)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(r));
+            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(r)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::StateId(r));
         });
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {

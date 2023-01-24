@@ -28,7 +28,7 @@
 #include "ode_secirvvs/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"

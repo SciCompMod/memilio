@@ -39,7 +39,6 @@
 namespace mio
 {
 
-
 /**
  * Date that serializes into a string.
  */
@@ -83,8 +82,8 @@ public:
     double num_deaths;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
@@ -95,8 +94,8 @@ public:
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id      = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return apply(
             io,
             [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid,
@@ -156,8 +155,8 @@ class DiviEntry
 public:
     double num_icu;
     Date date;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
@@ -165,8 +164,8 @@ public:
         auto obj       = io.expect_object("DiviEntry");
         auto num_icu   = obj.expect_element("ICU", Tag<double>{});
         auto date      = obj.expect_element("Date", Tag<StringDate>{});
-        auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id  = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return apply(
             io,
             [](auto&& ni, auto&& d, auto&& sid, auto&& cid) {
@@ -224,15 +223,15 @@ public:
     static const std::array<const char*, 11> age_group_names;
 
     CustomIndexArray<double, AgeGroup> population;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
         auto obj       = io.expect_object("PopulationDataEntry");
-        auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id  = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         std::vector<IOResult<double>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
@@ -390,9 +389,9 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         //holiday periods
-        auto holiday_periods = regions::de::get_holidays(
-            regions::de::get_state_id(regions::de::CountyId(county_ids[county_idx])), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.template get<ContactPattern>();
+        auto holiday_periods = regions::get_holidays(regions::get_state_id(regions::CountyId(county_ids[county_idx])),
+                                                     start_date, end_date);
+        auto& contacts       = counties[county_idx].parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
         std::transform(
@@ -498,8 +497,6 @@ create_graph(Graph<Model, MigrationParameters>& params_graph, const Parameters& 
     return success(params_graph);
 }
 
-
-
 /**
  * Represents an entry in a vaccination data file.
  */
@@ -511,8 +508,8 @@ public:
     double num_vaccinations_completed;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
@@ -521,8 +518,8 @@ public:
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
-        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::StateId>{});
+        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return mio::apply(
             io,
             [](auto nf, auto d, auto&& a_str, auto sid, auto cid) -> IOResult<VaccinationDataEntry> {
