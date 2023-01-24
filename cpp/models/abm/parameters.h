@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -50,7 +50,7 @@ struct IncubationPeriod {
 };
 
 struct SusceptibleToExposedByCarrier {
-    using Type = CustomIndexArray<ScalarType, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -62,7 +62,7 @@ struct SusceptibleToExposedByCarrier {
 };
 
 struct SusceptibleToExposedByInfected {
-    using Type = CustomIndexArray<ScalarType, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
