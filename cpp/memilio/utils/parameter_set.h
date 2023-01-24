@@ -248,29 +248,31 @@ public:
         unused(a);
     }
 
-    ParameterSet(const ParameterSet&)
-    {
-        int a = 0;
-        unused(a);
-    }
-    ParameterSet(ParameterSet&&)
-    {
-        int a = 0;
-        unused(a);
-    }
-    ParameterSet& operator=(const ParameterSet&)
-    {
-        int a = 0;
-        unused(a);
-        return *this;
-    }
-    ParameterSet& operator=(ParameterSet&&)
-    {
-        int a = 0;
-        unused(a);
-        return *this;
-    }
-    virtual ~ParameterSet() = default;
+    // ParameterSet(const ParameterSet&)
+    // {
+    //     int a = 0;
+    //     int b = a + a;
+    //     unused(b);
+    //     unused(a);
+    // }
+    // ParameterSet(ParameterSet&&)
+    // {
+    //     int a = 0;
+    //     unused(a);
+    // }
+    // ParameterSet& operator=(const ParameterSet&)
+    // {
+    //     int a = 0;
+    //     unused(a);
+    //     return *this;
+    // }
+    // ParameterSet& operator=(ParameterSet&&)
+    // {
+    //     int a = 0;
+    //     unused(a);
+    //     return *this;
+    // }
+    // virtual ~ParameterSet() = default;
     /**
      * @brief get value of a parameter
      * @tparam Tag the queried parameter
