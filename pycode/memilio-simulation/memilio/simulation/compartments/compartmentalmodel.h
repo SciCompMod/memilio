@@ -36,7 +36,6 @@ void bind_CompartmentalModel(pybind11::module& m, std::string const& name)
     using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
     pybind11::class_<Model>(m, name.c_str())
         .def(pybind11::init<Populations const&, Parameters const&>())
-        .def("apply_constraints", &Model::template apply_constraints<Parameters>)
         .def("check_constraints", &Model::template check_constraints<Parameters>)
         .def("get_initial_values", &Model::get_initial_values)
         .def_property(

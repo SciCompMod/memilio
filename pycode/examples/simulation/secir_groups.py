@@ -125,7 +125,7 @@ def run_secir_groups_simulation(show_plot=True):
         coeffs=np.ones((num_groups, num_groups)) * 0.9, t=30.0, level=0, type=0))
 
     # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)

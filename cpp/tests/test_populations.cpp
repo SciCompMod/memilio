@@ -20,6 +20,7 @@
 #include "memilio/epidemiology/populations.h"
 #include <gtest/gtest.h>
 #include <array>
+#include <iostream>
 
 // Three categories, one defined by an enum, one by an enum class and one by a struct.
 enum class InfectionState
@@ -222,4 +223,31 @@ TEST(TestPopulations, set_difference_from_group_total)
             }
         }
     }
+}
+
+TEST(TestPopulations, check_constraints)
+{
+    mio::Index<InfectionState> num_infType(InfectionState::Count);
+    mio::Index<AgeGroup> num_ageGroup(7);
+    mio::Index<Continent> num_continents(Continent::Count);
+
+    using Po = mio::Populations<InfectionState, AgeGroup, Continent>;
+    Po m({num_infType, num_ageGroup, num_continents});
+
+    ASSERT_EQ(m.check_constraints(), 0);
+
+    Po::Index E_2_europe = {mio::Index<InfectionState>(InfectionState::S), mio::Index<AgeGroup>(2),
+                            mio::Index<Continent>(Europe)};
+    m[E_2_europe]        = -3;
+    ASSERT_EQ(m.check_constraints(), 1);
+
+    m[E_2_europe] = 3;
+    ASSERT_EQ(m.check_constraints(), 0);
+    Po::Index R_1_asia = {mio::Index<InfectionState>(InfectionState::R), mio::Index<AgeGroup>(1),
+                          mio::Index<Continent>(Asia)};
+    m[R_1_asia]        = -4;
+    ASSERT_EQ(m.check_constraints(), 1);
+
+    m[R_1_asia] = 4;
+    ASSERT_EQ(m.check_constraints(), 0);
 }

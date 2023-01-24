@@ -72,7 +72,7 @@ int main()
     model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
 
-    model.apply_constraints();
+    model.check_constraints();
 
     auto integrator = std::make_shared<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);

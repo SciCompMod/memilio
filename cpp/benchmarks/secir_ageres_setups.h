@@ -85,7 +85,7 @@ mio::osecir::Model make_model(int num)
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
                                mio::SimulationTime(30.));
 
-    model.apply_constraints();
+    model.check_constraints();
 
     return model;
 }

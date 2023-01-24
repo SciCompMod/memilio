@@ -66,7 +66,7 @@ def parameter_study():
         secir.AgeGroup(0),
         secir.InfectionState.Susceptible),
         10000)
-    model.apply_constraints()
+    model.check_constraints()
     graph.add_node(id=0, model=model)  # copies the model into the graph
     model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 0
     model.populations[secir.AgeGroup(
@@ -83,7 +83,7 @@ def parameter_study():
         secir.AgeGroup(0),
         secir.InfectionState.Susceptible),
         2000)
-    model.apply_constraints()
+    model.check_constraints()
     graph.add_node(id=1, model=model)
     migration_coefficients = 0.1 * np.ones(8)
     migration_params = mio.MigrationParameters(migration_coefficients)

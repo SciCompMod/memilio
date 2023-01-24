@@ -225,29 +225,17 @@ public:
     }
 
     /**
-     * @brief checks whether the population Parameters satisfy their corresponding constraints and applys them
-     */
-    void apply_constraints()
-    {
-        for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
-                            0);
-                this->array()[i] = 0;
-            }
-        }
-    }
-
-    /**
      * @brief checks whether the population Parameters satisfy their corresponding constraints
      */
-    void check_constraints() const
+    int check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0) {
                 log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->array()[i], 0);
+                return 1;
             }
         }
+        return 0;
     }
 
     /**

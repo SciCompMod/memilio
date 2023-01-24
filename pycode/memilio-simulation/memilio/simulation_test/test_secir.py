@@ -62,7 +62,7 @@ class Test_secir_integration(unittest.TestCase):
             Damping(coeffs=np.r_[0.0], t=0.0, level=0, type=0))
         model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
-        model.apply_constraints()
+        model.check_constraints()
 
         self.model = model
 

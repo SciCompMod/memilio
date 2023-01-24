@@ -462,7 +462,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 {
     std::vector<mio::osecir::Model> model(1, {6});
-    model[0].apply_constraints();
+    model[0].check_constraints();
     std::vector<double> scaling_factor_inf(6, 1.0);
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);
@@ -508,7 +508,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
 {
     std::vector<mio::osecir::Model> model(1, {6});
-    model[0].apply_constraints();
+    model[0].check_constraints();
     std::vector<double> scaling_factor_inf(6, 1.0);
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);
@@ -557,7 +557,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
 {
 
     std::vector<mio::osecir::Model> model(1, {6});
-    model[0].apply_constraints();
+    model[0].check_constraints();
     std::vector<double> scaling_factor_inf(6, 1.0);
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);
@@ -606,7 +606,7 @@ TEST(TestSaveParameters, ExtrapolateRKI)
 {
     std::vector<mio::osecir::Model> model{mio::osecir::Model(6)};
 
-    model[0].apply_constraints();
+    model[0].check_constraints();
     std::vector<double> scaling_factor_inf(6, 1.0);
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);

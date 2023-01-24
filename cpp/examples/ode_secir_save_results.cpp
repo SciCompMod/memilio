@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
-    params.apply_constraints();
+    model.check_constraints();
     auto num_groups = (int)(size_t)params.get_num_groups();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();

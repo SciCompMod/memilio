@@ -151,7 +151,7 @@ void draw_sample(Model& model)
     draw_sample_infection(model);
     draw_sample_demographics(model);
     model.parameters.get<ContactPatterns>().draw_sample();
-    model.apply_constraints();
+    model.check_constraints();
 }
 
 Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph)
@@ -183,7 +183,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
 
         node_model.parameters.template get<ContactPatterns>().make_matrix();
-        node_model.apply_constraints();
+        node_model.check_constraints();
 
         sampled_graph.add_node(params_node.id, node_model);
     }

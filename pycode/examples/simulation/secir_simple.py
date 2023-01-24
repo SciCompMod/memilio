@@ -101,7 +101,7 @@ def run_secir_simulation(show_plot=True):
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
     # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)

@@ -175,8 +175,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::osecir::Parameters::check_constraints)
-        .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
+        .def("check_constraints", &mio::osecir::Parameters::check_constraints);
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});

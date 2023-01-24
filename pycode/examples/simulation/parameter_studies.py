@@ -88,7 +88,7 @@ def parameter_study():
 
     # study the effect of different infection rates
 
-    model.apply_constraints()
+    model.check_constraints()
 
     graph = secir.ModelGraph()
     graph.add_node(0, model)

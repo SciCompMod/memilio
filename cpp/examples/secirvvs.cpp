@@ -109,7 +109,7 @@ int main()
 
     model.parameters.get<mio::osecirvvs::Seasonality>() = 0.2;
 
-    model.apply_constraints();
+    model.check_constraints();
 
     // use adaptive Runge-Kutta-Fehlberg45 scheme as integrator
     // auto integrator = std::make_shared<mio::RKIntegratorCore>();

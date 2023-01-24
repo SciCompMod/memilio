@@ -132,7 +132,7 @@ TEST(TestSecir, reduceToSecirAndCompareWithPreviousRun)
 
     model.parameters.get<mio::osecirvvs::Seasonality>() = 0.2;
 
-    model.apply_constraints();
+    model.check_constraints();
 
     // TODO: gets stuck by division by zero!!
     // auto integrator = std::make_shared<mio::RKIntegratorCore>();
@@ -396,7 +396,7 @@ mio::osecirvvs::Model make_model(int num_age_groups, bool set_invalid_initial_va
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
     set_contact_parameters(model.parameters, set_invalid_initial_value);
-    model.parameters.apply_constraints();
+    model.check_constraints();
     return model;
 }
 

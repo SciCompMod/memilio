@@ -37,24 +37,13 @@ namespace details
 template <class T>
 using check_constraints_expr_t = decltype(std::declval<T>().check_constraints());
 
-//helpers for apply_constraints
-template <class T>
-using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
-} //namespace details
-
+} // namespace details
 /**
  * @brief check whether a check_constraints function exists
  * @tparam The type to check for the existence of the member function
  */
 template <class T>
 using has_check_constraints_member_function = is_expression_valid<details::check_constraints_expr_t, T>;
-
-/**
- * @brief check whether a apply_constraints function exists
- * @tparam The type to check for the existence of the member function
- */
-template <class T>
-using has_apply_constraints_member_function = is_expression_valid<details::apply_constraints_expr_t, T>;
 
 /**
  * @brief CompartmentalModel is a template for a compartmental model for an
@@ -159,20 +148,6 @@ public:
     Eigen::VectorXd get_initial_values() const
     {
         return populations.get_compartments();
-    }
-
-    // TODO: if constexpr as soon as we open for C++17
-    template <typename T = ParameterSet>
-    std::enable_if_t<has_apply_constraints_member_function<T>::value> apply_constraints()
-    {
-        populations.apply_constraints();
-        parameters.apply_constraints();
-    }
-
-    template <typename T = ParameterSet>
-    std::enable_if_t<!has_apply_constraints_member_function<T>::value> apply_constraints()
-    {
-        populations.apply_constraints();
     }
 
     template <typename T = ParameterSet>

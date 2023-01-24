@@ -61,7 +61,7 @@ int main()
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = -fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
@@ -86,7 +86,7 @@ int main()
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
                                mio::SimulationTime(30.));
 
-    model.apply_constraints();
+    model.check_constraints();
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 

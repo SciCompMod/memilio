@@ -60,7 +60,7 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.CriticalPerSevere[A0] = 0.25
         model.parameters.DeathsPerCritical[A0] = 0.3
 
-        model.apply_constraints()
+        model.check_constraints()
         return model
 
     def test_run(self):

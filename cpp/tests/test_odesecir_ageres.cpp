@@ -72,7 +72,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
     }
 
-    params.apply_constraints();
+    model.check_constraints();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
@@ -149,7 +149,7 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
         params.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
     }
 
-    params.apply_constraints();
+    model.check_constraints();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =

@@ -97,7 +97,7 @@ TEST(TestMobility, nodeEvolve)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
     params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
     params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.;
-    params.apply_constraints();
+    params.check_constraints();
 
     double t0 = 2.835;
     double dt = 0.5;
@@ -126,7 +126,7 @@ TEST(TestMobility, edgeApplyMigration)
     params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
     params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]                   = 1.5;
     params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]                   = 2.;
-    params.apply_constraints();
+    params.check_constraints();
     double t = 3.125;
     mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
     mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
