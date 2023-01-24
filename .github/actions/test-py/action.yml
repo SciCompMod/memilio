@@ -37,7 +37,7 @@ runs:
       run: |
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest
+          python -W ignore::DeprecationWarning -m coverage run --include=**site-packages/memilio* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
