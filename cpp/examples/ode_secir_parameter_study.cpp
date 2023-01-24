@@ -124,7 +124,7 @@ int main()
         params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
     }
 
-    params.check_constraints();
+    model.check_constraints();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] =
