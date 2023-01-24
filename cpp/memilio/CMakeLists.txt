@@ -19,7 +19,7 @@ add_library(memilio
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
-    geography/holiday_data_de.ipp
+    geography/holiday_data.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h
     compartments/parameter_studies.h
