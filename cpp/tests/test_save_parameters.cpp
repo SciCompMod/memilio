@@ -51,7 +51,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 4.;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
@@ -278,7 +278,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        model.parameters.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        model.parameters.get<mio::osecir::SerialInterval>()[i]       = 4.;
         model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         model.parameters.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
