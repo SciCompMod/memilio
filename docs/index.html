@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<HTML lang="en">
+
+<HEAD>
+  <TITLE>MEmilio - a high performance Modular EpideMIcs simuLatIOn software</TITLE>
+  <meta name="description"
+    content="MEmilio, Infectious Disease Modeling, Pandemic, Mobility, Scenarios, German Aerospace Center">
+  <meta name="keywords"
+    content="MEmilio, Infectious Disease Modeling, Virus, Sars-CoV-2, Covid-19, Pandemic, Mobility, Scenarios, German Aerospace Center">
+  <meta name="author" content="Deutsches Zentrum für Luft- und Raumfahrt e.V. (DLR)">
+  <meta name="HandheldFriendly" content="true">
+  <meta name="google-site-verification" content="BEq7yWqksTB4rBtUzG6qVYfhCm40JNbNWjpS537OnWo">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <link rel="icon" href="https://www.dlr.de/favicon.ico" />
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script>
+
+    function width() {
+      if (window.innerWidth && window.visualViewport.width) {
+        return Math.min(window.innerWidth, window.visualViewport.width);
+      }
+      else if (window.innerWidth) {
+        return window.innerWidth;
+      }
+      else if (window.visualViewport.width) {
+        return window.visualViewport.width;
+      } else {
+        return 0;
+      }
+    }
+
+    function height() {
+      if (window.innerHeight) {
+        return window.innerHeight;
+      } else {
+        return 0;
+      }
+    }
+
+    function resize(elem, newwidth) {
+      oldwidth = elem.width;
+      oldheight = elem.height;
+      if (elem.width === undefined) {
+        oldwidth = parseInt(elem.style.width);
+        oldheight = parseInt(elem.style.height);
+      }
+      var rescale = newwidth / oldwidth;
+      elem.style.width = newwidth + "px";
+      elem.style.height = rescale * oldheight + "px";
+    }
+
+  </script>
+
+
+</HEAD>
+
+<body style="background-color:#FFFFFF; overflow-x:hidden; overflow-y:scroll">
+
+  <div id="header" style="width:100%; background-color:#A9E2FF; margin:0px; position:fixed; z-index:6;">
+
+    <div id="header_left" style="padding-left:20px; padding-top:0px; width:30%; position:relative; float:left;">
+      <p style='font-size:32pt'>MEmilio</p>
+    </div>
+    <div id="header_right" style="padding-left:20px; padding-top:40px; width:65%; position:relative; float:right;">
+      <div class='menu_div'><a class='menu' href='index.html#start'>Start</a></div>
+      <div class='menu_div'><a class='menu' href="documentation/index.html">Documentation</a></div>
+      <div class='menu_div'><a class='menu' href="coverage/cpp/index.html">C++ Coverage</a></div>
+      <div class='menu_div'><a class='menu' href="coverage/python/index.html">Python Coverage</a></div>
+      <div class='menu_div'><a class='menu' href="pylint/index.html">Pylint</a></div>
+    </div>
+
+  </div>
+
+  <div id='content' style="text-align:left; width:100%; margin:0px;">
+
+    <div id="start" style="position:relative; float:left; width:100%; box-sizing: border-box; padding-top:95px">
+      <h1>MEmilio - a high performance Modular EpideMIcs simuLatIOn software</h1>
+
+      <div class="content">
+        MEmilio is a common project between the Institute for Software Technology of the German Aerospace Center (DLR)
+        and the department of Systems Immunology (SIMM) of the Helmholtz Center for Infection Research (HZI). This
+        project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a
+        precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEmilio is still under
+        developement but it is available as Open Source and we encourage everyone to make use of it. If you use it,
+        please cite:
+
+        <ul>
+          <li> Kühn, Martin Joachim und Abele, Daniel und Kerkmann, David und Korf, Sascha Alexander und Zunker, Henrik
+            und
+            Wendler, Anna Clara und Bicker, Julia und Nguyen, Dang Khoa und Klitz, Margrit und Koslow, Wadim und Siggel,
+            Martin und Kleinert, Jan und Rack, Kathrin und Binder, Sebastian und Plötzke, Lena und Schmieding, René und
+            Lenz, Patrick und Betz, Maximilian Franz und Lutz, Annette und Gerstein, Carlotta und Schmidt, Agatha und
+            Meyer-Hermann, Michael und Basermann, Achim (2022) MEmilio - a high performance Modular EpideMIcs simuLatIOn
+            software (2022). <a href="https://github.com/DLR-SC/memilio">https://github.com/DLR-SC/memilio</a>, <a
+              href="https://elib.dlr.de/192140/">https://elib.dlr.de/192140/</a>.</li><br>
+
+          <li> Koslow W, Kühn MJ, Binder S, Klitz M, Abele D, et al. (2022) Appropriate relaxation of non-pharmaceutical
+            interventions minimizes the risk of a resurgence in SARS-CoV-2 infections in spite of the Delta variant.
+            PLOS
+            Computational Biology 18(5): e1010054. <a
+              href="https://doi.org/10.1371/journal.pcbi.1010054">https://doi.org/10.1371/journal.pcbi.1010054</a></li>
+        </ul>
+        <p></p>
+
+        Contact: <a href="mailto:Martin.Kuehn@DLR.de">Martin.Kuehn@DLR.de</a>
+        <p></p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="footer"
+    style="position:relative; float:left; width:100%; box-sizing: border-box; background-color:#A9E2FF; bottom:0px; text-align:center">
+    <a href="" style="padding-right:10px">Imprint and terms of use</a>
+    <a href="" style="padding-right:10px">Privacy</a>
+    <a href="" style="padding-right:10px">Cookies & Tracking</a>
+    <a href="" style="padding-right:10px">Accessibility</a>
+  </div>
+
+
+
+  <script>
+    if (width() < 600) {
+      for (var i = 0; i < document.getElementsByTagName('img').length; i++) {
+        if (document.getElementsByTagName('img').item(i).width > 350) {
+          resize(document.getElementsByTagName('img').item(i), 250);
+        }
+      }
+      for (var i = 0; i < document.getElementsByClassName('content').length; i++) {
+        document.getElementsByClassName('content').item(i).style.paddingLeft = '20px';
+        document.getElementsByClassName('content').item(i).style.paddingRight = '20px';
+      }
+      document.getElementById('header_right').style.paddingTop = '0px';
+      document.getElementById('start').style.paddingTop = '210px';
+    }
+  </script>
+
+</body>
+
+</HTML>
