@@ -304,7 +304,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.1);
     mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, 1);
 
     // Run parameter study

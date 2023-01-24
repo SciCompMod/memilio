@@ -620,7 +620,7 @@ TEST(TestSecir, testModelConstraints)
     // }
 
     // temporary test for random variables
-    set_params_distributions_normal(model, t0, tmax, 0.2);
+    set_params_distributions_normal(model, t0, tmax, 0.1);
 
     for (size_t j = 0; j < 10; j++) {
         draw_sample(model);
