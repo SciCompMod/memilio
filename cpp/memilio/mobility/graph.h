@@ -25,6 +25,8 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/utils/parameter_distributions.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -259,7 +261,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 
         //local parameters
         auto& tnt_value = counties[county_idx].parameters.template get<TestNTrace>();
-        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         //holiday periods
@@ -279,7 +281,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = counties[county_idx].populations[{i, j}];
                 compartment_value =
-                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                    mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
                                                                                      1.1 * double(compartment_value)));
             }
