@@ -248,7 +248,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
                          const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                          double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    BOOST_OUTCOME_TRY(county_ids, get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
@@ -294,7 +294,8 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
     return success();
 }
 
-template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup, class InfectionState, class ReadFunction>
+template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
+          class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func)

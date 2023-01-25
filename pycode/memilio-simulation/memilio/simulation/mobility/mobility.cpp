@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "mobility/mobility.h"
+#include "mobility/graph_parameters.h"
 
 #include "pybind11/eigen.h"
 

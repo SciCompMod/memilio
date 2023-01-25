@@ -26,7 +26,7 @@
 #include "utils/parameter_set.h"
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
-#include "mobility/mobility.h"
+#include "mobility/graph_parameters.h"
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
