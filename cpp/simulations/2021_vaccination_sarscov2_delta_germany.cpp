@@ -26,6 +26,7 @@
 #include "memilio/utils/date.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -551,14 +552,15 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     // and mobility between counties
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     const auto& read_function = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>;
-    const auto& create_graph_function =
-        mio::create_graph<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, ContactLocation,
-                          mio::osecirvvs::InfectionState, mio::osecirvvs::Model, mio::osecirvvs::Parameters,
-                          decltype(read_function)>;
-    BOOST_OUTCOME_TRY(create_graph_function(params_graph, params, start_date, end_date, data_dir, read_function,
-                                            scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
-                                            migrating_compartments, contact_locations.size(),
-                                            mio::get_offset_in_days(end_date, start_date), false));
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, mio::osecirvvs::Model,
+                       mio::osecirvvs::Parameters, decltype(read_function)>;
+    const auto& set_edge_function =
+        mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::osecirvvs::InfectionState>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function,
+                                        scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
+                                        mio::get_offset_in_days(end_date, start_date), false));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size()));
 
     return mio::success(params_graph);
 }

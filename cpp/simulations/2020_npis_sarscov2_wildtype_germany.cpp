@@ -23,6 +23,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "boost/filesystem.hpp"
@@ -472,14 +473,14 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     const auto& read_function = mio::osecir::read_population_data_county<mio::osecir::Model>;
-    const auto& create_graph_function =
-        mio::create_graph<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, ContactLocation,
-                          mio::osecir::InfectionState, mio::osecir::Model, mio::osecir::Parameters,
-                          decltype(read_function)>;
 
-    BOOST_OUTCOME_TRY(create_graph_function(params_graph, params, start_date, end_date, data_dir, read_function,
-                                            scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
-                                            migrating_compartments, contact_locations.size(), 0, false));
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
+                       mio::osecir::Parameters, decltype(read_function)>;
+    const auto& set_edge_function = mio::set_edges<ContactLocation, mio::osecir::Model, mio::osecir::InfectionState>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function,
+                                        scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor, 0, false));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size()));
 
     return mio::success(params_graph);
 }

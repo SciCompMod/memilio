@@ -23,8 +23,6 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/mobility/graph_parameters.h"
 
 #include "boost/filesystem.hpp"
 
