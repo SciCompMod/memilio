@@ -78,7 +78,7 @@ struct Cell {
     uint32_t num_people;
     uint32_t num_carriers;
     uint32_t num_infected;
-    CustomIndexArray<UncertainValue, AgeGroup, VaccinationState> cached_exposure_rate;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate;
 
     Cell()
         : num_people(0)
@@ -89,7 +89,7 @@ struct Cell {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<UncertainValue, AgeGroup, VaccinationState> cached_exposure_rate_new)
+         CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -214,7 +214,7 @@ public:
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<UncertainValue, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
         return m_cached_exposure_rate;
     }
@@ -296,7 +296,7 @@ private:
     bool m_capacity_adapted_transmission_risk;
     TimeSeries<ScalarType> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<UncertainValue, AgeGroup, VaccinationState> m_cached_exposure_rate;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
     MaskType m_required_mask;
     bool m_npi_active;
