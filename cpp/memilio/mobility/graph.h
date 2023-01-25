@@ -22,14 +22,12 @@
 
 #include <functional>
 #include "memilio/utils/stl_util.h"
-#include "memilio/io/epi_data.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
-#include "memilio/io/result_io.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -243,13 +241,14 @@ private:
 }; // namespace mio
 
 template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-          class ReadFunction>
+          class ReadFunction, class NodeIdFunction>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
-                         const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                         double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                         bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    BOOST_OUTCOME_TRY(county_ids, node_func((data_dir / "pydata" / "Germany").string()));
     std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
