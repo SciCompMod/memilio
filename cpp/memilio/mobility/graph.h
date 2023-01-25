@@ -27,6 +27,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/epidemiology/damping.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
