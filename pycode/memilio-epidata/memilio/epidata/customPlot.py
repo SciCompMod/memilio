@@ -33,11 +33,12 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 mpl.use('Agg')
 
 
-def plotList(
+def plot_multiple_series(
         x, y, legend, title='', xlabel='', ylabel='', linewidth=1,
-        xticks_idx='default', loc_legend='upper_left', fig_size=(10, 6), fig_name='customPlot',
+        xticks_idx='default', loc_legend='upper right', fig_size=(10, 6), plot_outside=True, fig_name='customPlot',
         path_rel='figures/', dpi=300, outercolor='white', innercolor='white'):
-    """! Plots time series data.
+    """! Plots a variable number of time series data on the same time window
+    inside one plot.
 
     @param x x values to plot.
     @param y List of curve(s) to plot.
@@ -80,8 +81,9 @@ def plotList(
     if ylabel != '':
         ax.set_ylabel(ylabel, fontsize=12)
 
-    if len(y) > 3:
-        ax.legend(fontsize=12, bbox_to_anchor=(1, 1), loc=loc_legend)
+    if plot_outside:
+        # For multiple lines, it may be better suited to plot the legend outside
+        ax.legend(fontsize=12, bbox_to_anchor=(1, 1), loc='upper left')
     else:
         ax.legend(fontsize=12, loc=loc_legend)
 
@@ -89,3 +91,4 @@ def plotList(
 
     gd.check_dir(path_rel)
     plt.savefig(path_rel + fig_name + '.png', bbox_inches='tight', dpi=dpi)
+    print('Plot saved to ' + path_rel + fig_name + '.png')

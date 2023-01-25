@@ -41,7 +41,7 @@ class Test_customPlot(fake_filesystem_unittest.TestCase):
         xvals = [i for i in range(100)]
         yvals = [xvals for i in range(3)]
 
-        customPlot.plotList(xvals, yvals, ['yvals' + str(i)
+        customPlot.plot_multiple_series(xvals, yvals, ['yvals' + str(i)
                                            for i in range(len(yvals))], title='Test', xlabel='Date',
                             ylabel='Number of Test', xticks_idx=[0, 17, 47, 66, 99], linewidth=2,
                             loc_legend='upper right', fig_size=(9, 6), fig_name='Test', path_rel=self.path, dpi=50,
