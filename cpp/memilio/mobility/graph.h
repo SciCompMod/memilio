@@ -294,7 +294,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
     return success();
 }
 
-template <class ContactLocation, class Model, class MigrationParams, class InfectionState, class ReadFunction>
+template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup, class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func)

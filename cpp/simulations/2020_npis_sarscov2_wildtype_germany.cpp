@@ -478,7 +478,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
                        mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes)>;
-    const auto& set_edge_function = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+    const auto& set_edge_function = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
                                                    mio::osecir::InfectionState, decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
                                         scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor, 0, false));
