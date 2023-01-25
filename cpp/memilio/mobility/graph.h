@@ -28,6 +28,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
+#include "memilio/geography/regions.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
