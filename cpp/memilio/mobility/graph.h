@@ -29,6 +29,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include "memilio/io/result_io.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -248,7 +249,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
                          const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                          double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(county_ids, get_county_ids((data_dir / "pydata" / "Germany").string()));
+    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
