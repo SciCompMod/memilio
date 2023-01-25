@@ -33,6 +33,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/epidemiology/age_group.h"
 
 #include "boost/filesystem.hpp"
 
