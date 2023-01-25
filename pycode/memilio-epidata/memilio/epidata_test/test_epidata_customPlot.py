@@ -42,10 +42,10 @@ class Test_customPlot(fake_filesystem_unittest.TestCase):
         yvals = [xvals for i in range(3)]
 
         customPlot.plot_multiple_series(xvals, yvals, ['yvals' + str(i)
-                                           for i in range(len(yvals))], title='Test', xlabel='Date',
-                            ylabel='Number of Test', xticks_idx=[0, 17, 47, 66, 99], linewidth=2,
-                            loc_legend='upper right', fig_size=(9, 6), fig_name='Test', path_rel=self.path, dpi=50,
-                            outercolor=[0.3, 0.5, 0.3], innercolor=[1, 1, 1])
+                                                       for i in range(len(yvals))], title='Test', xlabel='Date',
+                                        ylabel='Number of Test', xticks_idx=[0, 17, 47, 66, 99], linewidth=2,
+                                        loc_legend='upper right', fig_size=(9, 6), fig_name='Test', path_rel=self.path, dpi=50,
+                                        outercolor=[0.3, 0.5, 0.3], innercolor=[1, 1, 1])
 
         mock_plt.subplots.assert_called_once_with(
             figsize=(9, 6), facecolor=[0.3, 0.5, 0.3])
