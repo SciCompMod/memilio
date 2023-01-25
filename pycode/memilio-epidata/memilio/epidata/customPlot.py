@@ -66,15 +66,13 @@ def plot_multiple_series(
     if isinstance(x, pd.Series):
         x = x.values
     if xticks_idx == 'default':
-        tick_range = (np.arange(int(len(x) / 30) + 1)
+        xticks_idx = (np.arange(int(len(x) / 30) + 1)
                       * 30)  # only plot every 30th day
-        tick_range[-1] -= 1  # adapt for last element
-        ax.set_xticks(x[tick_range])
-        ax.set_xticklabels(x[tick_range], rotation=90, fontsize=8)
-    else:
-        ax.set_xticks([x[i] for i in xticks_idx])
-        ax.set_xticklabels([x[i] for i in xticks_idx],
-                           rotation=90, fontsize=10)
+        xticks_idx[-1] -= 1  # adapt for last element
+
+    ax.set_xticks([x[i] for i in xticks_idx])
+    ax.set_xticklabels([x[i] for i in xticks_idx],
+                       rotation=90, fontsize=10)
 
     if xlabel != '':
         ax.set_xlabel(xlabel, fontsize=12)
