@@ -22,6 +22,8 @@
 
 #include <functional>
 #include "memilio/utils/stl_util.h"
+#include "memilio/io/epi_data.h"
+#include "memilio/epidemiology/age_group.h"
 #include <iostream>
 
 namespace mio
@@ -228,6 +230,122 @@ private:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace mio
+
+template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+          class ReadFunction>
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+                         const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                         double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+{
+    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& county : counties) {
+        county.parameters = params;
+    }
+
+    BOOST_OUTCOME_TRY(read_func(counties, start_date, county_ids, scaling_factor_inf, scaling_factor_icu,
+                                (data_dir / "pydata" / "Germany").string(), num_days, export_time_series));
+
+    for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
+
+        auto tnt_capacity = counties[county_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = counties[county_idx].parameters.template get<TestNTrace>();
+        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        //holiday periods
+        auto holiday_periods = regions::get_holidays(regions::get_state_id(regions::CountyId(county_ids[county_idx])),
+                                                     start_date, end_date);
+        auto& contacts       = counties[county_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = counties[county_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(county_ids[county_idx], counties[county_idx]);
+    }
+    return success();
+}
+
+template <class ContactLocation, class Model, class MigrationParams, class InfectionState, class ReadFunction>
+IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
+                         std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+                         ReadFunction&& read_func)
+{
+    // mobility between nodes
+    BOOST_OUTCOME_TRY(mobility_data_commuter,
+                      read_func((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
+    BOOST_OUTCOME_TRY(mobility_data_twitter, read_func((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
+    if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
+        mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
+        mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
+        mobility_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Mobility matrices do not have the correct size. You may need to run "
+                            "transformMobilitydata.py from pycode memilio epidata package.");
+    }
+
+    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
+            auto& populations = params_graph.nodes()[county_idx_i].property.populations;
+            // mobility coefficients have the same number of components as the contact matrices.
+            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
+            auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
+
+            //commuters
+            auto working_population = 0.0;
+            auto min_commuter_age   = AgeGroup(2);
+            auto max_commuter_age   = AgeGroup(4); //this group is partially retired, only partially commutes
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
+            }
+            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
+                                     working_population; //data is absolute numbers, we need relative
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+                for (auto compartment : migrating_compartments) {
+                    auto coeff_index = populations.get_flat_index({age, compartment});
+                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+                        commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
+                }
+            }
+            //others
+            auto total_population = populations.get_total();
+            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
+                                 total_population; //data is absolute numbers, we need relative
+            for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
+                for (auto compartment : migrating_compartments) {
+                    auto coeff_idx = populations.get_flat_index({age, compartment});
+                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
+                }
+            }
+
+            //only add edges with mobility above thresholds for performance
+            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
+            if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
+                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
+            }
+        }
+    }
+
+    return success();
+}
 
 /**
  * Create an unconnected graph.

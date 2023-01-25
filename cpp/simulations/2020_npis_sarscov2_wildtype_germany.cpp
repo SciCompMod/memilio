@@ -472,15 +472,18 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-    const auto& read_function = mio::osecir::read_population_data_county<mio::osecir::Model>;
+    const auto& read_function_nodes = mio::osecir::read_population_data_county<mio::osecir::Model>;
+    const auto& read_function_edges = mio::read_mobility_plain;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-                       mio::osecir::Parameters, decltype(read_function)>;
-    const auto& set_edge_function = mio::set_edges<ContactLocation, mio::osecir::Model, mio::osecir::InfectionState>;
-    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function,
+                       mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes)>;
+    const auto& set_edge_function = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+                                                   mio::osecir::InfectionState, decltype(read_function_edges)>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
                                         scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor, 0, false));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size()));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+                                        read_function_edges));
 
     return mio::success(params_graph);
 }
