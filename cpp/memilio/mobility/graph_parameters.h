@@ -36,9 +36,6 @@
 
 #include <cassert>
 
-//is used to provide some paths as function arguments
-namespace fs = boost::filesystem;
-
 namespace mio
 {
 

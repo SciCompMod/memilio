@@ -24,7 +24,13 @@
 #include "memilio/utils/stl_util.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/date.h"
 #include <iostream>
+
+#include "boost/filesystem.hpp"
+
+//is used to provide some paths as function arguments
+namespace fs = boost::filesystem;
 
 namespace mio
 {
