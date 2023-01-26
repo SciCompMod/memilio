@@ -32,7 +32,7 @@ namespace abm
 {
 
 Person::Person(LocationId id, AgeGroup age, uint32_t person_id)
-    : m_location_id(std::make_shared<LocationId>(id))
+    : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -65,10 +65,10 @@ void Person::interact(TimePoint t, TimeSpan dt, Location& loc, const GlobalInfec
 void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
 {
     if (&loc_old != &loc_new) {
-        loc_old.remove_person(*this);
-        m_location_id = std::make_shared<LocationId>(LocationId({loc_new.get_index(), loc_new.get_type()}));
+        loc_old.remove_person(shared_from_this());
+        m_location_id = LocationId({loc_new.get_index(), loc_new.get_type()});
         m_cells       = cells;
-        loc_new.add_person(*this);
+        loc_new.add_person(shared_from_this());
         m_time_at_location = TimeSpan(0);
     }
 }
@@ -104,7 +104,7 @@ void Person::add_new_infection(Infection&& inf)
 
 LocationId Person::get_location_id() const
 {
-    return *m_location_id;
+    return m_location_id;
 }
 
 void Person::set_assigned_location(Location& location)

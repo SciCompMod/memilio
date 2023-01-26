@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -95,22 +95,20 @@ void Location::begin_step(TimePoint t, TimeSpan dt)
     }
 }
 
-void Location::add_person(const Person& p, uint32_t cell_idx)
+void Location::add_person(const std::shared_ptr<Person>& p, uint32_t cell_idx)
 {
-    m_cells[cell_idx].m_persons.emplace_back(std::make_shared<Person>(p));
+    m_cells[cell_idx].m_persons.push_back(p);
 }
 
-void Location::remove_person(const Person& p)
+void Location::remove_person(const std::shared_ptr<Person>& p)
 {
     for (auto&& cell : m_cells) {
-        auto it = std::remove_if(cell.m_persons.begin(), cell.m_persons.end(), [&](std::shared_ptr<Person> other) {
-            return *other == p;
-        });
+        auto it = std::remove(cell.m_persons.begin(), cell.m_persons.end(), p);
         cell.m_persons.erase(it, cell.m_persons.end());
     }
 }
 
-uint32_t Location::get_population()
+uint32_t Location::get_number_persons()
 {
     return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](uint32_t sum, auto cell) {
         return sum + cell.m_persons.size();
@@ -131,7 +129,7 @@ uint32_t Location::get_subpopulation_cell(TimePoint t, InfectionState state, con
 
 uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    int n_persons = 0;
+    uint32_t n_persons = 0;
     for (auto&& cell : m_cells) {
         n_persons += cell.get_subpopulation(t, state);
     }
@@ -152,13 +150,26 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations(TimePoint t) cons
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
 the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
 */
-double Cell::compute_space_per_person_relative()
+ScalarType Cell::compute_space_per_person_relative()
 {
     if (m_capacity.volume != 0) {
         return 66.0 / m_capacity.volume;
     }
     else {
         return 1.0;
+    }
+}
+
+void Location::store_subpopulations(const TimePoint t)
+{
+    m_subpopulations.add_time_point(t.days());
+    m_subpopulations.get_last_value() = get_subpopulations(t).cast<double>();
+}
+
+void Location::initialize_subpopulations(const TimePoint t)
+{
+    if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+        store_subpopulations(t);
     }
 }
 } // namespace abm

@@ -49,6 +49,25 @@ enum class LocationType : std::uint32_t
 
 static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
 
+/**
+ * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
+ * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
+ */
+struct LocationId {
+    uint32_t index;
+    LocationType type;
+
+    bool operator==(const LocationId& rhs) const
+    {
+        return (index == rhs.index && type == rhs.type);
+    }
+
+    bool operator!=(const LocationId& rhs) const
+    {
+        return !(index == rhs.index && type == rhs.type);
+    }
+};
+
 } // namespace abm
 } // namespace mio
 

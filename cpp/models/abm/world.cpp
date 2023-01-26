@@ -46,7 +46,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_shared<Person>(id, age, person_id));
     auto& person = *m_persons.back();
-    get_location(person).add_person(person);
+    get_location(person).add_person(m_persons.back());
     return person;
 }
 
@@ -85,7 +85,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target, t)) {
-                    if (target != &get_location(*person) && target->get_population() < target->get_capacity().persons) {
+                    if (target != &get_location(*person) &&
+                        target->get_number_persons() < target->get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(*target);
                         if (wears_mask) {
                             person->migrate_to(get_location(*person), *target);
@@ -119,6 +120,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
             location.begin_step(t, dt);
+            location.store_subpopulations(t + dt);
         }
     }
 }

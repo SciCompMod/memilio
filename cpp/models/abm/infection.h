@@ -45,18 +45,18 @@ public:
     ViralLoad(TimePoint start_day, const GlobalInfectionParameters& params);
 
     /**
-     * @brief Draws the viral load of the infection from a set of distributions.
-     * @param[in] params Global infection parameters.
-     */
-    void draw_viral_load(const GlobalInfectionParameters& params);
-
-    /**
      * @brief Gets the viral load of the infection at a given TimePoint.
      * @param[in] t TimePoint of querry.
      */
     ScalarType get_viral_load(TimePoint t) const;
 
 private:
+    /**
+     * @brief Draws the viral load of the infection from a set of distributions.
+     * @param[in] params Global infection parameters.
+     */
+    void draw_viral_load(const GlobalInfectionParameters& params);
+
     TimePoint m_start_date;
     TimePoint m_end_date;
     UncertainValue m_peak;

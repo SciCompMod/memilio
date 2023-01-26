@@ -44,7 +44,7 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 /**
  * Agents in the simulated world that can carry and spread the infection.
  */
-class Person
+class Person : public std::enable_shared_from_this<Person>
 {
 public:
     /**
@@ -357,7 +357,7 @@ public:
     //double get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
-    std::shared_ptr<LocationId> m_location_id = nullptr;
+    LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;
