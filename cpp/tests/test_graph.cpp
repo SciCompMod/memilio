@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph.h"
+#include "memilio/epidemiology/age_group.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <type_traits>
@@ -27,7 +28,8 @@ struct MockModel {
 
 struct Parameters {
 
-    Parameters(mio::AgeGroup num_agegroups), m_num_groups{num_agegroups}
+    Parameters(mio::AgeGroup num_agegroups)
+        : m_num_groups{num_agegroups}
     {
     }
 

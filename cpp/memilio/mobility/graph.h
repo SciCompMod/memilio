@@ -267,9 +267,9 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         //holiday periods
-        auto holiday_periods = regions::get_holidays(regions::get_state_id(regions::CountyId(county_ids[county_idx])),
-                                                     start_date, end_date);
-        auto& contacts       = counties[county_idx].parameters.template get<ContactPattern>();
+        auto holiday_periods = regions::get_holidays(
+            regions::get_state_id(int(regions::CountyId(county_ids[county_idx]))), start_date, end_date);
+        auto& contacts = counties[county_idx].parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
         std::transform(

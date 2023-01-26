@@ -370,6 +370,14 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 }
 
 /**
+ * @brief returns a vector with the ids of all nodes.
+ * @param path directory to population data
+ * @param node_id integer specifying whether the nodes should be counties or districts
+ * @return list of node ids.
+ */
+IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id);
+
+/**
  * Represents an entry in a vaccination data file.
  */
 class VaccinationDataEntry
