@@ -235,8 +235,9 @@ public:
      */
     template <class T1, class... TN,
               class = std::enable_if_t<
-                  details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
-                                 ParameterTagTraits<Tags>...>::value>>
+                  conjunction_v<negation<std::is_same<std::decay_t<T1>, ParameterSet>>, 
+                        details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                 ParameterTagTraits<Tags>...>>>>
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
