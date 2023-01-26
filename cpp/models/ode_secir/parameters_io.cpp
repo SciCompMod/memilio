@@ -35,7 +35,7 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -337,8 +337,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
 
     for (auto&& entry : population_data) {
         auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 ||
-                   (entry.county_id && regions::StateId(r) == regions::get_state_id(*entry.county_id)) ||
+            return r == 0 || (entry.county_id && regions::StateId(r) == regions::get_state_id(*entry.county_id)) ||
                    (entry.county_id && regions::CountyId(r) == *entry.county_id);
         });
         if (it != vregion.end()) {

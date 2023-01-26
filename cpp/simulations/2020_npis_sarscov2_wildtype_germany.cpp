@@ -23,7 +23,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "boost/filesystem.hpp"

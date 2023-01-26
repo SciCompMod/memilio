@@ -28,7 +28,7 @@
 #include "ode_secir/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
@@ -84,8 +84,9 @@ IOResult<void> read_confirmed_cases_data(
      * @param day Specifies day at which the data is read
      * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
-                            Date date, const std::vector<double>& scaling_factor_inf);
+IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf);
 
 /**
      * @brief reads number of ICU patients from DIVI register into Parameters
@@ -165,18 +166,18 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, co
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
 
-            t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(std::round(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
-                                      model[county].parameters.template get<SerialInterval>()[AgeGroup(group)]))));
-            t_Exposed[county].push_back(
-                static_cast<int>(std::round(2 * model[county].parameters.template get<SerialInterval>()[AgeGroup(group)] -
-                                 model[county].parameters.template get<IncubationTime>()[AgeGroup(group)])));
-            t_InfectedSymptoms[county].push_back(
-                static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)])));
-            t_InfectedSevere[county].push_back(
-                static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
+                std::round(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
+                                model[county].parameters.template get<SerialInterval>()[AgeGroup(group)]))));
+            t_Exposed[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[AgeGroup(group)] -
+                           model[county].parameters.template get<IncubationTime>()[AgeGroup(group)])));
+            t_InfectedSymptoms[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)])));
+            t_InfectedSevere[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[AgeGroup(group)]);
@@ -276,8 +277,8 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(
-        details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
+                                                        scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
     return success();
 }
@@ -304,8 +305,8 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
         log_warning("No DIVI data available for this date");
     }
 
-    BOOST_OUTCOME_TRY(
-        details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
+                                                        date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
     return success();
 }
@@ -333,8 +334,8 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
-                                            scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county,
+                                                        date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
 
     if (export_time_series) {

@@ -29,7 +29,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -358,8 +358,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
         //all counties belong to the country (id = 0)
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
-                   (county_entry.county_id &&
-                    regions::StateId(r) == regions::get_state_id(*county_entry.county_id)) ||
+                   (county_entry.county_id && regions::StateId(r) == regions::get_state_id(*county_entry.county_id)) ||
                    (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id);
         });
         if (it != vregion.end()) {
