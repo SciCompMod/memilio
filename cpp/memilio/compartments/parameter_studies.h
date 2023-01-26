@@ -21,7 +21,7 @@
 #define PARAMETER_STUDIES_H
 
 #include "memilio/utils/time_series.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/compartments/simulation.h"
 
 #include <cmath>
@@ -32,7 +32,7 @@ namespace mio
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
  * Can simulate migration graphs with one simulation in each node or single simulations.
- * @tparam S type of simulation that runs in one node of the graph, e.g. SecirSimulation. 
+ * @tparam S type of simulation that runs in one node of the graph.
  */
 template <class S>
 class ParameterStudy
@@ -73,7 +73,7 @@ public:
 
     /**
      * @brief Create study for single compartment model.
-     * @param params SecirParams object 
+     * @param model compartment model with initial values
      * @param t0 start time of simulations
      * @param tmax end time of simulations
      * @param num_runs number of runs in ensemble run
@@ -173,7 +173,7 @@ public:
 
     /**
      * Get the input model that the parameter study is run for.
-     * Use for single node simulations, use get_secir_model_graph for graph simulations.
+     * Use for single node simulations, use get_model_graph for graph simulations.
      * @{
      */
     const typename Simulation::Model& get_model() const
@@ -191,11 +191,11 @@ public:
      * Use for graph simulations, use get_model for single node simulations.
      * @{
      */
-    const Graph<typename Simulation::Model, MigrationParameters>& get_secir_model_graph() const
+    const Graph<typename Simulation::Model, MigrationParameters>& get_model_graph() const
     {
         return m_graph;
     }
-    Graph<typename Simulation::Model, MigrationParameters>& get_secir_model_graph()
+    Graph<typename Simulation::Model, MigrationParameters>& get_model_graph()
     {
         return m_graph;
     }

@@ -268,7 +268,13 @@ public:
     {
         return m_subpopulations;
     }
-    
+
+    /**
+     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
+     * @param t The first TimePoint in subpopulation
+    */
+    void initialize_subpopulation(const TimePoint& t);
+
     bool get_npi_active() const
     {
         return m_npi_active;
@@ -281,6 +287,7 @@ public:
 
 private:
     void change_subpopulation(InfectionState s, int delta);
+
 private:
     LocationType m_type;
     uint32_t m_index;

@@ -30,6 +30,9 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/utils/date.h"
+
+#include "boost/filesystem.hpp"
 
 #include <cassert>
 
@@ -386,8 +389,8 @@ auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eige
  * detect a get_migration_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(
-    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(test_commuters(
+    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when migrating from their source node.
@@ -529,6 +532,7 @@ make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdg
 {
     return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
 }
+
 /** @} */
 
 } // namespace mio

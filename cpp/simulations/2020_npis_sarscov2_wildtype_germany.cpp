@@ -23,6 +23,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "boost/filesystem.hpp"
@@ -461,6 +462,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 7.5 / 100000.;
     auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                     mio::osecir::InfectionState::InfectedNoSymptoms,
                                     mio::osecir::InfectionState::InfectedSymptoms,
@@ -469,15 +472,22 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-    const auto& read_function = mio::osecir::read_input_data_county<mio::osecir::Model>;
-    const auto& create_graph_function =
-        mio::create_graph_county<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, ContactLocation,
-                          mio::osecir::InfectionState, mio::osecir::Model, mio::osecir::Parameters,
-                          decltype(read_function)>;
+    const auto& read_function_nodes = mio::osecir::read_population_data_county<mio::osecir::Model>;
+    const auto& read_function_edges = mio::read_mobility_plain;
+    const auto& node_id_function    = mio::get_county_ids;
 
-    BOOST_OUTCOME_TRY(create_graph_function(params_graph, params, start_date, end_date, data_dir, read_function,
-                                            scaling_factor_infected, 1.0, 7.5 / 100000., migrating_compartments,
-                                            contact_locations.size(), 0, false));
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
+                       mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
+                       decltype(node_id_function)>;
+    const auto& set_edge_function =
+        mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+                       mio::osecir::InfectionState, decltype(read_function_edges)>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
+                                        node_id_function, scaling_factor_infected, scaling_factor_icu,
+                                        tnt_capacity_factor, 0, false));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+                                        read_function_edges));
 
     return mio::success(params_graph);
 }

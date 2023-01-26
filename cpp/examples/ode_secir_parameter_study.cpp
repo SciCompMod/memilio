@@ -20,7 +20,7 @@
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/io/result_io.h"
 
 /**

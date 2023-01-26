@@ -30,7 +30,6 @@
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/date.h"
-#include "memilio/io/mobility_io.h"
 
 #include "json/value.h"
 #include <string>
@@ -82,9 +81,9 @@ public:
     double num_deaths;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
-    boost::optional<regions::de::DistrictId> district_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
@@ -95,9 +94,9 @@ public:
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id      = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
-        auto district_id   = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
             [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid,
@@ -147,6 +146,13 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
 }
 
 /**
+ * @brief returns a vector with the ids of all German counties.
+ * @param path directory to population data
+ * @return list of county ids.
+ */
+IOResult<std::vector<int>> get_county_ids(const std::string& path);
+
+/**
  * Represents entries in a DIVI data file.
  * Number of persons in the ICU in a region on a specific date.
  * Region can be a county, a state, or a country. If it is a country, both
@@ -157,9 +163,9 @@ class DiviEntry
 public:
     double num_icu;
     Date date;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
-    boost::optional<regions::de::DistrictId> district_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
@@ -167,9 +173,9 @@ public:
         auto obj         = io.expect_object("DiviEntry");
         auto num_icu     = obj.expect_element("ICU", Tag<double>{});
         auto date        = obj.expect_element("Date", Tag<StringDate>{});
-        auto state_id    = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id   = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
-        auto district_id = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
+        auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
             [](auto&& ni, auto&& d, auto&& sid, auto&& cid, auto&& did) {
@@ -227,17 +233,17 @@ public:
     static const std::array<const char*, 11> age_group_names;
 
     CustomIndexArray<double, AgeGroup> population;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
-    boost::optional<regions::de::DistrictId> district_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
         auto obj         = io.expect_object("PopulationDataEntry");
-        auto state_id    = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id   = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
-        auto district_id = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
+        auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         std::vector<IOResult<double>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
@@ -364,242 +370,6 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 }
 
 /**
- * @brief returns a vector with the ids of all German counties.
- * @param path directory to population data
- * @return list of county ids.
- */
-IOResult<std::vector<int>> get_county_ids(const std::string& path);
-
-template <typename TestNTrace, typename ContactPattern, class Model, class Parameters, class ReadFunction>
-IOResult<void> set_nodes_county(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                                Graph<Model, MigrationParameters>& params_graph, ReadFunction&& read_func,
-                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
-{
-    BOOST_OUTCOME_TRY(county_ids, get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
-    for (auto& county : counties) {
-        county.parameters = params;
-    }
-
-    BOOST_OUTCOME_TRY(read_func(counties, start_date, county_ids, scaling_factor_inf, scaling_factor_icu,
-                                (data_dir / "pydata" / "Germany").string(), num_days, export_time_series));
-
-    for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
-
-        auto tnt_capacity = counties[county_idx].populations.get_total() * tnt_capacity_factor;
-
-        //local parameters
-        auto& tnt_value = counties[county_idx].parameters.template get<TestNTrace>();
-        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
-        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
-
-        //holiday periods
-        auto holiday_periods = regions::de::get_holidays(
-            regions::de::get_state_id(int(regions::de::CountyId(county_ids[county_idx]))), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.template get<ContactPattern>();
-        contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-        std::transform(
-            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-            });
-
-        //uncertainty in populations
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-                auto& compartment_value = counties[county_idx].populations[{i, j}];
-                compartment_value =
-                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-                                                                                     1.1 * double(compartment_value)));
-            }
-        }
-
-        params_graph.add_node(county_ids[county_idx], counties[county_idx]);
-    }
-    return success();
-}
-
-template <class TestNTrace, typename ContactPattern, class Model, class Parameters, class ReadFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         const fs::path& population_data_path, int node_value, const fs::path& confirmed_cases_path,
-                         const fs::path& divi_data_path, Graph<Model, MigrationParameters>& params_graph,
-                         ReadFunction&& read_func, const std::vector<double>& scaling_factor_inf,
-                         double scaling_factor_icu, double tnt_capacity_factor,
-                         const fs::path& vaccination_data_path = ' ', int num_days = 0, bool export_time_series = false)
-{
-    BOOST_OUTCOME_TRY(node_ids, get_node_ids(population_data_path, node_value));
-    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
-    for (auto& node : nodes) {
-        node.parameters = nodes;
-    }
-
-    if (vaccination_data_path == ' ') {
-        BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir,
-                                    divi_data_path, confirmed_cases_path, population_data_path, num_days,
-                                    export_time_series));
-    }
-    else {
-        BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir,
-                                    divi_data_path, confirmed_cases_path, population_data_path, vaccination_data_path,
-                                    num_days, export_time_series));
-    }
-
-    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-
-        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
-
-        //local parameters
-        auto& tnt_value = nodes[node_idx].parameters.template get<TestNTrace>();
-        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
-        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
-
-        auto id;
-        if (node_value == 0) {
-            id = int(regions::de::CountyId(node_ids[node_idx]));
-        }
-        else {
-            id = int(regions::de::DistrictId(node_ids[node_idx]));
-        }
-        //holiday periods
-        auto holiday_periods = regions::de::get_holidays(regions::de::get_state_id(id), start_date, end_date);
-        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
-        contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-        std::transform(
-            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-            });
-
-        //uncertainty in populations
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-                auto& compartment_value = nodes[node_idx].populations[{i, j}];
-                compartment_value =
-                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
-                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
-                                                                                     1.1 * double(compartment_value)));
-            }
-        }
-
-        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
-    }
-    return success();
-}
-
-template <class ContactLocation, class Model, class InfectionState>
-IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParameters>& params_graph,
-                         std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size)
-{
-    // mobility between nodes
-    BOOST_OUTCOME_TRY(mobility_data_commuter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(mobility_data_twitter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
-    if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Mobility matrices do not have the correct size. You may need to run "
-                            "transformMobilitydata.py from pycode memilio epidata package.");
-    }
-
-    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
-        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
-            auto& populations = params_graph.nodes()[county_idx_i].property.populations;
-            // mobility coefficients have the same number of components as the contact matrices.
-            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
-
-            //commuters
-            auto working_population = 0.0;
-            auto min_commuter_age   = AgeGroup(2);
-            auto max_commuter_age   = AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
-            }
-            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
-                                     working_population; //data is absolute numbers, we need relative
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_index = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
-                }
-            }
-            //others
-            auto total_population = populations.get_total();
-            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
-                                 total_population; //data is absolute numbers, we need relative
-            for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_idx = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
-                }
-            }
-
-            //only add edges with mobility above thresholds for performance
-            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
-            if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
-            }
-        }
-    }
-
-    return success();
-}
-
-template <typename TestNTrace, typename ContactPattern, class ContactLocation, class InfectionState, class Model,
-          class Parameters, class ReadFunction>
-IOResult<Graph<Model, MigrationParameters>>
-create_graph_county(Graph<Model, MigrationParameters>& params_graph, const Parameters& params, Date start_date,
-                    Date end_date, const fs::path& data_dir, ReadFunction&& read_func,
-                    const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                    double tnt_capacity_factor, std::initializer_list<InfectionState>& migrating_compartments,
-                    size_t contact_locations_size, int num_days = 0, bool export_time_series = false)
-{
-    const auto& set_node_function = set_nodes_county<TestNTrace, ContactPattern, Model, Parameters, ReadFunction>;
-    const auto& set_edge_function = set_edges<ContactLocation, Model, InfectionState>;
-    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_func,
-                                        scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days,
-                                        export_time_series));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations_size));
-    return success(params_graph);
-}
-
-template <typename TestNTrace, typename ContactPattern, class ContactLocation, class InfectionState, class Model,
-          class Parameters, class ReadFunction>
-IOResult<Graph<Model, MigrationParameters>>
-create_graph(Graph<Model, MigrationParameters>& params_graph, const Parameters& params, Date start_date, Date end_date,
-             const fs::path& data_dir, const fs::path& population_data_path, int node_value,
-             const fs::path& confirmed_cases_path, const fs::path& divi_data_path, ReadFunction&& read_func,
-             const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
-             std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-             const fs::path& vaccination_data_path = ' ', int num_days = 0, bool export_time_series = false)
-{
-    const auto& set_node_function = set_nodes<TestNTrace, ContactPattern, Model, Parameters, ReadFunction>;
-    const auto& set_edge_function = set_edges<ContactLocation, Model, InfectionState>;
-    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, population_data_path, node_value,
-                                        confirmed_cases_path, divi_data_path, params_graph, read_func,
-                                        scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor,
-                                        vaccination_data_path, num_days, export_time_series));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations_size));
-    return success(params_graph);
-}
-
-/**
- * @brief returns a vector with the ids of all nodes.
- * @param path directory to population data
- * @param node_id integer specifying whether the nodes should be counties or districts
- * @return list of node ids.
- */
-IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id);
-
-/**
  * Represents an entry in a vaccination data file.
  */
 class VaccinationDataEntry
@@ -610,9 +380,9 @@ public:
     double num_vaccinations_completed;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
-    boost::optional<regions::de::DistrictId> district_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
@@ -621,9 +391,9 @@ public:
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
-        auto district_id                = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
+        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id                = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return mio::apply(
             io,
             [](auto nf, auto d, auto&& a_str, auto sid, auto cid, auto did) -> IOResult<VaccinationDataEntry> {

@@ -23,11 +23,10 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
-#include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
 
 #include "boost/filesystem.hpp"
 
+//is used to provide some paths as function arguments
 namespace fs = boost::filesystem;
 
 namespace mio
@@ -37,13 +36,10 @@ namespace mio
  */
 namespace regions
 {
-/**
-     * Germany.
-     */
-namespace de
-{
+
 /**
          * Id of a state.
+         * For Germany the Ids are:
          * 1 = Schleswig-Holstein
          * 2 = Hamburg
          * 3 = Niedersachsen
@@ -74,13 +70,13 @@ DECL_TYPESAFE(int, DistrictId);
 
 /**
          * get the id of the state that the specified county is in. 
-         * @param county a county id.
+         * @param[in, out] county a county id.
          */
 StateId get_state_id(int county);
 
 /**
          * get the holidays in a german state.
-         * @param state id of the state.
+         * @param[in] state id of the state.
          * @return range of pairs of start and end dates of holiday periods, sorted by start date.
          */
 Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
@@ -90,15 +86,13 @@ get_holidays(StateId state);
          * get the holidays in a german state in a given time period.
          * The returned periods may not be completely included in the queried period,
          * they may only partially overlap.
-         * @param state id of the state.
-         * @param start_date start of the queried period.
-         * @param end_date end of the queried period.
+         * @param[in] state id of the state.
+         * @param[in] start_date start of the queried period.
+         * @param[in] end_date end of the queried period.
          * @return range of pairs of start and end dates of holiday periods, sorted by start date.
          */
 Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
 get_holidays(StateId state, Date start_date, Date end_date);
-
-} // namespace de
 
 } // namespace regions
 

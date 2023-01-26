@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "ode_secir/parameter_space.h"

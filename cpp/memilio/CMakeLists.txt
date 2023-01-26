@@ -19,7 +19,7 @@ add_library(memilio
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
-    geography/holiday_data_de.ipp
+    geography/holiday_data.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h
     compartments/parameter_studies.h
@@ -49,8 +49,8 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
-    mobility/mobility.h
-    mobility/mobility.cpp
+    mobility/graph_parameters.h
+    mobility/graph_parameters.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h

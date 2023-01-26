@@ -28,7 +28,7 @@
 #include "ode_secir/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
@@ -319,6 +319,8 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
  * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
  * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
+ * @param num_days Number of days to be simulated; required to extrapolate real data
+ * @param export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class Model>
 IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,

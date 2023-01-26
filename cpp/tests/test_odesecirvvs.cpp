@@ -31,7 +31,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph_parameters.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/parameter_set.h"
