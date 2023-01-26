@@ -22,6 +22,27 @@
 #include <gmock/gmock.h>
 #include <type_traits>
 
+struct MockModel {
+};
+
+struct Parameters {
+
+    Parameters(mio::AgeGroup num_agegroups), m_num_groups{num_agegroups}
+    {
+    }
+
+    mio::AgeGroup m_num_groups;
+};
+
+template <class Model>
+void mockReadFunction(std::vector<Model>& model, mio::Date date, const std::vector<int>& node_ids,
+                      const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
+                      const std::string& divi_data_path, const std::string& confirmed_cases_path,
+                      const std::string& population_data_path, const std::string& vaccination_data_path, int num_days,
+                      bool export_time_series)
+{
+}
+
 TEST(TestGraph, creation)
 {
     mio::Graph<int, int> g;
@@ -55,9 +76,6 @@ TEST(TestGraph, duplicate_edge)
 
 TEST(TestGraph, graph_without_edges)
 {
-    struct MockModel {
-    };
-
     struct MockMobility {
     };
     std::vector<MockModel> models = {MockModel(), MockModel()};
@@ -74,6 +92,10 @@ TEST(TestGraph, graph_without_edges)
     EXPECT_TRUE(model_type_true);
     auto model_type_false = std::is_same<decltype(g.nodes()[0].property), MockMobility>::value;
     EXPECT_FALSE(model_type_false);
+}
+
+TEST(TestGraph, set_nodes)
+{
 }
 
 TEST(TestGraph, ot_edges)
@@ -100,10 +122,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly(const MoveOnly&)            = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph = mio::Graph<MoveOnly, MoveOnly>;
 

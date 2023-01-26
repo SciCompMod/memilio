@@ -37,8 +37,8 @@ TEST(TestRegions, get_holidays)
 
 TEST(TestRegions, get_state_id)
 {
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(1001)), mio::regions::de::StateId(1));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(2000)), mio::regions::de::StateId(2));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(5970)), mio::regions::de::StateId(5));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(9161)), mio::regions::de::StateId(9));
+    ASSERT_EQ(mio::regions::de::get_state_id(int(mio::regions::de::CountyId(1001))), mio::regions::de::StateId(1));
+    ASSERT_EQ(mio::regions::de::get_state_id(int(mio::regions::de::CountyId(2000))), mio::regions::de::StateId(2));
+    ASSERT_EQ(mio::regions::de::get_state_id(int(mio::regions::de::CountyId(5970))), mio::regions::de::StateId(5));
+    ASSERT_EQ(mio::regions::de::get_state_id(int(mio::regions::de::CountyId(9161))), mio::regions::de::StateId(9));
 }

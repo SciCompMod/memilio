@@ -32,9 +32,9 @@ namespace regions
 namespace de
 {
 
-StateId get_state_id(CountyId county)
+StateId get_state_id(int county)
 {
-    return StateId(int(county) / 1000);
+    return StateId(county / 1000);
 }
 
 Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>

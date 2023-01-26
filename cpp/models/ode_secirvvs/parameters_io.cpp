@@ -359,7 +359,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
-                    regions::de::StateId(r) == regions::de::get_state_id(*county_entry.county_id)) ||
+                    regions::de::StateId(r) == regions::de::get_state_id(int(*county_entry.county_id))) ||
                    (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id);
         });
         if (it != vregion.end()) {

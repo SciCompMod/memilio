@@ -76,7 +76,7 @@ DECL_TYPESAFE(int, DistrictId);
          * get the id of the state that the specified county is in. 
          * @param county a county id.
          */
-StateId get_state_id(CountyId county);
+StateId get_state_id(int county);
 
 /**
          * get the holidays in a german state.

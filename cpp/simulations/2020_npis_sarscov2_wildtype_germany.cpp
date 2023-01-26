@@ -471,7 +471,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     const auto& read_function = mio::osecir::read_input_data_county<mio::osecir::Model>;
     const auto& create_graph_function =
-        mio::create_graph<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, ContactLocation,
+        mio::create_graph_county<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, ContactLocation,
                           mio::osecir::InfectionState, mio::osecir::Model, mio::osecir::Parameters,
                           decltype(read_function)>;
 

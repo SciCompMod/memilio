@@ -371,10 +371,10 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 IOResult<std::vector<int>> get_county_ids(const std::string& path);
 
 template <typename TestNTrace, typename ContactPattern, class Model, class Parameters, class ReadFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         Graph<Model, MigrationParameters>& params_graph, ReadFunction&& read_func,
-                         const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                         double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+IOResult<void> set_nodes_county(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                                Graph<Model, MigrationParameters>& params_graph, ReadFunction&& read_func,
+                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
 {
     BOOST_OUTCOME_TRY(county_ids, get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
@@ -396,7 +396,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 
         //holiday periods
         auto holiday_periods = regions::de::get_holidays(
-            regions::de::get_state_id(regions::de::CountyId(county_ids[county_idx])), start_date, end_date);
+            regions::de::get_state_id(int(regions::de::CountyId(county_ids[county_idx]))), start_date, end_date);
         auto& contacts = counties[county_idx].parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
@@ -418,6 +418,74 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         }
 
         params_graph.add_node(county_ids[county_idx], counties[county_idx]);
+    }
+    return success();
+}
+
+template <class TestNTrace, typename ContactPattern, class Model, class Parameters, class ReadFunction>
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         const fs::path& population_data_path, int node_value, const fs::path& confirmed_cases_path,
+                         const fs::path& divi_data_path, Graph<Model, MigrationParameters>& params_graph,
+                         ReadFunction&& read_func, const std::vector<double>& scaling_factor_inf,
+                         double scaling_factor_icu, double tnt_capacity_factor,
+                         const fs::path& vaccination_data_path = ' ', int num_days = 0, bool export_time_series = false)
+{
+    BOOST_OUTCOME_TRY(node_ids, get_node_ids(population_data_path, node_value));
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = nodes;
+    }
+
+    if (vaccination_data_path == ' ') {
+        BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir,
+                                    divi_data_path, confirmed_cases_path, population_data_path, num_days,
+                                    export_time_series));
+    }
+    else {
+        BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir,
+                                    divi_data_path, confirmed_cases_path, population_data_path, vaccination_data_path,
+                                    num_days, export_time_series));
+    }
+
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestNTrace>();
+        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        auto id;
+        if (node_value == 0) {
+            id = int(regions::de::CountyId(node_ids[node_idx]));
+        }
+        else {
+            id = int(regions::de::DistrictId(node_ids[node_idx]));
+        }
+        //holiday periods
+        auto holiday_periods = regions::de::get_holidays(regions::de::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
     return success();
 }
@@ -488,17 +556,37 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParamet
 template <typename TestNTrace, typename ContactPattern, class ContactLocation, class InfectionState, class Model,
           class Parameters, class ReadFunction>
 IOResult<Graph<Model, MigrationParameters>>
-create_graph(Graph<Model, MigrationParameters>& params_graph, const Parameters& params, Date start_date, Date end_date,
-             const fs::path& data_dir, ReadFunction&& read_func, const std::vector<double>& scaling_factor_inf,
-             double scaling_factor_icu, double tnt_capacity_factor,
-             std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-             int num_days = 0, bool export_time_series = false)
+create_graph_county(Graph<Model, MigrationParameters>& params_graph, const Parameters& params, Date start_date,
+                    Date end_date, const fs::path& data_dir, ReadFunction&& read_func,
+                    const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                    double tnt_capacity_factor, std::initializer_list<InfectionState>& migrating_compartments,
+                    size_t contact_locations_size, int num_days = 0, bool export_time_series = false)
 {
-    const auto& set_node_function = set_nodes<TestNTrace, ContactPattern, Model, Parameters, ReadFunction>;
+    const auto& set_node_function = set_nodes_county<TestNTrace, ContactPattern, Model, Parameters, ReadFunction>;
     const auto& set_edge_function = set_edges<ContactLocation, Model, InfectionState>;
     BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_func,
                                         scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days,
                                         export_time_series));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations_size));
+    return success(params_graph);
+}
+
+template <typename TestNTrace, typename ContactPattern, class ContactLocation, class InfectionState, class Model,
+          class Parameters, class ReadFunction>
+IOResult<Graph<Model, MigrationParameters>>
+create_graph(Graph<Model, MigrationParameters>& params_graph, const Parameters& params, Date start_date, Date end_date,
+             const fs::path& data_dir, const fs::path& population_data_path, int node_value,
+             const fs::path& confirmed_cases_path, const fs::path& divi_data_path, ReadFunction&& read_func,
+             const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+             std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+             const fs::path& vaccination_data_path = ' ', int num_days = 0, bool export_time_series = false)
+{
+    const auto& set_node_function = set_nodes<TestNTrace, ContactPattern, Model, Parameters, ReadFunction>;
+    const auto& set_edge_function = set_edges<ContactLocation, Model, InfectionState>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, population_data_path, node_value,
+                                        confirmed_cases_path, divi_data_path, params_graph, read_func,
+                                        scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor,
+                                        vaccination_data_path, num_days, export_time_series));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations_size));
     return success(params_graph);
 }
