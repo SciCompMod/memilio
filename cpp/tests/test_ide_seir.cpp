@@ -25,7 +25,29 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <gtest/gtest.h>
 
-class IdeSeirModelTest : public testing::Test
+TEST(TestIdeSeirMin, simulateDefault)
+{
+    double tmax = 1;
+    double dt   = 0.1;
+
+    using Vec = mio::TimeSeries<double>::Vector;
+
+    mio::TimeSeries<double> init(1);
+    init.add_time_point<Eigen::VectorXd>(-12.0, Vec::Constant(1, 10));
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, Vec::Constant(1, 10));
+    }
+
+    mio::iseir::IdeSeirModel model(std::move(init), dt, 10);
+    model.simulate(tmax);
+    auto result = model.calculate_EIR();
+
+    // TODO: It is actually an inconsistency that the simulation of the IDE model goes to tmax + dt,
+    // instead of tmax; this has to be corrected in the future.
+    EXPECT_NEAR(result.get_last_time(), tmax + 0.1, 1e-10);
+}
+
+class TestIdeSeir : public testing::Test
 {
 protected:
     virtual void SetUp()
@@ -61,7 +83,7 @@ public:
     mio::iseir::IdeSeirModel* model = nullptr;
 };
 
-TEST_F(IdeSeirModelTest, compareWithPreviousRun)
+TEST_F(TestIdeSeir, compareWithPreviousRun)
 {
 
     auto compare = load_test_data_csv<double>("ide-seir-compare.csv");
