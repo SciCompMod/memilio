@@ -76,7 +76,7 @@ struct Cell {
     * @brief Computes a relative cell size for the Cell.
     * @return The relative cell size for the Cell.
     */
-    double compute_space_per_person_relative();
+    ScalarType compute_space_per_person_relative();
 
     /**
     * @brief Get subpopulation of a particular InfectionState in the Cell.
@@ -117,6 +117,25 @@ public:
     {
         return m_index;
     }
+
+    /**
+     * @brief Compute the transmission factor for contact transmission of the virus in a Cell.
+     * @param[in] cell_index Cell index of the Cell.
+     * @param[in] virus VirusVariant of interest.
+     * @param[in] age_receiver AgeGroup of the receiving Person.
+     * @param[in] age_transmitter AgeGroup of the transmitting Person.
+     * @returns Amount of average infections with the virus from the AgeGroup of the transmitter per day.
+    */
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                            AgeGroup age_transmitter) const;
+
+    /**
+     * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
+     * @param[in] cell_index Cell index of the Cell.
+     * @param[in] virus VirusVariant of interest.
+     * @returns Amount of average infections with the virus per day.
+    */
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const;
 
     /** 
      * @brief A person interacts with the population at this Location and may become infected.

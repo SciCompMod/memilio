@@ -87,8 +87,8 @@ public:
     void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
-     * @brief Get the current infection of the person.
-     * @returns The current infection state of the person.
+     * @brief Get the latest Infection of the Person.
+     * @returns The latest Infection of the Person.
      */
     Infection& get_infection()
     {
@@ -270,7 +270,7 @@ public:
      * @brief Get the protection of the mask. A value of 1 represents full protection and a value of 0 means no protection.
      * @return The protection factor of the mask.
      */
-    double get_mask_protective_factor(const GlobalInfectionParameters& params) const;
+    ScalarType get_mask_protective_factor(const GlobalInfectionParameters& params) const;
 
     /**
      * @brief For every LocationType a person has a compliance value between -1 and 1.
@@ -278,7 +278,7 @@ public:
      * 1 means that the Person always wears a Mask a the LocationType even if it is not required.
      * @param preferences The vector of mask compliance values for all LocationTypes.
      */
-    void set_mask_preferences(std::vector<double> preferences)
+    void set_mask_preferences(std::vector<ScalarType> preferences)
     {
         m_mask_compliance = preferences;
     }
@@ -289,7 +289,7 @@ public:
      * @return The probability that the person does not comply to any mask duty/wears a
      * mask even if it is not required.
      */
-    double get_mask_compliance(LocationType location) const
+    ScalarType get_mask_compliance(LocationType location) const
     {
         return m_mask_compliance[static_cast<int>(location)];
     }
@@ -326,7 +326,7 @@ private:
          * @param[in] t TimePoint of check.
          * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
         */
-        double get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+        ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
         {
             return 1.; // put implementation in .cpp
         }
@@ -337,7 +337,7 @@ private:
          * @param[in] t TimePoint of check.
          * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
         */
-        double get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+        ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
         {
             return 1.; // put implementation in .cpp
         }
@@ -350,11 +350,11 @@ public:
      * @param[in] t TimePoint of check.
      * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
     */
-    double get_protection_factor(VirusVariant v, TimePoint t) const
+    ScalarType get_protection_factor(VirusVariant v, TimePoint t) const
     {
         return m_immunity_level.get_protection_factor(v, t);
     }
-    //double get_severity_factor = ImmunityLevel::get_severity_factor;
+    //ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
     LocationId m_location_id;
@@ -365,14 +365,14 @@ private:
     bool m_quarantine = false;
     AgeGroup m_age;
     TimeSpan m_time_at_location;
-    double m_random_workgroup;
-    double m_random_schoolgroup;
-    double m_random_goto_work_hour;
-    double m_random_goto_school_hour;
+    ScalarType m_random_workgroup;
+    ScalarType m_random_schoolgroup;
+    ScalarType m_random_goto_work_hour;
+    ScalarType m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
     Mask m_mask;
     bool m_wears_mask = false;
-    std::vector<double> m_mask_compliance;
+    std::vector<ScalarType> m_mask_compliance;
     uint32_t m_person_id;
     std::vector<uint32_t> m_cells;
 };

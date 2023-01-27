@@ -63,6 +63,8 @@ Infection::Infection(VirusVariant virus, const GlobalInfectionParameters& params
                      InfectionState start_state, bool detected)
     : m_virus_variant(virus)
     , m_viral_load(start_date, params)
+    , m_log_norm_alpha(0.) // subject to change
+    , m_log_norm_beta(1.) // subject to change
     , m_detected(detected)
 {
     draw_infection_course(start_date, params, start_state);

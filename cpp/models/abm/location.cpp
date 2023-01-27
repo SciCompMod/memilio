@@ -40,20 +40,33 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
 {
 }
 
+ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                                   AgeGroup age_transmitter) const
+{
+    return m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, age_receiver}] *
+           m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+}
+
+ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const
+{
+    return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
+           m_parameters.get<AerosolTransmissionRates>()[{virus}];
+}
+
 void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
-    auto age               = person.get_age();
-    double mask_protection = person.get_mask_protective_factor(global_params);
+    auto age_receiver          = person.get_age();
+    ScalarType mask_protection = person.get_mask_protective_factor(global_params);
     for (auto cell_index : person.get_cells()) { // should be changed so that persons can only be in one cell
-        std::pair<VirusVariant, double> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
+        std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
-            VirusVariant virus              = static_cast<VirusVariant>(v);
-            double local_indiv_trans_prob_v = 0;
-            for (uint32_t a = 0; a != static_cast<uint32_t>(AgeGroup::Count); ++a) {
-                local_indiv_trans_prob_v += (m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, age}] *
-                                                 m_parameters.get<ContactRates>()[{age, static_cast<AgeGroup>(a)}] +
-                                             m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
-                                                 m_parameters.get<AerosolTransmissionRates>()[{virus}]) *
+            VirusVariant virus                  = static_cast<VirusVariant>(v);
+            ScalarType local_indiv_trans_prob_v = 0;
+            for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count);
+                 ++age_transmitter) {
+                local_indiv_trans_prob_v += (transmission_contacts_per_day(cell_index, virus, age_receiver,
+                                                                           static_cast<AgeGroup>(age_transmitter)) +
+                                             transmission_air_per_day(cell_index, virus)) *
                                             (1 - mask_protection) * dt.days() / days(1).days() *
                                             person.get_protection_factor(virus, t);
             }
@@ -163,7 +176,7 @@ ScalarType Cell::compute_space_per_person_relative()
 void Location::store_subpopulations(const TimePoint t)
 {
     m_subpopulations.add_time_point(t.days());
-    m_subpopulations.get_last_value() = get_subpopulations(t).cast<double>();
+    m_subpopulations.get_last_value() = get_subpopulations(t).cast<ScalarType>();
 }
 
 void Location::initialize_subpopulations(const TimePoint t)

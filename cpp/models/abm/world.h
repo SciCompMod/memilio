@@ -70,30 +70,32 @@ public:
     World& operator=(const World&)  = delete;
 
     /** 
-     * prepare the world for the next simulation step.
-     * @param dt length of the time step 
+     * Prepare the World for the next simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * evolve the world one time step.
-     * @param dt length of the time step
+     * Evolve the world one time step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void evolve(TimePoint t, TimeSpan dt);
 
     /** 
-     * Add a location to the world.
-     * @param type Type of location to add.
-     * @param num_cells [Default: 1] Number of cells that the location is divided into.
-     * @return Index and type of the newly created location.
+     * Add a Location to the world.
+     * @param[in] type Type of Location to add.
+     * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
+     * @return Index and type of the newly created Location.
      */
     LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /** 
-     * @brief Add a person to the world.
-     * @param id Index and type of the initial location of the person.
-     * @param age AgeGroup of the person.
-     * @return Reference to the newly created person.
+     * @brief Add a Person to the world.
+     * @param[in] id Index and type of the initial Location of the Person.
+     * @param[in] age AgeGroup of the person.
+     * @return Reference to the newly created Person.
      */
     Person& add_person(const LocationId id, AgeGroup age);
 

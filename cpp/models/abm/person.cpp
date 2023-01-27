@@ -43,10 +43,10 @@ Person::Person(LocationId id, AgeGroup age, uint32_t person_id)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()();
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
+    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()();
+    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()();
+    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()();
+    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()();
 }
 
 Person::Person(const Location& location, AgeGroup age, uint32_t person_id)
@@ -152,7 +152,7 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
 
 bool Person::get_tested(TimePoint t, const TestParameters& params)
 {
-    double random = UniformDistribution<double>::get_instance()();
+    ScalarType random = UniformDistribution<ScalarType>::get_instance()();
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -196,7 +196,7 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-double Person::get_mask_protective_factor(const GlobalInfectionParameters& params) const
+ScalarType Person::get_mask_protective_factor(const GlobalInfectionParameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;
@@ -212,7 +212,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {
             // draw if the person wears a mask even if not required
-            double wear_mask = UniformDistribution<double>::get_instance()();
+            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()();
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
             }
@@ -222,7 +222,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = true;
         if (get_mask_compliance(target.get_type()) < 0.) {
             // draw if a person refuses to wear the required mask
-            double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()(-1., 0.);
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }
