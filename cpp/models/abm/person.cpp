@@ -31,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(LocationId id, AgeGroup age, uint32_t person_id)
-    : m_location_id(id)
+Person::Person(const std::shared_ptr<Location>& location, AgeGroup age, uint32_t person_id)
+    : m_location(location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -49,26 +49,22 @@ Person::Person(LocationId id, AgeGroup age, uint32_t person_id)
     m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()();
 }
 
-Person::Person(const Location& location, AgeGroup age, uint32_t person_id)
-    : Person({location.get_index(), location.get_type()}, age, person_id)
-{
-}
-
-void Person::interact(TimePoint t, TimeSpan dt, Location& loc, const GlobalInfectionParameters& params)
+void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params)
 {
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
-        loc.interact(*this, t, dt, params);
+        m_location->interact(*this, t, dt, params);
     }
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
+void Person::migrate_to(std::shared_ptr<Location>& loc_old, std::shared_ptr<Location>& loc_new,
+                        const std::vector<uint32_t>& cells)
 {
     if (&loc_old != &loc_new) {
-        loc_old.remove_person(shared_from_this());
-        m_location_id = LocationId({loc_new.get_index(), loc_new.get_type()});
-        m_cells       = cells;
-        loc_new.add_person(shared_from_this());
+        loc_old->remove_person(shared_from_this());
+        m_location = loc_new;
+        m_cells    = cells;
+        loc_new->add_person(shared_from_this());
         m_time_at_location = TimeSpan(0);
     }
 }
@@ -102,9 +98,14 @@ void Person::add_new_infection(Infection&& inf)
     m_infections.push_back(std::move(inf));
 }
 
-LocationId Person::get_location_id() const
+std::shared_ptr<Location> Person::get_location()
 {
-    return m_location_id;
+    return m_location;
+}
+
+const std::shared_ptr<Location> Person::get_location() const
+{
+    return m_location;
 }
 
 void Person::set_assigned_location(Location& location)

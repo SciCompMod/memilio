@@ -39,10 +39,12 @@ class ViralLoad
 public:
     /**
      * @brief Constructor for ViralLoad.
+     * @param[in] virus VirusVariant to determine the ViralLoad course.
+     * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] start_day TimePoint of construction.
-     * @param[in] params Global infection parameters.
+     * @param[in,out] params Global infection parameters.
      */
-    ViralLoad(TimePoint start_day, const GlobalInfectionParameters& params);
+    explicit ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, GlobalInfectionParameters& params);
 
     /**
      * @brief Gets the viral load of the infection at a given TimePoint.
@@ -52,16 +54,18 @@ public:
 
 private:
     /**
-     * @brief Draws the viral load of the infection from a set of distributions.
+     * @brief Draws the ViralLoad of the Infection from a set of distributions in the global parameters.
+     * @param[in] virus VirusVariant to determine the ViralLoad course.
+     * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] params Global infection parameters.
      */
-    void draw_viral_load(const GlobalInfectionParameters& params);
+    void draw_viral_load(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params);
 
     TimePoint m_start_date;
     TimePoint m_end_date;
-    UncertainValue m_peak;
-    UncertainValue m_incline;
-    UncertainValue m_decline; // always negative
+    ScalarType m_peak;
+    ScalarType m_incline;
+    ScalarType m_decline; // always negative
 };
 
 class Infection
@@ -70,12 +74,14 @@ class Infection
 public:
     /**
      * @brief Create an Infection for a single Person.
-     * @param virus Virus type of the Infection.
-     * @param start_date Starting date of the Infection.
-     * @param start_state [Default: InfectionState::Susceptible] Starting InfectionState of the Person. Only for initialization.
-     * @param detected [Default: false] If the Infection is detected.
+     * @param[in] virus Virus type of the Infection.
+     * @param[in] age AgeGroup to determine the ViralLoad course.
+     * @param[in] start_date Starting date of the Infection.
+     * @param[in] start_state [Default: InfectionState::Susceptible] Starting InfectionState of the Person. Only for initialization.
+     * @param[in] detected [Default: false] If the Infection is detected.
      */
-    explicit Infection(VirusVariant virus, const GlobalInfectionParameters& params, TimePoint start_date,
+    explicit Infection(VirusVariant virus, AgeGroup age,
+                       GlobalInfectionParameters& params, TimePoint start_date,
                        InfectionState start_state = InfectionState::Exposed, bool detected = false);
 
     /**

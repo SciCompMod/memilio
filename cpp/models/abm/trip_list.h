@@ -44,7 +44,7 @@ struct Trip {
     TimePoint time;
     /**location where the person migrates to */
     LocationId migration_destination;
-    /**location where te person starts the trip*/
+    /**location where the person starts the trip*/
     LocationId migration_origin;
     /**If migration_destination consists of different cells, this gives the index of the cells the person migrates to.*/
     std::vector<uint32_t> cells;

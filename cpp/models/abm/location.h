@@ -127,7 +127,7 @@ public:
      * @returns Amount of average infections with the virus from the AgeGroup of the transmitter per day.
     */
     ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                            AgeGroup age_transmitter) const;
+                                             AgeGroup age_transmitter) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
@@ -143,7 +143,7 @@ public:
      * @param dt Length of the current simulation time step.
      * @param global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    void interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.

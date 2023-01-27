@@ -26,6 +26,7 @@
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/damping.h"
@@ -181,6 +182,71 @@ struct RecoveredToSusceptible {
     }
 };
 
+struct ViralLoadPeak {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadPeak";
+    }
+};
+
+struct ViralLoadIncline {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadIncline";
+    }
+};
+
+struct ViralLoadDecline {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, -1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadDecline";
+    }
+};
+
+struct InfectivityFromViralLoadAlpha {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 0.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "InfectivityFromViralLoadAlpha";
+    }
+};
+
+struct InfectivityFromViralLoadBeta {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "InfectivityFromViralLoadBeta";
+    }
+};
+
 struct DetectInfection {
     using Type = CustomIndexArray<ScalarType, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
@@ -211,7 +277,9 @@ struct MaskProtection {
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadPeak, ViralLoadIncline,
+                 ViralLoadDecline, InfectivityFromViralLoadAlpha, InfectivityFromViralLoadBeta, DetectInfection,
+                 MaskProtection>;
 
 struct MaximumContacts {
     using Type = ScalarType;

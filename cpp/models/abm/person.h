@@ -49,19 +49,11 @@ class Person : public std::enable_shared_from_this<Person>
 public:
     /**
      * @brief Create a Person.
-     * @param id Index and type of the initial location of the person.
-     * @param age The age group of the person.
-     * @param person_id Index of the person.
-     */
-    Person(LocationId id, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
-
-    /**
-     * @brief Create a Person.
      * @param location Initial location of the person.
      * @param age The age group of the person.
      * @param person_id Index of the person.
      */
-    Person(const Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    Person(const std::shared_ptr<Location>& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
     * compare two persons
@@ -74,17 +66,19 @@ public:
     /** 
      * @brief Time passes and the person interacts with the population at its current location.
      * The person might become infected.
+     * @param[in] t Current time.
      * @param[in] dt Length of the current simulation time step.
-     * @param[in] global_infection_parameters Infection parameters that are the same in all locations.
+     * @param[in,out] global_infection_parameters Infection parameters that are the same in all locations.
      */
-    void interact(TimePoint t, TimeSpan dt, Location& loc, const GlobalInfectionParameters& params);
+    void interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params);
 
     /** 
      * @brief Migrate to a different location.
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
+    void migrate_to(std::shared_ptr<Location>& loc_old, std::shared_ptr<Location>& loc_new,
+                    const std::vector<uint32_t>& cells_new = {});
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -142,10 +136,12 @@ public:
     }
 
     /**
-     * @brief Get index and type of the current location of the person.
-     * @returns Index and type of the current location of the person.
+     * @brief Get the current Location of the Person.
+     * @returns Current Location of the Person.
      */
-    LocationId get_location_id() const;
+    std::shared_ptr<Location> get_location();
+
+    const std::shared_ptr<Location> get_location() const;
 
     /**
      * @brief Get the time the person has been at its current location.
@@ -357,7 +353,7 @@ public:
     //ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
-    LocationId m_location_id;
+    std::shared_ptr<Location> m_location;
     std::vector<uint32_t> m_assigned_locations;
     std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;

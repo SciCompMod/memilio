@@ -26,21 +26,17 @@ namespace mio
 namespace abm
 {
 
-ViralLoad::ViralLoad(TimePoint start_date, const GlobalInfectionParameters& params)
+ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, GlobalInfectionParameters& params)
     : m_start_date(start_date)
 {
-    m_peak.set_distribution(mio::ParameterDistributionUniform(m_peak * 0.9, m_peak * 1.1));
-    m_incline.set_distribution(mio::ParameterDistributionUniform(m_incline * 0.9, m_incline * 1.1));
-    m_decline.set_distribution(mio::ParameterDistributionUniform(m_decline * 1.1, m_decline * 0.9));
-    draw_viral_load(params);
+    draw_viral_load(virus, age, params);
 }
 
-void ViralLoad::draw_viral_load(const GlobalInfectionParameters& /*params*/)
+void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params)
 {
-    // These numbers are subject to change, They are going to be based on distributions backed from data.
-    m_peak.draw_sample();
-    m_incline.draw_sample();
-    m_decline.draw_sample();
+    m_peak     = params.get<ViralLoadPeak>()[{virus, age}].draw_sample();
+    m_incline  = params.get<ViralLoadIncline>()[{virus, age}].draw_sample();
+    m_decline  = params.get<ViralLoadDecline>()[{virus, age}].draw_sample();
     m_end_date = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 
@@ -59,12 +55,12 @@ ScalarType ViralLoad::get_viral_load(TimePoint t) const
     }
 }
 
-Infection::Infection(VirusVariant virus, const GlobalInfectionParameters& params, TimePoint start_date,
+Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
                      InfectionState start_state, bool detected)
     : m_virus_variant(virus)
-    , m_viral_load(start_date, params)
-    , m_log_norm_alpha(0.) // subject to change
-    , m_log_norm_beta(1.) // subject to change
+    , m_viral_load(virus, age, start_date, params)
+    , m_log_norm_alpha(params.get<InfectivityFromViralLoadAlpha>()[{virus, age}].draw_sample())
+    , m_log_norm_beta(params.get<InfectivityFromViralLoadBeta>()[{virus, age}].draw_sample())
     , m_detected(detected)
 {
     draw_infection_course(start_date, params, start_state);

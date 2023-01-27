@@ -53,7 +53,7 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const
 {
     auto age_receiver          = person.get_age();
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
@@ -77,7 +77,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
             random_transition(VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
-            person.add_new_infection(Infection(virus, global_params, t));
+            person.add_new_infection(Infection(virus, age_receiver, global_params, t));
         }
     }
     // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells

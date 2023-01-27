@@ -112,8 +112,8 @@ public:
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
-                    std::vector<std::vector<Location>>::const_iterator>>
+    Range<std::pair<std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator,
+                    std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator>>
     get_locations() const;
 
     /**
@@ -127,24 +127,24 @@ public:
      * @param id LocationId of the location
      * @return reference to the location
      */
-    const Location& get_individualized_location(LocationId id) const;
+    const std::shared_ptr<Location>& get_individualized_location(LocationId id) const;
 
-    Location& get_individualized_location(LocationId id);
+    std::shared_ptr<Location>& get_individualized_location(LocationId id);
 
     /**
      * get the current location of a person
      * @return reference to the current location of the person
      */
-    const Location& get_location(const Person& person) const;
+    const std::shared_ptr<Location>& get_location(const Person& person) const;
 
-    Location& get_location(const Person& person);
+    std::shared_ptr<Location>& get_location(Person& person);
 
     /**
      * find an assigned location of a person
      * @param type the location type that specifies the assigned location
      * @return pointer to the assigned location
      */
-    Location* find_location(LocationType type, const Person& person);
+    std::shared_ptr<Location> find_location(LocationType type, const Person& person);
 
     /** 
      * number of persons in one infection state at all locations of a type.
@@ -193,7 +193,7 @@ private:
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::shared_ptr<Person>> m_persons;
-    std::vector<std::vector<Location>> m_locations;
+    std::vector<std::vector<std::shared_ptr<Location>>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
