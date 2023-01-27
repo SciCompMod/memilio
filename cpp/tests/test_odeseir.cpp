@@ -109,3 +109,27 @@ TEST_F(TestSeir, checkPopulationConservation)
     }
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
+
+TEST_F(TestSeir, check_constraints_parameters)
+{
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+
+    // model.check_constraints() combines the functions from population and parameters.
+    // We only want to test the functions for the parameters defined in parameters.h
+    ASSERT_EQ(model.parameters.check_constraints(), 0);
+
+    mio::set_log_level(mio::LogLevel::off);
+    model.parameters.set<mio::oseir::TimeExposed>(-5.2);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+}

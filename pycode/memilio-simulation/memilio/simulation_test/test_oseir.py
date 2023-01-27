@@ -57,7 +57,7 @@ class Test_oseir_integration(unittest.TestCase):
         model.parameters.ContactPatterns.add_damping(
             Damping(coeffs=[[0.6]], t=12.5, level=0, type=0))
 
-        model.apply_constraints()
+        model.check_constraints()
 
         self.model = model
 
@@ -76,8 +76,8 @@ class Test_oseir_integration(unittest.TestCase):
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/seir-compare.csv'),
-            sep='(?<!#)\s+')
-        refData.columns = pd.Series(refData.columns.str.replace("#\s", ""))
+            sep=r'(?<!#)\s+')
+        refData.columns = pd.Series(refData.columns.str.replace(r"#\s", ""))
 
         result = simulate(t0=self.t0, tmax=self.tmax,
                           dt=self.dt, model=self.model)
@@ -104,6 +104,30 @@ class Test_oseir_integration(unittest.TestCase):
 
                 tol = rel_tol * ref
                 self.assertAlmostEqual(ref, actual, delta=tol)
+
+    def test_check_constraints_parameters(self):
+
+        model = Model()
+
+        model.parameters.TimeExposed.value = 5.2
+        model.parameters.TimeInfected.value = 6.
+        model.parameters.TransmissionProbabilityOnContact.value = 1.
+
+        model.parameters.TimeExposed.value = 5.2
+        model.parameters.TimeInfected.value = 6.
+        model.parameters.TransmissionProbabilityOnContact.value = 1.
+        self.assertEqual(model.parameters.check_constraints(), 0)
+
+        model.parameters.TimeExposed.value = -1.
+        self.assertEqual(model.parameters.check_constraints(), 1)
+
+        model.parameters.TimeExposed.value = 5.2
+        model.parameters.TimeInfected.value = 0
+        self.assertEqual(model.parameters.check_constraints(), 1)
+
+        model.parameters.TimeInfected.value = 6.
+        model.parameters.TransmissionProbabilityOnContact.value = -1.
+        self.assertEqual(model.parameters.check_constraints(), 1)
 
 
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ int main()
 
     mio::oseir::Model model;
 
-    double total_population = 1061000;
+    double total_population                                                                            = 1061000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 10000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 1000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 1000;
@@ -48,11 +48,11 @@ int main()
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(1.0);
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(2);
-    
+
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 2.7;
     model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
 
-    model.apply_constraints();
+    model.check_constraints();
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
@@ -74,7 +74,6 @@ int main()
         }
 
         Eigen::VectorXd res_j = secir.get_last_value();
-        printf("\nnumber total: %f\n",
-               res_j[0] + res_j[1] + res_j[2] + res_j[3]);
+        printf("\nnumber total: %f\n", res_j[0] + res_j[1] + res_j[2] + res_j[3]);
     }
 }

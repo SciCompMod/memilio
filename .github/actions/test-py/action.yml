@@ -18,12 +18,12 @@ runs:
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Install Python Wheels
@@ -37,7 +37,7 @@ runs:
       run: |
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest
+          python -W ignore::DeprecationWarning -m coverage run --include=**/site-packages/memilio/* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
@@ -58,7 +58,7 @@ runs:
           getvaccinationdata --help
         fi
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-py-coverage-reports
         path: |

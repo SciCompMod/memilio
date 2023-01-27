@@ -23,6 +23,7 @@
 #include "memilio/math/adapt_rk.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/analyze_result.h"
+#include "ode_secir/parameters.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -788,4 +789,69 @@ TEST(Secir, get_migration_factors)
         ASSERT_GT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], beta);
         ASSERT_LT(factors[Eigen::Index(mio::osecir::InfectionState::InfectedSymptoms)], max_beta);
     }
+}
+
+TEST(Secir, check_constraints_parameters)
+{
+    auto model = mio::osecir::Model(1);
+    ASSERT_EQ(model.parameters.check_constraints(), 0);
+
+    mio::set_log_level(mio::LogLevel::off);
+    model.parameters.set<mio::osecir::Seasonality>(-0.5);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::Seasonality>(0.2);
+    model.parameters.set<mio::osecir::ICUCapacity>(-2);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::ICUCapacity>(2);
+    model.parameters.set<mio::osecir::IncubationTime>(-2);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::IncubationTime>(2);
+    model.parameters.set<mio::osecir::SerialInterval>(1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::SerialInterval>(5);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::SerialInterval>(1.5);
+    model.parameters.set<mio::osecir::TimeInfectedSymptoms>(0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TimeInfectedSymptoms>(2);
+    model.parameters.set<mio::osecir::TimeInfectedSevere>(-1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TimeInfectedSevere>(2);
+    model.parameters.set<mio::osecir::TimeInfectedCritical>(0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TimeInfectedCritical>(2);
+    model.parameters.set<mio::osecir::TransmissionProbabilityOnContact>(2.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::TransmissionProbabilityOnContact>(0.5);
+    model.parameters.set<mio::osecir::RelativeTransmissionNoSymptoms>(-1.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::RelativeTransmissionNoSymptoms>(0.5);
+    model.parameters.set<mio::osecir::RecoveredPerInfectedNoSymptoms>(3.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::RecoveredPerInfectedNoSymptoms>(0.5);
+    model.parameters.set<mio::osecir::RiskOfInfectionFromSymptomatic>(-2.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::RiskOfInfectionFromSymptomatic>(0.5);
+    model.parameters.set<mio::osecir::SeverePerInfectedSymptoms>(-1.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::SeverePerInfectedSymptoms>(0.5);
+    model.parameters.set<mio::osecir::CriticalPerSevere>(-1.0);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    model.parameters.set<mio::osecir::CriticalPerSevere>(0.5);
+    model.parameters.set<mio::osecir::DeathsPerCritical>(1.1);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
 }

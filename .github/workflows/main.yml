@@ -16,9 +16,11 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: pre-commit/action@v2.0.0
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - uses: pre-commit/action@v3.0.0
 
   build-cpp-gcc_clang:
     if: github.event.pull_request.draft == false
@@ -31,10 +33,10 @@ jobs:
           - version: "latest"
             os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-18.04"
+            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with: 
           compiler: ${{ matrix.compiler }}
@@ -48,7 +50,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with:
           compiler: gcc
@@ -69,7 +71,7 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
         with: 
           config: ${{ matrix.config }}
@@ -79,7 +81,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
         with: 
           config: Release
@@ -98,10 +100,10 @@ jobs:
           - version: "latest"
             os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-18.04"
+            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
         with: 
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
@@ -112,7 +114,7 @@ jobs:
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
         with: 
           build-artifact: build-cpp-linux-gcc-latest-Release-part
@@ -131,7 +133,7 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
         with: 
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
@@ -141,7 +143,7 @@ jobs:
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
         with: 
           build-artifact: build-cpp-windows-msvc-latest-Release-part
@@ -152,7 +154,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: epidata
@@ -162,7 +164,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: epidata
@@ -174,7 +176,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: simulation
@@ -184,7 +186,7 @@ jobs:
     needs: build-py-simulation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
@@ -193,7 +195,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-docs
 
   test-pylint-epidata:
@@ -201,7 +203,7 @@ jobs:
     needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-pylint
         with:
           package: epidata
@@ -212,19 +214,19 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install python3-pip gnupg
           python -m pip install --upgrade pip
       - name: Download Python Wheels
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: python-wheels-epidata
           path: pycode/wheelhouse
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: Install Python Wheels
@@ -242,7 +244,7 @@ jobs:
           getvaccinationdata -o data_dl
           gethospitalizationdata -o data_dl
       - name: Upload Data
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: data
           path: |
@@ -261,21 +263,21 @@ jobs:
     needs: [test-py-epidata, test-cpp-gcc_clang]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-py-coverage-reports
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./pycode/test/coverage_python.xml,./coverage.info
           verbose: true
@@ -285,33 +287,34 @@ jobs:
     needs: [test-py-epidata, test-cpp-gcc_clang, test-docs, test-pylint-epidata]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
       - name: Download python coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-py-coverage-reports
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-cpp-coverage-reports
       - name: Download documentation
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: documentation
           path: docs/html
       - name: Download pylint report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: pylint-report
           path: pycode/build_pylint
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
-          cp ci_index/main_index.html public/index.html
+          cp docs/style.css public/style.css
+          cp docs/index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
@@ -328,7 +331,7 @@ jobs:
           cp -r coverage_python/* public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
         with:
           name: pages

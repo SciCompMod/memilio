@@ -140,7 +140,7 @@ struct IncubationTime {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 1.);
+        return Type(size, 2.);
     }
     static std::string name()
     {
@@ -171,7 +171,7 @@ struct SerialInterval {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 1.);
+        return Type(size, 1.5);
     }
     static std::string name()
     {
@@ -413,7 +413,7 @@ struct ReducExposedPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -428,7 +428,7 @@ struct ReducExposedImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -443,7 +443,7 @@ struct ReducInfectedSymptomsPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -458,7 +458,7 @@ struct ReducInfectedSymptomsImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -474,7 +474,7 @@ struct ReducInfectedSevereCriticalDeadPartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -489,7 +489,7 @@ struct ReducInfectedSevereCriticalDeadImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 0.0);
+        return Type(size, 1.);
     }
     static std::string name()
     {
@@ -723,16 +723,20 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.    
      */
-    void check_constraints() const
+    int check_constraints() const
     {
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
-            log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            log_error("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            return 1;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
-            log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+            log_error("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+            return 1;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -740,64 +744,145 @@ public:
             if (this->get<IncubationTime>()[i] < 2.0) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
                           this->get<IncubationTime>()[i], 2.0);
+                return 1;
             }
 
             if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
+                return 1;
             }
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
+                return 1;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSymptoms>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedSevere>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSevere>()[i], 1.0);
+                return 1;
             }
 
             if (this->get<TimeInfectedCritical>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedCritical>()[i], 1.0);
+                return 1;
             }
 
-            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d}", 0);
+            if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
-                log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
+                return 1;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
-                            1);
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
-                            1);
+                log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
+                          1);
+                return 1;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                return 1;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                return 1;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+
+            if (this->get<VaccinationGap>()[i] < 1) {
+                log_error("Constraint check: Parameter VaccinationGap smaller {:d}", 1);
+                return 1;
+            }
+
+            if (this->get<DaysUntilEffectivePartialImmunity>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {:d}", 0);
+                return 1;
+            }
+            if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
+                log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {:d}", 0);
+                return 1;
+            }
+
+            if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
+                this->get<ReducExposedPartialImmunity>()[i] > 1.0) {
+                log_error("Constraint check: Parameter ReducExposedPartialImmunity smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+            if (this->get<ReducExposedImprovedImmunity>()[i] <= 0.0 ||
+                this->get<ReducExposedImprovedImmunity>()[i] > 1.0) {
+                log_error("Constraint check: Parameter ReducExposedImprovedImmunity smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+            if (this->get<ReducInfectedSymptomsPartialImmunity>()[i] <= 0.0 ||
+                this->get<ReducInfectedSymptomsPartialImmunity>()[i] > 1.0) {
+                log_error(
+                    "Constraint check: Parameter ReducInfectedSymptomsPartialImmunity smaller {:d} or larger {:d}", 0,
+                    1);
+                return 1;
+            }
+            if (this->get<ReducInfectedSymptomsImprovedImmunity>()[i] <= 0.0 ||
+                this->get<ReducInfectedSymptomsImprovedImmunity>()[i] > 1.0) {
+                log_error(
+                    "Constraint check: Parameter ReducInfectedSymptomsImprovedImmunity smaller {:d} or larger {:d}", 0,
+                    1);
+                return 1;
+            }
+            if (this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] <= 0.0 ||
+                this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] > 1.0) {
+                log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadPartialImmunity smaller {:d} or "
+                          "larger {:d}",
+                          0, 1);
+                return 1;
+            }
+            if (this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] <= 0.0 ||
+                this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] > 1.0) {
+                log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadImprovedImmunity smaller {:d} or "
+                          "larger {:d}",
+                          0, 1);
+                return 1;
+            }
+            if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] > 1.0) {
+                log_error("Constraint check: Parameter ReducTimeInfectedMild smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+            if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {
+                log_error("Constraint check: Parameter BaseInfectiousnessB117 smaller {:d}", 0);
+                return 1;
+            }
+            if (this->get<BaseInfectiousnessB161>()[i] < 0.0) {
+                log_error("Constraint check: Parameter BaseInfectiousnessB161 smaller {:d}", 0);
+                return 1;
             }
         }
+        return 0;
     }
 
 private:

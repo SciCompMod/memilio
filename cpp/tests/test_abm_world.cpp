@@ -180,8 +180,8 @@ TEST(TestWorld, evolveMigration)
 
         EXPECT_EQ(p1.get_location_id().type, mio::abm::LocationType::Work);
         EXPECT_EQ(p2.get_location_id().type, mio::abm::LocationType::School);
-        EXPECT_EQ(school.get_subpopulations().sum(), 1);
-        EXPECT_EQ(work.get_subpopulations().sum(), 1);
+        EXPECT_EQ(school.get_population().get_last_value().sum(), 1);
+        EXPECT_EQ(work.get_population().get_last_value().sum(), 1);
     }
 
     {
@@ -236,10 +236,10 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p3.get_location_id().type, mio::abm::LocationType::Hospital);
         EXPECT_EQ(p4.get_location_id().type, mio::abm::LocationType::Home);
         EXPECT_EQ(p5.get_location_id().type, mio::abm::LocationType::Home);
-        EXPECT_EQ(event.get_subpopulations().sum(), 1);
-        EXPECT_EQ(work.get_subpopulations().sum(), 1);
-        EXPECT_EQ(home.get_subpopulations().sum(), 2);
-        EXPECT_EQ(hospital.get_subpopulations().sum(), 1);
+        EXPECT_EQ(event.get_population().get_last_value().sum(), 1);
+        EXPECT_EQ(work.get_population().get_last_value().sum(), 1);
+        EXPECT_EQ(home.get_population().get_last_value().sum(), 2);
+        EXPECT_EQ(hospital.get_population().get_last_value().sum(), 1);
     }
 }
 
