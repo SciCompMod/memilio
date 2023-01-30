@@ -20,10 +20,13 @@
 #ifndef SEIR_PARAMETERS_H
 #define SEIR_PARAMETERS_H
 
+#include "memilio/config.h"
+#include "memilio/utils/time_series.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
+#include <memory>
 #include <vector>
 
 namespace mio
@@ -95,7 +98,23 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+/**
+     * @brief the contact patterns within the society are modelled using a ContactMatrix
+     */
+struct Flows {
+    using Type = std::shared_ptr<TimeSeries<ScalarType>>;
+    static Type get_default()
+    {
+        return std::make_shared<TimeSeries<ScalarType>>(3);
+    }
+    static std::string name()
+    {
+        return "Flows";
+    }
+};
+
+using ParametersBase =
+    ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns, Flows>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

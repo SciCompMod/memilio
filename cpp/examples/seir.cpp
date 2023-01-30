@@ -17,11 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include "memilio/math/integrator.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/flow_calculator.h"
+#include <type_traits>
 
 int main()
 {
@@ -53,8 +58,9 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
-
-    auto seir = simulate(t0, tmax, dt, model);
+    auto I = std::make_shared<
+        mio::flow_calculator<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>>();
+    auto seir = simulate(t0, tmax, dt, model, I);
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);

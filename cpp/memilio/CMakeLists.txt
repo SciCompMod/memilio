@@ -8,13 +8,13 @@ add_library(memilio
     epidemiology/populations.h
     epidemiology/damping.cpp
     epidemiology/damping.h
-    epidemiology/uncertain_matrix.h    
+    epidemiology/uncertain_matrix.h
     epidemiology/uncertain_matrix.cpp
-    epidemiology/contact_matrix.h    
+    epidemiology/contact_matrix.h
     epidemiology/contact_matrix.cpp
-    epidemiology/damping_sampling.h    
+    epidemiology/damping_sampling.h
     epidemiology/damping_sampling.cpp
-    epidemiology/dynamic_npis.h    
+    epidemiology/dynamic_npis.h
     epidemiology/dynamic_npis.cpp
     epidemiology/regions.h
     epidemiology/regions.cpp
@@ -49,6 +49,7 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
+    math/flow_calculator.h
     mobility/mobility.h
     mobility/mobility.cpp
     mobility/graph_simulation.h
@@ -78,24 +79,24 @@ add_library(memilio
 
 target_include_directories(memilio PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> #includes configured by cmake
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>   
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # includes configured by cmake
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_compile_features(memilio PUBLIC cxx_std_14)
 target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking)
-target_compile_options(memilio 
-    PRIVATE 
-        ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
+target_compile_options(memilio
+    PRIVATE
+    ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
     PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+    $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
 
-if (MEMILIO_HAS_HDF5)
+if(MEMILIO_HAS_HDF5)
     target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
     target_include_directories(memilio PUBLIC ${HDF5_INCLUDE_DIRS})
 endif()
 
-if (MEMILIO_HAS_JSONCPP)
+if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
 endif()

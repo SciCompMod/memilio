@@ -52,16 +52,20 @@ public:
         double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                            params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        dydt[(size_t)InfectionState::Susceptible] =
-            -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Exposed] =
-            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+        double SToE = coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        double EToI = (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+        double IToR = (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+        dydt[(size_t)InfectionState::Susceptible] = -SToE;
+        dydt[(size_t)InfectionState::Exposed]     = SToE - EToI;
+        dydt[(size_t)InfectionState::Infected]    = EToI - IToR;
+        dydt[(size_t)InfectionState::Recovered]   = IToR;
+
+        params.get<Flows>()->add_time_point(t);
+        Eigen::Index ind{0};
+        for (const auto i : {SToE, EToI, IToR}) {
+            params.get<Flows>()->get_last_value()[ind] = i;
+            ++ind;
+        }
     }
 };
 
