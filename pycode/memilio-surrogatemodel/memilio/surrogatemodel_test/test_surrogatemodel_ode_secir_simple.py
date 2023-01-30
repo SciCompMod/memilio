@@ -27,8 +27,9 @@ import unittest
 import numpy as np
 import logging
 
-# suppress all autograph warnings from Tensorflow
-logging.getLogger("tensorflow").setLevel(logging.ERROR) 
+# suppress all autograph warnings from tensorflow
+
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 
 class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
