@@ -22,8 +22,8 @@ import unittest
 
 import numpy as np
 import logging
-logging.getLogger("tensorflow").setLevel(logging.ERROR) # suppress all autograph warnings from Tensorflow
-
+# suppress all autograph warnings from Tensorflow
+logging.getLogger("tensorflow").setLevel(logging.ERROR) 
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,

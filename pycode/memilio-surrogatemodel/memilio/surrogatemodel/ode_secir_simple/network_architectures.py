@@ -46,20 +46,20 @@ def lstm_network_multi_input_single_output():
     return model
 
 
-def cnn_multi_input_multi_output(label_width):
+def cnn_multi_input_multi_output(label_width, conv_size = 3):
     """! CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
 
     Input and output have shape [batch, time, features].
 
     @param label_width Number of time steps in the output.
+    @param conv_size Convolution kernel width which is 3 per default.
     """
-    CONV_WIDTH = 3
     num_outputs = 8
     model = tf.keras.Sequential([
         # Lambda layer transforms input to shape [batch, CONV_WIDTH, features]
-        tf.keras.layers.Lambda(lambda x: x[:, -CONV_WIDTH:, :]),
+        tf.keras.layers.Lambda(lambda x: x[:, -conv_size:, :]),
         tf.keras.layers.Conv1D(256, activation='relu',
-                               kernel_size=(CONV_WIDTH)),
+                               kernel_size=(conv_size)),
         tf.keras.layers.Dense(label_width*num_outputs,
                               kernel_initializer=tf.initializers.zeros()),
         tf.keras.layers.Reshape([label_width, num_outputs])
