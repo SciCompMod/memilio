@@ -21,6 +21,9 @@ import os
 import unittest
 
 import numpy as np
+import logging
+logging.getLogger("tensorflow").setLevel(logging.ERROR) # suppress all autograph warnings from Tensorflow
+
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
@@ -160,7 +163,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             len(mlp_output.history['val_loss']), max_epochs)
         lstm_single_output = model.network_fit(
-            self.path, model=model_lstm_single, max_epochs=max_epochs, plot=False)
+            self.path, model=model_lstm_multi_input_single_output, max_epochs=max_epochs, plot=False)
         self.assertEqual(
             len(lstm_single_output.history['val_loss']), max_epochs)
 

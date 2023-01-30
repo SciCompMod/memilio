@@ -21,7 +21,7 @@ import tensorflow as tf
 
 
 def mlp_multi_input_single_output():
-    """! Simple MLP Network which takes the compartments for one single time step as input and returns the 8 compartments for one single time step.
+    """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for one single time step.
 
     Reshaping adds an extra dimension to the output, so the shape of the output is 1x8. This makes the shape comparable to that of the multi-output models.
     """
