@@ -46,7 +46,7 @@ def lstm_network_multi_input_single_output():
     return model
 
 
-def cnn_multi_input_multi_output(label_width, conv_size = 3):
+def cnn_multi_input_multi_output(label_width, conv_size=3):
     """! CNN Network which uses multiple time steps as input and returns the 8 compartments for multiple time step in the future.
 
     Input and output have shape [batch, time, features].

@@ -17,18 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+from pyfakefs import fake_filesystem_unittest
+
+from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
+                                                     network_architectures)
 import os
 import unittest
 
 import numpy as np
 import logging
+
 # suppress all autograph warnings from Tensorflow
 logging.getLogger("tensorflow").setLevel(logging.ERROR) 
-from pyfakefs import fake_filesystem_unittest
-
-from memilio.surrogatemodel.ode_secir_simple import (data_generation, model,
-                                                     network_architectures)
-
 
 class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 

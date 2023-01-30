@@ -172,9 +172,9 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1] 
+        index=[str(compartment).split('.')[1]
                for compartment in InfectionState.values()],
-               columns=['Percentage Error'])
+        columns=['Percentage Error'])
 
     return mean_percentage
 
