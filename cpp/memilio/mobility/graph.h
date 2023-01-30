@@ -240,13 +240,30 @@ private:
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace mio
 
+/**
+ * @brief Sets the graph nodes for german counties.
+ * Reads the county ids and the epidemiological data from json files and 
+ * then creates one node for each county id. Every node contains a model.
+ * @param[in] params Model Parameters that are used for every node.
+ * @param[in] start_date Start date for which the data should be read.
+ * @param[in] end_data End date for which the data should be read.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+ * @param[in] node_func Function that returns the county ids.
+ * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+ * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ */
 template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
-                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
-                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
-                         bool export_time_series = false)
+IOResult<void> set_nodes_county(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                                Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+                                NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                                double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                                bool export_time_series = false)
 {
     BOOST_OUTCOME_TRY(county_ids, node_func((data_dir / "pydata" / "Germany").string()));
     std::vector<Model> counties(county_ids.size(), Model(int(size_t(params.get_num_groups()))));
@@ -294,6 +311,193 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
     return success();
 }
 
+/**
+ * @brief Sets the graph nodes for counties or districts.
+ * Reads the node ids which could refer to districts or counties and the epidemiological 
+ * data from json files and creates one node for each id. Every node contains a model.
+ * @param[in] params Model Parameters that are used for every node.
+ * @param[in] start_date Start date for which the data should be read.
+ * @param[in] end_data End date for which the data should be read.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] population_data_path Path to json file containing the population data.
+ * @param[in] node_value Specifies whether the node ids should be district or county ids.
+ * @param[in] confirmed_cases_path Path to json file containing the case data.
+ * @param[in] divi_data_path Path to json file containing the divi data.
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+ * @param[in] node_func Function that returns the county ids.
+ * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+ * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ */
+template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+          class ReadFunction, class NodeIdFunction>
+IOResult<void>
+set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+          const std::string& population_data_path, int node_value, const std::string& confirmed_cases_path,
+          const std::string& divi_data_path, Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+          NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+          double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+{
+    // mio::unused(data_dir);
+    // //mio::unused(population_data_path);
+    // mio::unused(confirmed_cases_path);
+    // mio::unused(divi_data_path);
+    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, node_value));
+    //std::vector<int> node_ids{1001};
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = params;
+    }
+
+    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+                                divi_data_path, confirmed_cases_path, population_data_path, num_days,
+                                export_time_series));
+
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestNTrace>();
+        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        auto id = 0;
+        if (node_value == 0) {
+            id = int(regions::CountyId(node_ids[node_idx]));
+        }
+        else {
+            id = int(regions::DistrictId(node_ids[node_idx]));
+        }
+        //holiday periods
+        auto holiday_periods = regions::get_holidays(regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
+    }
+    return success();
+}
+
+/**
+ * @brief Sets the graph nodes for counties or districts.
+ * Reads the node ids which could refer to districts or counties and the epidemiological 
+ * data from json files and creates one node for each id. Every node contains a model.
+ * @param[in] params Model Parameters that are used for every node.
+ * @param[in] start_date Start date for which the data should be read.
+ * @param[in] end_data End date for which the data should be read.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] population_data_path Path to json file containing the population data.
+ * @param[in] node_value Specifies whether the node ids should be district or county ids.
+ * @param[in] confirmed_cases_path Path to json file containing the case data.
+ * @param[in] divi_data_path Path to json file containing the divi data.
+ * @param[in] vaccination_data_path Path to the json file containing the vaccination data
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
+ * @param[in] node_func Function that returns the county ids.
+ * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+ * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+ * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ */
+template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+          class ReadFunction, class NodeIdFunction>
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         const std::string& population_data_path, int node_value,
+                         const std::string& confirmed_cases_path, const std::string& divi_data_path,
+                         const std::string& vaccination_data_path, Graph<Model, MigrationParams>& params_graph,
+                         ReadFunction&& read_func, NodeIdFunction&& node_func,
+                         const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                         double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+{
+    // mio::unused(data_dir);
+    // //mio::unused(population_data_path);
+    // mio::unused(confirmed_cases_path);
+    // mio::unused(divi_data_path);
+    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, node_value));
+    //std::vector<int> node_ids{1001};
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = params;
+    }
+
+    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+                                divi_data_path, confirmed_cases_path, population_data_path, vaccination_data_path,
+                                num_days, export_time_series));
+
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestNTrace>();
+        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        auto id = 0;
+        if (node_value == 0) {
+            id = int(regions::CountyId(node_ids[node_idx]));
+        }
+        else {
+            id = int(regions::DistrictId(node_ids[node_idx]));
+        }
+        //holiday periods
+        auto holiday_periods = regions::get_holidays(regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
+    }
+    return success();
+}
+
+/**
+ * @brief Sets the graph edges.
+ * Reads the commuting matrices from txt files and sets the graph edges with that.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in, out] params_graph Graph whose nodes are set by the function.
+ * @param[in] migrating_compartments Compartments that commute.
+ * @param[in] contact_locations_size Number of contact locations.
+ * @param[in] read_func Function that reads commuting matrices.
+ */
 template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,

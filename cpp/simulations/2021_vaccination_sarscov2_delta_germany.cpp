@@ -556,9 +556,9 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     const auto& node_id_function    = mio::get_county_ids;
 
     const auto& set_node_function =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, mio::osecirvvs::Model,
-                       mio::MigrationParameters, mio::osecirvvs::Parameters, decltype(read_function_nodes),
-                       decltype(node_id_function)>;
+        mio::set_nodes_county<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns,
+                              mio::osecirvvs::Model, mio::MigrationParameters, mio::osecirvvs::Parameters,
+                              decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
                        mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
