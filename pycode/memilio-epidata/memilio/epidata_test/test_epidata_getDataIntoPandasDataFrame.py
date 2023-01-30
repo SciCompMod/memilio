@@ -475,7 +475,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         gd.write_dataframe(df, self.path, "test_csv", 'csv')
 
-        file0 = "test_csv.json"
+        file0 = "test_csv.csv"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), [file0])        
@@ -534,7 +534,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
         error_message = "Error: The file format: " + 'wrong' + \
-                        " does not exist. Use json, json_timeasstring or hdf5."
+                        " does not exist. Use json, json_timeasstring, csv, or hdf5."
         self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
