@@ -406,17 +406,16 @@ def get_npi_data(fine_resolution=2,
         stored data frames.
     @param counties_considered [Default: 'All']. Either 'All' or a list of
         county IDs from 1001 to 16xxx.
-    @param npi_activation_days_threshold [Default: 5]. Defines days of 
-        exceeding inidence threshold to activate NPIs.
-    @param npi_alifting_days_threshold [Default: 5]. Defines days of 
-        falling below inidence threshold to lift NPIs.
+    @param npi_activation_days_threshold [Default: 3]. Defines necessary number
+         of days exceeding case incidence threshold to activate NPIs.
+    @param npi_alifting_days_threshold [Default: 5]. Defines necessary number 
+         of days below case incidence threshold threshold to lift NPIs.
     """
 
-    # depending on the federal state and time period, there are 
-    # huge deviations of the lifting and activation delay which was usually
-    # between 1 and 14 days
-    # we use npi_lifting_days_threshold = 5 and npi_activation_days_threshold = 3 as default
-    # as this is the most common and has at some point been used in almost every county
+    # Depending on the federal state and time period, there are 
+    # huge differences for number of days before the lifting and activation. 
+    # It was usually between 1 and 14 days. We use npi_lifting_days_threshold = 5 
+    # and npi_activation_days_threshold = 3 as default averaged value.
 
     if counties_considered == 'All':
         counties_considered = geoger.get_county_ids()
@@ -745,7 +744,7 @@ def get_npi_data(fine_resolution=2,
     # replace -99 ("not used anymore") by 0 ("not used")
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
-    counterdb = 0
+    counter_cases_start = 0
 
     for countyID in counties_considered:
         cid = 0
@@ -757,9 +756,17 @@ def get_npi_data(fine_resolution=2,
             )
             pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
                                           == countyID, dd.EngEng['population']].values[0]
+
             # consider difference between current day and day-7 to compute incidence
-            df_infec_local['Incidence'] = df_infec_local[dd.EngEng['confirmed']].diff(
-                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']]) / pop_local * 100000
+            # As a helper, repeat first entry seven times, incidence then always starts with 0.
+            cases_first_value = df_infec_local[dd.EngEng['confirmed']].values[0]
+            df_infec_local_repeat_first_entry = [
+                cases_first_value for i in range(7)] + list(
+                df_infec_local[dd.EngEng['confirmed']].values.transpose())
+
+            df_infec_local['Incidence'] = (pd.Series(
+                df_infec_local_repeat_first_entry).diff(periods=7) /
+                pop_local * 100000)[7:].values
 
             # set to main data frame
             df_infec_rki.loc[df_infec_rki[dd.EngEng['idCounty']] ==
@@ -771,8 +778,10 @@ def get_npi_data(fine_resolution=2,
 
             
             local_incid = df_infec_local['Incidence'].copy()
-            if local_incid[0]>0:
-                counterdb += 1
+            # Count counties with start cases >= 1:
+            # In this case NPI activation cannot be ensured to work as expected            
+            if cases_first_value >= 1:
+                counter_cases_start += 1
 
         # get county-local data frame
         start_time = time.perf_counter()
@@ -935,8 +944,13 @@ def get_npi_data(fine_resolution=2,
                   str(len(counties_considered)) +
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
-    if counterdb >= len(counties_considered)*0.05:
-        print('WARNING: DataFrame starts with incidence > 0, thus incidence dependent NPIs could not be activated correctly. Please consider a start date 1 or 2 weeks ahead of your analysis.')
+    if counter_cases_start >= len(counties_considered)*0.05:
+        print('WARNING: DataFrame starts with reported cases > 0 '
+            'for more than 5 percent of the counties to be considered. '
+            'In this case, incidence computation and activation of '
+            'incidence-dependent NPIs cannot be ensured to work correctly. '
+            'Please consider a start date of some weeks ahead of the '
+            'time window to be analyzed for NPI\'s effects.')
 
     # print sub counters
     print('Sub task counters are: ')
