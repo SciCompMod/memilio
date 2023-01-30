@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-202 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -23,7 +23,7 @@ import tensorflow as tf
 def mlp_multi_input_single_output():
     """! Simple MLP Network which takes the compartments for one single time step as input and returns the 8 compartments for one single time step.
 
-    Reshaping adds an extra dimension to the output, so the output of the shape is 1x8. This makes the shape comparable to that of the multi-output models.
+    Reshaping adds an extra dimension to the output, so the shape of the output is 1x8. This makes the shape comparable to that of the multi-output models.
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
@@ -37,7 +37,7 @@ def mlp_multi_input_single_output():
 def lstm_network_multi_input_single_output():
     """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
 
-    Input and output have shape [batch, time, features].
+    Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
     """
     model = tf.keras.models.Sequential([
         tf.keras.layers.LSTM(32, return_sequences=True),

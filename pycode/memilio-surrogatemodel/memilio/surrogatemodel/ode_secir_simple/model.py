@@ -52,6 +52,8 @@ def plot_compartment_prediction_model(
         if compartment.name == plot_compartment:
             break
         plot_compartment_index += 1
+    if plot_compartment_index == len(InfectionState.values()):
+        raise ValueError('Compartment name given could not be found.')
     max_n = min(max_subplots, inputs.shape[0])
 
     for n in range(max_n):
@@ -155,7 +157,7 @@ def get_test_statistic(test_inputs, test_labels, model):
 
     @param test_inputs inputs from test data.
     @param test_labels labels (output) from test data.
-    @aram model trained model. 
+    @param model trained model. 
 
     """
 
@@ -170,9 +172,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=['Susceptible', 'Exposed', 'InfectedNoSymptoms',
-               'InfectedSymptoms', 'InfectedSevere', 'InfectedCritical',
-               'Recovered', 'Dead'],
+        index=[str(compartment).split('.')[1] for compartment in InfectionState.values()],
         columns=['Percentage Error'])
 
     return mean_percentage

@@ -135,7 +135,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         # models with single output
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
-        model_lstm_single = network_architectures.lstm_network_multi_input_single_output()
+        model_lstm_multi_input_single_output = network_architectures.lstm_network_multi_input_single_output()
 
         # no existing dataset
         with self.assertRaises(FileNotFoundError) as error:
