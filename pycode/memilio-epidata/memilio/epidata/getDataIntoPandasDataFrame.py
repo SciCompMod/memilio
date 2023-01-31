@@ -314,7 +314,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or csv.")
+            " does not exist. Use json, json_timeasstring, csv, or hdf5.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
