@@ -10,12 +10,12 @@ on:
       - version-*
     paths:
       - '**/memilio-epidata/**'
-      - './.github/**'
+      - '.github/**'
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - '**/memilio-epidata/**'
-      - './.github/**'
+      - '.github/**'
   workflow_dispatch:
 
 jobs:

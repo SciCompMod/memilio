@@ -8,12 +8,12 @@ on:
       - 'main'
     tags:
       - version-*
-    paths:
-      - '!**/memilio-epidata/**'
+    paths-ignore:
+      - '**/memilio-epidata/**'
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '!**/memilio-epidata/**'
+    paths-ignore:
+      - '**/memilio-epidata/**'
   workflow_dispatch:
 
 jobs:
