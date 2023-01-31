@@ -1037,7 +1037,7 @@ def get_npi_data(fine_resolution=2,
         pass
 
     #### start validation ####
-    if fine_resolution == 2 and npi_activation_days_threshold == 1 and npi_lifting_days_threshold == 1 or fine_resolution == 1:
+    if fine_resolution > 0 and npi_activation_days_threshold == 1 and npi_lifting_days_threshold == 1:
 
         for countyID in counties_considered:
             for npiCode in [
