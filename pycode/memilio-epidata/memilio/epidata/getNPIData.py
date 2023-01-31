@@ -131,56 +131,60 @@ def read_files(directory, fine_resolution):
     """
     if fine_resolution > 0:
         try:
+            try:
+                codelist = ['m01a', 'm01b', 'm02a', 'm02b', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09',
+                            'm10', 'm11', 'm12', 'm13', 'm14', 'm15', 'm16', 'm17', 'm18', 'm19', 'm20', 'm21']
+                counter_codes = 0
+                for code in codelist:
+                    df_npis_per_code = pd.read_csv(
+                        os.path.join(directory,
+                                        'kr_massn_unterkat_{}.csv'.format(code)),
+                        sep=',')
 
-            codelist = ['m01a', 'm01b', 'm02a', 'm02b', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09',
-                        'm10', 'm11', 'm12', 'm13', 'm14', 'm15', 'm16', 'm17', 'm18', 'm19', 'm20', 'm21']
-            counter_codes = 0
-            for code in codelist:
-                df_npis_per_code = pd.read_csv(
-                    os.path.join(directory,
-                                    'kr_massn_unterkat_{}.csv'.format(code)),
-                    sep=',') 
-
-                # set some parameters for dataframe
-                if counter_codes == 0:
-                    counties = np.sort(df_npis_per_code.ags5.unique())
-                    num_counties = len(df_npis_per_code.ags5.unique())
-
-                    # extract dates from data
-                    dates = df_npis_per_code.iloc[:int(df_npis_per_code.shape[0]/num_counties), 5]
-                    # rename dates so that they match dates from other npi dataframe
-                    dates_new = ['d' + date.replace('-', '') for date in dates]
-
-                    df_local = [pd.DataFrame() for i in range(num_counties)]
-                
-                #  set df for all counties
-                for i in range(0,num_counties):
+                    # set some parameters for dataframe
                     if counter_codes == 0:
-                        df_local[i] = pd.DataFrame(columns=list(df_npis_per_code.columns[0:5]) + ['code'] + dates_new)
+                        counties = np.sort(df_npis_per_code.ags5.unique())
+                        num_counties = len(df_npis_per_code.ags5.unique())
 
-                    dummy_to_append = pd.DataFrame(columns=['code'] + dates_new, data=df_npis_per_code[df_npis_per_code.ags5 == counties[i]].iloc[:, 6:].T.reset_index().values.copy())
+                        # extract dates from data
+                        dates = df_npis_per_code.iloc[:int(df_npis_per_code.shape[0]/num_counties), 5]
+                        # rename dates so that they match dates from other npi dataframe
+                        dates_new = ['d' + date.replace('-', '') for date in dates]
 
-                    df_local[i] = pd.concat([df_local[i], dummy_to_append])
+                        df_local = [pd.DataFrame() for i in range(num_counties)]
+                
+                    #  set df for all counties
+                    for i in range(0,num_counties):
+                        if counter_codes == 0:
+                            df_local[i] = pd.DataFrame(columns=list(df_npis_per_code.columns[0:5]) + ['code'] + dates_new)
+
+                        dummy_to_append = pd.DataFrame(columns=['code'] + dates_new, data=df_npis_per_code[df_npis_per_code.ags5 == counties[i]].iloc[:, 6:].T.reset_index().values.copy())
+
+                        df_local[i] = pd.concat([df_local[i], dummy_to_append])
                     
-                    if df_npis_per_code.iloc[i*len(dates):(i+1)*len(dates),3].nunique() > 1:
-                        raise gd.DataError('Dates are not sorted as expected.')
+                        if df_npis_per_code.iloc[i*len(dates):(i+1)*len(dates),3].nunique() > 1:
+                            raise gd.DataError('Dates are not sorted as expected.')
 
-                    # Set first five columns so that they match old format of data frame (from kr_massnahmen_unterkategorien.csv)
-                    if counter_codes == len(codelist)-1:
-                        df_local[i].iloc[:,0:5] = df_npis_per_code.iloc[i*len(dates),0:5].values
+                        # Set first five columns so that they match old format of data frame (from kr_massnahmen_unterkategorien.csv)
+                        if counter_codes == len(codelist)-1:
+                            df_local[i].iloc[:,0:5] = df_npis_per_code.iloc[i*len(dates),0:5].values
 
-                counter_codes += 1
-        
-
+                    counter_codes += 1
+                df_npis_old = pd.concat([df_local[i] for i in range(num_counties)]) 
+                df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
+                df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace('code_m', 'M')
+            except FileNotFoundError:
+                df_npis_old = pd.read_csv(
+                    os.path.join(
+                        directory, 'kr_massnahmen_unterkategorien.csv'),
+                    sep=',')
+                df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
         except FileNotFoundError:
             print_manual_download(
                 'kr_massnahmen_unterkategorien.csv',
                 'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
             raise FileNotFoundError
 
-        df_npis_old = pd.concat([df_local[i] for i in range(num_counties)]) 
-        df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
-        df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace('code_m', 'M')
 
         # check if rows hospitals and geriatric care are still empty;
         # these fields have been empty so far and are thus not used
@@ -472,10 +476,17 @@ def get_npi_data(fine_resolution=2,
     # for fine resolution we don't have codes M22 - M24 but are still listed in description
     if fine_resolution > 0:
         # count how many codes contain M22, M23 or M24
-        num_nonexistent_codes = df_npis_desc['Variablenname'].str.count("M22|M23|M24").sum()
+        num_nonexistent_codes = df_npis_desc['Variablenname'].str.count(
+            "M22|M23|M24").sum()
         # do not include these nonexistent codes
-        npi_codes_prior = df_npis_desc['Variablenname'].iloc[:-num_nonexistent_codes]
-        npi_codes_prior_desc = df_npis_desc['Variable'].iloc[:-num_nonexistent_codes]
+        if num_nonexistent_codes != 0:
+            npi_codes_prior = df_npis_desc['Variablenname'].iloc[: -
+                                                                 num_nonexistent_codes]
+            npi_codes_prior_desc = df_npis_desc['Variable'].iloc[: -
+                                                                 num_nonexistent_codes]
+        else:
+            npi_codes_prior = df_npis_desc['Variablenname']
+            npi_codes_prior_desc = df_npis_desc['Variable']
     # for fine_resolution = 0 df_npis_old M22-M24 are empty)
     else:
         npi_codes_prior = df_npis_desc['Variablenname']
@@ -488,13 +499,9 @@ def get_npi_data(fine_resolution=2,
     # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
     # other
     if fine_resolution > 0:
-        df_npis_combinations_pre = pd.read_excel(
-            os.path.join(
-                directory, 'combination_npis.xlsx'), engine = 'openpyxl')
-
-
         num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count("M22|M23|M24").sum()
-        df_npis_combinations_pre = df_npis_combinations_pre.iloc[:-num_nonexistent_codes_pre,:]
+        if num_nonexistent_codes_pre !=0:
+            df_npis_combinations_pre = df_npis_combinations_pre.iloc[:-num_nonexistent_codes_pre,:]
         # rename essential columns and throw away others
         column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
