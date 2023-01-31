@@ -266,9 +266,9 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
             df_npis_old[dd.EngEng['npiCode']].tolist(),
             self.corrected_codes[1: 12: 2])
 
-    # test full function only for 13 days and one county
-    # use side effect to return different values to pd.read_json (first cases, then population)
-
+    # Test full functionality only for 13 days and one county.
+    # Use side_effect to return first case data, then population data with 1st
+    # and 2nd call to pd.read_json().
     @patch('pandas.read_json', side_effect=[df_cases, df_pop])
     @patch('memilio.epidata.getNPIData.read_files',
            return_value=[df_npis_old, df_npis_desc, df_npis_combinations_pre])
@@ -277,8 +277,8 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
                          df_npis_desc['Variablenname'],
                          df_npis_old_renamed])
     def test_get_npi_data(self, mock_codes, mock_read, mock_data):
-        # print 'Additional errors in consistent naming' is expected
-        # print 'WARNING: DataFrame starts with incidence > 0, thus incidence dependent NPIs could not be activated correctly.' is expected
+        # print 'Additional errors in consistent naming' is expected.
+        # print 'WARNING: DataFrame starts with reported cases > 0 for more than 5 percent...' is expected.
         npis_test = gnd.get_npi_data(
             fine_resolution=2, out_folder=self.path,
             counties_considered=[1001],
