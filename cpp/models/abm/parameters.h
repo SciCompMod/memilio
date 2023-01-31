@@ -231,13 +231,13 @@ struct MaximumContacts {
 using LocalInfectionParameters = ParameterSet<MaximumContacts>;
 
 struct TestParameters {
-    UncertainValue sensitivity;
-    UncertainValue specificity;
+    ScalarType sensitivity;
+    ScalarType specificity;
 };
 
 struct GenericTest {
     using Type = TestParameters;
-    static Type get_default()
+    static constexpr Type get_default()
     {
         return Type{0.9, 0.99};
     }
@@ -249,7 +249,7 @@ struct GenericTest {
 
 struct AntigenTest : public GenericTest {
     using Type = TestParameters;
-    static Type get_default()
+    static constexpr Type get_default()
     {
         return Type{0.8, 0.88};
     }
@@ -261,7 +261,7 @@ struct AntigenTest : public GenericTest {
 
 struct PCRTest : public GenericTest {
     using Type = TestParameters;
-    static Type get_default()
+    static constexpr Type get_default()
     {
         return Type{0.9, 0.99};
     }

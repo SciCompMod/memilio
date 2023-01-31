@@ -34,7 +34,7 @@ namespace fs = boost::filesystem;
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
+void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
 {
     p = mio::UncertainValue(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
@@ -45,10 +45,10 @@ void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(mio::UncertainValue exposed, mio::UncertainValue infected,
-                                                   mio::UncertainValue carrier, mio::UncertainValue recovered)
+mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected, ScalarType carrier,
+                                                   ScalarType recovered)
 {
-    mio::UncertainValue susceptible = 1 - exposed - infected - carrier - recovered;
+    ScalarType susceptible          = 1 - exposed - infected - carrier - recovered;
     std::vector<ScalarType> weights = {susceptible,  exposed,      carrier,       infected / 3,
                                        infected / 3, infected / 3, recovered / 2, recovered / 2};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
@@ -318,11 +318,11 @@ void create_assign_locations(mio::abm::World& world)
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
 
     auto probability = mio::UncertainValue();
-    assign_uniform_distribution(probability, 1.0, 1.0);
-    auto test_type = mio::abm::AntigenTest();
+    assign_uniform_distribution(probability, 0.5, 1.0);
 
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type, probability);
+    auto test_type      = mio::abm::AntigenTest();
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
+                                                  probability.draw_sample());
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
 
@@ -419,24 +419,25 @@ void create_assign_locations(mio::abm::World& world)
 
     testing_min_time           = mio::abm::days(7);
     auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, mio::UncertainValue(1.0));
+                                                         end_date, test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
     auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 
+    assign_uniform_distribution(probability, 0.1, 0.5);
     testing_min_time         = mio::abm::days(1);
     auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
-                                                       test_type, mio::UncertainValue(0.5));
+                                                       test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::UncertainValue exposed_pct, mio::UncertainValue infected_pct,
-                            mio::UncertainValue carrier_pct, mio::UncertainValue recovered_pct)
+void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
+                            ScalarType carrier_pct, ScalarType recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
