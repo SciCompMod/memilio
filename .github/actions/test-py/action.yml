@@ -56,6 +56,7 @@ runs:
           getcasesestimation --help
           getcommutermobility --help
           getvaccinationdata --help
+          gethospitalizationdata --help
         fi
     - name: Upload coverage reports
       uses: actions/upload-artifact@v3
@@ -64,5 +65,5 @@ runs:
         path: |
           pycode/coverage_python.xml
           coverage_python
-        retention-days: 1
+        retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}
