@@ -408,8 +408,6 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
     }
     auto max_date = max_date_entry->date;
-    auto max_full_date =
-        offset_date_by_days(max_date, days_until_effective1 - days_until_effective2 - vaccination_distance);
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
