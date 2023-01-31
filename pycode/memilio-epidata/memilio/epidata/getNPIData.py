@@ -167,7 +167,7 @@ def read_files(directory, fine_resolution):
 
                         # Set first five columns so that they match old format of data frame (from kr_massnahmen_unterkategorien.csv)
                         if counter_codes == len(codelist)-1:
-                            df_local[i].iloc[:,0:5] = df_npis_per_code.iloc[i*len(dates),0:5].values
+                            df_local[i][df_local[i].columns[0:5]] = df_npis_per_code.iloc[i*len(dates),0:5].values
 
                     counter_codes += 1
                 df_npis_old = pd.concat([df_local[i] for i in range(num_counties)]) 
@@ -464,6 +464,10 @@ def get_npi_data(fine_resolution=2,
 
     if counties_considered == 'All':
         counties_considered = geoger.get_county_ids()
+    try:
+        counties_considered.remove(16056)
+    except ValueError:
+        pass
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
@@ -723,17 +727,18 @@ def get_npi_data(fine_resolution=2,
                 incidence_thresholds_to_npis[(
                     incval, '_' + code_considered.split('_')[2])].append(i)
 
-    # check if more than the county of Eisenach would be removed with
-    # current county list
+    # Remove counties which are not considered. Check if all considered counties are in the dataframe
     counties_removed = df_npis_old[
         ~df_npis_old[dd.EngEng['idCounty']].isin(counties_considered)][
         dd.EngEng['idCounty']].unique()
-    if 16056 in counties_considered:
-        if list(counties_removed) != [16056]:
-            raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
+
+    if set(counties_considered).difference(counties_removed) == set(
+            counties_considered) and np.array_equal(
+            sorted(np.append(counties_considered, counties_removed)),
+            sorted(df_npis_old[dd.EngEng['idCounty']].unique())):
+        pass
     else:
-        if counties_removed.size > 1:
-            raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
+        raise gd.DataError('Error. Considered counties hae been removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
         counties_considered)].reset_index(drop=True)
@@ -1032,40 +1037,22 @@ def get_npi_data(fine_resolution=2,
         pass
 
     #### start validation ####
-    if fine_resolution == 2 and (npi_activation_days_threshold + npi_lifting_days_threshold == 0):
-        start_date_validation = datetime(2020, 3, 1)
-        end_date_validation = datetime(2022, 2, 15)
+    if fine_resolution == 2 and npi_activation_days_threshold == 1 and npi_lifting_days_threshold == 1 or fine_resolution == 1:
 
         for countyID in counties_considered:
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
-                for subcode in [''] + ['_'+str(i) for i in range(1, 6)]:
                     [
                         a, b, oldf, newf] = validate(
                         df_npis_old, df_npis, df_infec_rki, countyID,
-                        npiCode + subcode, start_npi_cols, npi_incid_start,
-                        start_date_validation, end_date_validation,
+                        npiCode, start_npi_cols, npi_incid_start,
+                        start_date_new, end_date_new,
                         fine_resolution)
                     if (a != b):
                         print('Error in NPI activation computation')
                         print(a, b, a - b)
 
-    elif fine_resolution == 1:
-        start_date_validation = datetime(2020, 3, 1)
-        end_date_validation = datetime(2022, 2, 15)
-
-        for countyID in counties_considered:
-            for npiCode in [
-                'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
-                    'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
-                [a, b, oldf, newf] = validate(df_npis_old, df_npis,
-                                              df_infec_rki, countyID, npiCode, start_npi_cols,
-                                              npi_incid_start, start_date_validation,
-                                              end_date_validation, fine_resolution)
-                if (a != b):
-                    print('Error in NPI activation computation')
-                    print(a, b, a == b)
     #### end validation ####
 
     if fine_resolution > 0:
