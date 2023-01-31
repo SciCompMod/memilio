@@ -190,6 +190,17 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
+          
+  build-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: surrogatemodel
 
   build-py-plot:
     if: github.event.pull_request.draft == false
@@ -212,6 +223,16 @@ jobs:
         with: 
           package: plot
           coverage: ON 
+
+  test-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    needs: [build-py-surrogatemodel, build-py-simulation]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: surrogatemodel
 
   test-docs:
     if: github.event.pull_request.draft == false
@@ -237,7 +258,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-pylint
         with:
-          package: plot          
+          package: plot  
 
   download-data:
     if: github.event.pull_request.draft == false
@@ -344,7 +365,8 @@ jobs:
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
-          cp ci_index/main_index.html public/index.html
+          cp docs/style.css public/style.css
+          cp docs/index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation

@@ -868,10 +868,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              [dd.EngEng['date'],
               dd.EngEng['vaccPartial']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_old]
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_old],
-            'Partial vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_PartialVacination_Absolute")
+            title='Partial vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_PartialVacination_Absolute")
 
         # plot full vaccination curves for different age groups
         yvals = [
@@ -880,10 +880,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              [dd.EngEng['date'],
               dd.EngEng['vaccComplete']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_old]
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_old],
-            'Full vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_FullVacination_Absolute")
+            title='Full vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_FullVacination_Absolute")
 
     ######## data without age resolution ###########
     # write data frame resolved per county
@@ -1005,10 +1005,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng['vaccPartial']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_new]
 
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_new],
-            'Partial vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_PartialVacination_AgeExtr_Absolute")
+            title='Partial vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_PartialVacination_AgeExtr_Absolute")
 
         # consider full vaccination for new age groups
         yvals = [
@@ -1018,10 +1018,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng['vaccComplete']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_new]
 
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_new],
-            'Full vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_FullVacination_AgeExtr_Absolute")
+            title='Full vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_FullVacination_AgeExtr_Absolute")
 
 
 def main():

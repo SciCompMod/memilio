@@ -27,6 +27,11 @@ runs:
       if:  inputs.package == 'plot'
       with:
         name: python-wheels-epidata
+    - name: Download Python Wheels for surrogatemodel
+      uses: actions/download-artifact@v3
+      if:  inputs.package == 'surrogatemodel'
+      with:
+        name: python-wheels-simulation
         path: pycode/wheelhouse
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
@@ -43,7 +48,7 @@ runs:
       run: |
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest
+          python -W ignore::DeprecationWarning -m coverage run --include=**/site-packages/memilio/* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
