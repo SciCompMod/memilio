@@ -48,7 +48,7 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
     @param end_date_validation End date for validation.
     """
 
-    if fine_resolution == 1:
+    if fine_resolution == 2:
         npiCodes = [npiCode + code
                     for code in [''] + ['_' + str(i) for i in range(1, 6)]]
     else:
@@ -136,7 +136,6 @@ def read_files(directory, fine_resolution):
                         'm10', 'm11', 'm12', 'm13', 'm14', 'm15', 'm16', 'm17', 'm18', 'm19', 'm20', 'm21']
             counter_codes = 0
             for code in codelist:
-                
                 df_npis_per_code = pd.read_csv(
                     os.path.join(directory,
                                     'kr_massn_unterkat_{}.csv'.format(code)),
@@ -153,11 +152,9 @@ def read_files(directory, fine_resolution):
                     dates_new = ['d' + date.replace('-', '') for date in dates]
 
                     df_local = [pd.DataFrame() for i in range(num_counties)]
-                    print('.')
                 
                 #  set df for all counties
                 for i in range(0,num_counties):
-                    print(i)
                     if counter_codes == 0:
                         df_local[i] = pd.DataFrame(columns=list(df_npis_per_code.columns[0:5]) + ['code'] + dates_new)
 
@@ -172,8 +169,6 @@ def read_files(directory, fine_resolution):
                     if counter_codes == len(codelist)-1:
                         df_local[i].iloc[:,0:5] = df_npis_per_code.iloc[i*len(dates),0:5].values
 
-                    print(df_local[i])
-
                 counter_codes += 1
         
 
@@ -186,7 +181,6 @@ def read_files(directory, fine_resolution):
         df_npis_old = pd.concat([df_local[i] for i in range(num_counties)]) 
         df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
         df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace('code_m', 'M')
-        print(df_npis_old)
 
         # check if rows hospitals and geriatric care are still empty;
         # these fields have been empty so far and are thus not used
@@ -472,25 +466,6 @@ def get_npi_data(fine_resolution=2,
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-<<<<<<< Updated upstream
-=======
-    if fine_resolution > 0:
-        # defines delay in number of days between exceeding
-        # incidence threshold and NPI getting active
-        # delay = 0 means only one day is considered (=no delay)
-        npi_activation_days_threshold = 3
-        npi_lifting_days_threshold = 5
-        # depending on the federal state and time period, there are 
-        # huge deviations of the lifting and activation delay which was usually
-        # between 1 and 14 days
-        # we use npi_lifting_days_threshold = 5 and npi_activation_days_threshold = 3 
-        # as this is the most common and has at some point been used in almost every county
-        print('Using a threshold for NPI activation of ' +
-              str(npi_activation_days_threshold) + ' days.')
-        print('Using a threshold for NPI lifting of ' +
-              str(npi_lifting_days_threshold) + ' days.')
-
->>>>>>> Stashed changes
     # read manual downloaded files from directory
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(directory, fine_resolution)
 
@@ -514,16 +489,13 @@ def get_npi_data(fine_resolution=2,
     # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
     # other
     if fine_resolution > 0:
-<<<<<<< Updated upstream
-=======
         df_npis_combinations_pre = pd.read_excel(
             os.path.join(
                 directory, 'combination_npis.xlsx'), engine = 'openpyxl')
 
 
-        num_nonexistent_codes2 = df_npis_combinations_pre['Variablenname'].str.count("M22|M23|M24").sum()
-        df_npis_combinations_pre = df_npis_combinations_pre.iloc[:-num_nonexistent_codes2,:]
->>>>>>> Stashed changes
+        num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count("M22|M23|M24").sum()
+        df_npis_combinations_pre = df_npis_combinations_pre.iloc[:-num_nonexistent_codes_pre,:]
         # rename essential columns and throw away others
         column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
@@ -754,7 +726,7 @@ def get_npi_data(fine_resolution=2,
         if list(counties_removed) != [16056]:
             raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
     else:
-        if counties_removed.size > 0:
+        if counties_removed.size > 1:
             raise gd.DataError('Error. Other counties than that of Eisenach were removed.')
     # remove rows for Eisenach
     df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
@@ -1091,11 +1063,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    df = get_npi_data(fine_resolution=1, file_format='csv')
-
-    #df = read_files(directory, fine_resolution)
-
-    
+    df = get_npi_data(fine_resolution=2, file_format='csv')
 
 
 if __name__ == "__main__":
