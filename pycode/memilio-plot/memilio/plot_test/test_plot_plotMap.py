@@ -21,7 +21,7 @@ import datetime as dt
 import os
 import os.path
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import geopandas
 import numpy as np
@@ -35,9 +35,6 @@ import memilio.plot.plotMap as pm
 class TestPlotMap(fake_filesystem_unittest.TestCase):
 
     path = '/home/plot_data'
-
-    def setUp(self):
-        self.setUpPyfakefs()
 
     # strings for read, download and update data
     # be careful: not completely realistic data
@@ -62,42 +59,63 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
     age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
                   3: '35-59', 4: '60-79', 5: '80+'}
 
-    filter_age = None
+    def test_extract_data(self):
+        filter_age = None
+        i = 0
+        for file in self.files_input.values():
+            df = pm.extract_data(
+                file, region_spec='ID_County',
+                column='Synthetic data',
+                date=dt.date(2021, 11, 18),
+                filters={'ID_State': None,
+                         'Age_RKI': filter_age},
+                file_format=self.file_format)
 
-    relative = False
+            if i == 0:
+                dfs_all = pd.DataFrame(df.iloc[:, 0])
 
-    i = 0
-    for file in files_input.values():
-        df = pm.extract_data(
-            file, region_spec='ID_County',
-            column='Synthetic data',
-            date=dt.date(2021, 11, 18),
-            filters={'ID_State': None,
-                     'Age_RKI': filter_age},
-            file_format=file_format)
+            dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
+            i += 1
+        data_columns = dfs_all.columns[1:]
+        assert len(data_columns) == 2
 
-        if i == 0:
-            dfs_all = pd.DataFrame(df.iloc[:, 0])
-
-        dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
-        i += 1
-
-    @patch('geopandas.read_file', return_value=(geopandas.GeoDataFrame(
-        columns=['ARS', 'GEN', 'NUTS', 'geometry'])))
+    @patch('memilio.plot.plotMap.gpd.GeoDataFrame.plot',
+           return_value=(MagicMock()))
+    @patch('memilio.plot.plotMap.plt', return_value=(MagicMock()))
+    @patch('memilio.plot.plotMap.gpd.read_file',
+           return_value=(geopandas.GeoDataFrame(
+               columns=['ARS', 'GEN', 'NUTS', 'geometry'])))
     @patch('memilio.plot.plotMap.save_interactive', return_value=0)
-    def test_plot_list(self, mock_save_interactive, mock_read_file):
-        # mock_read_file.return_value = (geopandas.GeoDataFrame(
-        #     columns=['ARS', 'GEN', 'NUTS', 'geometry']))
-        # mock_save_interactive.return_value = 0
+    def test_plot_list(
+            self, mock_save_interactive, mock_read_file, mock_plt,
+            mock_gpd_plot):
+        filter_age = None
+        i = 0
+        for file in self.files_input.values():
+            df = pm.extract_data(
+                file, region_spec='ID_County',
+                column='Synthetic data',
+                date=dt.date(2021, 11, 18),
+                filters={'ID_State': None,
+                         'Age_RKI': filter_age},
+                file_format=self.file_format)
+
+            if i == 0:
+                dfs_all = pd.DataFrame(df.iloc[:, 0])
+
+            dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
+            i += 1
+        data_columns = dfs_all.columns[1:]
         pm.plot_map(
-            self.dfs_all, scale_colors=np.array([0, 1]),
+            dfs_all, scale_colors=np.array([0, 1]),
             legend=['', ''],
             title='Synthetic data (relative)', plot_colorbar=True,
             output_path=self.path,
             fig_name='customPlot', dpi=300,
             outercolor=[205 / 255, 238 / 255, 251 / 255])
-        data_columns = self.dfs_all.columns[1:]
+        data_columns = dfs_all.columns[1:]
         assert mock_save_interactive.call_count == len(data_columns)
+        assert mock_gpd_plot.call_count == len(data_columns)
 
 
 if __name__ == '__main__':
