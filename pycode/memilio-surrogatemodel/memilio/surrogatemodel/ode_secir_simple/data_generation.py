@@ -40,6 +40,8 @@ def run_secir_simulation(days):
     """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
+    @param Days Describes how many days we simulate within a single run.
+    @return List containing the populations in each compartment for each day of the simulation.
    """
     set_log_level(LogLevel.Off)
 
