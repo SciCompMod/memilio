@@ -23,6 +23,7 @@ import os.path
 import unittest
 from unittest.mock import patch
 
+import geopandas
 import numpy as np
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
@@ -31,10 +32,12 @@ import memilio.epidata.getPopulationData as gpd
 import memilio.plot.plotMap as pm
 
 
-@unittest.skip
 class TestPlotMap(fake_filesystem_unittest.TestCase):
 
     path = '/home/plot_data'
+
+    def setUp(self):
+        self.setUpPyfakefs()
 
     # strings for read, download and update data
     # be careful: not completely realistic data
@@ -45,8 +48,11 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
 
-    files_input = {'Data set 1': os.path.join(here, '/testdata/Synthetic_data_counties_sh'),
-                   'Data set 2 (plot set 1 again...)': os.path.join(here, '/testdata/Synthetic_data_counties_sh')}
+    files_input = {
+        'Data set 1': os.path.join(
+            here, 'test_data', 'Synthetic_data_counties_sh'),
+        'Data set 2 (plot set 1 again...)': os.path.join(
+            here, 'test_data', 'Synthetic_data_counties_sh')}
     file_format = 'json'
     # Define age groups which will be considered through filtering
     # Keep keys and values as well as its assignment constant, remove entries
@@ -76,10 +82,23 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
         dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
         i += 1
 
-    pm.plot_map(
-        dfs_all, scale_colors=np.array([0, 1]),
-        legend=['', ''],
-        title='Synthetic data (relative)', plot_colorbar=True,
-        output_path=path,
-        fig_name='customPlot', dpi=300,
-        outercolor=[205 / 255, 238 / 255, 251 / 255])
+    @patch('geopandas.read_file', return_value=(geopandas.GeoDataFrame(
+        columns=['ARS', 'GEN', 'NUTS', 'geometry'])))
+    @patch('memilio.plot.plotMap.save_interactive', return_value=0)
+    def test_plot_list(self, mock_save_interactive, mock_read_file):
+        # mock_read_file.return_value = (geopandas.GeoDataFrame(
+        #     columns=['ARS', 'GEN', 'NUTS', 'geometry']))
+        # mock_save_interactive.return_value = 0
+        pm.plot_map(
+            self.dfs_all, scale_colors=np.array([0, 1]),
+            legend=['', ''],
+            title='Synthetic data (relative)', plot_colorbar=True,
+            output_path=self.path,
+            fig_name='customPlot', dpi=300,
+            outercolor=[205 / 255, 238 / 255, 251 / 255])
+        data_columns = self.dfs_all.columns[1:]
+        assert mock_save_interactive.call_count == len(data_columns)
+
+
+if __name__ == '__main__':
+    unittest.main()

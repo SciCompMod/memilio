@@ -251,6 +251,19 @@ def scale_dataframe_relative(df, age_groups, df_population):
     return df
 
 
+# Save interactive html files.
+def save_interactive(col, filename, map_data, scale_colors):
+    """! Plots region-specific information onto a interactive html map.
+
+    @param[in] col Defines the col that will be plotted.
+    @param[in] filename Filename with path determines save directory.
+    @param[in] map_data Geopandas file with plot data
+    @param[in] scale_colors Array of min-max-values to scale colorbar.
+    """
+    map_data.explore(col, legend=True, vmin=scale_colors[0],
+                     vmax=scale_colors[1]).save(filename)
+
+
 def plot_map(data: pd.DataFrame,
              scale_colors: np.array([0, 1]),
              legend: list = [],
@@ -305,18 +318,13 @@ def plot_map(data: pd.DataFrame,
 
     map_data[data_columns] = data.loc[:, data_columns]
 
-    # Save interactive html files.
-    def save_interactive(col, filename):
-        map_data.explore(col, legend=True, vmin=scale_colors[0],
-                         vmax=scale_colors[1]).save(filename)
-
     for i in range(len(data_columns)):
         if legend[i] == '':
             fname = 'data_column_' + str(i)
         else:
             fname = str(legend[i].replace(' ', '_'))
         save_interactive(data[data_columns[i]], os.path.join(
-            output_path, fname) + '.html')
+            output_path, fname) + '.html', map_data, scale_colors)
 
     fig = plt.figure(figsize=(4 * len(data_columns), 6), facecolor=outercolor)
     # Use n+2 many columns (1: legend + 2: empty space + 3-n: data sets) and
