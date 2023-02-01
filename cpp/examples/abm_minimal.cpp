@@ -64,14 +64,6 @@ int main()
     }
     add_household_group_to_world(world, threePersonHousehold_group);
 
-    // Assign an infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
-        world.set_infection_state(person, (mio::abm::InfectionState)state);
-    }
-
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
@@ -103,6 +95,17 @@ int main()
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+
+    // Assign infection state to each person.
+    // The infection states are chosen randomly.
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        uint32_t infection_state = rand() % (uint32_t)mio::abm::InfectionState::Count;
+        if (infection_state != (uint32_t)mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         (mio::abm::InfectionState)infection_state));
+    }
 
     // Assign locations to the people
     for (auto& person : persons) {
