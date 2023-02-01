@@ -79,16 +79,16 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
         data_columns = dfs_all.columns[1:]
         assert len(data_columns) == 2
 
-    @patch('memilio.plot.plotMap.gpd.GeoDataFrame.plot',
+    @patch('memilio.plot.plotMap.geopandas.GeoDataFrame.plot',
            return_value=(MagicMock()))
     @patch('memilio.plot.plotMap.plt', return_value=(MagicMock()))
-    @patch('memilio.plot.plotMap.gpd.read_file',
+    @patch('memilio.plot.plotMap.geopandas.read_file',
            return_value=(geopandas.GeoDataFrame(
                columns=['ARS', 'GEN', 'NUTS', 'geometry'])))
     @patch('memilio.plot.plotMap.save_interactive', return_value=0)
     def test_plot_list(
             self, mock_save_interactive, mock_read_file, mock_plt,
-            mock_gpd_plot):
+            mock_geopandas_plot):
         filter_age = None
         i = 0
         for file in self.files_input.values():
@@ -115,7 +115,7 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
             outercolor=[205 / 255, 238 / 255, 251 / 255])
         data_columns = dfs_all.columns[1:]
         assert mock_save_interactive.call_count == len(data_columns)
-        assert mock_gpd_plot.call_count == len(data_columns)
+        assert mock_geopandas_plot.call_count == len(data_columns)
 
 
 if __name__ == '__main__':
