@@ -21,7 +21,7 @@ import os
 
 # in case of a necessary manual installation of GDAL and Fiona on Windows, see
 # https://stackoverflow.com/questions/69521550/importerror-the-read-file-function-requires-the-fiona-package-but-it-is-no
-import geopandas as gpd
+import geopandas
 import h5py
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ def print_manual_download(filename, url):
         'to the current working directory under tools/.')
 
 
-def merge_eisenach(map_data: gpd.GeoDataFrame):
+def merge_eisenach(map_data: geopandas.GeoDataFrame):
     """! Merges geometries for Eisenach with Wartburgkreis of Geopandas 
     dataframe.
 
@@ -295,7 +295,7 @@ def plot_map(data: pd.DataFrame,
     # Read and filter map data.
     if data[region_classifier].isin(geoger.get_county_ids()).all():
         try:
-            map_data = gpd.read_file(
+            map_data = geopandas.read_file(
                 os.path.join(
                     os.getcwd(),
                     'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
