@@ -814,13 +814,13 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);
 
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_pct, infected_pct, carrier_pct, recovered_pct);
 
     // Add locations and assign locations to the people.
     create_assign_locations(world);
+
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
@@ -895,7 +895,7 @@ int main(int argc, char** argv)
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
-        printf("Number of run is %s.\n", argv[1]);
+        printf("Number of runs is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {

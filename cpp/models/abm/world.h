@@ -77,6 +77,13 @@ public:
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
+     * Follow up on the World after the simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
+     */
+    void end_step(TimePoint t, TimeSpan dt);
+
+    /** 
      * Evolve the world one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.

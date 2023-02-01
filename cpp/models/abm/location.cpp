@@ -129,37 +129,6 @@ uint32_t Location::get_number_persons()
     });
 }
 
-uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
-{
-    return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
-        return p->get_infection_state(t) == state;
-    });
-}
-
-uint32_t Location::get_subpopulation_cell(TimePoint t, InfectionState state, const uint32_t cell_idx) const
-{
-    return m_cells[cell_idx].get_subpopulation(t, state);
-}
-
-uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
-{
-    uint32_t n_persons = 0;
-    for (auto&& cell : m_cells) {
-        n_persons += cell.get_subpopulation(t, state);
-    }
-    return n_persons;
-}
-
-Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations(TimePoint t) const
-{
-    std::array<int, size_t(InfectionState::Count)> subpopulations;
-    for (uint32_t i = 0; i < subpopulations.size(); ++i) {
-        for (auto&& cell : m_cells) {
-            subpopulations[i] += cell.get_subpopulation(t, static_cast<InfectionState>(i));
-        }
-    }
-    return Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size());
-}
 /*
 For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
 the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
@@ -174,10 +143,33 @@ ScalarType Cell::compute_space_per_person_relative()
     }
 }
 
+uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
+{
+    return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
+        return p->get_infection_state(t) == state;
+    });
+}
+
+uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
+{
+    uint32_t n_persons = 0;
+    for (auto&& cell : m_cells) {
+        n_persons += cell.get_subpopulation(t, state);
+    }
+    return n_persons;
+}
+
 void Location::store_subpopulations(const TimePoint t)
 {
     m_subpopulations.add_time_point(t.days());
-    m_subpopulations.get_last_value() = get_subpopulations(t).cast<ScalarType>();
+    std::array<int, size_t(InfectionState::Count)> subpopulations;
+    for (uint32_t i = 0; i < subpopulations.size(); ++i) {
+        for (auto&& cell : m_cells) {
+            subpopulations[i] += cell.get_subpopulation(t, static_cast<InfectionState>(i));
+        }
+    }
+    m_subpopulations.get_last_value() =
+        Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size()).cast<ScalarType>();
 }
 
 void Location::initialize_subpopulations(const TimePoint t)
@@ -186,5 +178,10 @@ void Location::initialize_subpopulations(const TimePoint t)
         store_subpopulations(t);
     }
 }
+const TimeSeries<ScalarType>& Location::get_subpopulations() const
+{
+    return m_subpopulations;
+}
+
 } // namespace abm
 } // namespace mio

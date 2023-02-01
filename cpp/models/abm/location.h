@@ -266,28 +266,12 @@ public:
     uint32_t get_number_persons();
 
     /**
-    * @brief Get number of Person%s of a particular InfectionState for one Cell.
-    * @param[in] t TimePoint of querry.
-    * @param[in] state InfectionState of interest.
-    * @param[in] cell_idx [Default: 0] CellIndex of the Cell.
-    * @return Amount of Person%s of the InfectionState in the Cell.
-    */
-    uint32_t get_subpopulation_cell(TimePoint t, InfectionState state, uint32_t cell_idx = 0) const;
-
-    /**
-    * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
-    * @param[in] t TimePoint of querry.
-    * @param[in] state InfectionState of interest.
-    * @return Amount of Person%s of the InfectionState in all Cell%s.
-    */
+     * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
+     * @param[in] t TimePoint of querry.
+     * @param[in] state InfectionState of interest.
+     * @return Amount of Person%s of the InfectionState in all Cell%s.
+     */
     uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
-
-    /**
-    * @brief Get all subpopulations for all Cell%s.
-    * @param[in] t TimePoint of querry.
-    * @return Vector of all subpopulations in all Cell%s.
-    */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations(TimePoint t) const;
 
     /**
      * Add a timepoint to the subpopulations timeseries.
@@ -301,13 +285,18 @@ public:
     */
     void initialize_subpopulations(TimePoint t);
 
+    /**
+     * @brief Get the complete history of subpopulations.
+    */
+    const TimeSeries<ScalarType>& get_subpopulations() const;
+
 private:
     LocationType m_type;
     uint32_t m_index;
     bool m_capacity_adapted_transmission_risk;
     LocalInfectionParameters m_parameters;
     TimeSeries<ScalarType> m_subpopulations{Eigen::Index(InfectionState::Count)};
-    std::vector<Cell> m_cells{};
+    std::vector<Cell> m_cells;
     MaskType m_required_mask;
     bool m_npi_active;
 };

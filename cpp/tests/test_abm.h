@@ -21,10 +21,6 @@
 #define TEST_ABM_H
 
 #include "abm/abm.h"
-#include "abm/age.h"
-#include "abm/location_type.h"
-#include "abm/migration_rules.h"
-#include "abm/lockdown_rules.h"
 #include "memilio/math/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
@@ -88,7 +84,7 @@ struct ScopedMockDistribution {
 };
 
 /**
- * @brief Add an Infection to the person with the demanded InfectionState at the given time. Intended for simple use in tests.
+ * @brief Add an Infection to the Person with the demanded InfectionState at the given time. Intended for simple use in tests.
 */
 void add_infection_simple(mio::abm::Person& p, mio::abm::TimePoint t,
                           mio::abm::InfectionState infection_state = mio::abm::InfectionState::Infected)
@@ -96,6 +92,19 @@ void add_infection_simple(mio::abm::Person& p, mio::abm::TimePoint t,
     mio::abm::GlobalInfectionParameters params;
     p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), static_cast<mio::abm::AgeGroup>(0),
                                             params, t, infection_state));
+}
+
+/**
+ * @brief Create a Person without a World object. Intended for simple use in tests.
+*/
+mio::abm::Person create_person_simple(std::shared_ptr<mio::abm::Location> location, mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                       mio::abm::AgeGroup age_group             = mio::abm::AgeGroup::Age15to34)
+{
+    mio::abm::Person p = mio::abm::Person(location, age_group);
+    if (infection_state != mio::abm::InfectionState::Susceptible) {
+        add_infection_simple(p, mio::abm::TimePoint(0), infection_state);
+    }
+    return p;
 }
 
 /**

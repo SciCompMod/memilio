@@ -57,6 +57,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     m_testing_strategy.update_activity_status(t);
     migration(t, dt);
+    end_step(t, dt);
 }
 
 void World::interaction(TimePoint t, TimeSpan dt)
@@ -116,7 +117,15 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
             location->cache_exposure_rates(t, dt);
-            location->store_subpopulations(t + dt);
+        }
+    }
+}
+
+void World::end_step(TimePoint t, TimeSpan /*dt*/)
+{
+    for (auto&& locations : m_locations) {
+        for (auto& location : locations) {
+            location->store_subpopulations(t);
         }
     }
 }
