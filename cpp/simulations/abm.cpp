@@ -303,7 +303,7 @@ void create_assign_locations(mio::abm::World& world)
 {
     // Add one social event with 100 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    // People have to get tested in the 2 days before the event
+    // A high percentage of people (50-100%) have to get tested in the 2 days before the event
     // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
     // room height of 3 m
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
