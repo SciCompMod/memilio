@@ -304,17 +304,18 @@ private:
     void change_subpopulation(InfectionState s, int delta);
 
 private:
-    LocationType m_type;
-    uint32_t m_index;
+    LocationType m_type; ///< Type of the Location.
+    uint32_t m_index; ///< Index of the Location.
     int m_num_persons = 0;
     LocationCapacity m_capacity;
-    bool m_capacity_adapted_transmission_risk;
+    bool m_capacity_adapted_transmission_risk; /*< If true considers the LocationCapacity for the computation of the 
+    transmission risk.*/
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
-    LocalInfectionParameters m_parameters;
+    LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
-    MaskType m_required_mask;
-    bool m_npi_active;
+    MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
+    bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };
 
 } // namespace abm

@@ -71,8 +71,8 @@ public:
     void change_mask(MaskType new_mask_type);
 
 private:
-    MaskType m_type;
-    TimeSpan m_time_used;
+    MaskType m_type; ///< Type of the Mask.
+    TimeSpan m_time_used; ///< Time the Mask has been used.
 };
 } // namespace abm
 } // namespace mio

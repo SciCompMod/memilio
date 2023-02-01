@@ -199,14 +199,15 @@ private:
 
 /**
  * @brief Adds a specific Household to the World.
- * @param[out] world The World to which the Household has to be added.
+ * Adds Person%s to the World according to the age distribution of the HouseholdMember%s of the Household.
+ * @param[in,out] world The World to which the Household has to be added.
  * @param[in] household The Household to add to World.
  */
 void add_household_to_world(World& world, const Household& household);
 
 /**
  * @brief Adds Household%s from a HouseholdGroup to the World.
- * @param[out] world The World to which the group has to be added.
+ * @param[in,out] world The World to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */
 void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
