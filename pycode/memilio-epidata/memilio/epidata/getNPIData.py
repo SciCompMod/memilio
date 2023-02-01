@@ -250,12 +250,13 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
     For a formerly active NPI to be lifted, the incidence has to be below
     the threshold for npi_lifting_days_threshold many days.
 
-    If one of the former cases holds true, then the activation or lifting
-    happens the day following the satisfaction of the criterion. This is in
-    accordance with case reporting that can only happen after the day has 
-    finished and as these reports generally appeared in the morning, the NPI 
-    can not directly be activated or lifted that same day. Please see the 
-    examples for a better understanding.
+    If one of the former cases holds true, then the activation or lifting happens 
+    two days after the satisfaction of the criterion. This is in accordance with 
+    case reporting that can only happen after the day has finished and as these 
+    reports generally appeared in the morning for the previous day, the NPI can 
+    not directly be activated or lifted that day but only on the next day. Hence 
+    the incidence-dependent NPI is activated or lifted two days after the threshold
+    is/ is not exceeded. Please see the examples for a better understanding.
 
     Example (Threshold=3.5): 
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
