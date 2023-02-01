@@ -29,14 +29,16 @@ namespace abm
 ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, GlobalInfectionParameters& params)
     : m_start_date(start_date)
 {
-    draw_viral_load(virus, age, params);
+    draw_viral_load(virus, age, VaccinationState::Unvaccinated,
+                    params); // to be changed once the immunity level is implemented
 }
 
-void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params)
+void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
+                                GlobalInfectionParameters& params)
 {
-    m_peak     = params.get<ViralLoadPeak>()[{virus, age}].draw_sample();
-    m_incline  = params.get<ViralLoadIncline>()[{virus, age}].draw_sample();
-    m_decline  = params.get<ViralLoadDecline>()[{virus, age}].draw_sample();
+    m_peak     = params.get<ViralLoadPeak>()[{virus, age, vaccination_state}].draw_sample();
+    m_incline  = params.get<ViralLoadIncline>()[{virus, age, vaccination_state}].draw_sample();
+    m_decline  = params.get<ViralLoadDecline>()[{virus, age, vaccination_state}].draw_sample();
     m_end_date = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 

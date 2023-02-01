@@ -84,7 +84,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectio
     // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
 }
 
-void Location::begin_step(TimePoint t, TimeSpan dt)
+void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

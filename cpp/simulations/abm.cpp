@@ -420,13 +420,15 @@ void create_assign_locations(mio::abm::World& world)
  * Assign an infection state to each person.
  */
 
-void assign_infection_state(mio::abm::World& world, double exposed_pct, double infected_pct, double carrier_pct,
-                            double recovered_pct)
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
+                            double carrier_pct, double recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        world.set_infection_state(person,
-                                  determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
+        auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
+                                                         world.get_global_infection_parameters(), t, infection_state));
     }
 }
 
@@ -823,15 +825,15 @@ int main()
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);
 
-    // Assign an infection state to each person.
-    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
-
-    // Add locations and assign locations to the people.
-    create_assign_locations(world);
-
     auto t0         = mio::abm::TimePoint(0);
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
     auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60);
+
+    // Assign an infection state to each person.
+    assign_infection_state(world, t0, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+
+    // Add locations and assign locations to the people.
+    create_assign_locations(world);
 
     // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.

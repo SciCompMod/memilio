@@ -66,12 +66,6 @@ void World::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::set_infection_state(Person& person, InfectionState inf_state, TimePoint t)
-{
-    person.add_new_infection(
-        Infection(static_cast<VirusVariant>(0), static_cast<AgeGroup>(0), m_infection_parameters, t, inf_state));
-}
-
 void World::migration(TimePoint t, TimeSpan dt)
 {
     for (auto& person : m_persons) {
@@ -121,7 +115,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location->begin_step(t, dt);
+            location->cache_exposure_rates(t, dt);
             location->store_subpopulations(t + dt);
         }
     }

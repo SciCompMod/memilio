@@ -163,7 +163,7 @@ public:
      * @param t Current TimePoint of the simulation.
      * @param dt The duration of the simulation step.
      */
-    void begin_step(TimePoint t, TimeSpan dt);
+    void cache_exposure_rates(TimePoint t, TimeSpan dt);
 
     /**
      * @return parameters of the infection that are specific to this location

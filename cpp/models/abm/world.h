@@ -100,15 +100,6 @@ public:
     Person& add_person(const LocationId id, AgeGroup age);
 
     /**
-     * Sets the current infection state of the person.
-     * Warning: Use only during setup, may distort the simulation results!
-     * @param[in,out] person Person to set infection state.
-     * @param[in] inf_state Infection state to set.
-     * @param[in] t [Default: 0] TimePoint of initialization of the infection.
-     */
-    void set_infection_state(Person& person, InfectionState inf_state, TimePoint t = TimePoint(0));
-
-    /**
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
