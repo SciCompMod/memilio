@@ -183,10 +183,10 @@ struct RecoveredToSusceptible {
 };
 
 struct ViralLoadPeak {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
         return default_val;
     }
     static std::string name()
@@ -196,10 +196,10 @@ struct ViralLoadPeak {
 };
 
 struct ViralLoadIncline {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
         return default_val;
     }
     static std::string name()
@@ -209,10 +209,10 @@ struct ViralLoadIncline {
 };
 
 struct ViralLoadDecline {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, -1.);
+        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, -1.);
         return default_val;
     }
     static std::string name()

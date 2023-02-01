@@ -64,11 +64,12 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectio
             ScalarType local_indiv_trans_prob_v = 0;
             for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count);
                  ++age_transmitter) {
-                local_indiv_trans_prob_v += (transmission_contacts_per_day(cell_index, virus, age_receiver,
-                                                                           static_cast<AgeGroup>(age_transmitter)) +
-                                             transmission_air_per_day(cell_index, virus)) *
-                                            (1 - mask_protection) * dt.days() / days(1).days() *
-                                            person.get_protection_factor(virus, t);
+                local_indiv_trans_prob_v +=
+                    (std::min(m_parameters.get<MaximumContacts>(),
+                              transmission_contacts_per_day(cell_index, virus, age_receiver,
+                                                            static_cast<AgeGroup>(age_transmitter))) +
+                     transmission_air_per_day(cell_index, virus)) *
+                    (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
             }
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
