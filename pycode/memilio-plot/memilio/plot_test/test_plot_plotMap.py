@@ -89,22 +89,9 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
     def test_plot_list(
             self, mock_save_interactive, mock_read_file, mock_plt,
             mock_geopandas_plot):
-        filter_age = None
-        i = 0
-        for file in self.files_input.values():
-            df = pm.extract_data(
-                file, region_spec='ID_County',
-                column='Synthetic data',
-                date=dt.date(2021, 11, 18),
-                filters={'ID_State': None,
-                         'Age_RKI': filter_age},
-                file_format=self.file_format)
 
-            if i == 0:
-                dfs_all = pd.DataFrame(df.iloc[:, 0])
-
-            dfs_all[df.columns[-1] + ' ' + str(i)] = df[df.columns[-1]]
-            i += 1
+        dfs_all = pd.DataFrame(columns=['ID_County', 'Count 0', 'Count 1'], data=[
+                               [1001, 2, 3], [1002, 3, 4]])
         data_columns = dfs_all.columns[1:]
         pm.plot_map(
             dfs_all, scale_colors=np.array([0, 1]),

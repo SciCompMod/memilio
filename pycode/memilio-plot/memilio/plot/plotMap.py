@@ -253,11 +253,11 @@ def scale_dataframe_relative(df, age_groups, df_population):
 
 # Save interactive html files.
 def save_interactive(col, filename, map_data, scale_colors):
-    """! Plots region-specific information onto a interactive html map.
+    """! Plots region-specific information in an interactive html map.
 
-    @param[in] col Defines the col that will be plotted.
-    @param[in] filename Filename with path determines save directory.
-    @param[in] map_data Geopandas file with plot data
+    @param[in] col The column that will be plotted.
+    @param[in] filename Filename with path that determines the output directory.
+    @param[in] map_data Geopandas file with plot data.
     @param[in] scale_colors Array of min-max-values to scale colorbar.
     """
     map_data.explore(col, legend=True, vmin=scale_colors[0],
@@ -283,11 +283,11 @@ def plot_map(data: pd.DataFrame,
     @param[in] legend List subtitles for different columns. Can be list of 
         empty strings.
     @param[in] title Title of the plot.
-    @param[in] plot_colorbar Defines if colorbar will be plotted.
-    @param[in] output_path Output path for figure.   
-    @param[in] fig_name Name of figure created.
-    @param[in] dpi Dots-per-inch value for exported figures.
-    @param[in] outercolor Background color of plot image.
+    @param[in] plot_colorbar Defines if a colorbar will be plotted.
+    @param[in] output_path Output path for the figure.   
+    @param[in] fig_name Name of the figure created.
+    @param[in] dpi Dots-per-inch value for the exported figure.
+    @param[in] outercolor Background color of the plot image.
     """
     region_classifier = data.columns[0]
 
@@ -311,7 +311,7 @@ def plot_map(data: pd.DataFrame,
                 'Georeferenzierung: UTM32s, Format: shape (ZIP, 5 MB)',
                 'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-2-500-000-stand-31-12-vg2500-12-31.html')
     else:
-        gd.raiseDataError('Provide shape files regions to be plotted.')
+        raise gd.DataError('Provide shape files regions to be plotted.')
 
     # Remove regions that are not input data table.
     map_data = map_data[map_data.ARS.isin(data[region_classifier])]
