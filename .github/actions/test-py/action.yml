@@ -27,6 +27,7 @@ runs:
       if:  inputs.package == 'plot'
       with:
         name: python-wheels-epidata
+        path: pycode/wheelhouse
     - name: Download Python Wheels for surrogatemodel
       uses: actions/download-artifact@v3
       if:  inputs.package == 'surrogatemodel'

@@ -202,6 +202,16 @@ jobs:
         with:
           package: surrogatemodel
 
+  test-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    needs: [build-py-surrogatemodel, build-py-simulation]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: surrogatemodel
+
   build-py-plot:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -223,16 +233,6 @@ jobs:
         with: 
           package: plot
           coverage: ON 
-
-  test-py-surrogatemodel:
-    if: github.event.pull_request.draft == false
-    needs: [build-py-surrogatemodel, build-py-simulation]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-py
-        with: 
-          package: surrogatemodel
 
   test-docs:
     if: github.event.pull_request.draft == false
