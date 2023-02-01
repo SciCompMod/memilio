@@ -36,5 +36,7 @@
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
 #include "abm/vaccine.h"
+#include "abm/age.h"
+#include "abm/household.h"
 
 #endif
