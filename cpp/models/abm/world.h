@@ -201,7 +201,7 @@ private:
      */
     void interaction(TimePoint t, TimeSpan dt);
     /**
-     * @brief Person%s may change their current Location.
+     * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */

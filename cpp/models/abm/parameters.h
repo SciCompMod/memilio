@@ -38,7 +38,6 @@ namespace abm
 
 /**
  * @brief Time that a Person is infected but not yet infectious.
- * 
  */
 struct IncubationPeriod {
     using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;

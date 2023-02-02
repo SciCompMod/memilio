@@ -194,7 +194,8 @@ public:
 
 private:
     int m_number_of_households; ///< Number of Household%s in this group.
-    std::vector<std::tuple<Household, int>> m_household_list;
+    std::vector<std::tuple<Household, int>> m_household_list; /**< A list of types of Household%s and the amount of 
+    times it is in the group.*/
 };
 
 /**
