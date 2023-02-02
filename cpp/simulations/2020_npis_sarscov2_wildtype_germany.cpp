@@ -26,6 +26,7 @@
 #include "memilio/mobility/graph_parameters.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
+#include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -477,15 +478,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& node_id_function    = mio::get_county_ids;
 
     const auto& set_node_function =
-        mio::set_nodes_county<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-                              mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
-                              decltype(node_id_function)>;
+        mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
+                       mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
+                       decltype(node_id_function)>;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
                        mio::osecir::InfectionState, decltype(read_function_edges)>;
-    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
-                                        node_id_function, scaling_factor_infected, scaling_factor_icu,
-                                        tnt_capacity_factor, 0, false));
+    BOOST_OUTCOME_TRY(
+        set_node_function(params, start_date, end_date, data_dir,
+                          mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
+                          0, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                          scaling_factor_icu, tnt_capacity_factor, 0, false));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges));
 

@@ -150,7 +150,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
  * @param path directory to population data
  * @return list of county ids.
  */
-IOResult<std::vector<int>> get_county_ids(const std::string& path);
+IOResult<std::vector<int>> get_county_ids(const std::string& path, int node_value);
 
 /**
  * Represents entries in a DIVI data file.

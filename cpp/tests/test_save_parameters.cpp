@@ -559,17 +559,15 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     model1[0].apply_constraints();
     std::vector<mio::osecir::Model> model2(1, {6});
     model2[0].apply_constraints();
+    std::vector<mio::osecir::Model> model3(1, {6});
+    model3[0].apply_constraints();
     std::vector<double> scaling_factor_inf(6, 1.0);
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);
 
     std::vector<int> county = {1002};
 
-    std::string path           = TEST_DATA_DIR;
-    auto divi_data_path        = mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json");
-    auto confirmed_cases_path  = mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json");
-    auto population_data_path  = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-    auto vaccination_data_path = mio::path_join(TEST_DATA_DIR, "all_county_ageinf_vacc_ma7.json");
+    std::string path = TEST_DATA_DIR;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
         model1[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
@@ -578,13 +576,19 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model2[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
         model2[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
         model2[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
+        model3[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.1 * ((size_t)group + 1);
+        model3[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[group]      = 0.11 * ((size_t)group + 1);
+        model3[0].parameters.get<mio::osecir::CriticalPerSevere>()[group]              = 0.12 * ((size_t)group + 1);
     }
     auto read_result1 =
         mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf, scaling_factor_icu, path);
-    auto read_result2 = mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu, path,
-                                                     divi_data_path, confirmed_cases_path, population_data_path);
+    auto read_result2 =
+        mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu, path);
+    auto read_result_district = mio::osecir::read_input_data(
+        model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(path, "pydata/District"));
     ASSERT_THAT(print_wrap(read_result1), IsSuccess());
     ASSERT_THAT(print_wrap(read_result2), IsSuccess());
+    ASSERT_THAT(print_wrap(read_result_district), IsSuccess());
 
     std::vector<double> sus   = {10284.13, 19082.86, 73783.12, 82494.81, 43725.08, 15612.70};
     std::vector<double> exp   = {0.571429, 4.82143, 20.8163, 22.1429, 4.57143, 4.64286};
@@ -600,32 +604,46 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
                     1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Susceptible}]), sus[i],
                     1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Susceptible}]), sus[i],
+                    1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Exposed}]), exp[i], 1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Exposed}]), exp[i], 1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Exposed}]), exp[i], 1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedNoSymptoms}]),
                     car[i], 1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedNoSymptoms}]),
+                    car[i], 1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedNoSymptoms}]),
                     car[i], 1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSymptoms}]), inf[i],
                     1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSymptoms}]), inf[i],
                     1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSymptoms}]), inf[i],
+                    1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSevere}]), hosp[i],
                     1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSevere}]), hosp[i],
+                    1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedSevere}]), hosp[i],
                     1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}]), icu[i],
                     1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}]), icu[i],
                     1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}]), icu[i],
+                    1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Recovered}]), rec[i], 1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Recovered}]), rec[i], 1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Recovered}]), rec[i], 1e-1);
         EXPECT_NEAR((model1[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Dead}]), death[i], 1e-1);
         EXPECT_NEAR((model2[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Dead}]), death[i], 1e-1);
+        EXPECT_NEAR((model3[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::Dead}]), death[i], 1e-1);
     }
 
     EXPECT_NEAR(model1[0].populations.get_total(), 246793, 1e-6);
     EXPECT_NEAR(model2[0].populations.get_total(), 246793, 1e-6);
+    EXPECT_NEAR(model3[0].populations.get_total(), 246793, 1e-6);
 }
 
 TEST(TestSaveParameters, ExtrapolateRKI)

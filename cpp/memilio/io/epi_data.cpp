@@ -67,19 +67,25 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id)
     return success(id);
 }
 
-IOResult<std::vector<int>> get_county_ids(const std::string& path)
+IOResult<std::vector<int>> get_county_ids(const std::string& path, int node_value)
 {
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path));
 
     std::vector<int> id;
     id.reserve(population_data.size());
-    for (auto&& entry : population_data) {
-        if (entry.county_id) {
-            id.push_back(entry.county_id->get());
+
+    if (node_value == 0) {
+        for (auto&& entry : population_data) {
+            if (entry.county_id) {
+                id.push_back(entry.county_id->get());
+            }
+            else {
+                return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
+            }
         }
-        else {
-            return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
-        }
+    }
+    else {
+        return failure(StatusCode::InvalidValue, "node value does not belong to county ids.");
     }
     //remove duplicate county ids
     id.erase(std::unique(id.begin(), id.end()), id.end());

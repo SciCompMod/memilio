@@ -328,15 +328,16 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
                                       const std::string& dir, int num_days = 0, bool export_time_series = false)
 {
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
+        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
+                                                 county, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county,
-                                                        date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(
+        model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_population_data(
+        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -344,10 +345,11 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(dir, "county_divi_ma7.json"), path_join(dir, "cases_all_county_age_ma7.json"),
-            path_join(dir, "county_current_population.json")));
+        BOOST_OUTCOME_TRY(
+            export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
+                                                num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "county_current_population.json")));
     }
     return success();
 }
@@ -364,20 +366,19 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 template <class Model>
 IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::vector<int>& node_ids,
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                               const std::string& dir, const std::string& divi_data_path,
-                               const std::string& confirmed_cases_path, const std::string& population_data_path,
-                               int num_days = 0, bool export_time_series = false)
+                               const std::string& data_dir, int num_days = 0, bool export_time_series = false)
 {
 
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, divi_data_path, node_ids, date, scaling_factor_icu));
+        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date,
+                                                 scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(
-        details::set_confirmed_cases_data(model, confirmed_cases_path, node_ids, date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, population_data_path, node_ids));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
+                                                        date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -385,9 +386,10 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         // (This only represents the vectorization of the previous function over all simulation days...)
         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
                     "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, node_ids, date, scaling_factor_inf,
-                                                              scaling_factor_icu, num_days, divi_data_path,
-                                                              confirmed_cases_path, population_data_path));
+        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
+            model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
+            path_join(data_dir, "critical_cases.json"), path_join(data_dir, "confirmed_cases.json"),
+            path_join(data_dir, "population_data.json")));
     }
     return success();
 }

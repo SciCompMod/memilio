@@ -56,7 +56,9 @@ namespace details
 template <class EpiDataEntry>
 int get_region_id(const EpiDataEntry& rki_entry)
 {
-    return rki_entry.county_id ? rki_entry.county_id->get() : (rki_entry.state_id ? rki_entry.state_id->get() : 0);
+    return rki_entry.county_id ? rki_entry.county_id->get()
+                               : (rki_entry.state_id ? rki_entry.state_id->get()
+                                                     : (rki_entry.district_id ? rki_entry.district_id->get() : 0));
 }
 
 IOResult<void> read_confirmed_cases_data(
@@ -351,7 +353,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 
     for (auto&& county_entry : population_data) {
         //accumulate population of states or country from population of counties
-        if (!county_entry.county_id) {
+        if (!county_entry.county_id && !county_entry.district_id) {
             return failure(StatusCode::InvalidFileFormat, "File with county population expected.");
         }
         //find region that this county belongs to
@@ -361,7 +363,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
                    (county_entry.county_id &&
                     regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
                    (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
-                   (county_entry.district_id && county_entry.district_id == regions::DistrictId(r));
+                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());

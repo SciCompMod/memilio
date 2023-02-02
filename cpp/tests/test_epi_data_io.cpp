@@ -30,6 +30,7 @@
 #include "json/value.h"
 #include "ode_secirvvs/model.h"
 #include "ode_secirvvs/parameters_io.h"
+#include "memilio/utils/stl_util.h"
 #include "boost/optional/optional_io.hpp"
 #include <gmock/gmock-matchers.h>
 
@@ -220,8 +221,8 @@ TEST(TestEpiDataIo, read_county_ids)
         16061, 16062, 16063, 16064, 16065, 16066, 16067, 16068, 16069, 16070, 16071, 16072, 16073, 16074, 16075, 16076,
         16077};
 
-    std::string path = TEST_DATA_DIR;
-    auto read_ids    = mio::get_county_ids(path);
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    auto read_ids    = mio::get_county_ids(path, 0);
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));

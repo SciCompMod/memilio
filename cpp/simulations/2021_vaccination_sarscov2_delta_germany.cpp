@@ -27,6 +27,7 @@
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
 #include "memilio/mobility/graph_parameters.h"
+#include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -556,15 +557,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     const auto& node_id_function    = mio::get_county_ids;
 
     const auto& set_node_function =
-        mio::set_nodes_county<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns,
-                              mio::osecirvvs::Model, mio::MigrationParameters, mio::osecirvvs::Parameters,
-                              decltype(read_function_nodes), decltype(node_id_function)>;
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, mio::osecirvvs::Model,
+                       mio::MigrationParameters, mio::osecirvvs::Parameters, decltype(read_function_nodes),
+                       decltype(node_id_function)>;
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
                        mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
-    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
-                                        node_id_function, scaling_factor_infected, scaling_factor_icu,
-                                        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
+    BOOST_OUTCOME_TRY(set_node_function(
+        params, start_date, end_date, data_dir,
+        mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"), 0, params_graph,
+        read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
+        mio::get_offset_in_days(end_date, start_date), false));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges));
 
