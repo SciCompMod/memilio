@@ -141,13 +141,13 @@ public:
     bool operator==(const TestingScheme& other) const;
 
     /**
-     * @brief Add a TestingCriteria to the set of age groups that are checked for testing.
+     * @brief Add a TestingCriteria to the set of TestingCriteria that are checked for testing.
      * @param[in] criteria TestingCriteria to be added.
      */
     void add_testing_criteria(const TestingCriteria criteria);
 
     /**
-     * @brief Remove a TestingCriteria from the set of age groups that are checked for testing.
+     * @brief Remove a TestingCriteria from the set of TestingCriteria that are checked for testing.
      * @param[in] criteria TestingCriteria to be removed.
      */
     void remove_testing_criteria(const TestingCriteria criteria);
