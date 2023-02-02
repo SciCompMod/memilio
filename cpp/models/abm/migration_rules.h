@@ -34,10 +34,10 @@ class Person;
 
 /**
  * @name Rules for migration between Location%s.
- * @param p Person the rule is applied to.
- * @param t Current time.
- * @param dt Length of the time step.
- * @param params Migration parameters.
+ * @param[in] p Person the rule is applied to.
+ * @param[in] t Current time.
+ * @param[in] dt Length of the time step.
+ * @param[in] params Migration parameters.
  * @return Location that the Person migrates to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 

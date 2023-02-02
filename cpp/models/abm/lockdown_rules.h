@@ -51,9 +51,9 @@ void set_home_office(TimePoint t_begin, double p, MigrationParameters& params);
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
- * @param t_begin Begin of the intervention.
- * @param p Percentage of Person%s that are homeschooled.
- * @param params Migration parameters that include Damping.
+ * @param[in] t_begin Begin of the intervention.
+ * @param[in] p Percentage of Person%s that are homeschooled.
+ * @param[in,out] params Migration parameters that include Damping.
  */
 void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params);
 
@@ -62,9 +62,9 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params
  * Whether a Person joins a social event is a random event (exponentially distributed).
  * The Damping changes the parameter of the exponential distribution, where a Damping of 0 corresponds to no Damping
  * and a Damping of 1 means that no social events are happening.
- * @param t_begin Begin of the intervention.
- * @param p Damping between 0 and 1 that changes the parameter of the exponential distribution.
- * @param params Migration parameters that include Damping.
+ * @param[in] t_begin Begin of the intervention.
+ * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
+ * @param[in,out] params Migration parameters that include Damping.
  */
 void close_social_events(TimePoint t_begin, double p, MigrationParameters& params);
 

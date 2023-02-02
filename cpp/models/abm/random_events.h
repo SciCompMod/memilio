@@ -39,9 +39,9 @@ namespace abm
  * In this case the current state is returned.
  * @tparam T Type that represents the states.
  * @tparam NumTransitions Number of possible transitions.
- * @param current_state Current state before transition.
- * @param dt Length of the time step.
- * @param transitions Array of pairs of new states and their rates (probabilities).
+ * @param[in] current_state Current state before transition.
+ * @param[in] dt Length of the time step.
+ * @param[in] transitions Array of pairs of new states and their rates (probabilities).
  * @return New state from the list if transition happens, current_state otherwise.
  */
 template <class T, size_t NumTransitions>

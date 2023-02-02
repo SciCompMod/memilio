@@ -33,7 +33,7 @@ class Mask
 public:
     /**
      * @brief Construct a new Mask of a certain type.
-     * @param type The type of the Mask.
+     * @param[in] type The type of the Mask.
      */
     Mask(MaskType type);
 
@@ -56,23 +56,23 @@ public:
     }
 
     /**
-    * @brief Increase the time this Mask was used by a timestep.
-    * @param dt The length of the timestep.
-    */
+     * @brief Increase the time this Mask was used by a timestep.
+     * @param[in] dt The length of the timestep.
+     */
     void increase_time_used(TimeSpan dt)
     {
         m_time_used += dt;
     }
 
     /**
-    * @brief Change the type of the Mask and reset the time it was used.
-    * @param new_mask_type the type of the new Mask.
-    */
+     * @brief Change the type of the Mask and reset the time it was used.
+     * @param[in] new_mask_type The type of the new Mask.
+     */
     void change_mask(MaskType new_mask_type);
 
 private:
     MaskType m_type; ///< Type of the Mask.
-    TimeSpan m_time_used; ///< Time the Mask has been used.
+    TimeSpan m_time_used; ///< Length of time the Mask has been used.
 };
 } // namespace abm
 } // namespace mio
