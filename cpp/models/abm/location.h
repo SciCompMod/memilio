@@ -77,7 +77,8 @@ struct Cell {
     uint32_t num_people; ///< Number of Person%s in the Cell.
     uint32_t num_carriers; ///< Number of pre- and asymptomatic Person%s in the Cell.
     uint32_t num_infected; ///< Number of symptomatic Person%s in the Cell.
-    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate; ///<
+    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate; /**< The parameter for the exponential
+    distribution to decide if a Person becomes infected.*/
 
     Cell()
         : num_people(0)
