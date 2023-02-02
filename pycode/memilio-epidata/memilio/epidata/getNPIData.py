@@ -497,12 +497,16 @@ def get_npi_data(fine_resolution=2,
         npi_codes_prior = df_npis_desc['Variablenname']
         npi_codes_prior_desc = df_npis_desc['Variable']
 
-    # for fine_resolution > 0 deactivation of non-combinable
-    # incidence-dependent NPIs has to be conducted; therefore we defined a
-    # matrix of possible combinations of NPIs (marked with an X if combinable)
-    # NPIs of different main category (e.g., M01a and M04) can always be
-    # combined; only those of, e.g., M01a_010_3 and M01a_080_4 can exclude each
-    # other
+    # For fine_resolution > 0 deactivation of non-combinable / conflicting
+    # (incidence-dependent) NPIs has to be conducted.
+    # For all NPIs, we defined a matrix of possible combinations of NPIs;
+    # marked with an X if combinable.
+    # Exclusion of NPIs of different main category (e.g., M01a and M04) 
+    # happens based on this table and the strictness index provided by Corona-
+    # Datenplattform. Those of, e.g., M01a_010_3 and M01a_080_4 exclude each
+    # other according to the threshold they were prescribed with. Active NPIs
+    # with low incidence thresholds deactivate conflicting NPIs with higher 
+    # thresholds.
     if fine_resolution > 0:
         num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count("M22|M23|M24").sum()
         if num_nonexistent_codes_pre !=0:
@@ -529,6 +533,13 @@ def get_npi_data(fine_resolution=2,
                 list(
                     npi_groups_combinations
                     [npi_groups_combinations == code].index))
+        # read and save strictness order for NPIs of each main categorie
+        df_npis_strictness_index = {
+            npi_groups_combinations_unique[i]:
+            # TODO: Replace strictness of j for all NPIs by some value from Datenplattform...
+            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]][j] : j for j in range(len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]]))}
+        for i in range(len(npi_groups_combinations_unique))}
+
         # create hash table of main code to contained codes and combination matrix
         df_npis_combinations = {
             npi_groups_combinations_unique[i]:
@@ -858,6 +869,26 @@ def get_npi_data(fine_resolution=2,
         df_local_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                    == countyID].copy()
 
+        # Consistency of incidence dependent NPIs:
+        # The same NPI should not be prescribed multiple times at the same day
+        # for different thresholds. In order to avoid contradictions, only
+        # retain the strictest mentioned implementation.
+        for i in range(int(len(df_local_old)/6)):
+            sum_npi_inc = np.where(df_local_old.iloc[6*i+1:6*(i+1),6:].sum()>1)
+            if len(sum_npi_inc[0]):
+                print('Reduce multiple prescription of NPI ' + str(npis.loc[i, 'Description']) + ' for county ' + str(countyID))
+                for j in sum_npi_inc[0]:
+                    # get lowest index (i.e., strictest implementation of NPI).
+                    idx_start = np.where(df_local_old.iloc[6*i+1:6*(i+1),6+j])[0].min()
+                    # Remove less strict and thus contradictory
+                    # implementations of the same NPI the same day.
+                    df_local_old.iloc[6*i+1+idx_start+1:6*(i+1),6+j] = 0
+
+                if not all(df_local_old.iloc[6*i+1:6*(i+1),6+sum_npi_inc[0]].sum()==1):
+                    raise gd.DataError('Consistency correction failed.')
+
+        ## end of consistency correction ##
+
         # potentially remove rows if they are not in npis dict
         npi_rows = [i in npis[dd.EngEng['npiCode']].values
                     for i in df_local_old[dd.EngEng['npiCode']]]
@@ -980,6 +1011,13 @@ def get_npi_data(fine_resolution=2,
                                         # print('\n')
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
+
+            # TODO:
+            # Remove conflicting non-incidence dependent NPIs according to
+            # strictness index of Corona-Datenplattform and exclusion
+            # criteria defined in df_npis_combinations
+            for code in df_npis_combinations.keys():
+                code_cols = df_npis_combinations[code].columns
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
