@@ -38,7 +38,7 @@ class Simulation
 
 public:
     /**
-     * Create a simulation.
+     * @brief Create a simulation.
      * @param[in] t The starting time of the Simulation.
      * @param[in,out] world The World to simulate.
      */
