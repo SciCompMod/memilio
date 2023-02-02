@@ -21,33 +21,33 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    auto home   = std::make_shared<mio::abm::Location>(mio::abm::LocationType::Home, 0);
-    auto work   = std::make_shared<mio::abm::Location>(mio::abm::LocationType::Work, 0);
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto person = create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
-    ASSERT_EQ(testing_criteria.evaluate(person, *work, t), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
     testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
     testing_criteria.add_infection_state(mio::abm::InfectionState::Carrier);
     testing_criteria.add_location_type(mio::abm::LocationType::Home);
     testing_criteria.add_location_type(mio::abm::LocationType::Work);
 
-    ASSERT_EQ(testing_criteria.evaluate(person, *work, t), true);
-    ASSERT_EQ(testing_criteria.evaluate(person, *home, t), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, work, t), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
     testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
-    ASSERT_EQ(testing_criteria.evaluate(person, *home, t),
+    ASSERT_EQ(testing_criteria.evaluate(person, home, t),
               false); // now it isn't empty and get's evaluated against age group
     testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
-    ASSERT_EQ(testing_criteria.evaluate(person, *home, t), true);
+    ASSERT_EQ(testing_criteria.evaluate(person, home, t), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::Infected);
-    ASSERT_EQ(testing_criteria.evaluate(person, *home, t), false);
+    ASSERT_EQ(testing_criteria.evaluate(person, home, t), false);
 
     testing_criteria.add_infection_state(mio::abm::InfectionState::Infected);
     testing_criteria.remove_location_type(mio::abm::LocationType::Home);
-    ASSERT_EQ(testing_criteria.evaluate(person, *home, t), false);
+    ASSERT_EQ(testing_criteria.evaluate(person, home, t), false);
 
     auto testing_criteria_manual = mio::abm::TestingCriteria(
         {}, std::vector<mio::abm::LocationType>({mio::abm::LocationType::Work}),
@@ -88,8 +88,8 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    auto loc_home = std::make_shared<mio::abm::Location>(mio::abm::LocationType::Home, 0);
-    auto loc_work = std::make_shared<mio::abm::Location>(mio::abm::LocationType::Work, 0);
+    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto person1  = create_person_simple(loc_home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34);
     auto person2 =
         create_person_simple(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age15to34);
@@ -102,13 +102,13 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.9));
-    ASSERT_EQ(testing_scheme.run_scheme(person1, *loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme.run_scheme(person2, *loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(person1, *loc_home, start_date),
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date),
               true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme.run_scheme(person1, *loc_work, start_date), true); // Person doesn't test
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
 
     testing_scheme.add_testing_criteria(testing_criteria1);
     testing_scheme.remove_testing_criteria(testing_criteria1);
-    ASSERT_EQ(testing_scheme.run_scheme(person1, *loc_home, start_date), true);
+    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), true);
 }

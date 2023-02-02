@@ -109,9 +109,9 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
     }
 }
 
-void Location::add_person(const std::shared_ptr<Person>& p, uint32_t cell_idx)
+void Location::add_person(std::shared_ptr<Person> p, uint32_t cell_idx)
 {
-    m_cells[cell_idx].m_persons.push_back(p);
+    m_cells[cell_idx].m_persons.push_back(std::move(p));
 }
 
 void Location::remove_person(const std::shared_ptr<Person>& p)

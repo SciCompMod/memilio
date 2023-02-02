@@ -288,8 +288,8 @@ void create_assign_locations(mio::abm::World& world)
     // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
     // room height of 3 m
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
-    world.get_individualized_location(event)->get_infection_parameters().set<mio::abm::MaximumContacts>(100);
-    world.get_individualized_location(event)->set_capacity(100, 375);
+    world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+    world.get_individualized_location(event).set_capacity(100, 375);
 
     std::vector<mio::abm::LocationType> test_at_social_event = {mio::abm::LocationType::SocialEvent};
     auto testing_criteria =
@@ -311,11 +311,11 @@ void create_assign_locations(mio::abm::World& world)
     // (https://doi.org/10.1016/j.buildenv.2021.107926))
     // For the ICUs we assume a capacity of 30 agents and the same volume.
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
-    world.get_individualized_location(hospital)->get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(hospital)->set_capacity(584, 26242);
+    world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(hospital).set_capacity(584, 26242);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
-    world.get_individualized_location(icu)->get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    world.get_individualized_location(icu)->set_capacity(30, 1350);
+    world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    world.get_individualized_location(icu).set_capacity(30, 1350);
 
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The maximum contacs are 40.
@@ -329,16 +329,16 @@ void create_assign_locations(mio::abm::World& world)
     // and a volume of 7200 cubic meters (10 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and 3 m
     // room height).
     auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
-    world.get_individualized_location(shop)->get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    world.get_individualized_location(shop)->set_capacity(240, 7200);
+    world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    world.get_individualized_location(shop).set_capacity(240, 7200);
 
     auto school = world.add_location(mio::abm::LocationType::School);
-    world.get_individualized_location(school)->get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(school)->set_capacity(600, 3600);
+    world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    world.get_individualized_location(school).set_capacity(600, 3600);
 
     auto work = world.add_location(mio::abm::LocationType::Work);
-    world.get_individualized_location(work)->get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-    world.get_individualized_location(work)->set_capacity(100, 3000);
+    world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    world.get_individualized_location(work).set_capacity(100, 3000);
 
     int counter_event  = 0;
     int counter_school = 0;
@@ -368,26 +368,26 @@ void create_assign_locations(mio::abm::World& world)
         if (counter_event == 1000) {
             counter_event = 0;
             event         = world.add_location(mio::abm::LocationType::SocialEvent);
-            world.get_individualized_location(event)->set_capacity(100, 375);
-            world.get_individualized_location(event)->get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+            world.get_individualized_location(event).set_capacity(100, 375);
+            world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
         }
         if (counter_school == 600) {
             counter_school = 0;
             school         = world.add_location(mio::abm::LocationType::School);
-            world.get_individualized_location(school)->get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(school)->set_capacity(600, 3600);
+            world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            world.get_individualized_location(school).set_capacity(600, 3600);
         }
         if (counter_work == 100) {
             counter_work = 0;
             work         = world.add_location(mio::abm::LocationType::Work);
-            world.get_individualized_location(work)->get_infection_parameters().set<mio::abm::MaximumContacts>(40);
-            world.get_individualized_location(work)->set_capacity(100, 3000);
+            world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            world.get_individualized_location(work).set_capacity(100, 3000);
         }
         if (counter_shop == 15000) {
             counter_shop = 0;
             shop         = world.add_location(mio::abm::LocationType::BasicsShop);
-            world.get_individualized_location(shop)->get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-            world.get_individualized_location(shop)->set_capacity(240, 7200);
+            world.get_individualized_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            world.get_individualized_location(shop).set_capacity(240, 7200);
         }
     }
 

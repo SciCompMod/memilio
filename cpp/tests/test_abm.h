@@ -97,8 +97,9 @@ void add_infection_simple(mio::abm::Person& p, mio::abm::TimePoint t,
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
-mio::abm::Person create_person_simple(std::shared_ptr<mio::abm::Location> location, mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                       mio::abm::AgeGroup age_group             = mio::abm::AgeGroup::Age15to34)
+mio::abm::Person create_person_simple(mio::abm::Location& location,
+                                      mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                      mio::abm::AgeGroup age_group             = mio::abm::AgeGroup::Age15to34)
 {
     mio::abm::Person p = mio::abm::Person(location, age_group);
     if (infection_state != mio::abm::InfectionState::Susceptible) {

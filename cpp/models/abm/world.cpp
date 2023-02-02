@@ -46,7 +46,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     auto loc           = get_individualized_location(id);
     m_persons.push_back(std::make_shared<Person>(loc, age, person_id));
-    loc->add_person(m_persons.back());
+    loc.add_person(m_persons.back());
     auto& person = *m_persons.back();
     return person;
 }
@@ -81,9 +81,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 auto target      = find_location(target_type, *person);
                 auto current     = person->get_location();
-                if (m_testing_strategy.run_strategy(*person, *target, t)) {
-                    if (target != current && target->get_number_persons() < target->get_capacity().persons) {
-                        bool wears_mask = person->apply_mask_intervention(*target);
+                if (m_testing_strategy.run_strategy(*person, target, t)) {
+                    if (target != current && target.get_number_persons() < target.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target);
                         if (wears_mask) {
                             person->migrate_to(current, target);
                         }
@@ -102,8 +102,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto current = person->get_location();
             if (!person->is_in_quarantine() && current == get_individualized_location(trip.migration_origin)) {
                 auto target = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, *target, t)) {
-                    person->apply_mask_intervention(*target);
+                if (m_testing_strategy.run_strategy(*person, target, t)) {
+                    person->apply_mask_intervention(target);
                     person->migrate_to(current, target);
                 }
             }
@@ -142,17 +142,17 @@ auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPer
     return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
 }
 
-const std::shared_ptr<Location>& World::get_individualized_location(LocationId id) const
+const Location& World::get_individualized_location(LocationId id) const
 {
-    return m_locations[(uint32_t)id.type][id.index];
+    return *m_locations[(uint32_t)id.type][id.index];
 }
 
-std::shared_ptr<Location>& World::get_individualized_location(LocationId id)
+Location& World::get_individualized_location(LocationId id)
 {
-    return m_locations[(uint32_t)id.type][id.index];
+    return *m_locations[(uint32_t)id.type][id.index];
 }
 
-std::shared_ptr<Location> World::find_location(LocationType type, const Person& person)
+Location& World::find_location(LocationType type, const Person& person)
 {
     auto index = person.get_assigned_location_index(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");

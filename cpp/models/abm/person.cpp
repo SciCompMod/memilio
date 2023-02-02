@@ -31,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(const std::shared_ptr<Location>& location, AgeGroup age, uint32_t person_id)
-    : m_location(location)
+Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+    : m_location(location.shared_from_this())
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -57,14 +57,13 @@ void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& param
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(std::shared_ptr<Location>& loc_old, std::shared_ptr<Location>& loc_new,
-                        const std::vector<uint32_t>& cells)
+void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
 {
-    if (&loc_old != &loc_new) {
-        loc_old->remove_person(shared_from_this());
-        m_location = loc_new;
+    if (loc_old != loc_new) {
+        loc_old.remove_person(shared_from_this());
+        m_location = loc_new.shared_from_this();
         m_cells    = cells;
-        loc_new->add_person(shared_from_this());
+        loc_new.add_person(shared_from_this());
         m_time_at_location = TimeSpan(0);
     }
 }
@@ -98,14 +97,14 @@ void Person::add_new_infection(Infection&& inf)
     m_infections.push_back(std::move(inf));
 }
 
-std::shared_ptr<Location> Person::get_location()
+Location& Person::get_location()
 {
-    return m_location;
+    return *m_location;
 }
 
-const std::shared_ptr<Location> Person::get_location() const
+const Location& Person::get_location() const
 {
-    return m_location;
+    return *m_location;
 }
 
 void Person::set_assigned_location(Location& location)

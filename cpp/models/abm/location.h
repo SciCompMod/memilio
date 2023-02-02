@@ -91,7 +91,7 @@ struct Cell {
 /**
  * All locations in the simulated world where persons gather.
  */
-class Location
+class Location : public std::enable_shared_from_this<Location>
 {
 public:
     /**
@@ -101,6 +101,19 @@ public:
      * @param num_cells [Default: 1] The number of cells in which the Location is divided.
      */
     Location(LocationType type, uint32_t index, uint32_t num_cells = 1);
+
+    /**
+    * @brief Compare two Location%s.
+    */
+    bool operator==(const Location& other) const
+    {
+        return (m_type == other.m_type && m_index == other.m_index);
+    }
+
+    bool operator!=(const Location& other) const
+    {
+        return !(*this == other);
+    }
 
     /**
      * get the type of this location.
@@ -150,7 +163,7 @@ public:
      * @param person The Person arriving.
      * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(const std::shared_ptr<Person>& person, uint32_t cell_idx = 0);
+    void add_person(std::shared_ptr<Person> person, uint32_t cell_idx = 0);
 
     /** 
      * @brief Remove a Person from the population of this Location.

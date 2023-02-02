@@ -79,10 +79,10 @@ TEST(TestSimulation, advance_subpopulation)
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
 
     for (size_t i = 0; i < 50; i++) {
-        auto v = school->get_subpopulations().get_value(i);
+        auto v = school.get_subpopulations().get_value(i);
         // Check whether the number of persons in infected state at the location is consistent
         ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
         // Check the time evolution is correct
-        ASSERT_EQ(school->get_subpopulations().get_time(i), ScalarType(i) / 24);
+        ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }
 }

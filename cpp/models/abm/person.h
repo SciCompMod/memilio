@@ -53,7 +53,7 @@ public:
      * @param age The age group of the person.
      * @param person_id Index of the person.
      */
-    Person(const std::shared_ptr<Location>& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
     * compare two persons
@@ -77,8 +77,7 @@ public:
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(std::shared_ptr<Location>& loc_old, std::shared_ptr<Location>& loc_new,
-                    const std::vector<uint32_t>& cells_new = {});
+    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -139,9 +138,9 @@ public:
      * @brief Get the current Location of the Person.
      * @returns Current Location of the Person.
      */
-    std::shared_ptr<Location> get_location();
+    Location& get_location();
 
-    const std::shared_ptr<Location> get_location() const;
+    const Location& get_location() const;
 
     /**
      * @brief Get the time the person has been at its current location.

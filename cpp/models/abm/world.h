@@ -125,24 +125,16 @@ public:
      * @param id LocationId of the location
      * @return reference to the location
      */
-    const std::shared_ptr<Location>& get_individualized_location(LocationId id) const;
+    const Location& get_individualized_location(LocationId id) const;
 
-    std::shared_ptr<Location>& get_individualized_location(LocationId id);
-
-    /**
-     * get the current location of a person
-     * @return reference to the current location of the person
-     */
-    const std::shared_ptr<Location>& get_location(const Person& person) const;
-
-    std::shared_ptr<Location>& get_location(Person& person);
+    Location& get_individualized_location(LocationId id);
 
     /**
      * find an assigned location of a person
      * @param type the location type that specifies the assigned location
      * @return pointer to the assigned location
      */
-    std::shared_ptr<Location> find_location(LocationType type, const Person& person);
+    Location& find_location(LocationType type, const Person& person);
 
     /** 
      * number of persons in one infection state at all locations of a type.
