@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -27,6 +27,7 @@
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/time_series.h"
 #include <array>
 #include <random>
 
@@ -74,10 +75,11 @@ struct LocationId {
  * The Location can be split up into several Cell%s. This allows a finer division of the people at the Location.
  */
 struct Cell {
+
     uint32_t num_people; ///< Number of Person%s in the Cell.
     uint32_t num_carriers; ///< Number of pre- and asymptomatic Person%s in the Cell.
     uint32_t num_infected; ///< Number of symptomatic Person%s in the Cell.
-    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate; /**< The parameter for the exponential
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate; /**< The parameter for the exponential
     distribution to decide if a Person becomes infected.*/
 
     Cell()
@@ -89,7 +91,7 @@ struct Cell {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate_new)
+         CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -172,13 +174,6 @@ public:
      */
     int get_subpopulation(InfectionState s) const;
 
-    /** 
-     * number of persons at this location for all infection states.
-     * vector is indexed by InfectionState.
-     * @return number of persons in all infection states.
-     * */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
-
     /**
      * @return parameters of the infection that are specific to this location
      */
@@ -223,7 +218,7 @@ public:
      * get the number of persons at the location
      * @return number of persons
      */
-    int get_population()
+    int get_total_population_size()
     {
         return m_num_persons;
     }
@@ -231,7 +226,7 @@ public:
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<double, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
         return m_cached_exposure_rate;
     }
@@ -259,7 +254,7 @@ public:
      * @brief Computes a relative transmission risk factor for the Location.
      * @return The relative risk factor for the Location.
      */
-    double compute_relative_transmission_risk();
+    ScalarType compute_relative_transmission_risk();
 
     /**
      * @brief Set the capacity adapted transmission risk flag.
@@ -271,6 +266,26 @@ public:
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
+     * Add a timepoint to the subpopulations timeseries
+     * @param t the TimePoint to be added
+    */
+    void add_subpopulations_timepoint(const TimePoint& t);
+
+    /**
+     * Return the time series object of the current number of individuals in the each infection state
+     * @return the time series object of the current number of individuals in the each infection state
+    */
+    const TimeSeries<ScalarType>& get_population() const
+    {
+        return m_subpopulations;
+    }
+
+    /**
+     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
+     * @param t The first TimePoint in subpopulation
+    */
+    void initialize_subpopulation(const TimePoint& t);
+  
     /**
      * @brief Get the information whether NPIs are active at this Location.
      * If true requires e.g. Mask%s when entering a Location.
@@ -303,11 +318,11 @@ private:
     uint32_t m_index; ///< Index of the Location.
     int m_num_persons = 0;
     LocationCapacity m_capacity;
-    bool m_capacity_adapted_transmission_risk; /*< If true considers the LocationCapacity for the computation of the 
+    bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
-    std::array<int, size_t(InfectionState::Count)> m_subpopulations;
+    TimeSeries<ScalarType> m_subpopulations;
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
-    CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> m_cached_exposure_rate;
     std::vector<Cell> m_cells;
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
