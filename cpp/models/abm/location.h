@@ -79,7 +79,8 @@ struct Cell {
     uint32_t num_people; ///< Number of Person%s in the Cell.
     uint32_t num_carriers; ///< Number of pre- and asymptomatic Person%s in the Cell.
     uint32_t num_infected; ///< Number of symptomatic Person%s in the Cell.
-    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate; /**< The parameter for the exponential
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState>
+        cached_exposure_rate; /**< The parameter for the exponential
     distribution to decide if a Person becomes infected.*/
 
     Cell()
@@ -266,9 +267,10 @@ public:
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
+    /**
      * Add a timepoint to the subpopulations timeseries
      * @param t the TimePoint to be added
-    */
+     */
     void add_subpopulations_timepoint(const TimePoint& t);
 
     /**
@@ -285,7 +287,7 @@ public:
      * @param t The first TimePoint in subpopulation
     */
     void initialize_subpopulation(const TimePoint& t);
-  
+
     /**
      * @brief Get the information whether NPIs are active at this Location.
      * If true requires e.g. Mask%s when entering a Location.
