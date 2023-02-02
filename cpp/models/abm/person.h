@@ -64,7 +64,7 @@ struct InfectionProperties {
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
- * Agents in the simulated world that can carry and spread the infection.
+ * @brief Agents in the simulated World that can carry and spread the Infection.
  */
 class Person
 {
@@ -133,8 +133,8 @@ public:
     void set_infection_state(InfectionState inf_state);
 
     /**
-     * @brief Get the age group of this Person.
-     * @return Age of the Person.
+     * Get the age group of this person.
+     * @return age.
      */
     AgeGroup get_age() const
     {
@@ -304,7 +304,7 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param target The target location.
+     * @param[in] target The target location.
      */
     bool apply_mask_intervention(const Location& target);
 
