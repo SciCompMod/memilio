@@ -43,7 +43,6 @@ mio::abm::InfectionState determine_infection_state(double exposed, double infect
     return (mio::abm::InfectionState)state;
 }
 
-
 /**
  * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
  * This is done with equal distribution and if the number of people is not divisible by number of households the last one gets the rest. E.g. number_of_people = 10, number_of_households = 3. Then the vector household_sizes = {3,3,4}.
@@ -854,8 +853,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
-    auto t0         = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto t0               = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
@@ -863,13 +862,13 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-        
+
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto&& locations : sim.get_world().get_locations()) {
-            for (auto location : locations){
+            for (auto location : locations) {
                 loc_ids.push_back(location.get_index());
             }
         }
@@ -903,12 +902,14 @@ int main(int argc, char** argv)
         num_runs = atoi(argv[1]);
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to the current directory.\n");
-    } else if (argc == 3) {
-        num_runs = atoi(argv[1]);
+    }
+    else if (argc == 3) {
+        num_runs   = atoi(argv[1]);
         result_dir = argv[2];
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
-    } else {
+    }
+    else {
         printf("Usage:\n");
         printf("abm_example <num_runs>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
