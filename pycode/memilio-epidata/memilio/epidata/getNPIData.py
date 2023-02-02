@@ -118,7 +118,7 @@ def print_manual_download(filename, url):
 
 def read_files(directory, fine_resolution):
     """! Reads files from local directory and returns data in dataframes
-    
+
     @param directory Directory where data is loaded from.
     @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
         are considered.
@@ -132,13 +132,15 @@ def read_files(directory, fine_resolution):
     if fine_resolution > 0:
         try:
             try:
-                codelist = ['m01a', 'm01b', 'm02a', 'm02b', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09',
-                            'm10', 'm11', 'm12', 'm13', 'm14', 'm15', 'm16', 'm17', 'm18', 'm19', 'm20', 'm21']
+                codelist = [
+                    'm01a', 'm01b', 'm02a', 'm02b', 'm03', 'm04', 'm05', 'm06',
+                    'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm14',
+                    'm15', 'm16', 'm17', 'm18', 'm19', 'm20', 'm21']
                 counter_codes = 0
                 for code in codelist:
                     df_npis_per_code = pd.read_csv(
                         os.path.join(directory,
-                                        'kr_massn_unterkat_{}.csv'.format(code)),
+                                     'kr_massn_unterkat_{}.csv'.format(code)),
                         sep=',')
 
                     # set some parameters for dataframe
@@ -147,32 +149,47 @@ def read_files(directory, fine_resolution):
                         num_counties = len(df_npis_per_code.ags5.unique())
 
                         # extract dates from data
-                        dates = df_npis_per_code.iloc[:int(df_npis_per_code.shape[0]/num_counties), 5]
+                        dates = df_npis_per_code.iloc[:int(
+                            df_npis_per_code.shape[0]/num_counties), 5]
                         # rename dates so that they match dates from other npi dataframe
-                        dates_new = ['d' + date.replace('-', '') for date in dates]
+                        dates_new = [
+                            'd' + date.replace('-', '') for date in dates]
 
-                        df_local = [pd.DataFrame() for i in range(num_counties)]
-                
+                        df_local = [pd.DataFrame()
+                                    for i in range(num_counties)]
+
                     #  set df for all counties
-                    for i in range(0,num_counties):
+                    for i in range(0, num_counties):
                         if counter_codes == 0:
-                            df_local[i] = pd.DataFrame(columns=list(df_npis_per_code.columns[0:5]) + ['code'] + dates_new)
+                            df_local[i] = pd.DataFrame(
+                                columns=list(df_npis_per_code.columns[0: 5]) +
+                                ['code'] + dates_new)
 
-                        dummy_to_append = pd.DataFrame(columns=['code'] + dates_new, data=df_npis_per_code[df_npis_per_code.ags5 == counties[i]].iloc[:, 6:].T.reset_index().values.copy())
+                        dummy_to_append = pd.DataFrame(
+                            columns=['code'] + dates_new,
+                            data=df_npis_per_code
+                            [df_npis_per_code.ags5 == counties[i]].
+                            iloc[:, 6:].T.reset_index().values.copy())
 
                         df_local[i] = pd.concat([df_local[i], dummy_to_append])
-                    
-                        if df_npis_per_code.iloc[i*len(dates):(i+1)*len(dates),3].nunique() > 1:
-                            raise gd.DataError('Dates are not sorted as expected.')
+
+                        if df_npis_per_code.iloc[i * len(dates): (i + 1) *
+                                                 len(dates),
+                                                 3].nunique() > 1:
+                            raise gd.DataError(
+                                'Dates are not sorted as expected.')
 
                         # Set first five columns so that they match old format of data frame (from kr_massnahmen_unterkategorien.csv)
                         if counter_codes == len(codelist)-1:
-                            df_local[i][df_local[i].columns[0:5]] = df_npis_per_code.iloc[i*len(dates),0:5].values
+                            df_local[i][df_local[i].columns[0:5]
+                                        ] = df_npis_per_code.iloc[i*len(dates), 0:5].values
 
                     counter_codes += 1
-                df_npis_old = pd.concat([df_local[i] for i in range(num_counties)]) 
+                df_npis_old = pd.concat([df_local[i]
+                                        for i in range(num_counties)])
                 df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
-                df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace('code_m', 'M')
+                df_npis_old['NPI_code'] = df_npis_old['NPI_code'].str.replace(
+                    'code_m', 'M')
             except FileNotFoundError:
                 df_npis_old = pd.read_csv(
                     os.path.join(
@@ -184,7 +201,6 @@ def read_files(directory, fine_resolution):
                 'kr_massnahmen_unterkategorien.csv',
                 'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
             raise FileNotFoundError
-
 
         # check if rows hospitals and geriatric care are still empty;
         # these fields have been empty so far and are thus not used
@@ -215,24 +231,24 @@ def read_files(directory, fine_resolution):
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=2, engine = 'openpyxl')
+                sheet_name=2, engine='openpyxl')
         else:
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=3, engine = 'openpyxl')
+                sheet_name=3, engine='openpyxl')
     except FileNotFoundError:
         print_manual_download(
             'datensatzbeschreibung_massnahmen.xlsx',
             'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
         raise FileNotFoundError
-    
+
     # download combinations of npis
     try:
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, 'combination_npis.xlsx'), engine = 'openpyxl')
+                    directory, 'combination_npis.xlsx'), engine='openpyxl')
     except FileNotFoundError:
         print('File not found.')
         raise FileNotFoundError
@@ -240,7 +256,9 @@ def read_files(directory, fine_resolution):
     return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
 
-def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, npi_activation_days_threshold, incid_threshold):
+def activate_npis_based_on_incidence(
+        local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
+        incid_threshold):
     """! 
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
@@ -276,7 +294,7 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
     With npi_lifting_days_threshold=3, npi_activation_days_threshold=2
     NPI should be activated on day 9 (and lifted on day 15; not in the vector)
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-    
+
     Another example: 
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
@@ -284,7 +302,7 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
     NPI should be activated on day 2 and lifted on day 14
     int_active should then be:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
-    
+
     Please also note that the first column will always returned as false 
     so the dataframe should not start with dates where NPIs are implemented.
     For the Corona Datenplattform frame which starts from 2020-03-01
@@ -298,7 +316,8 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
     """
 
     if npi_lifting_days_threshold < 1 or npi_activation_days_threshold < 1:
-        raise ValueError('Activation or lifting day variables need to be 1 or larger')
+        raise ValueError(
+            'Activation or lifting day variables need to be 1 or larger')
 
     # First get a Series with 0 for yesterdays incidence
     # is below threshold and 1 for incidence over threshold
@@ -312,21 +331,23 @@ def activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, np
     for i in range(len(yesterdays_incid_over_threshold)):
         # Set int_active=0 where last npi_lifting_days_threshold+1 days did not exceed
         # the threshold
-        if yesterdays_incid_over_threshold[max(0,i-npi_lifting_days_threshold):i].values.sum() == 0:
+        if yesterdays_incid_over_threshold[max(0, i-npi_lifting_days_threshold):i].values.sum() == 0:
             int_active[i] = 0
         # Set int_active=1 where last npi_activation_days_threshold+1 days did
         # all exceed the threshold
-        elif yesterdays_incid_over_threshold[max(0,i-npi_activation_days_threshold):i].values.sum() == npi_activation_days_threshold:
+        elif yesterdays_incid_over_threshold[max(0, i-npi_activation_days_threshold):i].values.sum() == npi_activation_days_threshold:
             int_active[i] = 1
         # If no condition applies, set int_active to the value of the previous day
-        elif i>0: # for i=0, int_active always will be zero (see comment above)
+        # for i=0, int_active always will be zero (see comment above)
+        elif i > 0:
             int_active[i] = int_active[i-1]
         # elif i==0 int active is 0
 
     return int_active
 
 
-def drop_codes_and_categories(npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
+def drop_codes_and_categories(
+        npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
     """! Drops codes and categories from original data frame if they are not 
     used.
 
@@ -374,7 +395,7 @@ def drop_codes_and_categories(npi_codes_prior, npi_codes_prior_desc, df_npis_old
                         missing_grouped_codes.append(mcode)
                 if len(missing_grouped_codes) > 0:  # only MCODE_NUMBER codes
                     raise gd.DataError('Missing NPI codes: ' +
-                                str(missing_grouped_codes))
+                                       str(missing_grouped_codes))
             else:
                 raise gd.DataError('Missing NPI codes: ' + str(missing_codes))
 
@@ -399,10 +420,9 @@ def drop_codes_and_categories(npi_codes_prior, npi_codes_prior_desc, df_npis_old
                 raise gd.DataError('Error in NPI names, please check.')
     else:
         # no dropping for fine_resolution == 0
-        codes_dropped=[]
-    
-    return codes_dropped, npi_codes_prior, df_npis_old
+        codes_dropped = []
 
+    return codes_dropped, npi_codes_prior, df_npis_old
 
 
 def get_npi_data(fine_resolution=2,
@@ -411,8 +431,8 @@ def get_npi_data(fine_resolution=2,
                  start_date=dd.defaultDict['start_date'],
                  end_date=dd.defaultDict['end_date'],
                  counties_considered=geoger.get_county_ids(),
-                 npi_activation_days_threshold = 3,    
-                 npi_lifting_days_threshold = 5
+                 npi_activation_days_threshold=3,
+                 npi_lifting_days_threshold=5
                  ):
     """! Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
@@ -458,9 +478,9 @@ def get_npi_data(fine_resolution=2,
          of days below case incidence threshold threshold to lift NPIs.
     """
 
-    # Depending on the federal state and time period, there are 
-    # huge differences for number of days before the lifting and activation. 
-    # It was usually between 1 and 14 days. We use npi_lifting_days_threshold = 5 
+    # Depending on the federal state and time period, there are
+    # huge differences for number of days before the lifting and activation.
+    # It was usually between 1 and 14 days. We use npi_lifting_days_threshold = 5
     # and npi_activation_days_threshold = 3 as default averaged value.
 
     if counties_considered == 'All':
@@ -475,9 +495,10 @@ def get_npi_data(fine_resolution=2,
     gd.check_dir(directory)
 
     # read manual downloaded files from directory
-    df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(directory, fine_resolution)
+    df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
+        directory, fine_resolution)
 
-    # get existing codes that are used 
+    # get existing codes that are used
     # for fine resolution we don't have codes M22 - M24 but are still listed in description
     if fine_resolution > 0:
         # count how many codes contain M22, M23 or M24
@@ -501,16 +522,18 @@ def get_npi_data(fine_resolution=2,
     # (incidence-dependent) NPIs has to be conducted.
     # For all NPIs, we defined a matrix of possible combinations of NPIs;
     # marked with an X if combinable.
-    # Exclusion of NPIs of different main category (e.g., M01a and M04) 
+    # Exclusion of NPIs of different main category (e.g., M01a and M04)
     # happens based on this table and the strictness index provided by Corona-
     # Datenplattform. Those of, e.g., M01a_010_3 and M01a_080_4 exclude each
     # other according to the threshold they were prescribed with. Active NPIs
-    # with low incidence thresholds deactivate conflicting NPIs with higher 
+    # with low incidence thresholds deactivate conflicting NPIs with higher
     # thresholds.
     if fine_resolution > 0:
-        num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count("M22|M23|M24").sum()
-        if num_nonexistent_codes_pre !=0:
-            df_npis_combinations_pre = df_npis_combinations_pre.iloc[:-num_nonexistent_codes_pre,:]
+        num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count(
+            "M22|M23|M24").sum()
+        if num_nonexistent_codes_pre != 0:
+            df_npis_combinations_pre = df_npis_combinations_pre.iloc[: -
+                                                                     num_nonexistent_codes_pre, :]
         # rename essential columns and throw away others
         column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
@@ -537,8 +560,9 @@ def get_npi_data(fine_resolution=2,
         df_npis_strictness_index = {
             npi_groups_combinations_unique[i]:
             # TODO: Replace strictness of j for all NPIs by some value from Datenplattform...
-            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]][j] : j for j in range(len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]]))}
-        for i in range(len(npi_groups_combinations_unique))}
+            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]][j]: j for j in range(
+                len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]]))}
+            for i in range(len(npi_groups_combinations_unique))}
 
         # create hash table of main code to contained codes and combination matrix
         df_npis_combinations = {
@@ -596,7 +620,7 @@ def get_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i, engine = 'openpyxl')
+                    sheet_name=i, engine='openpyxl')
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
                     print('Error in combination matrix.')
                 del df_in_valid
@@ -660,13 +684,18 @@ def get_npi_data(fine_resolution=2,
     if fine_resolution > 0:
         for code in df_npis_combinations.keys():
             local_codes_used_rows = df_npis_combinations[code][1].Code.isin(
-                npis.NPI_code)
+                npis['NPI_code'])
             local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
-                npis.NPI_code)
+                npis['NPI_code'])
 
             # overwrite item 0 since codes are stored in *.columns
             df_npis_combinations[code] = df_npis_combinations[code][1].loc[local_codes_used_rows,
-                                                                        local_codes_used_cols].reset_index(drop=True).copy()
+                                                                           local_codes_used_cols].reset_index(drop=True).copy()
+
+            # also remove strictness indices of unused codes
+            df_npis_strictness_index[code] = {
+                key: val for key, val in df_npis_strictness_index[code].items()
+                if key in npis['NPI_code'].values}
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -792,7 +821,7 @@ def get_npi_data(fine_resolution=2,
             df_population = pd.read_json(
                 directory + "county_current_population.json")
         except:
-            df_population=gpd.get_population_data()
+            df_population = gpd.get_population_data()
         min_date.append(
             df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
         max_date.append(
@@ -857,10 +886,9 @@ def get_npi_data(fine_resolution=2,
             df_infec_local = df_infec_local[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
                 df_infec_local[dd.EngEng['date']] <= end_date_new)].reset_index()
 
-            
             local_incid = df_infec_local['Incidence'].copy()
             # Count counties with start cases >= 1:
-            # In this case NPI activation cannot be ensured to work as expected            
+            # In this case NPI activation cannot be ensured to work as expected
             if cases_first_value >= 1:
                 counter_cases_start += 1
 
@@ -874,17 +902,24 @@ def get_npi_data(fine_resolution=2,
         # for different thresholds. In order to avoid contradictions, only
         # retain the strictest mentioned implementation.
         for i in range(int(len(df_local_old)/6)):
-            sum_npi_inc = np.where(df_local_old.iloc[6*i+1:6*(i+1),6:].sum()>1)
+            sum_npi_inc = np.where(
+                df_local_old.iloc[6*i+1:6*(i+1), 6:].sum() > 1)
             if len(sum_npi_inc[0]):
-                print('Reduce multiple prescription of NPI ' + str(npis.loc[i, 'Description']) + ' for county ' + str(countyID))
+                print(
+                    'Reduce multiple prescription in county ' + str(countyID) +
+                    ' for NPI ' + str(npis.loc[i, 'Description']))
                 for j in sum_npi_inc[0]:
                     # get lowest index (i.e., strictest implementation of NPI).
-                    idx_start = np.where(df_local_old.iloc[6*i+1:6*(i+1),6+j])[0].min()
+                    idx_start = np.where(
+                        df_local_old.iloc[6*i+1:6*(i+1), 6+j])[0].min()
                     # Remove less strict and thus contradictory
                     # implementations of the same NPI the same day.
-                    df_local_old.iloc[6*i+1+idx_start+1:6*(i+1),6+j] = 0
+                    df_local_old.iloc[6*i+1+idx_start+1:6*(i+1), 6+j] = 0
 
-                if not all(df_local_old.iloc[6*i+1:6*(i+1),6+sum_npi_inc[0]].sum()==1):
+                if not all(
+                    df_local_old.iloc
+                    [6 * i + 1: 6 * (i + 1),
+                     6 + sum_npi_inc[0]].sum() == 1):
                     raise gd.DataError('Consistency correction failed.')
 
         ## end of consistency correction ##
@@ -893,8 +928,7 @@ def get_npi_data(fine_resolution=2,
         npi_rows = [i in npis[dd.EngEng['npiCode']].values
                     for i in df_local_old[dd.EngEng['npiCode']]]
 
-
-        # create columns for date, county ID 
+        # create columns for date, county ID
         df_local_new = pd.DataFrame(
             columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']])
 
@@ -951,7 +985,9 @@ def get_npi_data(fine_resolution=2,
                 if level[0] >= 0:  # level[0] = incidvalthrsh
 
                     # get days where npis are active as int (1/0)
-                    int_active = activate_npis_based_on_incidence(local_incid, npi_lifting_days_threshold, npi_activation_days_threshold, level[0])
+                    int_active = activate_npis_based_on_incidence(
+                        local_incid, npi_lifting_days_threshold,
+                        npi_activation_days_threshold, level[0])
 
                     # multiply rows of data frame by either 1 if threshold
                     # passed (i.e., mentioned NPI is active) or zero
@@ -988,7 +1024,7 @@ def get_npi_data(fine_resolution=2,
                             # extract codes
                             subcodes_nocombi = df_npis_combinations[code].loc[scidx, :]
                             # only consider those codes which cannot be
-                            # combined; for these values of 1 have to be
+                            # combined; for these, values of 1 have to be
                             # set to 0
                             subcodes_nocombi = list(
                                 subcodes_nocombi
@@ -1012,12 +1048,53 @@ def get_npi_data(fine_resolution=2,
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
 
-            # TODO:
-            # Remove conflicting non-incidence dependent NPIs according to
+            # TODO: (maybe also remove incidence-dependent here? to discuss!)
+            # Remove conflicting non-incidence (?) dependent NPIs according to
             # strictness index of Corona-Datenplattform and exclusion
             # criteria defined in df_npis_combinations
             for code in df_npis_combinations.keys():
-                code_cols = df_npis_combinations[code].columns
+                # get other subcodes MX_Y_* below current main code MX_Y
+                subcodes_list = list(df_npis_strictness_index[code].keys())
+                # sort index reversely with the strictest (highest) index first
+                idx_strictness_sorted_rev = np.argsort(
+                    list(df_npis_strictness_index[code].values()))[::-1]
+
+                for jj in range(len(idx_strictness_sorted_rev)-1):
+                    # get index of NPI of a certain strictness
+                    idx_strictness = idx_strictness_sorted_rev[jj]
+                    # get code of corresponding NPI
+                    subcode = subcodes_list[idx_strictness]
+
+                    # get indices of days where subcode is active
+                    subcode_active = np.where(df_local_new.loc[:,subcode]>0)[0]
+
+                    if len(subcode_active>0):                  
+                        # get indices of less strict NPIs
+                        idxs_less_strict = np.sort(idx_strictness_sorted_rev[jj+1:])
+
+                        # extract true/false list of combination of subcodes
+                        subcodes_nocombi = df_npis_combinations[code].loc[:, subcode]
+                        # only consider those codes which cannot be combined; 
+                        # for these, values of 1 have to be set to 0
+                        subcodes_nocombi = list(
+                            subcodes_nocombi
+                            [subcodes_nocombi == 0].index)
+                        
+                        # intersect non-combinable subcodes with less strict subcodes
+                        idx_subcodes_deactivation = np.sort(list(
+                            set(idxs_less_strict).intersection(subcodes_nocombi)))
+
+                        for kk in idx_subcodes_deactivation:
+                            days_deact = np.where(df_local_new.loc[subcode_active, [subcodes_list[kk] + str(appendix[1]) for appendix in incidence_thresholds]].sum(axis=1)>0)[0]
+                            if len(days_deact) > 0:
+                                print('Deactivating for ' + 'County ' + str(countyID))
+                                print('\t' + str(subcodes_list[kk]) + ' due to ' + str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
+                                print('\n')
+                                df_local_new.loc[subcode_active,
+                                                 [subcodes_list[kk] +
+                                                  str(appendix[1])
+                                                  for appendix in
+                                                  incidence_thresholds]] = 0
 
             # reduction of factor space NPI x incidence threshold to NPI
             # by max aggregation of all incidence threshold columns per NPI
@@ -1037,7 +1114,10 @@ def get_npi_data(fine_resolution=2,
 
         start_time = time.perf_counter()
 
-        df_npis = pd.concat([df_npis.copy(), df_local_new.copy()], ignore_index=True)
+        df_npis = pd.concat(
+            [df_npis.copy(),
+             df_local_new.copy()],
+            ignore_index=True)
         counters[cid] += time.perf_counter()-start_time
         cid += 1
 
@@ -1054,11 +1134,11 @@ def get_npi_data(fine_resolution=2,
                   str(int(time_remain / 60)) + ' min.')
     if counter_cases_start >= len(counties_considered)*0.05:
         print('WARNING: DataFrame starts with reported cases > 0 '
-            'for more than 5 percent of the counties to be considered. '
-            'In this case, incidence computation and activation of '
-            'incidence-dependent NPIs cannot be ensured to work correctly. '
-            'Please consider a start date of some weeks ahead of the '
-            'time window to be analyzed for NPI\'s effects.')
+              'for more than 5 percent of the counties to be considered. '
+              'In this case, incidence computation and activation of '
+              'incidence-dependent NPIs cannot be ensured to work correctly. '
+              'Please consider a start date of some weeks ahead of the '
+              'time window to be analyzed for NPI\'s effects.')
 
     # print sub counters
     print('Sub task counters are: ')
@@ -1082,15 +1162,15 @@ def get_npi_data(fine_resolution=2,
             for npiCode in [
                 'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                     'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
-                    [
-                        a, b, oldf, newf] = validate(
-                        df_npis_old, df_npis, df_infec_rki, countyID,
-                        npiCode, start_npi_cols, npi_incid_start,
-                        start_date_new, end_date_new,
-                        fine_resolution)
-                    if (a != b):
-                        print('Error in NPI activation computation')
-                        print(a, b, a - b)
+                [
+                    a, b, oldf, newf] = validate(
+                    df_npis_old, df_npis, df_infec_rki, countyID,
+                    npiCode, start_npi_cols, npi_incid_start,
+                    start_date_new, end_date_new,
+                    fine_resolution)
+                if (a != b):
+                    print('Error in NPI activation computation')
+                    print(a, b, a - b)
 
     #### end validation ####
 
