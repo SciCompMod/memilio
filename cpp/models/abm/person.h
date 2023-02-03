@@ -40,7 +40,7 @@ namespace abm
 class Location;
 
 /**
- * @brief InfectionProperties describe the #InfectionState of a Person and if an infection is detected
+ * @brief InfectionProperties describe the #InfectionState of a Person and if an Infection is detected.
  */
 struct InfectionProperties {
     InfectionProperties(InfectionState infection_state, bool infection_detected = false)
@@ -305,6 +305,7 @@ public:
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
      * @param[in] target The target location.
+     * @return Whether a Person wears a Mask at the Location.
      */
     bool apply_mask_intervention(const Location& target);
 

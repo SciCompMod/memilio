@@ -199,7 +199,7 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain type against an Infection.
+ * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
  */
 struct MaskProtection {
     using Type = CustomIndexArray<double, MaskType>;

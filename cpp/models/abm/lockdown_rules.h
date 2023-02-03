@@ -37,7 +37,7 @@ namespace abm
  * @file LockdownRules implements non phamarceutical interventions via Dampings.
  * For interventions, Person%s are randomly divided into groups, e.g. one group works at home and the other group still
  * goes to work.
- * The probability with which a Person belongs to a certain group is time dependent. This change
+ * The probability with which a Person belongs to a certain group is time-dependent. This change
  * in probabilty is implemented by using Dampings.
  */
 

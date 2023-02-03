@@ -42,7 +42,7 @@ struct Trip {
     World, where all Person%s are saved.*/
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
-    LocationId migration_origin; ///< Location where the person starts the Trip.
+    LocationId migration_origin; ///< Location where the Person starts the Trip.
     std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 

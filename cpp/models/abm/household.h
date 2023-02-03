@@ -148,7 +148,7 @@ private:
     int m_number_of_members; ///< Total number of Person%s in the Household.
     int m_space_per_member; ///< Space per Person in cubic meters (constant maximal capacity over time).
     std::vector<std::tuple<HouseholdMember, int>> m_household_member_list; /**< HouseholdMember%s of the Household and 
-    the respective number of Person%s*/
+    the respective number of Person%s.*/
 };
 
 /**

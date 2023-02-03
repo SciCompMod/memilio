@@ -38,7 +38,7 @@ class TestingCriteria
 public:
     /**
      * Create a testing criteria.
-     * @param ages Vector of AgeGroup%s that are either allowed or required to be tested.
+     * @param[in] ages Vector of AgeGroup%s that are either allowed or required to be tested.
      * @param[in] location_types Vector of #LocationType%s that are either allowed or required to be tested.
      * @param[in] infection_states Vector of #InfectionState%s that are either allowed or required to be tested.
      * An empty vector of ages/#LocationType%s/#InfectionStates% means that no condition on the corresponding property
@@ -110,7 +110,7 @@ private:
      */
     bool has_requested_infection_state(const Person& p) const;
 
-    std::vector<AgeGroup> m_ages; ///< Set of ages that are either allowed or required to be tested.
+    std::vector<AgeGroup> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::vector<LocationType> m_location_types; /**< Set of #LocationState%s that are either allowed or required to be 
     tested.*/
     std::vector<InfectionState> m_infection_states; /**< Set of #InfectionState%s that are either allowed or required to

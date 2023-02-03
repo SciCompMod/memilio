@@ -117,7 +117,7 @@ public:
     Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
 
     /**
-     * @brief Get the type of this Location.
+     * @brief Get the LocationType of this Location.
      * @return The type of this Location.
      */
     LocationType get_type() const
@@ -207,7 +207,7 @@ public:
     }
 
     /**
-     * @brief Set the required type of Mask for entering this Location.
+     * @brief Set the required MaskType for entering this Location.
      * @param[in] type The type of the Mask.
      */
     void set_required_mask(MaskType type)
@@ -268,8 +268,8 @@ public:
     }
 
     /**
-     * Add a timepoint to the subpopulations timeseries
-     * @param t the TimePoint to be added
+     * Add a TimePoint to the subpopulations TimeSeries.
+     * @param t The TimePoint to be added.
      */
     void add_subpopulations_timepoint(const TimePoint& t);
 

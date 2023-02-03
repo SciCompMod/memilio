@@ -32,7 +32,7 @@ namespace
 /**
  * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
  * @param[in] age_groups A CustomIndexArray with the weights.
- * @return The picked age group.
+ * @return The picked AgeGroup.
  */
 AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
 {
