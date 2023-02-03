@@ -69,7 +69,9 @@ class Scanner:
         pkg = importlib_resources.files("memilio.generation")
         filename = self.config.skbuild_path_to_database.split('_skbuild')
         if (len(filename) > 1):
-            with importlib_resources.as_file(pkg.joinpath("../_skbuild" + filename[-1] + "/compile_commands.json")) as path:
+            with importlib_resources.as_file(
+                    pkg.joinpath("../_skbuild" + filename[-1] +
+                                 "/compile_commands.json")) as path:
                 dirname, _ = os.path.split(path)
         else:
             dirname = self.config.skbuild_path_to_database
@@ -78,7 +80,8 @@ class Scanner:
         commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:
             for argument in command.arguments:
-                if argument != '-Wno-unknown-warning' and argument != "--driver-mode=g++" and argument != "-O3":
+                if (argument != '-Wno-unknown-warning' and
+                        argument != "--driver-mode=g++" and argument != "-O3"):
                     file_args.append(argument)
         file_args = file_args[1:-4]
         clang_cmd = [
@@ -108,7 +111,8 @@ class Scanner:
         self.finalize(intermed_repr)
         return intermed_repr
 
-    def find_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
+    def find_node(self: Self, node: Cursor,
+                  intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
         """
         Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
@@ -177,7 +181,8 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CLASS_DECL and write information (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
+        Inspect the nodes of kind CLASS_DECL and write information 
+        (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -187,9 +192,11 @@ class Scanner:
             self.check_model_base(node, intermed_repr)
             if self.config.optional.get("age_group"):
                 self.check_age_group(node, intermed_repr)
-        elif self.config.optional.get("simulation_class") and node.spelling == self.config.optional.get("simulation_class"):
+        elif (self.config.optional.get("simulation_class")
+              and node.spelling == self.config.optional.get("simulation_class")):
             intermed_repr.simulation_class = node.spelling
-        elif self.config.optional.get("parameterset_wrapper") and self.config.namespace + self.config.parameterset in [base.spelling for base in node.get_children()]:
+        elif (self.config.optional.get("parameterset_wrapper") and self.config.namespace
+                + self.config.parameterset in [base.spelling for base in node.get_children()]):
             intermed_repr.parameterset_wrapper = node.spelling
 
     def check_model_base(
@@ -221,7 +228,8 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CLASS_DECL with the name defined in config.age_group and write needed information into intermed_repr.
+        Inspect the nodes of kind CLASS_DECL with the name defined in 
+        config.age_group and write needed information into intermed_repr.
         Information: age_group
 
         @param node Current node represented as a Cursor object.
@@ -231,7 +239,8 @@ class Scanner:
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
                 continue
             for base_template_arg in base.get_children():
-                if base_template_arg.kind == CursorKind.TYPE_REF and "AgeGroup" in base_template_arg.spelling:
+                if (base_template_arg.kind == CursorKind.TYPE_REF
+                        and "AgeGroup" in base_template_arg.spelling):
                     for child in base_template_arg.get_definition().get_children():
                         if child.kind == CursorKind.CXX_BASE_SPECIFIER:
                             intermed_repr.age_group["base"] = child.get_definition(
@@ -283,7 +292,8 @@ class Scanner:
     def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
         Finalize the IntermediateRepresenation as last step of the Scanner.
-        Write needed information from config into intermed_repr, delet unnecesary enums and check for missing model features.
+        Write needed information from config into intermed_repr,
+        delet unnecesary enums and check for missing model features.
 
         @param intermed_repr Dataclass used for saving the extracted model features.
         """

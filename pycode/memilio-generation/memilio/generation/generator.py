@@ -101,14 +101,17 @@ class Generator:
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
         Generate the python bindings to the C++ code.
-        Template files for python and cpp from the template folder are used and the identifiers substituted with the corresponding substitutions.
+        Template files for python and cpp from the template folder are used 
+        and the identifiers substituted with the corresponding substitutions.
 
         @param intermed_repr Dataclass holding the model features.
         """
         # read templates
-        with open(os.path.join(intermed_repr.python_generation_module_path, "memilio/generation/template/template_py.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path,
+                               "memilio/generation/template/template_py.txt")) as t:
             template_py = string.Template(t.read())
-        with open(os.path.join(intermed_repr.python_generation_module_path, "memilio/generation/template/template_cpp.txt")) as t:
+        with open(os.path.join(intermed_repr.python_generation_module_path,
+                               "memilio/generation/template/template_cpp.txt")) as t:
             template_cpp = string.Template(t.read())
 
         # substitue identifiers
