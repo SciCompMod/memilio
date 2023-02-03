@@ -560,8 +560,8 @@ def get_npi_data(fine_resolution=2,
         df_npis_strictness_index = {
             npi_groups_combinations_unique[i]:
             # TODO: Replace strictness of j for all NPIs by some value from Datenplattform...
-            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]][j]: j for j in range(
-                len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[0]]))}
+            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]].values[j]: j for j in range(
+                len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]]))}
             for i in range(len(npi_groups_combinations_unique))}
 
         # create hash table of main code to contained codes and combination matrix
@@ -570,7 +570,7 @@ def get_npi_data(fine_resolution=2,
             [
                 list(
                     df_npis_combinations_pre['Variablenname']
-                    [npi_groups_idx[0]]),
+                    [npi_groups_idx[i]]),
                 np.eye(len(npi_groups_idx[i]))]
             for i in range(len(npi_groups_combinations_unique))}
 
