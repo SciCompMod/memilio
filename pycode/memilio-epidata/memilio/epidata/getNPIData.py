@@ -581,16 +581,17 @@ def get_npi_data(fine_resolution=2,
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
-            df_npis_combinations[npi_groups_combinations_unique[i]][1] = df_npis_combinations_pre.iloc[npi_groups_idx[i],
-                                                                                                       start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
-            if (df_npis_combinations[npi_groups_combinations_unique[i]][1]-np.transpose(df_npis_combinations[npi_groups_combinations_unique[i]][1])).max() > 0:
+            npic_uniq = npi_groups_combinations_unique[i] # reduce code length
+            df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[
+                npi_groups_idx[i], start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
+            if (df_npis_combinations[npic_uniq][1]-np.transpose(df_npis_combinations[npic_uniq][1])).max() > 0:
                 print('Error in input file: Please correct combination matrix input.')
             # make it a dataframe to allow easy removal of code lines and rows
             # if they are not used later on
-            df_npis_combinations[npi_groups_combinations_unique[i]][1] = pd.DataFrame(
-                df_npis_combinations[npi_groups_combinations_unique[i]][1],
+            df_npis_combinations[npic_uniq][1] = pd.DataFrame(
+                df_npis_combinations[npic_uniq][1],
                 columns=codes_local)
-            df_npis_combinations[npi_groups_combinations_unique[i]][1].insert(
+            df_npis_combinations[npic_uniq][1].insert(
                 0, 'Code', codes_local)
 
         del df_npis_combinations_pre
