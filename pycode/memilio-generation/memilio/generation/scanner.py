@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file scanner.py
-@brief Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
+@brief Analyze the model and extract the needed information. Information get passed to the IntermediateRepresenation.
 """
 from __future__ import annotations
 
@@ -32,8 +32,9 @@ from warnings import catch_warnings
 
 import importlib_resources
 from clang.cindex import *
-from memilio.generation import IntermediateRepresentation, utility
 from typing_extensions import Self
+
+from memilio.generation import IntermediateRepresentation, utility
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 
 class Scanner:
     """
-    Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
+    Analyze the model and extract the needed information.
     """
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
@@ -58,8 +59,8 @@ class Scanner:
 
     def create_ast(self: Self) -> None:
         """
-        Creates an abstract syntax tree for the main model.cpp file with an corresponding CompilationDatabase. 
-        Requires a compile_commands.json.
+        Create an abstract syntax tree for the main model.cpp file with an corresponding CompilationDatabase. 
+        A compile_commands.json is required (automatically generated in the build process).
         """
         idx = Index.create()
 
@@ -96,8 +97,8 @@ class Scanner:
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """
-        Extracts the information of the abstract syntax tree and saves them in the data class intermed_repr.
-        Calls find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
+        Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
+        Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         @return Information extracted from the model saved as an IntermediateRepresentation. 
         """
@@ -109,8 +110,8 @@ class Scanner:
 
     def find_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
         """
-        Recursively walks over every node of an abstract syntax tree. Saves the namespace the node is in.
-        Calls check_node_kind for extracting information from the nodes.
+        Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
+        Call check_node_kind for extracting information from the nodes.
 
         @param node Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -149,7 +150,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind ENUM_DECL and writes needed information into intermed_repr.
+        Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
         Information: Name of Enum
 
         @param node Current node represented as a Cursor object.
@@ -162,7 +163,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind ENUM_CONSTANT_DECL and writes needed information into intermed_repr.
+        Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
         Information: Keys of an Enum
 
         @param node Current node represented as a Cursor object.
@@ -176,7 +177,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CLASS_DECL and writes information (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
+        Inspect the nodes of kind CLASS_DECL and write information (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -211,7 +212,7 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """ 
         Not used yet.
-        Inspects nodes which represent base specifier.
+        Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
         """
         pass
@@ -220,7 +221,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CLASS_DECL with the name defined in config.age_group and writes needed information into intermed_repr.
+        Inspect the nodes of kind CLASS_DECL with the name defined in config.age_group and write needed information into intermed_repr.
         Information: age_group
 
         @param node Current node represented as a Cursor object.
@@ -244,7 +245,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CONSTRUCTOR and writes needed information into intermed_repr.
+        Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
         Information: intermed_repr.init
 
         @param node Current node represented as a Cursor object.
@@ -264,11 +265,11 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind TYPE_ALIAS_DECL and writes needed information into intermed_repr.
+        Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
         Information: intermed_repr.parameterset
 
         @param node Current node represented as a Cursor object.
-        @param Dataclass used for saving the extracted model features.
+        @param intermed_repr Dataclass used for saving the extracted model features.
         """
         if node.spelling == self.config.parameterset:
             intermed_repr.parameterset = node.spelling
@@ -282,9 +283,9 @@ class Scanner:
     def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
         Finalize the IntermediateRepresenation as last step of the Scanner.
-        Writes needed information from config into intermed_repr, delets unnecesary enums and checks for missing model features.
+        Write needed information from config into intermed_repr, delet unnecesary enums and check for missing model features.
 
-        @param Dataclass used for saving the extracted model features.
+        @param intermed_repr Dataclass used for saving the extracted model features.
         """
         # remove unnecesary enum
         population_groups = []
@@ -312,13 +313,13 @@ class Scanner:
 
     def output_ast(self: Self) -> None:
         """
-        Outputs the abstract syntax tree to terminal.
+        Output the abstract syntax tree to terminal.
         """
         utility.output_cursor_and_children(self.ast.cursor)
 
     def output_ast_file(self: Self) -> None:
         """
-        Outputs the abstract syntax tree to file.
+        Output the abstract syntax tree to file.
         """
         with open('output_ast.txt', 'a') as f:
             utility.output_cursor_and_children_file(self.ast.cursor, f)

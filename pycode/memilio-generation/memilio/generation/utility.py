@@ -32,7 +32,7 @@ def try_set_libclang_path(path: str) -> None:
     """
     Try to set the file path for the libclang library. 
     If its already set, the returned Exception gets caught and discarded.
-    If the given path string is empty or None, the function tries to determine it with a call on the terminal.
+    If the given path string is empty or None, the path is determined with a call on the terminal.
 
     @param path Path to the library files of libclang. Can be an empty string.
     """

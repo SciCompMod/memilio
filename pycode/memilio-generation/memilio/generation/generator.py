@@ -19,7 +19,7 @@
 #############################################################################
 """
 @file generator.py
-@brief Generates the model specific python bindings code with the information given by the IntermediateRepresantation.
+@brief Generate the model specific python bindings code with the information given by the IntermediateRepresantation.
 """
 from __future__ import annotations
 
@@ -27,8 +27,9 @@ import os
 import string
 from typing import TYPE_CHECKING
 
-from memilio.generation.template import template_string as StringTemplates
 from typing_extensions import Self
+
+from memilio.generation.template import template_string as StringTemplates
 
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
@@ -100,7 +101,7 @@ class Generator:
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
         Generate the python bindings to the C++ code.
-        Uses the template files for python and cpp from the template folder and replaces the identifiers with the corresponding substitutions.
+        Template files for python and cpp from the template folder are used and the identifiers substituted with the corresponding substitutions.
 
         @param intermed_repr Dataclass holding the model features.
         """

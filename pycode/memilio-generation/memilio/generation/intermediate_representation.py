@@ -58,7 +58,8 @@ class IntermediateRepresentation:
     def check_complete_data(self: Self, optional: Dict
                             [str, Union[str, bool]]) -> None:
         """
-        Check for missing data in the IntermediateRepresentation. Called by the Scanner as last step of the data extraction.
+        Check for missing data in the IntermediateRepresentation. 
+        Called by the Scanner as last step of the data extraction.
 
         @param optional Dictionary of the optional data from the config.json.
         """
