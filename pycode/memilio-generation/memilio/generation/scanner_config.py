@@ -35,7 +35,8 @@ class ScannerConfig:
     Provide configurations from JSON-file in Python as dataclass.
 
     Attributes (and config.json parameters):
-        source_file: Path to the main file of the mode e.g., model.cpp
+        source_file: Path to the main file of the model, e.g., model.cpp
+
         path_database: Path to the folder of the compile_commands.json
         namespace: C++ namespace of the model class
         python_module_name: Individual name for binded python module
