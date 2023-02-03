@@ -44,10 +44,12 @@ class ScannerConfig:
         skbuild_path_to_database: Path to compile_commands.json
         target_folder: Target folder for generated files
         optional: List with optional arguments
-            libclang_library_path: Path to the local libclang library, if empty string path gets obtained with terminal command
+            libclang_library_path: Path to the local libclang library. If the string is empty, the program tries to retrieve the path from a terminal command.
+
             simulation_class: Name of simulation class, if not used set as empty string
             age_group: Boolean defining if model uses age groups
-            parameterset_wrapper": Boelean defining if model uses wrapper for parameterset
+            parameterset_wrapper": Boolean defining if model uses wrapper for parameterset.
+
     """
     source_file: str
     namespace: str
