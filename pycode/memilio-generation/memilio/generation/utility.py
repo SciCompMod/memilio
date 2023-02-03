@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Maximilian Betz
 #
@@ -30,11 +30,11 @@ from clang.cindex import Config, Cursor, Type
 
 def try_set_libclang_path(path: str) -> None:
     """
-    Try to set the file_path for the libclang library. 
+    Try to set the file path for the libclang library. 
     If its already set, the returned Exception gets caught and discarded.
-    If the given path string is empty, it is obtain with a call on the terminal.
+    If the given path string is empty or None, the function tries to determine it with a call on the terminal.
 
-    @param path Path to the library files of libClang. Can be an empty string.
+    @param path Path to the library files of libclang. Can be an empty string.
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path):
@@ -51,6 +51,8 @@ def try_set_libclang_path(path: str) -> None:
     try:
         Config.set_library_file(path)
     except Exception as e:
+        # Catch given exception from libclang. If the exact string output in libclang changes,
+        # this needs to be adapted as well.
         if str(e) != "library file must be set before before using any other functionalities in libclang.":
             raise (e)
 
@@ -71,10 +73,12 @@ def get_base_class(base_type: Type) -> List[Any]:
 def get_base_class_string(base_type: Type) -> List[Any]:
     """
     Retrieve the spelling of the base class.
-    Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, mio::SecirParams>.
+    Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
     @param Type of the current node.
     """
+    # fixes an issue in the generation of the abstract syntax tree
+    # depending on the compiler version a whitespace is added between '>>'
     result = [base_type.spelling.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
         result.append(get_base_class_string(
@@ -82,21 +86,21 @@ def get_base_class_string(base_type: Type) -> List[Any]:
     return result
 
 
-def indent(level: int) -> str:
+def indent(spaces: int) -> str:
     """ 
     Indentation string for pretty-printing.
 
-    @param level Amount of indentations.
+    @param spaces Number of spaces.
     """
-    return '  '*level
+    return '  '*spaces
 
 
-def output_cursor_print(cursor: Cursor, level: int) -> None:
+def output_cursor_print(cursor: Cursor, spaces: int) -> None:
     """ 
     Low level cursor output to the terminal.
 
-    @param cursor Represents the current node of the AST as an Cursor object from libClang.
-    @param level Amount of indentations.
+    @param cursor Represents the current node of the AST as an Cursor object from libclang.
+    @param spaces Number of spaces.
     """
     spelling = ''
     displayname = ''
@@ -107,41 +111,41 @@ def output_cursor_print(cursor: Cursor, level: int) -> None:
         displayname = cursor.displayname
     kind = cursor.kind
 
-    print(indent(level) + spelling, '<' + str(kind) + '>')
-    print(indent(level+1) + '"' + displayname + '"')
+    print(indent(spaces) + spelling, '<' + str(kind) + '>')
+    print(indent(spaces+1) + '"' + displayname + '"')
 
 
-def output_cursor_and_children_print(cursor: Cursor, level: int = 0) -> None:
+def output_cursor_and_children_print(cursor: Cursor, spaces: int = 0) -> None:
     """ 
     Output this cursor and its children with minimal formatting to the terminal.
 
-    @param cursor Represents the current node of the AST as an Cursor object from libClang.
-    @param level [Default = 0] Amount of indentations.
+    @param cursor Represents the current node of the AST as an Cursor object from libclang.
+    @param spaces [Default = 0] Number of spaces.
     """
-    output_cursor_print(cursor, level)
+    output_cursor_print(cursor, spaces)
     if cursor.kind.is_reference():
-        print(indent(level) + 'reference to:')
-        output_cursor_print(cursor.referenced, level+1)
+        print(indent(spaces) + 'reference to:')
+        output_cursor_print(cursor.referenced, spaces+1)
 
     # Recurse for children of this cursor
     has_children = False
     for c in cursor.get_children():
         if not has_children:
-            print(indent(level) + '{')
+            print(indent(spaces) + '{')
             has_children = True
-        output_cursor_and_children_print(c, level+1)
+        output_cursor_and_children_print(c, spaces+1)
 
     if has_children:
-        print(indent(level) + '}')
+        print(indent(spaces) + '}')
 
 
-def output_cursor_file(cursor: Cursor, f: TextIO, level: int) -> None:
+def output_cursor_file(cursor: Cursor, f: TextIO, spaces: int) -> None:
     """ 
     Low level cursor output to a file.
 
-    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param cursor Represents the current node of the AST as an Cursor object from libclang.
     @param f Open file object for output.
-    @param level Amount of indentations.
+    @param spaces Number of spaces.
     """
     spelling = ''
     displayname = ''
@@ -152,33 +156,33 @@ def output_cursor_file(cursor: Cursor, f: TextIO, level: int) -> None:
         displayname = cursor.displayname
     kind = cursor.kind
 
-    f.write(indent(level) + spelling + ' <' + str(kind) + '> ')
+    f.write(indent(spaces) + spelling + ' <' + str(kind) + '> ')
     if cursor.location.file:
         f.write(cursor.location.file.name + '\n')
-    f.write(indent(level+1) + '"' + displayname + '"\n')
+    f.write(indent(spaces+1) + '"' + displayname + '"\n')
 
 
 def output_cursor_and_children_file(
-        cursor: Cursor, f: TextIO, level: int = 0) -> None:
+        cursor: Cursor, f: TextIO, spaces: int = 0) -> None:
     """ 
     Output this cursor and its children with minimal formatting to a file.
 
-    @param cursor Represents the current node of the AST as an Cursor object from libClang.
+    @param cursor Represents the current node of the AST as an Cursor object from libclang.
     @param f Open file object for output.
-    @param level Amount of indentations.
+    @param spaces Number of spaces.
     """
-    output_cursor_file(cursor, f, level)
+    output_cursor_file(cursor, f, spaces)
     if cursor.kind.is_reference():
-        f.write(indent(level) + 'reference to:\n')
-        output_cursor_file(cursor.referenced, f, level+1)
+        f.write(indent(spaces) + 'reference to:\n')
+        output_cursor_file(cursor.referenced, f, spaces+1)
 
     # Recurse for children of this cursor
     has_children = False
     for c in cursor.get_children():
         if not has_children:
-            f.write(indent(level) + '{\n')
+            f.write(indent(spaces) + '{\n')
             has_children = True
-        output_cursor_and_children_file(c, f, level+1)
+        output_cursor_and_children_file(c, f, spaces+1)
 
     if has_children:
-        f.write(indent(level) + '}\n')
+        f.write(indent(spaces) + '}\n')

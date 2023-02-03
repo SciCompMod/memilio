@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Maximilian Betz
 #
@@ -24,13 +24,12 @@ import argparse
 import os
 
 import importlib_resources
-
 from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 def run_memilio_generation(print_ast=False):
     # Define ScannerConfig and initialize Scanner
-    pkg = importlib_resources.files("memilio")
+    pkg = importlib_resources.files("memilio.generation")
     with importlib_resources.as_file(pkg.joinpath('tools/config.json')) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
@@ -44,7 +43,7 @@ def run_memilio_generation(print_ast=False):
     generator.create_substitutions(intermed_repr)
     generator.generate_files(intermed_repr)
 
-    # Print the ast to a file
+    # Print the abstract syntax tree to a file
     if (print_ast):
         scanner.output_ast_file()
 

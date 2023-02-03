@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Maximilian Betz
 #
@@ -70,4 +70,4 @@ class IntermediateRepresentation:
                     None), "No parameterset_wrapper found. If None is used in this model, then set parameterset_wrapper to false in config.json"
         if optional.get("age_group"):
             assert (self.age_group != {
-            }), "No AgeGroup found. If None is used in this model set age_group to false in config.json"
+            }), "No age_group found. If None is used in this model set age_group to false in config.json"

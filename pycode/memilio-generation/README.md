@@ -30,8 +30,8 @@ pip install .
 The package provides an example script on how to use it in `memilio/tools`. The example uses the ode_seir model from the [C++ Library](../../cpp/models/ode_seir/README.md).
 
 Before running the example you have to do these steps of setup:
-- Change [config.json](./memilio/tools/config.json). You can find a documentation in the ScannerConfig class.
-- Change [ScannerConfig class](./memilio/generation/scanner_config.py).
+- Change [config.json.txt](./memilio/tools/config.json.txt). You can find a documentation in the ScannerConfig class.
+- Look into the parameters set in __post_init__() of the [ScannerConfig class](./memilio/generation/scanner_config.py), if they match up with the cpp-class names.
 
 Example:
 After processing as described in the previous paragraph, run the example with the command (path according to the current folder):
@@ -40,7 +40,7 @@ After processing as described in the previous paragraph, run the example with th
 python memilio/tools/seir.py 
 ```
 
-When working on a new model you can copy the example script and add an additional segment to the config.json. The setup works similar to the example. Additionaly you can print the AST of your model into a file (Usefull for development/debugging).
+When working on a new model you can copy the example script and add an additional segment to the config.json.txt. The setup works similar to the example. Additionaly you can print the AST of your model into a file (Usefull for development/debugging).
 
 ## Testing
 

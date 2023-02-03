@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Maximilian Betz
 #
@@ -32,9 +32,8 @@ from warnings import catch_warnings
 
 import importlib_resources
 from clang.cindex import *
-from typing_extensions import Self
-
 from memilio.generation import IntermediateRepresentation, utility
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
@@ -59,14 +58,14 @@ class Scanner:
 
     def create_ast(self: Self) -> None:
         """
-        Creates an AST for the main model.cpp file with an corresponding CompilationDatabase. 
+        Creates an abstract syntax tree for the main model.cpp file with an corresponding CompilationDatabase. 
         Requires a compile_commands.json.
         """
         idx = Index.create()
 
         # Create the cmd arguments
         file_args = []
-        pkg = importlib_resources.files("memilio")
+        pkg = importlib_resources.files("memilio.generation")
         filename = self.config.skbuild_path_to_database.split('_skbuild')
         if (len(filename) > 1):
             with importlib_resources.as_file(pkg.joinpath("../_skbuild" + filename[-1] + "/compile_commands.json")) as path:
@@ -89,7 +88,7 @@ class Scanner:
         clang_cmd_result = subprocess.run(clang_cmd, stdout=subprocess.PIPE)
         clang_cmd_result.check_returncode()
 
-        # Since `clang.Index.read` expects a file path, write generated AST to a
+        # Since `clang.Index.read` expects a file path, write generated abstract syntax tree to a
         # temporary named file. This file will be automatically deleted when closed.
         with tempfile.NamedTemporaryFile() as ast_file:
             ast_file.write(clang_cmd_result.stdout)
@@ -97,8 +96,8 @@ class Scanner:
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """
-        Extracts the information of the ASTs and saves them in intermed_repr, realization of an IntermediateRepresentation data class.
-        Iterates over list of list_ast and calls find_node to visit all nodes of AST.
+        Extracts the information of the abstract syntax tree and saves them in the data class intermed_repr.
+        Calls find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         @return Information extracted from the model saved as an IntermediateRepresentation. 
         """
@@ -110,10 +109,10 @@ class Scanner:
 
     def find_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
         """
-        Recursively walks over every node of an ast. Saves the namespace the node is in.
+        Recursively walks over every node of an abstract syntax tree. Saves the namespace the node is in.
         Calls check_node_kind for extracting information from the nodes.
 
-        @param node Represents the current node of the AST as a Cursor object from libClang.
+        @param node Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         @param intermed_repr Dataclass used for saving the extracted model features.
         @param namespace [Default = ""] Namespace of the current node.
         """
@@ -196,7 +195,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Helper function to retrieve the model base.
+        Helper function to retreive the model base.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -210,7 +209,11 @@ class Scanner:
     def check_base_specifier(
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
-        """ Not used yet."""
+        """ 
+        Not used yet.
+        Inspects nodes which represent base specifier.
+        For now this is handled by the parent node, which represents the class.
+        """
         pass
 
     def check_age_group(
@@ -309,13 +312,13 @@ class Scanner:
 
     def output_ast(self: Self) -> None:
         """
-        Outputs the ast to terminal.
+        Outputs the abstract syntax tree to terminal.
         """
         utility.output_cursor_and_children(self.ast.cursor)
 
     def output_ast_file(self: Self) -> None:
         """
-        Outputs the ast to file.
+        Outputs the abstract syntax tree to file.
         """
         with open('output_ast.txt', 'a') as f:
             utility.output_cursor_and_children_file(self.ast.cursor, f)

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Maximilian Betz
 #
@@ -27,9 +27,8 @@ import os
 import string
 from typing import TYPE_CHECKING
 
-from typing_extensions import Self
-
 from memilio.generation.template import template_string as StringTemplates
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
