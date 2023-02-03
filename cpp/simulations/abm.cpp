@@ -22,20 +22,35 @@
 #include "abm/household.h"
 #include "abm/state.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
 namespace fs = boost::filesystem;
+
+/**
+ * Set a value and distribution of an UncertainValue.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
+ * @param p uncertain value to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
+void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
+{
+    p = mio::UncertainValue(0.5 * (max + min));
+    p.set_distribution(mio::ParameterDistributionUniform(min, max));
+}
 
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-mio::abm::InfectionState determine_infection_state(double exposed, double infected, double carrier, double recovered)
+mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected, ScalarType carrier,
+                                                   ScalarType recovered)
 {
-    double susceptible          = 1 - exposed - infected - carrier - recovered;
-    std::vector<double> weights = {susceptible,  exposed,      carrier,       infected / 3,
-                                   infected / 3, infected / 3, recovered / 2, recovered / 2};
+    ScalarType susceptible          = 1 - exposed - infected - carrier - recovered;
+    std::vector<ScalarType> weights = {susceptible,  exposed,      carrier,       infected / 3,
+                                       infected / 3, infected / 3, recovered / 2, recovered / 2};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
@@ -288,7 +303,7 @@ void create_assign_locations(mio::abm::World& world)
 {
     // Add one social event with 100 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
-    // People have to get tested in the 2 days before the event
+    // A high percentage of people (50-100%) have to get tested in the 2 days before the event
     // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
     // room height of 3 m
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
@@ -301,11 +316,13 @@ void create_assign_locations(mio::abm::World& world)
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
-    auto probability      = 1.0;
-    auto test_type        = mio::abm::AntigenTest();
 
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type, probability);
+    auto probability = mio::UncertainValue();
+    assign_uniform_distribution(probability, 0.5, 1.0);
+
+    auto test_type      = mio::abm::AntigenTest();
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
+                                                  probability.draw_sample());
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
 
@@ -401,27 +418,26 @@ void create_assign_locations(mio::abm::World& world)
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
 
     testing_min_time           = mio::abm::days(7);
-    probability                = 1.0;
     auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
-                                                         end_date, test_type, probability);
+                                                         end_date, test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
     auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 
-    testing_min_time = mio::abm::days(1);
-    probability      = 0.5;
-    auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+    assign_uniform_distribution(probability, 0.1, 0.5);
+    testing_min_time         = mio::abm::days(1);
+    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
+                                                       test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, double exposed_pct, double infected_pct, double carrier_pct,
-                            double recovered_pct)
+void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
+                            ScalarType carrier_pct, ScalarType recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
@@ -815,7 +831,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
 
     // Assumed percentage of infection state at the beginning of the simulation.
-    double exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
+    ScalarType exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
@@ -855,7 +871,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{}; // Vector of collected results
+    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
@@ -875,7 +891,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Advance the world to tmax
         sim.advance(tmax);
         // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<double>>{sim.get_result()};
+        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
         // Push result of the simulation back to the result vector
         ensemble_results.push_back(temp_sim_result);
         // Option to save the current run result to file
@@ -903,6 +919,7 @@ int main(int argc, char** argv)
         printf("Number of run is %s.\n", argv[1]);
         printf("Saving results to the current directory.\n");
     }
+
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
