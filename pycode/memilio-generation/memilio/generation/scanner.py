@@ -42,14 +42,14 @@ if TYPE_CHECKING:
 
 class Scanner:
     """
-    Analyzes the model and extracts the needed information. Passes them on to the IntermediatRepresenation.
+    Analyzes the model and extracts the needed information. Passes them on to the IntermediateRepresenation.
     """
 
     def __init__(self: Self, conf: ScannerConfig) -> None:
         """
         Basic Constructor of Scanner class.
 
-        @param conf Dataclass with the configurations.
+        @param conf ScannerConfig dataclass with the configurations.
         """
         self.config = conf
         utility.try_set_libclang_path(
@@ -97,7 +97,7 @@ class Scanner:
 
     def extract_results(self: Self) -> IntermediateRepresentation:
         """
-        Extracts the information of the asts and saves them in the data class intermed_repr.
+        Extracts the information of the ASTs and saves them in intermed_repr, realization of an IntermediateRepresentation data class.
         Iterates over list of list_ast and calls find_node to visit all nodes of AST.
 
         @return Information extracted from the model saved as an IntermediateRepresentation. 
@@ -111,9 +111,9 @@ class Scanner:
     def find_node(self: Self, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
         """
         Recursively walks over every node of an ast. Saves the namespace the node is in.
-        Calls check_node_kind for extracting information out of the nodes.
+        Calls check_node_kind for extracting information from the nodes.
 
-        @param node Represents the current node of the AST as an Cursor object from libClang.
+        @param node Represents the current node of the AST as a Cursor object from libClang.
         @param intermed_repr Dataclass used for saving the extracted model features.
         @param namespace [Default = ""] Namespace of the current node.
         """
@@ -131,7 +131,7 @@ class Scanner:
         """
         Dictionary to map CursorKind to methods. Works like a switch.
 
-        @param Underlaying kind of the current node.
+        @param Underlying kind of the current node.
         @return Appropriate method for the given kind.
         """
         switch = {
@@ -177,8 +177,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Inspect the nodes of kind CLASS_DECL and writes needed information into intermed_repr.
-        Information: model_class, model_base, simulation_class, parameterset_wrapper
+        Inspect the nodes of kind CLASS_DECL and writes information (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -197,7 +196,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Helper function to retreive the model base.
+        Helper function to retrieve the model base.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.
@@ -280,7 +279,7 @@ class Scanner:
     def finalize(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
         Finalize the IntermediateRepresenation as last step of the Scanner.
-        Writes needed information from config into intermed_repr, delets unnecesary enums and ckecks for missing model features.
+        Writes needed information from config into intermed_repr, delets unnecesary enums and checks for missing model features.
 
         @param Dataclass used for saving the extracted model features.
         """
@@ -320,3 +319,4 @@ class Scanner:
         """
         with open('output_ast.txt', 'a') as f:
             utility.output_cursor_and_children_file(self.ast.cursor, f)
+            print('AST written to ' + str(os.path.abspath(f.name)))
