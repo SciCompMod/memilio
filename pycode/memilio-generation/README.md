@@ -33,7 +33,8 @@ Before running the example you have to do these steps of setup:
 - Change [config.json](./memilio/tools/config.json). You can find a documentation in the ScannerConfig class.
 - Change [ScannerConfig class](./memilio/generation/scanner_config.py).
 
-Run the example with the command (path according to the current folder):
+Example:
+After processing as described in the previous paragraph, run the example with the command (path according to the current folder):
 
 ```bash
 python memilio/tools/seir.py 
@@ -53,10 +54,10 @@ python -m unittest
 
 When implementing new model features you can follow these steps:
 - Add necessary configurations to [config txt-file](./memilio/tools/config.json.txt) and add corresponding attributes to the [ScannerConfig class](./memilio/generation/scanner_config.py).
-- Find the nodes in the abstract syntax tree (AST) with the features you want to implement (use method Scanner.output_ast_file()).
-- Add the extraction of those features. Therefore you need to change the "check_*"-methods corresponding to the CursorKind of your nodes in the [Scanner class](./memilio/generation/scanner.py). If there is no corresponding "check_*"-method you need to write a new one and add it to the switch-method (scanner.switch_node_kind()).
+- For the features you want to implement, find the nodes in the abstract syntax tree (AST) (use method Scanner.output_ast_file(); see the example in tools/).
+- Add the extraction of those features. Therefore you need to change the "check_..."-methods corresponding to the CursorKind of your nodes in the [Scanner class](./memilio/generation/scanner.py). If there is no corresponding "check_..."-method you need to write a new one and add it to the switch-method (scanner.switch_node_kind()).
 - Extend the [IntermediateRepresentation](./memilio/generation/intermediate_representation.py) for the new model features.
-- Adjust the [cpp-template](./memilio//generation/template/template_cpp.txt) and the [string-template-methods](./memilio/generation/template/template_string.py). If needed use new identifiers and write new string-template-methods for them.
+- Adjust the [cpp-template](./memilio//generation/template/template_ode_cpp.txt) and the [string-template-methods](./memilio/generation/template/template_ode_string.py). If needed, use new identifiers and write new string-template-methods for them.
 - Adjust the substitution dictionaries in the [Generator class](./memilio/generation/generator.py).
-- Write new/Adjust script in the [tool folder](./memilio/tools/) for the model an try to run.
+- Write new/Adjust script in the [tool folder](./memilio/tools/) for the model and try to run.
 - Update [tests](./memilio/generation_test/).
