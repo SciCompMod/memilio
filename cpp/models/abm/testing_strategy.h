@@ -154,7 +154,6 @@ public:
 
     /**
      * @brief Get the activity status of the scheme.
-     * @return Activity status of the scheme.
      */
     bool is_active() const;
 

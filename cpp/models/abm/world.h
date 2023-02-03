@@ -148,21 +148,20 @@ public:
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
-     * @return Number of Person%s that are in the specified #InfectionState.
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
 
     /** 
-     * @brief Get the migration parameters.
-     * @return The migration parameters of this World.
+     * @brief Get the MigrationParameters.
+     * @return Reference to the MigrationParameters.
      */
     MigrationParameters& get_migration_parameters();
 
     const MigrationParameters& get_migration_parameters() const;
 
     /** 
-     * @brief Get the global infection parameters.
-     * @return The infection parameters of this World.
+     * @brief Get the GlobalInfectionParameters.
+     * @return Reference to the GlobalInfectionParameters.
      */
     GlobalInfectionParameters& get_global_infection_parameters();
 
@@ -170,7 +169,7 @@ public:
 
     /**
      * @brief Get the migration data.
-     * @return The list of Trip%s that the Person%s make.
+     * @return Reference to the list of Trip%s that the Person%s make.
      */
     TripList& get_trip_list();
 
@@ -187,7 +186,7 @@ public:
 
     /** 
      * @brief Get the TestingStrategy.
-     * @return The list of TestingSchemes that are checked for testing.
+     * @return Refernce to the list of TestingSchemes that are checked for testing.
      */
     TestingStrategy& get_testing_strategy();
 

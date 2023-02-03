@@ -305,6 +305,7 @@ struct LockdownDate {
         return "LockdownDate";
     }
 };
+
 /**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
@@ -319,6 +320,7 @@ struct BasicShoppingRate {
         return "BasicShoppingRate";
     }
 };
+
 /**
  * @brief Percentage of Person%s of the respective age going to work.
  */
@@ -333,6 +335,7 @@ struct WorkRatio {
         return "WorkRatio";
     }
 };
+
 /**
  * @brief Percentage of Person%s of the respective age going to school.
  */
@@ -347,6 +350,7 @@ struct SchoolRatio {
         return "SchoolRatio";
     }
 };
+
 /**
  * @brief Parameter for the exponential distribution to decide if a Person goes to a social event.
  */

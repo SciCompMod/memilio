@@ -38,8 +38,7 @@ public:
     Mask(MaskType type);
 
     /**
-     * @brief Get the type of this Mask.
-     * @return The type of this Mask. 
+     * @brief Get the MaskType of this Mask.
      */
     MaskType get_type() const
     {
@@ -48,7 +47,6 @@ public:
 
     /**
      * @brief Get the length of time this Mask has been used.
-     * @return The TimeSpan this Mask has been used.
      */
     const TimeSpan& get_time_used() const
     {

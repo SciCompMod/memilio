@@ -78,13 +78,11 @@ public:
 
     /**
      * @brief Get the next Trip.
-     * @return The next Trip.
      */
     const Trip& get_next_trip() const;
 
     /**
      * @brief Get the time at which the next Trip will happen.
-     * @return The time of the next Trip.
      */
     TimePoint get_next_trip_time() const;
 
@@ -104,7 +102,6 @@ public:
 
     /**
      * @brief Get the length of the TripList.
-     * @return Size of the vector of Trip%s.
      */
     size_t num_trips() const
     {
@@ -113,7 +110,6 @@ public:
 
     /**
      * @brief Get the current index.
-     * @return The current index.
      */
     uint32_t get_current_index() const
     {

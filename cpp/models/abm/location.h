@@ -118,7 +118,6 @@ public:
 
     /**
      * @brief Get the LocationType of this Location.
-     * @return The type of this Location.
      */
     LocationType get_type() const
     {
@@ -127,7 +126,6 @@ public:
 
     /**
      * @brief Get the index of this Location.
-     * @return The index of this Location.
      */
     unsigned get_index() const
     {
@@ -190,7 +188,6 @@ public:
 
     /**
      * @brief Get the Cell%s of this Location.
-     * @return A vector with the Cell%s.
      */
     const std::vector<Cell>& get_cells() const
     {
@@ -199,7 +196,6 @@ public:
 
     /**
      * @brief Get the type of Mask that is demanded when entering this Location.
-     * @return The type of the Mask.
      */
     MaskType get_required_mask() const
     {
@@ -234,8 +230,8 @@ public:
 
     /**
      * Set the capacity of the location in person and volume
-    * @param persons maximum number of people that can visit the location at the same time
-    * @param volume volume of the location in m^3
+     * @param persons maximum number of people that can visit the location at the same time
+     * @param volume volume of the location in m^3
      */
     void set_capacity(int persons, int volume)
     {
@@ -253,7 +249,6 @@ public:
 
     /**
      * @brief Computes a relative transmission risk factor for the Location.
-     * @return The relative risk factor for the Location.
      */
     ScalarType compute_relative_transmission_risk();
 
@@ -268,15 +263,15 @@ public:
     }
 
     /**
-     * Add a TimePoint to the subpopulations TimeSeries.
-     * @param t The TimePoint to be added.
+     * Add a timepoint to the subpopulations timeseries
+     * @param t the TimePoint to be added
      */
     void add_subpopulations_timepoint(const TimePoint& t);
 
     /**
      * Return the time series object of the current number of individuals in the each infection state
      * @return the time series object of the current number of individuals in the each infection state
-    */
+     */
     const TimeSeries<ScalarType>& get_population() const
     {
         return m_subpopulations;
@@ -285,13 +280,12 @@ public:
     /**
      * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
      * @param t The first TimePoint in subpopulation
-    */
+     */
     void initialize_subpopulation(const TimePoint& t);
 
     /**
      * @brief Get the information whether NPIs are active at this Location.
      * If true requires e.g. Mask%s when entering a Location.
-     * @return True if NPIs are active.
      */
     bool get_npi_active() const
     {

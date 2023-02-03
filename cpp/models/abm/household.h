@@ -72,8 +72,7 @@ public:
     }
 
     /**
-     * @brief Returns the array with the weight of each AgeGroup.
-     * @returns A CustomIndexArray with the integer weights of the AgeGroup%s.
+     * @brief Returns the CustomIndexArray with the weights of each AgeGroup.
      */
     const CustomIndexArray<int, AgeGroup>& get_age_weights() const
     {
@@ -103,7 +102,6 @@ public:
 
     /**
      * @brief Returns the number of members, i.e.\ Person%s in the Household.
-     * @return Integer of number of members.
      */
     int get_total_number_of_members() const
     {
@@ -121,7 +119,6 @@ public:
 
     /**
      * @brief Get the space per member of the Household.
-     * @return Integer of space per member in cubic meters.
      */
     int get_space_per_member() const
     {
@@ -129,8 +126,7 @@ public:
     }
 
     /**
-     * @brief Returns the HouseholdMember%s of the Household.
-     * @return List of HouseholdMember%s of the Household.
+     * @brief Get the HouseholdMember%s of the Household.
      */
     const std::vector<std::tuple<HouseholdMember, int>>& get_members() const
     {
@@ -169,7 +165,6 @@ public:
 
     /**
      * @brief Returns the number of Household%s in the HouseholdGroup.
-     * @return Integer of number of Household%s.
      */
     int get_total_number_of_households() const
     {

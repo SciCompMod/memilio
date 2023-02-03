@@ -260,8 +260,7 @@ public:
     const std::vector<uint32_t>& get_cells() const;
 
     /**
-     * @brief Get the Mask of the Person.
-     * @return Current Mask of the Person.
+     * @brief Get the current Mask of the Person.
      */
     Mask& get_mask()
     {
@@ -274,9 +273,8 @@ public:
     }
 
     /**
-     * @brief Get the protection of the Mask. A value of 1 represents full protection and a value of 0 means no
-     * protection.
-     * @return The protection factor of the Mask.
+     * @brief Get the protection of the Mask.
+     * A value of 1 represents full protection and a value of 0 means no protection.
      */
     double get_protective_factor(const GlobalInfectionParameters& params) const;
 
@@ -284,7 +282,7 @@ public:
      * @brief For every LocationType a Person has a compliance value between -1 and 1.
      * -1 means that the Person never complies to any mask duty at the given LocationType.
      * 1 means that the Person always wears a Mask a the LocationType even if it is not required.
-     * @param preferences The vector of mask compliance values for all LocationTypes.
+     * @param[in] preferences The vector of mask compliance values for all LocationTypes.
      */
     void set_mask_preferences(std::vector<double> preferences)
     {

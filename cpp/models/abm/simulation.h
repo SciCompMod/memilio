@@ -64,7 +64,6 @@ public:
     /**
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
-     * @return The result of the Simulation.
      */
     const TimeSeries<double>& get_result() const
     {
@@ -72,8 +71,7 @@ public:
     }
 
     /**
-     * @name Get the World that this Simulation evolves.
-     * @{
+     * @brief Get the World that this Simulation evolves.
      */
     World& get_world()
     {
@@ -83,7 +81,6 @@ public:
     {
         return m_world;
     }
-    /**@}*/
 
 private:
     void store_result_at(TimePoint t);
