@@ -248,7 +248,7 @@ def read_files(directory, fine_resolution):
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, 'combination_npis.xlsx'), engine='openpyxl')
+                    directory, 'combination_npis_incl_ranking.xlsx'), engine='openpyxl')
     except FileNotFoundError:
         print('File not found.')
         raise FileNotFoundError
@@ -519,15 +519,22 @@ def get_npi_data(fine_resolution=2,
         npi_codes_prior_desc = df_npis_desc['Variable']
 
     # For fine_resolution > 0 deactivation of non-combinable / conflicting
-    # (incidence-dependent) NPIs has to be conducted.
-    # For all NPIs, we defined a matrix of possible combinations of NPIs;
-    # marked with an X if combinable.
-    # Exclusion of NPIs of different main category (e.g., M01a and M04)
-    # happens based on this table and the strictness index provided by Corona-
-    # Datenplattform. Those of, e.g., M01a_010_3 and M01a_080_4 exclude each
-    # other according to the threshold they were prescribed with. Active NPIs
-    # with low incidence thresholds deactivate conflicting NPIs with higher
-    # thresholds.
+    # NPIs has to be conducted.
+    #
+    # NPIs of different main categories (e.g., M01a and M04) can always be
+    # prescribed together as they target different locations and settings.
+    #
+    # NPIs with the same main code (i.e., targeting the same location, e.g., 
+    # schools, or the same set of NPIs, e.g., masks) can exclude each other.
+    # Exclusion happens based on table provided in xlsx or csv format.
+    # 
+    # In first place, NPIs of higher stringency index as defined by the Corona-
+    # Datenplattform deactivate NPIs with lower stringency index. 
+    # NPIs of the same main code and with the same stringency index may or
+    # may not exclude each other according to the threshold they were
+    # prescribed with. Prescribed and active NPIs with high incidence thresholds
+    # deactivate conflicting NPIs with lower thresholds (as the latter are 
+    # considered to be less strict).
     if fine_resolution > 0:
         num_nonexistent_codes_pre = df_npis_combinations_pre['Variablenname'].str.count(
             "M22|M23|M24").sum()
@@ -535,11 +542,12 @@ def get_npi_data(fine_resolution=2,
             df_npis_combinations_pre = df_npis_combinations_pre.iloc[: -
                                                                      num_nonexistent_codes_pre, :]
         # rename essential columns and throw away others
-        column_names = ['Unnamed: ' + str(i) for i in range(3, 19)]
+        columns_combinations = np.where((df_npis_combinations_pre=='x').any()==True)[0]
+        column_names = ['Unnamed: ' + str(i) for i in range(columns_combinations[0], columns_combinations[-1]+1)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
         df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
         df_npis_combinations_pre = df_npis_combinations_pre[[
-            'Variablenname'] + [i for i in range(0, 16)]]
+            'Variablenname', 'Massnahmenindex'] + [i for i in range(0, len(columns_combinations))]]
         # replace empty cells by zeros and x-marked cells by ones
         df_npis_combinations_pre = df_npis_combinations_pre.replace(np.nan, 0)
         df_npis_combinations_pre = df_npis_combinations_pre.replace('x', 1)
@@ -556,34 +564,33 @@ def get_npi_data(fine_resolution=2,
                 list(
                     npi_groups_combinations
                     [npi_groups_combinations == code].index))
-        # read and save strictness order for NPIs of each main categorie
-        df_npis_strictness_index = {
-            npi_groups_combinations_unique[i]:
-            # TODO: Replace strictness of j for all NPIs by some value from Datenplattform...
-            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]].values[j]: j for j in range(
-                len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]]))}
-            for i in range(len(npi_groups_combinations_unique))}
 
-        # create hash table of main code to contained codes and combination matrix
+        # TODO: look at:
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M16_100', 'M16_100_1', 'M16_100_2', 'M16_100_3', 'M16_100_4', 'M16_100_5']))].iloc[:,6:]==1)
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01a_020', 'M01a_020_1', 'M01a_020_2', 'M01a_020_3', 'M01a_020_4', 'M01a_020_5']))].iloc[:,6:]==1)
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01b_020', 'M01b_020_1', 'M01b_020_2', 'M01b_020_3', 'M01b_020_4', 'M01b_020_5']))].iloc[:,6:]==1)
+
+        # create hash table of main code to strictness rankings inside main
+        # code and combination matrix inside the same strictness rank
         df_npis_combinations = {
             npi_groups_combinations_unique[i]:
             [
-                list(
-                    df_npis_combinations_pre['Variablenname']
-                    [npi_groups_idx[i]]),
+            {df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]].values[j]:
+             df_npis_combinations_pre['Massnahmenindex'][npi_groups_idx[i]].values[j] for j in range(
+                len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]]))},
                 np.eye(len(npi_groups_idx[i]))]
             for i in range(len(npi_groups_combinations_unique))}
 
+
         # run through all groups and set possible combinations according to
         # read combination matrix
-        start_comb_matrix = list(
-            df_npis_combinations_pre.columns).index('Variablenname')+1
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+3
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
-            npic_uniq = npi_groups_combinations_unique[i] # reduce code length
-            df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[
-                npi_groups_idx[i], start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
+            npic_uniq = npi_groups_combinations_unique[i]  # reduce code length
+            df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[np.array(npi_groups_idx[i]),
+                                                                               start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
             if (df_npis_combinations[npic_uniq][1]-np.transpose(df_npis_combinations[npic_uniq][1])).max() > 0:
                 print('Error in input file: Please correct combination matrix input.')
             # make it a dataframe to allow easy removal of code lines and rows
@@ -689,14 +696,15 @@ def get_npi_data(fine_resolution=2,
             local_codes_used_cols = df_npis_combinations[code][1].columns.isin(
                 npis['NPI_code'])
 
-            # overwrite item 0 since codes are stored in *.columns
-            df_npis_combinations[code] = df_npis_combinations[code][1].loc[local_codes_used_rows,
+            # remove strictness indices of unused codes
+            df_npis_combinations[code][0] = {
+                key: val for key, val in df_npis_combinations[code][0].items()
+                if key in npis['NPI_code'].values}
+            # remove columns of combinations
+            df_npis_combinations[code][1] = df_npis_combinations[code][1].loc[local_codes_used_rows,
                                                                            local_codes_used_cols].reset_index(drop=True).copy()
 
-            # also remove strictness indices of unused codes
-            df_npis_strictness_index[code] = {
-                key: val for key, val in df_npis_strictness_index[code].items()
-                if key in npis['NPI_code'].values}
+
 
     # prepare grouping of NPIs to reduce product space of
     # NPI x active_from_inc (with values "incidence does not matter", and
@@ -1009,7 +1017,7 @@ def get_npi_data(fine_resolution=2,
                 level_lower = [lev for lev in levels_exclusion
                                if lev[0] < level[0]]
                 for code in df_npis_combinations.keys():
-                    code_cols = df_npis_combinations[code].columns
+                    code_cols = df_npis_combinations[code][1].columns
                     # iterate over subcode indices
                     for scidx in range(len(code_cols)-1):
                         # check if code was used, otherwise nothing to
@@ -1023,7 +1031,7 @@ def get_npi_data(fine_resolution=2,
                             indicator_code_active > 0)[0]
                         if len(indicator_code_active_idx) > 0:
                             # extract codes
-                            subcodes_nocombi = df_npis_combinations[code].loc[scidx, :]
+                            subcodes_nocombi = df_npis_combinations[code][1].loc[scidx, :]
                             # only consider those codes which cannot be
                             # combined; for these, values of 1 have to be
                             # set to 0
@@ -1040,12 +1048,12 @@ def get_npi_data(fine_resolution=2,
                                     # where NPI code_cols[scidx] + level[1]
                                     # is active
                                     if df_local_new.loc[indicator_code_active_idx, subcode_excl + level_other[1]].any():
-                                        # print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
-                                        # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
-                                        # print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
-                                        # print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
+                                        print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
+                                        print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
                                         # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
-                                        # print('\n')
+                                        print('\n')
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
 
@@ -1055,10 +1063,10 @@ def get_npi_data(fine_resolution=2,
             # criteria defined in df_npis_combinations
             for code in df_npis_combinations.keys():
                 # get other subcodes MX_Y_* below current main code MX_Y
-                subcodes_list = list(df_npis_strictness_index[code].keys())
+                subcodes_list = list(df_npis_combinations[code][0].keys())
                 # sort index reversely with the strictest (highest) index first
                 idx_strictness_sorted_rev = np.argsort(
-                    list(df_npis_strictness_index[code].values()))[::-1]
+                    list(df_npis_combinations[code][0].values()))[::-1]
 
                 for jj in range(len(idx_strictness_sorted_rev)-1):
                     # get index of NPI of a certain strictness
@@ -1074,6 +1082,7 @@ def get_npi_data(fine_resolution=2,
                         idxs_less_strict = np.sort(idx_strictness_sorted_rev[jj+1:])
 
                         # extract true/false list of combination of subcodes
+                        # TODO [0] or [1] ?
                         subcodes_nocombi = df_npis_combinations[code].loc[:, subcode]
                         # only consider those codes which cannot be combined; 
                         # for these, values of 1 have to be set to 0
