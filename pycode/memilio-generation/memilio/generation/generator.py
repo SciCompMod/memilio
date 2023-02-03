@@ -100,7 +100,7 @@ class Generator:
     def generate_files(
             self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """
-        Generate the bingings.
+        Generate the python bindings to the C++ code.
         Uses the template files for python and cpp from the template folder and replaces the identifiers with the corresponding substitutions.
 
         @param intermed_repr Dataclass holding the model features.
