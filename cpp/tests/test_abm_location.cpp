@@ -47,7 +47,7 @@ TEST(TestLocation, addRemovePerson)
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
     auto person1  = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
-    home.add_person(person1);
+    //home.add_person(person1);
     person1.migrate_to(home, location, {0, 1});
     auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
     home.add_person(person2);
