@@ -70,7 +70,7 @@ class Scanner:
         filename = self.config.skbuild_path_to_database.split('_skbuild')
         if (len(filename) > 1):
             with importlib_resources.as_file(
-                    pkg.joinpath("../_skbuild" + filename[-1] +
+                    pkg.joinpath("../../../_skbuild" + filename[-1] +
                                  "/compile_commands.json")) as path:
                 dirname, _ = os.path.split(path)
         else:
