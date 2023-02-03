@@ -28,6 +28,10 @@ namespace mio
 {
 namespace abm
 {
+/**
+ * @brief Reduces the probability that a Person becomes infected.
+ * Every Person has a Mask that reduces the probability of becoming infected when wearing this Mask.
+ */
 class Mask
 {
 public:

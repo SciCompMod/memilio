@@ -263,8 +263,8 @@ public:
     }
 
     /**
-     * Add a timepoint to the subpopulations timeseries
-     * @param t the TimePoint to be added
+     * @brief Add a TimePoint to the subpopulations TimeSeries.
+     * @param t The TimePoint to be added.
      */
     void add_subpopulations_timepoint(const TimePoint& t);
 
