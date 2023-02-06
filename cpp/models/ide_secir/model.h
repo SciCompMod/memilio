@@ -50,7 +50,7 @@ public:
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
-          Pa Parameterset_init = Pa());
+          const Pa& Parameterset_init = Pa());
 
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.

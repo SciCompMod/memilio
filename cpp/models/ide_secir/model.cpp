@@ -30,7 +30,7 @@ namespace isecir
 {
 
 Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
-             Pa Parameterset_init)
+             const Pa& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_SECIR{TimeSeries<ScalarType>((ScalarType)InfectionState::Count)}
