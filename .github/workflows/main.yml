@@ -163,16 +163,17 @@ jobs:
         with:
           package: simulation
 
-  test-py-simulation:
+  build-py-plot:
     if: github.event.pull_request.draft == false
-    needs: build-py-simulation
     runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/test-py
-        with: 
-          package: simulation
-          
+      - uses: ./.github/actions/build-py
+        with:
+          package: plot
+ 
   build-py-surrogatemodel:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -184,6 +185,16 @@ jobs:
         with:
           package: surrogatemodel
 
+  test-py-simulation:
+    if: github.event.pull_request.draft == false
+    needs: build-py-simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with: 
+          package: simulation
+
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
     needs: [build-py-surrogatemodel, build-py-simulation]
@@ -193,17 +204,6 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: surrogatemodel
-
-  build-py-plot:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/build-py
-        with:
-          package: plot
 
   test-py-plot:
     if: github.event.pull_request.draft == false
@@ -225,6 +225,18 @@ jobs:
         with:
           package: plot
 
+  get-epidata-artifacts:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        artifact-name: [test-py-coverage-reports, pylint-report]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/download-artifacts
+        with:
+          artifact-name: ${{ matrix.artifact-name }}
+
   test-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -232,27 +244,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-docs
 
-  get-py-coverage-reports:
-    if: github.event.pull_request.draft == false
-    runs-on: ununtu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/download-artifacts
-        with:
-          artifact-name: test-py-coverage-reports
-
-  get-pylint-report:
-    if: github.event.pull_request.draft == false
-    runs-on: ununtu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/download-artifacts
-        with:
-          artifact-name: pylint-report
-
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, get-py-coverage-reports]
+    needs: [test-cpp-gcc_clang, get-epidata-artifacts]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -276,7 +270,7 @@ jobs:
 
   pages:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, test-docs, get-py-coverage-reports, get-pylint-report, ]
+    needs: [test-cpp-gcc_clang, test-docs, get-epidata-artifacts]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
