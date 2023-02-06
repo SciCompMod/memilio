@@ -233,7 +233,7 @@ jobs:
         artifact-name: [test-py-coverage-reports, pylint-report]
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/download-artifacts
+      - uses: ./.github/actions/download-artifact
         with:
           artifact-name: ${{ matrix.artifact-name }}
 
