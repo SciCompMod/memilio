@@ -236,6 +236,7 @@ jobs:
       - uses: ./.github/actions/download-artifact
         with:
           artifact-name: ${{ matrix.artifact-name }}
+          secret-token: ${{ secrets.GITHUB_TOKEN }}
 
   test-docs:
     if: github.event.pull_request.draft == false

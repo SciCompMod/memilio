@@ -4,6 +4,9 @@ inputs:
   artifact-name:
     description: "Name of the required artifact."
     required: true
+  secret-token:
+    description: "GitHub Token to use gh command in workflow"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -11,7 +14,7 @@ runs:
       shell: pwsh
       run: gh run download -n ${{ inputs.artifact-name }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: secret-token
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
