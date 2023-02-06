@@ -14,7 +14,7 @@ runs:
       shell: pwsh
       run: gh run download -n ${{ inputs.artifact-name }}
       env:
-        GITHUB_TOKEN: secret-token
+        GITHUB_TOKEN: ${{ inputs.secret-token }}
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
