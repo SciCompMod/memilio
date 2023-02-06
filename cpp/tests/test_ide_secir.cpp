@@ -18,11 +18,14 @@
 * limitations under the License.
 */
 
-#include "load_test_data.h"
+//#include "load_test_data.h"
 #include "ide_secir/model.h"
+//#include "ide_secir/model.cpp"
 #include "ide_secir/parameters.h"
-#include "memilio/math/eigen.h"
+#include "ide_secir/infection_state.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/logging.h"
+#include "memilio/config.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <gtest/gtest.h>
 
@@ -31,7 +34,7 @@ class ModelTest : public testing::Test
 protected:
     virtual void SetUp()
     {
-        using Vec = mio::TimeSeries<double>::Vector;
+        using Vec = mio::TimeSeries<ScalarType>::Vector;
 
         ScalarType N     = 10000;
         ScalarType Dead0 = 12;
@@ -39,25 +42,27 @@ protected:
 
         int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
-        mio::TimeSeries<double> result(num_transitions);
-        result.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
-        while (result.get_last_time() < 0) {
-            result.add_time_point(result.get_last_time() + dt,
-                                  Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
+        Vec vec_init(num_transitions);
+        mio::TimeSeries<ScalarType> init(num_transitions);
+        vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+        init.add_time_point(-10, vec_init);
+        while (init.get_last_time() < 0) {
+            init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
         }
 
-        model = new mio::isecir::Model(std::move(result), dt, N, Dead0);
+
+        model = new mio::isecir::Model(std::move(init), dt, N, Dead0);
 
         // Set working parameters.
-        model->parameters.set<mio::isecir::TransitionDistributions>(
-            std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-        model->parameters.set<mio::isecir::TransitionProbabilities>(std::vector<double>(num_transitions, 0.5));
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-        model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1.0);
-        model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-        model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+        // model->parameters.set<mio::isecir::TransitionDistributions>(
+        //     std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+        // model->parameters.set<mio::isecir::TransitionProbabilities>(std::vector<ScalarType>(num_transitions, 0.5));
+        // mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+        // contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        // model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+        // model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1.0);
+        // model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
+        // model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
     }
 
     virtual void TearDown()
@@ -71,8 +76,21 @@ public:
 
 TEST_F(ModelTest, checkPopulationConservation)
 {
-    model->simulate(15);
+    mio::TimeSeries<ScalarType> compartments = model->simulate(15);
 
+    ScalarType num_persons_0 = 0.0;
+
+    for (auto i = 0; i < compartments[0].size(); i++) {
+        num_persons_0 += compartments[0][i];
+    }
+
+    ScalarType num_persons = 0.0;
+
+    for (auto i = 0; i < compartments.get_last_value().size(); i++) {
+        num_persons += compartments.get_last_value()[i];
+    }
+
+    EXPECT_NEAR(num_persons,num_persons_0,1e-10);
     // using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     // ScalarType tmax  = 10;
