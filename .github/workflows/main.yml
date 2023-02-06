@@ -162,17 +162,6 @@ jobs:
       - uses: ./.github/actions/build-py
         with:
           package: simulation
-
-  build-py-plot:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/build-py
-        with:
-          package: plot
  
   build-py-surrogatemodel:
     if: github.event.pull_request.draft == false
@@ -205,37 +194,19 @@ jobs:
         with: 
           package: surrogatemodel
 
-  test-py-plot:
-    if: github.event.pull_request.draft == false
-    needs: build-py-plot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/test-py
-        with: 
-          package: plot
-          coverage: ON 
-
-  test-pylint-plot:
-    needs: build-py-plot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/test-pylint
-        with:
-          package: plot
-
   get-epidata-artifacts:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
       matrix:
         artifact-name: [test-py-coverage-reports, pylint-report]
+        package: [epidata, plot, simulation, surrogatemodel]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/download-artifact
         with:
           artifact-name: ${{ matrix.artifact-name }}
+          package: ${{ matrix.package }}
           secret-token: ${{ secrets.GITHUB_TOKEN }}
 
   test-docs:
@@ -258,7 +229,7 @@ jobs:
       - name: Download python coverage report
         uses: actions/download-artifact@v3
         with:
-          name: test-py-coverage-reports
+          path: coverage_python
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
