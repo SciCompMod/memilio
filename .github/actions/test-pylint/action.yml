@@ -33,6 +33,6 @@ runs:
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v3
       with:
-        name: pylint-report
+        name: pylint-report-${{ inputs.package }}
         path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html
         retention-days: 7

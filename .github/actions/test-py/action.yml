@@ -21,7 +21,7 @@ runs:
       uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
-        path: pycode/wheelhouse
+        path: pycode/wheelhouse 
     - name: Download additional Python Wheels for plot package
       uses: actions/download-artifact@v3
       if:  inputs.package == 'plot'
@@ -73,7 +73,7 @@ runs:
     - name: Upload coverage reports
       uses: actions/upload-artifact@v3
       with:
-        name: test-py-coverage-reports
+        name: test-py-coverage-reports-${{ inputs.package }}
         path: |
           pycode/coverage_python.xml
           coverage_python
