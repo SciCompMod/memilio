@@ -200,7 +200,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-docs
-    
+
+  test-pylint-plot:
+    needs: build-py-plot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-pylint
+        with:
+          package: plot  
+
   get-py-coverage-reports:
     if: github.event.pull_request.draft == false
     runs-on: ununtu-latest
@@ -221,7 +230,7 @@ jobs:
 
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, get-py-coverage-reports]
+    needs: [test-cpp-gcc_clang, get-py-coverage-report]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -245,7 +254,7 @@ jobs:
 
   pages:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, test-docs, get-py-coverage-reports, get-pylint-report]
+    needs: [test-cpp-gcc_clang, test-docs, get-py-coverage-reports, ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
