@@ -35,4 +35,4 @@ runs:
       with:
         name: pylint-report
         path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html
-        retention-days: 3
+        retention-days: 7
