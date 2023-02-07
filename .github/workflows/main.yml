@@ -183,6 +183,7 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
+          coverage: ON
 
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
@@ -193,6 +194,7 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: surrogatemodel
+          coverage: ON
 
   get-epidata-artifacts:
     if: github.event.pull_request.draft == false
@@ -200,7 +202,7 @@ jobs:
     strategy:
       matrix:
         artifact-name: [test-py-coverage-reports, pylint-report]
-        package: [epidata, plot, simulation, surrogatemodel]
+        package: [epidata, plot]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/download-artifact
@@ -253,7 +255,7 @@ jobs:
       - name: Download python coverage report
         uses: actions/download-artifact@v3
         with:
-          name: test-py-coverage-reports
+          path: pycode/memilio-*/coverage
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
@@ -266,8 +268,7 @@ jobs:
       - name: Download pylint report
         uses: actions/download-artifact@v3
         with:
-          name: pylint-report
-          path: pycode/build_pylint
+          path: pycode/memilio-*/build_pylint
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public

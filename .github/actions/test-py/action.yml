@@ -74,8 +74,6 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: test-py-coverage-reports-${{ inputs.package }}
-        path: |
-          pycode/coverage_python.xml
-          coverage_python
+        path: pycode/memilio-"${{ inputs.package }}"/coverage
         retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}
