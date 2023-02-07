@@ -204,7 +204,7 @@ jobs:
 
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, get-epidata-artifacts]
+    needs: [test-cpp-gcc_clang, test-py-surrogate-model]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -229,7 +229,7 @@ jobs:
 
   pages:
     if: github.event.pull_request.draft == false
-    needs: [test-cpp-gcc_clang, test-docs, get-epidata-artifacts]
+    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogate-model]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
