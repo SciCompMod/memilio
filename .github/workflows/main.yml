@@ -183,7 +183,6 @@ jobs:
       - uses: ./.github/actions/test-py
         with: 
           package: simulation
-          coverage: ON
 
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
@@ -195,21 +194,6 @@ jobs:
         with: 
           package: surrogatemodel
           coverage: ON
-
-  get-epidata-artifacts:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        artifact-name: [test-py-coverage-reports, pylint-report]
-        package: [epidata, plot]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/download-artifact
-        with:
-          artifact-name: ${{ matrix.artifact-name }}
-          package: ${{ matrix.package }}
-          secret-token: ${{ secrets.GITHUB_TOKEN }}
 
   test-docs:
     if: github.event.pull_request.draft == false
@@ -229,9 +213,10 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        uses: actions/download-artifact@v3
-        with:
-          path: coverage_python
+        shell: pwsh
+        run: gh run download -p test-py-coverage-report-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
@@ -253,9 +238,10 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
       - name: Download python coverage report
-        uses: actions/download-artifact@v3
-        with:
-          path: pycode/memilio-*/coverage
+        shell: pwsh
+        run: gh run download -p test-py-coverage-report-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
@@ -266,9 +252,10 @@ jobs:
           name: documentation
           path: docs/html
       - name: Download pylint report
-        uses: actions/download-artifact@v3
-        with:
-          path: pycode/memilio-*/build_pylint
+        shell: pwsh
+        run: gh run download -p pylint-report-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
