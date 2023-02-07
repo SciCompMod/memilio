@@ -58,8 +58,9 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
-    auto I = std::make_shared<
-        mio::flow_calculator<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>>();
+    auto I = std::make_shared<mio::flow_calculator>(
+        model.parameters.get<mio::oseir::Flows>(),
+        mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>());
     auto seir = simulate(t0, tmax, dt, model, I);
 
     printf("\n number total: %f\n",
