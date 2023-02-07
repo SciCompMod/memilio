@@ -169,7 +169,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: surrogatemodel
@@ -189,7 +189,7 @@ jobs:
     needs: [build-py-surrogatemodel, build-py-simulation]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: surrogatemodel
@@ -214,7 +214,7 @@ jobs:
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
         shell: pwsh
-        run: gh run download -p test-py-coverage-reports-*
+        run: gh run download -p test-py-coverage-reports-* -D ./coverage-python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
@@ -224,7 +224,7 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v3
         with:
-          files: ./pycode/coverage_python.xml,./coverage.info
+          files: ./coverage_python/**,./coverage.info
           verbose: true
 
   pages:
