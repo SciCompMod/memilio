@@ -384,7 +384,7 @@ public:
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::StateId>{});
+        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::StateId>{});
         auto county_id                  = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return mio::apply(
             io,

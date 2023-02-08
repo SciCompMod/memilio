@@ -240,7 +240,7 @@ private:
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace mio
 
-template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
 IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
                          Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
@@ -262,7 +262,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         auto tnt_capacity = counties[county_idx].populations.get_total() * tnt_capacity_factor;
 
         //local parameters
-        auto& tnt_value = counties[county_idx].parameters.template get<TestNTrace>();
+        auto& tnt_value = counties[county_idx].parameters.template get<TestAndTrace>();
         tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
