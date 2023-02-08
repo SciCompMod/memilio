@@ -46,49 +46,42 @@ class PylintCommand(Command):
 
 
 setup(
-    name='memilio-epidata',
+    name='memilio-plot',
     version=__version__,
     author='DLR-SC',
-    author_email='daniel.abele@dlr.de',
+    author_email='martin.kuehn@dlr.de',
     maintainer_email='martin.kuehn@dlr.de',
     url='https://github.com/DLR-SC/memilio',
-    description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
+    description='Part of MEmilio project, plots data to maps or visualizes simulation curves.',
     entry_points={
         'console_scripts': [
-            'getcasedata=memilio.epidata.getCaseData:main',
-            'getpopuldata=memilio.epidata.getPopulationData:main',
-            'getjhdata = memilio.epidata.getJHData:main',
-            'getdividata = memilio.epidata.getDIVIData:main',
-            'getsimdata = memilio.epidata.getSimulationData:main',
-            'cleandata = memilio.epidata.cleanData:main',
-            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
-            'getcommutermobility = memilio.epidata.getCommuterMobility:main',
-            'getvaccinationdata = memilio.epidata.getVaccinationData:main',
-            'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
         ],
     },
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     long_description='',
-    test_suite='memilio.epidata_test',
+    test_suite='memilio.plot_test',
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'matplotlib',
-        'tables',
         'numpy>=1.22',  # smaller numpy versions cause a security issue
         'openpyxl',
         'xlrd',
         'requests',
         'pyxlsb',
-        'wget'
+        'wget',
+        'folium',
+        'matplotlib',
+        'mapclassify',
+        'geopandas',
+        'h5py'
     ],
     extras_require={
         'dev': [
             # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
             'pyfakefs>=4.2.1',
-            # coverage 7.0.0 can't find .whl files and breaks CI
-            'coverage>=7.0.1',
+            'coverage',
             'pylint<=2.11.1',
             'pylint_json2html<=0.3.0',
         ],

@@ -113,11 +113,11 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
         auto num_carriers               = get_subpopulation(InfectionState::Carrier);
         auto num_infected               = get_subpopulation(InfectionState::Infected);
         auto relative_transmission_risk = compute_relative_transmission_risk();
-        m_cached_exposure_rate.array()  = relative_transmission_risk *
-                                         std::min(m_parameters.get<MaximumContacts>(), ScalarType(m_num_persons)) /
-                                         m_num_persons *
-                                         (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
-                                          global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
+        m_cached_exposure_rate.array() =
+            relative_transmission_risk * std::min(m_parameters.get<MaximumContacts>(), ScalarType(m_num_persons)) /
+            m_num_persons *
+            (global_params.get<SusceptibleToExposedByCarrier>().array().cast<ScalarType>() * num_carriers +
+             global_params.get<SusceptibleToExposedByInfected>().array().cast<ScalarType>() * num_infected);
     }
     else {
         for (auto& cell : m_cells) {
@@ -128,8 +128,9 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
                 auto relative_transmission_risk = compute_relative_transmission_risk();
                 cell.cached_exposure_rate.array() =
                     std::min(m_parameters.get<MaximumContacts>(), ScalarType(cell.num_people)) / cell.num_people *
-                    (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
-                     global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected) *
+                    (global_params.get<SusceptibleToExposedByCarrier>().array().cast<ScalarType>() * cell.num_carriers +
+                     global_params.get<SusceptibleToExposedByInfected>().array().cast<ScalarType>() *
+                         cell.num_infected) *
                     relative_transmission_risk;
             }
         }

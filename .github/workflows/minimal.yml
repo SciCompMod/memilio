@@ -87,6 +87,46 @@ jobs:
         with: 
           package: simulation
 
+  build-py-surrogatemodel:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: surrogatemodel
+
+  test-py-surrogatemodel:
+    needs: [build-py-surrogatemodel, build-py-simulation]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: surrogatemodel
+
+  build-py-plot:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-py
+        with:
+          package: plot
+
+  test-py-plot:
+    if: github.event.pull_request.draft == false
+    needs: [build-py-plot, build-py-epidata]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with: 
+          package: plot
+
   test-pylint-epidata:
     needs: build-py-epidata
     runs-on: ubuntu-latest
@@ -95,7 +135,16 @@ jobs:
       - uses: ./.github/actions/test-pylint
         with:
           package: epidata
-          
+
+  test-pylint-plot:
+    needs: build-py-plot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-pylint
+        with:
+          package: plot    
+
   test-docs:
     needs: build-py-epidata
     runs-on: ubuntu-latest

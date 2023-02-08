@@ -29,6 +29,7 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"

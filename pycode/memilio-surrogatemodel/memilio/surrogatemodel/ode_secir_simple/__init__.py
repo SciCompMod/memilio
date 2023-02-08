@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele
+# Authors: Agatha Schmidt, Henrik Zunker
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -19,7 +19,5 @@
 #############################################################################
 
 """
-MEmilio main namespace package.
+A surrogate model for a simple SECIR model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
 """
-
-__path__ = __import__('pkgutil').extend_path(__path__, __name__)

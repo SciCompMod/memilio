@@ -151,7 +151,7 @@ When you start creating a new script:
         - ## Header
         - # @brief name descr
         - # longer description
-    - add description in the beginning of every function directly after the definiton
+    - add description in the beginning of every function directly after the definition
         - start and end with """
         - add a short description to first line
         - afterwards add a longer description

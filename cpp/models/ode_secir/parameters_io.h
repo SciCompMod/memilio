@@ -29,6 +29,7 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
@@ -179,6 +180,18 @@ export_input_data_county_timeseries(std::vector<Model>& model, const std::string
                 std::round(model[county].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
             t_InfectedCritical[county].push_back(static_cast<int>(
                 std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
+                std::round(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
+                                model[county].parameters.template get<SerialInterval>()[AgeGroup(group)]))));
+            t_Exposed[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[AgeGroup(group)] -
+                           model[county].parameters.template get<IncubationTime>()[AgeGroup(group)])));
+            t_InfectedSymptoms[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[AgeGroup(group)])));
+            t_InfectedSevere[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[AgeGroup(group)])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[AgeGroup(group)]);
@@ -279,6 +292,8 @@ IOResult<void> read_input_data_germany(std::vector<Model>& model, Date date,
     }
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
                                                         scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date,
+                                                        scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
     return success();
 }
@@ -307,6 +322,8 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
                                                         date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state,
+                                                        date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
     return success();
 }
@@ -319,8 +336,8 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
  * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
  * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
- * @param num_days Number of days to be simulated; required to extrapolate real data
- * @param export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+ * @param num_days [Default: 0] Number of days to be simulated; required to extrapolate real data
+ * @param export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class Model>
 IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/geography/regions.h"
+#include "memilio/geography/regions.h"
 #include "gtest/gtest.h"
 
 TEST(TestRegions, get_holidays)

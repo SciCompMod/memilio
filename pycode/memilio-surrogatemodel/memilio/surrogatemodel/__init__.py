@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele
+# Authors: Agatha Schmidt, Henrik Zunker
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -19,7 +19,5 @@
 #############################################################################
 
 """
-MEmilio main namespace package.
+Machine-learnt surrogate models for equation- or agent-based expert models.
 """
-
-__path__ = __import__('pkgutil').extend_path(__path__, __name__)
