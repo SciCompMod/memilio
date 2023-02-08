@@ -550,22 +550,6 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
                                     mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
                                     mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
-    auto scaling_factor_icu      = 1.0;
-    auto tnt_capacity_factor     = 1.43 / 100000.;
-    auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
-
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
