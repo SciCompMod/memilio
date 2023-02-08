@@ -20,7 +20,7 @@
 #ifndef ODESECIRVVS_PARAMETER_SPACE_H
 #define ODESECIRVVS_PARAMETER_SPACE_H
 
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"

@@ -29,7 +29,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"

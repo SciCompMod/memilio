@@ -28,7 +28,7 @@
 #include "models/ode_secir/model.h"
 #include "models/ode_secirvvs/parameters_io.h"
 #include "models/ode_secirvvs/parameter_space.h"
-#include "memilio/mobility/graph_parameters.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "models/ode_secirvvs/model.h"
 #include "memilio/io/io.h"
 #include "matchers.h"
