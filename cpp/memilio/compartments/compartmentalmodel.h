@@ -22,11 +22,11 @@
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
+#include "memilio/utils/flow_chart.h"
 #include "memilio/utils/metaprogramming.h"
+#include <type_traits>
 #include <vector>
 #include <functional>
-
-#define USE_DERIV_FUNC 1
 
 namespace mio
 {
@@ -70,25 +70,12 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Comp, class Pop, class Params>
+template <class Comp, class Pop, class Params, class FlowChart = void>
 struct CompartmentalModel {
 public:
     using Compartments = Comp;
     using Populations  = Pop;
     using ParameterSet = Params;
-
-    // The flow function takes a set of parameters, the current time t and the
-    // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
-    // that represents a flow going from one compartment to another.
-    using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> pop,
-                                                  Eigen::Ref<const Eigen::VectorXd> y, double t)>;
-
-    // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
-    // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
-    // function will be subtracted from the time derivative of the populations at the flat index corresponding
-    // to the from-compartment, and added to the time derivative of the populations at the flat index
-    // corresponding to the to-compartment.
-    using Flow = std::tuple<typename Populations::Index, typename Populations::Index, FlowFunction>;
 
     /**
      * @brief CompartmentalModel default constructor
@@ -99,30 +86,15 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
-    /**
-     * @brief add_flow defines a flow from compartment A to another compartment B
-     * @param from is the index of the departure compartment A
-     * @param to is the index of the receiving compartment B
-     * @param f is a function defining the flow given a set of parameters, the current time t and the
-     * snapshot y of all population sizes at time t, represented as a flat array
-     */
-    void add_flow(typename Populations::Index from, typename Populations::Index to, FlowFunction f)
-    {
-        flows.push_back(Flow(from, to, f));
-    }
-
-#if USE_DERIV_FUNC
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
                                  double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
-#endif // USE_DERIV_FUNC
-
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
@@ -139,16 +111,7 @@ public:
                               Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
-
-#if USE_DERIV_FUNC
         this->get_derivatives(pop, y, t, dydt);
-#else // USE_DERIV_FUNC
-        for (auto& flow : flows) {
-            ScalarType f = std::get<2>(flow)(parameters, pop, y, t);
-            dydt[call(Populations::get_flat_index, std::get<0>(flow))] -= f;
-            dydt[call(Populations::get_flat_index, std::get<1>(flow))] += f;
-        }
-#endif // USE_DERIV_FUNC
     }
 
     /**
@@ -190,9 +153,66 @@ public:
 
     Populations populations{};
     ParameterSet parameters{};
+};
+
+template <class Comp, class Pop, class Params, class... Flows>
+struct CompartmentalModel<Comp, Pop, Params, FlowChart<Flows...>> : public CompartmentalModel<Comp, Pop, Params> {
+public:
+    using CompartmentalModel<Comp, Pop, Params>::CompartmentalModel;
+
+    virtual void get_flows(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
+                           Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+
+    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> dydt) const
+    {
+        dydt.setZero();
+        get_rhs_impl<0>(flows, dydt);
+    }
+
+    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                         Eigen::Ref<Eigen::VectorXd> dydt) const override final
+    {
+        get_flows(pop, y, t, m_flow_values);
+        get_derivatives(m_flow_values, dydt);
+    }
+
+protected:
+    template <Comp Source, Comp Target>
+    constexpr size_t get_flow_index() const
+    {
+        return FlowChart<Flows...>().template get<Flow<Comp, Source, Target>>();
+    }
+
+    template <size_t flow_index>
+    constexpr Eigen::Index get_flow_source() const
+    {
+        return static_cast<Eigen::Index>(FlowChart<Flows...>().template get<flow_index>().source);
+    }
+
+    template <size_t flow_index>
+    constexpr Eigen::Index get_flow_target() const
+    {
+        return static_cast<Eigen::Index>(FlowChart<Flows...>().template get<flow_index>().target);
+    }
 
 private:
-    std::vector<Flow> flows{};
+    mutable Eigen::VectorXd m_flow_values{FlowChart<Flows...>().size()};
+
+    template <size_t i>
+    inline std::enable_if_t<i == sizeof...(Flows)> get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>,
+                                                                Eigen::Ref<Eigen::VectorXd>) const
+    {
+        // end recursion
+    }
+
+    template <size_t i>
+    inline std::enable_if_t<i != sizeof...(Flows)> get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows,
+                                                                Eigen::Ref<Eigen::VectorXd> rhs) const
+    {
+        rhs[static_cast<size_t>(FlowChart<Flows...>().template get<i>().source)] -= flows[i];
+        rhs[static_cast<size_t>(FlowChart<Flows...>().template get<i>().target)] += flows[i];
+        get_rhs_impl<i + 1>(flows, rhs);
+    }
 };
 
 /**

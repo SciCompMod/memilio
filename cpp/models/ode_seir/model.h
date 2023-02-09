@@ -23,6 +23,7 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/flow_chart.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
@@ -35,9 +36,13 @@ namespace oseir
     * define the model *
     ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+template <class I = InfectionState>
+using Flows = FlowChart<Flow<I, I::Susceptible, I::Exposed>, Flow<I, I::Exposed, I::Infected>,
+                        Flow<I, I::Infected, I::Recovered>>;
+
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows<>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters, Flows<>>;
 
 public:
     Model()
@@ -45,7 +50,7 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+    /* void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
         auto& params     = this->parameters;
@@ -59,13 +64,20 @@ public:
         dydt[(size_t)InfectionState::Exposed]     = SToE - EToI;
         dydt[(size_t)InfectionState::Infected]    = EToI - IToR;
         dydt[(size_t)InfectionState::Recovered]   = IToR;
+    } */
+    void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                   Eigen::Ref<Eigen::VectorXd> flows) const override
+    {
+        auto& params     = this->parameters;
+        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
 
-        params.get<Flows>()->add_time_point(t);
-        Eigen::Index ind{0};
-        for (const auto i : {SToE, EToI, IToR}) {
-            params.get<Flows>()->get_last_value()[ind] = i;
-            ++ind;
-        }
+        flows[get_flow_index<InfectionState::Susceptible, InfectionState::Exposed>()] =
+            coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        flows[get_flow_index<InfectionState::Exposed, InfectionState::Infected>()] =
+            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+        flows[get_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 };
 

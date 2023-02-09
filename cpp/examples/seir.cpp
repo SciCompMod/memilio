@@ -26,14 +26,39 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/math/flow_calculator.h"
+#include <iostream>
 #include <type_traits>
+
+void print_to_terminal(const mio::TimeSeries<ScalarType>& results, const std::vector<std::string>& state_names)
+{
+    // print column labels
+    printf("%-16s  ", "Time");
+    for (size_t k = 0; k < static_cast<size_t>(results.get_num_elements()); k++) {
+        if (k < state_names.size()) {
+            printf(" %-16s", state_names[k].data()); // print underlying char*
+        }
+        else {
+            printf(" %-16s", ("#" + std::to_string(k + 1)).data());
+        }
+    }
+    // print values as table
+    auto num_points = static_cast<size_t>(results.get_num_time_points());
+    for (size_t i = 0; i < num_points; i++) {
+        printf("\n%16.6f", results.get_time(i));
+        auto res_i = results.get_value(i);
+        for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
+            printf(" %16.6f", res_i[j]);
+        }
+    }
+    printf("\n");
+}
 
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 1;
+    double tmax = 10;
     double dt   = 0.001;
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -58,10 +83,12 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
-    auto I = std::make_shared<mio::flow_calculator>(
+    /* auto I = std::make_shared<mio::flow_calculator>(
         model.parameters.get<mio::oseir::Flows>(),
-        mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>());
-    auto seir = simulate(t0, tmax, dt, model, I);
+        mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>()); */
+    auto seir = simulate(t0, tmax, dt, model);
+
+    print_to_terminal(seir, {});
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);

@@ -98,23 +98,7 @@ struct ContactPatterns {
     }
 };
 
-/**
-     * @brief the contact patterns within the society are modelled using a ContactMatrix
-     */
-struct Flows {
-    using Type = std::shared_ptr<TimeSeries<ScalarType>>;
-    static Type get_default()
-    {
-        return std::make_shared<TimeSeries<ScalarType>>(3);
-    }
-    static std::string name()
-    {
-        return "Flows";
-    }
-};
-
-using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns, Flows>;
+using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
