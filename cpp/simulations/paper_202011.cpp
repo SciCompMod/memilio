@@ -26,8 +26,10 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/mio_mpi.h"
 #include "mpi.h"
+#include "secir/secir_params.h"
 #include "secir/secir_parameters_io.h"
 #include "secir/parameter_space.h"
 #include "boost/filesystem.hpp"
@@ -35,6 +37,7 @@
 
 #include <cstdio>
 #include <iomanip>
+#include <numeric>
 #include <vector>
 
 #define USE_ORDERED_OUTPUT
@@ -796,18 +799,16 @@ inline void adhoc_byte_serializer(const std::vector<std::vector<mio::SecirModel>
     }
 }
 
-inline void adhoc_byte_deserializer(const std::vector<char>& bytes, const std::vector<size_t>& offsets,
-                                    std::vector<std::vector<mio::SecirModel>>& ensemble_params)
+inline std::vector<std::vector<mio::SecirModel>> adhoc_byte_deserializer(const std::vector<char>& bytes, const std::vector<size_t>& offsets, size_t num_runs)
 {
+    std::vector<std::vector<mio::SecirModel>> ensemble_params(num_runs);
     Json::Value js;
     std::string errors;
     auto parser = Json::CharReaderBuilder{}.newCharReader();
     // determine number of runs via number of ensemble params per run
-    size_t num_nodes = ensemble_params.front().size();
-    size_t num_runs  = (offsets.size() - 1) / num_nodes;
-    ensemble_params.resize(ensemble_params.size() + num_runs); // mind leading 0
+    auto num_nodes = (offsets.size() - 1) / num_runs;
     for (size_t i = 0; i < num_runs; i++) {
-        auto& run_params = ensemble_params[ensemble_params.size() - num_runs + i];
+        auto& run_params = ensemble_params[i];
         run_params.reserve(num_nodes);
         for (size_t j = 0; j < num_nodes; j++) {
             size_t n         = num_nodes * i + j; // unwrap offsets
@@ -817,6 +818,7 @@ inline void adhoc_byte_deserializer(const std::vector<char>& bytes, const std::v
             run_params.push_back(mio::deserialize_json(js, mio::Tag<mio::SecirModel>{}).value());
         }
     }
+    return ensemble_params;
 }
 
 /**
@@ -827,8 +829,8 @@ inline void adhoc_byte_deserializer(const std::vector<char>& bytes, const std::v
  * @param comm Communicator to gather results on.
  * @param tag Tag to use for communication. Uses tag, tag+1 and tag+2.
  */
-void gather_results(std::vector<std::vector<mio::SecirModel>>& ensemble_params, const int& root = 0,
-                    const MPI_Comm& comm = MPI_COMM_WORLD, const std::array<int, 3> tags = {8, 9, 10})
+void gather_results(std::vector<std::vector<mio::SecirModel>>& ensemble_params, const std::vector<int>& run_distribution, const int& root = 0,
+                    const MPI_Comm& comm = MPI_COMM_WORLD)
 {
     // Note: this functions assumes ensamble_params[run_id] has the same size for all run_ids and ranks.
     int my_rank, my_size;
@@ -842,28 +844,44 @@ void gather_results(std::vector<std::vector<mio::SecirModel>>& ensemble_params, 
     std::vector<size_t> bytes_offsets;
     if (my_rank != root) {
         // send params to root
-        MPI_Request requests[3];
         adhoc_byte_serializer(ensemble_params, bytes, bytes_offsets);
         size_t bytes_offsets_size = bytes_offsets.size();
-        MPI_Isend(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, root, tags[0], comm, requests);
-        MPI_Isend(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, root, tags[1], comm, requests + 1);
-        MPI_Isend(bytes.data(), bytes.size(), MPI_CHAR, root, tags[2], comm, requests + 2);
-        MPI_Waitall(3, requests, MPI_STATUSES_IGNORE);
+        MPI_Send(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, root, 0, comm);
+        MPI_Send(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, root, 0, comm);
+        MPI_Send(bytes.data(), bytes.size(), MPI_CHAR, root, 0, comm);
     }
     else {
+        auto num_nodes = ensemble_params[0].size();
+        auto num_age_groups = int(size_t(ensemble_params[0][0].parameters.get_num_groups()));
+        auto num_runs_global = std::accumulate(std::begin(run_distribution), std::end(run_distribution), 0);
+        auto my_num_runs = ensemble_params.size();
+        auto my_start_run_idx = std::accumulate(std::begin(run_distribution), std::begin(run_distribution) + my_rank, 0);
+        // reserve space for each rank
+        ensemble_params.resize(num_runs_global);
+        for (size_t i = 0; i < ensemble_params.size(); ++i) {
+            ensemble_params[i].resize(num_nodes, mio::SecirModel(num_age_groups));
+        }
+        //copy root's own runs to the right place
+        for (size_t i = 0; i < my_num_runs; ++i){
+            ensemble_params[my_start_run_idx + i] = ensemble_params[i];
+        }
+
         // recieve ranks in any order
         for (int rank = 1; rank < my_size; rank++) {
             MPI_Status status;
             size_t bytes_offsets_size;
 
-            MPI_Recv(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, MPI_ANY_SOURCE, tags[0], comm, &status);
+            MPI_Recv(&bytes_offsets_size, 1, MIO_MPI_SIZE_T, MPI_ANY_SOURCE, 0, comm, &status);
+            auto send_rank = status.MPI_SOURCE;
             bytes_offsets.resize(bytes_offsets_size);
-            MPI_Recv(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, status.MPI_SOURCE, tags[1], comm,
+            MPI_Recv(bytes_offsets.data(), bytes_offsets_size, MIO_MPI_SIZE_T, send_rank, 0, comm,
                      MPI_STATUS_IGNORE);
             bytes.resize(bytes_offsets.back()); // last offset == total size
-            MPI_Recv(bytes.data(), bytes_offsets.back(), MPI_CHAR, status.MPI_SOURCE, tags[2], comm, MPI_STATUS_IGNORE);
+            MPI_Recv(bytes.data(), bytes_offsets.back(), MPI_CHAR, send_rank, 0, comm, MPI_STATUS_IGNORE);
 
-            adhoc_byte_deserializer(bytes, bytes_offsets, ensemble_params);
+            auto send_ensemble_params = adhoc_byte_deserializer(bytes, bytes_offsets, run_distribution[send_rank]);
+            auto send_start_run_idx = std::accumulate(std::begin(run_distribution), std::begin(run_distribution) + send_rank, 0);
+            std::copy(send_ensemble_params.begin(), send_ensemble_params.end(), ensemble_params.begin() + send_start_run_idx);
         }
     }
 }
@@ -875,8 +893,8 @@ void gather_results(std::vector<std::vector<mio::SecirModel>>& ensemble_params, 
  * @param comm Communicator to gather results on.
  * @param tag Tag to use for communication.
  */
-void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results, const int root = 0,
-                    const MPI_Comm comm = MPI_COMM_WORLD, const int tag = 7)
+void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results, const std::vector<int>& run_distribution, 
+                    const int root, const MPI_Comm comm)
 {
     int my_size, my_rank;
     MPI_Comm_size(comm, &my_size);
@@ -912,43 +930,38 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
         return b;
     }());
 
-    std::vector<double> buffer(ts_size * num_nodes * num_runs);
     // send all local ensemble_results to root, using buffer
-    if (my_rank != root) {
-        auto itr = buffer.begin();
-        for (auto& run_result : ensemble_results) {
-            for (auto& node_result : run_result) {
-                itr = std::copy(node_result.data(), node_result.data() + ts_size, itr);
+    auto num_runs_global = std::accumulate(std::begin(run_distribution), std::end(run_distribution), 0);
+    auto start_run_idx = std::accumulate(std::begin(run_distribution), std::begin(run_distribution) + my_rank, 0);
+    if (my_rank != root) {        
+        for (size_t run_idx = 0; run_idx < num_runs; ++run_idx) {
+            for (size_t node_idx = 0; node_idx < num_nodes; ++node_idx) {
+                int run_and_node_idx[] = { int(run_idx) + start_run_idx, int(node_idx) };
+                MPI_Send(run_and_node_idx, 2, MPI_INT, root, 0, comm);
+                MPI_Send(ensemble_results[run_idx][node_idx].data(), ts_size, MPI_DOUBLE, root, 0, comm);
             }
         }
-        MPI_Send(&num_runs, 1, MIO_MPI_SIZE_T, root, tag, comm);
-        MPI_Send(buffer.data(), buffer.size(), MPI_DOUBLE, root, tag, comm);
     }
     // recieve and fill all local results into ensemble_results
-    else // my_size > 1
+    else // root
     {
         // reserve space for each rank
-        ensemble_results.reserve(ensemble_results.size() * my_size);
-        // create buffer of TimeSeries with correct data size
-        std::vector<mio::TimeSeries<double>> ts_copy_buffer(ensemble_results[0]);
-        for (int rank = 0; rank < my_size - 1; rank++) {
-            auto itr = buffer.begin();
-            size_t runs;
+        ensemble_results.resize(num_runs_global);
+        for (size_t i = 0; i < ensemble_results.size(); ++i) {
+            ensemble_results[i].resize(num_nodes, mio::TimeSeries<double>::zero(num_timepoints, num_rows - 1));
+        }
+        
+        //copy root's own runs to the right place
+        for (size_t i = 0; i < num_runs; ++i){
+            ensemble_results[start_run_idx + i] = ensemble_results[i];
+        }
+        for (size_t i = 0; i < (num_runs_global - run_distribution[root]) * num_nodes; ++i){
+            int run_and_node_idx[2];
             MPI_Status status;
-            MPI_Recv(&runs, 1, MIO_MPI_SIZE_T, MPI_ANY_SOURCE, tag, comm, &status);
-            if (runs > num_runs) {
-                buffer.resize(ts_size * num_nodes * runs);
-            }
-            MPI_Recv(buffer.data(), ts_size * num_nodes * runs, MPI_DOUBLE, status.MPI_SOURCE, tag, comm,
-                     MPI_STATUS_IGNORE);
-            // copy the recieved data into ensemble_results via ts_copy_buffer
-            for (size_t i = 0; i < num_runs; i++) {
-                for (size_t j = 0; j < num_nodes; j++) {
-                    std::copy(itr, itr + ts_size, ts_copy_buffer[j].data());
-                    itr += ts_size;
-                }
-                ensemble_results.push_back(ts_copy_buffer);
-            }
+            MPI_Recv(run_and_node_idx, 2, MPI_INT, MPI_ANY_SOURCE, 0, comm, &status);
+            auto run_idx = run_and_node_idx[0];
+            auto node_idx = run_and_node_idx[1];
+            MPI_Recv(ensemble_results[run_idx][node_idx].data(), ts_size, MPI_DOUBLE, status.MPI_SOURCE, 0, comm, MPI_STATUS_IGNORE);
         }
     }
 }
@@ -991,7 +1004,7 @@ void write_sim_graph(std::ostream&& out, Graph& g)
  */
 #ifdef MEMILIO_HAS_MPI
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
-                        const int& num_runs, const size_t& run_id, const int& root = 0,
+                        const std::vector<int>& run_distribution, const int& root = 0,
                         const MPI_Comm& comm = MPI_COMM_WORLD)
 #else
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
@@ -1006,7 +1019,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     int my_rank;
     MPI_Comm_rank(comm, &my_rank);
     // shift run index so that results are saved in different directories for each run
-    auto run_idx = run_id;
+    auto run_idx = std::accumulate(std::begin(run_distribution), std::begin(run_distribution) + my_rank, 0);
+    auto num_runs = run_distribution[my_rank];
 #else
     auto run_idx = size_t(0);
 #endif // MEMILIO_HAS_MPI
@@ -1066,8 +1080,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     BOOST_OUTCOME_TRY(save_result_result);
 
 #ifdef MEMILIO_HAS_MPI
-    gather_results(ensemble_results, root, comm);
-    gather_results(ensemble_params, root, comm);
+    gather_results(ensemble_results, run_distribution, root, comm);
+    gather_results(ensemble_params, run_distribution, root, comm);
     if (my_rank == root) {
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
     }
@@ -1085,18 +1099,15 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
  * @param size total size of the communicator
  * @return unique run id, starting at 0 and inreasing by the returned num_rums with the rank.
  */
-int split_runs(int& num_runs, const int rank, const int size)
+std::vector<int> split_runs(int num_runs, const int size)
 {
-    int local_num_runs = num_runs / size; // int division
-    const int residual = num_runs - local_num_runs * size;
-    if (rank < residual) {
-        num_runs = ++local_num_runs;
-        return local_num_runs * rank;
+    std::vector<int> run_distribution(size, 0);
+    const auto local_num_runs = num_runs / size; // int division
+    const auto residual = num_runs - local_num_runs * size;
+    for (auto rank = 0; rank < size; ++rank) {
+        run_distribution[rank] = rank < residual ? local_num_runs + 1 : local_num_runs;
     }
-    else {
-        num_runs = local_num_runs;
-        return local_num_runs * rank + residual;
-    }
+    return run_distribution;
 }
 
 int main(int argc, char** argv)
@@ -1149,34 +1160,32 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    int run_id = split_runs(num_runs, world_rank, world_size);
-
-    // create a subcommunicator of ranks with at least 1 run
+    //split of communicator for ranks that don't get any runs
     MPI_Comm comm;
-    MPI_Comm_split(MPI_COMM_WORLD, num_runs > 0, world_rank, &comm);
+    int comm_color = world_rank < num_runs ? 1 : 0;
+    MPI_Comm_split(MPI_COMM_WORLD, comm_color, world_rank, &comm);
 
     // continue only with ranks with positive num_runs
-    if (num_runs == 0) {
-        mio::log_info("Rank {} will idle.", world_rank);
+    if (comm_color == 0) {
+        mio::log_warning("Rank {} will idle.", world_rank);
         MPI_Bcast(&return_code, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Finalize();
         return return_code;
     }
 
-    // from now on use subcomm for all computations
     int my_rank, my_size;
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &my_size);
+
+    //distribute runs
+    auto run_distribution = split_runs(num_runs, my_size);
+
     // use last rank as root, since it (potentially) has less runs to compute
     const int my_root = my_size - 1;
 
-    if (my_size < world_size && my_rank == my_root) {
-        mio::log_warning("Too many ranks ({}) for the number of runs ({}). Some ranks will idle.", world_size, my_size);
-    }
-
     // currently, 14899 random numbers are generated on SAVE, and 14898 on LOAD
     const size_t rng_cache_size = 20000;
-    mio::initialize_rng_cache(num_runs * rng_cache_size,
+    mio::initialize_rng_cache(run_distribution[my_rank] * rng_cache_size,
                               {432594781, 856020163, 1893783597, 1080248813, 3012324386, 794391132}, my_root, comm);
     mio::thread_local_rng().chunk_size(rng_cache_size);
 
@@ -1191,7 +1200,7 @@ int main(int argc, char** argv)
     }
 
 #ifdef MEMILIO_HAS_MPI
-    auto result = run(mode, data_dir, save_dir, result_dir, num_runs, run_id, my_root, comm);
+    auto result = run(mode, data_dir, save_dir, result_dir, run_distribution, my_root, comm);
 #else
     auto result = run(mode, data_dir, save_dir, result_dir, num_runs);
 #endif // MEMILIO_HAS_MPI
