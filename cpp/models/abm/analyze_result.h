@@ -1,0 +1,93 @@
+/* 
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*
+* Authors: Khoa Nguyen
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#ifndef ABM_ANALYZE_RESULT_H
+#define ABM_ANALYZE_RESULT_H
+
+#include "abm/simulation.h"
+#include "abm/parameters.h"
+#include "memilio/data/analyze_result.h"
+
+#include <functional>
+#include <vector>
+
+namespace mio
+{
+namespace abm
+{
+/**
+    * @brief computes the p percentile of the parameters for each node.
+    * @param ensemble_result graph of multiple simulation runs
+    * @param p percentile value in open interval (0, 1)
+    * @return p percentile of the parameters over all runs
+    */
+template <class Model>
+std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, double p)
+{
+    assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
+
+    auto num_runs  = ensemble_params.size();
+    auto num_nodes = ensemble_params[0].size();
+    //auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
+    std::vector<AgeGroup> age_groups = {AgeGroup::Age0to4,   AgeGroup::Age5to14,  AgeGroup::Age15to34,
+                                        AgeGroup::Age35to59, AgeGroup::Age60to79, AgeGroup::Age80plus};
+    std::vector<double> single_element_ensemble(num_runs);
+
+    // lamda function that calculates the percentile of a single paramter
+    std::vector<Model> percentile(num_nodes, Model());
+    auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
+        std::vector<double> single_element(num_runs);
+        for (size_t run = 0; run < num_runs; run++) {
+            auto const& params  = ensemble_params[run][n];
+            single_element[run] = get_param(params);
+        }
+        std::sort(single_element.begin(), single_element.end());
+        auto& new_params = get_param(percentile[n]);
+        new_params       = single_element[static_cast<size_t>(num_runs * p)];
+    };
+
+    for (size_t node = 0; node < num_nodes; node++) {
+        for (auto i : age_groups) {
+            //Population
+            for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
+                param_percentil(
+                    node, [ compart, i ](auto&& model) -> auto& {
+                        return model.populations[{i, compart}];
+                    });
+            }
+            // Global infection parameters
+            // param_percentil(
+            //     node, [i](auto&& model) -> auto& {
+            //         return model.parameters.template get<CarrierToInfected>()[{i, i}];
+            //     });
+        }
+        for (size_t run = 0; run < num_runs; run++) {
+            auto const& params           = ensemble_params[run][node];
+            single_element_ensemble[run] = params.populations.get_total();
+        }
+        std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
+    }
+
+    return percentile;
+}
+
+} // namespace abm
+} // namespace mio
+
+#endif 

@@ -385,6 +385,30 @@ using MigrationParameters =
     ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
+using AllParameters =
+    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
+                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
+
+class Parameters : public AllParameters
+{
+public:
+    Parameters(AgeGroup num_agegroups)
+        : AllParameters()
+        , m_num_groups{num_agegroups}
+    {
+    }
+
+    AgeGroup get_num_groups() const
+    {
+        return m_num_groups;
+    }
+
+private:
+    AgeGroup m_num_groups;
+};
+
 } // namespace abm
 } // namespace mio
 #endif

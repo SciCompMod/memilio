@@ -23,6 +23,7 @@
 #include "abm/state.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
+#include "abm/analyze_result.h"
 #include "boost/filesystem.hpp"
 
 namespace fs = boost::filesystem;
@@ -873,35 +874,43 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
+    auto ensemble_params = std::vector<std::vector<mio::abm::Model>>{};
+    ensemble_params.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
     auto save_result_result = mio::IOResult<void>(mio::success()); // Variable informing over successful IO operations
+    std::vector<int> loc_ids;
 
     // Loop over a number of runs
     while (run_idx <= num_runs) {
 
-        // Create the sampled simulation with start time t0.
+        // Create the sampled simulation with start time t0
         auto sim = create_sampled_simulation(t0);
-        // Collect the id of location in world.
-        std::vector<int> loc_ids;
-        for (auto&& locations : sim.get_world().get_locations()) {
-            for (auto location : locations) {
-                loc_ids.push_back(location.get_index());
+        // Collect the id of location in world if it is the first run
+        if (run_idx == 1) {
+            for (auto&& locations : sim.get_world().get_locations()) {
+                for (auto location : locations) {
+                    loc_ids.push_back(location.get_index());
+                }
             }
         }
+
         // Advance the world to tmax
         sim.advance(tmax);
-        // TODO: update result of the simulation to be a vector of location result.
-        auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
-        // Push result of the simulation back to the result vector
-        ensemble_results.push_back(temp_sim_result);
+        sim.get_world();
+
+        ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()});
+        ensemble_params.push_back(std::vector<mio::abm::Model>{mio::abm::Model()});
+        
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
+            save_result_result =
+                save_result_with_params(ensemble_results.back(), ensemble_params.back(), loc_ids, result_dir, run_idx);
         }
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, loc_ids, result_dir, save_single_runs));
     return mio::success();
 }
 

@@ -23,11 +23,63 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
 
 namespace mio
 {
 namespace abm
 {
+
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+{
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+
+public:
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+
+    Model()
+        : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), ParameterSet(AgeGroup::Count))
+    {
+    }
+
+#if USE_DERIV_FUNC
+
+#endif // USE_DERIV_FUNC
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        //obj.add_element("Parameters", parameters);
+        obj.add_element("Populations", populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
+    }
+};
 
 /**
  * run the simulation in discrete steps, evolve the world and report results.
