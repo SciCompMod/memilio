@@ -101,7 +101,7 @@ public:
             auto sim = create_sampled_simulation(sample_graph);
             sim.advance(m_tmax);
 
-            result_processing_function(std::move(sim).get_graph());
+            result_processing_function(std::move(sim).get_graph(), i);
         }
     }
 
@@ -116,7 +116,7 @@ public:
         std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
-        run(sample_graph, [&ensemble_result](auto&& r) {
+        run(sample_graph, [&ensemble_result](auto&& r, auto&& /*i*/) {
             ensemble_result.emplace_back(std::move(r));
         });
 

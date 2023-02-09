@@ -632,12 +632,11 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_result = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
     parameter_study.run(
         [&](auto&& graph) {
             return draw_sample(graph, high);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto&& run_idx) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -652,7 +651,6 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
                                                              county_ids, result_dir, run_idx);
             }
             std::cout << "run " << run_idx << " complete." << std::endl;
-            ++run_idx;
         });
     BOOST_OUTCOME_TRY(save_result_result);
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
