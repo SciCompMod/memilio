@@ -33,8 +33,11 @@ namespace mio
 {
 
 /**
- * models a uniform_random_bit_generator.
- * keeps track of its seeds so they can be logged or set.
+ * Models a uniform_random_bit_generator.
+ * Keeps track of its seeds so they can be logged or set.
+ * The generated sequence can be segmented into blocks that can help to reproduce 
+ * simulations involving random numbers by reliably generating a specific part 
+ * of the sequence or to assign each thread/process a different sequence.
  * @see thread_local_rng for a static instance.
  */
 class RandomNumberGenerator
@@ -52,6 +55,7 @@ public:
     }
     result_type operator()()
     {
+        ++m_num_generated;
         return m_rng();
     }
 
@@ -71,16 +75,57 @@ public:
     {
         return m_seeds;
     }
+
+    /**
+    * Seed this random number generator.
+    * Starts a new random sequence at block 0.
+    * @param seeds at least one seed, e.g., generated using std::random_device. More seeds increase quality.
+    */
     void seed(const std::vector<unsigned int>& seeds)
     {
+        assert(seeds.size() > 0);
         m_seeds = seeds;
         std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
         m_rng.seed(sseq);
+        m_num_generated = 0;
+    }
+
+    /**
+    * Get/Set he the size of blocks of the generated sequence.
+    * @{
+    */
+    void set_block_size(size_t block_size)
+    {
+        m_block_size = block_size;
+    }
+    size_t get_block_size() const
+    {
+        return m_block_size;
+    }
+    /**@}*/
+
+    /**
+    * Forward to block index i.
+    * Skips numbers in the generated sequence up to the beginning of the block.
+    * The next number generated will be element block_size * i of the random sequence.
+    * Operation is O(1) for all tested compilers, but there is no guarantee, may be O(n).
+    * @param i block index. May not be a block that is already passed or started.
+    */
+    void forward_to_block(size_t i)
+    {
+        assert((i > m_num_generated / m_block_size) ||
+               (i == m_num_generated / m_block_size && m_num_generated % m_block_size == 0) &&
+                   "Can't forward to a previous block or one that is started.");
+        auto num_remaining = m_block_size * i - m_num_generated;
+        m_rng.discard(num_remaining);
+        m_num_generated += num_remaining;
     }
 
 private:
     std::vector<unsigned int> m_seeds;
     std::mt19937_64 m_rng;
+    size_t m_block_size = 1'000'000'000;
+    size_t m_num_generated = 0;
 };
 
 /**

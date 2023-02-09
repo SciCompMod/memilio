@@ -22,6 +22,7 @@ set(TESTSOURCES
     test_graph_simulation.cpp
     test_stl_util.cpp
     test_uncertain.cpp
+    test_random_number_generator.cpp
     test_time_series.cpp
     test_abm_household.cpp
     test_abm_location.cpp
