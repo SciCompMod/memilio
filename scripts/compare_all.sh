@@ -70,8 +70,8 @@ compare_numbers() {
 
 compare_h5() {
     # get text file from h5 and omit first line containing the files own path
-    h5dump $1 | tail -n +2 > "$results/1"
-    h5dump $2 | tail -n +2 > "$results/2"
+    h5dump -w 0 -m "%.14g" $1 | tail -n +2 > "$results/1"
+    h5dump -w 0 -m "%.14g" $2 | tail -n +2 > "$results/2"
     diff -qs "$results/1" "$results/2" >> $3
     different=$?
     echo "  with 1: $1" >> $3
