@@ -21,7 +21,6 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include "abm/state.h"
-#include "abm/parameters.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "abm/analyze_result.h"
