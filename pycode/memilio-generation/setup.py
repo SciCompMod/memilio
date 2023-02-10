@@ -31,6 +31,6 @@ setup(
     extras_require={'dev': []},
     long_description='',
     test_suite='memilio.generation_test',
-    package_data={'memilio': [
-        '../_skbuild/*/cmake-build/compile_commands.json', 'tools/config.json']},
+    package_data={'memilio.generation': [
+        '../../_skbuild/*/cmake-build/compile_commands.json', '../tools/config.json']},
 )

@@ -37,7 +37,7 @@ def try_set_libclang_path(path: str) -> None:
     @param path Path to the library files of libclang. Can be an empty string.
     """
     # Check if path was set in config. If not, try to get it with cmd.
-    if (not path):
+    if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
         clang_cmd = ["clang", '-print-file-name=']
         clang_cmd_result = subprocess.check_output(clang_cmd)
         path, dirname = os.path.split(clang_cmd_result)
