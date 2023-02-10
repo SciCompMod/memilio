@@ -31,7 +31,7 @@ The package provides an example script on how to use it in `memilio/tools`. The 
 
 Before running the example you have to do these steps of setup:
 - Change [config.json.txt](./memilio/tools/config.json.txt). You can find a documentation in the ScannerConfig class.
-- Look into the parameters set in __post_init__() of the [ScannerConfig class](./memilio/generation/scanner_config.py), if they match up with the cpp-class names.
+- Check if the parameters set in __post_init__() of the [ScannerConfig class](./memilio/generation/scanner_config.py) match with the cpp-class names.
 
 Example:
 After processing as described in the previous paragraph, run the example with the command (path according to the current folder):

@@ -59,7 +59,7 @@ class Scanner:
 
     def create_ast(self: Self) -> None:
         """
-        Create an abstract syntax tree for the main model.cpp file with an corresponding CompilationDatabase. 
+        Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase. 
         A compile_commands.json is required (automatically generated in the build process).
         """
         idx = Index.create()
