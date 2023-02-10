@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -31,9 +31,9 @@ namespace mio
 namespace abm
 {
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, InfectionParameters>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, InfectionParameters>;
 
 public:
     Model(const Populations& pop, const ParameterSet& params)
@@ -41,14 +41,15 @@ public:
     {
     }
 
+    Model(InfectionParameters params)
+        : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), params)
+    {
+    }
+
     Model()
         : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), ParameterSet(AgeGroup::Count))
     {
     }
-
-#if USE_DERIV_FUNC
-
-#endif // USE_DERIV_FUNC
 
     /**
      * serialize this. 
@@ -104,7 +105,8 @@ public:
      */
     Simulation(TimePoint t)
         : Simulation(t, World())
-    {}
+    {
+    }
 
     /** 
      * Run the simulation from the current time to tmax.
@@ -130,7 +132,7 @@ public:
     {
         return m_world;
     }
-    const World& get_world() const 
+    const World& get_world() const
     {
         return m_world;
     }

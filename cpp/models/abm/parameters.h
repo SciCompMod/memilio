@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
@@ -391,11 +391,19 @@ using AllParameters =
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
-class Parameters : public AllParameters
+class InfectionParameters : public GlobalInfectionParameters
 {
 public:
-    Parameters(AgeGroup num_agegroups)
-        : AllParameters()
+
+    InfectionParameters(GlobalInfectionParameters params, AgeGroup num_agegroups)
+        : GlobalInfectionParameters()
+        , m_num_groups{num_agegroups}
+        , m_params(params)
+    {
+    }
+
+    InfectionParameters(AgeGroup num_agegroups)
+        : GlobalInfectionParameters()
         , m_num_groups{num_agegroups}
     {
     }
@@ -407,6 +415,7 @@ public:
 
 private:
     AgeGroup m_num_groups;
+    GlobalInfectionParameters m_params;
 };
 
 } // namespace abm

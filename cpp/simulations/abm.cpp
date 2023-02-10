@@ -21,6 +21,7 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include "abm/state.h"
+#include "abm/parameters.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "abm/analyze_result.h"
@@ -896,11 +897,11 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
         // Advance the world to tmax
         sim.advance(tmax);
-        sim.get_world();
 
+        ensemble_params.push_back(std::vector<mio::abm::Model>{mio::abm::Model(mio::abm::InfectionParameters(
+            sim.get_world().get_global_infection_parameters(), mio::abm::AgeGroup::Count))});
         ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()});
-        ensemble_params.push_back(std::vector<mio::abm::Model>{mio::abm::Model()});
-        
+
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");

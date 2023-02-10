@@ -42,9 +42,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 {
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
-    auto num_runs  = ensemble_params.size();
-    auto num_nodes = ensemble_params[0].size();
-    //auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
+    auto num_runs                    = ensemble_params.size();
+    auto num_nodes                   = ensemble_params[0].size();
     std::vector<AgeGroup> age_groups = {AgeGroup::Age0to4,   AgeGroup::Age5to14,  AgeGroup::Age15to34,
                                         AgeGroup::Age35to59, AgeGroup::Age60to79, AgeGroup::Age80plus};
     std::vector<double> single_element_ensemble(num_runs);
@@ -63,19 +62,74 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
-        for (auto i : age_groups) {
+        for (auto age_group : age_groups) {
             //Population
             for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
                 param_percentil(
-                    node, [ compart, i ](auto&& model) -> auto& {
-                        return model.populations[{i, compart}];
+                    node, [ compart, age_group ](auto&& model) -> auto& {
+                        return model.populations[{age_group, compart}];
                     });
             }
             // Global infection parameters
-            // param_percentil(
-            //     node, [i](auto&& model) -> auto& {
-            //         return model.parameters.template get<CarrierToInfected>()[{i, i}];
-            //     });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<IncubationPeriod>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters
+                        .template get<SusceptibleToExposedByCarrier>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters
+                        .template get<SusceptibleToExposedByInfected>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<CarrierToInfected>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<CarrierToRecovered>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<InfectedToRecovered>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<InfectedToSevere>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<SevereToCritical>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<SevereToRecovered>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalToDead>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<CriticalToRecovered>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters
+                        .template get<RecoveredToSusceptible>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<DetectInfection>()[{age_group, VaccinationState::Count}];
+                });
+            param_percentil(
+                node, [age_group](auto&& model) -> auto& {
+                    return model.parameters.template get<MaskProtection>()[{age_group}];
+                });
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];
@@ -90,4 +144,4 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 } // namespace abm
 } // namespace mio
 
-#endif 
+#endif
