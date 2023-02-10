@@ -24,7 +24,6 @@
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
 #include "mobility/meta_mobility_instant.h"
-#include "mobility/meta_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"

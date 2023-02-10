@@ -24,7 +24,6 @@
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/mobility/meta_mobility_instant.h"
-#include "memilio/mobility/meta_mobility_instant.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/utils/stl_util.h"
@@ -476,7 +475,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
     const auto& read_function_edges = mio::read_mobility_plain;
-    const auto& node_id_function    = mio::get_county_ids;
+    const auto& node_id_function    = mio::get_node_ids;
 
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
@@ -488,7 +487,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(
         set_node_function(params, start_date, end_date, data_dir,
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
-                          0, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                          true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
                                         read_function_edges));

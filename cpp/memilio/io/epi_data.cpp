@@ -41,7 +41,7 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county)
     std::vector<int> id;
     id.reserve(population_data.size());
     for (auto&& entry : population_data) {
-        if (node_id == 0) {
+        if (is_county) {
             if (entry.county_id) {
                 id.push_back(entry.county_id->get());
             }
@@ -49,7 +49,7 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county)
                 return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
             }
         }
-        else if (node_id == 1) {
+        else {
             if (entry.district_id) {
                 id.push_back(entry.district_id->get());
             }
@@ -57,41 +57,12 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county)
                 return failure(StatusCode::InvalidValue, "Population data file is missing district ids.");
             }
         }
-        else {
-            return failure(StatusCode::InvalidValue, "Invalid Node_Id");
-        }
     }
 
     //remove duplicate county ids
     id.erase(std::unique(id.begin(), id.end()), id.end());
     return success(id);
 }
-
-IOResult<std::vector<int>> get_county_ids(const std::string& path, int node_value)
-{
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path));
-
-    std::vector<int> id;
-    id.reserve(population_data.size());
-
-    if (node_value == 0) {
-        for (auto&& entry : population_data) {
-            if (entry.county_id) {
-                id.push_back(entry.county_id->get());
-            }
-            else {
-                return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
-            }
-        }
-    }
-    else {
-        return failure(StatusCode::InvalidValue, "node value does not belong to county ids.");
-    }
-    //remove duplicate county ids
-    id.erase(std::unique(id.begin(), id.end()), id.end());
-    return success(id);
-}
-
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

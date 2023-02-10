@@ -146,13 +146,6 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
 }
 
 /**
- * @brief returns a vector with the ids of all German counties.
- * @param path directory to population data
- * @return list of county ids.
- */
-IOResult<std::vector<int>> get_county_ids(const std::string& path, int node_value);
-
-/**
  * Represents entries in a DIVI data file.
  * Number of persons in the ICU in a region on a specific date.
  * Region can be a county, a state, or a country. If it is a country, both
@@ -371,11 +364,11 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 
 /**
  * @brief returns a vector with the ids of all nodes.
- * @param path directory to population data
- * @param node_id integer specifying whether the nodes should be counties or districts
+ * @param[in] path directory to population data
+ * @param[in] is_county boolean specifying whether the nodes should be counties or districts
  * @return list of node ids.
  */
-IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id);
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county);
 
 /**
  * Represents an entry in a vaccination data file.
