@@ -35,7 +35,7 @@ const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
 const std::array<const char*, 6> VaccinationDataEntry::age_group_names = {"0-4",   "5-14",  "15-34",
                                                                           "35-59", "60-79", "80-99"};
 
-IOResult<std::vector<int>> get_node_ids(const std::string& path, int node_id)
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county)
 {
     BOOST_OUTCOME_TRY(population_data, read_population_data(path));
     std::vector<int> id;

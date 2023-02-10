@@ -259,7 +259,7 @@ private:
  * @param[in] num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
-template <class TestNTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
+template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
 IOResult<void>
 set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
@@ -281,7 +281,7 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
         auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
 
         //local parameters
-        auto& tnt_value = nodes[node_idx].parameters.template get<TestNTrace>();
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
         tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 

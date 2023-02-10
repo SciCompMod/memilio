@@ -95,7 +95,6 @@ Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<
 get_holidays(StateId state, Date start_date, Date end_date);
 
 } // namespace regions
-
 } // namespace mio
 
 #endif //MIO_EPI_REGIONS_H

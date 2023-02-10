@@ -20,7 +20,6 @@
 
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/geography/regions.h"
-#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
