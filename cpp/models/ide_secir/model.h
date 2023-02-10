@@ -52,6 +52,8 @@ public:
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
           const Pa& Parameterset_init = Pa());
 
+    void initialize();
+
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
     *
@@ -83,11 +85,15 @@ public:
      */
     void print_compartments() const;
 
+    TimeSeries<ScalarType> const& get_flows();
+
+    ScalarType get_timestep();
+
 private:
     /**
     * @brief Computes number of Susceptibles for the current last time in m_SECIR.
     *
-    * Number is computet using previous number of Susceptibles and the force of infection (also from previous timestep).
+    * Number is computed using previous number of Susceptibles and the force of infection (also from previous timestep).
     * Number is stored at the matching index in m_SECIR.
     */
     void compute_susceptibles();

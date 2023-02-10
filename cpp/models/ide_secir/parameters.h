@@ -42,7 +42,7 @@ namespace isecir
 */
 struct DelayDistribution {
     DelayDistribution()
-        : xright{6.0}
+        : xright{2.0}
     {
     }
     DelayDistribution(ScalarType init_x_right)
@@ -50,9 +50,9 @@ struct DelayDistribution {
     {
     }
 
-    ScalarType Distribution(ScalarType tau)
+    ScalarType Distribution(ScalarType infection_age)
     {
-        return smoother_cosine(tau, 0.0, xright, 1.0, 0.0);
+        return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
     }
 
     ScalarType get_xright()

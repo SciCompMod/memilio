@@ -42,6 +42,8 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_ini
     }
     m_SECIR.add_time_point(0);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = Dead0;
+
+    initialize();
 }
 
 void Model::compute_susceptibles()
@@ -237,11 +239,11 @@ void Model::compartments_current_timestep_ECIHU()
                         (int)InfectionTransitions::InfectedCriticalToRecovered);
 }
 
-TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
+void Model::initialize()
 {
-    std::cout << "Starting simulation:  \n";
     // compute S(0) and phi(0) as initial values for discretization scheme
     update_forceofinfection();
+    std::cout << "Force of inf: " << m_forceofinfection << "\n";
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
 
@@ -257,6 +259,11 @@ TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedSevere)] -
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedCritical)] -
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
+}
+
+TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
+{
+    std::cout << "Starting simulation:  \n";
 
     // for every time step:
     while ((int)m_transitions.get_last_time() < t_max) {
@@ -312,6 +319,16 @@ void Model::print_compartments() const
         }
         std::cout << "\n" << std::endl;
     }
+}
+
+TimeSeries<ScalarType> const& Model::get_flows()
+{
+    return m_transitions;
+}
+
+ScalarType Model::get_timestep()
+{
+    return m_dt;
 }
 
 } // namespace isecir

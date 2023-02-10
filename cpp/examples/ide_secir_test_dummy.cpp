@@ -42,10 +42,10 @@ int main()
 
     // add time points for initialization
     Vec vec_init(num_transitions);
-    vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-    init.add_time_point(-10, vec_init);
+    vec_init << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
+    init.add_time_point(-1, vec_init);
     while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
+        init.add_time_point(init.get_last_time() + dt, init.get_last_value());
     }
 
     // Initialize model.
@@ -59,16 +59,20 @@ int main()
     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(1);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1);
 
     // Carry out simulation.
-    mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
+    mio::TimeSeries<ScalarType> compartments = model.simulate(1);
 
     model.print_transitions();
     std::cout << "\n" << std::endl;
     model.print_compartments();
+
+    // compare compartments[0] (after initialization),
+    // compartments[1] and transitions [1] (after one simulation step)
+    // if these are correct then the functions used to obtain should be correct as well
 }
