@@ -26,9 +26,9 @@ int main()
     // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
 
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days. 
+    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     infection_params.get<mio::abm::IncubationPeriod>() = 4.;
-    
+
     // Create the world with infection parameters.
     auto world = mio::abm::World(infection_params);
 
@@ -43,32 +43,28 @@ int main()
     auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
     parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
-    
-    // Two-person household with one parent and one child. 
+
+    // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto twoPersonHousehold_full = mio::abm::Household();
-        twoPersonHousehold_full.add_members(child, 1);
-        twoPersonHousehold_full.add_members(parent, 1);
-        twoPersonHousehold_group.add_households(twoPersonHousehold_full, 2);  
-    }
+    auto twoPersonHousehold_full  = mio::abm::Household();
+    twoPersonHousehold_full.add_members(child, 1);
+    twoPersonHousehold_full.add_members(parent, 1);
+    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
     add_household_group_to_world(world, twoPersonHousehold_group);
 
-    // Three-person household with two parent and one child. 
+    // Three-person household with two parent and one child.
     auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto threePersonHousehold_full = mio::abm::Household();
-        threePersonHousehold_full.add_members(child, 1);
-        threePersonHousehold_full.add_members(parent, 2);
-        threePersonHousehold_group.add_households(threePersonHousehold_full, 2);
-    }
+    auto threePersonHousehold_full  = mio::abm::Household();
+    threePersonHousehold_full.add_members(child, 1);
+    threePersonHousehold_full.add_members(parent, 2);
+    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
 
     // Assign an infection state to each person.
-    // The infection states are chosen randomly. 
+    // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        uint32_t state = rand()%(uint32_t)mio::abm::InfectionState::Count;
+        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
         world.set_infection_state(person, (mio::abm::InfectionState)state);
     }
 
@@ -87,7 +83,7 @@ int main()
     // At every school, the maximum contacts are 20.
     auto school = world.add_location(mio::abm::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-     // At every workplace, maximum contacts are 10.
+    // At every workplace, maximum contacts are 10.
     auto work = world.add_location(mio::abm::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
 
@@ -97,7 +93,7 @@ int main()
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto test_type        = mio::abm::AntigenTest();
-    auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
+    auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
     auto testing_scheme_work =
@@ -121,13 +117,13 @@ int main()
         }
     }
 
-    // During the lockdown, social events are closed for 90% of people. 
+    // During the lockdown, social events are closed for 90% of people.
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
-    auto t0         = mio::abm::TimePoint(0);
-    auto tmax       = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim = mio::abm::Simulation(t0, std::move(world));
+    auto t0   = mio::abm::TimePoint(0);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto sim  = mio::abm::Simulation(t0, std::move(world));
     sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.
