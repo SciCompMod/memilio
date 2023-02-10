@@ -885,7 +885,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
         // Create the sampled simulation with start time t0
         auto sim = create_sampled_simulation(t0);
-        // Collect the id of location in world if it is the first run
+        // As the locations stay the same, collect the id of location in world only if it is the first run
         if (run_idx == 1) {
             for (auto&& locations : sim.get_world().get_locations()) {
                 for (auto location : locations) {

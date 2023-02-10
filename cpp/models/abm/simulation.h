@@ -38,18 +38,15 @@ class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, In
 public:
     Model(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
-    {
-    }
+    {}
 
     Model(InfectionParameters params)
         : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), params)
-    {
-    }
+    {}
 
     Model()
         : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), ParameterSet(AgeGroup::Count))
-    {
-    }
+    {}
 
     /**
      * serialize this. 
@@ -105,8 +102,7 @@ public:
      */
     Simulation(TimePoint t)
         : Simulation(t, World())
-    {
-    }
+    {}
 
     /** 
      * Run the simulation from the current time to tmax.

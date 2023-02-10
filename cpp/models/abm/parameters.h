@@ -385,12 +385,6 @@ using MigrationParameters =
     ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
-using AllParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
-                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
-
 class InfectionParameters : public GlobalInfectionParameters
 {
 public:
@@ -399,14 +393,12 @@ public:
         : GlobalInfectionParameters()
         , m_num_groups{num_agegroups}
         , m_params(params)
-    {
-    }
+    {}
 
     InfectionParameters(AgeGroup num_agegroups)
         : GlobalInfectionParameters()
         , m_num_groups{num_agegroups}
-    {
-    }
+    {}
 
     AgeGroup get_num_groups() const
     {
