@@ -59,7 +59,7 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county)
         }
     }
 
-    //remove duplicate county ids
+    //remove duplicate node ids
     id.erase(std::unique(id.begin(), id.end()), id.end());
     return success(id);
 }
