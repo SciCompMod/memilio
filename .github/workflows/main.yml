@@ -214,7 +214,7 @@ jobs:
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
         shell: pwsh
-        run: gh run download -p test-py-coverage-reports-* -D ./coverage-python
+        run: gh run download -p test-py-coverage-reports-* -D coverage-python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
@@ -239,7 +239,7 @@ jobs:
           sudo apt-get -qq -y install git
       - name: Download python coverage report
         shell: pwsh
-        run: gh run download -p test-py-coverage-reports-*
+        run: gh run download -p test-py-coverage-reports-* -D coverage-python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
@@ -253,7 +253,7 @@ jobs:
           path: docs/html
       - name: Download pylint report
         shell: pwsh
-        run: gh run download -p pylint-report-*
+        run: gh run download -p pylint-report-* -D pycode/build_pylint
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare basic Pages sites
@@ -268,13 +268,13 @@ jobs:
       - name: Prepare pylint reports
         run: |
           mkdir -p public/pylint
-          cp pycode/build_pylint/pylint.html public/pylint/index.html
+          cp pycode/build_pylint/** public/pylint/
       - name: Prepare coverage reports
         run: |
           mkdir -p public/coverage
           mkdir -p public/coverage/cpp
           mkdir -p public/coverage/python
-          cp -r coverage_python/* public/coverage/python/
+          cp -r coverage-python/test-py-coverage-reports-*/ public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
         uses: actions/upload-artifact@v3
