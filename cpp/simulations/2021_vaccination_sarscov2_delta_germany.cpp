@@ -19,13 +19,14 @@
 */
 
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/utils/date.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -509,151 +510,6 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
 }
 
 /**
- * Adds county nodes to graph.
- * Reads list counties and populations from files in the data directory. 
- * @param params Parameters that are shared between all nodes.
- * @param start_date start date of the simulation.
- * @param end_date end date of the simulation.
- * @param data_dir data directory.
- * @param params_graph graph object that the nodes will be added to.
- * @returns any io errors that happen during reading of the files.
- */
-mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Date start_date, mio::Date end_date,
-                              const fs::path& data_dir,
-                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
-{
-    namespace de = mio::regions::de;
-
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<mio::osecirvvs::Model> counties(county_ids.size(),
-                                                mio::osecirvvs::Model((int)size_t(params.get_num_groups())));
-    for (auto& county : counties) {
-        county.parameters = params;
-    }
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
-    auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(mio::osecirvvs::read_input_data_county(
-        counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
-        (data_dir / "pydata" / "Germany").string(), mio::get_offset_in_days(end_date, start_date)));
-    //set_synthetic_population_data(counties);
-
-    for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
-
-        //local parameters
-        auto tnt_capacity = counties[county_idx].populations.get_total() * 1.43 / 100000.;
-        assign_uniform_distribution(counties[county_idx].parameters.get<mio::osecirvvs::TestAndTraceCapacity>(),
-                                    0.8 * tnt_capacity, 1.2 * tnt_capacity);
-
-        //holiday periods (damping set globally, see set_npis)
-        auto holiday_periods =
-            de::get_holidays(de::get_state_id(de::CountyId(county_ids[county_idx])), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.get<mio::osecirvvs::ContactPatterns>();
-        contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-        std::transform(
-            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-            });
-
-        //uncertainty in populations
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = mio::Index<mio::osecirvvs::InfectionState>(0); j < mio::osecirvvs::InfectionState::Count;
-                 ++j) {
-                auto& compartment_value = counties[county_idx].populations[{i, j}];
-                assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
-                                            1.1 * double(compartment_value));
-            }
-        }
-
-        params_graph.add_node(county_ids[county_idx], counties[county_idx]);
-    }
-    return mio::success();
-}
-
-/**
- * Adds edges to graph.
- * Edges represent commuting and other mobility between counties.
- * Reads mobility from files in the data directory.
- * @param data_dir data directory.
- * @param params_graph graph object that the nodes will be added to.
- * @returns any io errors that happen during reading of the files.
- */
-mio::IOResult<void> set_edges(const fs::path& data_dir,
-                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
-{
-    // mobility between nodes
-    BOOST_OUTCOME_TRY(mobility_data_commuter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(mobility_data_twitter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
-    if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Mobility matrices do not have the correct size. You may need to run "
-                            "transformMobilitydata.py from pycode memilio epidata package.");
-    }
-
-    auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                   mio::osecirvvs::InfectionState::ExposedNaive,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                   mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                   mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
-    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
-        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
-            auto& populations = params_graph.nodes()[county_idx_i].property.populations;
-            // mobility coefficients have the same number of components as the contact matrices.
-            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = mio::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
-
-            //commuters
-            auto working_population = 0.0;
-            auto min_commuter_age   = mio::AgeGroup(2);
-            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
-            }
-            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
-                                     working_population; //data is absolute numbers, we need relative
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_index = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
-                }
-            }
-            //others
-            auto total_population = populations.get_total();
-            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
-                                 total_population; //data is absolute numbers, we need relative
-            for (auto age = mio::AgeGroup(0); age < populations.size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_idx = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
-                }
-            }
-
-            //only add edges with mobility above thresholds for performance
-            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
-            if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
-            }
-        }
-    }
-
-    return mio::success();
-}
-
-/**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
  * @param start_date start date of the simulation.
@@ -662,8 +518,8 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
-create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
-             bool long_time)
+get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
+          bool long_time)
 {
     const auto summer_date = late ? mio::Date(2021, 8, 1) : mio::Date(2021, 7, 1);
 
@@ -676,11 +532,41 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));
 
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 1.43 / 100000.;
+    auto migrating_compartments  = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+                                    mio::osecirvvs::InfectionState::ExposedNaive,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
-    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
-    BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
+    const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model>;
+    const auto& read_function_edges = mio::read_mobility_plain;
+    const auto& node_id_function    = mio::get_county_ids;
+
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity, mio::osecirvvs::ContactPatterns, mio::osecirvvs::Model,
+                       mio::MigrationParameters, mio::osecirvvs::Parameters, decltype(read_function_nodes),
+                       decltype(node_id_function)>;
+    const auto& set_edge_function =
+        mio::set_edges<ContactLocation, mio::osecirvvs::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+                       mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, data_dir, params_graph, read_function_nodes,
+                                        node_id_function, scaling_factor_infected, scaling_factor_icu,
+                                        tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+                                        read_function_edges));
 
     return mio::success(params_graph);
 }
@@ -724,7 +610,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
+        BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }

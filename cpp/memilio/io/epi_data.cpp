@@ -24,6 +24,7 @@
 
 namespace mio
 {
+
 const std::array<const char*, 6> ConfirmedCasesDataEntry::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
                                                                              "A35-A59", "A60-A79", "A80+"};
 

@@ -25,7 +25,7 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
@@ -81,8 +81,8 @@ public:
     double num_deaths;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
@@ -93,8 +93,8 @@ public:
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id      = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return apply(
             io,
             [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid,
@@ -144,6 +144,13 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
 }
 
 /**
+ * @brief returns a vector with the ids of all German counties.
+ * @param path directory to population data
+ * @return list of county ids.
+ */
+IOResult<std::vector<int>> get_county_ids(const std::string& path);
+
+/**
  * Represents entries in a DIVI data file.
  * Number of persons in the ICU in a region on a specific date.
  * Region can be a county, a state, or a country. If it is a country, both
@@ -154,8 +161,8 @@ class DiviEntry
 public:
     double num_icu;
     Date date;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
@@ -163,8 +170,8 @@ public:
         auto obj       = io.expect_object("DiviEntry");
         auto num_icu   = obj.expect_element("ICU", Tag<double>{});
         auto date      = obj.expect_element("Date", Tag<StringDate>{});
-        auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id  = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return apply(
             io,
             [](auto&& ni, auto&& d, auto&& sid, auto&& cid) {
@@ -222,15 +229,15 @@ public:
     static const std::array<const char*, 11> age_group_names;
 
     CustomIndexArray<double, AgeGroup> population;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
         auto obj       = io.expect_object("PopulationDataEntry");
-        auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id  = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         std::vector<IOResult<double>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
@@ -357,13 +364,6 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 }
 
 /**
- * @brief returns a vector with the ids of all German counties.
- * @param path directory to population data
- * @return list of county ids.
- */
-IOResult<std::vector<int>> get_county_ids(const std::string& path);
-
-/**
  * Represents an entry in a vaccination data file.
  */
 class VaccinationDataEntry
@@ -374,8 +374,8 @@ public:
     double num_vaccinations_completed;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
@@ -384,8 +384,8 @@ public:
         auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
         auto date                       = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
-        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto state_id                   = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         return mio::apply(
             io,
             [](auto nf, auto d, auto&& a_str, auto sid, auto cid) -> IOResult<VaccinationDataEntry> {
