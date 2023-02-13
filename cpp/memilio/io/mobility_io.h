@@ -23,7 +23,8 @@
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/io/json_serializer.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include <iostream>
 #include <fstream>
 #include <string>
