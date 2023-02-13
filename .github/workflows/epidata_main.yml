@@ -11,10 +11,10 @@ on:
     paths:
       - '**/memilio-epidata/**'
       #- '.github/**' disable only for testing
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - '**/memilio-epidata/**'
+  #pull_request:
+  #  types: [opened, reopened, synchronize, ready_for_review]
+  #  paths:
+  #    - '**/memilio-epidata/**'
       #- '.github/**'
   workflow_dispatch:
 

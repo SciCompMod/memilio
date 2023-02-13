@@ -214,7 +214,7 @@ jobs:
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
         shell: pwsh
-        run: gh run download -p test-py-coverage-reports-* -D coverage-python
+        run: gh run download -p test-py-coverage-reports-* -D coverage_python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
@@ -225,7 +225,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           directory: ./coverage_python
-          files: ./coverage-python/**,./coverage.info
+          files: ./coverage_python/**,./coverage.info
           verbose: true
 
   pages:
@@ -240,7 +240,7 @@ jobs:
           sudo apt-get -qq -y install git
       - name: Download python coverage report
         shell: pwsh
-        run: gh run download -p test-py-coverage-reports-* -D coverage-python
+        run: gh run download -p test-py-coverage-reports-* -D coverage_python
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download cpp coverage report
@@ -275,7 +275,7 @@ jobs:
           mkdir -p public/coverage
           mkdir -p public/coverage/cpp
           mkdir -p public/coverage/python
-          cp -r coverage-python/test-py-coverage-reports-*/ public/coverage/python/
+          cp -r coverage_python/test-py-coverage-reports-*/ public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
         uses: actions/upload-artifact@v3
