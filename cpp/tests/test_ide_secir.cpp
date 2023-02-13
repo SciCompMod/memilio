@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-//#include "load_test_data.h"
+#include "load_test_data.h"
 #include "ide_secir/model.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
@@ -45,10 +45,10 @@ protected:
 
         Vec vec_init(num_transitions);
         mio::TimeSeries<ScalarType> init(num_transitions);
-        vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+        vec_init << 25.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
         init.add_time_point(-10.0, vec_init);
         while (init.get_last_time() < 0) {
-            vec_init *=1.01;
+            vec_init *= 1.01;
             init.add_time_point(init.get_last_time() + dt, vec_init);
         }
 
@@ -98,6 +98,21 @@ TEST_F(ModelTest, checkPopulationConservation)
     }
 
     EXPECT_NEAR(num_persons_after,num_persons_before,1e-10);
+}
+
+TEST_F(ModelTest, compareWithPreviousRun)
+{
+    auto compare = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
+    mio::TimeSeries<ScalarType> compartments = model->simulate(5);
+
+    ASSERT_EQ(compare.size(), static_cast<size_t>(compartments.get_num_time_points()));
+    for (size_t i = 0; i < compare.size(); i++) {
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(compartments.get_num_elements()) + 1) << "at row " << i;
+        ASSERT_NEAR(compartments.get_time(i), compare[i][0], 1e-7) << "at row " << i;
+        for (size_t j = 1; j < compare[i].size(); j++) {
+            ASSERT_NEAR(compartments.get_value(i)[j - 1], compare[i][j], 1e-7) << " at row " << i;
+        }
+    }
 }
 
 TEST_F(ModelTest, checkPrivateSimulationFunctions)

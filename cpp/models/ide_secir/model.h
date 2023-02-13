@@ -84,27 +84,20 @@ public:
     void print_compartments() const;
 
     /**
+     * @brief Getter for the transitions.
+     * 
+     * @return TimeSeries with stored transitions calculated in the simulation.
+     */
+    TimeSeries<ScalarType> const& get_transitions();
+
+private:
+    /**
      * @brief Calculate the number of individuals in each compartment for time 0.
      * 
      * Initial transitions are used to calculate the initial compartment sizes.
      */
     void initialize();
 
-    /**
-     * @brief Getter for the transitions.
-     * 
-     * @return TimeSeries with stored transitions calculated in the simulation.
-     */
-    TimeSeries<ScalarType> const& get_transitions();
- 
-    /**
-     * @brief Getter for the timestep dt.
-     * 
-     * @return timestep dt.
-     */
-    ScalarType get_timestep();
-
-private:
     /**
     * @brief Computes number of Susceptibles for the current last time in m_SECIR.
     *

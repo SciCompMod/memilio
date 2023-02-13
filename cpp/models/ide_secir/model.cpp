@@ -315,7 +315,7 @@ void Model::print_compartments() const
     for (Eigen::Index i = 0; i < m_SECIR.get_num_time_points(); ++i) {
         std::cout << m_SECIR.get_time(i);
         for (Eigen::Index j = 0; j < m_SECIR.get_num_elements(); ++j) {
-            std::cout << "  |  " << m_SECIR[i][j];
+            std::cout << "  |  "  << std::fixed<<std::setprecision(4) <<m_SECIR[i][j];
         }
         std::cout << "\n" << std::endl;
     }
@@ -324,11 +324,6 @@ void Model::print_compartments() const
 TimeSeries<ScalarType> const& Model::get_transitions()
 {
     return m_transitions;
-}
-
-ScalarType Model::get_timestep()
-{
-    return m_dt;
 }
 
 } // namespace isecir

@@ -42,7 +42,7 @@ int main()
 
     // add time points for initialization
     Vec vec_init(num_transitions);
-    vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+    vec_init << 25.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
     init.add_time_point(-10, vec_init);
     while (init.get_last_time() < 0) {
         vec_init *=1.01;
