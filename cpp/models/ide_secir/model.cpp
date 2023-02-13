@@ -42,8 +42,6 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_ini
     }
     m_SECIR.add_time_point(0);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = Dead0;
-
-    initialize();
 }
 
 void Model::compute_susceptibles()
@@ -264,6 +262,7 @@ void Model::initialize()
 TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
 {
     std::cout << "Starting simulation:  \n";
+    initialize();
 
     // for every time step:
     while ((int)m_transitions.get_last_time() < t_max) {
@@ -302,7 +301,7 @@ void Model::print_transitions() const
     for (Eigen::Index i = 0; i < m_transitions.get_num_time_points(); ++i) {
         std::cout << m_transitions.get_time(i);
         for (Eigen::Index j = 0; j < m_transitions.get_num_elements(); ++j) {
-            std::cout << "  |  "<< std::fixed<<std::setprecision(8)  << m_transitions[i][j];
+            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_transitions[i][j];
         }
         std::cout << "\n" << std::endl;
     }
@@ -315,7 +314,7 @@ void Model::print_compartments() const
     for (Eigen::Index i = 0; i < m_SECIR.get_num_time_points(); ++i) {
         std::cout << m_SECIR.get_time(i);
         for (Eigen::Index j = 0; j < m_SECIR.get_num_elements(); ++j) {
-            std::cout << "  |  "  << std::fixed<<std::setprecision(4) <<m_SECIR[i][j];
+            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_SECIR[i][j];
         }
         std::cout << "\n" << std::endl;
     }
