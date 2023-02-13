@@ -365,10 +365,10 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 /**
  * @brief returns a vector with the ids of all nodes.
  * @param[in] path directory to population data
- * @param[in] is_county boolean specifying whether the nodes should be counties or districts
+ * @param[in] create_node_for_county boolean specifying whether the nodes should be counties or districts
  * @return list of node ids.
  */
-IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_county);
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool create_node_for_county);
 
 /**
  * Represents an entry in a vaccination data file.

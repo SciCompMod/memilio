@@ -249,7 +249,7 @@ private:
  * @param[in] end_data End date for which the data should be read.
  * @param[in] data_dir Directory that contains the data files.
  * @param[in] population_data_path Path to json file containing the population data.
- * @param[in] node_county Specifies whether the node ids should be county ids (true) or district ids (false).
+ * @param[in] create_node_for_county Specifies whether the node ids should be county ids (true) or district ids (false).
  * @param[in, out] params_graph Graph whose nodes are set by the function.
  * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
  * @param[in] node_func Function that returns the county ids.
@@ -261,13 +261,14 @@ private:
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
           class ReadFunction, class NodeIdFunction>
-IOResult<void>
-set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-          const std::string& population_data_path, bool node_county, Graph<Model, MigrationParams>& params_graph,
-          ReadFunction&& read_func, NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
-          double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0, bool export_time_series = false)
+IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                         const std::string& population_data_path, bool create_node_for_county,
+                         Graph<Model, MigrationParams>& params_graph, ReadFunction&& read_func,
+                         NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                         double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                         bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, node_county));
+    BOOST_OUTCOME_TRY(node_ids, node_func(population_data_path, create_node_for_county));
     std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
     for (auto& node : nodes) {
         node.parameters = params;
@@ -285,9 +286,8 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
         tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
-        //node_value 0 is to create nodes for County IDs and node value 1 to create nodes for District IDs
         auto id = 0;
-        if (node_county) {
+        if (create_node_for_county) {
             id = int(regions::CountyId(node_ids[node_idx]));
         }
         else {
