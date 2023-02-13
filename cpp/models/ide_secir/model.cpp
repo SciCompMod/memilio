@@ -302,7 +302,7 @@ void Model::print_transitions() const
     for (Eigen::Index i = 0; i < m_transitions.get_num_time_points(); ++i) {
         std::cout << m_transitions.get_time(i);
         for (Eigen::Index j = 0; j < m_transitions.get_num_elements(); ++j) {
-            std::cout << "  |  " << m_transitions[i][j];
+            std::cout << "  |  "<< std::fixed<<std::setprecision(8)  << m_transitions[i][j];
         }
         std::cout << "\n" << std::endl;
     }

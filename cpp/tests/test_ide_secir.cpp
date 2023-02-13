@@ -90,19 +90,19 @@ TEST_F(ModelTest, checkPopulationConservation)
     mio::TimeSeries<ScalarType> compartments = model->simulate(15);
 
     ScalarType num_persons_before = 0.0;
-    ScalarType num_persons_after = 0.0;
+    ScalarType num_persons_after  = 0.0;
 
     for (auto i = 0; i < compartments[0].size(); i++) {
         num_persons_before += compartments[0][i];
         num_persons_after += compartments.get_last_value()[i];
     }
 
-    EXPECT_NEAR(num_persons_after,num_persons_before,1e-10);
+    EXPECT_NEAR(num_persons_after, num_persons_before, 1e-10);
 }
 
 TEST_F(ModelTest, compareWithPreviousRun)
 {
-    auto compare = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
+    auto compare                             = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
     mio::TimeSeries<ScalarType> compartments = model->simulate(5);
 
     ASSERT_EQ(compare.size(), static_cast<size_t>(compartments.get_num_time_points()));
@@ -115,49 +115,74 @@ TEST_F(ModelTest, compareWithPreviousRun)
     }
 }
 
-TEST_F(ModelTest, checkPrivateSimulationFunctions)
+TEST_F(ModelTest, compareWithPreviousRunTransitions)
 {
-    // compute_susceptibles
+    auto compare = load_test_data_csv<ScalarType>("ide-secir-transitions-compare.csv");
+    model->simulate(5);
+    auto transitions = model->get_transitions();
 
-    // update_forceofinfection
+    size_t iter_0 = 0;
+    while (transitions.get_time(iter_0) < compare[0][0]) {
+        iter_0++;
+    }
 
-    // compute_flow
-
-    // flows_current_timestep
-
-    // compute_totaldeaths
-
-    // compute_recovered
-
-    // compute_compartment
-
-    // compartments_current_timestep_ECIHU
+    for (size_t i = 0; i < compare.size(); i++) {
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(transitions.get_num_elements()) + 1) << "at row " << i;
+        ASSERT_NEAR(transitions.get_time(i + iter_0), compare[i][0], 1e-7) << "at row " << i;
+        for (size_t j = 1; j < compare[i].size(); j++) {
+            ASSERT_NEAR(transitions.get_value(i + iter_0)[j - 1], compare[i][j], 1e-7) << " at row " << i;
+        }
+    }
 }
 
-TEST(IdeSecir, infection_transitions)
-{
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
+    TEST_F(ModelTest, checkPrivateSimulationFunctions)
+    {
+        // compute_susceptibles
 
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(0),
-              std::make_pair(mio::isecir::InfectionState::Susceptible, mio::isecir::InfectionState::Exposed));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(1),
-              std::make_pair(mio::isecir::InfectionState::Exposed, mio::isecir::InfectionState::InfectedNoSymptoms));
-    EXPECT_EQ(
-        mio::isecir::InfectionTransitionsMap.at(2),
-        std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::InfectedSymptoms));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(3),
-              std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(4), std::make_pair(mio::isecir::InfectionState::InfectedSymptoms,
-                                                                         mio::isecir::InfectionState::InfectedSevere));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(5),
-              std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(
-        mio::isecir::InfectionTransitionsMap.at(6),
-        std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::InfectedCritical));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(7),
-              std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::Recovered));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(8),
-              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Dead));
-    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(9),
-              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Recovered));
-}
+        // update_forceofinfection
+
+        // compute_flow
+
+        // flows_current_timestep
+
+        // compute_totaldeaths
+
+        // compute_recovered
+
+        // compute_compartment
+
+        // compartments_current_timestep_ECIHU
+    }
+
+    TEST(IdeSecir, infection_transitions)
+    {
+        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
+
+        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(0),
+                  std::make_pair(mio::isecir::InfectionState::Susceptible, mio::isecir::InfectionState::Exposed));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(1),
+            std::make_pair(mio::isecir::InfectionState::Exposed, mio::isecir::InfectionState::InfectedNoSymptoms));
+        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(2),
+                  std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms,
+                                 mio::isecir::InfectionState::InfectedSymptoms));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(3),
+            std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::Recovered));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(4),
+            std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::InfectedSevere));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(5),
+            std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::Recovered));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(6),
+            std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::InfectedCritical));
+        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(7),
+                  std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::Recovered));
+        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(8),
+                  std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Dead));
+        EXPECT_EQ(
+            mio::isecir::InfectionTransitionsMap.at(9),
+            std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Recovered));
+    }

@@ -60,7 +60,7 @@ struct DelayDistribution {
         return xright;
     }
 
-    private:
+private:
     ScalarType xright;
 };
 
