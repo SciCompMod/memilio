@@ -649,7 +649,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init)
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
                     mio::path_join(TEST_DATA_DIR, "county_current_population.json"), true,
-                    mio::path_join(TEST_DATA_DIR, "all_county_ageinf_vacc_ma7.json")),
+                    mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
