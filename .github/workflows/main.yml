@@ -224,7 +224,8 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v3
         with:
-          files: ./coverage_python/**,./coverage.info
+          directory: ./coverage_python
+          files: ./coverage-python/**,./coverage.info
           verbose: true
 
   pages:
