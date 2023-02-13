@@ -128,7 +128,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
     complete = False
     filename = "CaseDataFull"
-    path = os.path.join(directory + filename + ".csv")
+    path = os.path.join(directory + filename + ".json")
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
@@ -166,7 +166,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             except:
                 pass
         if not complete:
-            raise FileNotFoundError('Sorry')
+            raise FileNotFoundError('')
         
         # drop columns that do not exist in data from github
         df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",

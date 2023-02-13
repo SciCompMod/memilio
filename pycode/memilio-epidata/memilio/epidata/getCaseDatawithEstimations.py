@@ -237,7 +237,7 @@ def compare_estimated_and_rki_deathsnumbers(
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week = gd.loadExcel(
+    df_real_deaths_per_week = gd.get_file(
         "Cases_deaths_weekly", apiUrl=data_path, extension=".xlsx",
         param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
                     "engine": 'openpyxl'})
@@ -315,11 +315,11 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week_age = gd.loadExcel(
+    df_real_deaths_per_week_age = gd.get_file(
         'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
         param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG10', "header": 0,
                     "engine": 'openpyxl'})
-    df_real_deaths_per_week_gender = gd.loadExcel(
+    df_real_deaths_per_week_gender = gd.get_file(
         'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
         param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG20_G', "header": 0,
                     "engine": 'openpyxl'})

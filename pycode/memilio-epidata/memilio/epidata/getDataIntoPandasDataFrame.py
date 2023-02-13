@@ -34,8 +34,8 @@ import argparse
 import datetime
 import requests
 import magic
+import urllib3
 import pandas as pd
-import numpy as np
 from io import BytesIO
 from zipfile import ZipFile
 
@@ -43,7 +43,7 @@ from memilio.epidata import defaultDict as dd
 from memilio import progress_indicator
 
 
-def download_file(url, chunk_size=1024, timeout=None, progress_function=None):
+def download_file(url, chunk_size=1024, timeout=None, progress_function=None, verify=True):
     """! Download a file using GET over HTTP.
 
     @param url Full url of the file to download.
@@ -57,8 +57,11 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None):
         download progress in [0,1] as a float argument.
     @return File as BytesIO
     """
+    if verify == False:
+        # suppress this warning since the insecure requests is intentional
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     # send GET request as stream so 
-    req = requests.get(url, stream=True, timeout=timeout)
+    req = requests.get(url, stream=True, timeout=timeout, verify=verify)
     if req.status_code != 200: #e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
     # get file size from http header
@@ -116,7 +119,7 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
     param_dict_zip={}
 
     filetype_dict = {'text':pd.read_csv, 'Composite Document File V2 Document':pd.read_excel, 'Excel':pd.read_excel, 'Zip':extract_zip}
-    dict_dict = {pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
+    param_dict_dict = {pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
 
     if read_data:
         try:
@@ -144,7 +147,7 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
                     # find file type in dict and use function to read
                     func_to_use=[val for key, val in filetype_dict.items() if key in ftype]
                     # use different default dict for different functions
-                    dict_to_use=dict_dict[func_to_use[0]]
+                    dict_to_use=param_dict_dict[func_to_use[0]]
                     # adjust dict
                     for k in dict_to_use:
                         if k not in param_dict:

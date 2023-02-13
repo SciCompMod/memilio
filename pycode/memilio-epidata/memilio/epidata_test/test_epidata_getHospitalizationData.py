@@ -114,7 +114,7 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getHospitalizationData.pd.read_csv',
            return_value=df_test)
-    def test_get_hospitalization_data(self, mock_csv):
+    def test_get_hospitalization_data(self, mock_file):
         # this should not raise any errors
         ghd.get_hospitalization_data(out_folder=self.path)
 

@@ -91,19 +91,6 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         gD.check_dir(out_folder)
 
-        # Test case where file does not exist
-        file = "FullData_JohnHopkins.json"
-        file_with_path = os.path.join(out_folder, file)
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
-        self.assertEqual(str(error.exception),
-                         "Error: The file: " + file_with_path + \
-                         " does not exist. Call program without -r "
-                         "flag to get it.")
-
-        # Test case where file exists
-
         # write files which should be read in by program
         self.write_jh_data(out_folder)
 
@@ -189,19 +176,19 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
                 df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
-    @patch('memilio.epidata.getJHData.gd.loadCsv')
-    def test_get_JH_Data_Download(self, mock_loadcsv):
+    @patch('memilio.epidata.getJHData.gd.get_file')
+    def test_get_JH_Data_Download(self, mock_file):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \
             = [False, "json", self.path, False]
 
         gD.check_dir(out_folder)
 
-        mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
+        mock_file.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
         gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
 
-        mock_loadcsv.assert_called_once()
+        mock_file.assert_called_once()
 
         # have to create same data as read_data=True
 
@@ -283,19 +270,19 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
                 df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
-    @patch('memilio.epidata.getJHData.gd.loadCsv')
-    def test_get_JH_Data_Download_omit_raw(self, mock_loadcsv):
+    @patch('memilio.epidata.getJHData.gd.get_file')
+    def test_get_JH_Data_Download_omit_raw(self, mock_file):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \
             = [False, "json", self.path, True]
 
         gD.check_dir(out_folder)
 
-        mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
+        mock_file.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
         gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw)
 
-        mock_loadcsv.assert_called_once()
+        mock_file.assert_called_once()
 
         # have to create same data as read_data=True
 

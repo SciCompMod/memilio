@@ -28,7 +28,7 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
-
+from memilio import progress_indicator
 
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources
@@ -305,10 +305,11 @@ def get_official_county_table():
 
     @return County table with essential columns.
     """
-    url_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/' \
+    url_counties = 'http://www.destatis.de/DE/Themen/Laender-Regionen/' \
         'Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx?__blob=publicationFile'
-    county_table = gd.get_file(url=url_counties, read_data=False, param_dict={
-                               'sheet_name': 1, 'header': 5, 'engine': 'openpyxl'})
+    with progress_indicator.Percentage(message="Downloading " + url_counties) as p:
+        file = gd.download_file(url_counties, 1024, None, p.set_progress, verify=False)
+    county_table = pd.read_excel(file, sheet_name=1, header=5, engine='openpyxl')
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far

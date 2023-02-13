@@ -233,7 +233,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
-        df_pop_raw = gd.loadExcel(
+        df_pop_raw = gd.get_file(
             new_data_file, apiUrl='', extension='.xlsx',
             param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4})
         column_names = list(df_pop_raw.columns)
