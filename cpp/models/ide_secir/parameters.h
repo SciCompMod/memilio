@@ -60,13 +60,18 @@ struct DelayDistribution {
         return xright;
     }
 
-    //private:
+    private:
     ScalarType xright;
 };
 
+/**
+ * @brief Transition distribution for each Transition in InfectionTransitions.
+ * 
+ * Note that Distribution from S->E is just a dummy.
+ * This transition is calculated in a different way.
+ * 
+ */
 struct TransitionDistributions {
-    /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
-    This transition is calculated in a different way. */
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
@@ -79,10 +84,15 @@ struct TransitionDistributions {
     }
 };
 
+/**
+ * @brief Parameters needed for Transitionsdistribution.
+ * 
+ * Parameters stored in a vector for initialisation of the transitionsdistributions.
+ * Currently, for each transitiondistribution is only one paramter used (eg. xright).
+ * For each possible Transition defined in InfectionTransitions, there is exactly one parameter.
+ * E.g. for transition S -> E, thi is just a dummy.
+ */
 struct TransitionParameters {
-    // we need to initialize transition distributions with some parameters (for now just use one parameter per distribution, i.e. xright)
-    // to be able to define different transition distributions for each transition
-    // Here also transition S-> E is just a dummy
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
@@ -95,6 +105,9 @@ struct TransitionParameters {
     }
 };
 
+/**
+ * @brief defines the probability for each possible Transition to take this flow/transition
+ */
 struct TransitionProbabilities {
     /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions. 
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/

@@ -45,7 +45,8 @@ int main()
     vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
     init.add_time_point(-10, vec_init);
     while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
+        vec_init *=1.01;
+        init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
     // Initialize model.

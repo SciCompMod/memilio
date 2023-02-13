@@ -52,8 +52,6 @@ public:
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
           const Pa& Parameterset_init = Pa());
 
-    void initialize();
-
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
     *
@@ -63,7 +61,7 @@ public:
     * @param[in] t_max Last simulation day. 
     *   If the last point of time of the initial TimeSeries was 0, the simulation will be executed for t_max days.
     * @return The result of the simulation, stored in a TimeSeries with simulation time and 
-    *       associated number of susceptibles.
+    *       associated number of individuals in the compartments.
     */
     TimeSeries<ScalarType> const& simulate(ScalarType t_max);
 
@@ -85,8 +83,25 @@ public:
      */
     void print_compartments() const;
 
-    TimeSeries<ScalarType> const& get_flows();
+    /**
+     * @brief Calculate the number of individuals in each compartment for time 0.
+     * 
+     * Initial transitions are used to calculate the initial compartment sizes.
+     */
+    void initialize();
 
+    /**
+     * @brief Getter for the transitions.
+     * 
+     * @return TimeSeries with stored transitions calculated in the simulation.
+     */
+    TimeSeries<ScalarType> const& get_transitions();
+ 
+    /**
+     * @brief Getter for the timestep dt.
+     * 
+     * @return timestep dt.
+     */
     ScalarType get_timestep();
 
 private:

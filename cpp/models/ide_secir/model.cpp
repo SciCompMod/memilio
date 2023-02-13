@@ -321,7 +321,7 @@ void Model::print_compartments() const
     }
 }
 
-TimeSeries<ScalarType> const& Model::get_flows()
+TimeSeries<ScalarType> const& Model::get_transitions()
 {
     return m_transitions;
 }

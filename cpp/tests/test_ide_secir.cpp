@@ -30,54 +30,6 @@
 #include <iostream>
 #include <gtest/gtest.h>
 
-// int main()
-// {
-//     using Vec = mio::TimeSeries<ScalarType>::Vector;
-
-//     // ScalarType tmax  = 10;
-//     ScalarType N     = 10000;
-//     ScalarType Dead0 = 12;
-//     ScalarType dt    = 1;
-
-//     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
-
-//     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-//     mio::TimeSeries<ScalarType> init(num_transitions);
-
-//     // add time points for initialization
-//     Vec vec_init(num_transitions);
-//     vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-//     init.add_time_point(-10, vec_init);
-//     while (init.get_last_time() < 0) {
-//         init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
-//     }
-
-//     // Initialize model.
-//     mio::isecir::Model model(std::move(init), dt, N, Dead0);
-
-//     // // Set working parameters.
-//     model.parameters.set<mio::isecir::TransitionDistributions>(
-//         std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-//     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
-//     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-//     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-//     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-//     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-//     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-//     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-//     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
-
-//     // Carry out simulation.
-//     // mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
-
-//     std::cout << "In main:\n";
-//     model.print_transitions();
-//     std::cout << "\n" << std::endl;
-//     // model.print_compartments();
-// }
-
 class ModelTest : public testing::Test
 {
 protected:
@@ -94,9 +46,10 @@ protected:
         Vec vec_init(num_transitions);
         mio::TimeSeries<ScalarType> init(num_transitions);
         vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-        init.add_time_point(-10, vec_init);
+        init.add_time_point(-10.0, vec_init);
         while (init.get_last_time() < 0) {
-            init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
+            vec_init *=1.01;
+            init.add_time_point(init.get_last_time() + dt, vec_init);
         }
 
         model = new mio::isecir::Model(std::move(init), 1, N, Dead0);
@@ -125,173 +78,46 @@ public:
     mio::isecir::Model* model = nullptr;
 };
 
-TEST_F(ModelTest, checkSimulationFunctions)
+TEST_F(ModelTest, printTransitions)
 {
     std::cout << " In TEST_F: \n";
     model->print_transitions();
     std::cout << "\n" << std::endl;
 }
 
-TEST(IdeSecir, checkSimulationFunctions)
+TEST_F(ModelTest, checkPopulationConservation)
 {
-    using Vec = mio::TimeSeries<ScalarType>::Vector;
+    mio::TimeSeries<ScalarType> compartments = model->simulate(15);
 
-    // ScalarType tmax  = 10;
-    ScalarType N     = 10000;
-    ScalarType Dead0 = 12;
-    ScalarType dt    = 1;
+    ScalarType num_persons_before = 0.0;
+    ScalarType num_persons_after = 0.0;
 
-    int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
-
-    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-    mio::TimeSeries<ScalarType> init(num_transitions);
-
-    // add time points for initialization
-    Vec vec_init(num_transitions);
-    vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-    init.add_time_point(-10, vec_init);
-    while (init.get_last_time() < 0) {
-        init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
+    for (auto i = 0; i < compartments[0].size(); i++) {
+        num_persons_before += compartments[0][i];
+        num_persons_after += compartments.get_last_value()[i];
     }
 
-    // Initialize model.
-    mio::isecir::Model model(std::move(init), dt, N, Dead0);
-
-    // // Set working parameters.
-    model.parameters.set<mio::isecir::TransitionDistributions>(
-        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
-    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
-
-    std::cout << "In TEST: \n";
-    model.print_transitions();
-    std::cout << "\n" << std::endl;
+    EXPECT_NEAR(num_persons_after,num_persons_before,1e-10);
 }
 
-// TEST(IdeSecir, checkSimulationFunctions2)
-// {
-//     // Model setup
-//     using Vec = mio::TimeSeries<ScalarType>::Vector;
+TEST_F(ModelTest, checkPrivateSimulationFunctions)
+{
+    // compute_susceptibles
 
-//     // ScalarType tmax  = 10;
-//     ScalarType N     = 10000;
-//     ScalarType Dead0 = 12;
-//     ScalarType dt    = 1;
+    // update_forceofinfection
 
-//     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
+    // compute_flow
 
-//     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-//     mio::TimeSeries<ScalarType> init(num_transitions);
+    // flows_current_timestep
 
-//     // add time points for initialization
-//     Vec vec_init(num_transitions);
-//     vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-//     init.add_time_point(-10, vec_init);
-//     while (init.get_last_time() < 0) {
-//         std::cout << init.get_last_value() << "\n";
-//         init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
-//     }
+    // compute_totaldeaths
 
-//     // Initialize model.
-//     mio::isecir::Model model(std::move(init), dt, N, Dead0);
+    // compute_recovered
 
-//     // Set working parameters.
-//     model.parameters.set<mio::isecir::TransitionDistributions>(
-//         std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-//     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
-//     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-//     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-//     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-//     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-//     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-//     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-//     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+    // compute_compartment
 
-//     // mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
-//     model.print_compartments();
-//     model.print_transitions();
-
-//     // compute_susceptibles
-
-//     // update_forceofinfection
-
-//     // compute_flow
-
-//     // flows_current_timestep
-
-//     // compute_totaldeaths
-
-//     // compute_recovered
-
-//     // compute_compartment
-
-//     // compartments_current_timestep_ECIHU
-// }
-
-// TEST(IdeSecir, checkPopulationConservation)
-// {
-//     // Model setup
-//     using Vec = mio::TimeSeries<ScalarType>::Vector;
-
-//     // ScalarType tmax  = 10;
-//     ScalarType N     = 10000;
-//     ScalarType Dead0 = 12;
-//     ScalarType dt    = 1;
-
-//     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
-
-//     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-//     mio::TimeSeries<ScalarType> init(num_transitions);
-
-//     // add time points for initialization
-//     Vec vec_init(num_transitions);
-//     vec_init << 30.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
-//     init.add_time_point(-10, vec_init);
-//     while (init.get_last_time() < 0) {
-//         init.add_time_point(init.get_last_time() + dt, init.get_last_value() * 1.01);
-//     }
-
-//     // Initialize model.
-//     mio::isecir::Model model(std::move(init), dt, N, Dead0);
-
-//     // Set working parameters.
-//     model.parameters.set<mio::isecir::TransitionDistributions>(
-//         std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-//     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
-//     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
-//     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-//     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-//     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-//     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-//     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-//     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
-
-//     // mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
-//     model.print_compartments();
-//     model.print_transitions();
-
-//     // ScalarType num_persons_before = 0.0;
-//     // ScalarType num_persons_after  = 0.0;
-
-//     // for (auto i = 0; i < compartments[0].size(); i++) {
-//     //     num_persons_before += compartments[0][i];
-//     //     num_persons_after += compartments.get_last_value()[i];
-//     // }
-
-//     // EXPECT_NEAR(num_persons_before, num_persons_after, 1e-10);
-// }
+    // compartments_current_timestep_ECIHU
+}
 
 TEST(IdeSecir, infection_transitions)
 {
