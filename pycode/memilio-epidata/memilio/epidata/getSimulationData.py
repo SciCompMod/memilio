@@ -29,6 +29,8 @@ The functions which are called are:
 - getDIVIData.get_divi_data
 """
 
+import os
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData
@@ -84,9 +86,10 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         "read_data": read_data, "file_format": file_format,
         "out_folder": out_folder, "no_raw": no_raw}
 
-    arg_dict_data_download = {"start_date": start_date, "end_date": end_date,
-                              "impute_dates": impute_dates, "moving_average": moving_average,
-                              "make_plot": make_plot}
+    arg_dict_data_download = {
+        "start_date": start_date, "end_date": end_date,
+        "impute_dates": impute_dates, "moving_average": moving_average,
+        "make_plot": make_plot}
 
     arg_dict_cases = {**arg_dict_all, **arg_dict_data_download,
                       "split_berlin": split_berlin, "rep_date": rep_date}
@@ -121,11 +124,38 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         print_error('vaccination')
 
 
+def read_infection_data(file_name, path=dd.defaultDict['out_folder'],
+                        impute_dates=dd.defaultDict['impute_dates'],
+                        moving_average=dd.defaultDict['moving_average']):
+    """! Read data from epidata created json files.
+
+    This function tries to read a generated json files from the epidata package.
+    If it is not created yet, we return an error message.
+
+    Keyword arguments:
+    @param file_name Determines which from epidata generated data we want to read in.
+    @param path Directory where data is stored. Default defined in defaultDict as the default output directory of the generating functions.
+    """
+    try:
+        df = pd.read_json(os.path.join(path, "Germany", file_name))
+    # pandas>1.5 raise FileNotFoundError instead of ValueError
+    except (ValueError, FileNotFoundError) as err:
+        raise FileNotFoundError("Error: File " + file_name + " not found in directory " + path +
+                                ". Please adjust the file name or the directory. \
+                                If the files are not created yet, use the epidata package."
+                                ) \
+            from err
+    return df
+
+
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("sim")
-    get_simulation_data(**arg_dict)
+    # get_simulation_data(**arg_dict)
+    test = read_infection_data("cases_all_state_ma7.json")
+    a = 5
+    # get_simulation_data(**arg_dict)
 
 
 if __name__ == "__main__":
