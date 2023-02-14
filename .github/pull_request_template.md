@@ -9,7 +9,7 @@ Always to be checked:
 * [ ] The branch follows the naming conventions as defined in the [git workflow](git-workflow).
 * [ ] New code adheres with the [coding guidelines](coding-guidelines)
 * [ ] Make sure that the [pre-commit linting/style checks pass](https://github.com/DLR-SC/memilio/wiki).
-* [ ] No large data is added to the repository.
+* [ ] No large data files have been added to the repository. Maximum size for files should be of the order of KB not MB. In particular avoid adding of pdf, word, or other files that cannot be change-tracked correctly by git.
 
 If functions were changed or functionality was added:
 * [ ] Tests for new functionality has been added
@@ -37,4 +37,4 @@ The following questions are addressed in the documentation if need be:
 * [ ] There are appropriate **unit tests** and they pass.
 * [ ] The git history is clean and linearized for the merge request. All reviewers should squash commits and write a simple and meaningful commit message.
 * [ ] Coverage report for new code is acceptable. 
-* [ ] No large data is added to the repository.
+* [ ] No large data files have been added to the repository. Maximum size for files should be of the order of KB not MB. In particular avoid adding of pdf, word, or other files that cannot be change-tracked correctly by git.
