@@ -32,6 +32,15 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
 
 
+def download_vaccination_data(read_data, filename, directory):
+
+    url="https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
+    path = os.path.join(directory + filename + ".json")
+    df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
+                         'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}})
+
+    return df_data
+
 def sanity_checks(df):
     # test if dataframe is empty
     if df.empty:
@@ -502,10 +511,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     filename = "RKIVaccFull"
-    url="https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
-    path = os.path.join(directory + filename + ".csv")
-    df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
-                         'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}})
+
+    df_data = download_vaccination_data(read_data, filename, directory)
 
     if not no_raw:
         gd.write_dataframe(df_data, directory, filename, "json")
@@ -573,7 +580,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     try:
         population = pd.read_json(
-            directory + "county_current_population.json")
+            directory + "counsty_current_population.json")
     # pandas>1.5 raise FileNotFoundError instead of ValueError
     except (ValueError, FileNotFoundError):
         print("Population data was not found. Download it from the internet.")

@@ -68,7 +68,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     filename = "FullData_JohnHopkins"
     url="https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
-    path = os.path.join(out_folder + filename + ".csv")
+    path = os.path.join(out_folder, filename + ".json")
     df = gd.get_file(path, url, read_data, param_dict={})
 
     # output data to not always download it
