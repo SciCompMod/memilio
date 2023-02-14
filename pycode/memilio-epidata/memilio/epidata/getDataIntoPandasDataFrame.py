@@ -123,7 +123,7 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
 
     if read_data:
         try:
-            pd.read_json(filepath)
+            df = pd.read_json(filepath)
         except FileNotFoundError:
             user_input = input("Warning: The file: " + filepath + \
                 " does not exist in the directory. Do you want to download " + \
