@@ -2,7 +2,7 @@ import os
 
 from setuptools import find_packages, setup
 
-__version__ = '0.1.0'
+__version__ = '0.7.0'
 
 setup(
     name='memilio-surrogatemodel', version=__version__, author='DLR-SC',
