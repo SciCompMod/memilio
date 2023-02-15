@@ -23,8 +23,52 @@
 #include <tuple>
 #include <type_traits>
 
+namespace mio
+{
+
+namespace details
+{
+
+// base type to filter tuple Tags
+template <class Omittand, class Tag, class... Tags>
+struct FilteredTuple {
+};
+// 1st specialization: omitts Omittand, used by the 3rd generalization
+template <class Omittand>
+struct FilteredTuple<Omittand, std::tuple<Omittand>> {
+    using Type = std::tuple<>;
+};
+// 2nd specialization: accept Tag, confirmed to not be of type Omittand
+// (the 1st specialization is preferred, since it uses an explicit Type)
+template <class Omittand, class Tag>
+struct FilteredTuple<Omittand, std::tuple<Tag>> {
+    using Type = std::tuple<Tag>;
+};
+// 3rd/main specialization: recursively uses tuple_cat to concatonate Tag(s) != Omittand
+template <class Omittand, class Tag, class... Tags>
+struct FilteredTuple<Omittand, std::tuple<Tag, Tags...>> {
+    using Type = decltype(std::tuple_cat(std::declval<typename FilteredTuple<Omittand, std::tuple<Tag>>::Type>(),
+                                         std::declval<typename FilteredTuple<Omittand, std::tuple<Tags...>>::Type>()));
+};
+
+template <class Omittand, class... Tags>
+using filtered_tuple_t = typename FilteredTuple<Omittand, Tags...>::Type;
+
+template <template <class...> class T, class... Args>
+constexpr std::tuple<Args...> as_tuple(T<Args...>);
+
+template <template <class...> class T, class... Args>
+constexpr T<Args...> as_index(std::tuple<Args...>);
+
+template <class Omittand, template <class...> class IndexTemplate, class Index>
+using filtered_index_t = decltype(as_index<IndexTemplate>(
+    std::declval<typename FilteredTuple<Omittand, decltype(as_tuple(std::declval<Index>()))>::Type>()));
+
+} // namespace details
+
 template <class Status, Status Source, Status Target>
 struct Flow {
+    using Type                 = Status;
     const static Status source = Source;
     const static Status target = Target;
 };
@@ -42,7 +86,7 @@ public:
     template <class Flow>
     constexpr size_t get() const
     {
-        return get_impl(typelist<Flow>(), typelist<>(), typelist<Flows...>());
+        return get_impl<0>(Flow());
     }
 
     constexpr size_t size() const
@@ -55,29 +99,24 @@ private:
     struct typelist {
     };
 
-    template <class Flow, class... Indices>
-    constexpr size_t get_impl(typelist<Flow> f, typelist<Indices...>, typelist<>) const
+    template <size_t index, class Flow>
+    inline constexpr std::enable_if_t<!std::is_same<Flow, decltype(FlowChart<Flows...>().get<index>())>::value, size_t>
+    get_impl(Flow f) const
     {
-        static_assert(sizeof...(Indices) != sizeof...(Flows), "ERROR IN get<Flow>() - could not find flow");
-        static_assert(sizeof...(Indices) == sizeof...(Flows), "ERROR IN get<Flow>() - could not find flow");
-        return get_impl(f, typelist<Indices..., int>());
+        static_assert(index < sizeof...(Flows), "In get_impl<Flow>(): Flow is not in Flows...");
+        return get_impl<index + 1>(f);
     }
 
-    template <class Flow, class... Indices, class F, class... Fs>
-    inline constexpr std::enable_if_t<!std::is_same<Flow, F>::value, size_t>
-    get_impl(typelist<Flow> f, typelist<Indices...>, typelist<F, Fs...>) const
+    template <size_t index, class Flow>
+    inline constexpr std::enable_if_t<std::is_same<Flow, decltype(FlowChart<Flows...>().get<index>())>::value, size_t>
+    get_impl(Flow) const
     {
-        return get_impl(f, typelist<Indices..., int>(), typelist<Fs...>());
-    }
-
-    template <class Flow, class... Indices, class F, class... Fs>
-    inline constexpr std::enable_if_t<std::is_same<Flow, F>::value, size_t>
-    get_impl(typelist<Flow>, typelist<Indices...>, typelist<F, Fs...>) const
-    {
-        return sizeof...(Indices);
+        return index;
     }
 
     std::tuple<Flows...> m_flows;
 };
+
+} // namespace mio
 
 #endif

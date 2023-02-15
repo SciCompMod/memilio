@@ -63,6 +63,7 @@ public:
 
         // // delete m_flows
         // return rtval;
+        return false;
     }
 
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
