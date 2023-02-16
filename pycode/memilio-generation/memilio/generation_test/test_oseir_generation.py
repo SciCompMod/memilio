@@ -56,7 +56,7 @@ class TestOseirGeneration(unittest.TestCase):
             "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
             "namespace": "mio::oseir::",
             "python_module_name": "test_oseir",
-            "skbuild_path_to_database": self.build_dir.name,
+            "skbuild_path_to_database": "prefix/_skbuild/../memilio/generation" + self.build_dir.name.split("memilio/generation")[1],
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
             "target_folder": self.test_dir.name,
             "optional": {
