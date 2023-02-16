@@ -74,7 +74,8 @@ class Scanner:
                                  "/compile_commands.json")) as path:
                 dirname, _ = os.path.split(path)
         else:
-            dirname = self.config.skbuild_path_to_database
+            raise FileNotFoundError(
+                'compile_commands.json could not be detected from skbuild path.')
 
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.config.source_file)
