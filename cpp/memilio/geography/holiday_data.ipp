@@ -25,7 +25,10 @@
 #include <utility>
 #include <vector>
 
-namespace
+namespace holidays
+{
+
+namespace de
 {
 
 static const std::vector<std::pair<mio::Date, mio::Date>> holidays_01_sh = {
@@ -294,4 +297,6 @@ static const std::vector<std::pair<mio::Date, mio::Date>> holidays_16_th = {
     {{2024, 2, 12}, {2024, 2, 16}}, {{2024, 3, 25}, {2024, 4, 6}},    {{2024, 5, 10}, {2024, 5, 10}},
     {{2024, 6, 20}, {2024, 7, 31}}};
 
-} //namespace
+} // namespace de
+
+} //namespace holidays
