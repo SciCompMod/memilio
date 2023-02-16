@@ -87,11 +87,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -178,14 +178,16 @@ public:
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
+        const size_t num_compartments = dydt.size() / m_flow_flat_dim;
         for (size_t i = 0; i < m_flow_flat_dim; i++) {
-            get_rhs_impl<0>(flows, dydt, i);
+            get_rhs_impl<0>(flows, dydt, i, num_compartments);
         }
     }
 
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                          Eigen::Ref<Eigen::VectorXd> dydt) const override final
     {
+        m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
         get_derivatives(m_flow_values, dydt);
     }
@@ -256,19 +258,30 @@ private:
     }
 
     template <size_t i>
-    inline std::enable_if_t<i == sizeof...(Flows)> get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>,
-                                                                Eigen::Ref<Eigen::VectorXd>, const size_t) const
+    inline std::enable_if_t<i == sizeof...(Flows)>
+    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<Eigen::VectorXd>, const size_t, const size_t) const
     {
         // end recursion
     }
 
     template <size_t i>
     inline std::enable_if_t<i != sizeof...(Flows)>
-    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t index) const
+    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t index_age_group,
+                 const size_t num_compartments) const
     {
-        rhs[static_cast<size_t>(FlowChart<Flows...>().template get<i>().source)] -= flows[index + m_flow_flat_dim * i];
-        rhs[static_cast<size_t>(FlowChart<Flows...>().template get<i>().target)] += flows[index + m_flow_flat_dim * i];
-        get_rhs_impl<i + 1>(flows, rhs, index);
+        size_t indx_source =
+            static_cast<size_t>(FlowChart<Flows...>().template get<i>().source) + num_compartments * index_age_group;
+        size_t indx_target =
+            static_cast<size_t>(FlowChart<Flows...>().template get<i>().target) + num_compartments * index_age_group;
+
+        // std::cout << "index rhs:  : " << indx_source << " , " << indx_target << "\n";
+        // std::cout << "indx flx: " << index_age_group + m_flow_flat_dim * i << "\n";
+
+        // std::cout << "rhs size : " << rhs[indx_source] << "\n";
+        // std::cout << "abgezogen wird : " << flows[index_age_group * sizeof...(Flows) + i] << "\n";
+        rhs[indx_source] -= flows[index_age_group + m_flow_flat_dim * i];
+        rhs[indx_target] += flows[index_age_group + m_flow_flat_dim * i];
+        get_rhs_impl<i + 1>(flows, rhs, index_age_group, num_compartments);
     }
 };
 
