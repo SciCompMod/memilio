@@ -22,6 +22,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from memilio.generation import Generator, Scanner, ScannerConfig
 
@@ -51,12 +52,14 @@ class TestOseirGeneration(unittest.TestCase):
         cmake_cmd, stdout=subprocess.PIPE, cwd=build_dir.name)
     cmake_cmd_result.check_returncode()
 
-    def setUp(self):
+    @patch('memilio.generation.scanner.utility.try_get_compilation_database_path')
+    def setUp(self, try_get_compilation_database_path_mock):
+        try_get_compilation_database_path_mock.return_value = self.build_dir.name
         config_json = {
             "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
             "namespace": "mio::oseir::",
             "python_module_name": "test_oseir",
-            "skbuild_path_to_database": "prefix/_skbuild/../../.." + self.build_dir.name.replace(self.project_path, ""),
+            "skbuild_path_to_database": "",
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
             "target_folder": self.test_dir.name,
             "optional": {

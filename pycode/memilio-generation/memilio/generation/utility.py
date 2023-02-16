@@ -25,6 +25,7 @@ import os
 import subprocess
 from typing import Any, List, TextIO
 
+import importlib_resources
 from clang.cindex import Config, Cursor, Type
 
 
@@ -55,6 +56,27 @@ def try_set_libclang_path(path: str) -> None:
         # this needs to be adapted as well.
         if str(e) != "library file must be set before before using any other functionalities in libclang.":
             raise (e)
+
+
+def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
+    """
+    Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
+
+    @param skbuild_path_to_database Value from config.json
+    @return Path of directory
+    """
+    pkg = importlib_resources.files("memilio.generation")
+    filename = skbuild_path_to_database.split('_skbuild')
+    dirname = ""
+    if (len(filename) > 1):
+        with importlib_resources.as_file(
+                pkg.joinpath("../../_skbuild" + filename[-1] +
+                             "/compile_commands.json")) as path:
+            dirname, _ = os.path.split(path)
+    else:
+        raise FileNotFoundError(
+            'compile_commands.json could not be detected from skbuild path.')
+    return dirname
 
 
 def get_base_class(base_type: Type) -> List[Any]:

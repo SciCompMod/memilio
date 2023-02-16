@@ -30,7 +30,6 @@ import tempfile
 from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
 
-import importlib_resources
 from clang.cindex import *
 from typing_extensions import Self
 
@@ -66,17 +65,9 @@ class Scanner:
 
         # Create the cmd arguments
         file_args = []
-        pkg = importlib_resources.files("memilio.generation")
-        filename = self.config.skbuild_path_to_database.split('_skbuild')
-        if (len(filename) > 1):
-            with importlib_resources.as_file(
-                    pkg.joinpath("../../_skbuild" + filename[-1] +
-                                 "/compile_commands.json")) as path:
-                dirname, _ = os.path.split(path)
-        else:
-            raise FileNotFoundError(
-                'compile_commands.json could not be detected from skbuild path.')
 
+        dirname = utility.try_get_compilation_database_path(
+            self.config.skbuild_path_to_database)
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:
