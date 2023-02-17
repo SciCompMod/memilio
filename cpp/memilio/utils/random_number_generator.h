@@ -113,9 +113,9 @@ public:
     */
     void forward_to_block(size_t i)
     {
-        assert((i > m_num_generated / m_block_size) ||
-               (i == m_num_generated / m_block_size && m_num_generated % m_block_size == 0) &&
-                   "Can't forward to a previous block or one that is started.");
+        assert(((i > m_num_generated / m_block_size) ||
+                (i == m_num_generated / m_block_size && m_num_generated % m_block_size == 0)) &&
+               "Can't forward to a previous block or one that is started.");
         auto num_remaining = m_block_size * i - m_num_generated;
         m_rng.discard(num_remaining);
         m_num_generated += num_remaining;
