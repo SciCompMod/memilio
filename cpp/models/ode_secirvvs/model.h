@@ -312,8 +312,9 @@ public:
             // InfectedNoSymptoms
             flows[get_flow_index<InfectionState::InfectedNoSymptomsPartialImmunity,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * (rateINS / reducTimeInfectedMild) * y[INSPIi];
+                (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
+                rateINS / reducTimeInfectedMild * y[INSPIi];
             flows[get_flow_index<InfectionState::InfectedNoSymptomsPartialImmunity,
                                  InfectionState::InfectedSymptomsPartialImmunity>({i})] =
                 (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
@@ -337,8 +338,8 @@ public:
 
             flows[get_flow_index<InfectionState::InfectedSymptomsPartialImmunity,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity *
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) /
+                (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
+                         params.get<SeverePerInfectedSymptoms>()[i]) /
                 (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyPIi];
 
             flows[get_flow_index<InfectionState::InfectedSymptomsPartialImmunityConfirmed,
@@ -349,8 +350,8 @@ public:
 
             flows[get_flow_index<InfectionState::InfectedSymptomsPartialImmunityConfirmed,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity *
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) /
+                (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
+                         params.get<SeverePerInfectedSymptoms>()[i]) /
                 (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyPICi];
 
             // InfectedSevere
@@ -385,8 +386,9 @@ public:
             // InfectedNoSymptoms
             flows[get_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunity,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * (rateINS / reducTimeInfectedMild) * y[INSIIi];
+                (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
+                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
+                rateINS / reducTimeInfectedMild * y[INSIIi];
             flows[get_flow_index<InfectionState::InfectedNoSymptomsImprovedImmunity,
                                  InfectionState::InfectedSymptomsImprovedImmunity>({i})] =
                 (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
@@ -410,8 +412,8 @@ public:
 
             flows[get_flow_index<InfectionState::InfectedSymptomsImprovedImmunity,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity *
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) /
+                (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
+                         params.get<SeverePerInfectedSymptoms>()[i]) /
                 (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyIIi];
 
             flows[get_flow_index<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
@@ -422,8 +424,8 @@ public:
 
             flows[get_flow_index<InfectionState::InfectedSymptomsImprovedImmunityConfirmed,
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
-                reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity *
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) /
+                (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
+                         params.get<SeverePerInfectedSymptoms>()[i]) /
                 (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * y[ISyIICi];
 
             // InfectedSevere
@@ -793,7 +795,7 @@ public:
             },
             par, pop);
     }
-}; // namespace osecirvvs
+};
 
 //forward declaration, see below.
 template <class Base = mio::Simulation<Model>>
