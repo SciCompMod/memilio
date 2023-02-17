@@ -62,7 +62,6 @@ enum class InfectionState
     DeadNaive,
     DeadPartialImmunity,
     DeadImprovedImmunity,
-    TotalInfections, //total number of infections during the simulation, for data tracking only, does not contribute to simulation
 
     Count
 };
