@@ -541,8 +541,14 @@ def get_npi_data(fine_resolution=2,
         if num_nonexistent_codes_pre != 0:
             df_npis_combinations_pre = df_npis_combinations_pre.iloc[: -
                                                                      num_nonexistent_codes_pre, :]
+        
+        # drop 0 column if existent
+        try:
+            df_npis_combinations_pre.drop(columns=0)
+        except KeyError:
+            pass
         # rename essential columns and throw away others
-        columns_combinations = np.where((df_npis_combinations_pre=='x').any()==True)[0]
+        columns_combinations = np.where((df_npis_combinations_pre=='x').any()==True)[0] #maybe rename columns_used ?
         column_names = ['Unnamed: ' + str(i) for i in range(columns_combinations[0], columns_combinations[-1]+1)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
         df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
@@ -584,7 +590,7 @@ def get_npi_data(fine_resolution=2,
 
         # run through all groups and set possible combinations according to
         # read combination matrix
-        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+3
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+2
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
@@ -1048,12 +1054,13 @@ def get_npi_data(fine_resolution=2,
                                     # where NPI code_cols[scidx] + level[1]
                                     # is active
                                     if df_local_new.loc[indicator_code_active_idx, subcode_excl + level_other[1]].any():
-                                        print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
-                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
-                                        print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
-                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
-                                        # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
-                                        print('\n')
+                                        if subcode_excl != 'M03_020':
+                                            print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
+                                            print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
+                                            print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
+                                            print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
+                                            # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
+                                            print('\n')
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
 
@@ -1083,7 +1090,7 @@ def get_npi_data(fine_resolution=2,
 
                         # extract true/false list of combination of subcodes
                         # TODO [0] or [1] ?
-                        subcodes_nocombi = df_npis_combinations[code].loc[:, subcode]
+                        subcodes_nocombi = df_npis_combinations[code][1].loc[:, subcode]
                         # only consider those codes which cannot be combined; 
                         # for these, values of 1 have to be set to 0
                         subcodes_nocombi = list(

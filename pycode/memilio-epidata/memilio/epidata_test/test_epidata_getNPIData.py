@@ -291,7 +291,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         # some columns should be empty
         # either because they're not mentioned or because the incidence is not exceeded.
         self.assertEqual(
-            npis_test.iloc[:, [4, 5, 6, 7, 9, 11, 14, 15, 17]].values.sum(), 0)
+            npis_test.iloc[:, [4, 5, 6, 7, 9, 11, 13, 15, 17, 19]].values.sum(), 0)
         # incidence independent NPIs should not have changed
         self.assertEqual(
             npis_test.M1_1.to_list(),
@@ -309,10 +309,15 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             npis_test.M1_2_2.tolist(),
             [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
+            
+        self.assertEqual(
+            npis_test.M1_3_2.tolist(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
         #_4 -> Incidence > 50
+        # M1_3_4 is always 0 - cant be simultaneously active with M1_3_2
         self.assertEqual(
             npis_test.M1_3_4.to_list(),
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         self.assertEqual(
             npis_test.M1_2_4.to_list(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
