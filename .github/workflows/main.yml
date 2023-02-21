@@ -234,10 +234,9 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        shell: pwsh
-        run: gh run download -p test-py-coverage-reports-* -D coverage_python
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/download-artifact@v3
+        with:
+          name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
@@ -260,10 +259,9 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
       - name: Download python coverage report
-        shell: pwsh
-        run: gh run download -p test-py-coverage-reports-* -D coverage_python
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/download-artifact@v3
+        with:
+          name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
         uses: actions/download-artifact@v3
         with:
