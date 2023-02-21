@@ -10,7 +10,7 @@ on:
       - version-*
     paths:
       - '**/memilio-epidata/**'
-      - '.github/**' disable only for testing
+      - '.github/**'
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths:
