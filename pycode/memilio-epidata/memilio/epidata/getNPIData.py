@@ -1054,13 +1054,12 @@ def get_npi_data(fine_resolution=2,
                                     # where NPI code_cols[scidx] + level[1]
                                     # is active
                                     if df_local_new.loc[indicator_code_active_idx, subcode_excl + level_other[1]].any():
-                                        if subcode_excl != 'M03_020':
-                                            print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
-                                            print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
-                                            print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
-                                            print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
-                                            # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
-                                            print('\n')
+                                        print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
+                                        print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
+                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
+                                        # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
+                                        print('\n')
                                         df_local_new.loc[indicator_code_active_idx,
                                                          subcode_excl + level_other[1]] = 0
 
