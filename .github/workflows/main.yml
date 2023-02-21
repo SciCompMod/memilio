@@ -252,11 +252,6 @@ jobs:
         with:
           name: documentation
           path: docs/html
-      - name: Download pylint report
-        shell: pwsh
-        run: gh run download -p pylint-report-* -D pycode/build_pylint
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
@@ -266,10 +261,6 @@ jobs:
         run: |
           mkdir -p public/documentation
           cp -r docs/html/* public/documentation
-      - name: Prepare pylint reports
-        run: |
-          mkdir -p public/pylint
-          cp pycode/build_pylint/** public/pylint/
       - name: Prepare coverage reports
         run: |
           mkdir -p public/coverage
