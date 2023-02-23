@@ -23,12 +23,12 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
+#include "ode_seair/infection_state.h"
+#include "ode_seair/parameters.h"
 
 namespace mio
 {
-namespace oseir
+namespace oseair
 {
 
 /********************

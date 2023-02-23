@@ -19,7 +19,7 @@
 */
 #include "ode_seair/model.h"
 
-namespace oseir
+namespace oseair
 {
 
 } // namespace oseir

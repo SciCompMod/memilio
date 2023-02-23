@@ -28,7 +28,7 @@
 
 namespace mio
 {
-namespace oseir
+namespace oseair
 {
 
 /*******************************************

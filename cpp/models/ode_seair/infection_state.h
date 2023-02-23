@@ -22,7 +22,7 @@
 
 namespace mio
 {
-namespace oseir
+namespace oseair
 {
 
 /**
@@ -38,7 +38,7 @@ enum class InfectionState
     Count
 };
 
-} // namespace oseir
+} // namespace oseair
 } // namespace mio
 
 #endif // SEAIR_INFECTIONSTATE_H
