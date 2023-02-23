@@ -22,6 +22,7 @@
 
 #include "memilio/utils/time_series.h"
 #include <fstream>
+#include <string>
 
 
 namespace mio {
