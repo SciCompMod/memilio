@@ -35,6 +35,8 @@ enum class InfectionState
     Exposed,
     Infected,
     Recovered,
+    Asymptomatic,
+    Perished,
     Count
 };
 
