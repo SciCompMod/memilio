@@ -64,9 +64,9 @@ int main()
     integrator->set_abs_tolerance(1e-6);
     integrator->set_rel_tolerance(1e-6);
 
-    auto seir = simulate(t0, tmax, dt, model, integrator);
-    mio::time_series_to_file(seir,"seir.txt");
+    auto seair = simulate(t0, tmax, dt, model, integrator);
+    mio::time_series_to_file(seair,"seair.txt");
 
     printf("\n number total: %f\n",
-           seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
+           seair.get_last_value()[0] + seair.get_last_value()[1] + seair.get_last_value()[2] + seair.get_last_value()[3]);
 }
