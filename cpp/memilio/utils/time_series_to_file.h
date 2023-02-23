@@ -39,9 +39,9 @@ void time_series_to_file(const TimeSeries<FP>& time_series, const std::string& f
   output_file.precision(16);
 
   for(int i=0; i < time_series.get_num_time_points();++i) {
-    for(int j=0; j < time_series.matrix().cols()-1; ++j) {
-      output_file << time_series.matrix()(i,j) << " ";
-      output_file << time_series.matrix()(i,time_series.matrix().cols()-1) << std::endl;
+    for(int j=0; j < time_series.matrix().rows()-1; ++j) {
+      output_file << time_series.matrix()(j,i) << " ";
+      output_file << time_series.matrix()(time_series.matrix().rows()-1,i) << std::endl;
     }
   }
 
