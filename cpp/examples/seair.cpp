@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
+#include "ode_seair/model.h"
+#include "ode_seair/infection_state.h"
+#include "ode_seair/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/math/adapt_rk.h"
@@ -37,25 +37,25 @@ int main()
     double tmax = 100;
     double dt   = 0.01;
 
-    mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model;
+    mio::oseair::Model model;
 
     double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
         total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.set<mio::oseair::TimeExposed>(5.2);
+    model.parameters.set<mio::oseair::TimeInfected>(6);
+    model.parameters.set<mio::oseair::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseair::ContactPatterns>().get_baseline()(0, 0) = 10;
 
     model.check_constraints();
     // print_seir_params(model);
