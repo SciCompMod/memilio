@@ -63,6 +63,7 @@ add_library(memilio
     utils/memory.h
     utils/parameter_distributions.h
     utils/time_series.h
+    utils/time_series_to_file.h
     utils/time_series.cpp
     utils/span.h
     utils/span.cpp
