@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEIR_PARAMETERS_H
-#define SEIR_PARAMETERS_H
+#ifndef SEAIR_PARAMETERS_H
+#define SEAIR_PARAMETERS_H
 
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
@@ -157,4 +157,4 @@ public:
 } // namespace oseir
 } // namespace mio
 
-#endif // SEIR_PARAMETERS_H
+#endif // SEAIR_PARAMETERS_H

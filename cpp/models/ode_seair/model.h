@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEIR_MODEL_H
-#define SEIR_MODEL_H
+#ifndef SEAIR_MODEL_H
+#define SEAIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
@@ -68,4 +68,4 @@ public:
 } // namespace oseir
 } // namespace mio
 
-#endif // SEIR_MODEL_H
+#endif // SEAIR_MODEL_H

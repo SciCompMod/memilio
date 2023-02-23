@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SEIR_INFECTIONSTATE_H
-#define SEIR_INFECTIONSTATE_H
+#ifndef SEAIR_INFECTIONSTATE_H
+#define SEAIR_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -41,4 +41,4 @@ enum class InfectionState
 } // namespace oseir
 } // namespace mio
 
-#endif // SEIR_INFECTIONSTATE_H
+#endif // SEAIR_INFECTIONSTATE_H
