@@ -21,6 +21,7 @@
 #define EPI_TIME_SERIES_TO_FILE_H
 
 #include "memilio/utils/time_series.h"
+#include "memilio/math/eigen.h"
 #include <fstream>
 #include <string>
 
@@ -39,10 +40,13 @@ void time_series_to_file(const TimeSeries<FP>& time_series, const std::string& f
   output_file.precision(16);
 
   for(int i=0; i < time_series.get_num_time_points();++i) {
-    for(int j=0; j < time_series.matrix().rows()-1; ++j) {
-      output_file << time_series.matrix()(j,i) << " ";
-      output_file << time_series.matrix()(time_series.matrix().rows()-1,i) << std::endl;
+    auto time = time_series.get_time(i);
+    auto y = time_series.get_value(i);
+    output_file << time;
+    for (int j=0; j < y.size(); ++j) {
+      output_file << " " << y[j];
     }
+    output_file << std::endl;
   }
 
   output_file.close();
