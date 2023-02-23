@@ -4,8 +4,9 @@ add_library(ode_seair
     model.cpp
     parameters.h
 )
-target_link_libraries(ode_seiar PUBLIC memilio)
-target_include_directories(ode_seiar PUBLIC
+
+target_link_libraries(ode_seair PUBLIC memilio)
+target_include_directories(ode_seair PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
