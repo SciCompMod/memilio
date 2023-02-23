@@ -22,14 +22,20 @@
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/math/adapt_rk.h"
+#include "memilio/utils/time_series.h"
+#include "memilio/utils/time_series_to_file.h"
+#include <fstream>
+
+
 
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 1;
-    double dt   = 0.001;
+    double tmax = 100;
+    double dt   = 0.01;
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
@@ -53,8 +59,13 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
+    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    integrator->set_dt_max(dt);
+    integrator->set_abs_tolerance(1e-6);
+    integrator->set_rel_tolerance(1e-6);
 
-    auto seir = simulate(t0, tmax, dt, model);
+    auto seir = simulate(t0, tmax, dt, model, integrator);
+    mio::time_series_to_file(seir,"seir.txt");
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
