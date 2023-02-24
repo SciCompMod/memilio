@@ -318,11 +318,9 @@ public:
         return rnumb;
     }
 
-    template <class IOContext>
-    static IOResult<ParameterDistributionNormal> deserialize(IOContext& io)
+    template<class IOContext, class IOObject>
+    static IOResult<ParameterDistributionNormal> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto obj    = io.expect_object("ParameterDistribution");
-        auto type   = obj.expect_element("Type", Tag<std::string>{});
         auto m      = obj.expect_element("Mean", Tag<double>{});
         auto s      = obj.expect_element("StandardDev", Tag<double>{});
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
@@ -400,11 +398,9 @@ public:
         return new ParameterDistributionUniform(*this);
     }
 
-    template <class IOContext>
-    static IOResult<ParameterDistributionUniform> deserialize(IOContext& io)
+    template<class IOContext, class IOObject>
+    static IOResult<ParameterDistributionUniform> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto obj    = io.expect_object("ParameterDistribution");
-        auto type   = obj.expect_element("Type", Tag<std::string>{});
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
         auto ub     = obj.expect_element("UpperBound", Tag<double>{});
         auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
@@ -448,11 +444,11 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     auto type = obj.expect_element("Type", Tag<std::string>{});
     if (type) {
         if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize(io));
+            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize_elements(io, obj));
             return std::make_shared<ParameterDistributionUniform>(r);
         }
         else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize(io));
+            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize_elements(io, obj));
             return std::make_shared<ParameterDistributionNormal>(r);
         }
         else {
