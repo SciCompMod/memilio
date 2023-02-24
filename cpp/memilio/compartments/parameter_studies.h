@@ -20,11 +20,17 @@
 #ifndef PARAMETER_STUDIES_H
 #define PARAMETER_STUDIES_H
 
+#include "memilio/io/binary_serializer.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
 
 #include <cmath>
+#include <iterator>
+#include <numeric>
 
 namespace mio
 {
@@ -58,13 +64,19 @@ public:
     {
     }
 
+    /**
+     * create study for graph of compartment models.
+     * Creates distributions for all parameters of the models in the graph.
+     * @param graph graph of parameters
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param dev_rel relative deviation of the created distributions from the initial value.
+     * @param graph_sim_dt time step of graph simulation
+     * @param num_runs number of runs
+     */
     ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0,
                    double tmax, double dev_rel, double graph_sim_dt, size_t num_runs)
-        : m_graph(graph)
-        , m_num_runs(num_runs)
-        , m_t0{t0}
-        , m_tmax{tmax}
-        , m_dt_graph_sim(graph_sim_dt)
+        : ParameterStudy(graph, t0, tmax, graph_sim_dt, num_runs)
     {
         for (auto& params_node : m_graph.nodes()) {
             set_params_distributions_normal(params_node, t0, tmax, dev_rel);
@@ -79,10 +91,7 @@ public:
      * @param num_runs number of runs in ensemble run
      */
     ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, size_t num_runs)
-        : m_num_runs{num_runs}
-        , m_t0{t0}
-        , m_tmax{tmax}
-        , m_dt_graph_sim(tmax - t0)
+        : ParameterStudy({}, t0, tmax, tmax - t0, num_runs)
     {
         m_graph.add_node(0, model);
     }
@@ -90,24 +99,88 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
+     * This function is MPI-parallel. The MPI processes each contribute a share of the runs. 
+     * The result processing function is called in a process when a run in that process is finished.
+     * It receives the result of the run and an index that is ordered and unique across all processes.
+     * The values returned by the result processing function are gathered at the root process and returned as 
+     * a list in the same order as if the programm is running sequentially. Other processes than 
+     * @param sample_graph Function that receives the graph of parameters and returns a sampled copy.
      * @param result_processing_function Processing function for simulation results, e.g., output function.
-     *                                   Receives the result after each run is completed.
+     * @returns At the root process, a list of values per run that have been returned from the result processing function.
+     *          At all other processes, an empty list.
      */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    void run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
+    std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>>
+    run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
-        // Iterate over all parameters in the parameter space
-        for (size_t i = 0; i < m_num_runs; i++) {
+        int num_procs, rank;
+#ifdef MEMILIO_ENABLE_MPI
+        MPI_Comm_size(mpi::get_world(), &num_procs);
+        MPI_Comm_rank(mpi::get_world(), &rank);
+#else
+        num_procs = 1;
+        rank      = 0;
+#endif
+
+        auto run_distribution = distribute_runs(m_num_runs, num_procs);
+        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + rank, 0);
+        auto end_run_idx = start_run_idx + run_distribution[rank];
+
+        std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>> ensemble_result;
+        ensemble_result.reserve(m_num_runs);
+
+        for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
+            //ensure reproducible results if the number of runs or MPI process changes.
+            //assumptions:
+            //- the sample_graph functor uses the RNG provided by our library
+            //- the RNG has been freshly seeded/initialized before this call
+            //- the seeds are identical on all MPI processes
+            //- the block size of the RNG is sufficiently big to cover one run
+            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length 
+            //   of the mt19937 RNG is huge)
+            mio::thread_local_rng().forward_to_block(run_idx);
+
             auto sim = create_sampled_simulation(sample_graph);
             sim.advance(m_tmax);
 
-            result_processing_function(std::move(sim).get_graph(), i);
+            ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
         }
+
+#ifdef MEMILIO_ENABLE_MPI
+        //gather results
+        if (rank == 0) {
+            for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
+                int bytes_size;
+                MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+                std::cout << "Rank " << rank << " receiving " << bytes_size << " bytes from " << src_rank << std::endl;
+                ByteStream bytes(bytes_size);
+                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+
+                std::cout << "Rank " << rank << " deserializing" << std::endl;
+                auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
+                if (!src_ensemble_results) {
+                    log_error("Error receiving ensemble results from rank {}.", src_rank);
+                }
+                std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
+                          std::back_inserter(ensemble_result));
+            }
+        }
+        else {
+            auto bytes      = serialize_binary(ensemble_result);
+            auto bytes_size = int(bytes.data_size());
+            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
+            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
+            ensemble_result.clear(); //only return root process
+        }
+#endif
+
+        return ensemble_result;
     }
 
     /*
      * @brief Carry out all simulations in the parameter study.
-     * Convenience function for a few number of runs, but uses a lot of memory.
+     * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
+     * Unlike the other overload, this function is not MPI-parallel.
      * @return vector of results of each run.
      */
     template <class SampleGraphFunction>
@@ -116,9 +189,12 @@ public:
         std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
-        run(sample_graph, [&ensemble_result](auto&& r, auto&& /*i*/) {
-            ensemble_result.emplace_back(std::move(r));
-        });
+        for (size_t i = 0; i < m_num_runs; i++) {
+            auto sim = create_sampled_simulation(sample_graph);
+            sim.advance(m_tmax);
+
+            ensemble_result.emplace_back(std::move(sim).get_graph());
+        }
 
         return ensemble_result;
     }
@@ -218,6 +294,20 @@ private:
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+    }
+
+    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
+    {
+        //evenly distribute runs
+        //lower processes do one more run if runs are not evenly distributable
+        auto num_runs_local = num_runs / num_procs; //integer division!
+        auto remainder = num_runs % num_procs;
+
+        std::vector<size_t> run_distribution(num_procs);
+        std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
+        std::fill(run_distribution.begin() + remainder, run_distribution.end(), num_runs_local);
+
+        return run_distribution;
     }
 
 private:
