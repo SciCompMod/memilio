@@ -337,6 +337,25 @@ private:
     {
     }
 
+    template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) < sizeof...(Tags)), void*> = nullptr>
+    static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
+    {
+        //read next parameter, recurse
+        const size_t I = sizeof...(Rs);
+        using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
+        auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
+        return deserialize_recursive(io, obj, rs..., r);
+    }
+
+    template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) == sizeof...(Tags)), void*> = nullptr>
+    static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& /*obj*/, Rs&&... rs)
+    {
+        //no more parameters to read, build ParameterSet, stop recursion
+        return mio::apply(io, [](const typename Tags::Type&... t) {
+            return ParameterSet(t...);
+        }, rs...);
+    }
+
 public:
     /**
      * deserialize an object of this class.
@@ -346,12 +365,7 @@ public:
     static IOResult<ParameterSet> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("ParameterSet");
-        return apply(
-            io,
-            [](const typename Tags::Type&... t) {
-                return ParameterSet(t...);
-            },
-            obj.expect_element(Tags::name(), Tag<typename Tags::Type>{})...);
+        return deserialize_recursive(io, obj);
     }
 
 private:
