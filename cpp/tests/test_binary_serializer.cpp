@@ -1,9 +1,18 @@
 #include "boost/none.hpp"
 #include "boost/none_t.hpp"
 #include "matchers.h"
+#include "memilio/epidemiology/damping.h"
+#include "memilio/epidemiology/damping_sampling.h"
 #include "memilio/io/binary_serializer.h"
 #include "memilio/io/io.h"
+#include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/time_series.h"
+#include "memilio/utils/uncertain_value.h"
+#include "ode_secir/model.h"
+#include "ode_secir/parameter_space.h"
+#include "ode_secir/parameters.h"
 #include "gtest/gtest.h"
+#include <memory>
 
 namespace {
     template<class T>
@@ -123,6 +132,29 @@ TEST(BinarySerializer, complex_class)
 {
     check_roundtrip_serialize(Bar{"Hello", E::E1, {Foo{2}, Foo{3}}});
     check_roundtrip_serialize(Bar{"", boost::none, {}});
+}
+
+TEST(BinarySerializer, time_series)
+{
+    mio::TimeSeries<double> ts{48};
+    for (int i = 0; i < 10; ++i) {
+        ts.add_time_point(i, Eigen::VectorXd::Constant(48, double(i)));
+    }
+    auto stream = mio::serialize_binary(ts);
+    auto result = mio::deserialize_binary(stream, mio::Tag<mio::TimeSeries<double>>{});
+    EXPECT_THAT(result, IsSuccess());
+    EXPECT_EQ(result.value().get_num_time_points(), Eigen::Index(10));
+    EXPECT_EQ(result.value()[7][0], double(7));
+}
+
+TEST(BinarySerializer, model)
+{
+    //this test is only to make sure the correct number of bytes are serialized/deserialized
+    //in a very complex object. correct serializing of single values is tested by other tests.
+    mio::osecir::Model model{5};
+    auto stream = mio::serialize_binary(model);
+    auto result = mio::deserialize_binary(stream, mio::Tag<mio::osecir::Model>{});
+    EXPECT_THAT(result, IsSuccess());
 }
 
 TEST(ByteStream, end)
