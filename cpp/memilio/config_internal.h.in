@@ -27,5 +27,6 @@
 
 #cmakedefine MEMILIO_HAS_HDF5
 #cmakedefine MEMILIO_HAS_JSONCPP
+#cmakedefine MEMILIO_ENABLE_MPI
 
 #endif

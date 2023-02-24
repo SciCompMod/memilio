@@ -21,6 +21,7 @@
 #define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 
 #include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/span.h"
 
 #include <cassert>
@@ -88,6 +89,26 @@ public:
         std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
         m_rng.seed(sseq);
         m_num_generated = 0;
+    }
+
+    /**
+    * Set the seeds in all MPI processes the same as in the root.
+    */
+    void synchronize_seeds()
+    {
+#ifdef MEMILIO_ENABLE_MPI
+        int rank;
+        MPI_Comm_rank(mpi::get_world(), &rank);
+        int num_seeds;
+        if (rank == 0) {
+            num_seeds = int(m_seeds.size());
+        }
+        MPI_Bcast(&num_seeds, 1, MPI_INT, 0, mpi::get_world());
+        if (rank != 0) {
+            m_seeds.assign(num_seeds, 0);
+        }
+        MPI_Bcast(m_seeds.data(), num_seeds, MPI_UINT32_T, 0, mpi::get_world());
+#endif
     }
 
     /**
