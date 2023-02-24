@@ -49,8 +49,8 @@ public:
     * @param[in] Dead0 The total number of deaths at initial time 0.
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead0,
-          const Pa& Parameterset_init = Pa());
+    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead_before,
+          ScalarType Dead0, const Pa& Parameterset_init = Pa());
 
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -111,7 +111,7 @@ private:
      * 
      * Computed value is stored in m_forceofinfection.
      */
-    void update_forceofinfection();
+    void update_forceofinfection(bool initialization);
 
     /**
      * @brief Computes size of a flow.
@@ -189,6 +189,8 @@ private:
     ScalarType m_dt{0};
     // Population of the considered region.
     ScalarType m_N{0};
+    // Deaths before start of simulation
+    ScalarType m_deaths_before{0};
 };
 
 } // namespace isecir

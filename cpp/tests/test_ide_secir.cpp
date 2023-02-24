@@ -37,9 +37,10 @@ protected:
     {
         using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-        ScalarType N     = 10000;
-        ScalarType Dead0 = 12;
-        ScalarType dt    = 1;
+        ScalarType N           = 10000;
+        ScalarType Dead_before = 12;
+        ScalarType Dead0       = 12;
+        ScalarType dt          = 1;
 
         int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
@@ -52,7 +53,7 @@ protected:
             init.add_time_point(init.get_last_time() + dt, vec_init);
         }
 
-        model = new mio::isecir::Model(std::move(init), 1, N, Dead0);
+        model = new mio::isecir::Model(std::move(init), 1, N, Dead_before, Dead0);
 
         // Set working parameters.
         model->parameters.set<mio::isecir::TransitionDistributions>(
@@ -78,12 +79,12 @@ public:
     mio::isecir::Model* model = nullptr;
 };
 
-TEST_F(ModelTest, printTransitions)
-{
-    std::cout << " In TEST_F: \n";
-    model->print_transitions();
-    std::cout << "\n" << std::endl;
-}
+// TEST_F(ModelTest, printTransitions)
+// {
+//     std::cout << " In TEST_F: \n";
+//     model->print_transitions();
+//     std::cout << "\n" << std::endl;
+// }
 
 TEST_F(ModelTest, checkPopulationConservation)
 {
@@ -135,54 +136,96 @@ TEST_F(ModelTest, compareWithPreviousRunTransitions)
     }
 }
 
-    TEST_F(ModelTest, checkPrivateSimulationFunctions)
-    {
-        // compute_susceptibles
+TEST(IdeSecir, checkimulationFunctions)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-        // update_forceofinfection
+    ScalarType tmax        = 1;
+    ScalarType N           = 10000;
+    ScalarType Dead_before = 10;
+    ScalarType Dead0       = 10;
+    ScalarType dt          = 1;
 
-        // compute_flow
+    int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
-        // flows_current_timestep
+    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    mio::TimeSeries<ScalarType> init(num_transitions);
 
-        // compute_totaldeaths
-
-        // compute_recovered
-
-        // compute_compartment
-
-        // compartments_current_timestep_ECIHU
+    // add time points for initialization for transitions and death
+    Vec vec_init(num_transitions);
+    vec_init << 1.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    // add initial time point to time series
+    init.add_time_point(-1, vec_init);
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-    TEST(IdeSecir, infection_transitions)
-    {
-        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
+    // Initialize model.
+    mio::isecir::Model model(std::move(init), dt, N, Dead_before, Dead0);
 
-        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(0),
-                  std::make_pair(mio::isecir::InfectionState::Susceptible, mio::isecir::InfectionState::Exposed));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(1),
-            std::make_pair(mio::isecir::InfectionState::Exposed, mio::isecir::InfectionState::InfectedNoSymptoms));
-        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(2),
-                  std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms,
-                                 mio::isecir::InfectionState::InfectedSymptoms));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(3),
-            std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::Recovered));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(4),
-            std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::InfectedSevere));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(5),
-            std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::Recovered));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(6),
-            std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::InfectedCritical));
-        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(7),
-                  std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::Recovered));
-        EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(8),
-                  std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Dead));
-        EXPECT_EQ(
-            mio::isecir::InfectionTransitionsMap.at(9),
-            std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Recovered));
+    // Set working parameters.
+    model.parameters.set<mio::isecir::TransitionDistributions>(
+        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
+    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
+    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+
+    // Carry out simulation.
+    mio::TimeSeries<ScalarType> secihurd_simulated    = model.simulate(tmax);
+    mio::TimeSeries<ScalarType> transitions_simulated = model.get_transitions();
+
+    // Define vectors with values from example (calculated by hand, see Overleaf document)
+    Vec secihurd0((int)mio::isecir::InfectionState::Count);
+    Vec secihurd1((int)mio::isecir::InfectionState::Count);
+    Vec transitions1(num_transitions);
+    secihurd0 << 4995, 0.5, 0, 4, 0, 0, 4990.5, 10;
+    secihurd1 << 4994.00020016, 0.49989992, 0.49994996, 0.12498749, 1.03124687, 0.25781172, 4993.45699802, 10.12890586;
+    transitions1 << 0.99979984, 0.99989991, 0.24997498, 0.24997498, 2.06249374, 2.06249374, 0.51562344, 0.51562344,
+        0.12890586, 0.12890586;
+
+    // Compare SECIHURD compartments at times 0 and 1
+    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
+        EXPECT_NEAR(secihurd_simulated[0][i], secihurd0[i], 1e-8);
+        EXPECT_NEAR(secihurd_simulated[1][i], secihurd1[i], 1e-8);
     }
+
+    // Compare transitions at time 1
+    for (Eigen::Index i = 0; i < num_transitions; i++) {
+        EXPECT_NEAR(transitions_simulated[transitions_simulated.get_num_time_points() - 1][i], transitions1[i], 1e-8);
+    }
+}
+
+TEST(IdeSecir, infection_transitions)
+{
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
+
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(0),
+              std::make_pair(mio::isecir::InfectionState::Susceptible, mio::isecir::InfectionState::Exposed));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(1),
+              std::make_pair(mio::isecir::InfectionState::Exposed, mio::isecir::InfectionState::InfectedNoSymptoms));
+    EXPECT_EQ(
+        mio::isecir::InfectionTransitionsMap.at(2),
+        std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::InfectedSymptoms));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(3),
+              std::make_pair(mio::isecir::InfectionState::InfectedNoSymptoms, mio::isecir::InfectionState::Recovered));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(4), std::make_pair(mio::isecir::InfectionState::InfectedSymptoms,
+                                                                         mio::isecir::InfectionState::InfectedSevere));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(5),
+              std::make_pair(mio::isecir::InfectionState::InfectedSymptoms, mio::isecir::InfectionState::Recovered));
+    EXPECT_EQ(
+        mio::isecir::InfectionTransitionsMap.at(6),
+        std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::InfectedCritical));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(7),
+              std::make_pair(mio::isecir::InfectionState::InfectedSevere, mio::isecir::InfectionState::Recovered));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(8),
+              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Dead));
+    EXPECT_EQ(mio::isecir::InfectionTransitionsMap.at(9),
+              std::make_pair(mio::isecir::InfectionState::InfectedCritical, mio::isecir::InfectionState::Recovered));
+}

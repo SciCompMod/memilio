@@ -30,19 +30,21 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax  = 10;
-    ScalarType N     = 10000;
-    ScalarType Dead0 = 12;
-    ScalarType dt    = 1;
+    ScalarType tmax        = 10;
+    ScalarType N           = 10000;
+    ScalarType Dead_before = 12;
+    ScalarType Dead0       = 12;
+    ScalarType dt          = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
     mio::TimeSeries<ScalarType> init(num_transitions);
 
-    // add time points for initialization
+    // add time points for initialization for transitions and death
     Vec vec_init(num_transitions);
     vec_init << 25.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+    // add initial time point to time series
     init.add_time_point(-10, vec_init);
     while (init.get_last_time() < 0) {
         vec_init *= 1.01;
@@ -50,7 +52,7 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), dt, N, Dead0);
+    mio::isecir::Model model(std::move(init), dt, N, Dead_before, Dead0);
 
     // // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(
