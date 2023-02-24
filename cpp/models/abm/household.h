@@ -118,7 +118,7 @@ public:
     }
 
     /**
-     * @brief Get the space per member of the Household.
+     * @brief Get the space per member of the Household, measured in cubic meters.
      */
     int get_space_per_member() const
     {
