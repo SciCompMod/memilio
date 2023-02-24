@@ -1,5 +1,8 @@
 #include "memilio/utils/miompi.h"
+
+#ifdef MEMILIO_ENABLE_MPI
 #include <mpi.h>
+#endif
 
 namespace mio
 {

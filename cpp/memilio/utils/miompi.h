@@ -15,7 +15,7 @@ namespace mpi
 #ifdef MEMILIO_ENABLE_MPI
 using Comm = MPI_Comm;
 #else
-using Comm = void*
+using Comm = void*;
 #endif
 
 /**
