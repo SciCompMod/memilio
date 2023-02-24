@@ -1,9 +1,10 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC),
+* Forschungszentrum Juelich (FZJ)
 *
-* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
+* Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn, Ralf Hannemann-Tamas
 *
-* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+* Contact: Ralf Hannemann-Tamas <r.hannemann-tamas@fz-juelich.de>
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -32,8 +33,135 @@ namespace oseair
 {
 
 /*******************************************
-      * Define Parameters of the SEIR model *
+      * Define Parameters of the SEAIR model *
     *******************************************/
+
+/**
+ * @brief Social distancing.
+ */
+struct AlphaA {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.2);
+  }
+  static std::string name()
+  {
+    return "AlphaA";
+  }
+};
+
+
+/**
+ * @brief Quarantining.
+ */
+struct AlphaI {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.2);
+  }
+  static std::string name()
+  {
+    return "AlphaI";
+  }
+};
+
+/**
+ * @brief Rate of testing.
+ */
+struct Kappa {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.2);
+  }
+  static std::string name()
+  {
+    return "Kappa";
+  }
+};
+
+
+/**
+ * @brief Recovery rate.
+ */
+struct Beta {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.0067);
+  }
+  static std::string name()
+  {
+    return "Beta";
+  }
+};
+
+/**
+ * @brief Death Rate.
+ */
+struct Mu {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.0041);
+  }
+  static std::string name()
+  {
+    return "Mu";
+  }
+};
+
+
+/**
+ * @brief Inverse of the latent period of the virus.
+ */
+struct TLatentInverse {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.5);
+  }
+  static std::string name()
+  {
+    return "TLatentInverse";
+  }
+};
+
+/**
+ * @brief Infectious period for unconfirmed infected people.
+ */
+struct Rho {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.1);
+  }
+  static std::string name()
+  {
+    return "Rho";
+  }
+};
+
+
+/**
+ * @brief Rate recovered people become susceptible again.
+ */
+struct Gamma {
+  using Type = UncertainValue;
+  static Type get_default()
+  {
+    return Type(0.0);
+  }
+  static std::string name()
+  {
+    return "Gamma";
+  }
+};
+
+
+
 
 /**
      * @brief probability of getting infected from a contact
@@ -95,7 +223,7 @@ struct ContactPatterns {
     }
 };
 
-using ParametersBase = ParameterSet<TransmissionProbabilityOnContact, TimeExposed, TimeInfected, ContactPatterns>;
+using ParametersBase = ParameterSet<AlphaA, AlphaI, Kappa, Beta, Mu, TLatentInverse, Rho, Gamma>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -115,23 +243,6 @@ public:
      */
     int check_constraints() const
     {
-        if (this->get<TimeExposed>() <= 0.0) {
-            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
-                      this->get<TimeExposed>(), 0.0);
-            return 1;
-        }
-        if (this->get<TimeInfected>() <= 0.0) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
-                      this->get<TimeInfected>(), 0.0);
-            return 1;
-        }
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            return 1;
-        }
         return 0;
     }
 

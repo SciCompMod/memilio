@@ -35,27 +35,23 @@ int main()
 
     double t0   = 0;
     double tmax = 100;
-    double dt   = 0.01;
+    double dt   = 0.2;
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::oseair::Model model;
+    const double N = 327167434;// total population of the US
 
-    double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] =
-        total_population -
-        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}];
-    // suscetible now set with every other update
-    // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::oseair::TimeExposed>(5.2);
-    model.parameters.set<mio::oseair::TimeInfected>(6);
-    model.parameters.set<mio::oseair::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseair::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 0.0003451395725394549;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Asymptomatic)}]   = 0.00037846880968213874;
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Infected)}]  = (337072.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Recovered)}] = (17448.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Perished)}]   = (9619.0 / N);
+    model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::ObjectiveFunction)}]   = 0.0;
+
+
+
 
     model.check_constraints();
     // print_seir_params(model);
@@ -65,8 +61,8 @@ int main()
     integrator->set_rel_tolerance(1e-6);
 
     auto seair = simulate(t0, tmax, dt, model, integrator);
-    mio::time_series_to_file(seair,"seair.txt");
+    const std::string file_name = "seair.txt";
+    std::cout << "Writing output to " << file_name << std::endl;
+    mio::time_series_to_file(seair, file_name);
 
-    printf("\n number total: %f\n",
-           seair.get_last_value()[0] + seair.get_last_value()[1] + seair.get_last_value()[2] + seair.get_last_value()[3]);
 }

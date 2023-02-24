@@ -37,6 +37,7 @@ enum class InfectionState
     Recovered,
     Asymptomatic,
     Perished,
+    ObjectiveFunction,
     Count
 };
 
