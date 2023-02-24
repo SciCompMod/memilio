@@ -28,6 +28,7 @@ GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wc++17-extensions")
 #include "boost/outcome/result.hpp"
 #include "boost/outcome/try.hpp"
+#include "boost/optional.hpp"
 GCC_CLANG_DIAGNOSTIC(pop)
 #include <tuple>
 #include <iostream>

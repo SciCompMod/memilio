@@ -20,8 +20,6 @@
 #ifndef MIO_IO_BINARY_SERIALIZER_H
 #define MIO_IO_BINARY_SERIALIZER_H
 
-#include "boost/optional/optional.hpp"
-#include "boost/outcome/try.hpp"
 #include "memilio/io/io.h"
 #include "memilio/io/serializer_base.h"
 #include "memilio/utils/compiler_diagnostics.h"

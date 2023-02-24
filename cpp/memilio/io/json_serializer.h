@@ -28,7 +28,6 @@
 #include "memilio/io/serializer_base.h"
 #include "memilio/utils/metaprogramming.h"
 #include "json/json.h"
-#include "boost/optional.hpp"
 #include <fstream>
 #include <utility>
 #include <limits>

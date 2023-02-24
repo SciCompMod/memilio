@@ -79,37 +79,12 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("secir_model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def(
-            "run",
-            [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& g) {
-                        handle_result(std::move(g));
-                    });
-            },
-            py::arg("handle_result_func"))
         .def("run",
              [](mio::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
                  return self.run([](auto&& g) {
                      return draw_sample(g);
                  });
              })
-        .def(
-            "run_single",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& r) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()));
-                    });
-            },
-            py::arg("handle_result_func"))
         .def("run_single", [](mio::ParameterStudy<Simulation>& self) {
             return filter_graph_results(self.run([](auto&& g) {
                 return draw_sample(g);
