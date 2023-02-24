@@ -5,6 +5,7 @@
 #include "boost/outcome/try.hpp"
 #include "memilio/io/io.h"
 #include "memilio/io/serializer_base.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/metaprogramming.h"
 #include <memory>
 #include <sstream>
@@ -102,8 +103,20 @@ public:
         return m_buf.data();
     }
     /**@}*/
+
+    /**
+    * Get the size of the buffer of the stream.
+    */
+    size_t data_size() const
+    {
+        return m_buf.size();
+    }
 };
 
+/**
+* Stores a binary serialized object.
+* See io.h for documentation of serialization.
+*/
 class BinarySerializerObject : public SerializerBase
 {
 public:
@@ -145,6 +158,10 @@ private:
     ByteStream& m_stream;
 };
 
+/**
+* Serializes objects in binary format.
+* See io.h for documentation of serialization.
+*/
 class BinarySerializerContext : public SerializerBase
 {
 public:
@@ -185,21 +202,24 @@ private:
 };
 
 template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
-void BinarySerializerObject::add_element(const std::string& /*name*/, const T& value)
+void BinarySerializerObject::add_element(const std::string& name, const T& value)
 {
+    mio::unused(name);
     auto p = reinterpret_cast<const unsigned char*>(std::addressof(value));
     m_stream.write(p, sizeof(value));
 }
 
 template <class T, std::enable_if_t<negation_v<std::is_trivial<T>>, void*>>
-void BinarySerializerObject::add_element(const std::string& /*name*/, const T& value)
+void BinarySerializerObject::add_element(const std::string& name, const T& value)
 {
+    mio::unused(name);
     auto ctxt = BinarySerializerContext(m_status, m_flags, m_stream);
     mio::serialize(ctxt, value);
 }
 
-inline void BinarySerializerObject::add_element(const std::string& /*name*/, const std::string& value)
+inline void BinarySerializerObject::add_element(const std::string& name, const std::string& value)
 {
+    mio::unused(name);
     const auto size   = value.size();
     const auto p_size = reinterpret_cast<const unsigned char*>(std::addressof(size));
     const auto p_data = reinterpret_cast<const unsigned char*>(value.data());
@@ -210,24 +230,27 @@ inline void BinarySerializerObject::add_element(const std::string& /*name*/, con
 template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> /*tag*/)
 {
+    mio::unused(name);
     T t;
     if (m_stream.read(reinterpret_cast<unsigned char*>(std::addressof(t)), sizeof(t))) {
         return mio::success(t);
     }
     else {
-        return mio::failure(mio::StatusCode::UnknownError,
-                            "Unexpected EOF reading " + name + " from binary stream.");
+        return mio::failure(mio::StatusCode::UnknownError, "Unexpected EOF reading " + name + " from binary stream.");
     }
 }
 
 template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*>>
-IOResult<T> BinarySerializerObject::expect_element(const std::string& /*name*/, Tag<T> tag)
+IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> tag)
 {
-    return mio::deserialize(BinarySerializerContext(m_status, m_flags, m_stream), tag);
+    mio::unused(name);
+    auto ctxt = BinarySerializerContext(m_status, m_flags, m_stream);
+    return mio::deserialize(ctxt, tag);
 }
 
 inline IOResult<std::string> BinarySerializerObject::expect_element(const std::string& name, Tag<std::string>)
 {
+    mio::unused(name);
     size_t size;
     if (m_stream.read(reinterpret_cast<unsigned char*>(&size), sizeof(size))) {
         std::string t(size, 0);
@@ -239,22 +262,24 @@ inline IOResult<std::string> BinarySerializerObject::expect_element(const std::s
 }
 
 template <class Iter>
-void BinarySerializerObject::add_list(const std::string& /*name*/, Iter b, Iter e)
+void BinarySerializerObject::add_list(const std::string& name, Iter b, Iter e)
 {
-    add_element("", e - b);
+    mio::unused(name);
+    add_element("Size", size_t(e - b));
     for (; b != e; ++b) {
-        add_element("", *b);
+        add_element("Item", *b);
     }
 }
 
 template <class T>
-IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& /*name*/, Tag<T>)
+IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& name, Tag<T>)
 {
-    BOOST_OUTCOME_TRY(size, expect_element("", Tag<size_t>{}));
+    mio::unused(name);
+    BOOST_OUTCOME_TRY(size, expect_element("Size", Tag<size_t>{}));
     std::vector<T> v;
     v.reserve(size);
     for (auto i = size_t(0); i < size; ++i) {
-        BOOST_OUTCOME_TRY(t, expect_element("", Tag<T>{}));
+        BOOST_OUTCOME_TRY(t, expect_element("Item", Tag<T>{}));
         v.push_back(t);
     }
     return success(v);
@@ -263,23 +288,32 @@ IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& 
 template <class T>
 void BinarySerializerObject::add_optional(const std::string& name, const T* value)
 {
-    //optional is list of 0 or 1 element
-    add_list(name, value, value + (value ? 1 : 0));
+    mio::unused(name);
+    add_element("Exists", size_t(value ? 1 : 0));
+    if (value) {
+        add_element("Value", *value);
+    }
 }
 
 template <class T>
-IOResult<boost::optional<T>> BinarySerializerObject::expect_optional(const std::string& /*name*/, Tag<T>)
+IOResult<boost::optional<T>> BinarySerializerObject::expect_optional(const std::string& name, Tag<T>)
 {
-    //optional was written using add_list
-    //don't read use expect_list list to avoid constructing the std::vector
-    BOOST_OUTCOME_TRY(size, expect_element("", Tag<size_t>{}));
+    mio::unused(name);
+    BOOST_OUTCOME_TRY(size, expect_element("Exists", Tag<size_t>{}));
     if (size) {
-        BOOST_OUTCOME_TRY(t, expect_element("", Tag<T>{}));
+        BOOST_OUTCOME_TRY(t, expect_element("Value", Tag<T>{}));
         return mio::success(t);
     }
     return mio::success(boost::optional<T>{});
 }
 
+/**
+* Serialize an object into binary format.
+* The format is not portable, object must be deserialized by the same (or identically compiled) program.
+* @param t object to serialize.
+* @return a ByteStream that contains the serialized bytes that represent the object.
+* @tparam T the type of the object to be serialized.
+*/
 template <class T>
 ByteStream serialize_binary(const T& t)
 {
@@ -289,6 +323,14 @@ ByteStream serialize_binary(const T& t)
     return stream;
 }
 
+
+/**
+* Deserialize an object from binary format.
+* @param stream ByteStream that contains the bytes that represent the object.
+* @param tag Tag that carries the type of the object to be deserialized.
+* @return The deserialized object if succesful, an error otherwise.
+* @tparam T the type of the object to be serialized.
+*/
 template <class T>
 IOResult<T> deserialize_binary(ByteStream& stream, Tag<T>)
 {
