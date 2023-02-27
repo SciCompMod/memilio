@@ -579,11 +579,9 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         with patch('requests.get') as mock_request:
-            df = gd.get_file(
-                'Cases_deaths_weekly_fake', apiUrl=directory,
-                extension='.xlsx',
-                param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
-                            "engine": 'openpyxl'})
+            df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
+                sheet_name = 'COVID_Todesfälle', header = 0,
+                            engine = 'openpyxl')
             towrite = io.BytesIO()
             df.to_excel(towrite, index=False)
             towrite.seek(0)
@@ -592,9 +590,9 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
-        df_real_deaths_per_week = gd.get_file(
-            'Cases_deaths_weekly', apiUrl=directory, extension='.xlsx',
-            param_dict={"sheet_name": 0, "header": 0, "engine": 'openpyxl'})
+        df_real_deaths_per_week = pd.read_excel(
+            directory + 'Cases_deaths_weekly.xlsx',
+            sheet_name = 0, header = 0, engine = 'openpyxl')
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
         self.assertEqual(pd.to_numeric(
             df_real_deaths_per_week['Sterbejahr'])[0], 2020)

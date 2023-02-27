@@ -61,7 +61,17 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None, ve
         # suppress this warning since the insecure requests is intentional
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     # send GET request as stream so 
-    req = requests.get(url, stream=True, timeout=timeout, verify=verify)
+    try:
+        req = requests.get(url, stream=True, timeout=timeout, verify=verify)
+    except OSError:
+        user_input = input(
+            url +
+            "could not be opened due to an unsecure connection. Do you want to open it anyways without certification? (y/n)? \n")
+        if user_input == 'y' or user_input == 'Y':
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            req = requests.get(url, stream=True, timeout=timeout, verify=False)
+        if user_input == 'n' or user_input == 'N':
+            raise FileNotFoundError("Error: URL " + url + " could not be opened.")
     if req.status_code != 200: #e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
     # get file size from http header

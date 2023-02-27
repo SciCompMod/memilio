@@ -192,7 +192,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
            return_value=df_test_error)
-    def test_divi_data_sanity_checks(self, mockrjson3):
+    def test_divi_data_sanity_checks(self, mock_file):
 
         # first test
         # get random dataframe

@@ -62,7 +62,7 @@ WARNING: This file is experimental and has not been tested.
     @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.data_path
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
@@ -237,10 +237,9 @@ def compare_estimated_and_rki_deathsnumbers(
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week = gd.get_file(
-        "Cases_deaths_weekly", apiUrl=data_path, extension=".xlsx",
-        param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week = pd.read_excel(
+        data_path + "Cases_deaths_weekly.xlsx", sheet_name='COVID_Todesfälle',
+        header=0, engine='openpyxl')
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -315,14 +314,12 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week_age = gd.get_file(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG10', "header": 0,
-                    "engine": 'openpyxl'})
-    df_real_deaths_per_week_gender = gd.get_file(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG20_G', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week_age = pd.read_excel(
+        data_path + 'Cases_deaths_weekly.xlsx',
+        sheet_name='COVID_Todesfälle_KW_AG10', header=0, engine='openpyxl')
+    df_real_deaths_per_week_gender = pd.read_excel(
+        data_path + 'Cases_deaths_weekly.xlsx',
+        sheet_name='COVID_Todesfälle_KW_AG20_G', header=0, engine='openpyxl')
     df_real_deaths_per_week_age.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'AG 0-9 Jahre': 'age 0-9 years',
