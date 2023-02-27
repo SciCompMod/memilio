@@ -54,9 +54,6 @@ endif()
 add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 
-add_executable(ide_secir_test_dummy ide_secir_test_dummy.cpp)
-target_link_libraries(ide_secir_test_dummy PRIVATE memilio ide_secir)
-
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 

@@ -71,13 +71,14 @@ void Model::update_forceofinfection(bool initialization)
              .get_xright()});
 
     // corresponding index
-    // need calc_time_index timesteps in sum,
-    // subtract 1 because in the last summand all Transitiondistributions evaluate to 0
+    /* need calc_time_index timesteps in sum,
+     subtract 1 because in the last summand all Transitiondistributions evaluate to 0*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
     Eigen::Index num_time_points{};
     ScalarType current_time{};
     ScalarType deaths{};
+
     if (initialization) {
         // determine phi(-m_dt) which is the penultimate timepoint in m_transitions
         num_time_points = m_transitions.get_num_time_points() - 1;
@@ -115,20 +116,21 @@ void Model::update_forceofinfection(bool initialization)
                  m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>());
     }
-    m_forceofinfection = m_dt / ((ScalarType)m_N - deaths) * m_forceofinfection;
+    m_forceofinfection = 1 / ((ScalarType)m_N - deaths) * m_forceofinfection;
 }
 
 void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow)
 {
     ScalarType sum = 0;
 
-    // if we have Transitiondistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
-    // then we have that the derivative of Transitiondistribution(m_dt*i) is equal to zero for all i>= k+1,
-    // since we are using a backwards difference scheme to compute the derivative.
-    // this needs to be adjusted if we are changing the finite difference scheme
+    /* if we have Transitiondistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
+     Then we have that the derivative of Transitiondistribution(m_dt*i) is equal to zero for all i>= k+1,
+     since we are using a backwards difference scheme to compute the derivative.
+     this needs to be adjusted if we are changing the finite difference scheme */
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() /
-                                m_dt) + 1;
+                                m_dt) +
+        1;
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
@@ -143,7 +145,7 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     }
 
     m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
-        (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * m_dt * sum;
+        (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
 }
 
 void Model::flows_current_timestep()
@@ -226,7 +228,7 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
                m_transitions[i + 1][idx_IncomingFlow];
     }
 
-    m_SECIR.get_last_value()[idx_InfectionState] = m_dt * sum;
+    m_SECIR.get_last_value()[idx_InfectionState] = sum;
 }
 
 void Model::compartments_current_timestep_ECIHU()
@@ -261,7 +263,7 @@ void Model::compartments_current_timestep_ECIHU()
 void Model::initialize()
 {
     // compute S(0) and phi(-m_dt) as initial values for discretization scheme
-    // use phi(-m_dt) to be consistent with further calculations of S (see compute_susceptibles()), 
+    // use phi(-m_dt) to be consistent with further calculations of S (see compute_susceptibles()),
     // where also the value of phi for the previous timestep is used
     update_forceofinfection(true);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
