@@ -285,7 +285,7 @@ jobs:
           mkdir -p public/coverage
           mkdir -p public/coverage/cpp
           mkdir -p public/coverage/python
-          cp -r coverage_python/test-py-coverage-reports-*/ public/coverage/python/
+          cp -r coverage_python/* public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
         uses: actions/upload-artifact@v3
