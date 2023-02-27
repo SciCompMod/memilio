@@ -39,7 +39,6 @@ protected:
 
         ScalarType N           = 10000;
         ScalarType Dead_before = 12;
-        ScalarType Dead0       = 12;
         ScalarType dt          = 1;
 
         int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
@@ -53,7 +52,7 @@ protected:
             init.add_time_point(init.get_last_time() + dt, vec_init);
         }
 
-        model = new mio::isecir::Model(std::move(init), 1, N, Dead_before, Dead0);
+        model = new mio::isecir::Model(std::move(init), 1, N, Dead_before);
 
         // Set working parameters.
         model->parameters.set<mio::isecir::TransitionDistributions>(
@@ -136,14 +135,13 @@ TEST_F(ModelTest, compareWithPreviousRunTransitions)
     }
 }
 
-TEST(IdeSecir, checkimulationFunctions)
+TEST(IdeSecir, checksimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType tmax        = 1;
     ScalarType N           = 10000;
     ScalarType Dead_before = 10;
-    ScalarType Dead0       = 10;
     ScalarType dt          = 1;
 
     int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
@@ -161,7 +159,7 @@ TEST(IdeSecir, checkimulationFunctions)
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), dt, N, Dead_before, Dead0);
+    mio::isecir::Model model(std::move(init), dt, N, Dead_before);
 
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(

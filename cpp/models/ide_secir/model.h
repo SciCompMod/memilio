@@ -38,19 +38,19 @@ public:
     /**
     * @brief Constructor to create an IDE SECIR model.
     *
-    * @param[in, out] init TimeSeries with the initial values of the number of individuals,
-    *   which transition according to the transitions defined in infection_state.h at associated initial times.
-    *   The time steps should be equidistant and equal to the time step used for the simulation. 
-    *   A certain history of time steps and values for the transitions is needed. 
+    * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
+    *   which transit within one timestep dt_init from one compartment to another.
+    *   Possible transitions are specified in infection_state.h.
+    *   Considered points of times should have the distance dt_init and the last time point should be 0. 
+    *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
-    *   The last time point in this vector should be a time 0.
     * @param[in] dt_init The size of the time step used for numerical simulation.
-    * @param[in] N_init The population of the considered region. 
-    * @param[in] Dead0 The total number of deaths at initial time 0.
+    * @param[in] N_init The population of the considered region.
+    * @param[in] Dead_before The total number of deaths at the time point - dt_init.
     * @param[in, out] Parameterset_init used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead_before,
-          ScalarType Dead0, const Pa& Parameterset_init = Pa());
+          const Pa& Parameterset_init = Pa());
 
     /**
     * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
@@ -110,8 +110,10 @@ private:
      * @brief Computes force of infection for the current last time in m_transitions.
      * 
      * Computed value is stored in m_forceofinfection.
+     * 
+     * @param[in] initialization if true forceofinfection(-m_dt) will be calculated instead of the time at the last time point in transitions.
      */
-    void update_forceofinfection(bool initialization);
+    void update_forceofinfection(bool initialization = false);
 
     /**
      * @brief Computes size of a flow.
@@ -189,7 +191,7 @@ private:
     ScalarType m_dt{0};
     // Population of the considered region.
     ScalarType m_N{0};
-    // Deaths before start of simulation
+    // Deaths before start of simulation (at time -m_dt)
     ScalarType m_deaths_before{0};
 };
 

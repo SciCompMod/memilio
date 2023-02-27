@@ -30,7 +30,7 @@ namespace isecir
 {
 
 Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead_before,
-             ScalarType Dead0, const Pa& Parameterset_init)
+             const Pa& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_SECIR{TimeSeries<ScalarType>((ScalarType)InfectionState::Count)}
@@ -42,7 +42,8 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_ini
         log_error("Initialization failed. Number of elements in init does not match the required number.");
     }
     m_SECIR.add_time_point(0);
-    m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] = Dead0;
+    m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
+        m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::InfectedCriticalToDead)];
 }
 
 void Model::compute_susceptibles()
@@ -69,93 +70,65 @@ void Model::update_forceofinfection(bool initialization)
          parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
              .get_xright()});
 
-    //corresponding index
-    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt); //need calc_time_index timesteps in sum
+    // corresponding index
+    // need calc_time_index timesteps in sum,
+    // subtract 1 because in the last summand all Transitiondistributions evaluate to 0
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
     Eigen::Index num_time_points{};
     ScalarType current_time{};
-    if (initialization == true) {
+    ScalarType deaths{};
+    if (initialization) {
+        // determine phi(-m_dt) which is the penultimate timepoint in m_transitions
         num_time_points = m_transitions.get_num_time_points() - 1;
         current_time    = -m_dt;
-        for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-            ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
-            m_forceofinfection +=
-                parameters.get<TransmissionProbabilityOnContact>() *
-                parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
-                ((parameters.get<TransitionProbabilities>()[(
-                      int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
-                      parameters
-                          .get<TransitionDistributions>()[(
-                              int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
-                          .Distribution(infection_age) +
-                  parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered] *
-                      parameters
-                          .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
-                          .Distribution(infection_age)) *
-                     m_transitions[i + 2][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
-                     parameters.get<RelativeTransmissionNoSymptoms>() +
-                 (parameters
-                          .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
-                      parameters
-                          .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
-                          .Distribution(infection_age) +
-                  parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered] *
-                      parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
-                          .Distribution(infection_age)) *
-                     m_transitions[i + 2][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
-                     parameters.get<RiskOfInfectionFromSymptomatic>());
-        }
-        m_forceofinfection = m_dt / ((ScalarType)m_N - m_deaths_before) * m_forceofinfection;
+        deaths          = m_deaths_before;
     }
     else {
+        // phi for current last time in m_transitions.
         num_time_points = m_transitions.get_num_time_points();
         current_time    = m_transitions.get_last_time();
-
-        for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-            ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
-            m_forceofinfection +=
-                parameters.get<TransmissionProbabilityOnContact>() *
-                parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
-                ((parameters.get<TransitionProbabilities>()[(
-                      int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
-                      parameters
-                          .get<TransitionDistributions>()[(
-                              int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
-                          .Distribution(infection_age) +
-                  parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered] *
-                      parameters
-                          .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
-                          .Distribution(infection_age)) *
-                     m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
-                     parameters.get<RelativeTransmissionNoSymptoms>() +
-                 (parameters
-                          .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
-                      parameters
-                          .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
-                          .Distribution(infection_age) +
-                  parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered] *
-                      parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
-                          .Distribution(infection_age)) *
-                     m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
-                     parameters.get<RiskOfInfectionFromSymptomatic>());
-        }
-        m_forceofinfection = m_dt / ((ScalarType)m_N - m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)]) *
-                             m_forceofinfection;
+        deaths          = m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
     }
+
+    for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
+        ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
+        m_forceofinfection +=
+            parameters.get<TransmissionProbabilityOnContact>() *
+            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
+            ((parameters
+                      .get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms] *
+                  parameters
+                      .get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms]
+                      .Distribution(infection_age) +
+              parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedNoSymptomsToRecovered]
+                      .Distribution(infection_age)) *
+                 m_transitions[i + 1][Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] *
+                 parameters.get<RelativeTransmissionNoSymptoms>() +
+             (parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToInfectedSevere]
+                      .Distribution(infection_age) +
+              parameters.get<TransitionProbabilities>()[(int)InfectionTransitions::InfectedSymptomsToRecovered] *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransitions::InfectedSymptomsToRecovered]
+                      .Distribution(infection_age)) *
+                 m_transitions[i + 1][Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms)] *
+                 parameters.get<RiskOfInfectionFromSymptomatic>());
+    }
+    m_forceofinfection = m_dt / ((ScalarType)m_N - deaths) * m_forceofinfection;
 }
 
 void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow)
 {
     ScalarType sum = 0;
 
-    // We have Transitiondistribution(m_dt*i)=0 for all i>= k
-    // this implies that the derivative of Transitiondistribution(m_dt*i) is equal to zero for all i>= k+1
-    // (since we are using a backwards difference scheme to compute the derivative)
+    // if we have Transitiondistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
+    // then we have that the derivative of Transitiondistribution(m_dt*i) is equal to zero for all i>= k+1,
+    // since we are using a backwards difference scheme to compute the derivative.
     // this needs to be adjusted if we are changing the finite difference scheme
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() /
-                                m_dt) +
-        1;
+                                m_dt) + 1;
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
@@ -287,12 +260,14 @@ void Model::compartments_current_timestep_ECIHU()
 
 void Model::initialize()
 {
-    // compute S(0) and phi(0) as initial values for discretization scheme
+    // compute S(0) and phi(-m_dt) as initial values for discretization scheme
+    // use phi(-m_dt) to be consistent with further calculations of S (see compute_susceptibles()), 
+    // where also the value of phi for the previous timestep is used
     update_forceofinfection(true);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
 
-    //calculate compartment sizes for t=0
+    //calculate other compartment sizes for t=0
     compartments_current_timestep_ECIHU();
 
     //R; need an initial value for R, therefore do not calculate via compute_recovered()
@@ -306,7 +281,7 @@ void Model::initialize()
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
 
     // compute phi(0) needed for further simulation
-    update_forceofinfection(false);
+    update_forceofinfection();
 }
 
 TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
@@ -318,7 +293,6 @@ TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
     while ((int)m_transitions.get_last_time() < t_max) {
 
         m_transitions.add_time_point(m_transitions.get_last_time() + m_dt);
-        // std::cout << "time: " << m_transitions.get_last_time() << "\n";
         m_SECIR.add_time_point(m_SECIR.get_last_time() + m_dt);
 
         // compute_S:
@@ -330,8 +304,8 @@ TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
         // compute D
         compute_totaldeaths();
 
-        // compute phi(t) (only used for calculation of S in the next timestep!):
-        update_forceofinfection(false);
+        // compute phi(t) (only used for calculation of S and sigma_S^E in the next timestep!):
+        update_forceofinfection();
 
         // compute remaining compartments from flows
         compartments_current_timestep_ECIHU();
