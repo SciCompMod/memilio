@@ -118,12 +118,15 @@ public:
      * @param core implements the solution method
      */
     template <class F, class Vector>
-    SplitOdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
+    SplitOdeIntegrator(F&& f, double t0, Vector&& y0, Vector&& flow0, double dt_init,
+                       std::shared_ptr<IntegratorCore> core)
         : m_f(std::forward<F>(f))
         , m_result(t0, y0)
-        , m_flows(t0, y0) // TODO: dims
+        , m_flows(t0, flow0)
         , m_dt(dt_init)
         , m_core(core)
+        , m_yt(m_result.get_num_elements() + m_flows.get_num_elements())
+        , m_ytp1(m_yt.size())
     {
     }
 

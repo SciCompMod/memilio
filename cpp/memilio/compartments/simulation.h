@@ -137,6 +137,129 @@ private:
     OdeIntegrator m_integrator;
 }; // namespace mio
 
+template <class M>
+class FlowSimulation
+{
+    static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
+
+public:
+    using Model = M;
+
+    /**
+     * @brief setup the simulation with an ODE solver
+     * @param[in] model: An instance of a compartmental model
+     * @param[in] t0 start time
+     * @param[in] dt initial step size of integration
+     */
+    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
+        : m_integratorCore(
+              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(
+              [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
+                  auto n_flows = model.get_initial_flows().size();
+                  model.get_flows(y, y, t, dydt.tail(n_flows));
+                  model.get_derivatives(dydt.tail(n_flows), dydt.head(model.populations.numel()));
+              },
+              t0, m_model->get_initial_values(), m_model->get_initial_flows(), dt, m_integratorCore)
+    {
+    }
+
+    /**
+     * @brief set the core integrator used in the simulation
+     */
+    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    {
+        m_integratorCore = std::move(integrator);
+        m_integrator.set_integrator(m_integratorCore);
+    }
+
+    /**
+     * @brief get_integrator
+     * @return reference to the core integrator used in the simulation
+     */
+    IntegratorCore& get_integrator()
+    {
+        return *m_integratorCore;
+    }
+
+    /**
+     * @brief get_integrator
+     * @return reference to the core integrator used in the simulation
+     */
+    IntegratorCore const& get_integrator() const
+    {
+        return *m_integratorCore;
+    }
+
+    /**
+     * @brief advance simulation to tmax
+     * tmax must be greater than get_result().get_last_time_point()
+     * @param tmax next stopping point of simulation
+     */
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    {
+        return m_integrator.advance(tmax);
+    }
+
+    /**
+     * @brief get_result returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
+     */
+    TimeSeries<ScalarType>& get_result()
+    {
+        return m_integrator.get_result();
+    }
+
+    /**
+     * @brief get_result returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
+     */
+    const TimeSeries<ScalarType>& get_result() const
+    {
+        return m_integrator.get_result();
+    }
+
+    /**
+     * @brief get_flows returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
+     */
+    TimeSeries<ScalarType>& get_flows()
+    {
+        return m_integrator.get_flows();
+    }
+
+    /**
+     * @brief get_flows returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
+     */
+    const TimeSeries<ScalarType>& get_flows() const
+    {
+        return m_integrator.get_flows();
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation
+     */
+    const Model& get_model() const
+    {
+        return *m_model;
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation
+     */
+    Model& get_model()
+    {
+        return *m_model;
+    }
+
+private:
+    std::shared_ptr<IntegratorCore> m_integratorCore;
+    std::unique_ptr<Model> m_model;
+    SplitOdeIntegrator m_integrator;
+};
+
 /**
  * Defines the return type of the `advance` member function of a type.
  * Template is invalid if this member function does not exist.

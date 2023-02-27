@@ -98,9 +98,11 @@ Eigen::Ref<Eigen::VectorXd> SplitOdeIntegrator::advance(double tmax)
         // integrate both systems in one call
         step_okay &= m_core->step(m_f, m_yt, t, dt_eff, m_ytp1);
         // split m_ytp1 back in m_results and m_flows
-        m_result[i + 1] = m_ytp1.segment(0, m_result.get_num_elements());
+        m_result[i + 1] = m_ytp1.head(m_result.get_num_elements());
+        m_flows[i + 1]  = m_ytp1.tail(m_flows.get_num_elements());
 
         m_result.get_last_time() = t;
+        m_flows.get_last_time()  = t;
 
         ++i;
 
