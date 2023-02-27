@@ -87,11 +87,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -190,6 +190,11 @@ public:
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
         get_derivatives(m_flow_values, dydt);
+    }
+
+    Eigen::VectorXd get_initial_flows() const
+    {
+        return Eigen::VectorXd(FlowChart<Flows...>().size());
     }
 
 protected:
