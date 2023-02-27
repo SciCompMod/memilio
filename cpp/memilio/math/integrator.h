@@ -106,6 +106,67 @@ private:
     std::shared_ptr<IntegratorCore> m_core;
 };
 
+class SplitOdeIntegrator
+{
+public:
+    /**
+     * @brief create an integrator for a specific IVP
+     * @param f rhs of the ODE
+     * @param t0 initial point of independent variable t
+     * @param y0 value of y at t0
+     * @param dt_init initial integration step size
+     * @param core implements the solution method
+     */
+    template <class F, class Vector>
+    SplitOdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
+        : m_f(std::forward<F>(f))
+        , m_result(t0, y0)
+        , m_flows(t0, y0) // TODO: dims
+        , m_dt(dt_init)
+        , m_core(core)
+    {
+    }
+
+    /**
+     * @brief advance the integrator.
+     * @param tmax end point. must be greater than get_t().back()
+     */
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
+
+    TimeSeries<double>& get_result()
+    {
+        return m_result;
+    }
+
+    const TimeSeries<double>& get_result() const
+    {
+        return m_result;
+    }
+
+    TimeSeries<double>& get_flows()
+    {
+        return m_flows;
+    }
+
+    const TimeSeries<double>& get_flows() const
+    {
+        return m_flows;
+    }
+
+    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    {
+        m_core = integrator;
+    }
+
+private:
+    DerivFunction m_f;
+    TimeSeries<double> m_result;
+    TimeSeries<double> m_flows;
+    double m_dt;
+    std::shared_ptr<IntegratorCore> m_core;
+    Eigen::VectorXd m_yt, m_ytp1;
+};
+
 } // namespace mio
 
 #endif // INTEGRATOR_H
