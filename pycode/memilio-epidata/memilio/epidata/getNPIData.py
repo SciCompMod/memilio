@@ -22,6 +22,9 @@ import time
 import os
 import pandas as pd
 import numpy as np
+import warnings
+
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
@@ -590,7 +593,7 @@ def get_npi_data(fine_resolution=2,
 
         # run through all groups and set possible combinations according to
         # read combination matrix
-        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+2
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+3
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
@@ -915,10 +918,10 @@ def get_npi_data(fine_resolution=2,
         # Consistency of incidence dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
         # for different thresholds. In order to avoid contradictions, only
-        # retain the strictest mentioned implementation.
-        for i in range(int(len(df_local_old)/6)):
+        # retain the strictest mentioned implementation.                        #! wording strictness
+        for i in range(int(len(df_local_old)/6)):                               # check if only same subcode #! maybe consider main code ?
             sum_npi_inc = np.where(
-                df_local_old.iloc[6*i+1:6*(i+1), 6:].sum() > 1)
+                df_local_old.iloc[6*i:6*(i+1), 6:].sum() > 1)
             if len(sum_npi_inc[0]):
                 print(
                     'Reduce multiple prescription in county ' + str(countyID) +
@@ -926,14 +929,14 @@ def get_npi_data(fine_resolution=2,
                 for j in sum_npi_inc[0]:
                     # get lowest index (i.e., strictest implementation of NPI).
                     idx_start = np.where(
-                        df_local_old.iloc[6*i+1:6*(i+1), 6+j])[0].min()
+                        df_local_old.iloc[6*i:6*(i+1), 6+j])[0].min()
                     # Remove less strict and thus contradictory
                     # implementations of the same NPI the same day.
-                    df_local_old.iloc[6*i+1+idx_start+1:6*(i+1), 6+j] = 0
+                    df_local_old.iloc[6*i+idx_start+1:6*(i+1), 6+j] = 0
 
                 if not all(
                     df_local_old.iloc
-                    [6 * i + 1: 6 * (i + 1),
+                    [6 * i : 6 * (i + 1),
                      6 + sum_npi_inc[0]].sum() == 1):
                     raise gd.DataError('Consistency correction failed.')
 
@@ -1012,84 +1015,42 @@ def get_npi_data(fine_resolution=2,
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
-            # if new, dynamic NPIs for higher incidence (more restrictions,
-            # i.e., stricter) cannot be combined with previous, dynamic
-            # NPIs for lower indices (less restrictions, less strict),
-            # the latter have to be deactivated
-            # (incidence_thresholds_to_npis.keys() has to be sorted !)
-            levels_exclusion = list(reversed(incidence_thresholds_to_npis.keys()))[
-                0:-1]  # level<0 means non-incidence dependent and always active
-            for level in levels_exclusion:
-                level_lower = [lev for lev in levels_exclusion
-                               if lev[0] < level[0]]
-                for code in df_npis_combinations.keys():
-                    code_cols = df_npis_combinations[code][1].columns
-                    # iterate over subcode indices
-                    for scidx in range(len(code_cols)-1):
-                        # check if code was used, otherwise nothing to
-                        # exclude, i.e. no combination possible anyway.
-                        indicator_code_active = df_local_new.loc[:,
-                                                                 code_cols
-                                                                 [scidx] +
-                                                                 level
-                                                                 [1]]
-                        indicator_code_active_idx = np.where(
-                            indicator_code_active > 0)[0]
-                        if len(indicator_code_active_idx) > 0:
-                            # extract codes
-                            subcodes_nocombi = df_npis_combinations[code][1].loc[scidx, :]
-                            # only consider those codes which cannot be
-                            # combined; for these, values of 1 have to be
-                            # set to 0
-                            subcodes_nocombi = list(
-                                subcodes_nocombi
-                                [subcodes_nocombi == 0].index)
-                            # iterate over exclusive subcodes
-                            for subcode_excl in subcodes_nocombi:
-                                # iterate over less strict dynamic NPIs
-                                # i.e., where threshold is higher
-                                for level_other in level_lower:
-                                    # deactivate potential NPIs (with code:
-                                    # subcode_excl + level_other[1]) on days
-                                    # where NPI code_cols[scidx] + level[1]
-                                    # is active
-                                    if df_local_new.loc[indicator_code_active_idx, subcode_excl + level_other[1]].any():
-                                        print('Deactivating for ' + 'County ' + str(countyID) + ' and Incidence ' + str(level_other[0]))
-                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==subcode_excl + level_other[1]].index].values[0])
-                                        print('Due to Incidence > ' + str(level[0]) + ' and NPI ')
-                                        print('\t' + npi_codes_prior_desc[npi_codes_prior[npi_codes_prior==code_cols[scidx] + level[1]].index].values[0])
-                                        # print(list(df_local_new.loc[indicator_code_active_idx,'Date']))
-                                        print('\n')
-                                        df_local_new.loc[indicator_code_active_idx,
-                                                         subcode_excl + level_other[1]] = 0
-
-            # TODO: (maybe also remove incidence-dependent here? to discuss!)
-            # Remove conflicting non-incidence (?) dependent NPIs according to
-            # strictness index of Corona-Datenplattform and exclusion
-            # criteria defined in df_npis_combinations
+            # merge incidence dependent NPIs to have only one column for each subcode
+            df_merged=df_local_new.iloc[:,:2].copy()
             for code in df_npis_combinations.keys():
-                # get other subcodes MX_Y_* below current main code MX_Y
-                subcodes_list = list(df_npis_combinations[code][0].keys())
+                for i in range(len(df_npis_combinations[code][1].columns)):
+                    df_merged[df_npis_combinations[code][1].columns[i]
+                                ] = df_local_new.iloc[:, 2+(i*6):2+(i*6)+6].sum(axis=1)
+            # strictness deactivation is done with this merged dataframe
+
+            if df_merged.max()[2:].max() > 1:
+                raise gd.DataError('Error in merging...')
+
+            # Remove conflicting NPIs according to strictness index of Corona-Datenplattform and exclusion criteria
+            # defined in df_npis_combinations
+            for maincode in df_npis_combinations.keys():
+                # get all subcodes
+                subcodes = list(df_npis_combinations[maincode][0].keys())
                 # sort index reversely with the strictest (highest) index first
                 idx_strictness_sorted_rev = np.argsort(
-                    list(df_npis_combinations[code][0].values()))[::-1]
-
-                for jj in range(len(idx_strictness_sorted_rev)-1):
+                    list(df_npis_combinations[maincode][0].values()))[::-1]
+                for i in range(len(idx_strictness_sorted_rev)-1):
                     # get index of NPI of a certain strictness
-                    idx_strictness = idx_strictness_sorted_rev[jj]
+                    idx_strictness = idx_strictness_sorted_rev[i]
                     # get code of corresponding NPI
-                    subcode = subcodes_list[idx_strictness]
+                    subcode = subcodes[idx_strictness]
+
+                    # get subcode index
+                    scidx = subcodes.index(subcode)
 
                     # get indices of days where subcode is active
-                    subcode_active = np.where(df_local_new.loc[:,subcode]>0)[0]
+                    subcode_active = np.where(df_merged.loc[:,subcode]>0)[0]
 
-                    if len(subcode_active>0):                  
+                    if len(subcode_active) > 0:                  
                         # get indices of less strict NPIs
-                        idxs_less_strict = np.sort(idx_strictness_sorted_rev[jj+1:])
+                        idxs_less_strict = df_npis_combinations[maincode][1].columns[np.sort(idx_strictness_sorted_rev[i+1:])]
 
-                        # extract true/false list of combination of subcodes
-                        # TODO [0] or [1] ?
-                        subcodes_nocombi = df_npis_combinations[code][1].loc[:, subcode]
+                        subcodes_nocombi = df_npis_combinations[maincode][1].loc[scidx, :]
                         # only consider those codes which cannot be combined; 
                         # for these, values of 1 have to be set to 0
                         subcodes_nocombi = list(
@@ -1097,32 +1058,31 @@ def get_npi_data(fine_resolution=2,
                             [subcodes_nocombi == 0].index)
                         
                         # intersect non-combinable subcodes with less strict subcodes
-                        idx_subcodes_deactivation = np.sort(list(
-                            set(idxs_less_strict).intersection(subcodes_nocombi)))
+                        subcodes_deactivation = list(set(idxs_less_strict).intersection(subcodes_nocombi))
 
-                        for kk in idx_subcodes_deactivation:
-                            days_deact = np.where(df_local_new.loc[subcode_active, [subcodes_list[kk] + str(appendix[1]) for appendix in incidence_thresholds]].sum(axis=1)>0)[0]
+                        # check if all codes which can not be combined get deactivated
+                        for code in subcodes_nocombi:
+                            if code not in subcodes_deactivation:
+                                print('WARNING!')
+                                #raise gd.DataError('Can't deactivate NPI code ' + code + ' in county ' + countyID)
+
+                        for nocombi_code in subcodes_deactivation:
+                            days_deact = np.where(df_merged.loc[subcode_active, nocombi_code]>0)[0]
                             if len(days_deact) > 0:
                                 print('Deactivating for ' + 'County ' + str(countyID))
-                                print('\t' + str(subcodes_list[kk]) + ' due to ' + str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
+                                print('\t' + str(nocombi_code) + ' due to ' + str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
                                 print('\n')
-                                df_local_new.loc[subcode_active,
-                                                 [subcodes_list[kk] +
-                                                  str(appendix[1])
-                                                  for appendix in
-                                                  incidence_thresholds]] = 0
+                                df_merged.loc[subcode_active, nocombi_code] = 0
 
-            # reduction of factor space NPI x incidence threshold to NPI
-            # by max aggregation of all incidence threshold columns per NPI
+            # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
-                for main_code, codes_group in maincode_to_npicodes_map.items():
-                    # group by incidence (former codes X1_Y, X1_Z were transformed
-                    # to X1, X2) and write max value to main code column
-                    df_local_new.loc[:, main_code] = df_local_new.loc[:, codes_group].max(
-                        axis=1)
-                # remove subcategory columns
-                df_local_new = df_local_new.loc[:, [
-                    dd.EngEng['date'], dd.EngEng['idCounty']] + npi_codes_aggregated].copy()
+                df_local_new = df_merged.copy()
+            else:
+                # multiply subcode columns with incidence dependent subcode columns in df_local_new
+                for maincode in df_npis_combinations.keys:
+                    for subcode in df_npis_combinations[maincode][1].columns:
+                        for incidcode in ['','_1','_2','_3','_4','_5']:
+                            df_local_new[subcode+incidcode]*=df_merged[subcode]
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1148,6 +1108,7 @@ def get_npi_data(fine_resolution=2,
                   str(len(counties_considered)) +
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
+
     if counter_cases_start >= len(counties_considered)*0.05:
         print('WARNING: DataFrame starts with reported cases > 0 '
               'for more than 5 percent of the counties to be considered. '
