@@ -184,6 +184,10 @@ matrix_frqu_leisure = pd.crosstab(
     normalize='index')
 sns.heatmap(matrix_frqu_leisure,  vmin=0, xticklabels=dict_leisure.values(),
             yticklabels=dict_leisure.values())
+plt.xlabel('Leisure activity after trip')
+plt.ylabel('Leisure activity before trip')
+plt.title('Frequency of trips from which leisure activity to which leisure activity')
+plt.savefig(os.path.join(figs_path, 'heatmap_leisure.png'), dpi=300)
 
 
 # quick check if a data point in the matrix is correct
@@ -218,12 +222,20 @@ axs2[1].set_ylabel('Number of trips')
 bd_age = bd.groupby(['age']).size().reset_index(name='counts')
 bd_age = bd.groupby(['age']).size().reset_index(name='counts').rolling(window=7, min_periods=1, step=5).mean()
 bd_age.plot(kind='bar', x='age', y='counts')
-# TODO: redo this in age cohorts
+
 # analysze age distribution with age cohorts
-pd.cut(bd_persons_age_traffic_zone['age'], bins=[0, 18, 25, 35, 45, 55, 65, 75, 85, 95, 105], labels=[
-    '0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86-95', '96-105'])
-bd_age_cohorts = bd.groupby(['age']).size().reset_index(name='counts')
+bd_persons_id_and_age = bd[['personID', 'age']].drop_duplicates()
+bd_age_cohorts = pd.cut(
+    bd_persons_id_and_age['age'],
+    bins=[-1, 18, 25, 35, 45, 55, 65, 75, 85, 95, 106],
+    labels=['0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86-95', '96-105']).reset_index(
+    name='age_cohort').groupby(
+    ['age_cohort']).size().reset_index(
+    name='counts')
 bd_age_cohorts.plot(kind='bar', x='age_cohort', y='counts')
+plt.xlabel('Age cohort')
+plt.ylabel('Number of persons')
+plt.title('Age distribution of persons in Braunschweig in age cohorts, number ')
 
 
 # relation between age and trip duration in minutes and hours
@@ -231,9 +243,64 @@ bd_age_duration = bd.groupby(['age']).mean().reset_index()
 bd_age_duration['travelTime'] = bd_age_duration['travelTime'] / 60
 bd_age_duration.plot(kind='bar', x='age', y='travelTime')
 
-# also do this for trip distance #TODO: further investigate what tripdistance means
+# also do this for trip distance
 bd_age_distance = bd.groupby(['age']).mean().reset_index()
 bd_age_distance.plot(kind='bar', x='age', y='tripDistance')
+
+# analyze trip distance in distance cohort
+
+bd_trip_distance_cohorts = pd.cut(
+    bd['tripDistance'],
+    bins=[-1, 1, 2, 5, 10, 20, 50, 423789798324],
+    labels=['0-1', '1-2', '2-5', '5-10', '10-20', '20-50', '50+']).reset_index(
+    name='trip_distance_cohort').groupby(
+    ['trip_distance_cohort']).size().reset_index(
+    name='counts')
+bd_trip_distance_cohorts.plot(kind='bar', x='trip_distance_cohort', y='counts')
+plt.xlabel('Trip distance cohort in km')
+plt.ylabel('Number of trips')
+plt.title('Trip distance distribution in Braunschweig in trip distance cohorts, in km. Number of trips: ' + str(len(bd)))
+
+# pie diagram of trip distance cohorts for each age cohort
+bd_trip_distance_cohorts_vehicle = pd.cut(
+    bd['tripDistance'],
+    bins=[-1, 1, 2, 5, 10, 20, 50, 423789798324],
+    labels=['0-1', '1-2', '2-5', '5-10', '10-20', '20-50', '50+']).reset_index(
+    name='trip_distance_cohort')
+bd_age_cohorts = pd.cut(bd['age'],
+                        bins=[-1, 18, 25, 35, 45, 55, 65, 75, 85, 95],
+                        labels=['0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86-95']).reset_index(
+    name='age_cohort')
+# attach the age cohort to the dataframe
+bd_trip_distance_cohorts_vehicle = pd.concat([bd_trip_distance_cohorts_vehicle['trip_distance_cohort'], bd_age_cohorts['age_cohort']], axis=1)
+# group by age cohort and distance cohort
+bd_trip_distance_cohorts_vehicle = bd_trip_distance_cohorts_vehicle.groupby(['trip_distance_cohort', 'age_cohort']).size().reset_index(name='counts')
+# plot a pie chart for each age cohort
+for age_cohort in bd_trip_distance_cohorts_vehicle['age_cohort'].unique():
+    bd_trip_distance_cohorts_vehicle[bd_trip_distance_cohorts_vehicle['age_cohort'] == age_cohort].plot(
+        kind='pie', y='counts', labels=bd_trip_distance_cohorts_vehicle[bd_trip_distance_cohorts_vehicle['age_cohort'] == age_cohort]['trip_distance_cohort'], autopct='%1.1f%%', startangle=90)
+    plt.title('Trip distance distribution in Braunschweig in trip distance cohorts, in km. Number of trips: ' + str(len(bd)) + ' for age cohort ' + age_cohort)
+    plt.show()
+
+# now the same for trip duration vs vehicle type
+bd_trip_duration_cohorts_vehicle = pd.cut(
+    bd['travelTime'],
+    bins=[-1, 500, 1000, 5000, 10000, 423789798324],
+    labels=['0-500', '500-1000', '1000-5000', '5000-10000', '10000+']).reset_index(
+    name='trip_duration_cohort')
+bd_vehicle_type = bd['vehicleChoice'].reset_index(name='vehicleChoice')
+# attach the age cohort to the dataframe
+bd_trip_duration_cohorts_vehicle = pd.concat([bd_trip_duration_cohorts_vehicle['trip_duration_cohort'], bd_vehicle_type['vehicleChoice']], axis=1)
+# group by age cohort and distance cohort
+bd_trip_duration_cohorts_vehicle = bd_trip_duration_cohorts_vehicle.groupby(['trip_duration_cohort', 'vehicleChoice']).size().reset_index(name='counts')
+# plot a pie chart for each age cohort
+for vehicle_type in bd_trip_duration_cohorts_vehicle['vehicleChoice'].unique():
+    bd_trip_duration_cohorts_vehicle[bd_trip_duration_cohorts_vehicle['vehicleChoice'] == vehicle_type].plot(
+        kind='pie', y='counts', labels=bd_trip_duration_cohorts_vehicle[bd_trip_duration_cohorts_vehicle['vehicleChoice'] == vehicle_type]['trip_duration_cohort'], autopct='%1.1f%%', startangle=90)
+    plt.title('Trip duration distribution in Braunschweig in trip duration cohorts, in minutes. Number of trips: ' + str(len(bd)
+                                                                                                                         ) + ' for vehicle type ' + str(dict_vehicle[vehicle_type]))
+    plt.show()
+
 
 # also do a scatter plot of trip duration and trip distance with a regression line
 bd_age_distance.plot(kind='scatter', x='age', y='tripDistance')
@@ -243,7 +310,5 @@ bd_age_duration.plot(kind='scatter', x='age', y='travelTime')
 plt.plot(np.unique(bd_age_duration['age']), np.poly1d(np.polyfit(bd_age_duration['age'], bd_age_duration['travelTime'], 1))(np.unique(bd_age_duration['age'])))
 plt.show()
 
-# TODO: Vergleich der tripldistance mit vehicle choice
-#
 
 x = 42
