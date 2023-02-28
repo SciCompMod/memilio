@@ -1,40 +1,21 @@
-## Merge Request - GuideLine Checklist 
-
-**Guideline** to check code before resolve WIP and approval, respectively.
-As many checkboxes as possible should be ticked.
+## Merge Request - GuideLine Checklist
+Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) before opening a PR and request a reviewer when this is ready to review. If this is Work in Prorgess please use the draft feauture.
 
 ### Checks by code author:
-Always to be checked:
-* [ ] There is at least one issue associated with the pull request.
-* [ ] The branch follows the naming conventions as defined in the [git workflow](git-workflow).
-* [ ] New code adheres with the [coding guidelines](coding-guidelines)
-* [ ] Make sure that the [pre-commit linting/style checks pass](https://github.com/DLR-SC/memilio/wiki).
-* [ ] No large data files have been added to the repository. Maximum size for files should be of the order of KB not MB. In particular avoid adding of pdf, word, or other files that cannot be change-tracked correctly by git.
 
-If functions were changed or functionality was added:
-* [ ] Tests for new functionality has been added
-* [ ] A local test was succesful
-
-If new functionality was added:
-* [ ] There is appropriate **documentation** of your work. (use doxygen style comments)
-
-If new third party software is used:
-* [ ] Did you pay attention to its license? Please remember to add it to the wiki after successful merging.
-
-If new mathematical methods or epidemiological terms are used:
-* [ ] Are new methods referenced? Did you provide further documentation? Has the glossary been updated? 
-
-The following questions are addressed in the documentation if need be: 
-* [ ] Developers (what did you do?, how can it be maintained?)
-* [ ] For users (how to use your work?)
-* [ ] For admins (how to install and configure your work?)
-
-* For documentation: Please write or update the Readme in the current working directory!
+* [ ] Every addressed Issue is linked (use the "Closes #ISSUE" keyword)
+* [ ] New code adheres to [coding guidelines](https://github.com/DLR-SC/memilio/wiki/Coding-guidelines)
+* [ ] No large data files added (max size in KB, avoid PDFs, Word docs, etc.)
+* [ ] Tests are added for new functionality and run successful
+* [ ] Appropriate **documentation** for new functionality
+* [ ] Proper license attention for third-party software
 
 ### Checks by code reviewer(s):
-* [ ] Is the code clean of development artifacts e.g., unnecessary comments, prints, ...
-* [ ] The ticket goals for each associated issue are reached or problems are clearly addressed (i.e., a new issue was introduced).
-* [ ] There are appropriate **unit tests** and they pass.
-* [ ] The git history is clean and linearized for the merge request. All reviewers should squash commits and write a simple and meaningful commit message.
-* [ ] Coverage report for new code is acceptable. 
-* [ ] No large data files have been added to the repository. Maximum size for files should be of the order of KB not MB. In particular avoid adding of pdf, word, or other files that cannot be change-tracked correctly by git.
+
+* [ ] The issue is addressed
+* [ ] Clean code of development artifacts (unnecessary comments, prints,large data files, etc.)
+* [ ] Appropriate and passing **unit tests** with acceptable coverage report
+
+
+### Additional context
+Please list additional information or things a reviewer should look out for.
