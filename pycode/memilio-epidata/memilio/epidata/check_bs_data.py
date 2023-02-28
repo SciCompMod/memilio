@@ -4,19 +4,21 @@ import seaborn as sns
 import numpy as np
 import os
 
+
 def get_trip_chain_activity_after(person_id):
     bd_persons_trip_chain_activity_after = bd.loc[bd['personID'] == person_id, ['tripChain', 'ActivityAfter']]
     bd_persons_trip_chain_activity_after = bd_persons_trip_chain_activity_after.sort_values(by=['tripChain'], ascending=True, ignore_index=True)
     bd_persons_trip_chain_activity_after['ActivityAfter'] = bd_persons_trip_chain_activity_after['ActivityAfter'].map(dict_leisure)
     # and vehicle choice
+    print("\n")
     bd_persons_trip_chain_vehicle_choice = bd.loc[bd['personID'] == person_id, ['tripChain', 'vehicleChoice']]
     bd_persons_trip_chain_vehicle_choice = bd_persons_trip_chain_vehicle_choice.sort_values(by=['tripChain'], ascending=True, ignore_index=True)
     bd_persons_trip_chain_vehicle_choice['vehicleChoice'] = bd_persons_trip_chain_vehicle_choice['vehicleChoice'].map(dict_vehicle)
     return bd_persons_trip_chain_activity_after, bd_persons_trip_chain_vehicle_choice
 
-bd = pd.read_csv(r'C:\Users\korf_sa\Documents\rep\pycode\memilio-epidata\memilio\epidata\bs.csv', header=None)
-print(bd.dtypes)
-figs_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),'figs_bs_data')
+
+bd = pd.read_csv(r'/Users/saschakorf/Documents/Arbeit/memilio.nosynch/memilio/pycode/memilio-epidata/memilio/epidata/bs.csv', header=None)
+figs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figs_bs_data')
 
 bd.rename(
     columns={0: 'idTrafficZone', 1: 'tripID', 2: 'personID', 3: 'tripChain', 4: 'startZone', 5: 'destZone', 6: 'loc_id_start', 7: 'loc_id_end',
@@ -32,6 +34,9 @@ bd_persons = bd.groupby(['personID']).size().reset_index(name='counts')
 # Get the frequency of each number in the 'numbers' column
 bd_personss = bd_persons['counts'].value_counts().sort_index()
 
+# probably the traffic zones that are in braunschweig
+bd_tz_bs = bd.groupby(['idTrafficZone']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
+
 # count who does how many trips and sort them
 bd_persons = bd_persons.sort_values(by=['counts'], ascending=False, ignore_index=True)
 # Plot the frequency of each number
@@ -45,11 +50,15 @@ bd_persons[0:4000].plot(kind='bar', x='personID', y='counts')
 plt.xlabel('Person ID')
 plt.ylabel('Number of trips')
 plt.title('Number of trips per person (Braunschweig)' + ' (n = ' + str(len(bd_persons)) + ' persons)')
-plt.savefig(os.path.join(figs_path,'tripcount.png'), dpi=300)
+plt.savefig(os.path.join(figs_path, 'tripcount.png'), dpi=300)
 
-#get the id with the persons with the highest number of trips 
-[id_person_max_trips,id_person_max_1_trips] = [bd_persons['personID'][0],bd_persons['personID'][1]]
+# get the id with the persons with the highest number of trips
+[id_person_max_trips, id_person_max_1_trips] = [bd_persons['personID'][0], bd_persons['personID'][1]]
 print(get_trip_chain_activity_after(id_person_max_trips))
+
+# select rows where the start county is in id traffic zone
+bd_persons_inside_bs = bd.loc[bd['startZone'].isin(bd_tz_bs['idTrafficZone']) & bd['destZone'].isin(bd_tz_bs['idTrafficZone'])]
+
 
 # see which age takes which mode of transport
 bd_persons_age_vehicle_choice = bd.loc[:, ['personID', 'age', 'vehicleChoice']]
@@ -68,13 +77,12 @@ bd_persons_age_vehicle_choice['ageCohort'] = pd.cut(bd_persons_age_vehicle_choic
 bd_persons_age_vehicle_choice_cake = bd_persons_age_vehicle_choice.groupby(['ageCohort', 'vehicleChoice']).sum().reset_index()
 bd_persons_age_vehicle_choice_cake = bd_persons_age_vehicle_choice_cake.pivot(index='ageCohort', columns='vehicleChoice', values='counts')
 bd_persons_age_vehicle_choice_cake.plot.pie(subplots=True, figsize=(20, 10), title='Vehicle choice per age cohort (Braunschweig)')
-plt.savefig(os.path.join(figs_path,'vehicle_choice.png'), dpi=300)
+plt.savefig(os.path.join(figs_path, 'vehicle_choice.png'), dpi=300)
 
 # switch age cohort and vehicle choice
 # bd_persons_age_vehicle_choice_cake = bd_persons_age_vehicle_choice_cake.transpose()
 # bd_persons_age_vehicle_choice_cake.plot.pie(subplots=True, figsize=(20, 10), title='Age cohort per vehicle choice (Braunschweig)')
 # plt.show()
-
 
 
 # plot which traffic zone is the most popular for each age cohort
@@ -90,7 +98,7 @@ bd_persons_age_traffic_zone = bd_persons_age_traffic_zone.groupby(
 bd_persons_age_traffic_zone['ageCohort'] = pd.cut(bd_persons_age_traffic_zone['age'], bins=[0, 18, 25, 35, 45, 55, 65, 75, 85, 95, 105], labels=[
     '0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86-95', '96-105'])
 # plot the number of trips per age and traffic zone
-bd_persons_age_traffic_zone.plot(x='ageCohort' , y='counts', kind='bar', figsize=(20, 10), title='Number of trips per age and traffic zone (Braunschweig)')
+bd_persons_age_traffic_zone.plot(x='ageCohort', y='counts', kind='bar', figsize=(20, 10), title='Number of trips per age and traffic zone (Braunschweig)')
 
 
 # Add labels and title to the plot
@@ -114,6 +122,10 @@ for row in bd_traffic_zones_start.iterrows():
     bd_traffic_zones_start.loc[row[0], ['longitude', 'latitude']
                                ] = bd.loc[bd_traffic_zones_start.loc[row[0], 'startZone'] == bd['startZone'], ['loCs', 'laCs']].values[0]
 print(bd_traffic_zones_start)
+# plot longitude and latitude of traffic zones
+bd_traffic_zones_start.plot(
+    kind='scatter', x='longitude', y='latitude', s=bd_traffic_zones_start['counts'] / 100, figsize=(20, 10),
+    title='Traffic zones where people are starting their trips (Braunschweig)')
 
 # Count traffic zones where people are going and leaving
 bd_traffic_zones_end = bd.groupby(['destZone']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
@@ -144,15 +156,15 @@ plt.show()
 
 # Frequency matrix of trips between traffic zones
 matrix_freq = pd.crosstab(bd['startZone'], bd['destZone'])
-
-nonzero_matrix_freq = matrix_freq[matrix_freq > 0]
-nonzero_matrix_freq_greater = matrix_freq[matrix_freq > 100]
 nnz_matrix_freq = np.count_nonzero(matrix_freq)
-subset_matrix_freq_gretaer = nonzero_matrix_freq_greater.iloc[0:30, 0:30]
-
-sns.heatmap(nonzero_matrix_freq_greater,  vmin=0)
-sns.heatmap(subset_matrix_freq_gretaer,  vmin=0)
-#TODO: analyze this heatmaps especially the zero entries.
+subset_matrix_freq = matrix_freq.iloc[0:30, 0:30]
+nnz_sub_matrix_freq = np.count_nonzero(subset_matrix_freq)
+sns.heatmap(subset_matrix_freq, cmap="Blues",  vmin=0)
+plt.xlabel('Destination traffic zone')
+plt.ylabel('Start traffic zone')
+plt.title('Number of non-zero entries in frequency matrix: ' + str(nnz_sub_matrix_freq) + ' out of ' + str(subset_matrix_freq.size) + ' entries (' +
+          str(round(nnz_sub_matrix_freq / subset_matrix_freq.size * 100, 2)) + '%)')
+plt.savefig(os.path.join(figs_path, 'heatmap.png'), dpi=300)
 
 # frequency matrix of trips from which leisure activity to which leisure activity
 
@@ -207,13 +219,19 @@ bd_age = bd.groupby(['age']).size().reset_index(name='counts')
 bd_age = bd.groupby(['age']).size().reset_index(name='counts').rolling(window=7, min_periods=1, step=5).mean()
 bd_age.plot(kind='bar', x='age', y='counts')
 # TODO: redo this in age cohorts
+# analysze age distribution with age cohorts
+pd.cut(bd_persons_age_traffic_zone['age'], bins=[0, 18, 25, 35, 45, 55, 65, 75, 85, 95, 105], labels=[
+    '0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66-75', '76-85', '86-95', '96-105'])
+bd_age_cohorts = bd.groupby(['age']).size().reset_index(name='counts')
+bd_age_cohorts.plot(kind='bar', x='age_cohort', y='counts')
 
 
-# relation between age and trip duration #TODO: in minutes and hours
+# relation between age and trip duration in minutes and hours
 bd_age_duration = bd.groupby(['age']).mean().reset_index()
+bd_age_duration['travelTime'] = bd_age_duration['travelTime'] / 60
 bd_age_duration.plot(kind='bar', x='age', y='travelTime')
 
-# also do this for trip distance #TODO: further investigate what tripdistance means 
+# also do this for trip distance #TODO: further investigate what tripdistance means
 bd_age_distance = bd.groupby(['age']).mean().reset_index()
 bd_age_distance.plot(kind='bar', x='age', y='tripDistance')
 
@@ -225,7 +243,7 @@ bd_age_duration.plot(kind='scatter', x='age', y='travelTime')
 plt.plot(np.unique(bd_age_duration['age']), np.poly1d(np.polyfit(bd_age_duration['age'], bd_age_duration['travelTime'], 1))(np.unique(bd_age_duration['age'])))
 plt.show()
 
-#TODO: Vergleich der tripldistance mit vehicle choice
-#  
+# TODO: Vergleich der tripldistance mit vehicle choice
+#
 
 x = 42
