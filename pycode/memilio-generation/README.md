@@ -5,7 +5,7 @@ It enables the automatic generation of a part of the [Python Bindings](../memili
 
 This generating software was developed as a part of the Bachelor thesis [Automatische Codegenerierung für nutzerfreundliche mathematisch-epidemiologische Modelle](https://elib.dlr.de/190367/). The following figure from Chapter 5 outlines the workflow of the generator. Blue boxes represent parts of the code generator and orange ones the input and output. Rectangular boxes contain classes with logic, the rest represent data.
 
-![Blue boxes represent parts of the code generator and orange ones the input and output. Rectangular boxes contain classes with logic, the rest represent data.](generator_workflow.png?raw=true "Workflow of the code generator")
+[<img src="generator_workflow.png" width="50%"/>](generator_workflow.png "Workflow of the code generator")
 
 ## Prerequisites
 
