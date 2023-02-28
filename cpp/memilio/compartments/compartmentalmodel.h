@@ -87,11 +87,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -156,6 +156,12 @@ public:
     ParameterSet parameters{};
 };
 
+/**
+ * @brief CompartmentalModel with flows. 
+ * Inherited class from CompartmentalModel extended with flows. 
+ * The flows are first computed and then assigned to their source and target,
+ * allowing us to determine the population in the infection states.
+ */
 template <class Comp, class Pop, class Params, class... Flows>
 struct CompartmentalModel<Comp, Pop, Params, FlowChart<Flows...>> : public CompartmentalModel<Comp, Pop, Params> {
     using FlowIndex = details::filtered_index_t<Comp, Index, typename Pop::Index>;
@@ -192,6 +198,7 @@ public:
         get_derivatives(m_flow_values, dydt);
     }
 
+    // returns initial conditions when simulation with flows. Here, we return an empty eigen vector with the same size as number of flows.
     Eigen::VectorXd get_initial_flows() const
     {
         return Eigen::VectorXd(FlowChart<Flows...>().size());
@@ -211,18 +218,6 @@ protected:
         static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indizes must be specified");
         return FlowChart<Flows...>().template get<Flow<Comp, Source, Target>>();
     }
-
-    /* template <size_t flow_index>
-    constexpr Eigen::Index get_flow_source() const
-    {
-        return static_cast<Eigen::Index>(FlowChart<Flows...>().template get<flow_index>().source);
-    }
-
-    template <size_t flow_index>
-    constexpr Eigen::Index get_flow_target() const
-    {
-        return static_cast<Eigen::Index>(FlowChart<Flows...>().template get<flow_index>().target);
-    } */
 
 private:
     const FlowIndex m_flow_dims;
@@ -249,26 +244,14 @@ private:
     {
         return FlowIndex();
     }
-    /* 
-    template <class Values, class... Tags>
-    constexpr typename Pop::Index make_flow_index_impl(const Index<Tags...>, const Values& other) const
-    {
-        return make_flow_index_impl<Index, Tags...>(other);
-    }
- */
+
     template <class Type, class... Tags>
     constexpr FlowIndex make_dims(CustomIndexArray<Type, Tags...> i) const
     {
         return make_flow_index_impl<CustomIndexArray<Type, Tags...>, Tags...>(i);
     }
 
-    template <size_t i>
-    inline std::enable_if_t<i == sizeof...(Flows)>
-    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<Eigen::VectorXd>, const size_t, const size_t) const
-    {
-        // end recursion
-    }
-
+    // recursive implemention of mapping  flow source/target to the corresponding rhs entry.
     template <size_t i>
     inline std::enable_if_t<i != sizeof...(Flows)>
     get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t index_age_group,
@@ -279,14 +262,16 @@ private:
         size_t indx_target =
             static_cast<size_t>(FlowChart<Flows...>().template get<i>().target) + num_compartments * index_age_group;
 
-        // std::cout << "index rhs:  : " << indx_source << " , " << indx_target << "\n";
-        // std::cout << "indx flx: " << index_age_group + m_flow_flat_dim * i << "\n";
-
-        // std::cout << "rhs size : " << rhs[indx_source] << "\n";
-        // std::cout << "abgezogen wird : " << flows[index_age_group * sizeof...(Flows) + i] << "\n";
         rhs[indx_source] -= flows[index_age_group + m_flow_flat_dim * i];
         rhs[indx_target] += flows[index_age_group + m_flow_flat_dim * i];
         get_rhs_impl<i + 1>(flows, rhs, index_age_group, num_compartments);
+    }
+
+    template <size_t i>
+    inline std::enable_if_t<i == sizeof...(Flows)>
+    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<Eigen::VectorXd>, const size_t, const size_t) const
+    {
+        // end recursion
     }
 };
 

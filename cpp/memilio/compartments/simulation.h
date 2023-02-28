@@ -137,6 +137,10 @@ private:
     OdeIntegrator m_integrator;
 }; // namespace mio
 
+/**
+ * @brief A class for the simulation of a compartment model with Flows. The Flows are integrated when calling the time integration scheme.
+ * @tparam M a CompartmentModel type
+ */
 template <class M>
 class FlowSimulation
 {
@@ -303,6 +307,28 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
     return sim.get_result();
 }
 
+/**
+ * @brief simulate simulates a compartmental model and returns the same results as simulate and also the flows.
+ * @param[in] t0 start time
+ * @param[in] tmax end time
+ * @param[in] dt initial step size of integration
+ * @param[in] model: An instance of a compartmental model
+ * @return a Tuple of two TimeSeries to represent the final simulation result and flows
+ * @tparam Model a compartment model type
+ * @tparam Sim a simulation type that can simulate the model.
+ */
+template <class Model, class Sim = FlowSimulation<Model>>
+std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model,
+                                                   std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    model.check_constraints();
+    Sim sim(model, t0, dt);
+    if (integrator) {
+        sim.set_integrator(integrator);
+    }
+    sim.advance(tmax);
+    return {sim.get_result(), sim.get_flows()};
+}
 } // namespace mio
 
 #endif // POPULATIONS_H

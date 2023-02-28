@@ -20,13 +20,10 @@
 #ifndef SEIR_PARAMETERS_H
 #define SEIR_PARAMETERS_H
 
-#include "memilio/config.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
-#include <memory>
 #include <vector>
 
 namespace mio

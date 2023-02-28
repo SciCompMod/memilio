@@ -110,7 +110,8 @@ class SplitOdeIntegrator
 {
 public:
     /**
-     * @brief create an integrator for a specific IVP
+     @brief create an integrator for a specific IVP. In contrast to OdeIntegrator,
+        we consider the flows and concat them with the results for the time integration and split them afterwards.
      * @param f rhs of the ODE
      * @param t0 initial point of independent variable t
      * @param y0 value of y at t0
