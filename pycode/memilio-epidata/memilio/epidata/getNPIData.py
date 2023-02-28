@@ -1060,12 +1060,6 @@ def get_npi_data(fine_resolution=2,
                         # intersect non-combinable subcodes with less strict subcodes
                         subcodes_deactivation = list(set(idxs_less_strict).intersection(subcodes_nocombi))
 
-                        # check if all codes which can not be combined get deactivated
-                        for code in subcodes_nocombi:
-                            if code not in subcodes_deactivation:
-                                print('WARNING!')
-                                #raise gd.DataError('Can't deactivate NPI code ' + code + ' in county ' + countyID)
-
                         for nocombi_code in subcodes_deactivation:
                             days_deact = np.where(df_merged.loc[subcode_active, nocombi_code]>0)[0]
                             if len(days_deact) > 0:
@@ -1079,7 +1073,7 @@ def get_npi_data(fine_resolution=2,
                 df_local_new = df_merged.copy()
             else:
                 # multiply subcode columns with incidence dependent subcode columns in df_local_new
-                for maincode in df_npis_combinations.keys:
+                for maincode in df_npis_combinations.keys():
                     for subcode in df_npis_combinations[maincode][1].columns:
                         for incidcode in ['','_1','_2','_3','_4','_5']:
                             df_local_new[subcode+incidcode]*=df_merged[subcode]
