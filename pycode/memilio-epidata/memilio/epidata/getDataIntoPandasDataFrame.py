@@ -95,17 +95,23 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None, ve
     # return the downloaded content as file like object
     return BytesIO(file)
 
-def extract_zip(file, **param_dict):
-    """! """
+def extract_zip(file='', param_dict={}, func_to_use=pd.read_excel):
+    """! reads a zip file and returns a list of dataframes for every file in the zip folder.
+    If only one file is readable for func_to_use a single dataframe is returned instead of a list with oe entry.
 
-    # extract zip file in current working directory
+    @param file String. Path to Zipfile to read.
+    @param param_dict Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    @param func_to_use function to read the unpacked files in the zip folder. Default: pandas.read_excel
+
+    @return list od all dataframes (one for each file).
+    """
     with ZipFile(file, 'r') as zipObj:
         names=zipObj.namelist()
         all_dfs=[[] for i in range(len(names))]
         for i in range(len(names)):
             with zipObj.open(names[i]) as file2:
                 try:
-                    all_dfs[i]=pd.read_excel(file2.read(), **param_dict)
+                    all_dfs[i]=func_to_use(file2.read(), **param_dict)
                 except:
                     pass
     if len(all_dfs)==1:
@@ -138,9 +144,9 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
             user_input = input("Warning: The file: " + filepath + \
                 " does not exist in the directory. Do you want to download " + \
                 "the file from " + url +" (y/n)? \n")
-            if user_input == 'y' or user_input == 'Y':
-                df = get_file(filename=filepath, url=url, read_data=False, param_dict={})
-            if user_input == 'n' or user_input == 'N':
+            if user_input.lower() == 'y':
+                df = get_file(filepath=filepath, url=url, read_data=False, param_dict={})
+            if user_input.lower() == 'n':
                 error_message = "Error: The file from " + filepath + \
                 "could not be read. Call program without -r flag to get it."
                 raise FileNotFoundError(error_message)
@@ -165,16 +171,16 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
                     # create dataframe
                     df=func_to_use[0](file, **param_dict)
             except requests.exceptions.RequestException:
-                raise FileNotFoundError('Sorry')
+                raise FileNotFoundError('Error: Request failed.')
         except OSError:
             raise FileNotFoundError("Error: URL " + url + " could not be opened.")
     try:
         if df.empty:
-            raise DataError("Dataframe is empty")
+            raise DataError("Error: Dataframe is empty.")
     except AttributeError:
         for i in range(len(df)):
             if df[i].empty:
-                raise DataError("Dataframe is empty")
+                raise DataError("Error: Dataframe is empty.")
     return df
 
 def cli(what):

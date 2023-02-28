@@ -20,9 +20,10 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
 import os
+import json
 import sys
 from io import StringIO
-from unittest.mock import patch, call
+from unittest.mock import patch, PropertyMock
 from datetime import date, datetime
 import pandas as pd
 
@@ -55,11 +56,22 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 "Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-26T00:00:00Z", "NeuGenesen": -9, "AnzahlGenesen": 0, "IstErkrankungsbeginn": 0, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null }\
 ]}""")
 
+    # use hospitalization data file to test get_file
+    here = os.path.dirname(os.path.abspath(__file__))
+    test_data_file = os.path.join(
+        here, "test_data", "TestSetFullHospitalizationData.json")
+    # Load JSON file data to a python dict object.
+    with open(test_data_file, 'r') as file_object:
+        dict_object = json.load(file_object)
+
+    test_string_file = json.dumps(dict_object)
+
     def setUp(self):
         self.setUpPyfakefs()
-        # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
-        del sys.argv[1:]
-        # TODO:Is this is a good way to solve this?
+
+    def write_data(self, path_to_file):
+        with open(path_to_file, 'w') as f:
+            f.write(self.test_string_file)
 
     def test_cli_correct_default(self):
 
@@ -524,6 +536,75 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_jh.assert_called()
         mock_jh.assert_called_with(**arg_dict_jh)
 
+
+    def test_get_file_read(self):
+        # first test with read_data = True. get_file should return the json file as dataframe
+        filepath = os.path.join(self.path, 'test_file.json')
+        url=''
+        read_data=True
+        param_dict={}
+
+        # write file
+        gd.check_dir(self.path)
+        self.write_data(filepath)
+
+        df = gd.get_file(filepath, url, read_data, param_dict)
+
+        # check if non-empty dataframe is returned (Error is raised if dataframe is empty)
+        self.assertEqual(str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
+
+    @patch('pandas.read_json')
+    def test_get_file_empty_df(self, mock_json):
+
+        filepath = os.path.join(self.path, 'test_file.json')
+        url=''
+        read_data=True
+        param_dict={}
+
+        #return empty dataframe
+        mock_json.return_value = pd.DataFrame()
+
+        # get_file should raise an error if returned dataframe is empty
+        with self.assertRaises(gd.DataError) as error:
+            gd.get_file(filepath, url, read_data, param_dict)
+
+        error_message = "Error: Dataframe is empty."
+        self.assertEqual(str(error.exception), error_message)
+    
+    @patch('requests.get')
+    @patch('builtins.input')
+    @patch('pandas.read_json')
+    def test_get_file_user_input(self, mock_json, mock_in, mock_request):
+        
+        filepath = os.path.join(self.path, 'test_file.json')
+        url='test_url.com'
+        read_data=True
+        param_dict={}
+
+        # test with user input 'N'; get_file should raise filenotfounderror
+        mock_json.side_effect = FileNotFoundError
+        mock_in.return_value = 'N'
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict)
+
+        error_message = "Error: The file from " + filepath + \
+                "could not be read. Call program without -r flag to get it."
+        self.assertEqual(str(error.exception), error_message)
+
+        # test with user input 'y'; get file should try to download from url
+        mock_in.return_value = 'y'
+        # urlshould not be opened here. Instead raise a 404 Error
+        type(mock_request).status_code = PropertyMock(return_value=404)
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict)
+
+        error_message = 'Error: URL test_url.com could not be opened.'
+        self.assertEqual(str(error.exception), error_message)
+
+        # check call count
+        self.assertEqual(mock_in.call_count, 2)
 
 if __name__ == '__main__':
     unittest.main()
