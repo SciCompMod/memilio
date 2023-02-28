@@ -95,13 +95,12 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None, ve
     # return the downloaded content as file like object
     return BytesIO(file)
 
-def extract_zip(file='', param_dict={}, func_to_use=pd.read_excel):
+def extract_zip(file, **param_dict):
     """! reads a zip file and returns a list of dataframes for every file in the zip folder.
-    If only one file is readable for func_to_use a single dataframe is returned instead of a list with oe entry.
+    If only one file is readable for func_to_use a single dataframe is returned instead of a list with one entry.
 
     @param file String. Path to Zipfile to read.
     @param param_dict Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
-    @param func_to_use function to read the unpacked files in the zip folder. Default: pandas.read_excel
 
     @return list od all dataframes (one for each file).
     """
@@ -111,7 +110,7 @@ def extract_zip(file='', param_dict={}, func_to_use=pd.read_excel):
         for i in range(len(names)):
             with zipObj.open(names[i]) as file2:
                 try:
-                    all_dfs[i]=func_to_use(file2.read(), **param_dict)
+                    all_dfs[i]=pd.read_excel(file2.read(), **param_dict)
                 except:
                     pass
     if len(all_dfs)==1:

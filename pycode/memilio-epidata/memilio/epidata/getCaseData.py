@@ -166,7 +166,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             except:
                 pass
         if not complete:
-            raise FileNotFoundError('')
+            raise FileNotFoundError("Something went wrong, dataframe is empty for csv and geojson!")
         
         # drop columns that do not exist in data from github
         df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",

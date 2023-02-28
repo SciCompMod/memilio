@@ -193,8 +193,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
                 split_berlin=split_berlin, rep_date=rep_date)
         self.assertEqual(
             str(error.exception),
-            #"Something went wrong, dataframe is empty for csv and geojson!")
-            '')
+            "Something went wrong, dataframe is empty for csv and geojson!")
 
         self.assertEqual(mock_file.call_count, 3)
 
@@ -204,9 +203,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
                                     pd.read_json(
                                         os.path.join(
                                             directory,
-                                            "CaseDataNotFull.json"))]
-        mock_file.return_value = pd.read_json(
-            os.path.join(directory, "CaseDataArcgis.json"))
+                                            "CaseDataArcgis.json"))]
 
         gcd.get_case_data(
             read_data=read_data, file_format=file_format,
@@ -784,7 +781,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
 
         mock_file.return_value = pd.read_json(
-            self.test_string_all_federal_states_and_counties_read)
+            self.test_string_all_federal_states_and_counties_github)
 
         gcd.get_case_data(
             read_data=read_data, file_format=file_format,

@@ -594,7 +594,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         # test with user input 'y'; get file should try to download from url
         mock_in.return_value = 'y'
-        # urlshould not be opened here. Instead raise a 404 Error
+        # url should not be opened here. Instead raise a 404 Error
         type(mock_request).status_code = PropertyMock(return_value=404)
 
         with self.assertRaises(FileNotFoundError) as error:
