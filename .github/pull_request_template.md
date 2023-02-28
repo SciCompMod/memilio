@@ -1,3 +1,6 @@
+## Changes
+Please briefly list the changes made.
+
 ## Merge Request - GuideLine Checklist
 Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) before opening a PR and request a reviewer when this is ready to review. If this is Work in Prorgess please use the draft feauture.
 
