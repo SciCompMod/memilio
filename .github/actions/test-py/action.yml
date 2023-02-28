@@ -25,7 +25,7 @@ runs:
       uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
-        path: pycode/wheelhouse 
+        path: pycode/wheelhouse
     - name: Download additional Python Wheels for plot package
       uses: actions/download-artifact@v3
       if:  inputs.package == 'plot'
@@ -78,6 +78,8 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: test-py-coverage-reports-${{ inputs.package }}
-        path: '**/coverage_python.xml'
+        path: |
+          pycode/memilio-${{ inputs.package }}/**/coverage_python.xml
+          coverage_python
         retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}
