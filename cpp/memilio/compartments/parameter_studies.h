@@ -152,11 +152,9 @@ public:
             for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
                 int bytes_size;
                 MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
-                std::cout << "Rank " << rank << " receiving " << bytes_size << " bytes from " << src_rank << std::endl;
                 ByteStream bytes(bytes_size);
                 MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
 
-                std::cout << "Rank " << rank << " deserializing" << std::endl;
                 auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
                 if (!src_ensemble_results) {
                     log_error("Error receiving ensemble results from rank {}.", src_rank);

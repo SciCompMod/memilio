@@ -171,6 +171,7 @@ TEST(BinarySerializer, model)
     //this test is only to make sure the correct number of bytes are serialized/deserialized
     //in a very complex object. correct serializing of single values is tested by other tests.
     mio::osecir::Model model{5};
+    mio::osecir::set_params_distributions_normal(model, 0, 10, 0.01);
     auto stream = mio::serialize_binary(model);
     auto result = mio::deserialize_binary(stream, mio::Tag<mio::osecir::Model>{});
     EXPECT_THAT(result, IsSuccess());
