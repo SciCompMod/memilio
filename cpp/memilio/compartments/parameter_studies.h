@@ -123,8 +123,8 @@ public:
 #endif
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + rank, 0);
-        auto end_run_idx = start_run_idx + run_distribution[rank];
+        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
         std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
