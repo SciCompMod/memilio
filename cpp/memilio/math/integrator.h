@@ -94,6 +94,16 @@ public:
         return m_result;
     }
 
+    double get_dt()
+    {
+        return m_dt;
+    }
+
+    const double get_dt() const
+    {
+        return m_dt;
+    }
+
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
         m_core = integrator;
