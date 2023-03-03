@@ -16,10 +16,10 @@ add_library(memilio
     epidemiology/damping_sampling.cpp
     epidemiology/dynamic_npis.h
     epidemiology/dynamic_npis.cpp
-    epidemiology/regions.h
-    epidemiology/regions.cpp
+    geography/regions.h
+    geography/regions.cpp
     epidemiology/simulation_day.h
-    epidemiology/holiday_data_de.ipp
+    geography/holiday_data.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h
     compartments/parameter_studies.h
@@ -49,8 +49,8 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
-    mobility/mobility.h
-    mobility/mobility.cpp
+    mobility/meta_mobility_instant.h
+    mobility/meta_mobility_instant.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
