@@ -72,7 +72,7 @@ void Model::update_forceofinfection(bool initialization)
 
     // corresponding index
     /* need calc_time_index timesteps in sum,
-     subtract 1 because in the last summand all Transitiondistributions evaluate to 0*/
+     subtract 1 because in the last summand all Transitiondistributions evaluate to 0 (by definition of xright)*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
     Eigen::Index num_time_points{};
@@ -123,10 +123,10 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
 {
     ScalarType sum = 0;
 
-    /* if we have Transitiondistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
-     Then we have that the derivative of Transitiondistribution(m_dt*i) is equal to zero for all i>= k+1,
+    /* If we have TransitionDistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
+     then we have that the derivative of TransitionDistribution(m_dt*i) is equal to zero for all i>= k+1,
      since we are using a backwards difference scheme to compute the derivative.
-     this needs to be adjusted if we are changing the finite difference scheme */
+     This needs to be adjusted if we are changing the finite difference scheme */
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() /
                                 m_dt) +
@@ -145,14 +145,14 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     }
 
     m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
-        (-1) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
+        (-m_dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
 }
 
 void Model::flows_current_timestep()
 {
     // calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
     m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
-        m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
+        m_dt * m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
     // calculate all other flows with compute_flow
     // sigma_E^C
     compute_flow((int)InfectionTransitions::ExposedToInfectedNoSymptoms,
