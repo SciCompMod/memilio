@@ -40,7 +40,7 @@ namespace abm
 class Location;
 
 /**
- * Infection properties describe the infection state of a person and if a infection is detected
+ * @brief InfectionProperties describe the #InfectionState of a Person and if an Infection is detected.
  */
 struct InfectionProperties {
     InfectionProperties(InfectionState infection_state, bool infection_detected = false)
@@ -64,7 +64,7 @@ struct InfectionProperties {
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
- * Agents in the simulated world that can carry and spread the infection.
+ * @brief Agents in the simulated World that can carry and spread the Infection.
  */
 class Person
 {
@@ -198,13 +198,15 @@ public:
     }
 
     /**
-     * Every person has a random number.
-     * Depending on this number and the time, the person works from home in case of a lockdown.
+     * @brief Draw if the Person goes to work or is in home office during lockdown.
+     * Every person has a random number. Depending on this number and the time, the person works from home in case of a
+     * lockdown.
      * @return if the person works from home
      */
     bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
 
     /**
+     * @brief Draw at what time the Person goes to work.
      * Every person has a random number to determine what time to go to work.
      * Depending on this number person decides what time has to go to work;
      * @return the time of going to work
@@ -212,12 +214,14 @@ public:
     TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
 
     /**
+     * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
     bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
 
     /**
+     * @brief Draw at what time the Person goes to work.
      * Every person has a random number to determine what time to go to school.
      * Depending on this number person decides what time has to go to school;
      * @return the time of going to school
@@ -256,8 +260,7 @@ public:
     const std::vector<uint32_t>& get_cells() const;
 
     /**
-     * @brief Get the mask of the person.
-     * @return Current mask of the person.
+     * @brief Get the current Mask of the Person.
      */
     Mask& get_mask()
     {
@@ -270,16 +273,16 @@ public:
     }
 
     /**
-     * @brief Get the protection of the mask. A value of 1 represents full protection and a value of 0 means no protection.
-     * @return The protection factor of the mask.
+     * @brief Get the protection of the Mask.
+     * A value of 1 represents full protection and a value of 0 means no protection.
      */
     double get_protective_factor(const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief For every LocationType a person has a compliance value between -1 and 1.
+     * @brief For every LocationType a Person has a compliance value between -1 and 1.
      * -1 means that the Person never complies to any mask duty at the given LocationType.
      * 1 means that the Person always wears a Mask a the LocationType even if it is not required.
-     * @param preferences The vector of mask compliance values for all LocationTypes.
+     * @param[in] preferences The vector of mask compliance values for all LocationTypes.
      */
     void set_mask_preferences(std::vector<double> preferences)
     {
@@ -287,7 +290,7 @@ public:
     }
 
     /**
-     * @brief Get the mask compliance of the person for the current location.
+     * @brief Get the mask compliance of the Person for the current location.
      * @param location the current location of the person
      * @return The probability that the person does not comply to any mask duty/wears a
      * mask even if it is not required.
@@ -298,8 +301,9 @@ public:
     }
 
     /**
-     * @brief Checks whether the person wears a mask at the target location.
-     * @param target The target location.
+     * @brief Checks whether the Person wears a Mask at the target Location.
+     * @param[in] target The target location.
+     * @return Whether a Person wears a Mask at the Location.
      */
     bool apply_mask_intervention(const Location& target);
 

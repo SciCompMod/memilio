@@ -13,22 +13,16 @@ except ImportError:
         [sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
-__version__ = '0.1.0'
+__version__ = '0.7.0'
 
 setup(
-    name='memilio-simulation',
-    version=__version__,
-    author='DLR-SC',
-    author_email='daniel.abele@dlr.de',
-    maintainer_email='daniel.abele@dlr.de',
+    name='memilio-simulation', version=__version__, author='DLR-SC',
+    author_email='daniel.abele@dlr.de', maintainer_email='Martin.Kuehn@DLR.de',
     url='https://github.com/DLR-SC/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
-    packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
+    packages=find_packages(
+        where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
     install_requires=[],
-    extras_require={
-        'dev': ['numpy >= 1.22'],
-    },
-    long_description='',
-    test_suite='memilio.simulation_test',
-)
+    extras_require={'dev': ['numpy >= 1.22'], },
+    long_description='', test_suite='memilio.simulation_test',)

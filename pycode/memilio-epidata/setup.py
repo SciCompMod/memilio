@@ -4,7 +4,7 @@ import sys
 
 from setuptools import Command, find_packages, setup
 
-__version__ = '0.1.0'
+__version__ = '0.7.0'
 
 
 class PylintCommand(Command):
