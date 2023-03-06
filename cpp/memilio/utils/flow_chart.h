@@ -24,6 +24,7 @@
 
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 namespace mio
 {
@@ -137,7 +138,8 @@ private:
     };
 
     template <size_t index, class Flow>
-    inline constexpr std::enable_if_t<!std::is_same<Flow, decltype(FlowChart<Flows...>().get<index>())>::value, size_t>
+    inline constexpr std::enable_if_t<
+        !std::is_same<Flow, typename std::tuple_element<index, std::tuple<Flows...>>::type>::value, size_t>
     get_impl(Flow f) const
     {
         static_assert(index < sizeof...(Flows), "In get_impl<Flow>(): Flow is not in Flows...");
@@ -145,7 +147,8 @@ private:
     }
 
     template <size_t index, class Flow>
-    inline constexpr std::enable_if_t<std::is_same<Flow, decltype(FlowChart<Flows...>().get<index>())>::value, size_t>
+    inline constexpr std::enable_if_t<
+        std::is_same<Flow, typename std::tuple_element<index, std::tuple<Flows...>>::type>::value, size_t>
     get_impl(Flow) const
     {
         return index;
