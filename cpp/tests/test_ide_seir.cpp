@@ -25,7 +25,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <gtest/gtest.h>
 
-class IdeSeirModelTest : public testing::Test
+class ModelTest : public testing::Test
 {
 protected:
     virtual void SetUp()
@@ -41,7 +41,7 @@ protected:
                                   Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
         }
 
-        model = new mio::iseir::IdeSeirModel(std::move(result), dt, N);
+        model = new mio::iseir::Model(std::move(result), dt, N);
 
         model->parameters.set<mio::iseir::LatencyTime>(3.3);
         model->parameters.set<mio::iseir::InfectiousTime>(8.2);
@@ -58,10 +58,10 @@ protected:
     }
 
 public:
-    mio::iseir::IdeSeirModel* model = nullptr;
+    mio::iseir::Model* model = nullptr;
 };
 
-TEST_F(IdeSeirModelTest, compareWithPreviousRun)
+TEST_F(ModelTest, compareWithPreviousRun)
 {
 
     auto compare = load_test_data_csv<double>("ide-seir-compare.csv");
