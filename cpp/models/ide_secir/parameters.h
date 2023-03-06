@@ -40,19 +40,42 @@ namespace isecir
 /**
 * @brief Distribution of the time spent in a compartment before transiting to next compartment.
 */
-struct DelayDistribution {
-    DelayDistribution()
-        : xright{2.0}
+struct SmootherCosine {
+    SmootherCosine()
+        : xright{6.0}
     {
     }
-    DelayDistribution(ScalarType init_x_right)
+    SmootherCosine(ScalarType init_x_right)
         : xright{init_x_right}
     {
     }
 
-    ScalarType Distribution(ScalarType infection_age)
+    ScalarType Function(ScalarType infection_age)
     {
         return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
+    }
+
+    ScalarType xright{};
+};
+
+// TODO: write function that calculates correct xright to cut off function, rework template structure
+template <class DummyDistribution>
+struct DelayDistribution {
+    DelayDistribution()
+    {
+    }
+    // DelayDistribution(ScalarType init_x_right)
+    //     : xright{init_x_right}
+    // {
+    // }
+
+    ScalarType Distribution(ScalarType infection_age)
+    {
+        return DummyDistribution.Function(infection_age);
+    }
+
+    void calculate_xright(ScalarType tol = 10e-6, ScalarType dt)
+    {
     }
 
     ScalarType get_xright()
@@ -61,17 +84,12 @@ struct DelayDistribution {
     }
 
 private:
-    ScalarType xright;
+    ScalarType xright{};
 };
 
-/**
- * @brief Transition distribution for each Transition in InfectionTransitions.
- * 
- * Note that Distribution from S->E is just a dummy.
- * This transition is calculated in a different way.
- * 
- */
 struct TransitionDistributions {
+    /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
+    This transition is calculated in a different way. */
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
