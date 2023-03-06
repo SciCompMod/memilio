@@ -9,6 +9,10 @@ This directory collects the python packages for the MEmilio project. Currently, 
 
 * ``memilio-generation``: Contains an automatic generation of model specific binding fies. See `generation README <memilio-generation/README.md>`_.
 
+* ``memilio-plot``: Contains modules and scripts to plot epidemiological or simulation data as returned by other packages of the MEmilio software. See `plot README <memilio-plot/README.md>`_.
+
+* ``memilio-surrogatemodel``: Contains machine learning based surrogate models based on the MEmilio simulation models. See `surrogatemodel README <memilio-surrogatemodel/README.md>`_.
+
 See the corresponding directory for detailed installation and usage instruction.
 
 We recommend to use a virtual python environment to avoid dependency conflicts with other installed packages. On Linux, use the following commands to create and activate a virtual environment in directory called `epi_venv`:
