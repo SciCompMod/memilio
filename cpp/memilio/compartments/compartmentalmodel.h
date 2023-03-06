@@ -280,7 +280,7 @@ public:
     }
 
 private:
-    const size_t m_comp_factor;
+    size_t m_comp_factor;
     mutable Eigen::VectorXd m_flow_values;
 
     // compute only the factor used with "Comp" in this->population.get_flat_index
