@@ -125,12 +125,11 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
 
     /* If we have TransitionDistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
      then we have that the derivative of TransitionDistribution(m_dt*i) is equal to zero for all i>= k+1,
-     since we are using a backwards difference scheme to compute the derivative.
+     since we are using a backwards difference scheme to compute the derivative. Hence calc_time_index goes until 
+     std::ceil(xright/m_dt) since for std::ceil(xright/m_dt)+1 all terms are zero. 
      This needs to be adjusted if we are changing the finite difference scheme */
-    Eigen::Index calc_time_index =
-        (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() /
-                                m_dt) +
-        1;
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
+        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() / m_dt);
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
