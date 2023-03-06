@@ -87,7 +87,7 @@ PYBIND11_MODULE(_simulation, m)
     m.def(
         "get_state_id_de",
         [](int county) {
-            return int(mio::regions::get_state_id(mio::regions::CountyId(county)));
+            return int(mio::regions::get_state_id(int(mio::regions::CountyId(county))));
         },
         py::arg("county_id"));
     m.def(

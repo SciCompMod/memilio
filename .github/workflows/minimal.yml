@@ -68,6 +68,25 @@ jobs:
         with: 
           package: epidata
   
+  build-py-generation:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: generation
+
+  test-py-generation:
+    needs: build-py-generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: generation
+
   build-py-simulation:
     runs-on: ubuntu-latest
     container:
@@ -92,7 +111,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: surrogatemodel
@@ -101,7 +120,7 @@ jobs:
     needs: [build-py-surrogatemodel, build-py-simulation]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
         with: 
           package: surrogatemodel

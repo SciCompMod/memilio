@@ -1,4 +1,4 @@
-MEmilio Epidata Package
+MEmilio Plot Package
 =======================
 
 Content
