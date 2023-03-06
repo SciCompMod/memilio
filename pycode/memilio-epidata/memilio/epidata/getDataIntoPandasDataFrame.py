@@ -279,13 +279,19 @@ def cli(what):
     return vars(args)
 
 
-def append_filename(filename, impute_dates, moving_average):
+def append_filename(filename='', impute_dates=False, moving_average=0, split_berlin=False, rep_date=False):
     """! Creates consistent file names for all output.
     """
     if moving_average > 0:
         filename = filename + '_ma' + str(moving_average)
     elif impute_dates:
         filename = filename + '_all_dates'
+    
+    # split_berlin and repdate especially for case data
+    if split_berlin:
+        filename = filename + '_splt_berlin'
+    if rep_date:
+        filename = filename + 'repdate'
 
     return filename
 
