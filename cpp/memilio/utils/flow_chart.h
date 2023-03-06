@@ -20,6 +20,8 @@
 #ifndef FLOW_CHART_H_
 #define FLOW_CHART_H_
 
+#include "memilio/utils/index.h"
+
 #include <tuple>
 #include <type_traits>
 
@@ -51,20 +53,55 @@ struct FilteredTuple<Omittand, std::tuple<Tag, Tags...>> {
                                          std::declval<typename FilteredTuple<Omittand, std::tuple<Tags...>>::Type>()));
 };
 
-template <class Omittand, class... Tags>
-using filtered_tuple_t = typename FilteredTuple<Omittand, Tags...>::Type;
+template <template <class...> class T, class... Args>
+std::tuple<Args...> as_tuple(T<Args...>);
 
 template <template <class...> class T, class... Args>
-constexpr std::tuple<Args...> as_tuple(T<Args...>);
+T<Args...> as_index(std::tuple<Args...>);
 
-template <template <class...> class T, class... Args>
-constexpr T<Args...> as_index(std::tuple<Args...>);
+template <size_t I, class Index, class Dim, class... Tags>
+std::enable_if_t<(I == (sizeof...(Tags) - 1)), std::pair<size_t, size_t>> flatten_index_by_tags(Index const& indices,
+                                                                                                Dim const& dimensions)
+{
+    using Tag = typename std::tuple_element<I, std::tuple<Tags...>>::type;
+    assert(get<Tag>(indices) < get<Tag>(dimensions));
+    return {(size_t)mio::get<Tag>(indices), (size_t)mio::get<Tag>(dimensions)};
+}
 
-template <class Omittand, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<typename FilteredTuple<Omittand, decltype(as_tuple(std::declval<Index>()))>::Type>()));
+template <size_t I, class Index, class Dim, class... Tags>
+std::enable_if_t<(I < (sizeof...(Tags) - 1)), std::pair<size_t, size_t>> flatten_index_by_tags(Index const& indices,
+                                                                                               Dim const& dimensions)
+{
+    using Tag = typename std::tuple_element<I, std::tuple<Tags...>>::type;
+    assert(mio::get<Tag>(indices) < mio::get<Tag>(dimensions));
+
+    size_t val, prod;
+    std::tie(val, prod) = flatten_index_by_tags<I + 1, Index, Dim, Tags...>(indices, dimensions);
+
+    return {val + (size_t)mio::get<Tag>(indices) * prod, prod * (size_t)mio::get<Tag>(dimensions)};
+}
 
 } // namespace details
+
+template <class Omittand, class... Tags>
+using filtered_tuple_t = typename details::FilteredTuple<Omittand, Tags...>::Type;
+
+template <class Omittand, template <class...> class IndexTemplate, class Index>
+using filtered_index_t = decltype(details::as_index<IndexTemplate>(
+    std::declval<
+        typename details::FilteredTuple<Omittand, decltype(details::as_tuple(std::declval<Index>()))>::Type>()));
+
+template <class Index, class Dim, template <class...> class TagContainer, class Tag, class... Tags>
+size_t flatten_index_by_tags(const Index& indices, const Dim& dimensions, const TagContainer<Tag, Tags...>)
+{
+    return details::flatten_index_by_tags<0, Index, Dim, Tag, Tags...>(indices, dimensions).first;
+}
+
+template <class Index, class Dim, template <class...> class TagContainer>
+constexpr size_t flatten_index_by_tags(const Index&, const Dim&, const TagContainer<>)
+{
+    return 0;
+}
 
 template <class Status, Status Source, Status Target>
 struct Flow {
