@@ -37,12 +37,12 @@ int main()
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
-    child.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    child.set_age_weight(mio::AgeGroup(0), 1);
+    child.set_age_weight(mio::AgeGroup(1), 1);
 
     auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(mio::abm::AgeGroup::Age15to34, 1);
-    parent.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
+    parent.set_age_weight(mio::AgeGroup(2), 1);
+    parent.set_age_weight(mio::AgeGroup(3), 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -109,10 +109,10 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+        if (person.get_age() == mio::AgeGroup(1)) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
             person.set_assigned_location(work);
         }
     }

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -40,7 +40,7 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params
 
 void close_social_events(TimePoint t_begin, double p, MigrationParameters& params)
 {
-    auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
+    auto damping1 = Eigen::VectorXd::Constant(AgeGroup::size, p);
     params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
 

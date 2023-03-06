@@ -23,11 +23,11 @@
 #include "abm/location_type.h"
 #include "abm/mask_type.h"
 #include "abm/state.h"
-#include "abm/age.h"
 #include "abm/time.h"
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/mask.h"
+#include "memilio/epidemiology/age_group.h"
 
 #include <functional>
 #include <vector>

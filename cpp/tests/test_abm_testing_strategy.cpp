@@ -23,7 +23,7 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2), {});
 
     auto testing_criteria = mio::abm::TestingCriteria();
     ASSERT_EQ(testing_criteria.evaluate(person, work), true);
@@ -35,10 +35,10 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     ASSERT_EQ(testing_criteria.evaluate(person, work), true);
     ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
-    testing_criteria.add_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.add_age_group(mio::AgeGroup(3));
     ASSERT_EQ(testing_criteria.evaluate(person, home),
               false); // now it isn't empty and get's evaluated against age group
-    testing_criteria.remove_age_group(mio::abm::AgeGroup::Age35to59);
+    testing_criteria.remove_age_group(mio::AgeGroup(3));
     ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::Infected);
@@ -61,7 +61,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::Infected,
                                                                     mio::abm::InfectionState::Carrier};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                mio::abm::LocationType::Work};
+                                                                    mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -89,9 +89,8 @@ TEST(TestTestingScheme, runScheme)
 
     auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
-    auto person2 =
-        mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age15to34, {});
+    auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), {});
+    auto person2  = mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(2), {});
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)

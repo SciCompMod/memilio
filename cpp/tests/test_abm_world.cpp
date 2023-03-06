@@ -89,11 +89,11 @@ TEST(TestWorld, findLocation)
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
-    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age60to79,
-                                    world.get_global_infection_parameters());
-    auto& home   = world.get_individualized_location(home_id);
-    auto& school = world.get_individualized_location(school_id);
-    auto& work   = world.get_individualized_location(work_id);
+    auto person    = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(4),
+                                      world.get_global_infection_parameters());
+    auto& home     = world.get_individualized_location(home_id);
+    auto& school   = world.get_individualized_location(school_id);
+    auto& work     = world.get_individualized_location(work_id);
     person.set_assigned_location(home);
     person.set_assigned_location(school);
     person.set_assigned_location({0, mio::abm::LocationType::Work});
@@ -159,8 +159,8 @@ TEST(TestWorld, evolveMigration)
             .WillOnce(testing::Return(0.8)) // draw random work hour
             .WillOnce(testing::Return(0.8)); // draw random school hour
 
-        auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34);
-        auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+        auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::AgeGroup(2));
+        auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
 
         p1.set_assigned_location(school_id);
         p2.set_assigned_location(school_id);
@@ -193,12 +193,11 @@ TEST(TestWorld, evolveMigration)
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
 
-        auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34);
-        auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
-        auto& p3 = world.add_person(home_id, mio::abm::InfectionState::Infected_Severe, mio::abm::AgeGroup::Age5to14);
-        auto& p4 =
-            world.add_person(hospital_id, mio::abm::InfectionState::Recovered_Infected, mio::abm::AgeGroup::Age5to14);
-        auto& p5 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34);
+        auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::AgeGroup(2));
+        auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
+        auto& p3 = world.add_person(home_id, mio::abm::InfectionState::Infected_Severe, mio::AgeGroup(1));
+        auto& p4 = world.add_person(hospital_id, mio::abm::InfectionState::Recovered_Infected, mio::AgeGroup(1));
+        auto& p5 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2));
         p1.set_assigned_location(event_id);
         p2.set_assigned_location(event_id);
         p1.set_assigned_location(work_id);
@@ -249,7 +248,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto world   = mio::abm::World();
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
+    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
                                     world.get_global_infection_parameters());
     auto& home   = world.get_individualized_location(home_id);
     auto& work   = world.get_individualized_location(work_id);

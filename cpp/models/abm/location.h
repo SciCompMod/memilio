@@ -24,7 +24,7 @@
 #include "abm/parameters.h"
 #include "abm/state.h"
 #include "abm/location_type.h"
-
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
@@ -84,7 +84,7 @@ struct Cell {
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup::Count, VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup(AgeGroup::size), VaccinationState::Count}, 0.})
     {
     }
 

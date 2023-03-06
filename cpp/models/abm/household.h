@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Sascha Korf
+* Authors: Daniel Abele, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -23,7 +23,7 @@
 #define EPI_ABM_HOUSEHOLD_H
 
 #include "abm/abm.h"
-#include "abm/age.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/custom_index_array.h"
 #include <numeric>
 #include <vector>
@@ -51,7 +51,7 @@ public:
      * Constructs a newhousehold member.
      */
     HouseholdMember()
-        : m_age_weights({AgeGroup::Count}, 0)
+        : m_age_weights({AgeGroup(AgeGroup::size)}, 0)
     {
     }
 
@@ -60,7 +60,7 @@ public:
      */
     void set_age_weight(AgeGroup age_group, int weight)
     {
-        m_age_weights[{age_group}] = weight;
+        m_age_weights[age_group] = weight;
     }
 
     /**

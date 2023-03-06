@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -55,7 +55,7 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        person.get_age() == AgeGroup::Age5to14 && person.goes_to_school(t, params) && !person.is_in_quarantine()) {
+        person.get_age() == AgeGroup(1) && person.goes_to_school(t, params) && !person.is_in_quarantine()) {
         return LocationType::School;
     }
     //return home
@@ -70,7 +70,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Mi
     auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        (person.get_age() == AgeGroup::Age15to34 || person.get_age() == AgeGroup::Age35to59) &&
+        (person.get_age() == AgeGroup(2)|| person.get_age() == AgeGroup(3)) &&
         t.day_of_week() < 5 && t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {

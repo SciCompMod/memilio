@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Sascha Korf 
+* Authors: Daniel Abele, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,12 +22,12 @@
 #include <gtest/gtest.h>
 
 TEST(TestHouseholds, test_add_household_to_world)
-{
+{   
     auto member1 = mio::abm::HouseholdMember();
-    member1.set_age_weight(mio::abm::AgeGroup::Age0to4, 1);
+    member1.set_age_weight(mio::AgeGroup(0), 1);
 
     auto member2 = mio::abm::HouseholdMember();
-    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    member2.set_age_weight(mio::AgeGroup(1), 1);
 
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
@@ -42,10 +42,10 @@ TEST(TestHouseholds, test_add_household_to_world)
     EXPECT_EQ(persons.size(), 4);
 
     // Test age
-    EXPECT_EQ(persons[0].get_age(), mio::abm::AgeGroup::Age0to4);
-    EXPECT_EQ(persons[1].get_age(), mio::abm::AgeGroup::Age0to4);
-    EXPECT_EQ(persons[2].get_age(), mio::abm::AgeGroup::Age5to14);
-    EXPECT_EQ(persons[3].get_age(), mio::abm::AgeGroup::Age5to14);
+    EXPECT_EQ(persons[0].get_age(), mio::AgeGroup(0));
+    EXPECT_EQ(persons[1].get_age(), mio::AgeGroup(0));
+    EXPECT_EQ(persons[2].get_age(), mio::AgeGroup(1));
+    EXPECT_EQ(persons[3].get_age(), mio::AgeGroup(1));
 
     // Test location
     EXPECT_EQ(persons[0].get_location_id().index, persons[1].get_location_id().index);
@@ -56,10 +56,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
 {
 
     auto member1 = mio::abm::HouseholdMember();
-    member1.set_age_weight(mio::abm::AgeGroup::Age35to59, 1);
+    member1.set_age_weight(mio::AgeGroup(3), 1);
 
     auto member2 = mio::abm::HouseholdMember();
-    member2.set_age_weight(mio::abm::AgeGroup::Age5to14, 1);
+    member2.set_age_weight(mio::AgeGroup(1), 1);
 
     auto household_group = mio::abm::HouseholdGroup();
 
@@ -85,10 +85,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
 
     for (auto& person : persons) {
-        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+        if (person.get_age() == mio::AgeGroup(1)) {
             number_of_age5to14_year_olds++;
         }
-        if (person.get_age() == mio::abm::AgeGroup::Age35to59) {
+        if (person.get_age() == mio::AgeGroup(3)) {
             number_of_age35to59_year_olds++;
         }
     }

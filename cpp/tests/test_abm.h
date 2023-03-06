@@ -21,11 +21,11 @@
 #define TEST_ABM_H
 
 #include "abm/abm.h"
-#include "abm/age.h"
 #include "abm/location_type.h"
 #include "abm/migration_rules.h"
 #include "abm/lockdown_rules.h"
 #include "memilio/math/eigen_util.h"
+#include "memilio/epidemiology/age_group.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"

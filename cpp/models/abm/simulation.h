@@ -31,54 +31,6 @@ namespace mio
 namespace abm
 {
 
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, InfectionParameters>
-{
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, InfectionParameters>;
-
-public:
-    Model(const Populations& pop, const ParameterSet& params)
-        : Base(pop, params)
-    {}
-
-    Model(InfectionParameters params)
-        : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), params)
-    {}
-
-    Model()
-        : Model(Populations({AgeGroup(AgeGroup::Count), InfectionState::Count}), ParameterSet(AgeGroup::Count))
-    {}
-
-    /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
-    {
-        auto obj = io.create_object("Model");
-        //obj.add_element("Parameters", parameters);
-        obj.add_element("Populations", populations);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Model> deserialize(IOContext& io)
-    {
-        auto obj = io.expect_object("Model");
-        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations>{});
-        return apply(
-            io,
-            [](auto&& par_, auto&& pop_) {
-                return Model{pop_, par_};
-            },
-            par, pop);
-    }
-};
-
 /**
  * run the simulation in discrete steps, evolve the world and report results.
  */

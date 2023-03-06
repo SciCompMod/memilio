@@ -44,12 +44,11 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
     auto num_runs                    = ensemble_params.size();
     auto num_nodes                   = ensemble_params[0].size();
-    std::vector<AgeGroup> age_groups = {AgeGroup::Age0to4,   AgeGroup::Age5to14,  AgeGroup::Age15to34,
-                                        AgeGroup::Age35to59, AgeGroup::Age60to79, AgeGroup::Age80plus};
     std::vector<double> single_element_ensemble(num_runs);
+    auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
     // lamda function that calculates the percentile of a single paramter
-    std::vector<Model> percentile(num_nodes, Model());
+    std::vector<Model> percentile(num_nodes, World((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
         for (size_t run = 0; run < num_runs; run++) {
@@ -62,7 +61,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
-        for (auto age_group : age_groups) {
+        for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_groups); age_group++) {
             //Population
             for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
                 param_percentil(
@@ -126,10 +125,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 node, [age_group](auto&& model) -> auto& {
                     return model.parameters.template get<DetectInfection>()[{age_group, VaccinationState::Count}];
                 });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<MaskProtection>()[{age_group}];
-                });
+            //param_percentil(
+            //    node, [age_group](auto&& model) -> auto& {
+            //        return model.parameters.template get<MaskProtection>()[{MaskType::Count}];
+            //    });
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];
