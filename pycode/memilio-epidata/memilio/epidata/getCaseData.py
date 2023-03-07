@@ -261,7 +261,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     # get rid of unnecessary columns
     df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
                   "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1)
-    
+
     # merge Berlin counties
     if not split_berlin:
         df = geoger.merge_df_counties(
@@ -279,101 +279,115 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected': [dateToUse, {AnzahlFall: sum}, None, {}, ['Confirmed']],
         'deaths': [dateToUse, {AnzahlTodesfall: sum}, None, {}, ['Deaths']],
         'all_germany': [dateToUse, {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-            None, {}, ['Confirmed', 'Deaths', 'Recovered']],
+                        None, {}, ['Confirmed', 'Deaths', 'Recovered']],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
-            {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
-        'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, 
-            [IdBundesland], {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, 
-            ['Confirmed', 'Deaths', 'Recovered']],
-        'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis], 
-            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],
+                           {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
+        'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+                      [IdBundesland], {dd.EngEng["idState"]                                       : [k for k, v in dd.State.items()]},
+                      ['Confirmed', 'Deaths', 'Recovered']],
+        'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
+                            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],
         'all_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-            [IdLandkreis], {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, 
-            ['Confirmed', 'Deaths', 'Recovered']],
-        'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, 
-            [Geschlecht], {dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
-            ['Confirmed', 'Deaths', 'Recovered']],
+                       [IdLandkreis], {dd.EngEng["idCounty"]: sorted(
+                           set(df[dd.EngEng["idCounty"]].unique()))},
+                       ['Confirmed', 'Deaths', 'Recovered']],
+        'all_gender': [[dateToUse, Geschlecht], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
+                       [Geschlecht], {dd.EngEng["gender"]: list(
+                           df[dd.EngEng["gender"]].unique())},
+                       ['Confirmed', 'Deaths', 'Recovered']],
         'all_state_gender': [[dateToUse, IdBundesland, Geschlecht],
-            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [IdBundesland, Geschlecht],
-            {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
-            ['Confirmed', 'Deaths', 'Recovered']],
+                             {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                                 IdBundesland, Geschlecht],
+                             {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["gender"]: list(
+                                 df[dd.EngEng["gender"]].unique())},
+                             ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_gender': [[dateToUse, IdLandkreis, Geschlecht],
-            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [IdLandkreis, Geschlecht],
-            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
-            ['Confirmed', 'Deaths', 'Recovered']],
+                              {AnzahlFall: sum, AnzahlTodesfall: sum,
+                                  AnzahlGenesen: sum}, [IdLandkreis, Geschlecht],
+                              {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique(
+                              ))), dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
+                              ['Confirmed', 'Deaths', 'Recovered']],
         'all_age': [[dateToUse, Altersgruppe], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-            [Altersgruppe], {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
-            ['Confirmed', 'Deaths', 'Recovered']],
-        'all_state_age': [[dateToUse, IdBundesland, Altersgruppe], 
-            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [IdBundesland, Altersgruppe],
-            {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
-            ['Confirmed', 'Deaths', 'Recovered']],
+                    [Altersgruppe], {dd.EngEng["ageRKI"]: sorted(
+                        set(df[dd.EngEng["ageRKI"]].unique()))},
+                    ['Confirmed', 'Deaths', 'Recovered']],
+        'all_state_age': [[dateToUse, IdBundesland, Altersgruppe],
+                          {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                              IdBundesland, Altersgruppe],
+                          {dd.EngEng["idState"]: geoger.get_state_ids(), dd.EngEng["ageRKI"]: sorted(
+                              set(df[dd.EngEng["ageRKI"]].unique()))},
+                          ['Confirmed', 'Deaths', 'Recovered']],
         'all_county_age': [[dateToUse, IdLandkreis, Altersgruppe],
-            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [IdLandkreis, Altersgruppe],
-            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())), dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
-            ['Confirmed', 'Deaths', 'Recovered']]
+                           {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}, [
+                               IdLandkreis, Altersgruppe],
+                           {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique(
+                           ))), dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
+                           ['Confirmed', 'Deaths', 'Recovered']]
     }
 
     for file in files:
         if file not in ['infected', 'deaths', 'all_germany', 'infected_state',
-                 'all_state', 'infected_county', 'all_county', 'all_gender',
-                 'all_state_gender', 'all_county_gender', 'all_age',
-                 'all_state_age', 'all_county_age']:
+                        'all_state', 'infected_county', 'all_county', 'all_gender',
+                        'all_state_gender', 'all_county_gender', 'all_age',
+                        'all_state_age', 'all_county_age']:
             raise gd.DataError('Error: File '+file+' cannot be written.')
         if 'county' in file and split_berlin == True:
             split_berlin_local = True
         else:
             split_berlin_local = False
-        filename = 'cases_' + gd.append_filename(file, impute_dates, moving_average, split_berlin_local, rep_date)
+        filename = 'cases_' + \
+            gd.append_filename(file, impute_dates,
+                               moving_average, split_berlin_local, rep_date)
         # sum over all columns defined in arg_dict
         df_local = df.groupby(arg_dict[file][0]).agg(arg_dict[file][1])
 
         if file == 'deaths':
             # only consider where deaths > 0
             df_local = df_local[df_local[AnzahlTodesfall] != 0]
-        
+
         # cumulative sum over columns defined in arg_dict
         if arg_dict[file][2] == None:
             df_local_cs = df_local.cumsum().reset_index(drop=False)
-        else:  
+        else:
             df_local_cs = df_local.groupby(
                 level=[arg_dict[file][0].index(level_index) for level_index in arg_dict[file][2]]).cumsum().reset_index()
 
         if impute_dates or moving_average > 0:
             df_local_cs = mdfs.impute_and_reduce_df(df_local_cs,
-            group_by_cols=arg_dict[file][3],
-            mod_cols=arg_dict[file][4],
-            impute='forward', moving_average=moving_average,
-            min_date=start_date, max_date=end_date)
-        
-        df_local_cs=mdfs.extract_subframe_based_on_dates(df_local_cs, start_date, end_date)
+                                                    group_by_cols=arg_dict[file][3],
+                                                    mod_cols=arg_dict[file][4],
+                                                    impute='forward', moving_average=moving_average,
+                                                    min_date=start_date, max_date=end_date)
+
+        df_local_cs = mdfs.extract_subframe_based_on_dates(
+            df_local_cs, start_date, end_date)
         gd.write_dataframe(df_local_cs, directory, filename, file_format)
 
         if make_plot:
-            if file =='infected':
+            if file == 'infected':
                 # make plot
                 df_local_cs.plot(title='COVID-19 infections', grid=True,
-                            style='-o')
+                                 style='-o')
                 plt.tight_layout()
                 plt.show()
 
             if file == 'deaths':
                 df_local_cs.plot(title='COVID-19 deaths', grid=True,
-                            style='-o')
+                                 style='-o')
                 plt.tight_layout()
                 plt.show()
 
                 df.agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
                     .plot(title='COVID-19 infections, deaths, recovered', grid=True,
-                        kind='bar')
+                          kind='bar')
                 plt.tight_layout()
                 plt.show()
-    
+
             if file == 'all_gender':
                 df.groupby(Geschlecht) \
                     .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
                     .plot(title='COVID-19 infections, deaths, recovered', grid=True,
-                        kind='bar')
+                          kind='bar')
                 plt.tight_layout()
                 plt.show()
 
@@ -389,7 +403,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df_local = df.groupby(Altersgruppe).agg({AnzahlTodesfall: sum})
 
                 df_local.plot(title='COVID-19 deaths', grid=True,
-                            kind='bar')
+                              kind='bar')
                 plt.tight_layout()
                 plt.show()
 

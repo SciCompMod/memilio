@@ -406,7 +406,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = True
         rep_date = False
-        files = ['all_county', 'all_county_gender', 'all_state', 'all_germany', 'infected', 'deaths']
+        files = ['all_county', 'all_county_gender',
+                 'all_state', 'all_germany', 'infected', 'deaths']
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -525,7 +526,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             out_folder=out_folder, no_raw=no_raw, start_date=start_date,
             end_date=end_date, impute_dates=impute_dates,
             moving_average=moving_average, make_plot=make_plot,
-            split_berlin=split_berlin, rep_date=rep_date, files = files)
+            split_berlin=split_berlin, rep_date=rep_date, files=files)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 5)
@@ -675,7 +676,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 2)
 
-        self.assertTrue('cases_all_germany_all_dates.json' in os.listdir(directory))
+        self.assertTrue(
+            'cases_all_germany_all_dates.json' in os.listdir(directory))
 
         # test _all_dates file
         file = 'cases_all_germany_all_dates.json'
@@ -788,7 +790,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = True
         rep_date = False
-        files = ['infected_county', 'all_county', 'all_county_age', 'all_county_gender']
+        files = ['infected_county', 'all_county',
+                 'all_county_age', 'all_county_gender']
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -829,7 +832,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         make_plot = False
         split_berlin = False
         rep_date = False
-        files='All'
+        files = 'All'
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -893,7 +896,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
                                  "out_folder": self.path,
                                  "impute_dates": False, "make_plot": False,
                                  "moving_average": 0, "split_berlin": False,
-                                 "no_raw": False, "rep_date": False, "files":'Plot'}
+                                 "no_raw": False, "rep_date": False, "files": 'Plot'}
 
         out_folder = self.path
         directory = os.path.join(out_folder, 'Germany/')
