@@ -122,7 +122,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
     @param rep_date True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    @param files List of Strings or 'All' or 'Plot'. Defnies files which should be written (and plotted). Default 'All'.
+    @param files List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
     """
 
     if files == 'All':
@@ -273,9 +273,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                      dd.EngEng['ageRKI']])
 
     # dict for all files
-    # key is filename
-    # value is list of [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
-    arg_dict = {
+    # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
+    dict_files = {
         'infected': [dateToUse, {AnzahlFall: sum}, None, {}, ['Confirmed']],
         'deaths': [dateToUse, {AnzahlTodesfall: sum}, None, {}, ['Deaths']],
         'all_germany': [dateToUse, {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
@@ -326,36 +325,35 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     }
 
     for file in files:
-        if file not in ['infected', 'deaths', 'all_germany', 'infected_state',
-                        'all_state', 'infected_county', 'all_county', 'all_gender',
-                        'all_state_gender', 'all_county_gender', 'all_age',
-                        'all_state_age', 'all_county_age']:
+        if file not in dict_files.keys():
             raise gd.DataError('Error: File '+file+' cannot be written.')
+        # split berlin is only relevant for county level
         if 'county' in file and split_berlin == True:
             split_berlin_local = True
         else:
+            # dont append _split_berlin to filename on germany/state level
             split_berlin_local = False
         filename = 'cases_' + \
             gd.append_filename(file, impute_dates,
                                moving_average, split_berlin_local, rep_date)
-        # sum over all columns defined in arg_dict
-        df_local = df.groupby(arg_dict[file][0]).agg(arg_dict[file][1])
+        # sum over all columns defined in dict_files
+        df_local = df.groupby(dict_files[file][0]).agg(dict_files[file][1])
 
         if file == 'deaths':
             # only consider where deaths > 0
             df_local = df_local[df_local[AnzahlTodesfall] != 0]
 
-        # cumulative sum over columns defined in arg_dict
-        if arg_dict[file][2] == None:
+        # cumulative sum over columns defined in dict_files
+        if dict_files[file][2] == None:
             df_local_cs = df_local.cumsum().reset_index(drop=False)
         else:
             df_local_cs = df_local.groupby(
-                level=[arg_dict[file][0].index(level_index) for level_index in arg_dict[file][2]]).cumsum().reset_index()
+                level=[dict_files[file][0].index(level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
 
         if impute_dates or moving_average > 0:
             df_local_cs = mdfs.impute_and_reduce_df(df_local_cs,
-                                                    group_by_cols=arg_dict[file][3],
-                                                    mod_cols=arg_dict[file][4],
+                                                    group_by_cols=dict_files[file][3],
+                                                    mod_cols=dict_files[file][4],
                                                     impute='forward', moving_average=moving_average,
                                                     min_date=start_date, max_date=end_date)
 
