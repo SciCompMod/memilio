@@ -36,6 +36,7 @@ set(TESTSOURCES
     test_contact_matrix.cpp
     test_type_safe.cpp
     test_custom_index_array.cpp
+    test_flows.cpp
     test_parameter_set.cpp
     test_matrix_shape.cpp
     test_damping_sampling.cpp
