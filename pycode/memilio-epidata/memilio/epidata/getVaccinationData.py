@@ -717,11 +717,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             age_new_to_all_ages_indices[i])+start_age_data].sum(axis=1)
     # end of output meta information purposes
 
-    vacc_column_names = [
-        dd.EngEng['vaccPartial'],
-        dd.EngEng['vaccComplete'],
-        dd.EngEng['vaccRefresh']]
-
     groupby_list = [
         dd.EngEng['date'],
         dd.EngEng['idCounty'],
@@ -740,8 +735,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         moving_average_sanit = 0
         impute_sanit = 'zeros'
 
+    # define new column names
+    column_names_dict = {
+        1: dd.EngEng['vaccPartial'],
+        2: dd.EngEng['vaccComplete'],
+        3: dd.EngEng['vaccRefresh'],
+        11: dd.EngEng['vaccNotComplete'],
+        'x': dd.EngEng['vaccRefresh']}
+
     vacc_column_names, df_data_joined = mdfs.split_column_based_on_values(
-        df_data, "Impfschutz", "Number", groupby_list, vacc_column_names,
+        df_data, "Impfschutz", "Number", groupby_list, column_names_dict,
         compute_cumsum)
 
     ######## data with age resolution as provided in original frame ########
