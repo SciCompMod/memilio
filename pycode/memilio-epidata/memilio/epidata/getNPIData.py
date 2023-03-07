@@ -593,7 +593,7 @@ def get_npi_data(fine_resolution=2,
 
         # run through all groups and set possible combinations according to
         # read combination matrix
-        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+3
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index('Variablenname')+2
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values

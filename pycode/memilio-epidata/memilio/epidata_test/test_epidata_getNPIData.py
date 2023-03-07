@@ -295,7 +295,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         # incidence independent NPIs should not have changed
         self.assertEqual(
             npis_test.M1_1.to_list(),
-            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
         self.assertEqual(
             npis_test.M1_2.to_list(),
             [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
@@ -306,9 +306,10 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         # incidence depending NPIs can first be activated on day 4 due to activation_days_threshold=3
         # incidence is constantly > 20
         # M1_2_1,M1_3_1,M1_1_2,M1_3_2 always 0
+        #M1_2_2 is 0 if M1_2 is 1
         self.assertEqual(
             npis_test.M1_2_2.tolist(),
-            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
             
         self.assertEqual(
             npis_test.M1_3_2.tolist(),
@@ -326,7 +327,7 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         #M1_1_1 should not be active when M2,3_2,3,4,5 is active
         self.assertEqual(
             npis_test.M1_1_1.to_list(),
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 if __name__ == '__main__':
