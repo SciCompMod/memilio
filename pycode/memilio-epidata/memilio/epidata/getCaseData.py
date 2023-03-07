@@ -315,7 +315,16 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     }
 
     for file in files:
-        filename = 'cases_' + gd.append_filename(file, impute_dates, moving_average, split_berlin, rep_date)
+        if file not in ['infected', 'deaths', 'all_germany', 'infected_state',
+                 'all_state', 'infected_county', 'all_county', 'all_gender',
+                 'all_state_gender', 'all_county_gender', 'all_age',
+                 'all_state_age', 'all_county_age']:
+            raise gd.DataError('Error: File '+file+' cannot be written.')
+        if 'county' in file and split_berlin == True:
+            split_berlin_local = True
+        else:
+            split_berlin_local = False
+        filename = 'cases_' + gd.append_filename(file, impute_dates, moving_average, split_berlin_local, rep_date)
         # sum over all columns defined in arg_dict
         df_local = df.groupby(arg_dict[file][0]).agg(arg_dict[file][1])
 
@@ -324,16 +333,16 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df_local = df_local[df_local[AnzahlTodesfall] != 0]
         
         # cumulative sum over columns defined in arg_dict
-        if arg_dict[file][2] == None:   
+        if arg_dict[file][2] == None:
             df_local_cs = df_local.cumsum().reset_index(drop=False)
         else:  
             df_local_cs = df_local.groupby(
                 level=[arg_dict[file][0].index(level_index) for level_index in arg_dict[file][2]]).cumsum().reset_index()
 
         if impute_dates or moving_average > 0:
-            df_local_cs = mdfs.impute_and_reduce_df(df_local_cs.reset_index(),
-            groupby_cols=arg_dict[file][2],
-            mod_cols=arg_dict[file][3],
+            df_local_cs = mdfs.impute_and_reduce_df(df_local_cs,
+            group_by_cols=arg_dict[file][3],
+            mod_cols=arg_dict[file][4],
             impute='forward', moving_average=moving_average,
             min_date=start_date, max_date=end_date)
         
