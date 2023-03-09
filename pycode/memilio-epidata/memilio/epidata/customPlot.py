@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors: Martin J. Kuehn
 #
@@ -21,15 +21,24 @@
 @file customPlot.py
 @brief Plots time series data as provided by the scripts.
 """
+import os
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+mpl.use('Agg')
 
-def plotList(x, y, legend, title='', xlabel='', ylabel='', fig_name=''):
-    """! Plots time series data.
+
+def plot_multiple_series(
+        x, y, legend, title='', xlabel='', ylabel='', linewidth=1,
+        xticks_idx='default', loc_legend='upper left', fig_size=(10, 6), plot_outside=True, fig_name='customPlot',
+        path_rel='figures/', dpi=300, outercolor='white', innercolor='white'):
+    """! Plots a variable number of time series data on the same time window
+    inside one plot.
 
     @param x x values to plot.
     @param y List of curve(s) to plot.
@@ -37,36 +46,47 @@ def plotList(x, y, legend, title='', xlabel='', ylabel='', fig_name=''):
     @param title title of the plot.
     @param xlabel labels for x values.
     @param ylabel labels for y values.
+    @param linewidth [Default: 1] Width of plotted curves.
+    @param xticks_idx [Default: 'default'] List of xticks indices to be used. 
+        If 'default' is used, then every 30th x-value is printed.
+    @param dpi Dots per inch of figure.
+    @param outercolor Outer color of figure.
+    @oaram innercolor Inner color of figure.
     @param fig_name name of the figure to save.
-    @return dataframe with imputed dates (and moving average if requested)
     """
-    if len(y) > 3:
-        fig, ax = plt.subplots(figsize=(10, 6))
-    else:
-        fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=fig_size, facecolor=outercolor)
 
     for i in range(len(y)):
-        ax.plot(x, y[i], label=legend[i])
+        ax.plot(x, y[i], linewidth=linewidth, label=legend[i])
     if title != '':
         ax.set_title(title, fontsize=18)
-    tick_range = (np.arange(int(len(x) / 30) + 1)
-                  * 30)  # only plot every 30th day
-    tick_range[-1] -= 1  # adapt for last element
+
+    ax.set_facecolor(innercolor)
+
     if isinstance(x, pd.Series):
         x = x.values
-    ax.set_xticks(x[tick_range])
-    ax.set_xticklabels(x[tick_range], rotation=90, fontsize=8)
+    if xticks_idx == 'default':
+        xticks_idx = (np.arange(int(len(x) / 30) + 1)
+                      * 30)  # only plot every 30th day
+        xticks_idx[-1] -= 1  # adapt for last element
+
+    ax.set_xticks([x[i] for i in xticks_idx])
+    ax.set_xticklabels([x[i] for i in xticks_idx],
+                       rotation=90, fontsize=10)
+
     if xlabel != '':
         ax.set_xlabel(xlabel, fontsize=12)
     if ylabel != '':
         ax.set_ylabel(ylabel, fontsize=12)
 
-    if len(y) > 3:
-        ax.legend(fontsize=12, bbox_to_anchor=(1, 1), loc="upper left")
+    if plot_outside:
+        # For multiple lines, it may be better suited to plot the legend outside
+        ax.legend(fontsize=12, bbox_to_anchor=(1, 1), loc='upper left')
     else:
-        ax.legend(fontsize=12)
+        ax.legend(fontsize=12, loc=loc_legend)
 
     fig.subplots_adjust(bottom=0.2)  # adjust to show full xlabel information
 
-    gd.check_dir('figures/')
-    plt.savefig('figures/' + fig_name + '.jpg', bbox_inches='tight')
+    gd.check_dir(path_rel)
+    plt.savefig(path_rel + fig_name + '.png', bbox_inches='tight', dpi=dpi)
+    print('Plot saved to ' + path_rel + fig_name + '.png')

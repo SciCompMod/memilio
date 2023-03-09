@@ -66,4 +66,6 @@ target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 if(MEMILIO_HAS_HDF5)
   add_executable(ode_secir_save_results ode_secir_save_results.cpp)
   target_link_libraries(ode_secir_save_results PRIVATE memilio ode_secir)
+
 endif()
+
