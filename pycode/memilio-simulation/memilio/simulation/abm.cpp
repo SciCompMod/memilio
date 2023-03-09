@@ -44,14 +44,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered_Infected", mio::abm::InfectionState::Recovered_Infected)
         .value("Dead", mio::abm::InfectionState::Dead);
 
-    pymio::iterable_enum<mio::AgeGroup>(m, "AgeGroup")
-        .value("Age0to4", mio::AgeGroup(0))
-        .value("Age5to14", mio::AgeGroup(1))
-        .value("Age15to34", mio::AgeGroup(2))
-        .value("Age35to59", mio::AgeGroup(3))
-        .value("Age60to79", mio::AgeGroup(4))
-        .value("Age80plus", mio::AgeGroup(5));
-
     pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
         .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
         .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
