@@ -1,5 +1,16 @@
 #include "ad/ad.hpp"
+
+#include "memilio/utils/compiler_diagnostics.h"
+
+/* disable warnings of odint.hpp */
+
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wdeprecated-declarations")
+
 #include "boost/numeric/odeint.hpp" // IWYU pragma: keep
+
+GCC_CLANG_DIAGNOSTIC(pop)
+
 
 using ad_type = typename ad::gt1s<double>::type;
 
