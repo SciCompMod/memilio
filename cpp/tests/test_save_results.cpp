@@ -20,19 +20,18 @@
 #include "load_test_data.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_secir/model.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
+#include "ode_secir/parameter_space.h"
+#include "ode_secir/parameters_io.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/result_io.h"
 #include "temp_file_register.h"
 #include <gtest/gtest.h>
 #include <string>
-
 #include "matchers.h"
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "ode_secir/parameter_space.h"
-#include "ode_secir/parameters_io.h"
 
 TEST(TestSaveResult, save_result)
 {
