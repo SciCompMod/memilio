@@ -33,7 +33,7 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_ini
              const Pa& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
-    , m_SECIR{TimeSeries<ScalarType>((ScalarType)InfectionState::Count)}
+    , m_SECIR{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_dt{dt_init}
     , m_N{N_init}
     , m_deaths_before{Dead_before}

@@ -30,7 +30,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 
-class ModelTest : public testing::Test
+class ModelTestIdeSecir : public testing::Test
 {
 protected:
     virtual void SetUp()
@@ -81,7 +81,7 @@ public:
 };
 
 // check if population stays constant over course of simulation
-TEST_F(ModelTest, checkPopulationConservation)
+TEST_F(ModelTestIdeSecir, checkPopulationConservation)
 {
     mio::TimeSeries<ScalarType> compartments = model->simulate(15);
 
@@ -97,7 +97,7 @@ TEST_F(ModelTest, checkPopulationConservation)
 }
 
 // compare compartments with previous run
-TEST_F(ModelTest, compareWithPreviousRun)
+TEST_F(ModelTestIdeSecir, compareWithPreviousRun)
 {
     auto compare                             = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
     mio::TimeSeries<ScalarType> compartments = model->simulate(5);
@@ -113,7 +113,7 @@ TEST_F(ModelTest, compareWithPreviousRun)
 }
 
 // compare transitions with previous run
-TEST_F(ModelTest, compareWithPreviousRunTransitions)
+TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 {
     auto compare = load_test_data_csv<ScalarType>("ide-secir-transitions-compare.csv");
     model->simulate(5);
@@ -133,8 +133,8 @@ TEST_F(ModelTest, compareWithPreviousRunTransitions)
     }
 }
 
-// check rsults of our simulation with example calculated by hand
-// for exanḿple see Overleaf document
+// check results of our simulation with an example calculated by hand
+// for example see Overleaf document
 TEST(IdeSecir, checksimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;

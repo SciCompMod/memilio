@@ -25,7 +25,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <gtest/gtest.h>
 
-class ModelTest : public testing::Test
+class ModelTestIdeSeir : public testing::Test
 {
 protected:
     virtual void SetUp()
@@ -61,7 +61,7 @@ public:
     mio::iseir::Model* model = nullptr;
 };
 
-TEST_F(ModelTest, compareWithPreviousRun)
+TEST_F(ModelTestIdeSeir, compareWithPreviousRun)
 {
 
     auto compare = load_test_data_csv<double>("ide-seir-compare.csv");

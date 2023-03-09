@@ -6,9 +6,10 @@ This model is based on Integro-differential equations. The eight compartments
 - InfectedNoSymptoms, becomes InfectedSymptoms or Recovered after some time
 - InfectedSymptoms, becomes InfectedSevere or Recovered after some time
 - InfectedSevere, becomes InfectedCritical or Recovered after some time
-- InfectedCritical, becomes Recovereed or Dead after some time
+- InfectedCritical, becomes Recovered or Dead after some time
 - Recovered
 - Dead
+
 are used to simulate the spread of the disease.
 
 
