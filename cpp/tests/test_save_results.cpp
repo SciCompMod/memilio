@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
+#include "matchers.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
@@ -170,8 +171,9 @@ TEST(TestSaveResult, save_result_with_params)
         return draw_sample(g);
     });
 
-    // TempFileRegister tmp_file_register;
-    std::string tmp_results_dir = "/tmp/"; //tmp_file_register.get_unique_path();
+    TempFileRegister tmp_file_register;
+    std::string tmp_results_dir = tmp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
 
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
@@ -199,7 +201,7 @@ TEST(TestSaveResult, save_result_with_params)
             ++run_idx;
         });
     ASSERT_TRUE(save_result_status);
-    auto results_from_file = mio::read_result(tmp_results_dir + "run0/Result.h5");
+    auto results_from_file = mio::read_result(tmp_results_dir + "/run0/Result.h5");
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
@@ -263,8 +265,9 @@ TEST(TestSaveResult, save_results)
         return draw_sample(g);
     });
 
-    // TempFileRegister tmp_file_register;
-    std::string tmp_results_dir = "/tmp/"; //tmp_file_register.get_unique_path();
+    TempFileRegister tmp_file_register;
+    std::string tmp_results_dir = tmp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
 
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
@@ -287,11 +290,9 @@ TEST(TestSaveResult, save_results)
             ++run_idx;
         });
 
-    bool save_single_runs = true;
-    auto save_results_status =
-        save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir, save_single_runs);
+    auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
     ASSERT_TRUE(save_results_status);
-    auto results_from_file = mio::read_result(tmp_results_dir + "p25/Results.h5");
+    auto results_from_file = mio::read_result(tmp_results_dir + "/p25/Results.h5");
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
