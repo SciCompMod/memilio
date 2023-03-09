@@ -47,7 +47,7 @@ public:
     * @param[in] dt_init The size of the time step used for numerical simulation.
     * @param[in] N_init The population of the considered region.
     * @param[in] Dead_before The total number of deaths at the time point - dt_init.
-    * @param[in, out] Parameterset_init used Parameters for simulation. 
+    * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
     Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead_before,
           const Pa& Parameterset_init = Pa());
@@ -160,10 +160,10 @@ private:
      *
      * @param[in] idx_InfectionState Specifies the considered InfectionState
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to InfectionState in m_transitions. 
-     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant transitiondistribution, 
+     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
      *              related to a flow from the considered InfectionState to any other State.
      *              This index is also used for related Probability.
-     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant transitiondistribution, 
+     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
      *              related to a flow from the considered InfectionState to any other State (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      */

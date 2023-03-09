@@ -85,12 +85,12 @@ struct TransitionDistributions {
 };
 
 /**
- * @brief Parameters needed for Transitionsdistribution.
+ * @brief Parameters needed for TransitionDistributions.
  * 
- * Parameters stored in a vector for initialisation of the transitionsdistributions.
- * Currently, for each transitiondistribution is only one paramter used (eg. xright).
+ * Parameters stored in a vector for initialisation of the TransitionDistributions.
+ * Currently, for each TransitionDistribution is only one paramter used (eg. xright).
  * For each possible Transition defined in InfectionTransitions, there is exactly one parameter.
- * E.g. for transition S -> E, thi is just a dummy.
+ * Note that for transition S -> E, this is just a dummy.
  */
 struct TransitionParameters {
     using Type = std::vector<ScalarType>;
@@ -106,7 +106,7 @@ struct TransitionParameters {
 };
 
 /**
- * @brief defines the probability for each possible Transition to take this flow/transition
+ * @brief Defines the probability for each possible transition to take this flow/transition.
  */
 struct TransitionProbabilities {
     /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions. 
@@ -115,6 +115,7 @@ struct TransitionProbabilities {
     static Type get_default()
     {
         std::vector<ScalarType> probs((int)InfectionTransitions::Count, 0.5);
+        // Set the following probablities to 1 as there is no other option to go anywhere else.
         probs[Eigen::Index(InfectionTransitions::SusceptibleToExposed)]        = 1;
         probs[Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
         return probs;
@@ -127,7 +128,7 @@ struct TransitionProbabilities {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
@@ -145,10 +146,9 @@ struct ContactPatterns {
 };
 
 /**
-* @brief probability of getting infected from a contact
+* @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    // TODO: Abhaengigkeit von tau (und t), entspricht rho
     using Type = ScalarType;
     static Type get_default()
     {
@@ -161,10 +161,9 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-* @brief the relative InfectedNoSymptoms infectability
+* @brief The relative InfectedNoSymptoms infectability.
 */
 struct RelativeTransmissionNoSymptoms {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
     using Type = ScalarType;
     static Type get_default()
     {
@@ -177,10 +176,9 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
+* @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_I
     using Type = ScalarType;
     static Type get_default()
     {
@@ -192,25 +190,7 @@ struct RiskOfInfectionFromSymptomatic {
     }
 };
 
-/* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-*/
-/*Martin sagt das sollen wir aktuell mal weglassen
-struct MaxRiskOfInfectionFromSymptomatic {
-    // Dies könnte man irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
-    //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
-    // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.0;
-    }
-    static std::string name()
-    {
-        return "MaxRiskOfInfectionFromSymptomatic";
-    }
-};*/
-
-// Define Parameterset for IDE SEIR model.
+// Define Parameterset for IDE SECIR model.
 using ParametersBase =
     ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;

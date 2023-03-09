@@ -37,6 +37,7 @@ protected:
     {
         using Vec = mio::TimeSeries<ScalarType>::Vector;
 
+        //Set initial conditions
         ScalarType N           = 10000;
         ScalarType Dead_before = 12;
         ScalarType dt          = 1;
@@ -52,6 +53,7 @@ protected:
             init.add_time_point(init.get_last_time() + dt, vec_init);
         }
 
+        // Initialize model
         model = new mio::isecir::Model(std::move(init), 1, N, Dead_before);
 
         // Set working parameters.
@@ -78,13 +80,7 @@ public:
     mio::isecir::Model* model = nullptr;
 };
 
-// TEST_F(ModelTest, printTransitions)
-// {
-//     std::cout << " In TEST_F: \n";
-//     model->print_transitions();
-//     std::cout << "\n" << std::endl;
-// }
-
+// check if population stays constant over course of simulation
 TEST_F(ModelTest, checkPopulationConservation)
 {
     mio::TimeSeries<ScalarType> compartments = model->simulate(15);
@@ -100,6 +96,7 @@ TEST_F(ModelTest, checkPopulationConservation)
     EXPECT_NEAR(num_persons_after, num_persons_before, 1e-10);
 }
 
+// compare compartments with previous run
 TEST_F(ModelTest, compareWithPreviousRun)
 {
     auto compare                             = load_test_data_csv<ScalarType>("ide-secir-compare.csv");
@@ -115,6 +112,7 @@ TEST_F(ModelTest, compareWithPreviousRun)
     }
 }
 
+// compare transitions with previous run
 TEST_F(ModelTest, compareWithPreviousRunTransitions)
 {
     auto compare = load_test_data_csv<ScalarType>("ide-secir-transitions-compare.csv");
@@ -135,6 +133,8 @@ TEST_F(ModelTest, compareWithPreviousRunTransitions)
     }
 }
 
+// check rsults of our simulation with example calculated by hand
+// for exanḿple see Overleaf document
 TEST(IdeSecir, checksimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;

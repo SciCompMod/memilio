@@ -72,7 +72,7 @@ void Model::update_forceofinfection(bool initialization)
 
     // corresponding index
     /* need calc_time_index timesteps in sum,
-     subtract 1 because in the last summand all Transitiondistributions evaluate to 0 (by definition of xright)*/
+     subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of xright)*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
     Eigen::Index num_time_points{};
@@ -80,13 +80,13 @@ void Model::update_forceofinfection(bool initialization)
     ScalarType deaths{};
 
     if (initialization) {
-        // determine phi(-m_dt) which is the penultimate timepoint in m_transitions
+        // determine m_forceofinfection at time -m_dt which is the penultimate timepoint in m_transitions
         num_time_points = m_transitions.get_num_time_points() - 1;
         current_time    = -m_dt;
         deaths          = m_deaths_before;
     }
     else {
-        // phi for current last time in m_transitions.
+        // determine m_forceofinfection for current last time in m_transitions.
         num_time_points = m_transitions.get_num_time_points();
         current_time    = m_transitions.get_last_time();
         deaths          = m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
@@ -126,14 +126,14 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     /* If we have TransitionDistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
      then we have that the derivative of TransitionDistribution(m_dt*i) is equal to zero for all i>= k+1,
      since we are using a backwards difference scheme to compute the derivative. Hence calc_time_index goes until 
-     std::ceil(xright/m_dt) since for std::ceil(xright/m_dt)+1 all terms are zero. 
+     std::ceil(xright/m_dt) since for std::ceil(xright/m_dt)+1 all terms are already zero. 
      This needs to be adjusted if we are changing the finite difference scheme */
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
         parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() / m_dt);
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
-        // (num_time_points - 1 - i)* m_dt is the time, the individuals already been infected
+        // (num_time_points - 1 - i)* m_dt is the time, the individuals has already been infected
         ScalarType infection_age = (num_time_points - 1 - i) * m_dt;
 
         // backward difference scheme to approximate first derivative
@@ -149,35 +149,35 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
 
 void Model::flows_current_timestep()
 {
-    // calculate sigma_S^E with force of infection from previous time step und susceptibles from current time step
+    // calculate flow from S to E with force of infection from previous time step und susceptibles from current time step
     m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] =
         m_dt * m_forceofinfection * m_SECIR.get_last_value()[Eigen::Index(InfectionState::Susceptible)];
     // calculate all other flows with compute_flow
-    // sigma_E^C
+    // flow from E to C
     compute_flow((int)InfectionTransitions::ExposedToInfectedNoSymptoms,
                  Eigen::Index(InfectionTransitions::SusceptibleToExposed));
-    // sigma_C^I
+    // flow from C to I
     compute_flow((int)InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms,
                  Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
-    // sigma_C^R
+    // flow from C to R
     compute_flow((int)InfectionTransitions::InfectedNoSymptomsToRecovered,
                  Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms));
-    // sigma_I^H
+    // flow from I to H
     compute_flow((int)InfectionTransitions::InfectedSymptomsToInfectedSevere,
                  Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
-    // sigma_I^R
+    // flow from I to R
     compute_flow((int)InfectionTransitions::InfectedSymptomsToRecovered,
                  Eigen::Index(InfectionTransitions::InfectedNoSymptomsToInfectedSymptoms));
-    // sigma_H^U
+    // flow from H to U
     compute_flow((int)InfectionTransitions::InfectedSevereToInfectedCritical,
                  Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
-    // sigma_H^R
+    // flow from to H to R
     compute_flow((int)InfectionTransitions::InfectedSevereToRecovered,
                  Eigen::Index(InfectionTransitions::InfectedSymptomsToInfectedSevere));
-    // sigma_U^D
+    // flow from U to D
     compute_flow((int)InfectionTransitions::InfectedCriticalToDead,
                  Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
-    // sigma_U^R
+    // flow from U to R
     compute_flow((int)InfectionTransitions::InfectedCriticalToRecovered,
                  Eigen::Index(InfectionTransitions::InfectedSevereToInfectedCritical));
 }
@@ -261,9 +261,9 @@ void Model::compartments_current_timestep_ECIHU()
 
 void Model::initialize()
 {
-    // compute S(0) and phi(-m_dt) as initial values for discretization scheme
-    // use phi(-m_dt) to be consistent with further calculations of S (see compute_susceptibles()),
-    // where also the value of phi for the previous timestep is used
+    // compute Susceptibles at time 0  and m_forceofinfection at time -m_dt as initial values for discretization scheme
+    // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
+    // where also the value of m_forceofinfection for the previous timestep is used
     update_forceofinfection(true);
     m_SECIR[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
         m_transitions.get_last_value()[Eigen::Index(InfectionTransitions::SusceptibleToExposed)] / m_forceofinfection;
@@ -281,7 +281,7 @@ void Model::initialize()
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::InfectedCritical)] -
         m_SECIR.get_last_value()[Eigen::Index(InfectionState::Dead)];
 
-    // compute phi(0) needed for further simulation
+    // compute m_forceofinfection at time 0 needed for further simulation
     update_forceofinfection();
 }
 
@@ -305,7 +305,7 @@ TimeSeries<ScalarType> const& Model::simulate(ScalarType t_max)
         // compute D
         compute_totaldeaths();
 
-        // compute phi(t) (only used for calculation of S and sigma_S^E in the next timestep!):
+        // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):
         update_forceofinfection();
 
         // compute remaining compartments from flows
