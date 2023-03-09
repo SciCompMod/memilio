@@ -209,7 +209,7 @@ TEST(TestPerson, interact_exposed)
 
     auto infection_parameters = mio::abm::GlobalInfectionParameters();
     infection_parameters.set<mio::abm::IncubationPeriod>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 2.});
+        {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 2.});
 
     //setup location with some chance of exposure
     auto loc       = mio::abm::Location(mio::abm::LocationType::Work, 0);
@@ -258,7 +258,7 @@ TEST(TestPerson, applyMaskIntervention)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto target = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person = mio::abm::Person(home, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
     person.get_mask().change_mask(mio::abm::MaskType::Community);
 
     target.set_npi_active(false);
@@ -290,7 +290,7 @@ TEST(TestPerson, applyMaskIntervention)
 TEST(TestPerson, setWearMask)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
 
     person.set_wear_mask(false);
     ASSERT_FALSE(person.get_wear_mask());
@@ -303,19 +303,18 @@ TEST(TestPerson, getProtectiveFactor)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto person_community =
-        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
     person_community.get_mask().change_mask(mio::abm::MaskType::Community);
     person_community.set_wear_mask(true);
     auto person_surgical =
-        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
     person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
     person_surgical.set_wear_mask(true);
-    auto person_ffp2 =
-        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+    auto person_ffp2 = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
     person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
     person_ffp2.set_wear_mask(true);
     auto person_without =
-        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(mio::AgeGroup::size), {});
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(NUM_AGE_GROUPS), {});
     person_without.set_wear_mask(false);
 
     mio::abm::GlobalInfectionParameters params;

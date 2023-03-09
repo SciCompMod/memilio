@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 TEST(TestHouseholds, test_add_household_to_world)
-{   
+{
     auto member1 = mio::abm::HouseholdMember();
     member1.set_age_weight(mio::AgeGroup(0), 1);
 

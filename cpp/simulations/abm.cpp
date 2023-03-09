@@ -21,9 +21,9 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include "abm/state.h"
+#include "abm/analyze_result.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
-#include "abm/analyze_result.h"
 #include "boost/filesystem.hpp"
 
 namespace fs = boost::filesystem;
@@ -450,7 +450,7 @@ void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, Scal
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 {
     infection_params.set<mio::abm::IncubationPeriod>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 4.});
+        {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 4.});
 
     //0-4
     infection_params
@@ -840,8 +840,8 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Advance the world to tmax
         sim.advance(tmax);
 
-        ensemble_params.push_back(std::vector<mio::abm::World>{mio::abm::World(mio::abm::InfectionParameters(
-            sim.get_world().get_global_infection_parameters(), 6))});
+        ensemble_params.push_back(std::vector<mio::abm::World>{
+            mio::abm::World(mio::abm::InfectionParameters(sim.get_world().get_global_infection_parameters(), 6))});
         ensemble_results.push_back(std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()});
 
         // Option to save the current run result to file

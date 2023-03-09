@@ -54,14 +54,13 @@ public:
     using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
     using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
     using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
-
     /**
      * @brief Create a World.
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
     World(GlobalInfectionParameters params = {})
-        : Base(Populations({AgeGroup(AgeGroup::size), InfectionState::Count}),
-               InfectionParameters(params, AgeGroup(AgeGroup::size)))
+        : Base(Populations({AgeGroup(NUM_AGE_GROUPS), InfectionState::Count}),
+               InfectionParameters(params, AgeGroup(NUM_AGE_GROUPS)))
         , m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(params)
         , m_migration_parameters()
@@ -71,7 +70,8 @@ public:
     }
 
     World(int num_agegroups, GlobalInfectionParameters params = {})
-        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
+        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}),
+               InfectionParameters(AgeGroup(num_agegroups)))
         , m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(params)
         , m_migration_parameters()
@@ -80,11 +80,11 @@ public:
         use_migration_rules(true);
     }
 
-    World(const World&, GlobalInfectionParameters params = {})
-        : Base(Populations({AgeGroup(AgeGroup::size), InfectionState::Count}),
-               InfectionParameters({params}, AgeGroup(AgeGroup::size)))
+    World(const World&)
+        : Base(Populations({AgeGroup(NUM_AGE_GROUPS), InfectionState::Count}),
+               InfectionParameters(AgeGroup(NUM_AGE_GROUPS)))
         , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(params)
+        , m_infection_parameters()
         , m_migration_parameters()
         , m_trip_list()
     {
@@ -92,7 +92,7 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     // World(const World&)            = delete;
     World& operator=(const World&) = delete;

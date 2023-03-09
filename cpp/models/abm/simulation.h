@@ -53,7 +53,7 @@ public:
      * @param[in] t The starting time of the Simulation.
      */
     Simulation(TimePoint t)
-        : Simulation(t, World())
+        : Simulation(t, World(NUM_AGE_GROUPS))
     {
     }
 

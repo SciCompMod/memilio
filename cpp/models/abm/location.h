@@ -87,7 +87,7 @@ struct Cell {
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup(AgeGroup::size), VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup(NUM_AGE_GROUPS), VaccinationState::Count}, 0.})
     {
     }
 

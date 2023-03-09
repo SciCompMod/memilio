@@ -42,8 +42,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 {
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
-    auto num_runs                    = ensemble_params.size();
-    auto num_nodes                   = ensemble_params[0].size();
+    auto num_runs  = ensemble_params.size();
+    auto num_nodes = ensemble_params[0].size();
     std::vector<double> single_element_ensemble(num_runs);
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 

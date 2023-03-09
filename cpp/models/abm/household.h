@@ -56,7 +56,7 @@ public:
      * @brief Constructs a new HouseholdMember.
      */
     HouseholdMember()
-        : m_age_weights({AgeGroup(AgeGroup::size)}, 0)
+        : m_age_weights({AgeGroup(NUM_AGE_GROUPS)}, 0)
     {
     }
 

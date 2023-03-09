@@ -83,46 +83,44 @@ TEST(TestLocation, beginStep)
 
     {
         // Test should work identically work with any age.
-        mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AgeGroup::size) - 1));
+        mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, NUM_AGE_GROUPS - 1));
         mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
             mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
         mio::abm::GlobalInfectionParameters params;
         params.set<mio::abm::CarrierToInfected>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CarrierToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
-        params.set<mio::abm::DetectInfection>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        params.set<mio::abm::DetectInfection>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::DetectInfection>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::InfectedToSevere>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::InfectedToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SevereToCritical>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SevereToCritical>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SevereToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
-        params.set<mio::abm::CriticalToDead>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        params.set<mio::abm::CriticalToDead>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CriticalToDead>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CriticalToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::RecoveredToSusceptible>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SusceptibleToExposedByCarrier>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 0.4;
         params.set<mio::abm::SusceptibleToExposedByInfected>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
         //setup location with some chance of exposure
@@ -151,46 +149,44 @@ TEST(TestLocation, beginStep)
     }
 
     {
-        mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AgeGroup::size) - 1));
+        mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, NUM_AGE_GROUPS - 1));
         mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
             mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
         mio::abm::GlobalInfectionParameters params;
         params.set<mio::abm::CarrierToInfected>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CarrierToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
-        params.set<mio::abm::DetectInfection>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        params.set<mio::abm::DetectInfection>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::DetectInfection>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::InfectedToSevere>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::InfectedToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SevereToCritical>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SevereToCritical>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SevereToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
-        params.set<mio::abm::CriticalToDead>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        params.set<mio::abm::CriticalToDead>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CriticalToDead>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CriticalToRecovered>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::RecoveredToSusceptible>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::SusceptibleToExposedByCarrier>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 0.4;
         params.set<mio::abm::SusceptibleToExposedByInfected>(
-            {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+            {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
         //setup location with some chance of exposure
@@ -268,7 +264,7 @@ TEST(TestLocation, computeRelativeTransmissionRisk)
 {
     using testing::Return;
 
-    mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AgeGroup::size) - 1));
+    mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, NUM_AGE_GROUPS - 1));
     mio::abm::VaccinationState vaccination_state =
         mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
@@ -325,45 +321,37 @@ TEST(TestLocation, interact)
     using testing::Return;
 
     // Test should work identically work with any age.
-    mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AgeGroup::size) - 1));
+    mio::AgeGroup age = mio::AgeGroup(mio::UniformIntDistribution<int>()(0, NUM_AGE_GROUPS - 1));
     mio::abm::VaccinationState vaccination_state =
         mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
     mio::abm::GlobalInfectionParameters params;
-    params.set<mio::abm::CarrierToInfected>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::CarrierToInfected>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CarrierToRecovered>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::CarrierToRecovered>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::DetectInfection>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::DetectInfection>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::DetectInfection>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::InfectedToSevere>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::InfectedToSevere>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::InfectedToRecovered>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::InfectedToRecovered>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::SevereToCritical>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::SevereToCritical>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::SevereToCritical>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::SevereToRecovered>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::SevereToRecovered>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CriticalToDead>({{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::CriticalToDead>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::CriticalToDead>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::abm::CriticalToRecovered>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+    params.set<mio::abm::CriticalToRecovered>({{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
     params.set<mio::abm::RecoveredToSusceptible>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
     params.set<mio::abm::SusceptibleToExposedByCarrier>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 0.5;
     params.set<mio::abm::SusceptibleToExposedByInfected>(
-        {{mio::AgeGroup(mio::AgeGroup::size), mio::abm::VaccinationState::Count}, 0.});
+        {{mio::AgeGroup(NUM_AGE_GROUPS), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
     //setup location with some chance of exposure
