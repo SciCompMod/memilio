@@ -25,6 +25,7 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/flow_chart.h"
 #include "memilio/utils/metaprogramming.h"
+#include <cstddef>
 #include <type_traits>
 #include <vector>
 #include <functional>
@@ -87,11 +88,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -289,7 +290,7 @@ private:
     {
         static_assert(I > 0, "Population must contain Compartments Category.");
         // see get_flow_index for more information on flat indizes
-        return get<I>(this->populations.size()) * comp_factor<I - 1>();
+        return static_cast<size_t>(get<I>(this->populations.size())) * comp_factor<I - 1>();
     }
 
     // compute only the factor used with "Comp" in this->population.get_flat_index
