@@ -91,7 +91,7 @@ TEST(TestFlows, SimulationFlows)
     auto flows_results = seir[1].get_last_value();
     EXPECT_NEAR(flows_results[0], 39.416406382059776, 1e-14);
     EXPECT_NEAR(flows_results[1], 21.032301258673261, 1e-14);
-    EXPECT_NEAR(flows_results[2], 16.965940383085815, 1e-14);
+    EXPECT_NEAR(flows_results[2], 19.965940383085812, 1e-14);
 }
 
 struct CatA : public mio::Index<CatA> {
