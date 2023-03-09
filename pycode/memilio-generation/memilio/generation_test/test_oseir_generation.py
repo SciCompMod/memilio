@@ -28,7 +28,7 @@ from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 class TestOseirGeneration(unittest.TestCase):
-
+    maxDiff = None
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     project_path = here.split('/pycode')[0]
