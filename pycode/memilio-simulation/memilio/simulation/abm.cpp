@@ -44,14 +44,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered_Infected", mio::abm::InfectionState::Recovered_Infected)
         .value("Dead", mio::abm::InfectionState::Dead);
 
-    pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
-        .value("Age0to4", mio::abm::AgeGroup::Age0to4)
-        .value("Age5to14", mio::abm::AgeGroup::Age5to14)
-        .value("Age15to34", mio::abm::AgeGroup::Age15to34)
-        .value("Age35to59", mio::abm::AgeGroup::Age35to59)
-        .value("Age60to79", mio::abm::AgeGroup::Age60to79)
-        .value("Age80plus", mio::abm::AgeGroup::Age80plus);
-
     pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
         .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
         .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
@@ -73,9 +65,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
+    pymio::bind_Index<mio::AgeGroup>(m, "AgeIndex");
     pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup, mio::abm::VaccinationState>(
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::abm::VaccinationState>(
         m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
@@ -150,7 +142,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
-        .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
+        .def(py::init<const std::vector<mio::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
                       const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
 
