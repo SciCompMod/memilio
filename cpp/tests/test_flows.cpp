@@ -135,7 +135,7 @@ TEST(TestFlows, SimulationFlows)
 TEST(TestFlows, GetInitialFlows)
 {
     TestModel m;
-    EXPECT_EQ(m.get_initial_flows().size(), Flows().size());
+    EXPECT_EQ(m.get_initial_flows().size(), 3); // 3 == Flows().size()
     EXPECT_EQ(m.get_initial_flows().norm(), 0);
 }
 
