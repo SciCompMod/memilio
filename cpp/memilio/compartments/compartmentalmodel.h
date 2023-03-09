@@ -88,11 +88,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -263,7 +263,7 @@ public:
         // Then, we add the flow position I_{flow} via flow_index = flat_index * D_{flow} + I_{flow}, where
         // D_{flow} is the number of flows.
 
-        return flatten_index_by_tags(indices, this->populations.size(), indices) * FlowChart<Flows...>().size() +
+        return flatten_index_by_tags<FlowIndex>(indices, this->populations.size()) * FlowChart<Flows...>().size() +
                FlowChart<Flows...>().template get<Flow<Comp, Source, Target>>();
     }
 
@@ -343,7 +343,7 @@ private:
         get<Comp>(I) = Index<Comp>(0);
         // perform inner recursion, i.e. calculate the rhs for all flows, given index I
         get_rhs_inner_impl<0>(flows, rhs, this->populations.get_flat_index(I),
-                              flatten_index_by_tags(I, this->populations.size(), FlowIndex()));
+                              flatten_index_by_tags<FlowIndex>(I, this->populations.size()));
         // end recursion
     }
 

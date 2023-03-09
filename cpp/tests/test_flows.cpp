@@ -113,26 +113,26 @@ struct CatC : public mio::Index<CatC> {
     }
 };
 
-// class TestModel
-//     : public mio::CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
-// {
-//     using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
+class TestModel
+    : public mio::CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
+{
+    using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
 
-// public:
-//     TestModel()
-//         : Base(Populations({I::Count, CatA(2), CatB(3), CatC(5)}, 0.), mio::oseir::Parameters{})
-//     {
-//     }
-// };
+public:
+    TestModel()
+        : Base(Populations({I::Count, CatA(2), CatB(5), CatC(7)}, 0.), mio::oseir::Parameters{})
+    {
+    }
+};
 
 TEST(TestFlows, Compartmentalmodel)
 {
-    // TestModel m;
-    // EXPECT_EQ(m.get_initial_flows().size(), 3);
-    // auto idx0 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(0), CatC(0)});
-    // EXPECT_EQ(idx0, 2);
-    // auto idx1 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(1), CatC(0)});
-    // EXPECT_EQ(idx1, 3);
-    // auto idx2 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
-    // EXPECT_EQ(idx2, 5);
+    TestModel m;
+    EXPECT_EQ(m.get_initial_flows().size(), 3);
+    auto idx0 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
+    EXPECT_EQ(idx0, 3);
+    auto idx1 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(1), CatC(0)});
+    EXPECT_EQ(idx1, 7 * 3);
+    auto idx2 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(0), CatC(0)});
+    EXPECT_EQ(idx2, 5 * 7 * 3);
 }
