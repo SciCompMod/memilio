@@ -189,13 +189,14 @@ public:
     }
 
     // Note: use get_flow_index when accessing flows
+    // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
     virtual void get_flows(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
                            Eigen::Ref<Eigen::VectorXd> /*flows*/) const {};
 
     /**
      * @brief compute the right-hand-side of the ODE dydt = f(y, t) from flow values
      *
-     * This function is generated at compile time depending on the FlowChart tparam of the model.
+     * This function is generated at compile time depending on the FlowChart and Pop tparams of the model.
      *
      * @param flows the current flow values (as calculated by get_flows) as a flat array
      * @param dydt a reference to the calculated output
@@ -236,7 +237,7 @@ public:
      */
     Eigen::VectorXd get_initial_flows() const
     {
-        return Eigen::VectorXd(FlowChart<Flows...>().size());
+        return Eigen::VectorXd::Zero(FlowChart<Flows...>().size());
     }
 
     /**
@@ -258,8 +259,9 @@ public:
         // be larger or smaller (e.g. a S->I->R model has 3 Comp's, but 2 Flows) than Comp::Count, we cannot simply use
         // this->populations.get_flat_index.
         //
-        // Instead, we omit Comp from PopIndex (getting FlowIndex), calculate an without the Comp index or Dimension,
-        // i.e. we omit I_j and D_j corresponding to Comp from the formula above (via flatten_index_by_tags).
+        // Instead, we omit Comp from PopIndex (getting FlowIndex), calculate the flat_index without the Comp index or
+        // Dimension, i.e. we omit I_j and D_j corresponding to Comp from the formula above (this is done via
+        // flatten_index_by_tags).
         // Then, we add the flow position I_{flow} via flow_index = flat_index * D_{flow} + I_{flow}, where
         // D_{flow} is the number of flows.
 

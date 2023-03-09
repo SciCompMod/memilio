@@ -33,10 +33,41 @@ using I     = mio::oseir::InfectionState;
 using Flows = mio::FlowChart<mio::Flow<I, I::Susceptible, I::Exposed>, mio::Flow<I, I::Exposed, I::Infected>,
                              mio::Flow<I, I::Infected, I::Recovered>>;
 
+struct CatA : public mio::Index<CatA> {
+    CatA(size_t i)
+        : mio::Index<CatA>(i)
+    {
+    }
+};
+struct CatB : public mio::Index<CatB> {
+    CatB(size_t i)
+        : mio::Index<CatB>(i)
+    {
+    }
+};
+struct CatC : public mio::Index<CatC> {
+    CatC(size_t i)
+        : mio::Index<CatC>(i)
+    {
+    }
+};
+
+class TestModel
+    : public mio::CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
+{
+    using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
+
+public:
+    TestModel()
+        : Base(Populations({I::Count, CatA(11), CatB(5), CatC(7)}, 0.), mio::oseir::Parameters{})
+    {
+    }
+};
+
 TEST(TestFlows, FlowChart)
 {
     EXPECT_EQ(Flows().size(), 3);
-    // Testing get function using the source members.
+    // Testing get (by index) function, verifying with source members.
     auto flow0        = mio::Flow<I, I::Susceptible, I::Exposed>().source;
     auto test_source0 = Flows().get<0>().source;
     EXPECT_EQ(flow0, test_source0);
@@ -49,6 +80,7 @@ TEST(TestFlows, FlowChart)
     auto test_source2 = Flows().get<2>().source;
     EXPECT_EQ(flow2, test_source2);
 
+    // Testing get (by Flow) function.
     using Flow0 = mio::Flow<I, I::Susceptible, I::Exposed>;
     EXPECT_EQ(Flows().get<Flow0>(), 0);
 
@@ -87,52 +119,42 @@ TEST(TestFlows, SimulationFlows)
 
     model.check_constraints();
     auto seir = simulate_flows(t0, tmax, dt, model);
-
+    // verify results (computed using flows)
+    auto results = seir[0].get_last_value();
+    EXPECT_NEAR(results[0], 9660.5835936179428, 1e-14);
+    EXPECT_NEAR(results[1], 118.38410512338653, 1e-14);
+    EXPECT_NEAR(results[2], 104.06636087558746, 1e-14);
+    EXPECT_NEAR(results[3], 116.96594038308582, 1e-14);
+    // test flow results
     auto flows_results = seir[1].get_last_value();
     EXPECT_NEAR(flows_results[0], 39.416406382059776, 1e-14);
     EXPECT_NEAR(flows_results[1], 21.032301258673261, 1e-14);
-    EXPECT_NEAR(flows_results[2], 19.965940383085812, 1e-14);
+    EXPECT_NEAR(flows_results[2], 16.965940383085815, 1e-14);
 }
 
-struct CatA : public mio::Index<CatA> {
-    CatA(size_t i)
-        : mio::Index<CatA>(i)
-    {
-    }
-};
-struct CatB : public mio::Index<CatB> {
-    CatB(size_t i)
-        : mio::Index<CatB>(i)
-    {
-    }
-};
-struct CatC : public mio::Index<CatC> {
-    CatC(size_t i)
-        : mio::Index<CatC>(i)
-    {
-    }
-};
-
-class TestModel
-    : public mio::CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>
-{
-    using Base = CompartmentalModel<I, mio::Populations<I, CatA, CatB, CatC>, mio::oseir::Parameters, Flows>;
-
-public:
-    TestModel()
-        : Base(Populations({I::Count, CatA(2), CatB(5), CatC(7)}, 0.), mio::oseir::Parameters{})
-    {
-    }
-};
-
-TEST(TestFlows, Compartmentalmodel)
+TEST(TestFlows, GetInitialFlows)
 {
     TestModel m;
-    EXPECT_EQ(m.get_initial_flows().size(), 3);
+    EXPECT_EQ(m.get_initial_flows().size(), Flows().size());
+    EXPECT_EQ(m.get_initial_flows().norm(), 0);
+}
+
+TEST(TestFlows, GetFlowIndex)
+{
+    // test get_flow_index with some prime number products
+    TestModel m;
     auto idx0 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(0), CatC(1)});
     EXPECT_EQ(idx0, 3);
+
     auto idx1 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(0), CatB(1), CatC(0)});
     EXPECT_EQ(idx1, 7 * 3);
+
     auto idx2 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(0), CatC(0)});
     EXPECT_EQ(idx2, 5 * 7 * 3);
+
+    auto idx3 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(1), CatB(1), CatC(1)});
+    EXPECT_EQ(idx3, (5 * 7 * 3) + (7 * 3) + (3));
+
+    auto idx4 = m.get_flow_index<I::Susceptible, I::Exposed>({CatA(10), CatB(4), CatC(6)});
+    EXPECT_EQ(idx4, 10 * (5 * 7 * 3) + 4 * (7 * 3) + 6 * (3));
 }
