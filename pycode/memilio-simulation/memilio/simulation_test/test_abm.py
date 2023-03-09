@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele, Khoa Nguyen
+# Authors: Daniel Abele
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -50,7 +50,7 @@ class TestAbm(unittest.TestCase):
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
 
-        testing_ages = [0]
+        testing_ages = [abm.AgeGroup(0)]
         testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
         testing_crit = [abm.TestingCriteria(
@@ -69,13 +69,13 @@ class TestAbm(unittest.TestCase):
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
         p1 = world.add_person(
-            home_id, abm.InfectionState.Carrier, 2)
+            home_id, abm.InfectionState.Carrier, abm.AgeGroup(2))
         p2 = world.add_person(
-            social_event_id, abm.InfectionState.Recovered_Infected, 5)
+            social_event_id, abm.InfectionState.Recovered_Infected, abm.AgeGroup(5))
 
         # check persons
         self.assertEqual(len(world.persons), 2)
-        self.assertEqual(p1.age, 2)
+        self.assertEqual(p1.age, abm.AgeGroup(2))
         self.assertEqual(p1.location_id, home_id)
         self.assertEqual(p2.infection_state,
                          abm.InfectionState.Recovered_Infected)
@@ -94,9 +94,9 @@ class TestAbm(unittest.TestCase):
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
         p1 = world.add_person(
-            home_id, abm.InfectionState.Infected, 0)
+            home_id, abm.InfectionState.Infected, abm.AgeGroup(0))
         p2 = world.add_person(
-            home_id, abm.InfectionState.Recovered_Carrier, 2)
+            home_id, abm.InfectionState.Recovered_Carrier, abm.AgeGroup(2))
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))
@@ -106,9 +106,9 @@ class TestAbm(unittest.TestCase):
         social_event = world.locations[social_event_id.type][social_event_id.index]
         #social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
         #world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
-        world.infection_parameters.InfectedToSevere[1,
+        world.infection_parameters.InfectedToSevere[abm.AgeGroup(0),
                                                     abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedToRecovered[1,
+        world.infection_parameters.InfectedToRecovered[abm.AgeGroup(0),
                                                        abm.VaccinationState.Unvaccinated] = 0.0
 
         # trips
