@@ -19,11 +19,11 @@
 */
 #define _USE_MATH_DEFINES
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include "secir/secir.h"
+#include "ode_secir/model.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"
 #include "memilio/compartments/simulation.h"
@@ -86,17 +86,17 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 
 TEST(TestMobility, nodeEvolve)
 {
-    using Model = mio::SecirModel;
+    using Model = mio::osecir::Model;
     Model model(1);
     auto& params = model.parameters;
 
-    auto& cm                  = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
+    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}] = 100;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
-    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = 100;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
+    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.;
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -110,26 +110,26 @@ TEST(TestMobility, nodeEvolve)
 
 TEST(TestMobility, edgeApplyMigration)
 {
-    using Model = mio::SecirModel;
+    using Model = mio::osecir::Model;
 
     //setup nodes
     Model model(1);
-    auto& params               = model.parameters;
-    auto& cm                   = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
+    auto& params = model.parameters;
+    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 10;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
-    params.get<mio::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
-    params.get<mio::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
-    params.get<mio::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
-    params.get<mio::SerialInterval>()[(mio::AgeGroup)0]                   = 1.5;
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0]                   = 2.;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
+    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]                   = 1.5;
+    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]                   = 2.;
     params.apply_constraints();
     double t = 3.125;
-    mio::SimulationNode<mio::SecirSimulation<>> node1(model, t);
-    mio::SimulationNode<mio::SecirSimulation<>> node2(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
 
     //setup edge
     mio::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));

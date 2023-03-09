@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/dynamic_npis.h"
-#include "memilio/mobility/mobility.h"
-#include "secir/secir.h"
+#include "memilio/mobility/meta_mobility_instant.h"
+#include "ode_secir/model.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>
@@ -324,7 +324,7 @@ namespace mio_test
 class MockSimulation
 {
 public:
-    MockSimulation(mio::SecirModel m, double t0, double /*dt*/)
+    MockSimulation(mio::osecir::Model m, double t0, double /*dt*/)
         : m_model(m)
         , m_result(t0, m.get_initial_values())
     {
@@ -352,7 +352,7 @@ public:
         return m_result.add_time_point(t, m_result.get_last_value());
     }
 
-    mio::SecirModel m_model;
+    mio::osecir::Model m_model;
     mio::TimeSeries<double> m_result;
 };
 
@@ -360,9 +360,9 @@ public:
 
 TEST(DynamicNPIs, secir_threshold_safe)
 {
-    mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 1.0;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100.0);
+    mio::osecir::Model model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 1.0;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100.0);
 
     mio::DynamicNPIs npis;
     npis.set_threshold(
@@ -371,21 +371,22 @@ TEST(DynamicNPIs, secir_threshold_safe)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(23'000);
-    model.parameters.get<mio::DynamicNPIsInfectedSymptoms>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
 
-    mio::SecirSimulation<mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(sim.get_model().parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(
+        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
 }
 
 TEST(DynamicNPIs, secir_threshold_exceeded)
 {
-    mio::SecirModel model(1);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::InfectedSymptoms}] = 10;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 100);
+    mio::osecir::Model model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
 
     mio::DynamicNPIs npis;
     npis.set_threshold(
@@ -394,12 +395,13 @@ TEST(DynamicNPIs, secir_threshold_exceeded)
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(50'000);
-    model.parameters.get<mio::DynamicNPIsInfectedSymptoms>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
 
-    mio::SecirSimulation<mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(sim.get_model().parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 2);
+    ASSERT_EQ(
+        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 2);
 }

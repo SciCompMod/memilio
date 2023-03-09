@@ -30,9 +30,9 @@ namespace abm
 namespace
 {
 /**
- * Picks an age from a custom index array with a weight for each age group according to a discrete distribution.
- * @param age_groups A custom index array with the weights.
- * @return The picked age group.
+ * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
+ * @param[in] age_groups A CustomIndexArray with the weights.
+ * @return The picked AgeGroup.
  */
 AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
 {
@@ -58,6 +58,9 @@ void add_household_to_world(World& world, const Household& household)
 {
     auto home    = world.add_location(LocationType::Home);
     auto members = household.get_members();
+    world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
+                                                         household.get_total_number_of_members() *
+                                                             household.get_space_per_member());
 
     for (auto& memberTouple : members) {
         int count;

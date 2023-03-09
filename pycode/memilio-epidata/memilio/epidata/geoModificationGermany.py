@@ -24,7 +24,9 @@
     and counties and geographical merging criteria.
 """
 import os
+
 import pandas as pd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
@@ -83,7 +85,7 @@ def get_stateid_to_name():
     return dd.State
 
 
-def insert_names_of_states(df, state_id_col = dd.EngEng["idState"]):
+def insert_names_of_states(df, state_id_col=dd.EngEng["idState"]):
     """! Adds a column with names of states given a dataframe with state ids
 
     @param df dataframe with state ids and missing state names
@@ -287,17 +289,17 @@ def get_governing_regions(strict=True):
     # Take first three digits, apply set() to remove double appearances and
     # sort again.
     if strict == False:
-        return sorted(set([id[0:3] for id in get_county_ids(zfill=True)]))
+        return sorted({id[0:3] for id in get_county_ids(zfill=True)})
     else:
         # make exceptions for Rhineland Palatinate and Saxony and remove
         # trailing zeros
         return sorted(
-            set(
-                [id[0: 3]
-                 if
-                 not (id[0: 2] in ['07', '14'])
-                 and (id[2] != '0') else id[0: 2]
-                 for id in get_county_ids(zfill=True)]))
+            {
+                id[0: 3]
+                if
+                not (id[0: 2] in ['07', '14'])
+                and (id[2] != '0') else id[0: 2]
+                for id in get_county_ids(zfill=True)})
 
 
 def get_official_county_table():
@@ -308,8 +310,10 @@ def get_official_county_table():
     url_counties = 'http://www.destatis.de/DE/Themen/Laender-Regionen/' \
         'Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx?__blob=publicationFile'
     with progress_indicator.Percentage(message="Downloading " + url_counties) as p:
-        file = gd.download_file(url_counties, 1024, None, p.set_progress, verify=False)
-    county_table = pd.read_excel(file, sheet_name=1, header=5, engine='openpyxl')
+        file = gd.download_file(url_counties, 1024, None,
+                                p.set_progress, verify=False)
+    county_table = pd.read_excel(
+        file, sheet_name=1, header=5, engine='openpyxl')
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far
@@ -367,7 +371,7 @@ def create_intermediateregion_level(merge_eisenach=True):
     Kropp/Schwengler (2016) https://doi.org/10.1080/00343404.2014.923093
     Kropp/Schwengler (2011) https://doi.org/10.1007/s13147-011-0076-4
     """
-    if(False):
+    if (False):
         directory_path = os.getcwd()
         county_region_assignment = gd.loadExcel(
             targetFileName='Kreis_ID_AMR', apiUrl=os.path.join(

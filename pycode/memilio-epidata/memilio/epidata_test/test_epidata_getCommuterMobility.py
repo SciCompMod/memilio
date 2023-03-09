@@ -18,16 +18,18 @@
 # limitations under the License.
 #############################################################################
 
-from pyfakefs import fake_filesystem_unittest
-from unittest.mock import patch
-import unittest
-import pandas as pd
-import os
 import collections
-from memilio.epidata import getCommuterMobility as gcm
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gD
+import os
+import unittest
+from unittest.mock import patch
+
+import pandas as pd
+from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getCommuterMobility as gcm
+from memilio.epidata import getDataIntoPandasDataFrame as gD
 from memilio.epidata import getPopulationData as gpd
 
 

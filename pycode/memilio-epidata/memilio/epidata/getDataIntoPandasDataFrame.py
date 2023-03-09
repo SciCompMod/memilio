@@ -35,15 +35,27 @@ import datetime
 import requests
 import magic
 import urllib3
-import pandas as pd
 from io import BytesIO
 from zipfile import ZipFile
+
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio import progress_indicator
 
 
-def download_file(url, chunk_size=1024, timeout=None, progress_function=None, verify=True):
+def user_choice(message, default=False):
+    while True:
+        user_input = input(message + " (y/n): ")[0].lower()
+        if user_input == "y":
+            return True
+        elif user_input == "n":
+            return False
+        else:
+            print("Please answer with y (yes) or n (no)")
+
+
+def download_file(url, chunk_size=1024, timeout=None, progress_function=None, verify=True, interactive=True):
     """! Download a file using GET over HTTP.
 
     @param url Full url of the file to download.
@@ -55,45 +67,47 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None, ve
     @param timeout Timeout in seconds for the GET request.
     @param progress_function Function called regularly, with the current
         download progress in [0,1] as a float argument.
+    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
     @return File as BytesIO
     """
     if verify == False:
         # suppress this warning since the insecure requests is intentional
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    # send GET request as stream so 
+    # send GET request as stream so the content is not downloaded at once
     try:
         req = requests.get(url, stream=True, timeout=timeout, verify=verify)
     except OSError:
-        user_input = input(
-            url +
-            "could not be opened due to an unsecure connection. Do you want to open it anyways without certification? (y/n)? \n")
-        if user_input == 'y' or user_input == 'Y':
+        if interactive and user_choice(url + " could not be opened due to an "
+                                       "unsecure connection. Do you want to "
+                                       "open it anyways?\n"):
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             req = requests.get(url, stream=True, timeout=timeout, verify=False)
-        if user_input == 'n' or user_input == 'N':
-            raise FileNotFoundError("Error: URL " + url + " could not be opened.")
-    if req.status_code != 200: #e.g. 404
+        else:
+            raise FileNotFoundError(
+                "Error: URL " + url + " could not be opened.")
+    if req.status_code != 200:  # e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
     # get file size from http header
     # this is only the number of bytes downloaded, the size of the actual file
     # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
     # by iter_content)
     file_size = int(req.headers.get('content-length'))
-    file = bytearray() # file to be downloaded
+    file = bytearray()  # file to be downloaded
     if progress_function:
         progress = 0
         # download file as bytes via iter_content
         for chunk in req.iter_content(chunk_size=chunk_size):
-            file += chunk # append chunk to file
+            file += chunk  # append chunk to file
             # note: len(chunk) may be larger (e.g. encoding)
             # or smaller (for the last chunk) than chunk_size
             progress = min(progress+chunk_size, file_size)
             progress_function(progress/file_size)
-    else: # download without tracking progress
+    else:  # download without tracking progress
         for chunk in req.iter_content(chunk_size=None):
-            file += chunk # append chunk to file
+            file += chunk  # append chunk to file
     # return the downloaded content as file like object
     return BytesIO(file)
+
 
 def extract_zip(file, **param_dict):
     """! reads a zip file and returns a list of dataframes for every file in the zip folder.
@@ -105,19 +119,20 @@ def extract_zip(file, **param_dict):
     @return list od all dataframes (one for each file).
     """
     with ZipFile(file, 'r') as zipObj:
-        names=zipObj.namelist()
-        all_dfs=[[] for i in range(len(names))]
+        names = zipObj.namelist()
+        all_dfs = [[] for i in range(len(names))]
         for i in range(len(names)):
             with zipObj.open(names[i]) as file2:
                 try:
-                    all_dfs[i]=pd.read_excel(file2.read(), **param_dict)
+                    all_dfs[i] = pd.read_excel(file2.read(), **param_dict)
                 except:
                     pass
-    if len(all_dfs)==1:
-        all_dfs=all_dfs[0]
+    if len(all_dfs) == 1:
+        all_dfs = all_dfs[0]
     return all_dfs
 
-def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_dict={}):
+
+def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_dict={}, interactive=True):
     """! Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked wether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.
@@ -126,53 +141,59 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
     @param url String. URL to download the dataset.
     @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
     @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
 
     @return pandas dataframe
     """
     param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
-    param_dict_zip={}
+    param_dict_zip = {}
 
-    filetype_dict = {'text':pd.read_csv, 'Composite Document File V2 Document':pd.read_excel, 'Excel':pd.read_excel, 'Zip':extract_zip}
-    param_dict_dict = {pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
+    filetype_dict = {'text': pd.read_csv, 'Composite Document File V2 Document': pd.read_excel,
+                     'Excel': pd.read_excel, 'Zip': extract_zip}
+    param_dict_dict = {pd.read_csv: param_dict_csv,
+                       pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
 
     if read_data:
         try:
             df = pd.read_json(filepath)
         except FileNotFoundError:
-            user_input = input("Warning: The file: " + filepath + \
-                " does not exist in the directory. Do you want to download " + \
-                "the file from " + url +" (y/n)? \n")
-            if user_input.lower() == 'y':
-                df = get_file(filepath=filepath, url=url, read_data=False, param_dict={})
-            if user_input.lower() == 'n':
+            if interactive and user_choice("Warning: The file: " + filepath +
+                                           " does not exist in the directory. Do you want to download "
+                                           "the file from " + url + " instead?\n"):
+                df = get_file(filepath=filepath, url=url,
+                              read_data=False, param_dict={})
+            else:
                 error_message = "Error: The file from " + filepath + \
-                "could not be read. Call program without -r flag to get it."
+                    " does not exist. Call program without -r flag to get it."
                 raise FileNotFoundError(error_message)
     else:
 
         try:
-            try: # to download file from url and show download progress
+            try:  # to download file from url and show download progress
                 with progress_indicator.Percentage(message="Downloading " + url) as p:
-                    file = download_file(url, 1024, None, p.set_progress)
+                    file = download_file(
+                        url, 1024, None, p.set_progress, interactive=interactive)
                     # read first 2048 bytes to find file type
-                    ftype=magic.from_buffer(file.read(2048))
+                    ftype = magic.from_buffer(file.read(2048))
                     # set pointer back to starting position
                     file.seek(0)
                     # find file type in dict and use function to read
-                    func_to_use=[val for key, val in filetype_dict.items() if key in ftype]
+                    func_to_use = [val for key,
+                                   val in filetype_dict.items() if key in ftype]
                     # use different default dict for different functions
-                    dict_to_use=param_dict_dict[func_to_use[0]]
+                    dict_to_use = param_dict_dict[func_to_use[0]]
                     # adjust dict
                     for k in dict_to_use:
                         if k not in param_dict:
                             param_dict[k] = dict_to_use[k]
                     # create dataframe
-                    df=func_to_use[0](file, **param_dict)
+                    df = func_to_use[0](file, **param_dict)
             except requests.exceptions.RequestException:
                 raise FileNotFoundError('Error: Request failed.')
         except OSError:
-            raise FileNotFoundError("Error: URL " + url + " could not be opened.")
+            raise FileNotFoundError(
+                "Error: URL " + url + " could not be opened.")
     try:
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
@@ -181,6 +202,7 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
             if df[i].empty:
                 raise DataError("Error: Dataframe is empty.")
     return df
+
 
 def cli(what):
     """! Defines command line interface
@@ -374,7 +396,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "json_timeasstring":
         if dd.EngEng['date'] in df.columns:
-            if not isinstance(df.Date.values[0], type("string")):
+            if not isinstance(df.Date.values[0], str):
                 df.Date = df.Date.dt.strftime('%Y-%m-%d')
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":

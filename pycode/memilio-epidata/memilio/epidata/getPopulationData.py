@@ -26,11 +26,13 @@
 
 import os
 import sys
+
 import numpy as np
 import pandas as pd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def get_new_counties(data):
@@ -145,6 +147,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     filename_counties = 'county_table'
     filename_zensus = 'zensus'
     filename_reg_key = 'reg_key'
+
     url_zensus = 'https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv'
     url_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
         '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
@@ -152,7 +155,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     path_reg_key = os.path.join(directory, filename_zensus + ".json")
     zensus = gd.get_file(
         path_zensus, url_zensus, read_data, param_dict={})
-    reg_key = gd.get_file( path_reg_key, url_reg_key, read_data, param_dict={
+    reg_key = gd.get_file(path_reg_key, url_reg_key, read_data, param_dict={
         "engine": None, "sheet_name": 'Tabelle_1A', "header": 12},)
     counties = geoger.get_official_county_table()
 
@@ -383,7 +386,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             file_format=file_format)
 
         # find region keys for census population data
-        key = np.zeros((len(zensus)))
+        key = np.zeros(len(zensus))
         for i in range(len(key)):
             for j in range(len(reg_key)):
                 if zensus['Name'].values[i] == reg_key['NAME'].values.astype(
@@ -455,7 +458,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                     try:
                         if data[i, 0] == int(
                                 counties[dd.EngEng['idCounty']].values[j]):
-                            ratio[i] = counties[dd.EngEng['population']].values[j]/data[i, 1]
+                            ratio[i] = counties[dd.EngEng['population']
+                                                ].values[j]/data[i, 1]
 
                     except ValueError:
                         pass

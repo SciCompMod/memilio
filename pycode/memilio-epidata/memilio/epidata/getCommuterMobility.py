@@ -26,10 +26,13 @@ import collections
 import os
 import numpy as np
 import pandas as pd
-from memilio.epidata import getPopulationData as gPd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import geoModificationGermany as geoger
+import wget
+from zipfile import ZipFile
+
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getPopulationData as gPd
 
 
 def verify_sorted(countykey_list):
@@ -134,7 +137,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     Agency of Work data.
 
     Keyword arguments:
-    @param read_data True or False. Defines if data is read from file or downloaded. 
+    @param read_data True or False. Defines if data is read from file or downloaded.
         Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
@@ -169,7 +172,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    
+
     population = gPd.get_population_data(
         out_folder=out_folder, merge_eisenach=False, read_data=read_data)
 
@@ -200,9 +203,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     n = 0
 
     for item in files:
+
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
         # This File is in a zip folder so it has to be unzipped first before it can be read.
-        param_dict={"sheet_name": 3, "engine": "pyxlsb"}
+        param_dict = {"sheet_name": 3, "engine": "pyxlsb"}
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
 
         commuter_migration_file = gd.get_file('', url, False, param_dict)

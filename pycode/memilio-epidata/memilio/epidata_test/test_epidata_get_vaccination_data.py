@@ -18,15 +18,14 @@
 # limitations under the License.
 ######################################################################
 import unittest
-from unittest.mock import patch, call
-from pyfakefs import fake_filesystem_unittest
+from unittest.mock import call, patch
 
 import pandas as pd
-import certifi
+from pyfakefs import fake_filesystem_unittest
 
+from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
@@ -60,7 +59,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         ]
         df_to_concatenate = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
-        df_vacc_data = pd.concat([df_vacc_data, df_to_concatenate], ignore_index=True)
+        df_vacc_data = pd.concat(
+            [df_vacc_data, df_to_concatenate], ignore_index=True)
 
     df_vacc_data = df_vacc_data.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
@@ -88,7 +88,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         ]
         df_to_concatenate = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
-        df_vacc_data_altern = pd.concat([df_vacc_data_altern, df_to_concatenate], ignore_index=True)
+        df_vacc_data_altern = pd.concat(
+            [df_vacc_data_altern, df_to_concatenate], ignore_index=True)
 
     df_vacc_data_altern = df_vacc_data_altern.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
@@ -99,13 +100,13 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
-    @patch('builtins.input', return_value = 'y')
+    @patch('builtins.input', return_value='y')
     def test_get_vaccination_data_alternative_ages(self, mockin, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    @patch('builtins.input', return_value = 'y')
+    @patch('builtins.input', return_value='y')
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
 

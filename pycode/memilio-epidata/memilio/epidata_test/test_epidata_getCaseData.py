@@ -17,18 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import json
+import os
 import unittest
+from datetime import date, datetime
+from unittest.mock import patch
+
+import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
-import os
-import json
-import pandas as pd
-
-from memilio.epidata import getCaseData as gcd
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch
-from datetime import date, datetime
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -47,7 +47,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     filename = os.path.join(
         here, 'test_data', 'test_epidata_getCaseData_data_read.json')
     # Load JSON file data to a python dict object.
-    with open(filename, 'r') as file_object:
+    with open(filename) as file_object:
         dict_object = json.load(file_object)
     test_string_all_federal_states_and_counties_read = json.dumps(dict_object)[:-1] +\
         (""",{"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-11",\
@@ -113,7 +113,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     filename = os.path.join(
         here, 'test_data', 'test_epidata_getCaseData_data_github.json')
     # Load JSON file data to a python dict object.
-    with open(filename, 'r') as file_object:
+    with open(filename) as file_object:
         dict_object_github = json.load(file_object)
 
     test_string_all_federal_states_and_counties_github = json.dumps(
@@ -124,7 +124,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     filename = os.path.join(
         here, 'test_data', 'test_epidata_getCaseData_data_arcgis.json')
     # Load JSON file data to a python dict object.
-    with open(filename, 'r') as file_object:
+    with open(filename) as file_object:
         dict_object_arcgis = json.load(file_object)
 
     test_string_all_federal_states_and_counties_arcgis = json.dumps(
@@ -871,8 +871,8 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         file_format = 'json_timeasstring'
         out_folder = self.path
         no_raw = False
-        start_date=date(2020, 12, 24)
-        end_date=date(2021,5,17)
+        start_date = date(2020, 12, 24)
+        end_date = date(2021, 5, 17)
         impute_dates = False
         moving_average = 0
         make_plot = False
@@ -915,10 +915,15 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         df_germany = df_germany[df_germany[dd.EngEng['date']] >= lowerdate]
 
         # dataframes should be equal
-        self.assertEqual(len(df_germany_start_end_date),len(df_germany),"Dataframes don't have the same length.")
-        self.assertEqual(list(df_germany_start_end_date['Confirmed']),list(df_germany['Confirmed']),"Dataframes don't have the same confirmed cases.")
-        self.assertEqual(list(df_germany_start_end_date['Recovered']),list(df_germany['Recovered']),"Dataframes don't have the same recovered cases.")
-        self.assertEqual(list(df_germany_start_end_date['Deaths']),list(df_germany['Deaths']),"Dataframes don't have the same death cases.")
+        self.assertEqual(len(df_germany_start_end_date), len(
+            df_germany), "Dataframes don't have the same length.")
+        self.assertEqual(list(df_germany_start_end_date['Confirmed']), list(
+            df_germany['Confirmed']), "Dataframes don't have the same confirmed cases.")
+        self.assertEqual(list(df_germany_start_end_date['Recovered']), list(
+            df_germany['Recovered']), "Dataframes don't have the same recovered cases.")
+        self.assertEqual(list(df_germany_start_end_date['Deaths']), list(
+            df_germany['Deaths']), "Dataframes don't have the same death cases.")
+
 
 if __name__ == '__main__':
     unittest.main()

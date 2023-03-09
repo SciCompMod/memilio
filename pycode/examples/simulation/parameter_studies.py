@@ -18,16 +18,18 @@
 # limitations under the License.
 #############################################################################
 
+import argparse
+
 import numpy as np
+
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-import argparse
 
 
 def parameter_study():
     # setup basic parameters
     num_groups = 6
-    model = secir.SecirModel(num_groups)
+    model = secir.Model(num_groups)
 
     for i in range(num_groups):
         group = secir.AgeGroup(i)
@@ -88,7 +90,7 @@ def parameter_study():
 
     model.apply_constraints()
 
-    graph = secir.SecirModelGraph()
+    graph = secir.ModelGraph()
     graph.add_node(0, model)
     graph.add_node(1, model)
     graph.add_edge(0, 1, 0.01 * np.ones(8*num_groups))

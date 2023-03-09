@@ -23,14 +23,15 @@ function to get cases (data from RKI) and DIVI data plots
 WARNING: This file is currently not tested and maintained.
 """
 
-import pandas as pd
-import os
-import matplotlib.pyplot as plt
 import datetime
+import os
 
-import memilio.epidata.getDIVIData as getDIVIData
-import memilio.epidata.getCaseData as getCaseData
+import matplotlib.pyplot as plt
+import pandas as pd
+
 import memilio.epidata.defaultDict as dd
+import memilio.epidata.getCaseData as getCaseData
+import memilio.epidata.getDIVIData as getDIVIData
 
 yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
 
@@ -194,7 +195,8 @@ def plot_cases_age(
                 df.loc[mask & (df["Age_RKI"] == value)]['Date'],
                 df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
         plt.legend(ages)
-        plt.title('7-days moving average of age-resolved cumulative confirmed infections')
+        plt.title(
+            '7-days moving average of age-resolved cumulative confirmed infections')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -267,10 +269,12 @@ def plot_cases_county(
             data_folder, "cases_all_county_ma7.json"))
         mask = (df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
-        fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_") + '_ma7'
+        fig_name = 'cases_confirmed_infections_county_' + \
+            county.replace(" ", "_") + '_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Confirmed"])
-        plt.title('7-days moving average of cumulative confirmed infections in ' + county)
+        plt.title(
+            f'7-days moving average of cumulative confirmed infections in ' + county)
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')

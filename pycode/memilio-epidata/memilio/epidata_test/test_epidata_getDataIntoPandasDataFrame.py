@@ -17,25 +17,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
 import json
 import sys
-from io import StringIO
-from unittest.mock import patch, PropertyMock
 from datetime import date, datetime
+from io import StringIO
+import unittest
+from unittest.mock import patch, PropertyMock
+
 import pandas as pd
+from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-
-from memilio.epidata import getVaccinationData
-from memilio.epidata import getPopulationData
-from memilio.epidata import getCaseData
-from memilio.epidata import getDIVIData
-from memilio.epidata import getCaseDatawithEstimations
-from memilio.epidata import getJHData
+from memilio.epidata import getCaseData, getCaseDatawithEstimations
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import (getDIVIData, getJHData, getPopulationData,
+                             getVaccinationData)
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -202,13 +199,13 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
+            self.assertRegex(mock_stderr.getvalue(), r"invalid choice")
 
         test_args = ["prog", '--update-data', ]
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -216,7 +213,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -224,7 +221,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("cases")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
@@ -423,7 +420,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), [file])
 
         file_with_path = os.path.join(self.path, file)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
 
@@ -443,7 +440,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path).sort(), [file, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
@@ -487,7 +484,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "file_format": dd.defaultDict['file_format'],
             "out_folder": os.path.join(dd.defaultDict['out_folder']),
             'no_raw': dd.defaultDict["no_raw"]}
-        
+
         arg_dict_data_download = {
             "start_date": dd.defaultDict['start_date'],
             "end_date": dd.defaultDict['end_date'],
@@ -506,11 +503,10 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_vaccination = {
             **arg_dict_all, **arg_dict_data_download,
             "sanitize_data": dd.defaultDict['sanitize_data']}
-        
+
         arg_dict_cases_est = {**arg_dict_cases}
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
-
 
         getVaccinationData.main()
         mock_vaccination.assert_called()
@@ -536,13 +532,12 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_jh.assert_called()
         mock_jh.assert_called_with(**arg_dict_jh)
 
-
     def test_get_file_read(self):
         # first test with read_data = True. get_file should return the json file as dataframe
         filepath = os.path.join(self.path, 'test_file.json')
-        url=''
-        read_data=True
-        param_dict={}
+        url = ''
+        read_data = True
+        param_dict = {}
 
         # write file
         gd.check_dir(self.path)
@@ -551,17 +546,18 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         df = gd.get_file(filepath, url, read_data, param_dict)
 
         # check if non-empty dataframe is returned (Error is raised if dataframe is empty)
-        self.assertEqual(str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
+        self.assertEqual(
+            str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
 
     @patch('pandas.read_json')
     def test_get_file_empty_df(self, mock_json):
 
         filepath = os.path.join(self.path, 'test_file.json')
-        url=''
-        read_data=True
-        param_dict={}
+        url = ''
+        read_data = True
+        param_dict = {}
 
-        #return empty dataframe
+        # return empty dataframe
         mock_json.return_value = pd.DataFrame()
 
         # get_file should raise an error if returned dataframe is empty
@@ -570,16 +566,16 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         error_message = "Error: Dataframe is empty."
         self.assertEqual(str(error.exception), error_message)
-    
+
     @patch('requests.get')
     @patch('builtins.input')
     @patch('pandas.read_json')
     def test_get_file_user_input(self, mock_json, mock_in, mock_request):
-        
+
         filepath = os.path.join(self.path, 'test_file.json')
-        url='test_url.com'
-        read_data=True
-        param_dict={}
+        url = 'test_url.com'
+        read_data = True
+        param_dict = {}
 
         # test with user input 'N'; get_file should raise filenotfounderror
         mock_json.side_effect = FileNotFoundError
@@ -589,7 +585,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.get_file(filepath, url, read_data, param_dict)
 
         error_message = "Error: The file from " + filepath + \
-                "could not be read. Call program without -r flag to get it."
+            " does not exist. Call program without -r flag to get it."
         self.assertEqual(str(error.exception), error_message)
 
         # test with user input 'y'; get file should try to download from url
@@ -605,6 +601,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         # check call count
         self.assertEqual(mock_in.call_count, 2)
+
 
 if __name__ == '__main__':
     unittest.main()

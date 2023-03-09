@@ -17,14 +17,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import datetime, timedelta
-import time
 import os
-import pandas as pd
+import time
+from datetime import datetime, timedelta
+
 import numpy as np
-from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata  import getDataIntoPandasDataFrame as gd
+import pandas as pd
+
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
@@ -80,7 +82,8 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
     # transform data from original format to desired format
     if not read_data:
         # get county ids
-        unique_geo_entities = geoger.get_county_ids(merge_berlin, merge_eisenach, zfill=False)
+        unique_geo_entities = geoger.get_county_ids(
+            merge_berlin, merge_eisenach, zfill=False)
 
         start_weather_cols = list(
             df_weather_old.columns).index(
@@ -104,10 +107,10 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
         # store string dates 'dYYYYMMDD' in list before parsing
         str_dates = sorted(
-            set(
-                [str_col[-6:] + '15'
-                 for str_col in df_weather_old.iloc
-                 [:, start_weather_cols:].columns]))
+            {
+                str_col[-6:] + '15'
+                for str_col in df_weather_old.iloc
+                [:, start_weather_cols:].columns})
         # convert string dates into other format
         dates_new = [datetime.strptime(old_date, "%Y%m%d")
                      for old_date in str_dates]
@@ -152,14 +155,14 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             df_local_new[col_new] = np.transpose(weather_vals)
 
             df_local_new = mdfs.impute_and_reduce_df(
-                                                                      df_local_new,
-                                                                      {},
-                                                                      col_new,
-                                                                      impute='forward',
-                                                                      moving_average=moving_average,
-                                                                      min_date=min_date,
-                                                                      max_date=max_date,
-                                                                      start_w_firstval=True)
+                df_local_new,
+                {},
+                col_new,
+                impute='forward',
+                moving_average=moving_average,
+                min_date=min_date,
+                max_date=max_date,
+                start_w_firstval=True)
 
             df_weather = pd.concat([df_weather, df_local_new.copy()])
 
@@ -178,7 +181,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             "Time needed: " + str(time.perf_counter()-start_time) + " sec")
 
         #### start validation ####
-        
+
         #### end validation ####
 
         if moving_average > 0:
@@ -197,4 +200,4 @@ def main():
 
 if __name__ == "__main__":
 
-   main()
+    main()

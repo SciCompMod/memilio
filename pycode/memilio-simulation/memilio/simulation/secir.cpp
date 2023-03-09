@@ -26,10 +26,10 @@
 #include "utils/parameter_set.h"
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
-#include "mobility/mobility.h"
-#include "secir/secir.h"
-#include "secir/analyze_result.h"
-#include "secir/parameter_space.h"
+#include "mobility/meta_mobility_instant.h"
+#include "ode_secir/model.h"
+#include "ode_secir/analyze_result.h"
+#include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "Eigen/Core"
 #include "pybind11/stl_bind.h"
@@ -74,10 +74,10 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
         .def(
             "run",
@@ -117,7 +117,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         });
 }
 
-using Simulation     = mio::SecirSimulation<>;
+using Simulation     = mio::osecir::Simulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
 } // namespace
@@ -129,7 +129,7 @@ namespace pymio
 
 //specialization of pretty_name for secir types
 template <>
-std::string pretty_name<mio::InfectionState>()
+std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
@@ -159,45 +159,47 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def("ensemble_mean", &mio::ensemble_mean);
     m.def("ensemble_percentile", &mio::ensemble_percentile);
 
-    pymio::iterable_enum<mio::InfectionState>(m, "InfectionState")
-        .value("Susceptible", mio::InfectionState::Susceptible)
-        .value("Exposed", mio::InfectionState::Exposed)
-        .value("InfectedNoSymptoms", mio::InfectionState::InfectedNoSymptoms)
-        .value("InfectedSymptoms", mio::InfectionState::InfectedSymptoms)
-        .value("InfectedSevere", mio::InfectionState::InfectedSevere)
-        .value("InfectedCritical", mio::InfectionState::InfectedCritical)
-        .value("Recovered", mio::InfectionState::Recovered)
-        .value("Dead", mio::InfectionState::Dead);
+    pymio::iterable_enum<mio::osecir::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::osecir::InfectionState::Susceptible)
+        .value("Exposed", mio::osecir::InfectionState::Exposed)
+        .value("InfectedNoSymptoms", mio::osecir::InfectionState::InfectedNoSymptoms)
+        .value("InfectedSymptoms", mio::osecir::InfectionState::InfectedSymptoms)
+        .value("InfectedSevere", mio::osecir::InfectionState::InfectedSevere)
+        .value("InfectedCritical", mio::osecir::InfectionState::InfectedCritical)
+        .value("Recovered", mio::osecir::InfectionState::Recovered)
+        .value("Dead", mio::osecir::InfectionState::Dead);
 
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
-    pymio::bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
+    pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
-    py::class_<mio::SecirParams, mio::SecirParamsBase>(m, "SecirParams")
+    py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::SecirParams::check_constraints)
-        .def("apply_constraints", &mio::SecirParams::apply_constraints);
+        .def("check_constraints", &mio::osecir::Parameters::check_constraints)
+        .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
 
-    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
-    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::SecirModel::Populations>{});
+    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
+    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
     py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
-    pymio::bind_CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
-    py::class_<mio::SecirModel, mio::CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>>(
-        m, "SecirModel")
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
+                                                                                                           "ModelBase");
+    py::class_<mio::osecir::Model,
+               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(m,
+                                                                                                                "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
-    pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
+    pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
 
     m.def(
         "simulate",
-        [](double t0, double tmax, double dt, const mio::SecirModel& model) {
+        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
             return mio::simulate(t0, tmax, dt, model);
         },
-        "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-    pymio::bind_ModelNode<mio::SecirModel>(m, "SecirModelNode");
-    pymio::bind_SimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
-    pymio::bind_ModelGraph<mio::SecirModel>(m, "SecirModelGraph");
+    pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
+    pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
+    pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
@@ -205,15 +207,15 @@ PYBIND11_MODULE(_simulation_secir, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<mio::SecirSimulation<>>(m, "ParameterStudy");
+    bind_ParameterStudy<mio::osecir::Simulation<>>(m, "ParameterStudy");
 
-    m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
-          py::arg("tmax"), py::arg("dev_rel"));
+    m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal, py::arg("model"),
+          py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));
 
     m.def(
         "draw_sample",
-        [](mio::SecirModel& model) {
-            return mio::draw_sample(model);
+        [](mio::osecir::Model& model) {
+            return mio::osecir::draw_sample(model);
         },
         py::arg("model"));
 

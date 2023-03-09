@@ -17,18 +17,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import datetime
-import os
-import requests
 import io
+import os
+from datetime import datetime
+
 import pandas as pd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
-from memilio.epidata import modifyDataframeSeries as mdfs
+import requests
+
 from memilio.epidata import customPlot
+from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 # Downloads testing data from RKI
+
 
 def download_testing_data():
     """! Downloads the Sars-CoV-2 test data sets from RKI on country 
@@ -65,12 +68,14 @@ def download_testing_data():
         df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
         sheet_names = df.sheet_names
         df_test[1] = pd.read_excel(df, sheet_name=sheet_names[3], header=[4],
-            dtype={'Anteil positiv': float})
+                                   dtype={'Anteil positiv': float})
 
     return df_test
 
 # transform calender weeks of data frames to dates using Thursday
 # as the representation of each week
+
+
 def transform_weeks_to_dates(df_test):
     """! Transforms the calender weeks of the two data frames obtained from 
         RKI sources to dates in the middle of the corresponding week
@@ -105,6 +110,8 @@ def transform_weeks_to_dates(df_test):
 # gets rki testing monitoring data resolved by federal states (which only
 # is a subset of the total conducted tests)
 # extrapolates the values for counties according to their population
+
+
 def get_testing_data(read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
@@ -136,7 +143,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         - germany_counties_from_states_testpos: Positive rates of testing 
             for all counties of Germany, only taken from the
             values of the federal states. No extrapolation applied.
-                
+
     - Missing dates are imputed for all data frames ('impute_dates' is 
         not optional but always executed). 
     - A central moving average of N days is optional.
@@ -175,18 +182,18 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             df_test[0] = pd.read_json(county_file_in)
         # pandas>1.5 raise FileNotFoundError instead of ValueError
         except (ValueError, FileNotFoundError):
-            raise FileNotFoundError("Error: The file: " + county_file_in + \
-                                  " does not exist. Call program without" \
-                                  " -r flag to get it.")
-                                  
+            raise FileNotFoundError("Error: The file: " + county_file_in +
+                                    " does not exist. Call program without"
+                                    " -r flag to get it.")
+
         state_file_in = os.path.join(directory, filename_state + ".json")
         try:
             df_test[1] = pd.read_json(state_file_in)
         # pandas>1.5 raise FileNotFoundError instead of ValueError
         except (ValueError, FileNotFoundError):
-            raise FileNotFoundError("Error: The file: " + state_file_in + \
-                                  " does not exist. Call program without" \
-                                  " -r flag to get it.")
+            raise FileNotFoundError("Error: The file: " + state_file_in +
+                                    " does not exist. Call program without"
+                                    " -r flag to get it.")
     else:
         df_test = download_testing_data()
 
@@ -206,8 +213,10 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
 
-    df_test[0][dd.EngEng['date']] = pd.to_datetime(df_test[0][dd.EngEng['date']])
-    df_test[1][dd.EngEng['date']] = pd.to_datetime(df_test[1][dd.EngEng['date']])
+    df_test[0][dd.EngEng['date']] = pd.to_datetime(
+        df_test[0][dd.EngEng['date']])
+    df_test[1][dd.EngEng['date']] = pd.to_datetime(
+        df_test[1][dd.EngEng['date']])
 
     # drop columns
     df_test[0] = df_test[0].drop(
@@ -238,7 +247,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         [dd.EngEng['positiveRate']],
         impute='forward', moving_average=moving_average,
         min_date=start_date, max_date=end_date)
-    
+
     # store positive rates for the whole country
     filename = 'germany_testpos'
     filename = gd.append_filename(filename, impute_dates, moving_average)
@@ -247,12 +256,12 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # plot country-wide positive rates
     if make_plot:
         # make plot
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
             [df_test[0][dd.EngEng['positiveRate']]],
             ["Germany"],
-            'Positive rate for Sars-CoV-2 testing', 'Date', 'Positive rate',
-            "Germany_Testing_positive_rate")
+            title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
+            fig_name="Germany_Testing_positive_rate")
 
     # set last values for missing dates via forward imputation
     df_test[1] = mdfs.impute_and_reduce_df(
@@ -269,14 +278,14 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # plot positive rates of federal states
     if make_plot:
         # make plot
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
             [df_test[1].loc
              [df_test[1][dd.EngEng['idState']] == stateID,
               [dd.EngEng['positiveRate']]] for stateID in geoger.get_state_ids()],
             [stateName for stateName in geoger.get_state_names()],
-            'Positive rate for Sars-CoV-2 testing', 'Date', 'Positive rate',
-            "FederalStates_Testing_positive_rate")
+            title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
+            fig_name='FederalStates_Testing_positive_rate')
 
     # store positive rates of federal states on county level
     # get county ids
@@ -284,7 +293,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
     df_test_counties = pd.DataFrame()
     states_str = dict(zip((geoger.get_state_ids(zfill=True)), range(1,
-                                                      1+len(geoger.get_state_ids()))))
+                                                                    1+len(geoger.get_state_ids()))))
     for county in unique_geo_entities:
         county_str = str(county).zfill(5)
         state_index = states_str[county_str[0:2]]
@@ -302,12 +311,14 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_test_counties, directory, filename, file_format)
 
+
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("testing")
     get_testing_data(**arg_dict)
 
+
 if __name__ == "__main__":
 
-   main()
+    main()
