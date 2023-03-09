@@ -62,7 +62,7 @@ PYBIND11_MODULE(_simulation_test_oseir, m)
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     
     pymio::bind_CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters>(m, "ModelBase");
-    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters, mio::FlowChart<mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Susceptible, mio::oseir::InfectionState::Exposed>, mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Exposed, mio::oseir::InfectionState::Infected>, mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Infected, mio::oseir::InfectionState::Recovered>>>(m, "Model")
+    py::class_<mio::oseir::Model, mio::CompartmentalModel<mio::oseir::InfectionState, mio::Populations<mio::oseir::InfectionState>, mio::oseir::Parameters, mio::FlowChart<mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Susceptible, mio::oseir::InfectionState::Exposed>, mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Exposed, mio::oseir::InfectionState::Infected>, mio::Flow<mio::oseir::InfectionState, mio::oseir::InfectionState::Infected, mio::oseir::InfectionState::Recovered>>>>(m, "Model")
         .def(py::init<>());
 
 
