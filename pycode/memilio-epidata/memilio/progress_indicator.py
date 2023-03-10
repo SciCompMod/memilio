@@ -20,8 +20,9 @@
 import sys
 import time
 import threading
-from os import get_terminal_size, name as os_name
+from shutil import get_terminal_size
 from warnings import warn
+from os import name as os_name
 
 class ProgressIndicator:
     """! Print an animation to show that something is happening.
