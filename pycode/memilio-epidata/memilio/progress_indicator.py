@@ -160,7 +160,7 @@ class ProgressIndicator:
             self._enabled = True
             # start new threat to render the animator in the background
             self._thread = threading.Thread(target=self._render)
-            self._thread.setDaemon(True) # stops thread on main thread exit
+            self._thread.daemon = True # stops thread on main thread exit
             self._thread.start()
 
     def stop(self):
