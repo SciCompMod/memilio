@@ -113,6 +113,8 @@ public:
 
     /**
     * Get/Set he the size of blocks of the generated sequence.
+    * This affects the number of samples skipped by forward_to_block().
+    * Skipping samples is an O(n) operation, where n is the number of skipped samples, so choose the block size with care.
     * @{
     */
     void set_block_size(size_t block_size)
@@ -129,7 +131,7 @@ public:
     * Forward to block index i.
     * Skips numbers in the generated sequence up to the beginning of the block.
     * The next number generated will be element block_size * i of the random sequence.
-    * Operation is O(1) for all tested compilers, but there is no guarantee, may be O(n).
+    * This operation is O(n), where n is the number of skipped samples, so choose the block size with care.
     * @param i block index. May not be a block that is already passed or started.
     */
     void forward_to_block(size_t i)
@@ -145,7 +147,7 @@ public:
 private:
     std::vector<unsigned int> m_seeds;
     std::mt19937_64 m_rng;
-    size_t m_block_size = 1'000'000'000;
+    size_t m_block_size = 1'000'000;
     size_t m_num_generated = 0;
 };
 
