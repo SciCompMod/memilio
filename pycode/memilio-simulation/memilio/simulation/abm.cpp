@@ -1,5 +1,6 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*        & Helmholtz Centre for Infection Research (HZI)
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
@@ -43,8 +44,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Recovered_Carrier", mio::abm::InfectionState::Recovered_Carrier)
         .value("Recovered_Infected", mio::abm::InfectionState::Recovered_Infected)
         .value("Dead", mio::abm::InfectionState::Dead);
-
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
     pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
         .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
