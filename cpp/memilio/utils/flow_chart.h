@@ -32,27 +32,16 @@ namespace mio
 namespace details
 {
 
-// helper struct to remove Omittand from the type list of a tuple
-template <class Omittand, class Tuple>
-struct FilteredTuple {
+// empty struct to pass parameter packs
+template <class... Ts>
+struct typelist {
 };
-template <class Omittand>
-struct FilteredTuple<Omittand, std::tuple<Omittand>> {
-    // 1st specialization: omitts Omittand, used by the 3rd generalization
-    using Type = std::tuple<>;
-};
-template <class Omittand, class Tag>
-struct FilteredTuple<Omittand, std::tuple<Tag>> {
-    // 2nd specialization: accept Tag, confirmed to not be of type Omittand
-    // (the 1st specialization is preferred, since it uses an explicit Type)
-    using Type = std::tuple<Tag>;
-};
-template <class Omittand, class Tag, class... Tags>
-struct FilteredTuple<Omittand, std::tuple<Tag, Tags...>> {
-    // 3rd/main specialization: recursively uses tuple_cat to concatonate Tag(s) != Omittand
-    using Type = decltype(std::tuple_cat(std::declval<typename FilteredTuple<Omittand, std::tuple<Tag>>::Type>(),
-                                         std::declval<typename FilteredTuple<Omittand, std::tuple<Tags...>>::Type>()));
-};
+
+// function declaration used to remove Omittand from the type list of a tuple
+template <class Omittand, class... Tags>
+decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<Omittand, Tags>::value, std::tuple<>,
+                                                               std::tuple<Tags>>::type>()...))
+    filter_tuple(std::tuple<Tags...>);
 
 // function declaration used to replace type T by std::tuple
 template <template <class...> class T, class... Args>
@@ -62,67 +51,16 @@ std::tuple<Args...> as_tuple(T<Args...>);
 template <template <class...> class T, class... Args>
 T<Args...> as_index(std::tuple<Args...>);
 
-// function declaration used to extract a Tag from type T
-template <class Tag, template <class...> class T>
-Tag get_tag(T<Tag>);
+// remove all occurances of Omittand from the types in a std::tuple<types...>
+template <class Omittand, class Tuple>
+using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()));
 
-template <size_t I, class TagIndex, class Index, class Dim>
-std::enable_if_t<(I == (TagIndex::size - 1) && TagIndex::size > 0), std::pair<size_t, size_t>>
-flatten_index_by_tags(Index const& indices, Dim const& dimensions)
-{
-    using Tag = decltype(get_tag(mio::get<I>(std::declval<TagIndex>())));
-    assert(get<Tag>(indices) < get<Tag>(dimensions));
-    return {(size_t)mio::get<Tag>(indices), (size_t)mio::get<Tag>(dimensions)};
-}
-
-template <size_t I, class TagIndex, class Index, class Dim>
-std::enable_if_t<(I<(TagIndex::size - 1) && TagIndex::size> 0), std::pair<size_t, size_t>>
-flatten_index_by_tags(Index const& indices, Dim const& dimensions)
-{
-    using Tag = decltype(get_tag(mio::get<I>(std::declval<TagIndex>())));
-    assert(mio::get<Tag>(indices) < mio::get<Tag>(dimensions));
-
-    size_t val, prod;
-    std::tie(val, prod) = flatten_index_by_tags<I + 1, TagIndex, Index, Dim>(indices, dimensions);
-
-    return {val + (size_t)mio::get<Tag>(indices) * prod, prod * (size_t)mio::get<Tag>(dimensions)};
-}
-
-template <size_t I, class TagIndex, class Index, class Dim>
-constexpr std::enable_if_t<(TagIndex::size == 0), std::pair<size_t, size_t>>
-flatten_index_by_tags(Index const& /*indices*/, Dim const& /*dimensions*/)
-{
-    return {0, 0};
-}
+// remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
+template <class Omittand, template <class...> class IndexTemplate, class Index>
+using filtered_index_t = decltype(as_index<IndexTemplate>(
+    std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } // namespace details
-
-// remove Omittand from the types in a std::tuple<types...>
-template <class Omittand, class Tuple>
-using filtered_tuple_t = typename details::FilteredTuple<Omittand, Tuple>::Type;
-
-// remove Omittand from the types in an Index = IndexTemplate<types...>
-template <class Omittand, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(details::as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<Omittand, decltype(details::as_tuple(std::declval<Index>()))>>()));
-
-/**
- * @brief calculates the flat index from a set of indices into a multidimensional array 
- *
- * @see flatten_index for more details
- *
- * @param indices a multiindex into a multidimensional array
- * @param dimensions a multiindex of sizes of each dimension of the array
- * @tparam TagIndex Index type, determining which Tags are used in which order for the flat index
- * @tparam Index Index type, containing (at least) all Tags in TagIndex
- * @tparam Dim Index type, containing (at least) all Tags in Index
- * @return the corresponding flat index
- */
-template <class TagIndex, class Index, class Dim>
-size_t flatten_index_by_tags(const Index& indices, const Dim& dimensions)
-{
-    return details::flatten_index_by_tags<0, TagIndex, Index, Dim>(indices, dimensions).first;
-}
 
 /// @brief A Flow defines a transition between two Compartments in a CompartmentalModel. Use with FlowChart
 template <class Status, Status Source, Status Target>

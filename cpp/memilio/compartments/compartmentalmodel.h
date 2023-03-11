@@ -170,7 +170,7 @@ template <class Comp, class Pop, class Params, class... Flows>
 struct CompartmentalModel<Comp, Pop, Params, FlowChart<Flows...>> : public CompartmentalModel<Comp, Pop, Params> {
     using PopIndex = typename Pop::Index;
     // PopIndex without Comp, used as argument type for get_flow_index
-    using FlowIndex = filtered_index_t<Comp, Index, PopIndex>;
+    using FlowIndex = details::filtered_index_t<Comp, Index, PopIndex>;
     // Enforce that Comp is a unique Category of PopIndex, since we use source/target of Flows to provide Comp indices
     static_assert(FlowIndex::size == Pop::Index::size - 1,
                   "Compartments must be used exactly once as population index.");
@@ -184,6 +184,7 @@ public:
     CompartmentalModel<Comp, Pop, Params, FlowChart<Flows...>>(Args... args)
         : CompartmentalModel<Comp, Pop, Params>(args...)
         , m_comp_factor(comp_factor())
+        , m_flow_index_dimensions(reduce_index(this->populations.size()))
         , m_flow_values((this->populations.numel() / static_cast<size_t>(Comp::Count)) * FlowChart<Flows...>().size())
     {
     }
@@ -204,11 +205,15 @@ public:
     void get_derivatives(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
-        // create a new population index, by copying its size
-        // Note: we would like to have Index{0, ..., 0}, but since there is no default ctor, this is not easy to get.
-        //       -> all entries of index must be overwritten!
-        auto index = this->populations.size();
-        get_rhs_impl(flows, dydt, index);
+        for (size_t i = 0; i < this->populations.numel() / static_cast<size_t>(Comp::Count); i++) {
+            // see get_flow_index for more info on these index calculations.
+            // the Comp-index is added in get_rhs_impl; the flat Pop::Index is
+            //   flat_pop_index = i % m_comp_factor + (i / m_comp_factor) * m_comp_factor * Comp::Count;
+            // mind the integer division.
+            get_rhs_impl<0>(flows, dydt,
+                            i + (i / m_comp_factor) * m_comp_factor * (static_cast<size_t>(Comp::Count) - 1),
+                            i * FlowChart<Flows...>().size());
+        }
     }
 
     /**
@@ -242,7 +247,7 @@ public:
 
     /**
      * @brief a flat index into an array of flows (as computed by get_flows), given the indices of each category
-     * @param indices the custom indices for each category
+     * @param indices the custom indices for each category (except Comp)
      * @tparam Source the source of a flow
      * @tparam Target the target of a flow
      * @return a flat index into a data structure storing flow values
@@ -260,12 +265,12 @@ public:
         // this->populations.get_flat_index.
         //
         // Instead, we omit Comp from PopIndex (getting FlowIndex), calculate the flat_index without the Comp index or
-        // Dimension, i.e. we omit I_j and D_j corresponding to Comp from the formula above (this is done via
-        // flatten_index_by_tags).
+        // Dimension, i.e. we omit I_j and D_j corresponding to Comp from the formula above. We do this by calling
+        // flatten_index with a FlowIndex, with dimensions derived from Pop via reduce_index.
         // Then, we add the flow position I_{flow} via flow_index = flat_index * D_{flow} + I_{flow}, where
         // D_{flow} is the number of flows.
 
-        return flatten_index_by_tags<FlowIndex>(indices, this->populations.size()) * FlowChart<Flows...>().size() +
+        return flatten_index(indices, m_flow_index_dimensions) * FlowChart<Flows...>().size() +
                FlowChart<Flows...>().template get<Flow<Comp, Source, Target>>();
     }
 
@@ -284,7 +289,23 @@ public:
 
 private:
     size_t m_comp_factor;
-    mutable Eigen::VectorXd m_flow_values;
+    FlowIndex m_flow_index_dimensions;
+    mutable Eigen::VectorXd m_flow_values; // avoid allocation in get_derivatives (using get_flows)
+
+    // turn a PopIndex into a FlowIndex
+    template <class... Categories>
+    FlowIndex reduce_index(const PopIndex& i, details::typelist<Categories...>) const
+    {
+        return Index<Categories...>{get<Categories>(i)...};
+    }
+
+    // turn a PopIndex into a FlowIndex
+    FlowIndex reduce_index(const PopIndex& i) const
+    {
+        // since FlowIndex may not be trivially constructible, we use the typelist T to determine its Categories
+        using T = decltype(details::as_index<details::typelist>(details::as_tuple(std::declval<FlowIndex>())));
+        return reduce_index(i, T());
+    }
 
     // compute only the factor used with "Comp" in this->population.get_flat_index
     template <size_t I = PopIndex::size - 1>
@@ -302,75 +323,26 @@ private:
         return 1;
     }
 
-    // recursively compute the derivatives/rhs of the model equations.
-    // Uses runtime loops for non-"Comp" indices via the get_rhs_outer_impl, and compile-time recursion for Flows
-    // (which provide "Comp" indices as their source/target) via the get_rhs_inner_impl, called from "outer"
-    template <template <class...> class Index, class... Categories>
-    void get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs,
-                      Index<Categories...>& I) const
-    {
-        get_rhs_outer_impl<void, Categories...>(flows, rhs, I);
-    }
-
-    // compute rhs using flows - recursive function that loops over each Category in Populations, skipping Comp
-    // this function handles general Categories, e.g. AgeGroups
-    template <class Dummy, class Category, class... Categories>
-    inline std::enable_if_t<!std::is_same<Category, Comp>::value>
-    get_rhs_outer_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, PopIndex& I) const
-    {
-        const size_t size = static_cast<size_t>(get<Category>(this->populations.size()));
-        // loop over the given Category, setting the corresponding entry in I accordingly
-        for (size_t i = 0; i < size; ++i) {
-            get<Category>(I) = Index<Category>(i);
-            get_rhs_outer_impl<Dummy, Categories...>(flows, rhs, I);
-        }
-    }
-
-    // compute rhs using flows - recursive function that loops over each Category in Populations, skipping Comp
-    // this function handles Category==Comp (by not doing anything. get_rhs_inner_impl will deal with it)
-    template <class Dummy, class Category, class... Categories>
-    inline std::enable_if_t<std::is_same<Category, Comp>::value>
-    get_rhs_outer_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, PopIndex& I) const
-    {
-        get_rhs_outer_impl<Dummy, Categories...>(flows, rhs, I);
-    }
-
-    // compute rhs using flows - recursive function that loops over each Category in Populations, skipping Comp
-    // this function pre-calculates flat indices, calls get_rhs_inner_impl, and stops the recursion
-    template <class Dummy>
-    inline void get_rhs_outer_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs,
-                                   PopIndex& I) const
-    {
-        // set Comp = 0, so that the inner recursion can add their relevant index, using m_comp_factor
-        get<Comp>(I) = Index<Comp>(0);
-        // perform inner recursion, i.e. calculate the rhs for all flows, given index I
-        get_rhs_inner_impl<0>(flows, rhs, this->populations.get_flat_index(I),
-                              flatten_index_by_tags<FlowIndex>(I, this->populations.size()));
-        // end recursion
-    }
-
-    // recursively compute the derivatives/rhs of the model equations for a given Flow and non-"Comp" (flat) indices
+    // compute the derivatives/rhs of the model equations for a given Flow and non-"Comp" (flat) indices.
+    // the recursion is resolved at compile time depending on the FlowChart.
     template <size_t flow_id>
     inline std::enable_if_t<flow_id != sizeof...(Flows)>
-    get_rhs_inner_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t& flat_pop,
-                       const size_t& flat_flow) const
+    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs, const size_t& flat_pop,
+                 const size_t& flat_flow) const
     {
-        // see get_flow_index for more info on these index calculations
         constexpr size_t source = static_cast<size_t>(FlowChart<Flows...>().template get<flow_id>().source);
         constexpr size_t target = static_cast<size_t>(FlowChart<Flows...>().template get<flow_id>().target);
+        // see get_flow_index for more info on these index calculations.
         // flat_flow and flat_pop already contain index information for all non-Comp Categories, so
-        // we only need to add flow_id and source/target respectively (with the correct factors)
-        const size_t flow_index = flow_id + flat_flow * FlowChart<Flows...>().size();
-        // flat_flow already contains indices for all non-Comp Categories, so we only need to add the flow_id here
-        rhs[flat_pop + source * m_comp_factor] -= flows[flow_index];
-        rhs[flat_pop + target * m_comp_factor] += flows[flow_index];
-        get_rhs_inner_impl<flow_id + 1>(flows, rhs, flat_pop, flat_flow);
+        // we only need to add flow_id and source/target respectively (with the correct factors).
+        rhs[flat_pop + source * m_comp_factor] -= flows[flat_flow + flow_id];
+        rhs[flat_pop + target * m_comp_factor] += flows[flat_flow + flow_id];
+        get_rhs_impl<flow_id + 1>(flows, rhs, flat_pop, flat_flow);
     }
 
     template <size_t flow_id>
-    inline std::enable_if_t<flow_id == sizeof...(Flows)> get_rhs_inner_impl(Eigen::Ref<const Eigen::VectorXd>,
-                                                                            Eigen::Ref<Eigen::VectorXd>, const size_t&,
-                                                                            const size_t&) const
+    inline std::enable_if_t<flow_id == sizeof...(Flows)>
+    get_rhs_impl(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<Eigen::VectorXd>, const size_t&, const size_t&) const
     {
         // end recursion
     }
