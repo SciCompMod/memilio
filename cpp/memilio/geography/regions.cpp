@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/epidemiology/regions.h"
-#include "memilio/epidemiology/holiday_data_de.ipp"
+#include "memilio/geography/regions.h"
+#include "memilio/geography/holiday_data.ipp"
 
 #include <tuple>
 
@@ -26,8 +26,6 @@ namespace mio
 {
 
 namespace regions
-{
-namespace de
 {
 
 StateId get_state_id(CountyId county)
@@ -44,52 +42,52 @@ get_holidays(StateId state)
     auto data = &def;
     switch (int(state)) {
     case 1:
-        data = &holidays_01_sh;
+        data = &holidays::de::holidays_01_sh;
         break;
     case 2:
-        data = &holidays_02_hh;
+        data = &holidays::de::holidays_02_hh;
         break;
     case 3:
-        data = &holidays_03_ni;
+        data = &holidays::de::holidays_03_ni;
         break;
     case 4:
-        data = &holidays_04_hb;
+        data = &holidays::de::holidays_04_hb;
         break;
     case 5:
-        data = &holidays_05_nw;
+        data = &holidays::de::holidays_05_nw;
         break;
     case 6:
-        data = &holidays_06_he;
+        data = &holidays::de::holidays_06_he;
         break;
     case 7:
-        data = &holidays_07_rp;
+        data = &holidays::de::holidays_07_rp;
         break;
     case 8:
-        data = &holidays_08_bw;
+        data = &holidays::de::holidays_08_bw;
         break;
     case 9:
-        data = &holidays_09_by;
+        data = &holidays::de::holidays_09_by;
         break;
     case 10:
-        data = &holidays_10_sl;
+        data = &holidays::de::holidays_10_sl;
         break;
     case 11:
-        data = &holidays_11_be;
+        data = &holidays::de::holidays_11_be;
         break;
     case 12:
-        data = &holidays_12_bb;
+        data = &holidays::de::holidays_12_bb;
         break;
     case 13:
-        data = &holidays_13_mv;
+        data = &holidays::de::holidays_13_mv;
         break;
     case 14:
-        data = &holidays_14_sn;
+        data = &holidays::de::holidays_14_sn;
         break;
     case 15:
-        data = &holidays_15_st;
+        data = &holidays::de::holidays_15_st;
         break;
     case 16:
-        data = &holidays_16_th;
+        data = &holidays::de::holidays_16_th;
         break;
     default:
         break;
@@ -112,7 +110,6 @@ get_holidays(StateId state, Date start_date, Date end_date)
     return {holidays_in_range};
 }
 
-} // namespace de
 } // namespace regions
 
 } // namespace mio

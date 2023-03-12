@@ -20,7 +20,7 @@
 
 #include "abm/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
 #include "memilio/io/io.h"
@@ -65,7 +65,7 @@ TEST(TestEpiDataIo, read_rki)
     ASSERT_EQ(rki_data[0].num_confirmed, 1);
     ASSERT_EQ(rki_data[0].num_deaths, 2);
     ASSERT_EQ(rki_data[0].num_recovered, 3);
-    ASSERT_EQ(rki_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(rki_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(rki_data[0].state_id, boost::none);
 
     ASSERT_EQ(rki_data[1].age_group, mio::AgeGroup(0));
@@ -73,7 +73,7 @@ TEST(TestEpiDataIo, read_rki)
     ASSERT_EQ(rki_data[1].num_confirmed, 3);
     ASSERT_EQ(rki_data[1].num_deaths, 4);
     ASSERT_EQ(rki_data[1].num_recovered, 5);
-    ASSERT_EQ(rki_data[1].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(rki_data[1].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(rki_data[1].state_id, boost::none);
 }
 
@@ -108,11 +108,11 @@ TEST(TestEpiDataIo, read_divi)
     auto& divi_data = r.value();
     ASSERT_EQ(divi_data.size(), 2);
 
-    ASSERT_EQ(divi_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(divi_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(divi_data[0].date, mio::Date(2022, 10, 5));
     ASSERT_EQ(divi_data[0].num_icu, 10.0);
 
-    ASSERT_EQ(divi_data[1].county_id, mio::regions::de::CountyId(1002));
+    ASSERT_EQ(divi_data[1].county_id, mio::regions::CountyId(1002));
     ASSERT_EQ(divi_data[1].date, mio::Date(2022, 10, 7));
     ASSERT_EQ(divi_data[1].num_icu, 20.0);
 }
@@ -152,14 +152,14 @@ TEST(TestEpiDataIo, read_population)
     auto& population_data = r.value();
     ASSERT_EQ(population_data.size(), 2);
 
-    ASSERT_EQ(population_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(population_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_THAT(population_data[0].population,
                 testing::ElementsAre(testing::DoubleEq(10.0 + 2 * 10.0 / 3), testing::DoubleEq(10.0 / 3 + 10.0),
                                      testing::DoubleEq(10.0 + 10.0 + 10.0 + 0.5 * 10.0),
                                      testing::DoubleEq(0.5 * 10.0 + 10.0 + 2 * 10.0 / 3),
                                      testing::DoubleEq(10.0 / 3 + 10.0 + 0.2 * 10.0), testing::DoubleEq(0.8 * 10.0)));
 
-    ASSERT_EQ(population_data[1].county_id, mio::regions::de::CountyId(1002));
+    ASSERT_EQ(population_data[1].county_id, mio::regions::CountyId(1002));
     ASSERT_THAT(population_data[1].population,
                 testing::ElementsAre(testing::DoubleEq(10.0 + 2 * 20.0 / 3), testing::DoubleEq(20.0 / 3 + 30.0),
                                      testing::DoubleEq(40.0 + 50.0 + 60.0 + 0.5 * 70.0),
@@ -188,7 +188,7 @@ TEST(TestEpiDataIo, read_population_error_age)
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::KeyNotFound));
 }
 
-TEST(TestEpiDataIo, get_county_ids)
+TEST(TestEpiDataIo, read_county_ids)
 {
     std::vector<int> true_ids = {
         1001,  1002,  1003,  1004,  1051,  1053,  1054,  1055,  1056,  1057,  1058,  1059,  1060,  1061,  1062,  2000,
@@ -246,12 +246,12 @@ TEST(TestEpiData, vaccination_data)
 
     ASSERT_EQ(vacc_data[0].date, mio::Date(2021, 12, 1));
     ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(1));
-    ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1011));
+    ASSERT_EQ(vacc_data[0].county_id, mio::regions::CountyId(1011));
     ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 23.05);
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2021, 12, 2));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
-    ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
+    ASSERT_EQ(vacc_data[1].county_id, mio::regions::CountyId(1012));
     ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 12.0);
 }
 

@@ -35,7 +35,7 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -217,8 +217,9 @@ IOResult<void> read_confirmed_cases_data(
     return success();
 }
 
-IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
-                            Date date, const std::vector<double>& scaling_factor_inf)
+IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
 {
 
     std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
@@ -239,17 +240,17 @@ IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, 
         for (size_t group = 0; group < age_ranges.size(); group++) {
 
             t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)group] -
-                                      model[county].parameters.get<SerialInterval>()[(AgeGroup)group])));
+                static_cast<int>(std::round(2 * (model[county].parameters.get<IncubationTime>()[(AgeGroup)group] -
+                                                 model[county].parameters.get<SerialInterval>()[(AgeGroup)group]))));
             t_Exposed[county].push_back(
-                static_cast<int>(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.get<IncubationTime>()[(AgeGroup)group]));
+                static_cast<int>(std::round(2 * model[county].parameters.get<SerialInterval>()[(AgeGroup)group] -
+                                            model[county].parameters.get<IncubationTime>()[(AgeGroup)group])));
             t_InfectedSymptoms[county].push_back(
-                static_cast<int>(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group]));
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSymptoms>()[(AgeGroup)group])));
             t_InfectedSevere[county].push_back(
-                static_cast<int>(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                static_cast<int>(std::round(model[county].parameters.get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(model[county].parameters.get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
             mu_I_H[county].push_back(model[county].parameters.get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
@@ -336,9 +337,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
 
     for (auto&& entry : population_data) {
         auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 ||
-                   (entry.county_id && regions::de::StateId(r) == regions::de::get_state_id(*entry.county_id)) ||
-                   (entry.county_id && regions::de::CountyId(r) == *entry.county_id);
+            return r == 0 || (entry.county_id && regions::StateId(r) == regions::get_state_id(*entry.county_id)) ||
+                   (entry.county_id && regions::CountyId(r) == *entry.county_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());

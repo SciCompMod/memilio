@@ -70,6 +70,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
+    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup, mio::abm::VaccinationState>(
+        m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());

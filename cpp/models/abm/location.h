@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -29,6 +29,7 @@
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/time_series.h"
 #include <array>
 #include <random>
 
@@ -76,10 +77,10 @@ struct LocationId {
  * The location can be split up into several cells. This allows a finer division of the people in public transport.
  */
 struct Cell {
-    std::vector<Person> m_persons;
-    CustomIndexArray<double, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
-    CustomIndexArray<double, VirusVariant> m_cached_exposure_rate_air;
-    CellCapacity m_capacity;
+    uint32_t num_people;
+    uint32_t num_carriers;
+    uint32_t num_infected;
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate;
 
     Cell(std::vector<Person> persons = {})
         : m_persons(std::move(persons))
@@ -89,13 +90,14 @@ struct Cell {
     {
     }
 
-    /**
-    * computes a relative cell size for the cell
-    * @return the relative cell size for the cell
-    */
-    double compute_relative_cell_size();
-
-    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+    Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
+         CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate_new)
+        : num_people(num_p)
+        , num_carriers(num_c)
+        , num_infected(num_i)
+        , cached_exposure_rate(cached_exposure_rate_new)
+    {
+    }
 
 }; // namespace mio
 
@@ -157,7 +159,13 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(TimePoint t, TimeSpan dt);
+    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
+
+    /** 
+     * number of persons at this location in one infection state.
+     * @return number of persons at this location that are in the specified infection state
+     */
+    int get_subpopulation(InfectionState s) const;
 
     /**
      * @return parameters of the infection that are specific to this location
@@ -195,7 +203,7 @@ public:
      * get the number of persons at the location
      * @return number of persons
      */
-    int get_population()
+    int get_total_population_size()
     {
         return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](int sum, auto cell) {
             return sum + cell.m_capacity.persons;
@@ -205,12 +213,7 @@ public:
     /**
      * get the exposure rate of the location
      */
-    CustomIndexArray<double, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(const uint32_t cell_idx)
-    {
-        return m_cells[cell_idx].m_cached_exposure_rate_contacts;
-    }
-
-    CustomIndexArray<double, VirusVariant> get_cached_exposure_rate_air(const uint32_t cell_idx)
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> get_cached_exposure_rate()
     {
         return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
@@ -235,6 +238,12 @@ public:
     }
 
     /**
+    * computes a relative transmission risk factor for the location
+    * @return the relative risk factor for the location
+    */
+    ScalarType compute_relative_transmission_risk();
+
+    /**
     * Set the capacity adapted transmission risk flag
     * @param consider_capacity if true considers the capacity of the location for the computation of relative 
     * transmission risk
@@ -243,6 +252,27 @@ public:
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
+
+    /**
+     * Add a timepoint to the subpopulations timeseries
+     * @param t the TimePoint to be added
+    */
+    void add_subpopulations_timepoint(const TimePoint& t);
+
+    /**
+     * Return the time series object of the current number of individuals in the each infection state
+     * @return the time series object of the current number of individuals in the each infection state
+    */
+    const TimeSeries<ScalarType>& get_population() const
+    {
+        return m_subpopulations;
+    }
+
+    /**
+     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
+     * @param t The first TimePoint in subpopulation
+    */
+    void initialize_subpopulation(const TimePoint& t);
 
     bool get_npi_active() const
     {
@@ -278,8 +308,10 @@ private:
     LocationType m_type;
     uint32_t m_index;
     bool m_capacity_adapted_transmission_risk;
+    TimeSeries<ScalarType> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    std::vector<Cell> m_cells{};
+    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> m_cached_exposure_rate;
+    std::vector<Cell> m_cells;
     MaskType m_required_mask;
     bool m_npi_active;
 };

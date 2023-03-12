@@ -28,7 +28,7 @@
 #include "ode_secirvvs/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
@@ -145,18 +145,18 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         num_icu[county]                = std::vector<double>(num_age_groups, 0.0);
         for (size_t group = 0; group < num_age_groups; group++) {
 
-            t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                      model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
-            t_Exposed[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
-            t_InfectedSymptoms[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
-            t_InfectedSevere[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
+                std::round(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                                model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
+            t_Exposed[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
+            t_InfectedSymptoms[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group])));
+            t_InfectedSevere[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
@@ -217,19 +217,19 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(reduc_t * 2 *
-                                 (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                  model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
-            t_Exposed[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
+                std::round(reduc_t * 2 *
+                           (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                            model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
+            t_Exposed[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
             t_InfectedSymptoms[county].push_back(static_cast<int>(
-                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_InfectedSevere[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
+            t_InfectedSevere[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double exp_fac_part_immune =
                 model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)group];
@@ -303,19 +303,19 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_InfectedNoSymptoms[county].push_back(
-                static_cast<int>(reduc_t * 2 *
-                                 (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                  model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
-            t_Exposed[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
+                std::round(reduc_t * 2 *
+                           (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                            model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
+            t_Exposed[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
             t_InfectedSymptoms[county].push_back(static_cast<int>(
-                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_InfectedSevere[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
+            t_InfectedSevere[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double reduc_immune_exp =
                 model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)group];
@@ -660,18 +660,18 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     for (size_t county = 0; county < model.size(); county++) {
         for (size_t group = 0; group < num_age_groups; group++) {
 
-            t_Exposed_uv[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
-            t_InfectedNoSymptoms_uv[county].push_back(
-                static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                      model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
-            t_InfectedSymptoms_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group]));
-            t_InfectedSevere_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical_uv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+            t_Exposed_uv[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms_uv[county].push_back(static_cast<int>(
+                std::round(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                                model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
+            t_InfectedSymptoms_uv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group])));
+            t_InfectedSevere_uv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical_uv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             mu_C_R_uv[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
@@ -703,6 +703,7 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     std::vector<std::vector<double>> mu_C_R_pv{model.size()};
     std::vector<std::vector<double>> mu_I_H_pv{model.size()};
     std::vector<std::vector<double>> mu_H_U_pv{model.size()};
+
     // ICU data is not age-resolved. Use a partition of unity defined by
     // the age-dependent probability I->H->U divided by the sum over all
     // age groups of all of these probabilities.
@@ -712,19 +713,19 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_Exposed_pv[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
-            t_InfectedNoSymptoms_pv[county].push_back(
-                static_cast<int>(reduc_t * 2 *
-                                 (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                  model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
+            t_Exposed_pv[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms_pv[county].push_back(static_cast<int>(
+                std::round(reduc_t * 2 *
+                           (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                            model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
             t_InfectedSymptoms_pv[county].push_back(static_cast<int>(
-                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_InfectedSevere_pv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical_pv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
+            t_InfectedSevere_pv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical_pv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double exp_fact_part_immune =
                 model[county].parameters.template get<ReducExposedPartialImmunity>()[(AgeGroup)group];
@@ -782,19 +783,19 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
         for (size_t group = 0; group < num_age_groups; group++) {
 
             double reduc_t = model[0].parameters.template get<ReducTimeInfectedMild>()[(AgeGroup)group];
-            t_Exposed_fv[county].push_back(
-                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
-                                 model[county].parameters.template get<IncubationTime>()[(AgeGroup)group]));
-            t_InfectedNoSymptoms_fv[county].push_back(
-                static_cast<int>(reduc_t * 2 *
-                                 (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
-                                  model[county].parameters.template get<SerialInterval>()[(AgeGroup)group])));
+            t_Exposed_fv[county].push_back(static_cast<int>(
+                std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                           model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
+            t_InfectedNoSymptoms_fv[county].push_back(static_cast<int>(
+                std::round(reduc_t * 2 *
+                           (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                            model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
             t_InfectedSymptoms_fv[county].push_back(static_cast<int>(
-                model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t));
-            t_InfectedSevere_fv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group]));
-            t_InfectedCritical_fv[county].push_back(
-                static_cast<int>(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group]));
+                std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group] * reduc_t)));
+            t_InfectedSevere_fv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical_fv[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
 
             double reduc_immune_exp =
                 model[county].parameters.template get<ReducExposedImprovedImmunity>()[(AgeGroup)group];
@@ -1185,6 +1186,23 @@ IOResult<void> export_input_data_county_timeseries(const std::vector<Model>& mod
     auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_rki});
     BOOST_OUTCOME_TRY(
         save_result({extrapolated_rki_data_sum[0][0]}, {0}, num_groups, path_join(results_dir, "Results_rki_sum.h5")));
+
+    return success();
+}
+
+template <class Model>
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>&& model, const std::string& data_dir,
+                                                   const std::string& results_dir, const std::vector<int>& county,
+                                                   Date date, const std::vector<double>& scaling_factor_inf,
+                                                   double scaling_factor_icu, int num_days, bool set_vaccination_data)
+{
+    if (set_vaccination_data) {
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(data_dir, "all_county_ageinf_vacc_ma7.json"),
+                                                        date, county, num_days));
+    }
+
+    BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, data_dir, results_dir, county, date,
+                                                          scaling_factor_inf, scaling_factor_icu, num_days));
 
     return success();
 }
