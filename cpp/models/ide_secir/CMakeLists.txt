@@ -2,6 +2,8 @@ add_library(ide_secir
     infection_state.h
     model.h
     model.cpp
+    simulation.h
+    simulation.cpp    
     parameters.h
 )
 target_link_libraries(ide_secir PUBLIC memilio)

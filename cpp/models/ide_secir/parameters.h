@@ -65,7 +65,7 @@ private:
 };
 
 /**
- * @brief Transition distribution for each Transition in InfectionTransitions.
+ * @brief Transition distribution for each Transition in InfectionTransition.
  * 
  * Note that Distribution from S->E is just a dummy.
  * This transition is calculated in a different way.
@@ -75,7 +75,7 @@ struct TransitionDistributions {
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
-        return std::vector<DelayDistribution>((int)InfectionTransitions::Count, DelayDistribution());
+        return std::vector<DelayDistribution>((int)InfectionTransition::Count, DelayDistribution());
     }
 
     static std::string name()
@@ -89,14 +89,14 @@ struct TransitionDistributions {
  * 
  * Parameters stored in a vector for initialisation of the TransitionDistributions.
  * Currently, for each TransitionDistribution is only one paramter used (eg. xright).
- * For each possible Transition defined in InfectionTransitions, there is exactly one parameter.
+ * For each possible Transition defined in InfectionTransition, there is exactly one parameter.
  * Note that for transition S -> E, this is just a dummy.
  */
 struct TransitionParameters {
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<ScalarType>((int)InfectionTransitions::Count, 1.0);
+        return std::vector<ScalarType>((int)InfectionTransition::Count, 1.0);
     }
 
     static std::string name()
@@ -109,15 +109,15 @@ struct TransitionParameters {
  * @brief Defines the probability for each possible transition to take this flow/transition.
  */
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions. 
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        std::vector<ScalarType> probs((int)InfectionTransitions::Count, 0.5);
+        std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
         // Set the following probablities to 1 as there is no other option to go anywhere else.
-        probs[Eigen::Index(InfectionTransitions::SusceptibleToExposed)]        = 1;
-        probs[Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
+        probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
+        probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
         return probs;
     }
 
@@ -194,6 +194,48 @@ struct RiskOfInfectionFromSymptomatic {
 using ParametersBase =
     ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
                  TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+
+/**
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     */
+    void check_constraints() const
+    {
+        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0) {
+            log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d}", 0);
+        }
+
+        // TODO
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+};
 
 } // namespace isecir
 } // namespace mio

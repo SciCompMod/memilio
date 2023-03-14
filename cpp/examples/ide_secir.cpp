@@ -20,6 +20,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
@@ -35,7 +36,7 @@ int main()
     ScalarType Dead_before = 12;
     ScalarType dt          = 1;
 
-    int num_transitions = (int)mio::isecir::InfectionTransitions::Count;
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
     mio::TimeSeries<ScalarType> init(num_transitions);
@@ -52,14 +53,14 @@ int main()
     }
 
     // Initialize model.
-    mio::isecir::Model model(std::move(init), dt, N, Dead_before);
+    mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // Set working parameters.
     model.parameters.set<mio::isecir::TransitionDistributions>(
         std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
-    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransitions::Count, 0.5);
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::SusceptibleToExposed)]        = 1;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
+    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
@@ -69,9 +70,10 @@ int main()
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
 
     // Carry out simulation.
-    mio::TimeSeries<ScalarType> compartments = model.simulate(tmax);
+    mio::isecir::Simulation sim(model, 0, dt);
+    sim.advance(tmax);
 
-    model.print_transitions();
-    std::cout << "\n" << std::endl;
-    model.print_compartments();
+    sim.print_transitions();
+
+    sim.print_compartments();
 }

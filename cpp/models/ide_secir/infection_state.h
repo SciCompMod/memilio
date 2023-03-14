@@ -46,10 +46,10 @@ enum class InfectionState
 };
 
 /**
- * @brief The InfectionTransitions enum describes the possible
+ * @brief The InfectionTransition enum describes the possible
  * transitions of the infectious state of persons.
  */
-enum class InfectionTransitions
+enum class InfectionTransition
 {
     SusceptibleToExposed                 = 0,
     ExposedToInfectedNoSymptoms          = 1,

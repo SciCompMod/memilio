@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Anna Wendler, Lena Ploetzke
+* Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -32,7 +32,7 @@ namespace isecir
 {
 class Model
 {
-    using Pa = ParametersBase;
+    using ParameterSet = Parameters;
 
 public:
     /**
@@ -49,111 +49,85 @@ public:
     * @param[in] Dead_before The total number of deaths at the time point - dt_init.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, ScalarType N_init, ScalarType Dead_before,
-          const Pa& Parameterset_init = Pa());
+    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
+          const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
-    * @brief Simulate the evolution of infection numbers with the given IDE SECIR model.
-    *
-    * The simulation is performed by solving the underlying model equation numerically. 
-    * Here, an integro-differential equation is to be solved. The model parameters and the initial data are used.
-    *
-    * @param[in] t_max Last simulation day. 
-    *   If the last point of time of the initial TimeSeries was 0, the simulation will be executed for t_max days.
-    * @return The result of the simulation, stored in a TimeSeries with simulation time and 
-    *       associated number of individuals in the compartments.
+    * @brief Checks constraints on model parameters.
     */
-    TimeSeries<ScalarType> const& simulate(ScalarType t_max);
+    void check_constraints() const
+    {
+        parameters.check_constraints();
+    }
 
-    // Used Parameters for the simulation.
-    Pa parameters{};
-
-    /**
-     * @brief Print the transition part of the simulation result.
-     * 
-     * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
-     * simulation are printed. 
-     */
-    void print_transitions() const;
-
-    /**
-     * @brief Print the simulated numbers of individuals in each compartment for each time step.
-     * 
-     * The TimeSeries m_SECIR with simulated numbers of individuals in each compartment for each time step are printed. 
-     */
-    void print_compartments() const;
-
-    /**
-     * @brief Getter for the transitions.
-     * 
-     * @return TimeSeries with stored transitions calculated in the simulation.
-     */
-    TimeSeries<ScalarType> const& get_transitions();
-
-private:
     /**
      * @brief Calculate the number of individuals in each compartment for time 0.
      * 
      * Initial transitions are used to calculate the initial compartment sizes.
+     * @param[in] dt Time discretization step size.         
      */
-    void initialize();
+    void initialize(ScalarType dt);
 
     /**
-    * @brief Computes number of Susceptibles for the current last time in m_SECIR.
+    * @brief Computes number of Susceptibles for the current last time in m_population.
     *
     * Number is computed using previous number of Susceptibles and the force of infection (also from previous timestep).
-    * Number is stored at the matching index in m_SECIR.
+    * Number is stored at the matching index in m_population.
+    * @param[in] dt Time discretization step size.    
     */
-    void compute_susceptibles();
+    void compute_susceptibles(ScalarType dt);
 
     /**
      * @brief Computes force of infection for the current last time in m_transitions.
      * 
      * Computed value is stored in m_forceofinfection.
      * 
+     * @param[in] dt Time discretization step size.          
      * @param[in] initialization if true forceofinfection(-m_dt) will be calculated instead of the time at the last time point in transitions.
      */
-    void update_forceofinfection(bool initialization = false);
+    void update_forceofinfection(ScalarType dt, bool initialization = false);
 
     /**
      * @brief Computes size of a flow.
      * 
-     * Computes size of one flow from InfectionTransitions, specified in idx_InfectionTransitions, for the current 
+     * Computes size of one flow from InfectionTransition, specified in idx_InfectionTransitions, for the current 
      * last timevalue in m_transitions.
      *
-     * @param[in] idx_InfectionTransitions Specifies the considered flow from InfectionTransitions.
-     * @param[in] idx_IncomingFlow Index of the flow in InfectionTransitions, which goes to the considered starting
+     * @param[in] idx_InfectionTransitions Specifies the considered flow from InfectionTransition.
+     * @param[in] idx_IncomingFlow Index of the flow in InfectionTransition, which goes to the considered starting
      *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
      *      the value of this incoming flow.
+     * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow);
+    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
      *
      * New values are stored in m_transitions. Most values are computed via the function compute_flow().
-     * 
+     *
+     * @param[in] dt Time step.
      */
-    void flows_current_timestep();
+    void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Deaths for the current last time in m_SECIR.
+     * @brief Computes total number of Deaths for the current last time in m_population.
      * 
-     * Number is stored in m_SECIR.
+     * Number is stored in m_population.
      *
      */
-    void compute_totaldeaths();
+    void compute_deaths();
 
     /**
-     * @brief Computes total number of Recovered for the current last time in m_SECIR.
+     * @brief Computes total number of Recovered for the current last time in m_population.
      * 
-     * Number is stored in m_SECIR.
+     * Number is stored in m_population.
      *
      */
     void compute_recovered();
 
     /**
-     * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_SECIR.
+     * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_population.
      * 
      * Calculation is reasonable for all compartments except S, R, D. 
      * Therefore, we have alternative funtions for those compartments.
@@ -166,33 +140,31 @@ private:
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
      *              related to a flow from the considered InfectionState to any other State (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
+     * @param[in] dt Time discretization step size.
      */
     void compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index idx_IncomingFlow,
-                             int idx_TransitionDistribution1, int idx_TransitionDistribution2);
+                             int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments ECIHU for the current last timestep in m_SECIR.
+     * @brief Sets all values of remaining compartments ECIHU for the current last timestep in m_population.
      *
-     * New values are stored in m_SECIR. Most values are computed via the function get_size_of_compartments().
+     * New values are stored in m_population. Most values are computed via the function get_size_of_compartments().
      * 
+     * @param[in] dt Time discretization step size.
      */
-    void compartments_current_timestep_ECIHU();
+    void compartments_current_timestep_ECIHU(ScalarType dt);
 
-    // TimeSeries containing points of time and the corresponding number of transitions.
-    TimeSeries<ScalarType> m_transitions;
-    // TimeSeries containing points of time and the corresponding number of people in defined Infectionstates.
-    TimeSeries<ScalarType> m_SECIR;
-    /*Attention: m_SECIR and m_transitions do not necessarily have the same number of time points*/
+    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    /* Attention: m_population and m_transitions do not necessarily have the same number of time points */
+    TimeSeries<ScalarType>
+        m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
+    TimeSeries<ScalarType>
+        m_population; ///< TimeSeries containing points of time and the corresponding number of people in defined Infectionstate%s.
 
-    // Force of infection term needed for numerical scheme, corresponds to phi
-    ScalarType m_forceofinfection{0};
-
-    // Timestep used for simulation.
-    ScalarType m_dt{0};
-    // Population of the considered region.
-    ScalarType m_N{0};
-    // Deaths before start of simulation (at time -m_dt)
-    ScalarType m_deaths_before{0};
+private:
+    ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme
+    ScalarType m_N{0}; ///< Total population size of the considered region.
+    ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt)
 };
 
 } // namespace isecir
