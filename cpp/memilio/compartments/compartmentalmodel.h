@@ -242,7 +242,8 @@ public:
      */
     Eigen::VectorXd get_initial_flows() const
     {
-        return Eigen::VectorXd::Zero(FlowChart<Flows...>().size());
+        return Eigen::VectorXd::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) *
+                                     FlowChart<Flows...>().size());
     }
 
     /**
