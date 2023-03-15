@@ -162,6 +162,7 @@ public:
         , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
                   auto n_flows = model.get_initial_flows().size();
+                  dydt.setZero();
                   model.get_flows(y, y, t, dydt.tail(n_flows));
                   model.get_derivatives(dydt.tail(n_flows), dydt.head(model.populations.numel()));
               },

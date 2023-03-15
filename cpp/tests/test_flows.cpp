@@ -132,9 +132,47 @@ TEST(TestFlows, SimulationFlows)
     EXPECT_NEAR(flows_results[2], 16.965940383085815, 1e-14);
 }
 
+TEST(TestFlows, CompareSimulations)
+{
+    mio::set_log_level(mio::LogLevel::off);
+
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.001;
+
+    mio::oseir::Model model;
+
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+    // suscetible now set with every other update
+    // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+
+    model.check_constraints();
+    auto seir_sim_flows = simulate_flows(t0, tmax, dt, model);
+    auto seir_sim = simulate(t0, tmax, dt, model);
+    auto results_flows = seir_sim_flows[0].get_last_value();
+    auto results = seir_sim.get_last_value(); 
+
+    EXPECT_NEAR(results[0], results_flows[0], 1e-14);
+    EXPECT_NEAR(results[1], results_flows[1], 1e-14);
+    EXPECT_NEAR(results[2], results_flows[2], 1e-14);
+    EXPECT_NEAR(results[3], results_flows[3], 1e-14);
+}
+
 TEST(TestFlows, GetInitialFlows)
 {
-    TestModel m;
+    mio::oseir::Model m;
     EXPECT_EQ(m.get_initial_flows().size(), 3); // 3 == Flows().size()
     EXPECT_EQ(m.get_initial_flows().norm(), 0);
 }
