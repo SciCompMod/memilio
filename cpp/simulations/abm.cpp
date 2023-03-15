@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Khoa Nguyen
+* Authors: Daniel Abele, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,28 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
 #include "abm/abm.h"
-#include "abm/household.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
 namespace fs = boost::filesystem;
-
-/**
- * Set a value and distribution of an UncertainValue.
- * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
- * @param p uncertain value to set.
- * @param min minimum of distribution.
- * @param max minimum of distribution.
- */
-void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
-{
-    p = mio::UncertainValue(0.5 * (max + min));
-    p.set_distribution(mio::ParameterDistributionUniform(min, max));
-}
-
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -53,7 +37,7 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    uint32_t state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
     return (mio::abm::InfectionState)state;
 }
 
@@ -388,8 +372,8 @@ void create_assign_locations(mio::abm::World& world)
         if (counter_event == 1000) {
             counter_event = 0;
             event         = world.add_location(mio::abm::LocationType::SocialEvent);
-            world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
             world.get_individualized_location(event).set_capacity(100, 375);
+            world.get_individualized_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
         }
         if (counter_school == 600) {
             counter_school = 0;
@@ -435,13 +419,16 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
-                            ScalarType carrier_pct, ScalarType recovered_pct)
+
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
+                            double carrier_pct, double recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        world.set_infection_state(person,
-                                  determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
+        auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
+                                                         world.get_global_infection_parameters(), t, infection_state));
     }
 }
 
@@ -709,7 +696,6 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 */
 mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
-
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
 
@@ -722,7 +708,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     create_world_from_statistical_data(world);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    assign_infection_state(world, t0, exposed_pct, infected_pct, carrier_pct, recovered_pct);
 
     // Add locations and assign locations to the people.
     create_assign_locations(world);
@@ -765,7 +751,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         std::vector<int> loc_ids;
         for (auto&& locations : sim.get_world().get_locations()) {
             for (auto location : locations) {
-                loc_ids.push_back(location.get_index());
+                loc_ids.push_back(location->get_index());
             }
         }
         // Advance the world to tmax
@@ -803,7 +789,7 @@ int main(int argc, char** argv)
     else if (argc == 3) {
         num_runs   = atoi(argv[1]);
         result_dir = argv[2];
-        printf("Number of run is %s.\n", argv[1]);
+        printf("Number of runs is %s.\n", argv[1]);
         printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
     else {

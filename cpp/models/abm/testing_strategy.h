@@ -80,35 +80,37 @@ public:
     void add_infection_state(const InfectionState infection_state);
     /**
      * remove an infection state from the set of infection states that are either allowed or required to be tested
-     * @param infection_state infection state to be removed
+     * @param[in] infection_state infection state to be removed
      */
     void remove_infection_state(const InfectionState infection_state);
 
     /**
-     * check if a person and a location meet all the required properties to get tested
-     * @param p person to be checked
-     * @param l location to be checked
+     * Check if a Person and a Location meet all the required properties to get tested.
+     * @param[in] p Person to be checked.
+     * @param[in] l Location to be checked.
+     * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
-    bool evaluate(const Person& p, const Location& l, const TimePoint& t) const;
+    bool evaluate(const Person& p, const Location& l, TimePoint t) const;
 
 private:
     /**
-     * check if a person has the required age to get tested
-     * @param p person to be checked
+     * Check if a Person has the required age to get tested.
+     * @param[in] p Person to be checked.
      */
     bool has_requested_age(const Person& p) const;
 
     /**
-     * check if a location is in the set of locations that are allowed for testing
-     * @param l location to be checked
+     * Check if a Location is in the set of Location%s that are allowed for testing.
+     * @param[in] l Location to be checked.
      */
     bool is_requested_location_type(const Location& l) const;
 
     /**
-     * check if a person has the required infection state to get tested
-     * @param p person to be checked
+     * Check if a Person has the required InfectionState to get tested.
+     * @param p Person to be checked.
+     * @param[in] t TimePoint when to check.
      */
-    bool has_requested_infection_state(const Person& p, const TimePoint& t) const;
+    bool has_requested_infection_state(const Person& p, TimePoint t) const;
 
     std::vector<AgeGroup> m_ages;
     std::vector<LocationType> m_location_types;
@@ -127,11 +129,11 @@ public:
      * @param minimal_time_since_last_test time length of how often this scheme applies, i. e., a new test is performed after a person's last test
      * @param start_date starting date of the scheme
      * @param end_date ending date of the scheme
-     * @param probability probability of the test to be performed if a testing rule applies
      * @param test_type the type of test to be performed
+     * @param probability probability of the test to be performed if a testing rule applies
      */
     TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, double probability);
+                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, ScalarType probability);
 
     /**
      * Compares two testing schemes for functional equality.
@@ -156,16 +158,19 @@ public:
     bool is_active() const;
 
     /**
-     * checks if the scheme is active at a given time and updates activity status
-     * @param t time to be updated at
+     * Checks if the scheme is active at a given time and updates activity status.
+     * @param[in] t TimePoint to be updated at.
      */
-    void update_activity_status(const TimePoint t);
+    void update_activity_status(TimePoint t);
 
     /**
-     * runs the testing scheme and tests a person if necessary
-     * @return if the person is allowed to enter the location
+     * @brief: Runs the TestingScheme and potentially tests a Person.
+     * @param[in] person Person to check.
+     * @param[in] location Location to check.
+     * @param[in] t TimePoint when to run the scheme.
+     * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person& person, const Location& location, const TimePoint& t) const;
+    bool run_scheme(Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingCriteria> m_testing_criteria;
@@ -173,7 +178,7 @@ private:
     TimePoint m_start_date;
     TimePoint m_end_date;
     GenericTest m_test_type;
-    double m_probability;
+    ScalarType m_probability;
     bool m_is_active = false;
 };
 
@@ -200,16 +205,19 @@ public:
     void remove_testing_scheme(const TestingScheme& scheme);
 
     /**
-     * checks if the given time point t is within the interval of start and end date of each testing scheme and then changes the activity status for each testing scheme accordingly
-     * @param t time point to check the activity status of each testing scheme
+     * Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then changes the activity status for each TestingScheme accordingly.
+     * @param t TimePoint to check the activity status of each TestingScheme.
      */
-    void update_activity_status(const TimePoint t);
+    void update_activity_status(TimePoint t);
 
     /**
-     * run the testing strategy and tests a person if necessary
-     * @return if the person is allowed to enter the location
+     * @brief: Runs the TestingStrategy and potentially tests a Person.
+     * @param[in] person Person to check.
+     * @param[in] location Location to check.
+     * @param[in] t TimePoint when to run the strategy.
+     * @return If the person is allowed to enter the Location.
      */
-    bool run_strategy(Person& person, const Location& location, const TimePoint& t) const;
+    bool run_strategy(Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingScheme> m_testing_schemes;

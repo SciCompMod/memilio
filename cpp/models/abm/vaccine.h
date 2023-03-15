@@ -30,18 +30,19 @@ namespace abm
 {
 
 /** 
- * vaccine in ABM.
+ * Vaccine in ABM.
  * can be used as 0-based index
  */
 enum class Vaccine : std::uint32_t
 {
-    Moderna = 0,
+    Generic = 0,
 
     Count //last!!
 };
 
 /**
- * A vaccination is a tuple of time point and vaccine.
+ * A vaccination is a tuple of TimePoint and Vaccine.
+ * The TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
     TimePoint t;

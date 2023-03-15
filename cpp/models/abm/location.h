@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -50,39 +50,21 @@ struct CellCapacity {
         , persons(std::numeric_limits<int>::max())
     {
     }
-    int volume;
-    int persons;
+    uint32_t volume;
+    uint32_t persons;
 };
 
 /**
- * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
- * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
- */
-struct LocationId {
-    uint32_t index;
-    LocationType type;
-
-    bool operator==(const LocationId& rhs) const
-    {
-        return (index == rhs.index && type == rhs.type);
-    }
-
-    bool operator!=(const LocationId& rhs) const
-    {
-        return !(index == rhs.index && type == rhs.type);
-    }
-};
-
-/**
- * The location can be split up into several cells. This allows a finer division of the people in public transport.
+ * The location can be split up into several Cell%s. This allows a finer division of the people in public transport.
+ * By default, each Location consists of one Cell.
  */
 struct Cell {
-    uint32_t num_people;
-    uint32_t num_carriers;
-    uint32_t num_infected;
-    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate;
+    std::vector<std::shared_ptr<Person>> m_persons;
+    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
+    CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
+    CellCapacity m_capacity;
 
-    Cell(std::vector<Person> persons = {})
+    explicit Cell(std::vector<std::shared_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -90,30 +72,48 @@ struct Cell {
     {
     }
 
-    Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<ScalarType, AgeGroup, VaccinationState> cached_exposure_rate_new)
-        : num_people(num_p)
-        , num_carriers(num_c)
-        , num_infected(num_i)
-        , cached_exposure_rate(cached_exposure_rate_new)
-    {
-    }
+    /**
+    * @brief Computes a relative cell size for the Cell.
+    * @return The relative cell size for the Cell.
+    */
+    ScalarType compute_space_per_person_relative();
+
+    /**
+    * @brief Get subpopulation of a particular InfectionState in the Cell.
+    * @param[in] t TimePoint of querry.
+    * @param[in] state InfectionState of interest.
+    * @return Amount of persons of the InfectionState in the Cell.
+    */
+    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
 
 }; // namespace mio
 
 /**
- * all locations in the simulated world where persons gather.
+ * All locations in the simulated world where persons gather.
  */
-class Location
+class Location : public std::enable_shared_from_this<Location>
 {
 public:
     /**
-     * construct a Location of a certain type.
-     * @param type the type of the location
-     * @param index the index of the location
-     * @param num_cells the number of cells in which the location is divided, default 1
+     * Construct a Location of a certain type.
+     * @param type The type of the location.
+     * @param index The index of the location.
+     * @param num_cells [Default: 1] The number of cells in which the Location is divided.
      */
     Location(LocationType type, uint32_t index, uint32_t num_cells = 1);
+
+    /**
+    * @brief Compare two Location%s.
+    */
+    bool operator==(const Location& other) const
+    {
+        return (m_type == other.m_type && m_index == other.m_index);
+    }
+
+    bool operator!=(const Location& other) const
+    {
+        return !(*this == other);
+    }
 
     /**
      * get the type of this location.
@@ -131,41 +131,52 @@ public:
         return m_index;
     }
 
-    /** 
-     * a person interacts with the population at this location, may change infection state.
-     * @param person the person that interacts with the population
-     * @param dt length of the current simulation time step
-     * @param global_params global infection parameters
-     * @return new infection of the person
-     */
-    VirusVariant interact(const Person& person, const TimePoint& t, const TimeSpan& dt,
-                          const GlobalInfectionParameters& global_params) const;
-
-    /** 
-     * add a person to the population at this location.
-     * @param person the person arriving
-     * @param cell_idx index of the cell the person shall go to
+    /**
+     * @brief Compute the transmission factor for contact transmission of the virus in a Cell.
+     * @param[in] cell_index Cell index of the Cell.
+     * @param[in] virus VirusVariant of interest.
+     * @param[in] age_receiver AgeGroup of the receiving Person.
+     * @param[in] age_transmitter AgeGroup of the transmitting Person.
+     * @returns Amount of average infections with the virus from the AgeGroup of the transmitter per day.
     */
-    void add_person(const Person& person, const uint32_t cell_idx = 0);
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
+                                             AgeGroup age_transmitter) const;
+
+    /**
+     * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
+     * @param[in] cell_index Cell index of the Cell.
+     * @param[in] virus VirusVariant of interest.
+     * @returns Amount of average infections with the virus per day.
+    */
+    ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const;
 
     /** 
-     * remove a person from the population of this location.
-     * @param person the person leaving
+     * @brief A person interacts with the population at this Location and may become infected.
+     * @param person The Person that interacts with the population.
+     * @param dt Length of the current simulation time step.
+     * @param global_params Global infection parameters.
      */
-    void remove_person(const Person& person);
+    void interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const;
 
     /** 
-     * prepare the location for the next simulation step.
-     * @param dt the duration of the simulation step
-     * @param global_params global infection parameters
-     */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
+     * @brief Add a Person to the population at this Location.
+     * @param person The Person arriving.
+     * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
+    */
+    void add_person(std::shared_ptr<Person> person, uint32_t cell_idx = 0);
 
     /** 
-     * number of persons at this location in one infection state.
-     * @return number of persons at this location that are in the specified infection state
+     * @brief Remove a Person from the population of this Location.
+     * @param person The Person leaving.
      */
-    int get_subpopulation(InfectionState s) const;
+    void remove_person(const std::shared_ptr<Person>& person);
+
+    /** 
+     * @brief Prepare the location for the next simulation step.
+     * @param t Current TimePoint of the simulation.
+     * @param dt The duration of the simulation step.
+     */
+    void cache_exposure_rates(TimePoint t, TimeSpan dt);
 
     /**
      * @return parameters of the infection that are specific to this location
@@ -180,6 +191,9 @@ public:
         return m_parameters;
     }
 
+    /**
+     * @return All cells of the location.
+    */
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
@@ -200,48 +214,43 @@ public:
     }
 
     /**
-     * get the number of persons at the location
-     * @return number of persons
+     * @brief Get the contact exposure rate in the cell.
+     * @param[in] cell_idx CellIndex of interest.
+     * @return Air exposure rate in the cell.
      */
-    int get_total_population_size()
+    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx)
     {
-        return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](int sum, auto cell) {
-            return sum + cell.m_capacity.persons;
-        });
+        return m_cells[cell_idx].m_cached_exposure_rate_contacts;
     }
 
     /**
-     * get the exposure rate of the location
+     * @brief Get the air exposure rate in the cell.
+     * @param[in] cell_idx CellIndex of interest.
+     * @return Contact exposure rate in the cell.
      */
-    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> get_cached_exposure_rate()
+    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx)
     {
         return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
 
     /**
-    * Set the capacity of a cell in the location in person and volume
-    * @param persons maximum number of people that can visit the cell at the same time
-    * @param volume volume of the cell in m^3
+    * @brief Set the capacity of a cell in the Location in persons and volume.
+    * @param persons Maximum number of Person%s that can visit the Cell at the same time.
+    * @param volume Volume of the Cell in m^3.
     */
-    void set_capacity(int persons, int volume, uint32_t cell_idx = 0)
+    void set_capacity(uint32_t persons, uint32_t volume, uint32_t cell_idx = 0)
     {
         m_cells[cell_idx].m_capacity.persons = persons;
         m_cells[cell_idx].m_capacity.volume  = volume;
     }
 
     /**
-    * @return the capacity of a cell in person and volume
+    * @return The capacity of a Cell in persons and volume.
     */
     CellCapacity get_capacity(uint32_t cell_idx = 0)
     {
         return m_cells[cell_idx].m_capacity;
     }
-
-    /**
-    * computes a relative transmission risk factor for the location
-    * @return the relative risk factor for the location
-    */
-    ScalarType compute_relative_transmission_risk();
 
     /**
     * Set the capacity adapted transmission risk flag
@@ -252,27 +261,6 @@ public:
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
-
-    /**
-     * Add a timepoint to the subpopulations timeseries
-     * @param t the TimePoint to be added
-    */
-    void add_subpopulations_timepoint(const TimePoint& t);
-
-    /**
-     * Return the time series object of the current number of individuals in the each infection state
-     * @return the time series object of the current number of individuals in the each infection state
-    */
-    const TimeSeries<ScalarType>& get_population() const
-    {
-        return m_subpopulations;
-    }
-
-    /**
-     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
-     * @param t The first TimePoint in subpopulation
-    */
-    void initialize_subpopulation(const TimePoint& t);
 
     bool get_npi_active() const
     {
@@ -285,32 +273,42 @@ public:
     }
 
     /**
-    * get subpopulation for one cell
-    */
-    int get_subpopulation(const TimePoint& t, const InfectionState& state, const uint32_t cell_idx) const;
+     * @brief Get the total number of Person%s at the Location.
+     * @return Number of Person%s.
+     */
+    uint32_t get_number_persons();
 
     /**
-    * get subpouplation for all cells
-    */
-    int get_subpopulation(const TimePoint& t, const InfectionState& state) const;
+     * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
+     * @param[in] t TimePoint of querry.
+     * @param[in] state InfectionState of interest.
+     * @return Amount of Person%s of the InfectionState in all Cell%s.
+     */
+    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
-     * get all subpopulations for all cells
+     * Add a timepoint to the subpopulations timeseries.
+     * @param[in] t The TimePoint to be added.
     */
-    Eigen::Ref<const Eigen::VectorXi> get_subpopulations(TimePoint t) const;
+    void store_subpopulations(const TimePoint t);
 
     /**
-     * get the total number of infected persons
+     * @brief Initialize the history of subpopulations.
+     * @param[in] t The TimePoint of initialization.
     */
-    int get_number_infected_total(TimePoint t) const;
+    void initialize_subpopulations(TimePoint t);
+
+    /**
+     * @brief Get the complete history of subpopulations.
+    */
+    const TimeSeries<ScalarType>& get_subpopulations() const;
 
 private:
     LocationType m_type;
     uint32_t m_index;
     bool m_capacity_adapted_transmission_risk;
-    TimeSeries<ScalarType> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<ScalarType, AgeGroup, VaccinationState> m_cached_exposure_rate;
+    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(InfectionState::Count)};
     std::vector<Cell> m_cells;
     MaskType m_required_mask;
     bool m_npi_active;

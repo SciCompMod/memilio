@@ -24,10 +24,10 @@ TEST(TestSimulation, advance_random)
     auto world     = mio::abm::World();
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
-    auto& p3       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
-    auto& p4       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto& p1       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
+    auto& p2       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
+    auto& p3       = world.add_person(location2, mio::abm::AgeGroup::Age5to14);
+    auto& p4       = world.add_person(location2, mio::abm::AgeGroup::Age5to14);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
@@ -67,22 +67,22 @@ TEST(TestSimulation, advance_subpopulation)
 {
     auto world       = mio::abm::World();
     auto location_id = world.add_location(mio::abm::LocationType::School);
-    auto& school     = world.get_individualized_location(location_id);
-    auto person1 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14, {});
-    school.add_person(person1);
-    auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34, {});
-    school.add_person(person2);
-    auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59, {});
-    school.add_person(person3);
+    auto school      = world.get_individualized_location(location_id);
+    auto person1 =
+        add_person_simple(world, location_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto person2 =
+        add_person_simple(world, location_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
+    auto person3 =
+        add_person_simple(world, location_id, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
 
     for (size_t i = 0; i < 50; i++) {
-        auto v = school.get_population().get_value(i);
+        auto v = school.get_subpopulations().get_value(i);
         // Check whether the number of persons in infected state at the location is consistent
         ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
         // Check the time evolution is correct
-        ASSERT_EQ(school.get_population().get_time(i), ScalarType(i) / 24);
+        ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }
 }

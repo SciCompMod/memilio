@@ -66,7 +66,7 @@ public:
      * Sum over all locations of the number of persons in an infection state.
      * @return the result of the simulation.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
@@ -86,10 +86,11 @@ public:
     /**@}*/
 
 private:
+    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
 
     World m_world;
-    TimeSeries<double> m_result;
+    TimeSeries<ScalarType> m_result;
     TimePoint m_t;
     TimeSpan m_dt;
 };

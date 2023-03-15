@@ -100,6 +100,17 @@ int main()
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
+    // Assign infection state to each person.
+    // The infection states are chosen randomly.
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        uint32_t infection_state = rand() % (uint32_t)mio::abm::InfectionState::Count;
+        if (infection_state != (uint32_t)mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         (mio::abm::InfectionState)infection_state));
+    }
+
     // Assign locations to the people
     for (auto& person : persons) {
         //assign shop and event

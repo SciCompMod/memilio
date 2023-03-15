@@ -26,22 +26,23 @@ namespace mio
 namespace abm
 {
 
-ViralLoad::ViralLoad(const TimePoint& start_date, const GlobalInfectionParameters& params)
+ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, GlobalInfectionParameters& params)
     : m_start_date(start_date)
 {
-    draw_viral_load(params);
+    draw_viral_load(virus, age, VaccinationState::Unvaccinated,
+                    params); // to be changed once the immunity level is implemented
 }
 
-void ViralLoad::draw_viral_load(const GlobalInfectionParameters& /*params*/)
+void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
+                                GlobalInfectionParameters& params)
 {
-    // These numbers are subject to change, They are going to be based on distributions backed from data.
-    m_peak     = 5.0;
-    m_incline  = 1.0;
-    m_decline  = -1.0;
+    m_peak     = params.get<ViralLoadPeak>()[{virus, age, vaccination_state}].draw_sample();
+    m_incline  = params.get<ViralLoadIncline>()[{virus, age, vaccination_state}].draw_sample();
+    m_decline  = params.get<ViralLoadDecline>()[{virus, age, vaccination_state}].draw_sample();
     m_end_date = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 
-double ViralLoad::get_viral_load(const TimePoint& t) const
+ScalarType ViralLoad::get_viral_load(TimePoint t) const
 {
     if (t >= m_start_date && t <= m_end_date) {
         if (t.seconds() <= m_start_date.seconds() + m_peak / m_incline) {
@@ -56,23 +57,20 @@ double ViralLoad::get_viral_load(const TimePoint& t) const
     }
 }
 
-Infection::Infection(const VirusVariant& virus, const GlobalInfectionParameters& params, const TimePoint& start_date,
-                     const InfectionState& start_state, const bool detected)
+Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
+                     InfectionState start_state, bool detected)
     : m_virus_variant(virus)
-    , m_viral_load(start_date, params)
+    , m_viral_load(virus, age, start_date, params)
+    , m_log_norm_alpha(params.get<InfectivityFromViralLoadAlpha>()[{virus, age}].draw_sample())
+    , m_log_norm_beta(params.get<InfectivityFromViralLoadBeta>()[{virus, age}].draw_sample())
     , m_detected(detected)
 {
     draw_infection_course(start_date, params, start_state);
 };
 
-double Infection::get_viral_load(const TimePoint& t) const
+ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    return m_viral_load.get_viral_load(t);
-}
-
-double Infection::get_infectivity(const TimePoint& t) const
-{
-    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
+    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * m_viral_load.get_viral_load(t))));
 }
 
 const VirusVariant& Infection::get_virus_variant() const
@@ -80,7 +78,7 @@ const VirusVariant& Infection::get_virus_variant() const
     return m_virus_variant;
 }
 
-const InfectionState& Infection::get_infection_state(const TimePoint& t) const
+const InfectionState& Infection::get_infection_state(TimePoint t) const
 {
     return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t,
                                         [](std::pair<TimePoint, InfectionState> state, const TimePoint& t) {
@@ -99,8 +97,8 @@ bool Infection::is_detected() const
     return m_detected;
 }
 
-void Infection::draw_infection_course(const TimePoint& start_date, const GlobalInfectionParameters& /*params*/,
-                                      const InfectionState& start_state)
+void Infection::draw_infection_course(TimePoint start_date, const GlobalInfectionParameters& /*params*/,
+                                      InfectionState start_state)
 {
     auto t = start_date;
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, start_state));

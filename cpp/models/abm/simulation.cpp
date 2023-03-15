@@ -30,13 +30,15 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_t(t)
     , m_dt(hours(1))
 {
+    initialize_locations(t);
     store_result_at(t);
-    // Re-initialize the subpopulation if the simulation does not start from TimePoint 0.
-    if (t.days() != 0) {
-        for (auto&& locations : m_world.get_locations()) {
-            for (auto location : locations) {
-                location.initialize_subpopulation(t);
-            }
+}
+
+void Simulation::initialize_locations(TimePoint t)
+{
+    for (auto&& locations : m_world.get_locations()) {
+        for (auto location : locations) {
+            location->initialize_subpopulations(t);
         }
     }
 }

@@ -31,22 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(const LocationId id, const AgeGroup& age, const Infection& infection, const uint32_t person_id)
-    : Person(id, age, person_id)
-{
-    m_infections = std::vector<Infection>{infection};
-    /*if (is_infected(t) && infection.is_detected()) {
-        m_quarantine = true;
-    }*/
-}
-
-Person::Person(const Location& location, const AgeGroup& age, const Infection& infection, const uint32_t person_id)
-    : Person({location.get_index(), location.get_type()}, age, infection, person_id)
-{
-}
-
-Person::Person(const LocationId id, const AgeGroup& age, const uint32_t person_id)
-    : m_location_id(std::make_shared<LocationId>(id))
+Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+    : m_location(location.shared_from_this())
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -57,42 +43,32 @@ Person::Person(const LocationId id, const AgeGroup& age, const uint32_t person_i
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()();
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
+    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()();
+    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()();
+    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()();
+    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()();
 }
 
-Person::Person(const Location& location, const AgeGroup& age, const uint32_t person_id)
-    : Person({location.get_index(), location.get_type()}, age, person_id)
+void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params)
 {
-}
-
-void Person::interact(const TimePoint& t, const TimeSpan& dt, Location& loc, const GlobalInfectionParameters& params)
-{
-    auto current_infection_state = get_infection_state(t);
-    if (current_infection_state == InfectionState::Susceptible) { // Susceptible
-        auto virus = loc.interact(*this, t, dt, params);
-
-        if (virus != VirusVariant::Count) {
-            add_new_infection(Infection(virus, params, t));
-        }
+    if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
+        m_location->interact(*this, t, dt, params);
     }
     m_time_at_location += dt;
 }
 
 void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
 {
-    if (&loc_old != &loc_new) {
-        loc_old.remove_person(*this);
-        m_location_id = std::make_shared<LocationId>(LocationId({loc_new.get_index(), loc_new.get_type()}));
-        m_cells       = cells;
-        loc_new.add_person(*this);
+    if (loc_old != loc_new) {
+        loc_old.remove_person(shared_from_this());
+        m_location = loc_new.shared_from_this();
+        m_cells    = cells;
+        loc_new.add_person(shared_from_this());
         m_time_at_location = TimeSpan(0);
     }
 }
 
-bool Person::is_infected(const TimePoint& t) const
+bool Person::is_infected(TimePoint t) const
 {
     if (m_infections.empty()) {
         return false;
@@ -106,24 +82,29 @@ bool Person::is_infected(const TimePoint& t) const
     return true;
 }
 
-const InfectionState& Person::get_infection_state(const TimePoint& t) const
+InfectionState Person::get_infection_state(TimePoint t) const
 {
     if (m_infections.empty()) {
-        return std::move(InfectionState::Susceptible);
+        return InfectionState::Susceptible;
     }
     else {
         return m_infections.back().get_infection_state(t);
     }
 }
 
-void Person::add_new_infection(Infection inf)
+void Person::add_new_infection(Infection&& inf)
 {
     m_infections.push_back(std::move(inf));
 }
 
-LocationId Person::get_location_id() const
+Location& Person::get_location()
 {
-    return *m_location_id;
+    return *m_location;
+}
+
+const Location& Person::get_location() const
+{
+    return *m_location;
 }
 
 void Person::set_assigned_location(Location& location)
@@ -169,9 +150,9 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
-bool Person::get_tested(const TimePoint& t, const TestParameters& params)
+bool Person::get_tested(TimePoint t, const TestParameters& params)
 {
-    double random = UniformDistribution<double>::get_instance()();
+    ScalarType random = UniformDistribution<ScalarType>::get_instance()();
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -215,7 +196,7 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-double Person::get_mask_protective_factor(const GlobalInfectionParameters& params) const
+ScalarType Person::get_mask_protective_factor(const GlobalInfectionParameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;
@@ -231,7 +212,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {
             // draw if the person wears a mask even if not required
-            double wear_mask = UniformDistribution<double>::get_instance()();
+            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()();
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
             }
@@ -241,7 +222,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = true;
         if (get_mask_compliance(target.get_type()) < 0.) {
             // draw if a person refuses to wear the required mask
-            double wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
+            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()(-1., 0.);
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }
