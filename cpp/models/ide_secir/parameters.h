@@ -94,7 +94,7 @@ private:
 };
 
 /**
- * @brief Transition distribution for each Transition in InfectionTransition.
+ * @brief Transition distribution for each transition in InfectionTransition.
  * 
  * Note that Distribution from S->E is just a dummy.
  * This transition is calculated in a different way.
@@ -237,14 +237,83 @@ public:
 
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
      */
-    void check_constraints() const
+    int check_constraints() const
     {
-        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0) {
-            log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d}", 0);
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
+            return 1;
         }
 
-        // TODO
+        if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
+            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
+            log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        for (int i = 0; i < (int)InfectionTransition::Count; i++) {
+            if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
+                log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed] != 1.0) {
+            log_error("Constraint check: Parameter transitiion probability for SusceptibleToExposed unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms] != 1.0) {
+            log_error(
+                "Constraint check: Parameter transitiion probability for ExposedToInfectedNoSymptoms unequal to {:d}",
+                1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedNoSymptomsToInfectedSymptoms and "
+                      "InfectedNoSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSymptomsToInfectedSevere and "
+                      "InfectedSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSevereToInfectedCritical and "
+                      "InfectedSevereToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedCriticalToDead and "
+                      "InfectedCriticalToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        return 0;
     }
 
 private:
