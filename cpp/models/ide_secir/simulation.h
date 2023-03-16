@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin J Kuehn
+* Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,13 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_SIMULATOR_H
-#define EPI_ABM_SIMULATOR_H
+#ifndef IDE_SECIR_SIMULATION_H
+#define IDE_SECIR_SIMULATION_H
 
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
-#include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
@@ -36,7 +35,7 @@ namespace isecir
 {
 
 /**
- * run the simulation in discrete steps, evolve the world and report results.
+ * run the simulation in discrete steps and report results.
  */
 class Simulation
 {
@@ -129,11 +128,11 @@ private:
 };
 
 /**
- * @brief simulate simulates a compartmental model
+ * @brief simulates a compartmental model
  * @param[in] t0 start time
  * @param[in] tmax end time
  * @param[in] dt initial step size of integration
- * @param[in] model: An instance of a compartmental model
+ * @param[in] model an instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  * @tparam Model a compartment model type
  * @tparam Sim a simulation type that can simulate the model.
@@ -143,4 +142,4 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
 } // namespace isecir
 } // namespace mio
 
-#endif
+#endif //IDE_SECIR_SIMULATION_H

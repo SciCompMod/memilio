@@ -69,6 +69,8 @@ int main()
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
 
+    model.check_constraints();
+
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);

@@ -38,30 +38,59 @@ namespace isecir
 **********************************************/
 
 /**
-* @brief Distribution of the time spent in a compartment before transiting to next compartment.
+* @brief Function describing the time spent in a compartment before transiting to next compartment.
+
+* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain infection_age 
+* (i.e. time after entering the compartment) and has not yet progressed to the next.
+* See also function \gamma in Overleaf.
+* Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
+* TransitionDistribution implements a vector with DelayDistribution%s for each compartment.
 */
 struct DelayDistribution {
+    /**
+    * @brief Default constructor of the class. Default for m_max_support is 2.0 (relatively random.)
+    */
     DelayDistribution()
-        : xright{2.0}
-    {
-    }
-    DelayDistribution(ScalarType init_x_right)
-        : xright{init_x_right}
+        : m_max_support{2.0}
     {
     }
 
+    /**
+     * @brief Construct a new DelayDistribution object
+     * 
+     * @param init_max_support specifies the right bound and therefore the support of the function.
+     */
+    DelayDistribution(ScalarType init_max_support)
+        : m_max_support{init_max_support}
+    {
+    }
+    /**
+     * @brief DelayDistribution is currently defined as a smoothed cosine function.
+     * 
+     * Used function goes through points (0,1) and (m_max_suppor,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param infection_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the smoother cosine function
+     */
     ScalarType Distribution(ScalarType infection_age)
     {
-        return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
+        return smoother_cosine(infection_age, 0.0, m_max_support, 1.0, 0.0);
     }
 
-    ScalarType get_xright()
+    /**
+     * @brief Get the m_max_support object
+     * 
+     * Can be used to access the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_max_support()
     {
-        return xright;
+        return m_max_support;
     }
 
 private:
-    ScalarType xright;
+    ScalarType m_max_support; ///< specifies the right bound of the support of the DelayDistribution.
 };
 
 /**
@@ -88,7 +117,7 @@ struct TransitionDistributions {
  * @brief Parameters needed for TransitionDistributions.
  * 
  * Parameters stored in a vector for initialisation of the TransitionDistributions.
- * Currently, for each TransitionDistribution is only one paramter used (eg. xright).
+ * Currently, for each TransitionDistribution is only one paramter used (eg. m_max_suppor).
  * For each possible Transition defined in InfectionTransition, there is exactly one parameter.
  * Note that for transition S -> E, this is just a dummy.
  */

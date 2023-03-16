@@ -59,17 +59,17 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
     // determine the relevant calculation area = union of the supports of the relevant transition distributions
     ScalarType calc_time = std::max(
         {parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-             .get_xright(),
+             .get_max_support(),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-             .get_xright(),
+             .get_max_support(),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-             .get_xright(),
+             .get_max_support(),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-             .get_xright()});
+             .get_max_support()});
 
     // corresponding index
     /* need calc_time_index timesteps in sum,
-     subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of xright)*/
+     subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of max_support)*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
     Eigen::Index num_time_points{};
@@ -113,7 +113,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>());
     }
-    m_forceofinfection = 1 / ((ScalarType)m_N - deaths) * m_forceofinfection;
+    m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }
 
 void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
@@ -123,10 +123,10 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     /* If we have TransitionDistribution(m_dt*i)=0 for all i>= k (determined by the support of the distribution)
      then we have that the derivative of TransitionDistribution(m_dt*i) is equal to zero for all i>= k+1,
      since we are using a backwards difference scheme to compute the derivative. Hence calc_time_index goes until 
-     std::ceil(xright/m_dt) since for std::ceil(xright/m_dt)+1 all terms are already zero. 
+     std::ceil(max_support/m_dt) since for std::ceil(max_support/m_dt)+1 all terms are already zero. 
      This needs to be adjusted if we are changing the finite difference scheme */
-    Eigen::Index calc_time_index =
-        (Eigen::Index)std::ceil(parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_xright() / dt);
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
+        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_max_support() / dt);
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
@@ -206,8 +206,8 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
 
     // determine relevant calculation area and corresponding index
     ScalarType calc_time =
-        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_xright(),
-                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_xright());
+        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_max_support(),
+                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_max_support());
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt);
 
@@ -226,7 +226,7 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
     m_population.get_last_value()[idx_InfectionState] = sum;
 }
 
-void Model::compartments_current_timestep_ECIHU(ScalarType dt)
+void Model::other_compartments_current_timestep(ScalarType dt)
 {
     // E
     compute_compartment(Eigen::Index(InfectionState::Exposed), Eigen::Index(InfectionTransition::SusceptibleToExposed),
@@ -265,7 +265,7 @@ void Model::initialize(ScalarType dt)
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] / m_forceofinfection;
 
     //calculate other compartment sizes for t=0
-    compartments_current_timestep_ECIHU(dt);
+    other_compartments_current_timestep(dt);
 
     //R; need an initial value for R, therefore do not calculate via compute_recovered()
     m_population.get_last_value()[Eigen::Index(InfectionState::Recovered)] =

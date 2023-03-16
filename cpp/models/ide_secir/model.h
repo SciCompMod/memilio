@@ -40,7 +40,7 @@ public:
     *
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt_init from one compartment to another.
-    *   Possible transitions are specified in infection_state.h.
+    *   Possible transitions are specified in as InfectionTransition%s.
     *   Considered points of times should have the distance dt_init and the last time point should be 0. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
@@ -83,7 +83,8 @@ public:
      * Computed value is stored in m_forceofinfection.
      * 
      * @param[in] dt Time discretization step size.          
-     * @param[in] initialization if true forceofinfection(-m_dt) will be calculated instead of the time at the last time point in transitions.
+     * @param[in] initialization if true we are in the case of the initilization of the model. 
+     *      For this we need forceofinfection at timepoint -dt which differs to usually used timepoints.
      */
     void update_forceofinfection(ScalarType dt, bool initialization = false);
 
@@ -91,7 +92,7 @@ public:
      * @brief Computes size of a flow.
      * 
      * Computes size of one flow from InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last timevalue in m_transitions.
+     * last time value in m_transitions.
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in InfectionTransition, which goes to the considered starting
@@ -130,15 +131,15 @@ public:
      * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_population.
      * 
      * Calculation is reasonable for all compartments except S, R, D. 
-     * Therefore, we have alternative funtions for those compartments.
+     * Therefore, we have alternative functions for those compartments.
      *
      * @param[in] idx_InfectionState Specifies the considered InfectionState
      * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
-     *              related to a flow from the considered InfectionState to any other State.
-     *              This index is also used for related Probability.
+     *              related to a flow from the considered InfectionState to any other InfectionState.
+     *              This index is also used for related probability.
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
-     *              related to a flow from the considered InfectionState to any other State (in most cases to Recovered). 
+     *              related to a flow from the considered InfectionState to any other InfectionState (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      * @param[in] dt Time discretization step size.
      */
@@ -146,25 +147,25 @@ public:
                              int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments ECIHU for the current last timestep in m_population.
+     * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_population.
      *
      * New values are stored in m_population. Most values are computed via the function get_size_of_compartments().
      * 
      * @param[in] dt Time discretization step size.
      */
-    void compartments_current_timestep_ECIHU(ScalarType dt);
+    void other_compartments_current_timestep(ScalarType dt);
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    /* Attention: m_population and m_transitions do not necessarily have the same number of time points */
+    /* Attention: m_population and m_transitions do not necessarily have the same number of time points due to the initialization part. */
     TimeSeries<ScalarType>
         m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType>
-        m_population; ///< TimeSeries containing points of time and the corresponding number of people in defined Infectionstate%s.
+        m_population; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
 
 private:
-    ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme
+    ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
-    ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt)
+    ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
 };
 
 } // namespace isecir

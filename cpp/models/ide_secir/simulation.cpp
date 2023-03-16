@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin J Kuehn
+* Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef IDE_SECIR_SIMULATION_H
-#define IDE_SECIR_SIMULATION_H
-
 #include "ide_secir/simulation.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
@@ -57,7 +54,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->update_forceofinfection(m_dt);
 
         // compute remaining compartments from flows
-        m_model->compartments_current_timestep_ECIHU(m_dt);
+        m_model->other_compartments_current_timestep(m_dt);
         m_model->compute_recovered();
     }
 }
@@ -100,5 +97,3 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
 
 } // namespace isecir
 } // namespace mio
-
-#endif // IDE_SECIR_SIMULATION_H
