@@ -111,3 +111,7 @@ endif()
 if(MEMILIO_ENABLE_MPI)
     target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
 endif()
+
+if(MEMILIO_ENABLE_OPENMP)
+    target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
+endif()

@@ -33,6 +33,7 @@
 #include "memilio/utils/memory.h"
 #include <array>
 #include <random>
+#include <mutex>
 
 namespace mio
 {
@@ -330,6 +331,7 @@ public:
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
 private:
+    std::mutex m_mut; ///< Mutex to protect the list of persons from concurrent modification.
     LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/

@@ -78,6 +78,12 @@ test_save_results.cpp
 )
 endif()
 
+if(MEMILIO_ENABLE_OPENMP)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_openmp.cpp
+    )
+endif()
+
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir abm gtest_main)
