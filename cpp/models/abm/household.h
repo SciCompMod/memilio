@@ -56,7 +56,7 @@ public:
      * @brief Constructs a new HouseholdMember.
      */
     HouseholdMember()
-        : m_age_weights({AgeGroup(NUM_AGE_GROUPS)}, 0)
+        : m_age_weights({AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS)}, 0)
     {
     }
 
@@ -66,7 +66,7 @@ public:
      * @param[in] age_group The AgeGroup.
      * @param[in] weight The weight of the AgeGroup.
      */
-    void set_age_weight(AgeGroup age_group, int weight)
+    void set_age_weight(mio::AgeGroup age_group, int weight)
     {
         m_age_weights[age_group] = weight;
     }
@@ -74,13 +74,13 @@ public:
     /**
      * @brief Returns the CustomIndexArray with the weights of each AgeGroup.
      */
-    const CustomIndexArray<int, AgeGroup>& get_age_weights() const
+    const CustomIndexArray<int, mio::AgeGroup>& get_age_weights() const
     {
         return m_age_weights;
     }
 
 private:
-    CustomIndexArray<int, AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
+    CustomIndexArray<int, mio::AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
 };
 
 /**

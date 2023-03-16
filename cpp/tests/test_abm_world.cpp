@@ -22,16 +22,38 @@
 
 TEST(TestWorld, init)
 {
-    auto world = mio::abm::World();
+    auto world = mio::abm::World(6);
     for (uint32_t i = 0; i < (uint32_t)mio::abm::LocationType::Count; i++) {
         ASSERT_THAT(world.get_locations()[i], testing::ElementsAre());
     }
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
+TEST(TestWorld, copyWorld)
+{
+    auto simulation_params                              = mio::abm::SimulationParameters(6);
+    simulation_params.get<mio::abm::IncubationPeriod>() = 4.;
+    auto world                                          = mio::abm::World(simulation_params);
+    world.add_location(mio::abm::LocationType::School);
+    world.add_location(mio::abm::LocationType::School);
+    world.add_location(mio::abm::LocationType::Work);
+    world.add_location(mio::abm::LocationType::Home);
+
+    auto copied_world = mio::abm::World(world);
+    auto copied_simulation_params =
+        copied_world.get_simulation_parameters()
+            .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}];
+
+    ASSERT_EQ(copied_world.get_locations().size(), (uint32_t)mio::abm::LocationType::Count);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School].size(), 2);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Work].size(), 1);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home].size(), 1);
+    ASSERT_EQ(copied_simulation_params.value(), 4.);
+}
+
 TEST(TestWorld, addLocation)
 {
-    auto world      = mio::abm::World();
+    auto world      = mio::abm::World(6);
     auto school_id1 = world.add_location(mio::abm::LocationType::School);
     auto school_id2 = world.add_location(mio::abm::LocationType::School);
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
@@ -56,7 +78,7 @@ TEST(TestWorld, addLocation)
 
 TEST(TestWorld, addPerson)
 {
-    auto world    = mio::abm::World();
+    auto world    = mio::abm::World(6);
     auto location = world.add_location(mio::abm::LocationType::School);
 
     auto& p1 = world.add_person(location, mio::abm::InfectionState::Recovered_Carrier);
@@ -69,7 +91,7 @@ TEST(TestWorld, addPerson)
 
 TEST(TestWorld, getSubpopulationCombined)
 {
-    auto world   = mio::abm::World();
+    auto world   = mio::abm::World(6);
     auto school1 = world.add_location(mio::abm::LocationType::School);
     auto school2 = world.add_location(mio::abm::LocationType::School);
     auto school3 = world.add_location(mio::abm::LocationType::School);
@@ -86,7 +108,7 @@ TEST(TestWorld, getSubpopulationCombined)
 
 TEST(TestWorld, findLocation)
 {
-    auto world     = mio::abm::World();
+    auto world     = mio::abm::World(6);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
@@ -108,7 +130,7 @@ TEST(TestWorld, evolveStateTransition)
 {
     using testing::Return;
 
-    auto world     = mio::abm::World();
+    auto world     = mio::abm::World(6);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier);
     auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible);
@@ -142,7 +164,7 @@ TEST(TestWorld, evolveMigration)
     using testing::Return;
 
     {
-        auto world     = mio::abm::World();
+        auto world     = mio::abm::World(6);
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
         auto school_id = world.add_location(mio::abm::LocationType::School);
         auto work_id   = world.add_location(mio::abm::LocationType::Work);
@@ -186,7 +208,7 @@ TEST(TestWorld, evolveMigration)
     }
 
     {
-        auto world = mio::abm::World();
+        auto world = mio::abm::World(6);
         world.use_migration_rules(false);
 
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
@@ -246,7 +268,7 @@ TEST(TestWorld, evolveMigration)
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
 
-    auto world   = mio::abm::World();
+    auto world   = mio::abm::World(6);
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
     auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),

@@ -22,7 +22,7 @@
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World();
+    auto world     = mio::abm::World(6);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
     auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::AgeGroup(1));
@@ -66,14 +66,17 @@ TEST(TestDiscreteDistribution, generate)
 
 TEST(TestSimulation, advance_subpopulation)
 {
-    auto world       = mio::abm::World();
+    auto world       = mio::abm::World(6);
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
-    auto person1     = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(1), {});
+    auto person1     = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
+                                        mio::abm::GlobalInfectionParameters(6));
     school.add_person(person1);
-    auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2), {});
+    auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
+                                    mio::abm::GlobalInfectionParameters(6));
     school.add_person(person2);
-    auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, mio::AgeGroup(3), {});
+    auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
+                                    mio::abm::GlobalInfectionParameters(6));
     school.add_person(person3);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
