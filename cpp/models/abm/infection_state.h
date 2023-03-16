@@ -28,8 +28,8 @@ namespace abm
 {
 
 /** 
- * infection state in ABM.
- * can be used as 0-based index
+ * @brief #InfectionState in ABM.
+ * Can be used as 0-based index.
  */
 enum class InfectionState : std::uint32_t
 {

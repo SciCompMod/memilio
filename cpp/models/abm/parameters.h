@@ -39,6 +39,9 @@ namespace mio
 namespace abm
 {
 
+/**
+ * @brief Time that a Person is infected but not yet infectious.
+ */
 struct IncubationPeriod {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default()
@@ -183,6 +186,9 @@ struct RecoveredToSusceptible {
     }
 };
 
+/**
+ * @brief Probability that an Infection is detected.
+ */
 struct DetectInfection {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default()
@@ -195,6 +201,9 @@ struct DetectInfection {
     }
 };
 
+/**
+ * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ */
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
     static auto get_default()
@@ -208,13 +217,16 @@ struct MaskProtection {
 };
 
 /**
- * parameters of the infection that are the same everywhere within the world.
+ * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection>;
 
+/**
+ * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
+ */
 struct MaximumContacts {
     using Type = ScalarType;
     static constexpr Type get_default()
@@ -259,10 +271,13 @@ struct AerosolTransmissionRates {
 };
 
 /**
- * parameters of the infection that depend on the location.
+ * @brief Parameters of the Infection that depend on the Location.
  */
 using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
 
+/**
+ * @brief Parameters that describe the reliability of a test.
+ */
 struct TestParameters {
     UncertainValue sensitivity;
     UncertainValue specificity;
@@ -280,6 +295,9 @@ struct GenericTest {
     }
 };
 
+/**
+ * @brief Reliability of an AntigenTest.
+ */
 struct AntigenTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
@@ -292,6 +310,9 @@ struct AntigenTest : public GenericTest {
     }
 };
 
+/**
+ * @brief Reliability of a PCRTest.
+ */
 struct PCRTest : public GenericTest {
     using Type = TestParameters;
     static Type get_default()
@@ -305,7 +326,7 @@ struct PCRTest : public GenericTest {
 };
 
 /**
- * parameters that govern the migration between locations.
+ * @brief Starting date of interventions.
  */
 struct LockdownDate {
     using Type = TimePoint;
@@ -318,6 +339,10 @@ struct LockdownDate {
         return "LockdownDate";
     }
 };
+
+/**
+ * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
+ */
 struct BasicShoppingRate {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static auto get_default()
@@ -329,6 +354,10 @@ struct BasicShoppingRate {
         return "BasicShoppingRate";
     }
 };
+
+/**
+ * @brief Percentage of Person%s of the respective age going to work.
+ */
 struct WorkRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -340,6 +369,10 @@ struct WorkRatio {
         return "WorkRatio";
     }
 };
+
+/**
+ * @brief Percentage of Person%s of the respective age going to school.
+ */
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -351,6 +384,10 @@ struct SchoolRatio {
         return "SchoolRatio";
     }
 };
+
+/**
+ * @brief Parameter for the exponential distribution to decide if a Person goes to a social event.
+ */
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -363,6 +400,9 @@ struct SocialEventRate {
     }
 };
 
+/**
+ * @brief Earliest time that a Person can go to work.
+ */
 struct GotoWorkTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -375,6 +415,9 @@ struct GotoWorkTimeMinimum {
     }
 };
 
+/**
+ * @brief Latest time that a Person can go to work.
+ */
 struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -387,6 +430,9 @@ struct GotoWorkTimeMaximum {
     }
 };
 
+/**
+ * @brief Earliest time that a Person can go to school.
+ */
 struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -399,6 +445,9 @@ struct GotoSchoolTimeMinimum {
     }
 };
 
+/**
+ * @brief Latest time that a Person can go to school.
+ */
 struct GotoSchoolTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -412,7 +461,7 @@ struct GotoSchoolTimeMaximum {
 };
 
 /**
- * parameters that control the migration between locations.
+ * @brief Parameters that control the migration between Location%s.
  */
 using MigrationParameters =
     ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,

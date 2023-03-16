@@ -146,10 +146,8 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
                 except:
                     pass
         # should be equal to the input array
-        self.assertAlmostEqual(
-            list(inputarray_r[6:]),
-            list(control_sum[6:]),
-            10)
+        np.testing.assert_array_almost_equal(
+            inputarray_r[6:], control_sum[6:], 10)
 
 
 if __name__ == '__main__':

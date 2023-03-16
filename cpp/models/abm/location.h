@@ -192,8 +192,8 @@ public:
     }
 
     /**
-     * @return All cells of the location.
-    */
+     * @brief Get the Cell%s of this Location.
+     */
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
@@ -234,10 +234,10 @@ public:
     }
 
     /**
-    * @brief Set the capacity of a cell in the Location in persons and volume.
-    * @param persons Maximum number of Person%s that can visit the Cell at the same time.
-    * @param volume Volume of the Cell in m^3.
-    */
+     * @brief Set the capacity of a cell in the Location in persons and volume.
+     * @param persons Maximum number of Person%s that can visit the Cell at the same time.
+     * @param volume Volume of the Cell in m^3.
+     */
     void set_capacity(uint32_t persons, uint32_t volume, uint32_t cell_idx = 0)
     {
         m_cells[cell_idx].m_capacity.persons = persons;
@@ -250,8 +250,7 @@ public:
     CellCapacity get_capacity(uint32_t cell_idx = 0)
     {
         return m_cells[cell_idx].m_capacity;
-    }
-
+    } 
     /**
     * Set the capacity adapted transmission risk flag
     * @param consider_capacity if true considers the capacity of the location for the computation of relative 
@@ -261,6 +260,27 @@ public:
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
+
+    /**
+     * @brief Add a TimePoint to the subpopulations TimeSeries.
+     * @param t The TimePoint to be added.
+     */
+    void add_subpopulations_timepoint(const TimePoint& t);
+
+    /**
+     * Return the time series object of the current number of individuals in the each infection state
+     * @return the time series object of the current number of individuals in the each infection state
+     */
+    const TimeSeries<ScalarType>& get_population() const
+    {
+        return m_subpopulations;
+    }
+
+    /**
+     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
+     * @param t The first TimePoint in subpopulation
+     */
+    void initialize_subpopulation(const TimePoint& t);
 
     bool get_npi_active() const
     {
