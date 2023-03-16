@@ -332,10 +332,7 @@ private:
          * @param[in] t TimePoint of check.
          * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-        {
-            return 1.; // put implementation in .cpp
-        }
+        ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
 
         /**
          * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
@@ -343,10 +340,7 @@ private:
          * @param[in] t TimePoint of check.
          * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-        {
-            return 1.; // put implementation in .cpp
-        }
+        ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
     };
 
 public:

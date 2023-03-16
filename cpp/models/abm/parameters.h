@@ -186,6 +186,71 @@ struct RecoveredToSusceptible {
     }
 };
 
+struct ViralLoadPeak {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadPeak";
+    }
+};
+
+struct ViralLoadIncline {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadIncline";
+    }
+};
+
+struct ViralLoadDecline {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, -1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadDecline";
+    }
+};
+
+struct InfectivityFromViralLoadAlpha {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 0.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "InfectivityFromViralLoadAlpha";
+    }
+};
+
+struct InfectivityFromViralLoadBeta {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "InfectivityFromViralLoadBeta";
+    }
+};
+
 /**
  * @brief Probability that an Infection is detected.
  */
