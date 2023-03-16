@@ -59,7 +59,7 @@ private:
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] params Global infection parameters.
      */
-    void draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state, GlobalInfectionParameters& params);
+    void draw_viral_load(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params);
 
     TimePoint m_start_date;
     TimePoint m_end_date;
