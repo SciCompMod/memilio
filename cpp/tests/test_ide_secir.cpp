@@ -217,6 +217,7 @@ TEST(IdeSecir, checksimulationFunctions)
 // The idea of this test is to confirm that the equilibrium of the compartments
 // (after simulation for a long enough time) does not change if we have a different m_max_support
 // for the DelayDistribution describing the transition from InfectedCritical To Recovered.
+// We also check that the proportion between Recovered and Death is as expected in the equilibrium.
 TEST(IdeSecir, compareEquilibria)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -305,6 +306,20 @@ TEST(IdeSecir, compareEquilibria)
         EXPECT_NEAR(secihurd_simulated.get_last_value()[i], secihurd_simulated2.get_last_value()[i], 1e-8);
     }
 
+    // Check whether equilibrium has the right proportion between Recovered and Dead
+    // In our case we have that probabilities going from U to R or D are 0.5
+    // Hence the increase in both R and D should be equal between time 0 and tmax
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
+                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
+                secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
+                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
+                1e-8);
+    EXPECT_NEAR(secihurd_simulated2.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
+                    secihurd_simulated2[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
+                secihurd_simulated2.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
+                    secihurd_simulated2[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
+                1e-8);
+
     // Compute at what time the equilibrium was reached and check whether that time point is smaller for model than for model2
     // (as we have a smaller max_support in model than in model2)
     ScalarType equilibrium_time{};
@@ -323,9 +338,6 @@ TEST(IdeSecir, compareEquilibria)
     }
 
     EXPECT_TRUE(equilibrium_time < equilibrium_time2);
-
-    sim.print_compartments();
-    sim2.print_compartments();
 }
 
 TEST(IdeSecir, infection_transitions)
