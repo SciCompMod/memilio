@@ -214,11 +214,10 @@ TEST(IdeSecir, checksimulationFunctions)
     }
 }
 
-// Check whether the in the end we have the right proportion of Recovered and Deaths
 // The idea of this test is to confirm that the equilibrium of the compartments
 // (after simulation for a long enough time) does not change if we have a different m_max_support
 // for the DelayDistribution describing the transition from InfectedCritical To Recovered.
-TEST(IdeSecir, checkProportionRecoveredDeaths)
+TEST(IdeSecir, compareEquilibria)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -235,7 +234,7 @@ TEST(IdeSecir, checkProportionRecoveredDeaths)
 
     // add time points for initialization for transitions
     Vec vec_init(num_transitions);
-    vec_init << 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0;
+    vec_init << 0.0, 10.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0;
     // add initial time point to time series
     init.add_time_point(-12, vec_init);
     init2.add_time_point(-12, vec_init);
@@ -324,6 +323,9 @@ TEST(IdeSecir, checkProportionRecoveredDeaths)
     }
 
     EXPECT_TRUE(equilibrium_time < equilibrium_time2);
+
+    sim.print_compartments();
+    sim2.print_compartments();
 }
 
 TEST(IdeSecir, infection_transitions)
