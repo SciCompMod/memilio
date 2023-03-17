@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Wadim Koslow
+* Authors: Daniel Abele, Wadim Koslow, Henrik Zunker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,10 +19,6 @@
 */
 #include "load_test_data.h"
 #include "memilio/compartments/simulation.h"
-#include "ode_secir/model.h"
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
-#include "ode_seir/parameters.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
 #include "memilio/utils/time_series.h"
@@ -165,10 +161,7 @@ TEST(TestSaveResult, save_result_with_params)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto num_runs = 3;
-    auto study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
-    auto results  = study.run([](auto&& g) {
-        return draw_sample(g);
-    });
+    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -180,7 +173,7 @@ TEST(TestSaveResult, save_result_with_params)
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
     auto run_idx            = size_t(0);
-    study.run(
+    parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
@@ -208,7 +201,7 @@ TEST(TestSaveResult, save_result_with_params)
               result_from_file.get_groups().get_num_time_points());
 }
 
-TEST(TestSaveResult, save_results)
+TEST(TestSaveResult, save_percentiles_and_sums)
 {
     // set up parameter study
     double t0           = 0;
@@ -259,10 +252,7 @@ TEST(TestSaveResult, save_results)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto num_runs = 3;
-    auto study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
-    auto results  = study.run([](auto&& g) {
-        return draw_sample(g);
-    });
+    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -273,7 +263,7 @@ TEST(TestSaveResult, save_results)
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto run_idx = size_t(0);
-    study.run(
+    parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
@@ -291,10 +281,35 @@ TEST(TestSaveResult, save_results)
 
     auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
     ASSERT_TRUE(save_results_status);
-    auto results_from_file = mio::read_result(tmp_results_dir + "/p25/Results.h5");
-    ASSERT_TRUE(results_from_file);
-    auto result_from_file = results_from_file.value()[0];
+
+    // test percentiles
+    auto results_from_file_p05 = mio::read_result(tmp_results_dir + "/p05/Results.h5");
+    ASSERT_TRUE(results_from_file_p05);
+    auto results_from_file_p25 = mio::read_result(tmp_results_dir + "/p25/Results.h5");
+    ASSERT_TRUE(results_from_file_p25);
+    auto results_from_file_p50 = mio::read_result(tmp_results_dir + "/p50/Results.h5");
+    ASSERT_TRUE(results_from_file_p50);
+    auto results_from_file_p75 = mio::read_result(tmp_results_dir + "/p75/Results.h5");
+    ASSERT_TRUE(results_from_file_p75);
+    auto results_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Results.h5");
+    ASSERT_TRUE(results_from_file_p95);
+
+    auto result_from_file = results_from_file_p25.value()[0];  
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
+
+    // results_run
+    auto results_run0 = mio::read_result(tmp_results_dir + "/results_run0.h5");
+    ASSERT_TRUE(results_run0);
+    auto results_run0_sum = mio::read_result(tmp_results_dir + "/results_run0_sum.h5");
+    ASSERT_TRUE(results_run0_sum);
+    auto results_run1 = mio::read_result(tmp_results_dir + "/results_run1.h5");
+    ASSERT_TRUE(results_run1);
+    auto results_run1_sum = mio::read_result(tmp_results_dir + "/results_run1_sum.h5");
+    ASSERT_TRUE(results_run1_sum);
+    auto results_run2 = mio::read_result(tmp_results_dir + "/results_run2.h5");
+    ASSERT_TRUE(results_run2);
+    auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
+    ASSERT_TRUE(results_run2_sum);
 }
