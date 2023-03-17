@@ -36,7 +36,7 @@ void Simulation::advance(ScalarType tmax)
     m_model->initialize(m_dt);
 
     // for every time step:
-    while (m_model->m_transitions.get_last_time() < tmax) {
+    while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
 
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
         m_model->m_population.add_time_point(m_model->m_population.get_last_time() + m_dt);

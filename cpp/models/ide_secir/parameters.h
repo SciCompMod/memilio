@@ -89,6 +89,18 @@ struct DelayDistribution {
         return m_max_support;
     }
 
+    /**
+     * @brief Set the m_max_support object
+     * 
+     * Can be used to set the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    void set_max_support(ScalarType new_max_support)
+    {
+        m_max_support = new_max_support;
+    }
+
 private:
     ScalarType m_max_support; ///< specifies the right bound of the support of the DelayDistribution.
 };
@@ -110,27 +122,6 @@ struct TransitionDistributions {
     static std::string name()
     {
         return "TransitionDistributions";
-    }
-};
-
-/**
- * @brief Parameters needed for TransitionDistributions.
- * 
- * Parameters stored in a vector for initialisation of the TransitionDistributions.
- * Currently, for each TransitionDistribution is only one paramter used (eg. m_max_suppor).
- * For each possible Transition defined in InfectionTransition, there is exactly one parameter.
- * Note that for transition S -> E, this is just a dummy.
- */
-struct TransitionParameters {
-    using Type = std::vector<ScalarType>;
-    static Type get_default()
-    {
-        return std::vector<ScalarType>((int)InfectionTransition::Count, 1.0);
-    }
-
-    static std::string name()
-    {
-        return "TransitionParameters";
     }
 };
 
@@ -221,8 +212,8 @@ struct RiskOfInfectionFromSymptomatic {
 
 // Define Parameterset for IDE SECIR model.
 using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
+                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

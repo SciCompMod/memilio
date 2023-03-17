@@ -55,16 +55,26 @@ int main()
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
-    // Set working parameters.
-    model.parameters.set<mio::isecir::TransitionDistributions>(
-        std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+    // Set working parameters
+    // Set max_support for all Delay Distributions
+    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
+    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]                 = 3;
+    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 4;
+    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
+    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
+        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
+    }
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
