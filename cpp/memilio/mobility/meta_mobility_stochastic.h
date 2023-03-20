@@ -26,6 +26,9 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/mobility/graph_simulation.h"
 
+//rausnehmen
+#include "memilio/utils/compiler_diagnostics.h"
+
 #include "boost/filesystem.hpp"
 
 #include <cassert>
@@ -235,10 +238,17 @@ public:
      * get the cumulative transition rate of the edge.
     */
     template <class Sim>
-    std::vector<ScalarType> get_transition_rates(SimulationNode<Sim>& node_from)
+    Eigen::VectorXd get_transition_rates(SimulationNode<Sim>& node_from)
     {
-        auto transitionRates =
-            node_from.get_last_state().array() * m_parameters.get_coefficients().get_baseline().array();
+        Eigen::VectorXd transitionRates(node_from.get_last_state().size());
+        //std::cout << "node from last state" << node_from.get_last_state() << std::endl;
+        //std::cout << "transition coefficients" << m_parameters.get_coefficients().get_baseline() << std::endl;
+        for (Eigen::Index i = 0; i < node_from.get_last_state().size(); ++i) {
+            transitionRates[i] =
+                node_from.get_last_state()(i) * m_parameters.get_coefficients().get_baseline()[(size_t)i];
+        }
+        //std::cout << "transition rates \n" << transitionRates << std::endl;
+        //(node_from.get_last_state().array() * m_parameters.get_coefficients().get_baseline().array()).matrix();
         return transitionRates;
     }
 
@@ -259,9 +269,12 @@ template <class Sim>
 void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>& node_from,
                                               SimulationNode<Sim>& node_to)
 {
-
+    //std::cout << "compartments before transition: " << node_from.get_result().get_last_value()[event] << ", "
+    //<< node_to.get_result().get_last_value()[event] << std::endl;
     node_from.get_result().get_last_value()[event] -= 1;
     node_to.get_result().get_last_value()[event] += 1;
+    //std::cout << "compartments after transition: " << node_from.get_result().get_last_value()[event] << ", "
+    //<< node_to.get_result().get_last_value()[event] << std::endl;
 }
 
 /**
@@ -296,17 +309,17 @@ void apply_migration(MigrationEdgeStochastic& migrationEdge, size_t event, Simul
  * @{
  */
 template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
+GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
 make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdgeStochastic>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_stochastic(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
 template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
+GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
 make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdgeStochastic>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
 /** @} */

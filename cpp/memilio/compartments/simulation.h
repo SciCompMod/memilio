@@ -131,6 +131,22 @@ public:
         return *m_model;
     }
 
+    /**
+     * @brief returns the next time step chosen by integrator
+    */
+    double get_dt()
+    {
+        return m_integrator.get_dt();
+    }
+
+    /**
+     * @brief returns the next time step chosen by integrator
+    */
+    const double get_dt() const
+    {
+        return m_integrator.get_dt();
+    }
+
 private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
