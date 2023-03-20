@@ -74,7 +74,7 @@ public:
      * @brief Create a World.
      * @param[in] num_agegroups The number of age groups in the simulated world.
      */
-    World(int num_agegroups)
+    World(int32_t num_agegroups)
         : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}),
                SimulationParameters(AgeGroup(num_agegroups)))
         , m_locations((uint32_t)LocationType::Count)
