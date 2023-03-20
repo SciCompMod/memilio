@@ -66,13 +66,12 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
-    pymio::bind_Index<mio::AgeGroup>(m, "AgeIndex");
     pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::abm::VaccinationState>(
         m, "_AgeVaccinationParameterArray");
-    pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
-    pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
+    pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<int32_t>());
+    pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<int32_t>());
+    pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<int32_t>());
 
     py::class_<mio::abm::TimeSpan>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -191,8 +190,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
 
     py::class_<mio::abm::World>(m, "World")
-        .def(py::init<mio::abm::GlobalInfectionParameters>(),
-             py::arg("infection_parameters") = mio::abm::GlobalInfectionParameters{})
+        .def(py::init<int32_t>())
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 0,
              py::return_value_policy::reference_internal)
         .def("add_person", &mio::abm::World::add_person, py::return_value_policy::reference_internal)
