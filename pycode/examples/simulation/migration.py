@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors:
 #
@@ -34,56 +34,56 @@ def parameter_study():
     # setup basic parameters
     model = secir.Model(1)
 
-    model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
-    model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2
-    model.parameters.TimeInfectedSymptoms[secir.AgeGroup(0)] = 6
-    model.parameters.TimeInfectedSevere[secir.AgeGroup(0)] = 12
-    model.parameters.TimeInfectedCritical[secir.AgeGroup(0)] = 8
+    model.parameters.IncubationTime[mio.AgeGroup(0)] = 5.2
+    model.parameters.SerialInterval[mio.AgeGroup(0)] = 4.2
+    model.parameters.TimeInfectedSymptoms[mio.AgeGroup(0)] = 6
+    model.parameters.TimeInfectedSevere[mio.AgeGroup(0)] = 12
+    model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 8
 
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.r_[0.5]
     model.parameters.ContactPatterns.cont_freq_mat[0].add_damping(
         mio.Damping(np.r_[0.3], t=0.3))
 
-    model.parameters.TransmissionProbabilityOnContact[secir.AgeGroup(0)] = 1.0
-    model.parameters.RelativeTransmissionNoSymptoms[secir.AgeGroup(0)] = 0.67
-    model.parameters.RecoveredPerInfectedNoSymptoms[secir.AgeGroup(0)] = 0.09
-    model.parameters.RiskOfInfectionFromSymptomatic[secir.AgeGroup(0)] = 0.25
-    model.parameters.SeverePerInfectedSymptoms[secir.AgeGroup(0)] = 0.2
-    model.parameters.CriticalPerSevere[secir.AgeGroup(0)] = 0.25
-    model.parameters.DeathsPerCritical[secir.AgeGroup(0)] = 0.3
+    model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = 1.0
+    model.parameters.RelativeTransmissionNoSymptoms[mio.AgeGroup(0)] = 0.67
+    model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(0)] = 0.09
+    model.parameters.RiskOfInfectionFromSymptomatic[mio.AgeGroup(0)] = 0.25
+    model.parameters.SeverePerInfectedSymptoms[mio.AgeGroup(0)] = 0.2
+    model.parameters.CriticalPerSevere[mio.AgeGroup(0)] = 0.25
+    model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.3
 
     # two regions with different populations and with some migration between them
     graph = secir.MigrationGraph()
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Exposed] = 100
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 50
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSymptoms] = 50
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSevere] = 20
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedCritical] = 10
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 10
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Recovered] = 10
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup((
-        secir.AgeGroup(0),
+        mio.AgeGroup(0),
         secir.InfectionState.Susceptible),
         10000)
     model.apply_constraints()
     graph.add_node(id=0, model=model, t0=t0)  # copies the model into the graph
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 0
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Exposed] = 0
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedNoSymptoms] = 0
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSymptoms] = 0
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedSevere] = 0
-    model.populations[secir.AgeGroup(
+    model.populations[mio.AgeGroup(
         0), secir.InfectionState.InfectedCritical] = 0
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 0
-    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Recovered] = 0
+    model.populations[mio.AgeGroup(0), secir.InfectionState.Dead] = 0
     model.populations.set_difference_from_group_total_AgeGroup((
-        secir.AgeGroup(0),
+        mio.AgeGroup(0),
         secir.InfectionState.Susceptible),
         2000)
     model.apply_constraints()

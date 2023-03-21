@@ -59,7 +59,7 @@ public:
      * @param[in] params Parameters of the simulation that are the same everywhere in the World.
      */
     World(SimulationParameters params)
-        : Base(Populations({AgeGroup(params.get_num_groups()), InfectionState::Count}),
+        : Base(Populations({params.get_num_groups(), InfectionState::Count}),
                SimulationParameters(params.get_num_groups()))
         , m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(GlobalInfectionParameters(params.get_num_groups()))
@@ -78,14 +78,18 @@ public:
         : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}),
                SimulationParameters(AgeGroup(num_agegroups)))
         , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(GlobalInfectionParameters(num_agegroups))
-        , m_migration_parameters(MigrationParameters(num_agegroups))
-        , m_simulation_parameters(SimulationParameters(num_agegroups))
+        , m_infection_parameters(GlobalInfectionParameters(AgeGroup(num_agegroups)))
+        , m_migration_parameters(MigrationParameters(AgeGroup(num_agegroups)))
+        , m_simulation_parameters(SimulationParameters(AgeGroup(num_agegroups)))
         , m_trip_list()
     {
         use_migration_rules(true);
     }
 
+    /**
+     * @brief Create a copied World.
+     * @param[in] other The World that needs to be copied. 
+     */
     World(const World& other)
         : Base(other.populations, other.parameters)
         , m_locations(other.m_locations)

@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
+* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -133,11 +133,6 @@ std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
-template <>
-std::string pretty_name<mio::AgeGroup>()
-{
-    return "AgeGroup";
-}
 
 } // namespace pymio
 
@@ -169,8 +164,6 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Recovered", mio::osecir::InfectionState::Recovered)
         .value("Dead", mio::osecir::InfectionState::Dead);
 
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
-
     pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
     py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
@@ -180,7 +173,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
     py::class_<mio::osecir::Model,

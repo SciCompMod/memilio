@@ -29,29 +29,6 @@ TEST(TestWorld, init)
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
-TEST(TestWorld, copyWorld)
-{
-    auto simulation_params = mio::abm::SimulationParameters(6);
-    simulation_params.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(1), mio::abm::VaccinationState::Count}] = 4.;
-    auto world = mio::abm::World(simulation_params);
-    world.add_location(mio::abm::LocationType::School);
-    world.add_location(mio::abm::LocationType::School);
-    world.add_location(mio::abm::LocationType::Work);
-    world.add_location(mio::abm::LocationType::Home);
-
-    auto copied_world = mio::abm::World(world);
-    auto copied_simulation_params =
-        copied_world.get_simulation_parameters()
-            .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(1), mio::abm::VaccinationState::Count}]
-            .value();
-
-    ASSERT_EQ(copied_world.get_locations().size(), (uint32_t)mio::abm::LocationType::Count);
-    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School].size(), 2);
-    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Work].size(), 1);
-    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home].size(), 1);
-    ASSERT_EQ(copied_simulation_params, 4.);
-}
-
 TEST(TestWorld, addLocation)
 {
     auto world      = mio::abm::World(6);
@@ -310,4 +287,27 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
     ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), true); // no more testing_schemes
+}
+
+TEST(TestWorld, copyWorld)
+{
+    auto simulation_params = mio::abm::SimulationParameters(6);
+    simulation_params.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 4.;
+    auto world = mio::abm::World(simulation_params);
+    world.add_location(mio::abm::LocationType::School);
+    world.add_location(mio::abm::LocationType::School);
+    world.add_location(mio::abm::LocationType::Work);
+    world.add_location(mio::abm::LocationType::Home);
+
+    auto copied_world = mio::abm::World(world);
+    auto copied_simulation_params =
+        copied_world.get_simulation_parameters()
+            .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+
+    ASSERT_EQ(copied_world.get_locations().size(), (uint32_t)mio::abm::LocationType::Count);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School].size(), 2);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Work].size(), 1);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home].size(), 1);
+    ASSERT_EQ(copied_simulation_params, 4.);
 }

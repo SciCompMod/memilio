@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors:
 #
@@ -32,7 +32,7 @@ def parameter_study():
     model = secir.Model(num_groups)
 
     for i in range(num_groups):
-        group = secir.AgeGroup(i)
+        group = mio.AgeGroup(i)
 
         model.parameters.IncubationTime[group] = 5.2
         model.parameters.TimeInfectedSymptoms[group] = 6
@@ -74,7 +74,7 @@ def parameter_study():
     # process the result of one run
 
     def handle_result(graph):
-        group = secir.AgeGroup(0)
+        group = mio.AgeGroup(0)
         print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
             0).property.model.parameters.TransmissionProbabilityOnContact[group].value))
         print("compartments at t = {}:".format(

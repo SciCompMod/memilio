@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
 # Authors:
 #
@@ -30,7 +30,7 @@ class Test_ParameterStudy(unittest.TestCase):
     def _get_model(self):
         model = secir.Model(1)
 
-        A0 = secir.AgeGroup(0)
+        A0 = mio.AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2
         model.parameters.TimeInfectedSymptoms[A0] = 6

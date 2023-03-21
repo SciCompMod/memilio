@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
+# Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 #
-# Authors: Daniel Abele
+# Authors: Daniel Abele, Khoa Nguyen
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -20,8 +20,8 @@
 
 from unittest import TestCase, main
 
-from memilio.simulation import UncertainValue
-from memilio.simulation.secir import (AgeGroup, AgeGroupArray, InfectionState,
+from memilio.simulation import UncertainValue, AgeGroup, AgeGroupArray
+from memilio.simulation.secir import (InfectionState,
                                       SecirPopulationArray)
 
 
