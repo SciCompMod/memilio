@@ -21,8 +21,7 @@
 from unittest import TestCase, main
 
 from memilio.simulation import UncertainValue, AgeGroup, AgeGroupArray
-from memilio.simulation.secir import (InfectionState,
-                                      SecirPopulationArray)
+from memilio.simulation.secir import (InfectionState, SecirPopulationArray)
 
 
 class TestCustomIndexArray(TestCase):

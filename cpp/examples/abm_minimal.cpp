@@ -25,7 +25,7 @@
 int main()
 {
     // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::SimulationParameters simulation_params = mio::abm::SimulationParameters(6);
+    mio::abm::SimulationParameters simulation_params = mio::abm::SimulationParameters(mio::AgeGroup(6));
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     simulation_params.get<mio::abm::IncubationPeriod>() = 4.;

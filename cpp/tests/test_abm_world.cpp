@@ -291,8 +291,9 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 
 TEST(TestWorld, copyWorld)
 {
-    auto simulation_params = mio::abm::SimulationParameters(6);
-    simulation_params.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 4.;
+    auto simulation_params = mio::abm::SimulationParameters(mio::AgeGroup(6));
+    simulation_params.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] =
+        4.;
     auto world = mio::abm::World(simulation_params);
     world.add_location(mio::abm::LocationType::School);
     world.add_location(mio::abm::LocationType::School);

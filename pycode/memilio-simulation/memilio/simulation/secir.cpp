@@ -133,6 +133,11 @@ std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
+template <>
+std::string pretty_name<mio::AgeGroup>()
+{
+    return "AgeGroup";
+}
 
 } // namespace pymio
 
@@ -173,7 +178,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    
+
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
     py::class_<mio::osecir::Model,

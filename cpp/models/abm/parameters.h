@@ -43,9 +43,9 @@ namespace abm
  */
 struct IncubationPeriod {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -55,9 +55,9 @@ struct IncubationPeriod {
 
 struct SusceptibleToExposedByCarrier {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -67,9 +67,9 @@ struct SusceptibleToExposedByCarrier {
 
 struct SusceptibleToExposedByInfected {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -79,9 +79,9 @@ struct SusceptibleToExposedByInfected {
 
 struct CarrierToInfected {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -91,9 +91,9 @@ struct CarrierToInfected {
 
 struct CarrierToRecovered {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -103,9 +103,9 @@ struct CarrierToRecovered {
 
 struct InfectedToRecovered {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -115,9 +115,9 @@ struct InfectedToRecovered {
 
 struct InfectedToSevere {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -127,9 +127,9 @@ struct InfectedToSevere {
 
 struct SevereToCritical {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -139,9 +139,9 @@ struct SevereToCritical {
 
 struct SevereToRecovered {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -151,9 +151,9 @@ struct SevereToRecovered {
 
 struct CriticalToRecovered {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -163,9 +163,9 @@ struct CriticalToRecovered {
 
 struct CriticalToDead {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -175,9 +175,9 @@ struct CriticalToDead {
 
 struct RecoveredToSusceptible {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -190,9 +190,9 @@ struct RecoveredToSusceptible {
  */
 struct DetectInfection {
     using Type = CustomIndexArray<UncertainValue, AgeGroup, VaccinationState>;
-    static Type get_default(AgeGroup age_group)
+    static Type get_default(AgeGroup size)
     {
-        return Type({age_group, VaccinationState::Count}, 1.);
+        return Type({size, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -205,7 +205,7 @@ struct DetectInfection {
  */
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
-    static Type get_default(AgeGroup /*age_group*/)
+    static Type get_default(AgeGroup /*size*/)
     {
         return Type({MaskType::Count}, 1.);
     }
@@ -298,7 +298,7 @@ struct PCRTest : public GenericTest {
  */
 struct LockdownDate {
     using Type = TimePoint;
-    static auto get_default(AgeGroup /*age_group*/)
+    static auto get_default(AgeGroup /*size*/)
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
@@ -313,9 +313,9 @@ struct LockdownDate {
  */
 struct BasicShoppingRate {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static auto get_default(AgeGroup age_group)
+    static auto get_default(AgeGroup size)
     {
-        return Type({age_group}, 1.0);
+        return Type({size}, 1.0);
     }
     static std::string name()
     {
@@ -328,7 +328,7 @@ struct BasicShoppingRate {
  */
 struct WorkRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default(AgeGroup /*age_group*/)
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
@@ -343,7 +343,7 @@ struct WorkRatio {
  */
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default(AgeGroup /*age_group*/)
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
@@ -358,7 +358,7 @@ struct SchoolRatio {
  */
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default(AgeGroup /*age_group*/)
+    static auto get_default(AgeGroup /*size*/)
     {
         return Type(Eigen::VectorXd::Constant(6, 1.0));
     }
@@ -373,9 +373,9 @@ struct SocialEventRate {
  */
 struct GotoWorkTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default(AgeGroup age_group)
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(age_group, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
     }
     static std::string name()
     {
@@ -388,9 +388,9 @@ struct GotoWorkTimeMinimum {
  */
 struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default(AgeGroup age_group)
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(age_group, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
     }
     static std::string name()
     {
@@ -403,9 +403,9 @@ struct GotoWorkTimeMaximum {
  */
 struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default(AgeGroup age_group)
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(age_group, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
     }
     static std::string name()
     {
@@ -418,9 +418,9 @@ struct GotoSchoolTimeMinimum {
  */
 struct GotoSchoolTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
-    static auto get_default(AgeGroup age_group)
+    static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(age_group, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
     }
     static std::string name()
     {
@@ -448,9 +448,9 @@ using AllParameters =
 class SimulationParameters : public AllParameters
 {
 public:
-    SimulationParameters(AgeGroup age_groups)
-        : AllParameters(age_groups)
-        , m_num_groups{age_groups}
+    SimulationParameters(AgeGroup num_agegroups)
+        : AllParameters(num_agegroups)
+        , m_num_groups{num_agegroups}
     {
     }
 

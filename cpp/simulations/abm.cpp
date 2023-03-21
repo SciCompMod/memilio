@@ -776,7 +776,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     ScalarType exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::SimulationParameters simulation_params = mio::abm::SimulationParameters(6);
+    mio::abm::SimulationParameters simulation_params = mio::abm::SimulationParameters(mio::AgeGroup(6));
     set_parameters(simulation_params);
     auto world = mio::abm::World(simulation_params);
 
