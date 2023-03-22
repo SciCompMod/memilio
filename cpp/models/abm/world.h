@@ -217,7 +217,6 @@ private:
     bool m_use_migration_rules;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
-
         m_migration_rules;
 };
 

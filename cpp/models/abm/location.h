@@ -56,25 +56,6 @@ struct CellCapacity {
 };
 
 /**
- * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
- * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
- */
-struct LocationId {
-    uint32_t index;
-    LocationType type;
-
-    bool operator==(const LocationId& rhs) const
-    {
-        return (index == rhs.index && type == rhs.type);
-    }
-
-    bool operator!=(const LocationId& rhs) const
-    {
-        return !(index == rhs.index && type == rhs.type);
-    }
-};
-
-/**
  * The Location can be split up into several Cell%s. This allows a finer division of the people at the Location.
  */
 struct Cell {

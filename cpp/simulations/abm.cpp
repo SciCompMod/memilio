@@ -433,8 +433,8 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
-                            ScalarType carrier_pct, ScalarType recovered_pct)
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
+                            double carrier_pct, double recovered_pct)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
