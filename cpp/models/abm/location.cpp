@@ -55,9 +55,10 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
 
 void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const
 {
+    // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
-    for (auto cell_index : person.get_cells()) { // should be changed so that persons can only be in one cell
+    for (auto cell_index : person.get_cells()) { // the logic here is incorrect in case a person is in multiple cells
         std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus                  = static_cast<VirusVariant>(v);
@@ -81,7 +82,6 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectio
             person.add_new_infection(Infection(virus, age_receiver, global_params, t));
         }
     }
-    // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
 }
 
 void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
@@ -109,15 +109,16 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
     }
 }
 
-void Location::add_person(std::shared_ptr<Person> p, uint32_t cell_idx)
+void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
-    m_cells[cell_idx].m_persons.push_back(std::move(p));
+    for (uint32_t cell_idx : cells)
+        m_cells[cell_idx].m_persons.push_back(&p);
 }
 
-void Location::remove_person(const std::shared_ptr<Person>& p)
+void Location::remove_person(Person& p)
 {
     for (auto&& cell : m_cells) {
-        auto it = std::remove(cell.m_persons.begin(), cell.m_persons.end(), p);
+        auto it = std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p);
         cell.m_persons.erase(it, cell.m_persons.end());
     }
 }
@@ -145,7 +146,7 @@ ScalarType Cell::compute_space_per_person_relative()
 
 uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
         return p->get_infection_state(t) == state;
     });
 }

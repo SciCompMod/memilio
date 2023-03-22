@@ -58,12 +58,9 @@ TEST(TestMasks, maskProtection)
 
     //setup location with some chance of exposure
     auto infection_location = mio::abm::Location(mio::abm::Location(mio::abm::LocationType::School, 0));
-    auto susc_person1 =
-        std::make_shared<mio::abm::Person>(mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34));
-    auto susc_person2 =
-        std::make_shared<mio::abm::Person>(mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34));
-    auto infected1 =
-        std::make_shared<mio::abm::Person>(mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34));
+    auto susc_person1       = mio::abm::Person(mio::abm::Person(&infection_location, mio::abm::AgeGroup::Age15to34));
+    auto susc_person2       = mio::abm::Person(mio::abm::Person(&infection_location, mio::abm::AgeGroup::Age15to34));
+    auto infected1          = mio::abm::Person(mio::abm::Person(&infection_location, mio::abm::AgeGroup::Age15to34));
     infection_location.add_person(susc_person1);
     infection_location.add_person(susc_person2);
     infection_location.add_person(infected1);
@@ -73,19 +70,19 @@ TEST(TestMasks, maskProtection)
     auto dt = mio::abm::days(1);
     infection_location.cache_exposure_rates(t, dt);
     // susc_person1 wears a mask, default protection is 1
-    susc_person1->set_wear_mask(true);
+    susc_person1.set_wear_mask(true);
     // susc_person2 does not wear a mask
-    susc_person2->set_wear_mask(false);
+    susc_person2.set_wear_mask(false);
 
     //mock so every exponential distr is 1 -> everyone with a strict positiv (not zero) percantage to infect will infect, see random_events.h logic
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillOnce(testing::Return((dt.days() / 2)));
 
-    infection_location.interact(*susc_person1, t, dt, params);
-    infection_location.interact(*susc_person2, t, dt, params);
+    infection_location.interact(susc_person1, t, dt, params);
+    infection_location.interact(susc_person2, t, dt, params);
 
     // The person susc_person1 should have full protection against an infection, susc_person2 not
-    ASSERT_EQ(susc_person1->get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
-    ASSERT_EQ(susc_person2->get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
+    ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
+    ASSERT_EQ(susc_person2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }

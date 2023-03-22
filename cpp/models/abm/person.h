@@ -29,6 +29,7 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 
+#include "memilio/utils/memory.h"
 #include <functional>
 
 namespace mio
@@ -44,7 +45,7 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 /**
  * Agents in the simulated world that can carry and spread the infection.
  */
-class Person : public std::enable_shared_from_this<Person>
+class Person
 {
 public:
     /**
@@ -53,7 +54,7 @@ public:
      * @param age The age group of the person.
      * @param person_id Index of the person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location* location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
     * compare two persons
@@ -77,7 +78,7 @@ public:
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -313,50 +314,33 @@ public:
         return m_wears_mask;
     }
 
-private:
-    struct ImmunityLevel {
-        /**
+    /**
          * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
          * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-        {
-            return 1.; // put implementation in .cpp
-        }
+    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    {
+        return 1.; // put implementation in .cpp
+    }
 
-        /**
+    /**
          * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
          * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-        {
-            return 1.; // put implementation in .cpp
-        }
-    };
-
-public:
-    /**
-     * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
-     * @param[in] t TimePoint of check.
-     * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
-    */
-    ScalarType get_protection_factor(VirusVariant v, TimePoint t) const
+    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
     {
-        return m_immunity_level.get_protection_factor(v, t);
+        return 1.; // put implementation in .cpp
     }
-    //ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
-    std::shared_ptr<Location> m_location;
+    observer_ptr<Location> m_location;
     std::vector<uint32_t> m_assigned_locations;
     std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;
-    ImmunityLevel m_immunity_level; // do we need this? Or can we call p.ImmunityLevel.get_...() ?
     bool m_quarantine = false;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

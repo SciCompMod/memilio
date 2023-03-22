@@ -30,6 +30,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/memory.h"
 #include <array>
 #include <random>
 
@@ -59,12 +60,12 @@ struct CellCapacity {
  * By default, each Location consists of one Cell.
  */
 struct Cell {
-    std::vector<std::shared_ptr<Person>> m_persons;
+    std::vector<observer_ptr<Person>> m_persons;
     CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<std::shared_ptr<Person>> persons = {})
+    explicit Cell(std::vector<observer_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -91,7 +92,7 @@ struct Cell {
 /**
  * All locations in the simulated world where persons gather.
  */
-class Location : public std::enable_shared_from_this<Location>
+class Location
 {
 public:
     /**
@@ -163,13 +164,13 @@ public:
      * @param person The Person arriving.
      * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(std::shared_ptr<Person> person, uint32_t cell_idx = 0);
+    void add_person(Person& person, std::vector<uint32_t> cells = {0});
 
     /** 
      * @brief Remove a Person from the population of this Location.
      * @param person The Person leaving.
      */
-    void remove_person(const std::shared_ptr<Person>& person);
+    void remove_person(Person& person);
 
     /** 
      * @brief Prepare the location for the next simulation step.

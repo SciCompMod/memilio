@@ -45,10 +45,10 @@ namespace abm
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::const_iterator>;
+    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
+    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
+    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
+    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
 
     /**
      * create a World.
@@ -110,8 +110,8 @@ public:
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator,
-                    std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator>>
+    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
     get_locations() const;
 
     /**
@@ -182,8 +182,8 @@ private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::shared_ptr<Person>> m_persons;
-    std::vector<std::vector<std::shared_ptr<Location>>> m_locations;
+    std::vector<std::unique_ptr<Person>> m_persons;
+    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;

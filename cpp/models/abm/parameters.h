@@ -182,42 +182,39 @@ struct RecoveredToSusceptible {
     }
 };
 
-struct ViralLoadPeak {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
+struct ViralLoadDistributions {
+    ParameterDistributionUniform m_viral_load_peak;
+    ParameterDistributionUniform m_viral_load_incline;
+    ParameterDistributionUniform m_viral_load_decline;
+
+    ViralLoadDistributions() = default;
+    ViralLoadDistributions(ParameterDistributionUniform viral_load_peak,
+                           ParameterDistributionUniform viral_load_incline,
+                           ParameterDistributionUniform viral_load_decline)
+        : m_viral_load_peak(viral_load_peak)
+        , m_viral_load_incline(viral_load_incline)
+        , m_viral_load_decline(viral_load_decline)
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-        return default_val;
     }
-    static std::string name()
+
+    std::array<ScalarType, 3> draw_samples()
     {
-        return "ViralLoadPeak";
+        return {m_viral_load_peak.get_sample(), m_viral_load_incline.get_sample(), m_viral_load_decline.get_sample()};
     }
 };
 
-struct ViralLoadIncline {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+struct ViralLoadParameters {
+    using Type = CustomIndexArray<ViralLoadDistributions, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
+        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
+                         ParameterDistributionUniform(1., 1.), ParameterDistributionUniform(1., 1.),
+                         ParameterDistributionUniform(-1., -1.));
         return default_val;
     }
     static std::string name()
     {
-        return "ViralLoadIncline";
-    }
-};
-
-struct ViralLoadDecline {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, -1.);
-        return default_val;
-    }
-    static std::string name()
-    {
-        return "ViralLoadDecline";
+        return "ViralLoadParameters";
     }
 };
 
@@ -277,9 +274,8 @@ struct MaskProtection {
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadPeak, ViralLoadIncline,
-                 ViralLoadDecline, InfectivityFromViralLoadAlpha, InfectivityFromViralLoadBeta, DetectInfection,
-                 MaskProtection>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadParameters,
+                 InfectivityFromViralLoadAlpha, InfectivityFromViralLoadBeta, DetectInfection, MaskProtection>;
 
 struct MaximumContacts {
     using Type = ScalarType;

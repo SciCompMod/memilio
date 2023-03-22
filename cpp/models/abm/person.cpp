@@ -31,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(Location& location, AgeGroup age, uint32_t person_id)
-    : m_location(location.shared_from_this())
+Person::Person(Location* location, AgeGroup age, uint32_t person_id)
+    : m_location(location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -57,13 +57,13 @@ void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& param
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
+void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
 {
-    if (loc_old != loc_new) {
-        loc_old.remove_person(shared_from_this());
-        m_location = loc_new.shared_from_this();
+    if (*m_location != loc_new) {
+        m_location->remove_person(*this);
+        m_location = &loc_new;
         m_cells    = cells;
-        loc_new.add_person(shared_from_this());
+        loc_new.add_person(*this, cells);
         m_time_at_location = TimeSpan(0);
     }
 }
