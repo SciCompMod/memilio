@@ -30,6 +30,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/memory.h"
 #include <array>
 #include <random>
 
@@ -55,16 +56,15 @@ struct CellCapacity {
 };
 
 /**
- * The location can be split up into several Cell%s. This allows a finer division of the people in public transport.
- * By default, each Location consists of one Cell.
+ * The Location can be split up into several Cell%s. This allows a finer division of the people at the Location.
  */
 struct Cell {
-    std::vector<std::shared_ptr<Person>> m_persons;
+    std::vector<observer_ptr<Person>> m_persons;
     CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<std::shared_ptr<Person>> persons = {})
+    explicit Cell(std::vector<observer_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -91,7 +91,7 @@ struct Cell {
 /**
  * All locations in the simulated world where persons gather.
  */
-class Location : public std::enable_shared_from_this<Location>
+class Location
 {
 public:
     /**
@@ -116,7 +116,7 @@ public:
     }
 
     /**
-     * get the type of this location.
+     * @brief Get the LocationType of this Location.
      */
     LocationType get_type() const
     {
@@ -124,7 +124,7 @@ public:
     }
 
     /**
-     *get the index of this location.
+     * @brief Get the index of this Location.
      */
     unsigned get_index() const
     {
@@ -163,13 +163,13 @@ public:
      * @param person The Person arriving.
      * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(std::shared_ptr<Person> person, uint32_t cell_idx = 0);
+    void add_person(Person& person, std::vector<uint32_t> cells = {0});
 
     /** 
      * @brief Remove a Person from the population of this Location.
      * @param person The Person leaving.
      */
-    void remove_person(const std::shared_ptr<Person>& person);
+    void remove_person(Person& person);
 
     /** 
      * @brief Prepare the location for the next simulation step.
@@ -192,22 +192,25 @@ public:
     }
 
     /**
-     * @return All cells of the location.
-    */
+     * @brief Get the Cell%s of this Location.
+     */
     const std::vector<Cell>& get_cells() const
     {
         return m_cells;
     }
 
     /**
-     * get the type of mask that is demanded when entering the location
-     * @return type of the mask 
+     * @brief Get the type of Mask that is demanded when entering this Location.
      */
     MaskType get_required_mask() const
     {
         return m_required_mask;
     }
 
+    /**
+     * @brief Set the required MaskType for entering this Location.
+     * @param[in] type The type of the Mask.
+     */
     void set_required_mask(MaskType type)
     {
         m_required_mask = type;
@@ -253,20 +256,28 @@ public:
     }
 
     /**
-    * Set the capacity adapted transmission risk flag
-    * @param consider_capacity if true considers the capacity of the location for the computation of relative 
-    * transmission risk
-    */
+     * @brief Set the capacity adapted transmission risk flag.
+     * @param[in] consider_capacity If true considers the capacity of the location for the computation of relative 
+     * transmission risk.
+     */
     void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
+    /**
+     * @brief Get the information whether NPIs are active at this Location.
+     * If true requires e.g. Mask%s when entering a Location.
+     */
     bool get_npi_active() const
     {
         return m_npi_active;
     }
 
+    /**
+     * @brief Activate or deactivate NPIs at this Location.
+     * @param[in] new_status Status of NPIs.
+     */
     void set_npi_active(bool new_status)
     {
         m_npi_active = new_status;
@@ -304,14 +315,15 @@ public:
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
 private:
-    LocationType m_type;
-    uint32_t m_index;
-    bool m_capacity_adapted_transmission_risk;
-    LocalInfectionParameters m_parameters;
+    LocationType m_type; ///< Type of the Location.
+    uint32_t m_index; ///< Index of the Location.
+    bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
+    transmission risk.*/
+    LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     TimeSeries<ScalarType> m_subpopulations{Eigen::Index(InfectionState::Count)};
     std::vector<Cell> m_cells;
-    MaskType m_required_mask;
-    bool m_npi_active;
+    MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
+    bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };
 
 } // namespace abm

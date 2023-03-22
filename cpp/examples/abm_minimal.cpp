@@ -46,22 +46,18 @@ int main()
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto twoPersonHousehold_full = mio::abm::Household();
-        twoPersonHousehold_full.add_members(child, 1);
-        twoPersonHousehold_full.add_members(parent, 1);
-        twoPersonHousehold_group.add_households(twoPersonHousehold_full, 2);
-    }
+    auto twoPersonHousehold_full  = mio::abm::Household();
+    twoPersonHousehold_full.add_members(child, 1);
+    twoPersonHousehold_full.add_members(parent, 1);
+    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
     add_household_group_to_world(world, twoPersonHousehold_group);
 
     // Three-person household with two parent and one child.
     auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto threePersonHousehold_full = mio::abm::Household();
-        threePersonHousehold_full.add_members(child, 1);
-        threePersonHousehold_full.add_members(parent, 2);
-        threePersonHousehold_group.add_households(threePersonHousehold_full, 2);
-    }
+    auto threePersonHousehold_full  = mio::abm::Household();
+    threePersonHousehold_full.add_members(child, 1);
+    threePersonHousehold_full.add_members(parent, 2);
+    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
 
     // Add one social event with 5 maximum contacts.

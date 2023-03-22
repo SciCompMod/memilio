@@ -123,7 +123,7 @@ private:
      * @param[in] params GlobalInfectionParameters.
      * @param[in] start_state [Default: InfectionState::Exposed] Start state of the Infection.
      */
-    void draw_infection_course(TimePoint start_date, const GlobalInfectionParameters& params,
+    void draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
                                InfectionState start_state = InfectionState::Exposed);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; // start date of each infection state

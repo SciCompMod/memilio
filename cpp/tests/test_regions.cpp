@@ -17,18 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "gtest/gtest.h"
 
 TEST(TestRegions, get_holidays)
 {
-    auto a =
-        mio::regions::de::get_holidays(mio::regions::de::StateId(9), mio::Date(2020, 10, 15), mio::Date(2020, 11, 15));
+    auto a = mio::regions::get_holidays(mio::regions::StateId(9), mio::Date(2020, 10, 15), mio::Date(2020, 11, 15));
     ASSERT_EQ(a.size(), 1);
     ASSERT_EQ(a[0], std::make_pair(mio::Date(2020, 10, 31), mio::Date(2020, 11, 7)));
 
-    auto b =
-        mio::regions::de::get_holidays(mio::regions::de::StateId(3), mio::Date(2020, 7, 30), mio::Date(2020, 12, 31));
+    auto b = mio::regions::get_holidays(mio::regions::StateId(3), mio::Date(2020, 7, 30), mio::Date(2020, 12, 31));
     ASSERT_EQ(b.size(), 3);
     ASSERT_EQ(b[0], std::make_pair(mio::Date(2020, 7, 16), mio::Date(2020, 8, 27)));
     ASSERT_EQ(b[1], std::make_pair(mio::Date(2020, 10, 12), mio::Date(2020, 10, 24)));
@@ -37,8 +35,8 @@ TEST(TestRegions, get_holidays)
 
 TEST(TestRegions, get_state_id)
 {
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(1001)), mio::regions::de::StateId(1));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(2000)), mio::regions::de::StateId(2));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(5970)), mio::regions::de::StateId(5));
-    ASSERT_EQ(mio::regions::de::get_state_id(mio::regions::de::CountyId(9161)), mio::regions::de::StateId(9));
+    ASSERT_EQ(mio::regions::get_state_id(int(mio::regions::CountyId(1001))), mio::regions::StateId(1));
+    ASSERT_EQ(mio::regions::get_state_id(int(mio::regions::CountyId(2000))), mio::regions::StateId(2));
+    ASSERT_EQ(mio::regions::get_state_id(int(mio::regions::CountyId(5970))), mio::regions::StateId(5));
+    ASSERT_EQ(mio::regions::get_state_id(int(mio::regions::CountyId(9161))), mio::regions::StateId(9));
 }

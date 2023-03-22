@@ -37,7 +37,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     auto& locations = m_locations[(uint32_t)type];
     uint32_t index  = static_cast<uint32_t>(locations.size());
-    locations.emplace_back(std::make_shared<Location>(type, index, num_cells));
+    locations.emplace_back(std::make_unique<Location>(type, index, num_cells));
     return {index, type};
 }
 
@@ -45,9 +45,9 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     auto loc           = get_individualized_location(id);
-    m_persons.push_back(std::make_shared<Person>(loc, age, person_id));
-    loc.add_person(m_persons.back());
+    m_persons.push_back(std::make_unique<Person>(&loc, age, person_id));
     auto& person = *m_persons.back();
+    loc.add_person(person);
     return person;
 }
 
@@ -85,7 +85,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     if (target != current && target.get_number_persons() < target.get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(target);
                         if (wears_mask) {
-                            person->migrate_to(current, target);
+                            person->migrate_to(target);
                         }
                         break;
                     }
@@ -104,7 +104,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target, t)) {
                     person->apply_mask_intervention(target);
-                    person->migrate_to(current, target);
+                    person->migrate_to(target);
                 }
             }
             m_trip_list.increase_index();
@@ -131,8 +131,8 @@ void World::end_step(TimePoint t, TimeSpan /*dt*/)
 }
 
 auto World::get_locations() const
-    -> Range<std::pair<std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator,
-                       std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator>>
+    -> Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                       std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
 {
     return std::make_pair(m_locations.begin(), m_locations.end());
 }
@@ -162,7 +162,7 @@ Location& World::find_location(LocationType type, const Person& person)
 int World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
-    return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const std::shared_ptr<Location>& loc) {
+    return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const std::unique_ptr<Location>& loc) {
         return running_sum + loc->get_subpopulation(t, s);
     });
 }
