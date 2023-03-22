@@ -30,7 +30,7 @@ namespace abm
 {
 
 /**
- * run the simulation in discrete steps, evolve the world and report results.
+ * @brief Run the Simulation in discrete steps, evolve the World and report results.
  */
 class Simulation
 {
@@ -38,17 +38,17 @@ class Simulation
 
 public:
     /**
-     * Create a simulation.
-     * @param t0 the starting time of the simulation
-     * @param world the world to simulate
+     * @brief Create a simulation.
+     * @param[in] t0 The starting time of the Simulation.
+     * @param[in] world The World to simulate.
      */
     Simulation(TimePoint t0, World&& world);
 
     /**
-     * Create a simulation with an empty world.
+     * @brief Create a Simulation with an empty World.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param t0 the starting time of the simulation.
+     * @param[in] t0 The starting time of the Simulation.
      */
     Simulation(TimePoint t0)
         : Simulation(t0, World())
@@ -56,15 +56,14 @@ public:
     }
 
     /** 
-     * Run the simulation from the current time to tmax.
-     * @param tmax time to stop
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
      */
     void advance(TimePoint tmax);
 
     /**
-     * Get the result of the simulation.
-     * Sum over all locations of the number of persons in an infection state.
-     * @return the result of the simulation.
+     * @brief Get the result of the Simulation.
+     * Sum over all Location%s of the number of Person%s in an #InfectionState.
      */
     const TimeSeries<ScalarType>& get_result() const
     {
@@ -72,8 +71,7 @@ public:
     }
 
     /**
-     * Get the World that this simulation evolves.
-     * @{
+     * @brief Get the World that this Simulation evolves.
      */
     World& get_world()
     {
@@ -83,16 +81,15 @@ public:
     {
         return m_world;
     }
-    /**@}*/
 
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
 
-    World m_world;
-    TimeSeries<ScalarType> m_result;
-    TimePoint m_t;
-    TimeSpan m_dt;
+    World m_world; ///< The World to simulate.
+    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
+    TimePoint m_t; ///< The current TimePoint of the Simulation.
+    TimeSpan m_dt; ///< The length of the time steps.
 };
 
 } // namespace abm

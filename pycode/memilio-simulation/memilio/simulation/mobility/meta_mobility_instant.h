@@ -20,7 +20,7 @@
 #ifndef PYMIO_MOBILITY_H
 #define PYMIO_MOBILITY_H
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 #include "memilio/mobility/graph.h"
 
 #include "pybind11/pybind11.h"

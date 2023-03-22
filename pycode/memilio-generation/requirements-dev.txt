@@ -1,0 +1,2 @@
+libclang
+importlib-resources>=1.1.0; python_version < '3.9'

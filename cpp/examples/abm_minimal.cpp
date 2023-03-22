@@ -46,23 +46,27 @@ int main()
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto twoPersonHousehold_full = mio::abm::Household();
-        twoPersonHousehold_full.add_members(child, 1);
-        twoPersonHousehold_full.add_members(parent, 1);
-        twoPersonHousehold_group.add_households(twoPersonHousehold_full, 2);
-    }
+    auto twoPersonHousehold_full  = mio::abm::Household();
+    twoPersonHousehold_full.add_members(child, 1);
+    twoPersonHousehold_full.add_members(parent, 1);
+    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
     add_household_group_to_world(world, twoPersonHousehold_group);
 
     // Three-person household with two parent and one child.
     auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-    for (int counter = 0; counter < n_households; counter++) {
-        auto threePersonHousehold_full = mio::abm::Household();
-        threePersonHousehold_full.add_members(child, 1);
-        threePersonHousehold_full.add_members(parent, 2);
-        threePersonHousehold_group.add_households(threePersonHousehold_full, 2);
-    }
+    auto threePersonHousehold_full  = mio::abm::Household();
+    threePersonHousehold_full.add_members(child, 1);
+    threePersonHousehold_full.add_members(parent, 2);
+    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
+
+    // Assign an infection state to each person.
+    // The infection states are chosen randomly.
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
+        world.set_infection_state(person, (mio::abm::InfectionState)state);
+    }
 
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
