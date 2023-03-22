@@ -66,7 +66,7 @@ Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters
     , m_detected(detected)
 {
     draw_infection_course(start_date, params, start_state);
-};
+}
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
@@ -81,8 +81,8 @@ const VirusVariant& Infection::get_virus_variant() const
 const InfectionState& Infection::get_infection_state(TimePoint t) const
 {
     return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t,
-                                        [](std::pair<TimePoint, InfectionState> state, const TimePoint& t) {
-                                            return state.first <= t;
+                                        [](std::pair<TimePoint, InfectionState> state, const TimePoint& s) {
+                                            return state.first <= s;
                                         })))
         .second;
 }

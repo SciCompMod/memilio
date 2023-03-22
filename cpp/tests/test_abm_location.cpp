@@ -18,6 +18,8 @@
 * limitations under the License.
 */
 #include "test_abm.h"
+#include "test_abm.cpp"
+#include <memory>
 
 TEST(TestLocation, init)
 {
@@ -46,35 +48,39 @@ TEST(TestLocation, addRemovePerson)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto person1  = std::make_shared<mio::abm::Person>(
+        create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14));
     home.add_person(person1);
-    person1.migrate_to(home, location, {0, 1});
-    auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
+    person1->migrate_to(home, location, {0, 1});
+    auto person2 = std::make_shared<mio::abm::Person>(
+        create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34));
     home.add_person(person2);
-    person2.migrate_to(home, location, {0});
-    auto person3 = mio::abm::Person(home, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59);
+    person2->migrate_to(home, location, {0});
+    auto person3 = std::make_shared<mio::abm::Person>(
+        create_person_simple(home, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59));
     home.add_person(person3);
-    person3.migrate_to(home, location, {0, 1});
+    person3->migrate_to(home, location, {0, 1});
 
-    ASSERT_EQ(location.get_subpopulation(mio::abm::InfectionState::Infected), 2);
-    ASSERT_EQ(location.get_subpopulation(mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].num_people, 3u);
-    ASSERT_EQ(location.get_cells()[1].num_people, 2u);
-    ASSERT_EQ(location.get_cells()[2].num_people, 0u);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 2u);
-    ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
-    ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
+    auto t = mio::abm::TimePoint(0);
+    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Infected), 2);
+    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 3u);
+    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
+    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 1u);
+    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 
     location.remove_person(person2);
 
-    ASSERT_EQ(location.get_subpopulation(mio::abm::InfectionState::Infected), 1);
-    ASSERT_EQ(location.get_subpopulation(mio::abm::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].num_people, 2u);
-    ASSERT_EQ(location.get_cells()[1].num_people, 2u);
-    ASSERT_EQ(location.get_cells()[2].num_people, 0u);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
-    ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
-    ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
+    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Infected), 1);
+    ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
+    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
+    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
+    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
+    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 1u);
+    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 1u);
+    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 }
 
 TEST(TestLocation, beginStep)
@@ -224,8 +230,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)); // draw random school hour
     // .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+    auto& p1 = add_person_simple(world, home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
+    auto& p2 = add_person_simple(world, home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
 
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
@@ -242,10 +248,10 @@ TEST(TestLocation, reachCapacity)
 
     world.evolve(mio::abm::TimePoint(0) + mio::abm::hours(8), mio::abm::hours(1));
 
-    ASSERT_EQ(p1.get_location_id().type, mio::abm::LocationType::School);
-    ASSERT_EQ(p2.get_location_id().type, mio::abm::LocationType::Home); // p2 should not be able to enter the school
-    ASSERT_EQ(school.get_population().get_last_value().sum(), 1);
-    ASSERT_EQ(home.get_population().get_last_value().sum(), 1);
+    ASSERT_EQ(p1.get_location().get_type(), mio::abm::LocationType::School);
+    ASSERT_EQ(p2.get_location().get_type(), mio::abm::LocationType::Home); // p2 should not be able to enter the school
+    ASSERT_EQ(school.get_subpopulations().get_last_value().sum(), 1);
+    ASSERT_EQ(home.get_subpopulations().get_last_value().sum(), 1);
 }
 
 TEST(TestLocation, computeRelativeTransmissionRisk)
