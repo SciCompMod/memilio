@@ -122,49 +122,52 @@ class GraphSimulationStochastic
     using GraphSimulationBase<Graph,
                               std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
                                                  typename Graph::NodeProperty&)>>::GraphSimulationBase;
+    using Base = GraphSimulationBase<Graph,
+                              std::function<void(typename Graph::EdgeProperty&, size_t, typename Graph::NodeProperty&,
+                                                 typename Graph::NodeProperty&)>>;
 
 public:
     void advance(double t_max = 1.0)
     {
         //draw normalized waiting time
         ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(1.0);
-        std::vector<ScalarType> dt_cand(m_graph.nodes().size());
+        std::vector<ScalarType> dt_cand(Base::m_graph.nodes().size());
         ScalarType cumulative_rate = 0; //cumulative transition rate
         size_t parameters_per_edge =
-            size_t(m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
-        std::vector<ScalarType> transition_rates(parameters_per_edge * m_graph.edges().size());
-        while (m_t < t_max) {
-            m_dt = std::min({m_dt, t_max - m_t});
+            size_t(Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
+        std::vector<ScalarType> transition_rates(parameters_per_edge * Base::m_graph.edges().size());
+        while (Base::m_t < t_max) {
+            Base::m_dt = std::min({Base::m_dt, t_max - Base::m_t});
             //calculate current transition rates and cumulative rate
             cumulative_rate = get_cumulative_transition_rate();
             int node_iterator;
-            if (cumulative_rate * m_dt >
+            if (cumulative_rate * Base::m_dt >
                 normalized_waiting_time) { //at least one transition event during current time step
                 do {
                     //draw transition event
                     size_t event = mio::DiscreteDistribution<size_t>::get_instance()(get_rates());
                     //edge that performs transition event
-                    auto& event_edge = m_graph.edges()[int(event / parameters_per_edge)];
+                    auto& event_edge = Base::m_graph.edges()[int(event / parameters_per_edge)];
                     //index for compartment and age group migrating
                     auto flat_index = event % parameters_per_edge;
 
                     node_iterator = 0;
                     //advance nodes until t + (waiting_time / cumulative_rate)
-                    for (auto& n : m_graph.nodes()) {
-                        m_node_func(m_t, normalized_waiting_time / cumulative_rate, n.property);
+                    for (auto& n : Base::m_graph.nodes()) {
+                        Base::m_node_func(Base::m_t, normalized_waiting_time / cumulative_rate, n.property);
                         //get new dt of each node
                         dt_cand[node_iterator] = n.property.get_simulation().get_dt();
                         ++node_iterator;
                     }
                     //advance time
-                    m_t += normalized_waiting_time / cumulative_rate;
+                    Base::m_t += normalized_waiting_time / cumulative_rate;
 
                     //reduce remaining time of current time step
-                    m_dt -= normalized_waiting_time / cumulative_rate;
+                    Base::m_dt -= normalized_waiting_time / cumulative_rate;
 
                     //perform transition
-                    m_edge_func(event_edge.property, flat_index, m_graph.nodes()[event_edge.start_node_idx].property,
-                                m_graph.nodes()[event_edge.end_node_idx].property);
+                    Base::m_edge_func(event_edge.property, flat_index, Base::m_graph.nodes()[event_edge.start_node_idx].property,
+                                Base::m_graph.nodes()[event_edge.end_node_idx].property);
 
                     //calculate new cumulative rate
                     cumulative_rate = get_cumulative_transition_rate();
@@ -172,24 +175,24 @@ public:
                     //draw new normalized waiting time
                     normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(1.0);
 
-                } while (cumulative_rate * m_dt > normalized_waiting_time);
+                } while (cumulative_rate * Base::m_dt > normalized_waiting_time);
             }
             else { //no transition event in current time step
-                normalized_waiting_time -= cumulative_rate * m_dt; //reduce waiting time by current time step
+                normalized_waiting_time -= cumulative_rate * Base::m_dt; //reduce waiting time by current time step
             }
 
             node_iterator = 0;
             //advance nodes until t+dt
-            for (auto& n : m_graph.nodes()) {
-                m_node_func(m_t, m_dt, n.property);
+            for (auto& n : Base::m_graph.nodes()) {
+                Base::m_node_func(Base::m_t, Base::m_dt, n.property);
                 //get new dt of each node
                 dt_cand[node_iterator] = n.property.get_simulation().get_dt();
                 ++node_iterator;
             }
             //advance time
-            m_t += m_dt;
+            Base::m_t += Base::m_dt;
             //new dt ist the minimal dt of all nodes
-            m_dt = *std::min_element(dt_cand.begin(), dt_cand.end());
+            Base::m_dt = *std::min_element(dt_cand.begin(), dt_cand.end());
         }
     }
 
@@ -198,9 +201,9 @@ private:
     {
         //compute current cumulative transition rate
         ScalarType cumulative_transition_rate = 0;
-        for (auto& e : m_graph.edges()) {
+        for (auto& e : Base::m_graph.edges()) {
             cumulative_transition_rate +=
-                e.property.get_transition_rates(m_graph.nodes()[e.start_node_idx].property).sum();
+                e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property).sum();
         }
         return cumulative_transition_rate;
     }
@@ -208,9 +211,10 @@ private:
     void evaluate_transition_rates(std::vector<ScalarType>& rates, ScalarType& cumulative_rate, size_t num_params)
     {
         int counter = 0;
-        for (auto& e : m_graph.edges()) {
-            std::copy_n(e.property.get_transition_rates(m_graph.nodes()[e.start_node_idx].property), num_params,
-                        rates.begin() + counter * num_params)++ counter;
+        for (auto& e : Base::m_graph.edges()) {
+            std::copy_n(e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property), num_params,
+                        rates.begin() + counter * num_params);
+                        ++ counter;
         }
         cumulative_rate = std::accumulate(rates.begin(), rates.end(), 0.0);
     }
@@ -218,16 +222,13 @@ private:
     std::vector<ScalarType> get_rates()
     {
         std::vector<ScalarType> rates;
-        rates.reserve(m_graph.edges().size() *
-                      m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
-        for (auto& e : m_graph.edges()) {
-            auto edge_rates = e.property.get_transition_rates(m_graph.nodes()[e.start_node_idx].property);
+        rates.reserve(Base::m_graph.edges().size() *
+                      Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
+        for (auto& e : Base::m_graph.edges()) {
+            auto edge_rates = e.property.get_transition_rates(Base::m_graph.nodes()[e.start_node_idx].property);
             for (Eigen::Index i = 0; i < edge_rates.size(); ++i) {
                 rates.push_back(edge_rates(i));
             }
-            // for (auto& coeff : edge_rates) {
-            //     //rates.emplace_back(coeff);
-            // }
         }
         return rates;
     }

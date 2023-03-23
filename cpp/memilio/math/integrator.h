@@ -100,11 +100,6 @@ public:
         return m_next_dt;
     }
 
-    const double get_dt() const
-    {
-        return m_next_dt;
-    }
-
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
         m_core = integrator;
