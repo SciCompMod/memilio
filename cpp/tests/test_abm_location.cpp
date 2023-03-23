@@ -50,7 +50,7 @@ TEST(TestLocation, getIndex)
 
 TEST(TestLocation, addRemovePerson)
 {
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
     auto person1  = create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
     home.add_person(person1);

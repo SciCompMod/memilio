@@ -45,7 +45,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     auto loc           = get_individualized_location(id);
-    m_persons.push_back(std::make_unique<Person>(&loc, age, person_id));
+    m_persons.push_back(std::make_unique<Person>(loc, age, person_id));
     auto& person = *m_persons.back();
     loc.add_person(person);
     return person;

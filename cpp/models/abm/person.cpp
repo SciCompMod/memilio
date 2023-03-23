@@ -31,8 +31,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(Location* location, AgeGroup age, uint32_t person_id)
-    : m_location(location)
+Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+    : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)

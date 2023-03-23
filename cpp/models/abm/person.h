@@ -54,7 +54,7 @@ public:
      * @param age The age group of the person.
      * @param person_id Index of the person.
      */
-    explicit Person(Location* location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
     * compare two persons

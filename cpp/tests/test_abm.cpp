@@ -12,7 +12,8 @@ void add_infection_simple(mio::abm::Person& p, mio::abm::TimePoint t, mio::abm::
 mio::abm::Person create_person_simple(mio::abm::Location& location, mio::abm::InfectionState infection_state,
                                       mio::abm::AgeGroup age_group)
 {
-    mio::abm::Person p = mio::abm::Person(&location, age_group);
+    mio::abm::Person p = mio::abm::Person(location, age_group);
+    location.add_person(p);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         add_infection_simple(p, mio::abm::TimePoint(0), infection_state);
     }

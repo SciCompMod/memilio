@@ -62,10 +62,12 @@ Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters
                      InfectionState start_state, bool detected)
     : m_virus_variant(virus)
     , m_viral_load(virus, age, start_date, params)
-    , m_log_norm_alpha(params.get<InfectivityFromViralLoadAlpha>()[{virus, age}].draw_sample())
-    , m_log_norm_beta(params.get<InfectivityFromViralLoadBeta>()[{virus, age}].draw_sample())
     , m_detected(detected)
 {
+    auto draws       = params.get<InfectivityParameters>()[{virus, age}].draw_samples();
+    m_log_norm_alpha = draws[1];
+    m_log_norm_beta  = draws[2];
+
     draw_infection_course(age, params, start_date, start_state);
 }
 

@@ -34,10 +34,11 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity_adapted_transmission_risk(false)
-    , m_cells(std::vector<Cell>(num_cells))
+    , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
+    assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,

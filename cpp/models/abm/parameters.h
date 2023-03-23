@@ -221,29 +221,35 @@ struct ViralLoadParameters {
     }
 };
 
-struct InfectivityFromViralLoadAlpha {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default()
+struct InfectivityDistributions {
+    ParameterDistributionUniform m_infectivity_alpha;
+    ParameterDistributionUniform m_infectivity_beta;
+
+    InfectivityDistributions() = default;
+    InfectivityDistributions(ParameterDistributionUniform alpha, ParameterDistributionUniform beta, int x)
+        : m_infectivity_alpha(alpha)
+        , m_infectivity_beta(beta)
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, 0.);
-        return default_val;
+        x = 1; // dummy parameter due to bug in CustomIndexArray with exactly 3 arguments
     }
-    static std::string name()
+
+    std::array<ScalarType, 2> draw_samples()
     {
-        return "InfectivityFromViralLoadAlpha";
+        return {m_infectivity_alpha.get_sample(), m_infectivity_beta.get_sample()};
     }
 };
 
-struct InfectivityFromViralLoadBeta {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
+struct InfectivityParameters {
+    using Type = CustomIndexArray<InfectivityDistributions, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, 1.);
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, ParameterDistributionUniform(1., 1.),
+                         ParameterDistributionUniform(1., 1.), 1); // "1" is dummy due to bug (see above)
         return default_val;
     }
     static std::string name()
     {
-        return "InfectivityFromViralLoadBeta";
+        return "InfectivityParameters";
     }
 };
 
@@ -284,7 +290,7 @@ using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadParameters,
-                 InfectivityFromViralLoadAlpha, InfectivityFromViralLoadBeta, DetectInfection, MaskProtection>;
+                 InfectivityParameters, DetectInfection, MaskProtection>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
