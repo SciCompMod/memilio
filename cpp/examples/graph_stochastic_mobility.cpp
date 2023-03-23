@@ -23,6 +23,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/meta_mobility_stochastic.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 
 #include <iostream>
 

@@ -51,6 +51,8 @@ add_library(memilio
     math/interpolation.cpp
     mobility/meta_mobility_instant.h
     mobility/meta_mobility_instant.cpp
+    mobility/meta_mobility_stochastic.h
+    mobility/meta_mobility_stochastic.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h

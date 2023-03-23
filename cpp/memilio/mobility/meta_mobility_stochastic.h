@@ -17,14 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MOBILITY_H
-#define MOBILITY_H
+#ifndef MOBILITY_STOCHASTIC_H
+#define MOBILITY_STOCHASTIC_H
 
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/mobility/graph_simulation.h"
+#include "memilio/mobility/meta_mobility_instant.h"
 
 //rausnehmen
 #include "memilio/utils/compiler_diagnostics.h"
@@ -35,71 +36,6 @@
 
 namespace mio
 {
-
-/**
- * represents the simulation in one node of the graph.
- */
-template <class Sim>
-class SimulationNode
-{
-public:
-    template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    SimulationNode(Args&&... args)
-        : m_simulation(std::forward<Args>(args)...)
-        , m_last_state(m_simulation.get_result().get_last_value())
-        , m_t0(m_simulation.get_result().get_last_time())
-    {
-    }
-
-    /**
-     * get the result of the simulation in this node.
-     * @{
-     */
-    decltype(auto) get_result() const
-    {
-        return m_simulation.get_result();
-    }
-    decltype(auto) get_result()
-    {
-        return m_simulation.get_result();
-    }
-    /**@}*/
-
-    /**
-     * get the the simulation in this node.
-     * @{
-     */
-    Sim& get_simulation()
-    {
-        return m_simulation;
-    }
-    const Sim& get_simulation() const
-    {
-        return m_simulation;
-    }
-    /**@}*/
-
-    Eigen::Ref<const Eigen::VectorXd> get_last_state() const
-    {
-        return m_last_state;
-    }
-
-    double get_t0() const
-    {
-        return m_t0;
-    }
-
-    void evolve(double t, double dt)
-    {
-        m_simulation.advance(t + dt);
-        m_last_state = m_simulation.get_result().get_last_value();
-    }
-
-private:
-    Sim m_simulation;
-    Eigen::VectorXd m_last_state;
-    double m_t0;
-};
 
 /**
  * status and age dependent migration coefficients.
@@ -269,30 +205,16 @@ template <class Sim>
 void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>& node_from,
                                               SimulationNode<Sim>& node_to)
 {
-    //std::cout << "compartments before transition: " << node_from.get_result().get_last_value()[event] << ", "
-    //<< node_to.get_result().get_last_value()[event] << std::endl;
     node_from.get_result().get_last_value()[event] -= 1;
     node_to.get_result().get_last_value()[event] += 1;
-    //std::cout << "compartments after transition: " << node_from.get_result().get_last_value()[event] << ", "
-    //<< node_to.get_result().get_last_value()[event] << std::endl;
-}
-
-/**
- * node functor to evolve model.
- * @see SimulationNode::evolve
- */
-template <class Sim>
-void evolve_model(double t, double dt, SimulationNode<Sim>& node)
-{
-    node.evolve(t, dt);
 }
 
 /**
  * edge functor for migration simulation.
- * @see MigrationEdge::apply_migration
+ * @see MigrationEdgeStochastic::apply_migration
  */
-template <class Sim>
-void apply_migration(MigrationEdgeStochastic& migrationEdge, size_t event, SimulationNode<Sim>& node_from,
+template <class Sim, class StochasticEdge>
+void apply_migration(StochasticEdge& migrationEdge, size_t event, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
     migrationEdge.apply_migration(event, node_from, node_to);
@@ -312,18 +234,19 @@ template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
 make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdgeStochastic>& graph)
 {
-    return make_graph_sim_stochastic(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_stochastic(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim, MigrationEdgeStochastic>);
 }
 
 template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MigrationEdgeStochastic>>
 make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdgeStochastic>&& graph)
 {
-    return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_stochastic(t0, dt, std::move(graph), &evolve_model<Sim>,
+                                     &apply_migration<Sim, MigrationEdgeStochastic>);
 }
 
 /** @} */
 
 } // namespace mio
 
-#endif //MOBILITY_H
+#endif //MOBILITY_STOCHASTIC_H

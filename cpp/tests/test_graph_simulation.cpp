@@ -18,6 +18,10 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph_simulation.h"
+#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/meta_mobility_stochastic.h"
+#include "memilio/compartments/simulation.h"
+#include "ode_seir/model.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -121,6 +125,32 @@ TEST(TestGraphSimulation, stopsAtTmax)
     EXPECT_NEAR(sim.get_t(), tmax, 1e-15);
 }
 
+TEST(TestGraphSimulation, stopsAtTmaxStochastic)
+{
+    using testing::_;
+    using testing::Eq;
+
+    const auto t0   = 1.0;
+    const auto tmax = 5.;
+    const auto dt   = 0.076;
+
+    mio::oseir::Model model;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    model.populations.set_total(1000);
+
+    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    g.add_node(0, model, t0);
+    g.add_node(1, model, t0);
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
+
+    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+
+    sim.advance(tmax);
+
+    EXPECT_NEAR(sim.get_t(), tmax, 1e-15);
+}
+
 TEST(TestGraphSimulation, persistentChangesDuringSimulation)
 {
     mio::Graph<int, int> g;
@@ -156,10 +186,10 @@ namespace
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly(const MoveOnly&)            = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
 using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
