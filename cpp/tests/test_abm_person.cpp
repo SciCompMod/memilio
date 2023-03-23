@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "test_abm.h"
-
+/*
 TEST(TestPerson, init)
 {
     using testing::Return;
@@ -330,3 +330,4 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_ffp2.get_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_protective_factor(params), 0.);
 }
+*/

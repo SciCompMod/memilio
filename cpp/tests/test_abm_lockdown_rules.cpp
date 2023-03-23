@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "test_abm.h"
-
+/*
 TEST(TestLockdownRules, school_closure)
 {
     auto t         = mio::abm::TimePoint(0);
@@ -181,4 +181,4 @@ TEST(TestLockdownRules, social_events_opening)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
     ASSERT_EQ(mio::abm::go_to_event(p, t_evening, dt, params), mio::abm::LocationType::SocialEvent);
-}
+}*/

@@ -67,7 +67,7 @@ Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters
     , m_detected(detected)
 {
     draw_infection_course(age, params, start_date, start_state);
-};
+}
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
@@ -103,8 +103,8 @@ void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParamet
 {
     auto t = start_date;
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, start_state));
-    while ((m_infection_course.back().second != InfectionState::Recovered_Infected ||
-            m_infection_course.back().second != InfectionState::Recovered_Carrier ||
+    while ((m_infection_course.back().second != InfectionState::Recovered_Infected &&
+            m_infection_course.back().second != InfectionState::Recovered_Carrier &&
             m_infection_course.back().second != InfectionState::Dead)) {
         switch (m_infection_course.back().second) {
         case InfectionState::Exposed:

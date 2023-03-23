@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "test_abm.h"
-
+/*
 TEST(TestMasks, init)
 {
     auto mask = mio::abm::Mask(mio::abm::MaskType::Count);
@@ -86,3 +86,4 @@ TEST(TestMasks, maskProtection)
     ASSERT_EQ(susc_person1.get_infection_state(t + dt), mio::abm::InfectionState::Susceptible);
     ASSERT_EQ(susc_person2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }
+*/

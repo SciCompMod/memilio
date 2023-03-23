@@ -175,8 +175,13 @@ void Location::store_subpopulations(const TimePoint t)
 
 void Location::initialize_subpopulations(const TimePoint t)
 {
-    if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+    if (m_subpopulations.get_num_time_points() == 0) {
         store_subpopulations(t);
+    }
+    else {
+        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+            store_subpopulations(t);
+        }
     }
 }
 const TimeSeries<ScalarType>& Location::get_subpopulations() const
