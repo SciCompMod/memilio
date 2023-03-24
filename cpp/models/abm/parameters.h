@@ -226,11 +226,10 @@ struct InfectivityDistributions {
     ParameterDistributionUniform m_infectivity_beta;
 
     InfectivityDistributions() = default;
-    InfectivityDistributions(ParameterDistributionUniform alpha, ParameterDistributionUniform beta, int x)
+    InfectivityDistributions(ParameterDistributionUniform alpha, ParameterDistributionUniform beta)
         : m_infectivity_alpha(alpha)
         , m_infectivity_beta(beta)
     {
-        x = 1; // dummy parameter due to bug in CustomIndexArray with exactly 3 arguments
     }
 
     std::array<ScalarType, 2> draw_samples()
@@ -244,7 +243,7 @@ struct InfectivityParameters {
     static Type get_default()
     {
         Type default_val({VirusVariant::Count, AgeGroup::Count}, ParameterDistributionUniform(1., 1.),
-                         ParameterDistributionUniform(1., 1.), 1); // "1" is dummy due to bug (see above)
+                         ParameterDistributionUniform(1., 1.));
         return default_val;
     }
     static std::string name()

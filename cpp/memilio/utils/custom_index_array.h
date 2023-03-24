@@ -189,7 +189,9 @@ public:
      * @param b begin of the range of values.
      * @param e end of the range of values.
      */
-    template <class Iter>
+    template <class Iter,
+              typename std::enable_if_t<std::is_base_of<
+                  std::input_iterator_tag, typename std::iterator_traits<Iter>::iterator_category>::value>* = nullptr>
     CustomIndexArray(Index const& dims, Iter b, Iter e)
         : m_dimensions(dims)
         , m_numel(product(dims))
