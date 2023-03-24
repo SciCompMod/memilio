@@ -154,11 +154,17 @@ uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 
 uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    uint32_t n_persons = 0;
+    std::vector<Person*> loc_persons{};
     for (auto&& cell : m_cells) {
-        n_persons += cell.get_subpopulation(t, state);
+        for (auto p : cell.m_persons) {
+            loc_persons.push_back(p.get());
+        }
     }
-    return n_persons;
+    std::sort(loc_persons.begin(), loc_persons.end());
+    loc_persons.erase(std::unique(loc_persons.begin(), loc_persons.end()), loc_persons.end());
+    return count_if(loc_persons.begin(), loc_persons.end(), [&](Person* p) {
+        return p->get_infection_state(t) == state;
+    });
 }
 
 void Location::store_subpopulations(const TimePoint t)
@@ -166,9 +172,7 @@ void Location::store_subpopulations(const TimePoint t)
     m_subpopulations.add_time_point(t.days());
     std::array<int, size_t(InfectionState::Count)> subpopulations;
     for (uint32_t i = 0; i < subpopulations.size(); ++i) {
-        for (auto&& cell : m_cells) {
-            subpopulations[i] += cell.get_subpopulation(t, static_cast<InfectionState>(i));
-        }
+        subpopulations[i] = get_subpopulation(t, static_cast<InfectionState>(i));
     }
     m_subpopulations.get_last_value() =
         Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size()).cast<ScalarType>();
