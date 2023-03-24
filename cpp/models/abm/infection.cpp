@@ -37,9 +37,9 @@ void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationSta
                                 GlobalInfectionParameters& params)
 {
     auto draws = params.get<ViralLoadParameters>()[{virus, age, vaccination_state}].draw_samples();
-    m_peak     = draws[1];
-    m_incline  = draws[2];
-    m_decline  = draws[3];
+    m_peak     = draws[0];
+    m_incline  = draws[1];
+    m_decline  = draws[2];
     m_end_date = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 
@@ -65,8 +65,8 @@ Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters
     , m_detected(detected)
 {
     auto draws       = params.get<InfectivityParameters>()[{virus, age}].draw_samples();
-    m_log_norm_alpha = draws[1];
-    m_log_norm_beta  = draws[2];
+    m_log_norm_alpha = draws[0];
+    m_log_norm_beta  = draws[1];
 
     draw_infection_course(age, params, start_date, start_state);
 }

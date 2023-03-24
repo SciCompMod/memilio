@@ -163,7 +163,7 @@ public:
      * @param person The Person arriving.
      * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(Person& person, std::vector<uint32_t> cells = {1});
+    void add_person(Person& person, std::vector<uint32_t> cells = {0});
 
     /** 
      * @brief Remove a Person from the population of this Location.
