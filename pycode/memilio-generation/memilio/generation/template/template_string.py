@@ -36,13 +36,34 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     """
     substition_string = (
         "#include \"pybind_util.h\"\n"
-        "//Includes from pymio\n"
-        "//Includes for the model\n"
-        "//Includes from Memilio\n"
-        "//Optional Includes: \"pybind11/stl_bind.h\", \"Eigen/Core\"\n"
+        "\n//Includes from pymio\n"
+        "#include \"utils/custom_index_array.h\"\n"
+        "#include \"utils/parameter_set.h\"\n"
+        "#include \"utils/index.h\"\n"
     )
+
+    if "CompartmentalModel" in intermed_repr.model_base:
+        substition_string += (
+            "#include \"compartments/simulation.h\"\n"
+            "#include \"compartments/compartmentalmodel.h\"\n"
+            "#include \"epidemiology/populations.h\"\n"
+        )
+
     if intermed_repr.simulation_class is not None:
-        substition_string += "#include <vector>\n"
+        substition_string += (
+            "#include \"mobility/graph_simulation.h\"\n"
+            "#include \"mobility/meta_mobility_instant.h\"\n"
+        )
+
+    substition_string += "\n//Includes from Memilio\n"
+    for inlcude in intermed_repr.include_list:
+        substition_string += "#include \"" + inlcude + "\"\n"
+
+    if intermed_repr.simulation_class is not None:
+        substition_string += (
+            "\n\"pybind11/stl_bind.h\"\n"
+            "#include <vector>\n"
+        )
     return substition_string
 
 

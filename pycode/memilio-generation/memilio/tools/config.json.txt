@@ -14,7 +14,7 @@
         }
     },
     {
-        "source_file": "${memilio_SOURCE_DIR}/models/ode_seir/model.cpp",
+        "source_file": "${memilio_SOURCE_DIR}/models/ode_secir/model.cpp",
         "namespace": "mio::",
         "python_module_name": "osecir",
         "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
@@ -28,7 +28,7 @@
         }
     },
     {
-        "source_file": "${memilio_SOURCE_DIR}/models/ode_seir/model.cpp",
+        "source_file": "${memilio_SOURCE_DIR}/models/ode_secirvvs/model.cpp",
         "namespace": "mio::osecirvvs::",
         "python_module_name": "osecirvvs",
         "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
