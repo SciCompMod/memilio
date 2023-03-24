@@ -25,8 +25,6 @@
 TEST(TestLocation, init)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person   = create_person_simple(location);
-    location.add_person(person);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(mio::abm::TimePoint(0), i), 0);
@@ -60,13 +58,11 @@ TEST(TestLocation, addRemovePerson)
     person3.migrate_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
+    ASSERT_EQ(home.get_number_persons(), 0u);
     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Infected), 2);
     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
     ASSERT_EQ(location.get_cells()[0].m_persons.size(), 3u);
     ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 1u);
     ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 
     location.remove_person(person2);
@@ -75,9 +71,6 @@ TEST(TestLocation, addRemovePerson)
     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
     ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);
     ASSERT_EQ(location.get_cells()[1].m_persons.size(), 2u);
-    ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
-    ASSERT_EQ(location.get_cells()[0].m_persons.size(), 1u);
-    ASSERT_EQ(location.get_cells()[1].m_persons.size(), 1u);
     ASSERT_EQ(location.get_cells()[2].m_persons.size(), 0u);
 }
 
