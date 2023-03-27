@@ -69,10 +69,10 @@ public:
     void initialize(ScalarType dt);
 
     /**
-    * @brief Computes number of Susceptibles for the current last time in m_population.
+    * @brief Computes number of Susceptibles for the current last time in m_populations.
     *
     * Number is computed using previous number of Susceptibles and the force of infection (also from previous timestep).
-    * Number is stored at the matching index in m_population.
+    * Number is stored at the matching index in m_populations.
     * @param[in] dt Time discretization step size.    
     */
     void compute_susceptibles(ScalarType dt);
@@ -112,23 +112,23 @@ public:
     void flows_current_timestep(ScalarType dt);
 
     /**
-     * @brief Computes total number of Deaths for the current last time in m_population.
+     * @brief Computes total number of Deaths for the current last time in m_populations.
      * 
-     * Number is stored in m_population.
+     * Number is stored in m_populations.
      *
      */
     void compute_deaths();
 
     /**
-     * @brief Computes total number of Recovered for the current last time in m_population.
+     * @brief Computes total number of Recovered for the current last time in m_populations.
      * 
-     * Number is stored in m_population.
+     * Number is stored in m_populations.
      *
      */
     void compute_recovered();
 
     /**
-     * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_population.
+     * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_populations.
      * 
      * Calculation is reasonable for all compartments except S, R, D. 
      * Therefore, we have alternative functions for those compartments.
@@ -147,20 +147,20 @@ public:
                              int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_population.
+     * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_populations.
      *
-     * New values are stored in m_population. Most values are computed via the function get_size_of_compartments().
+     * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
      * 
      * @param[in] dt Time discretization step size.
      */
     void other_compartments_current_timestep(ScalarType dt);
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    /* Attention: m_population and m_transitions do not necessarily have the same number of time points due to the initialization part. */
+    /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
     TimeSeries<ScalarType>
         m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType>
-        m_population; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
+        m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
 
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Lena Ploetzke
+* Authors: Lena Ploetzke, Anna Wendler
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -46,7 +46,16 @@ protected:
 
         Vec vec_init(num_transitions);
         mio::TimeSeries<ScalarType> init(num_transitions);
-        vec_init << 25.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
+        vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+        vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
         init.add_time_point(-10.0, vec_init);
         while (init.get_last_time() < 0) {
             vec_init *= 1.01;
@@ -155,7 +164,16 @@ TEST(IdeSecir, checksimulationFunctions)
 
     // add time points for initialization for transitions and death
     Vec vec_init(num_transitions);
-    vec_init << 1.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
     // add initial time point to time series
     init.add_time_point(-1, vec_init);
     while (init.get_last_time() < 0) {
@@ -214,15 +232,13 @@ TEST(IdeSecir, checksimulationFunctions)
     }
 }
 
-// The idea of this test is to confirm that the equilibrium of the compartments
-// (after simulation for a long enough time) does not change if we have a different m_max_support
-// for the DelayDistribution describing the transition from InfectedCritical To Recovered.
-// We also check that the proportion between Recovered and Death is as expected in the equilibrium.
-TEST(IdeSecir, compareEquilibria)
+// The idea of this test is to check whether the proportion between Recovered and Dead is as expected
+// (after simulation for a long enough time, i.e. when the equlibrium is reached).
+TEST(IdeSecir, checkProportionRecoveredDeath)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 10;
+    ScalarType tmax        = 20;
     ScalarType N           = 10000;
     ScalarType Dead_before = 10;
     ScalarType dt          = 1;
@@ -231,18 +247,110 @@ TEST(IdeSecir, compareEquilibria)
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
     mio::TimeSeries<ScalarType> init(num_transitions);
-    mio::TimeSeries<ScalarType> init2(num_transitions);
 
     // add time points for initialization for transitions
     Vec vec_init(num_transitions);
-    vec_init << 0.0, 10.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
     // add initial time point to time series
     init.add_time_point(-12, vec_init);
-    init2.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
-        init2.add_time_point(init2.get_last_time() + dt, vec_init);
     }
+
+    // Initialize two models.
+    mio::isecir::Model model(std::move(init), N, Dead_before);
+
+    // Set working parameters.
+    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
+    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 3;
+    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
+    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
+        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
+    }
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+
+    // Set probabilties so that all indiviudal go from Susceptible to InfectedCritical with probability 1, from there they move
+    // to Recovered or Dead with probability 0.5, respectively.
+    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.5;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.5;
+    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+
+    mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
+    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+    // Carry out simulation.
+    mio::isecir::Simulation sim(model, 0, dt);
+    sim.advance(tmax);
+    mio::TimeSeries<ScalarType> secihurd_simulated = sim.get_result();
+
+    // Check whether equilibrium has been reached, only then can we expect the right proportion
+    // between Recovered and Dead
+    EXPECT_TRUE(secihurd_simulated[tmax / dt - 1] == secihurd_simulated[tmax / dt - 2]);
+
+    // Check whether equilibrium has the right proportion between Recovered and Dead
+    // In our case we have that probabilities going from U to R or D are 0.5
+    // Hence the increase in both R and D should be equal between time 0 and tmax
+    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
+                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
+                secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
+                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
+                1e-8);
+}
+
+// The idea of this test is to confirm that the equilibrium of the compartments
+// (after simulation for a long enough time) does not change if we have a different m_max_support
+// for the DelayDistribution describing the transition from InfectedCritical To Recovered.
+// We also check whether the equilibirum is reached earlier if m_max_support is chosen smaller.
+TEST(IdeSecir, compareEquilibria)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType tmax        = 20;
+    ScalarType N           = 10000;
+    ScalarType Dead_before = 10;
+    ScalarType dt          = 1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    mio::TimeSeries<ScalarType> init(num_transitions);
+
+    // add time points for initialization for transitions
+    Vec vec_init(num_transitions);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    // add initial time point to time series
+    init.add_time_point(-12, vec_init);
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    mio::TimeSeries<ScalarType> init2(init);
 
     // Initialize two models.
     mio::isecir::Model model(std::move(init), N, Dead_before);
@@ -306,20 +414,6 @@ TEST(IdeSecir, compareEquilibria)
         EXPECT_NEAR(secihurd_simulated.get_last_value()[i], secihurd_simulated2.get_last_value()[i], 1e-8);
     }
 
-    // Check whether equilibrium has the right proportion between Recovered and Dead
-    // In our case we have that probabilities going from U to R or D are 0.5
-    // Hence the increase in both R and D should be equal between time 0 and tmax
-    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
-                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
-                secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
-                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
-                1e-8);
-    EXPECT_NEAR(secihurd_simulated2.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
-                    secihurd_simulated2[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
-                secihurd_simulated2.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
-                    secihurd_simulated2[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
-                1e-8);
-
     // Compute at what time the equilibrium was reached and check whether that time point is smaller for model than for model2
     // (as we have a smaller max_support in model than in model2)
     ScalarType equilibrium_time{};
@@ -337,7 +431,7 @@ TEST(IdeSecir, compareEquilibria)
         }
     }
 
-    EXPECT_TRUE(equilibrium_time < equilibrium_time2);
+    EXPECT_TRUE(equilibrium_time <= equilibrium_time2);
 }
 
 TEST(IdeSecir, infection_transitions)

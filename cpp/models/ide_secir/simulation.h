@@ -67,7 +67,7 @@ public:
      */
     TimeSeries<double>& get_result()
     {
-        return m_model->m_population;
+        return m_model->m_populations;
     }
 
     /**
@@ -77,7 +77,7 @@ public:
      */
     const TimeSeries<double>& get_result() const
     {
-        return m_model->m_population;
+        return m_model->m_populations;
     }
 
     /**
@@ -117,7 +117,7 @@ public:
     /**
      * @brief Print the simulated numbers of individuals in each compartment for each time step.
      * 
-     * The TimeSeries m_population with simulated numbers of individuals in each compartment for each time step are printed. 
+     * The TimeSeries m_populations with simulated numbers of individuals in each compartment for each time step are printed. 
      */
     void print_compartments() const;
 
@@ -134,8 +134,6 @@ private:
  * @param[in] dt initial step size of integration
  * @param[in] model an instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
- * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
  */
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model);
 

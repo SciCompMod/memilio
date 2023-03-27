@@ -39,7 +39,7 @@ void Simulation::advance(ScalarType tmax)
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
 
         m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
-        m_model->m_population.add_time_point(m_model->m_population.get_last_time() + m_dt);
+        m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
 
         // compute_S:
         m_model->compute_susceptibles(m_dt);
@@ -78,10 +78,10 @@ void Simulation::print_compartments() const
 {
     // print compartments after simulation
     std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
-    for (Eigen::Index i = 0; i < m_model->m_population.get_num_time_points(); ++i) {
-        std::cout << m_model->m_population.get_time(i);
-        for (Eigen::Index j = 0; j < m_model->m_population.get_num_elements(); ++j) {
-            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_population[i][j];
+    for (Eigen::Index i = 0; i < m_model->m_populations.get_num_time_points(); ++i) {
+        std::cout << m_model->m_populations.get_time(i);
+        for (Eigen::Index j = 0; j < m_model->m_populations.get_num_elements(); ++j) {
+            std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_populations[i][j];
         }
         std::cout << "\n" << std::endl;
     }

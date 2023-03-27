@@ -43,7 +43,16 @@ int main()
 
     // add time points for initialization of transitions
     Vec vec_init(num_transitions);
-    vec_init << 25.0, 15.0, 8.0, 4.0, 1.0, 4.0, 1.0, 1.0, 1.0, 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
     // add initial time point to time series
     init.add_time_point(-10, vec_init);
     // add further time points until time 0
@@ -54,6 +63,8 @@ int main()
 
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, Dead_before);
+
+    // TODO: model.m_populations.get_last_value()[mio::isecir::InfectionState::Susceptible] = 17;
 
     // Set working parameters
     // Set max_support for all Delay Distributions
