@@ -81,7 +81,7 @@ struct LogLocId : public LogOnce {
     using Type = std::vector<location_id>;
     static Type log(const World& world)
     {
-        [world.get_location().get_id()];
+        return [world.get_location().get_id()];
     }
 };
 
