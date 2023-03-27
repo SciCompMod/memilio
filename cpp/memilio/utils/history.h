@@ -73,6 +73,7 @@ private:
         // end of recursion
     }
 };
+
 struct LogOnce {
 };
 
@@ -81,6 +82,17 @@ struct LogLocId : public LogOnce {
     static Type log(const World& world)
     {
         [world.get_location().get_id()];
+    }
+};
+
+struct LogAlways {
+};
+
+struct LogTime : public LogAlways {
+    using Type = std::vector<double>;
+    static Type log(const World& world)
+    {
+        [world.get_time()];
     }
 };
 
