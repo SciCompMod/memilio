@@ -23,6 +23,8 @@ import os
 import pandas as pd
 import numpy as np
 import warnings
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
@@ -608,9 +610,7 @@ def get_npi_data(fine_resolution=2,
                 df_npis_combinations[npic_uniq][1],
                 columns=codes_local)
             df_npis_combinations[npic_uniq][1].insert(
-                0, 'Code', codes_local)
-
-        del df_npis_combinations_pre
+                0, 'Code', codes_local) 
 
         # use to_excel function and specify the sheet_name and index
         # to store the dataframe in specified sheet if file not yet existent
@@ -873,6 +873,17 @@ def get_npi_data(fine_resolution=2,
     # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
+
+    df_npis_multiple_codes = {
+        npi_groups_combinations_unique[i]:
+        [
+        {df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]].values[j]:
+        df_npis_combinations_pre['Massnahmenindex'][npi_groups_idx[i]].values[j] for j in range(
+            len(df_npis_combinations_pre['Variablenname'][npi_groups_idx[i]]))},
+            np.zeros((len(npi_groups_idx[i]), len(npi_groups_idx[i])))]
+        for i in range(len(npi_groups_combinations_unique))}
+
+    count_codes(df_npis_old, df_npis_multiple_codes)
 
     for countyID in counties_considered:
         cid = 0
@@ -1155,6 +1166,46 @@ def get_npi_data(fine_resolution=2,
     gd.write_dataframe(df_npis, directory, filename, file_format)
 
     return df_npis
+
+def count_codes(df_npis_old, df_npis_combinations):
+    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
+    for county in geoger.get_county_ids():
+        df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']]==county]
+        code_dict = {}
+        for code in df_npis_combinations.keys():
+            for column in df_npis_combinations[code][1]:
+                code_dict[column] = df_local.iloc[:,6+np.where(df_local[df_local.NPI_code.str.contains(column)].iloc[:,6:].max() > 0)[0]].columns
+
+        for code in df_npis_combinations.keys():
+            column_list = df_npis_combinations[code][1].columns
+            for column in range(len(column_list)):
+                for column_other in range(len(column_list)):
+                    df_npis_combinations[code][1].iloc[column, column_other] += len(set(code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+                    df_npis_combinations[code][1].iloc[column_other, column] += len(set(code_dict[column_list[column_other]]).intersection(set(code_dict[column_list[column]])))
+
+    writer = pd.ExcelWriter(os.path.join(directory,'joined_codes.xlsx'), engine='xlsxwriter')
+    for code in df_npis_combinations.keys():
+        df_npis_combinations[code][1].to_excel(writer, sheet_name=code)
+    writer.close()
+
+    colors1 = np.array([[1.,1.,1.,1.]])
+    colors2 = mpl.cm.get_cmap('cool')(np.linspace(0,1,255))
+    colors = np.vstack((colors1, colors2))
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('colormap', colors)
+
+    for code in df_npis_combinations.keys():
+        df = pd.read_excel(os.path.join(directory, 'joined_codes.xlsx'), sheet_name = code, engine='openpyxl')
+        array_exclusion = df.iloc[:,1:].to_numpy()
+        fig = plt.figure()
+        positions = [i for i in range(len(df.columns)-1)]
+        plt.xticks(positions, [colname[-3:] for colname in df.columns.to_list()[1:]])
+        plt.yticks(positions, df.columns.to_list()[1:])
+        plt.imshow(array_exclusion, cmap=cmap, vmin = 0)
+        plt.colorbar()
+        plt.savefig(os.path.join(directory, 'heatmap_joined_codes', 'joined_codes_{}'.format(code)))
+        plt.close()
+
+
 
 
 def main():
