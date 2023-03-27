@@ -251,34 +251,37 @@ TEST(TestSaveParameters, read_graph_without_edges)
     auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir, mio::IOF_OmitDistributions, false);
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::IncubationTime>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::IncubationTime>()[i],
                   params.get<mio::osecir::IncubationTime>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i],
                   params.get<mio::osecir::TimeInfectedSymptoms>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::SerialInterval>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::SerialInterval>()[i],
                   params.get<mio::osecir::SerialInterval>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSevere>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSevere>()[i],
                   params.get<mio::osecir::TimeInfectedSevere>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedCritical>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedCritical>()[i],
                   params.get<mio::osecir::TimeInfectedCritical>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i],
-                  params.get<mio::osecir::TransmissionProbabilityOnContact>()[i]);
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i],
+            params.get<mio::osecir::TransmissionProbabilityOnContact>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i],
-                  params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]);
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i],
+            params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i],
-                  params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]);
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i],
+            params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i],
                   params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]);
 
-        EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::DeathsPerCritical>()[i],
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::DeathsPerCritical>()[i],
                   params.get<mio::osecir::DeathsPerCritical>()[i]);
     }
 }

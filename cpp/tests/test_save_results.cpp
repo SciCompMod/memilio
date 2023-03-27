@@ -203,18 +203,20 @@ TEST(TestSaveResult, save_result_with_params)
     auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
 
     EXPECT_EQ(
-        gr.value()
+        read_graph.value()
             .nodes()[0]
             .property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)],
         params.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)]);
 
-    EXPECT_EQ(
-        gr.value().nodes()[0].property.parameters.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)],
-        params.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)]);
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)],
+              params.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)]);
 
-    EXPECT_EQ(
-        gr.value().nodes()[0].property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
-        params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
+              params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
