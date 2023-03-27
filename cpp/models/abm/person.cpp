@@ -42,6 +42,7 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
+    , m_cells{0}
 {
     m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()();
     m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()();
