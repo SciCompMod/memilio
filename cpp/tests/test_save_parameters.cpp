@@ -248,7 +248,7 @@ TEST(TestSaveParameters, read_graph_without_edges)
     auto write_status   = mio::write_graph(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
-    auto gr = mio::read_graph<mio::osecir::Model>(tmp_results_dir, mio::IOF_OmitDistributions, false);
+    auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir, mio::IOF_OmitDistributions, false);
 
     for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
         EXPECT_EQ(gr.value().nodes()[0].property.parameters.get<mio::osecir::IncubationTime>()[i],

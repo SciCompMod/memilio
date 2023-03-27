@@ -200,7 +200,7 @@ TEST(TestSaveResult, save_result_with_params)
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
 
-    auto gr = mio::read_graph<mio::osecir::Model>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
+    auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
 
     EXPECT_EQ(
         gr.value()
