@@ -96,29 +96,29 @@ TEST(TestLocation, CacheExposureRate)
             mio::ParameterDistributionUniform(-0.0001, -0.0001)};
         params.set_default<mio::abm::InfectivityParameters>();
         params.get<mio::abm::InfectivityParameters>()[{variant, age}] = {mio::ParameterDistributionUniform(1., 1.),
-                                                                         mio::ParameterDistributionUniform(1., 1.), 1};
+                                                                         mio::ParameterDistributionUniform(1., 1.)};
 
         // setup a location with some chance of exposure
         auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
         auto location  = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
         auto infected1 = mio::abm::Person(home, age);
-        home.add_person(infected1);
         infected1.add_new_infection(mio::abm::Infection(variant, age, params, t));
         infected1.migrate_to(location, {0});
         auto infected2 = mio::abm::Person(home, age);
-        home.add_person(infected2);
         infected2.add_new_infection(mio::abm::Infection(variant, age, params, t));
         infected2.migrate_to(location, {0, 1});
 
         //cache precomputed results
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 1.63515, 1e-4);
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 1.63515, 1e-4);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.81758, 1e-4);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.81758, 1e-4);
-        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-4);
-        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-4);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 1.6351489523872873,
+                    1e-14);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 1.6351489523872873, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.81757447619364365,
+                    1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.81757447619364365, 1e-14);
+        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
+        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
         // should also work with capacities
         location.set_capacity_adapted_transmission_risk_flag(true);
@@ -127,9 +127,9 @@ TEST(TestLocation, CacheExposureRate)
         location.set_capacity(2, 22, 2); // Capacity for Cell 3
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 4.90545, 1e-4);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 2.45273, 1e-4);
-        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-4);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 4.9054468571618619, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 2.452723428580931, 1e-14);
+        EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
     }
 }
 /*
