@@ -50,11 +50,11 @@ TEST(TestLocation, addRemovePerson)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
+    auto person1  = create_person_simple(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
     person1.migrate_to(location, {0, 1});
-    auto person2 = create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
+    auto person2 = create_person_simple(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
     person2.migrate_to(location, {0});
-    auto person3 = create_person_simple(home, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59);
+    auto person3 = create_person_simple(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
     person3.migrate_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);

@@ -152,6 +152,19 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
+void Person::detect_infection(TimePoint t)
+{
+    if (is_infected(t)) {
+        m_infections.back().set_detected();
+        m_quarantine = true;
+    }
+}
+
+void Person::remove_quarantine()
+{
+    m_quarantine = false;
+}
+
 bool Person::get_tested(TimePoint t, const TestParameters& params)
 {
     ScalarType random = UniformDistribution<ScalarType>::get_instance()();

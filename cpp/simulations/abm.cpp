@@ -21,6 +21,7 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+#include "tests/test_abm.h"
 
 namespace fs = boost::filesystem;
 
@@ -440,8 +441,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     for (auto& person : persons) {
         auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state));
+            add_infection_simple(person, infection_state, t, world.get_global_infection_parameters());
     }
 }
 

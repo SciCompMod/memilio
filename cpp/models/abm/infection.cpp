@@ -59,16 +59,16 @@ ScalarType ViralLoad::get_viral_load(TimePoint t) const
 }
 
 Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
-                     InfectionState start_state, bool detected)
+                     bool detected)
     : m_virus_variant(virus)
     , m_viral_load(virus, age, start_date, params)
     , m_detected(detected)
 {
+    draw_infection_course(age, params, start_date);
+
     auto draws       = params.get<InfectivityParameters>()[{virus, age}].draw_samples();
     m_log_norm_alpha = draws[0];
     m_log_norm_beta  = draws[1];
-
-    draw_infection_course(age, params, start_date, start_state);
 }
 
 ScalarType Infection::get_infectivity(TimePoint t) const
@@ -100,11 +100,12 @@ bool Infection::is_detected() const
     return m_detected;
 }
 
-void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-                                      InfectionState start_state)
+void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date)
 {
     auto t = start_date;
-    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, start_state));
+    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Exposed));
+    auto uniform_dist = UniformDistribution<ScalarType>::get_instance();
+    ScalarType v;
     while ((m_infection_course.back().second != InfectionState::Recovered_Infected &&
             m_infection_course.back().second != InfectionState::Recovered_Carrier &&
             m_infection_course.back().second != InfectionState::Dead)) {
@@ -116,28 +117,66 @@ void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParamet
             m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Carrier));
             break;
         case InfectionState::Carrier:
-            // roll out if and how long until infected
-            t = t + TimeSpan(params.get<CarrierToInfected>()[{m_virus_variant, age,
-                                                              VaccinationState::Unvaccinated}]); // subject to change
-            m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected));
+            // roll out next infection step
+            v = uniform_dist();
+            if (v < 0.5) { // subject to change
+                t = t + TimeSpan(params.get<CarrierToInfected>()[{
+                            m_virus_variant, age, VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected));
+            }
+            else {
+                t = t + TimeSpan(params.get<CarrierToRecovered>()[{
+                            m_virus_variant, age, VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(
+                    std::pair<TimePoint, InfectionState>(t, InfectionState::Recovered_Carrier));
+            }
+
             break;
         case InfectionState::Infected:
             // roll out next infection step
-            t = t + TimeSpan(params.get<InfectedToSevere>()[{m_virus_variant, age,
-                                                             VaccinationState::Unvaccinated}]); // subject to change
-            m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Severe));
+            v = uniform_dist();
+            if (v < 0.5) { // subject to change
+                t = t + TimeSpan(params.get<InfectedToSevere>()[{m_virus_variant, age,
+                                                                 VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Severe));
+            }
+            else {
+                t = t + TimeSpan(params.get<InfectedToRecovered>()[{
+                            m_virus_variant, age, VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(
+                    std::pair<TimePoint, InfectionState>(t, InfectionState::Recovered_Infected));
+            }
             break;
         case InfectionState::Infected_Severe:
             // roll out next infection step
-            t = t + TimeSpan(params.get<SevereToCritical>()[{m_virus_variant, age,
-                                                             VaccinationState::Unvaccinated}]); // subject to change
-            m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Critical));
+            v = uniform_dist();
+            if (v < 0.5) { // subject to change
+                t = t + TimeSpan(params.get<SevereToCritical>()[{m_virus_variant, age,
+                                                                 VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(
+                    std::pair<TimePoint, InfectionState>(t, InfectionState::Infected_Critical));
+            }
+            else {
+                t = t + TimeSpan(params.get<SevereToRecovered>()[{
+                            m_virus_variant, age, VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(
+                    std::pair<TimePoint, InfectionState>(t, InfectionState::Recovered_Infected));
+            }
             break;
         case InfectionState::Infected_Critical:
             // roll out next infection step
-            t = t + TimeSpan(params.get<CriticalToDead>()[{m_virus_variant, age,
-                                                           VaccinationState::Unvaccinated}]); // subject to change
-            m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Dead));
+            v = uniform_dist();
+            if (v < 0.5) { // subject to change
+                t = t + TimeSpan(params.get<CriticalToDead>()[{m_virus_variant, age,
+                                                               VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Dead));
+            }
+            else {
+                t = t + TimeSpan(params.get<CriticalToRecovered>()[{
+                            m_virus_variant, age, VaccinationState::Unvaccinated}]); // subject to change
+                m_infection_course.push_back(
+                    std::pair<TimePoint, InfectionState>(t, InfectionState::Recovered_Infected));
+            }
             break;
         default:
             break;

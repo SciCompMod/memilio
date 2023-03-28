@@ -211,8 +211,9 @@ struct ViralLoadParameters {
     static Type get_default()
     {
         Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
-                         ParameterDistributionUniform(1., 1.), ParameterDistributionUniform(1., 1.),
-                         ParameterDistributionUniform(-1., -1.));
+                         ParameterDistributionUniform(8.1, 8.1),
+                         ParameterDistributionUniform(2. / days(1).seconds(), 2. / days(1).seconds()),
+                         ParameterDistributionUniform(-0.17 / days(1).seconds(), -0.17 / days(1).seconds()));
         return default_val;
     }
     static std::string name()
@@ -242,7 +243,7 @@ struct InfectivityParameters {
     using Type = CustomIndexArray<InfectivityDistributions, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, ParameterDistributionUniform(1., 1.),
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, ParameterDistributionUniform(-7., -7.),
                          ParameterDistributionUniform(1., 1.));
         return default_val;
     }

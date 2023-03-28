@@ -19,6 +19,7 @@
 */
 #include "abm/abm.h"
 #include "abm/household.h"
+#include "tests/test_abm.h"
 #include <cstdio>
 
 int main()
@@ -98,9 +99,7 @@ int main()
     for (auto& person : persons) {
         uint32_t infection_state = rand() % (uint32_t)mio::abm::InfectionState::Count;
         if (infection_state != (uint32_t)mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date,
-                                                         (mio::abm::InfectionState)infection_state));
+            add_infection_simple(person, infection_state, start_date, world.get_global_infection_parameters());
     }
 
     // Assign locations to the people

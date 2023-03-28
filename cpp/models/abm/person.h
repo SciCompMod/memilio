@@ -231,6 +231,16 @@ public:
     }
 
     /**
+     * @brief Sets the current Infection to detected and moves the Person into quarantine.
+    */
+    void detect_infection(TimePoint t);
+
+    /**
+     * @brief Removes the quarantine status of the Person.
+    */
+    void remove_quarantine();
+
+    /**
      * @brief Simulates a Corona test and returns the test result of the person.
      * If the test is positive, the person has to quarantine.
      * If the test is negative, quarantine ends.

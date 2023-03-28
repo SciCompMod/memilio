@@ -62,13 +62,14 @@ TEST(TestMasks, maskProtection)
         2 * mio::abm::days(1).seconds();
 
     //setup location with some chance of exposure
+    auto t                  = mio::abm::TimePoint(0);
     auto infection_location = mio::abm::Location(mio::abm::Location(mio::abm::LocationType::School, 0));
     auto susc_person1       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
     auto susc_person2       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
-    auto infected1          = create_person_simple(infection_location, mio::abm::InfectionState::Infected);
+    auto infected1          = create_person_simple(infection_location, mio::abm::AgeGroup::Age15to34,
+                                                   mio::abm::InfectionState::Infected, t, params); // infected 7 days prior
 
     //cache precomputed results
-    auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::days(1);
     infection_location.cache_exposure_rates(t, dt);
     // susc_person1 wears a mask, default protection is 1
@@ -76,7 +77,7 @@ TEST(TestMasks, maskProtection)
     // susc_person2 does not wear a mask
     susc_person2.set_wear_mask(false);
 
-    //mock so every exponential distr is 1 -> everyone with a strict positiv (not zero) percantage to infect will infect, see random_events.h logic
+    //mock so person 2 will get infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
 
