@@ -153,15 +153,15 @@ TEST(TestSaveResult, save_result_with_params)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
-    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.);
 
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto num_runs = 3;
-    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs        = 3;
+    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -199,6 +199,24 @@ TEST(TestSaveResult, save_result_with_params)
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
+
+    auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
+
+    EXPECT_EQ(
+        read_graph.value()
+            .nodes()[0]
+            .property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)],
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)]);
+
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)],
+              params.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)]);
+
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
+              params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
@@ -251,8 +269,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto num_runs = 3;
-    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs        = 3;
+    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -294,7 +312,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto results_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Results.h5");
     ASSERT_TRUE(results_from_file_p95);
 
-    auto result_from_file = results_from_file_p25.value()[0];  
+    auto result_from_file = results_from_file_p25.value()[0];
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
