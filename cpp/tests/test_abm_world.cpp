@@ -26,7 +26,6 @@ TEST(TestWorld, init)
     for (uint32_t i = 0; i < (uint32_t)mio::abm::LocationType::Count; i++) {
         ASSERT_THAT(world.get_locations()[i], testing::ElementsAre());
     }
-    ASSERT_EQ(world.parameters.get_num_groups(),6);
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 

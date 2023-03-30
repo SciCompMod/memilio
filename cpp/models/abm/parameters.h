@@ -475,13 +475,13 @@ public:
     {
     }
 
-    size_t get_num_groups() const
+    uint32_t get_num_groups() const
     {
         return m_num_groups;
     }
 
 private:
-    size_t m_num_groups;
+    uint32_t m_num_groups;
 };
 
 } // namespace abm
