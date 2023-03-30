@@ -332,7 +332,7 @@ template <class ContactLocation, class Model, class MigrationParams, class Migra
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                         ReadFunction&& read_func)
+                         ReadFunction&& read_func, AgeGroup min_commuter_age, AgeGroup max_commuter_age)
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(mobility_data_commuter,
@@ -356,8 +356,6 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
 
             //commuters
             auto working_population = 0.0;
-            auto min_commuter_age   = AgeGroup(2);
-            auto max_commuter_age   = AgeGroup(4); //this group is partially retired, only partially commutes
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
             }
