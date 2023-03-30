@@ -33,19 +33,20 @@
 #include "gtest/gtest.h"
 #include <memory>
 
-namespace {
-    template<class T>
+namespace
+{
+template <class T>
 void check_roundtrip_serialize(const T& t)
 {
     //binary serialized stream has no defined portable format
     //so no need to check contents of the stream after serialize
-    //roundtrip check is sufficient 
+    //roundtrip check is sufficient
     auto stream = mio::serialize_binary(t);
     auto result = mio::deserialize_binary(stream, mio::Tag<T>{});
     EXPECT_THAT(result, IsSuccess());
-    EXPECT_EQ(result.value(), t);    
+    EXPECT_EQ(result.value(), t);
 }
-}
+} // namespace
 
 TEST(BinarySerializer, int)
 {
@@ -57,7 +58,8 @@ TEST(BinarySerializer, float)
     check_roundtrip_serialize(3.1234f);
 }
 
-namespace {
+namespace
+{
 enum class E
 {
     E1 = 1,
@@ -70,7 +72,8 @@ TEST(BinarySerializer, enum)
     check_roundtrip_serialize(E::E2);
 }
 
-namespace {
+namespace
+{
 
 struct Foo {
     int i;
@@ -103,12 +106,15 @@ struct Foo {
     }
 };
 
-}
+} // namespace
 
 TEST(BinarySerializer, simple_class)
 {
     check_roundtrip_serialize(Foo{4});
 }
+
+namespace
+{
 
 struct Bar {
     std::string s;
@@ -128,7 +134,7 @@ struct Bar {
     {
         auto obj = io.expect_object("Bar");
         auto s   = obj.expect_element("s", mio::Tag<std::string>{});
-        auto e = obj.expect_optional("e", mio::Tag<E>{});
+        auto e   = obj.expect_optional("e", mio::Tag<E>{});
         auto v   = obj.expect_list("v", mio::Tag<Foo>{});
         return mio::apply(
             io,
@@ -146,6 +152,8 @@ struct Bar {
         return !(*this == other);
     }
 };
+
+} // namespace
 
 TEST(BinarySerializer, complex_class)
 {
@@ -180,7 +188,7 @@ TEST(BinarySerializer, model)
 TEST(ByteStream, end)
 {
     mio::ByteStream stream;
-    int i = 3;
+    int i  = 3;
     auto p = (unsigned char*)&i;
     stream.write(p, sizeof(i));
     EXPECT_TRUE(stream.read(p, sizeof(i)));
@@ -190,7 +198,7 @@ TEST(ByteStream, end)
 TEST(ByteStream, data)
 {
     mio::ByteStream stream(4);
-    int i = 3;
+    int i  = 3;
     auto p = (unsigned char*)&i;
     std::copy(p, p + sizeof(i), stream.data());
     i = 4;
