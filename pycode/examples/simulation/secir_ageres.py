@@ -68,14 +68,16 @@ def run_secir_simulation(show_plot=True):
     contacts = ContactMatrix(
         np.full((nb_groups, nb_groups), fact * cont_freq))
     contacts.add_damping(
-        Damping(coeffs=np.r_[0.7], t=30.0, level=0, type=0))
+        Damping(coeffs=np.full((nb_groups, nb_groups), 0.7), t=30.0, level=0, type=0))
     model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
     model = model
 
     result = simulate(t0=t0, tmax=tmax,
                       dt=dt, model=model)
+
     print(result.get_last_value())
+
     num_time_points = result.get_num_time_points()
     result_array = result.as_ndarray()
     t = result_array[0, :]
@@ -113,8 +115,9 @@ def run_secir_simulation(show_plot=True):
     fig.tight_layout
     fig.savefig('Secir_simple.pdf')
 
-    plt.show()
-    plt.close()
+    if (show_plot):
+        plt.show()
+        plt.close()
 
     for timestep in range(num_time_points):
         print(timestep, ": ", result.get_time(timestep), "\n")

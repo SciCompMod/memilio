@@ -54,7 +54,7 @@ int main()
 
     model.check_constraints();
 
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> seir = simulate(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 
@@ -64,16 +64,16 @@ int main()
         for (size_t k = 0; k < (size_t)mio::oseir::InfectionState::Count; k++) {
             printf(" %c", vars[k]);
         }
-        auto num_points = static_cast<size_t>(secir.get_num_time_points());
+        auto num_points = static_cast<size_t>(seir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
-            printf("\n%.14f ", secir.get_time(i));
-            Eigen::VectorXd res_j = secir.get_value(i);
+            printf("\n%.14f ", seir.get_time(i));
+            Eigen::VectorXd res_j = seir.get_value(i);
             for (size_t j = 0; j < (size_t)mio::oseir::InfectionState::Count; j++) {
                 printf(" %.14f", res_j[j]);
             }
         }
 
-        Eigen::VectorXd res_j = secir.get_last_value();
+        Eigen::VectorXd res_j = seir.get_last_value();
         printf("\nnumber total: %f\n", res_j[0] + res_j[1] + res_j[2] + res_j[3]);
     }
 }
