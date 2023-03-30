@@ -57,9 +57,8 @@ public:
      * @brief Create a World.
      * @param[in] num_agegroups The number of age groups in the simulated world.
      */
-    World(uint32_t num_agegroups)
+    World(size_t num_agegroups)
         : parameters(num_agegroups)
-        , populations(Populations<AgeGroup, InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}))
         , m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(GlobalInfectionParameters(num_agegroups))
         , m_migration_parameters(MigrationParameters(num_agegroups))
@@ -74,7 +73,6 @@ public:
      */
     World(const World& other)
         : parameters(other.parameters.get_num_groups())
-        , populations({AgeGroup(other.parameters.get_num_groups()), InfectionState::Count})
         , m_locations(other.m_locations)
         , m_infection_parameters(other.m_infection_parameters)
         , m_migration_parameters(other.m_migration_parameters)
@@ -102,7 +100,7 @@ public:
     {
         auto obj = io.create_object("World");
         obj.add_element("Parameters", parameters);
-        obj.add_element("Populations", populations);
+        // obj.add_element("Populations", populations);
     }
 
     /** 
@@ -229,7 +227,6 @@ public:
     const TestingStrategy& get_testing_strategy() const;
 
     SimulationParameters parameters;
-    Populations<AgeGroup, InfectionState> populations;
 
 private:
     /**

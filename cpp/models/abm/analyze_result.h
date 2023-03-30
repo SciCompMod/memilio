@@ -63,13 +63,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
     for (size_t node = 0; node < num_nodes; node++) {
         for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_groups); age_group++) {
-            //Population
-            for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
-                param_percentil(
-                    node, [ compart, age_group ](auto&& model) -> auto& {
-                        return model.populations[{age_group, compart}];
-                    });
-            }
             // Global infection parameters
             param_percentil(
                 node, [age_group](auto&& model) -> auto& {
@@ -129,7 +122,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.populations.get_total();
+            single_element_ensemble[run] = static_cast<double>(params.parameters.size());
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
     }
