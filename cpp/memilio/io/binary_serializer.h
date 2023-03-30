@@ -38,13 +38,11 @@ namespace mio
 */
 class ByteStream
 {
-    std::vector<unsigned char> m_buf;
-    size_t m_read_head;
-
 public:
     /**
     * Create stream with n readable bytes initialized to 0.
-    * Set value of readable bytes by accessing buffer through member function data().
+    * The value of the readable bytes can be set through the pointer returned by
+    * the data() member function.
     * @param n number of readable bytes.
     */
     ByteStream(size_t n)
@@ -62,7 +60,7 @@ public:
     }
 
     /**
-    * Write bytes to streams.
+    * Write bytes to the stream.
     * @param p pointer to bytes to be written.
     * @param s number of bytes to write.
     */
@@ -128,6 +126,10 @@ public:
     {
         return m_buf.size();
     }
+
+private:
+    std::vector<unsigned char> m_buf; ///< store of written/readable bytes
+    size_t m_read_head; ///< index in the buffer where next byte is read/written
 };
 
 /**
@@ -137,42 +139,100 @@ public:
 class BinarySerializerObject : public SerializerBase
 {
 public:
-    BinarySerializerObject(std::shared_ptr<IOStatus> status, int flags, ByteStream& stream)
+    BinarySerializerObject(ByteStream& stream, std::shared_ptr<IOStatus> status, int flags)
         : SerializerBase(status, flags)
         , m_stream(stream)
     {
     }
 
+    /**
+    * Add element of basic type to this object.
+    * As an optimization, also handles trivial structs, Enums, etc (everything that
+    * can be memopy'd.)
+    * @param name Name of the element.
+    * @param value Value to be serialized.
+    */
     template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
     void add_element(const std::string& name, const T& value);
 
+    /**
+    * Add string element to this object.
+    * @param name Name of the element.
+    * @param value Value to be serialized.
+    */
     void add_element(const std::string& name, const std::string& value);
 
+    /**
+    * Add serializable value as an element to this object.
+    * @param name Name of the element.
+    * @param value Value to be serialized.
+    */
     template <class T, std::enable_if_t<negation_v<std::is_trivial<T>>, void*> = nullptr>
     void add_element(const std::string& name, const T& value);
 
+    /**
+    * Get element of basic type from this object.
+    * As an optimization, also handles trivial structs, Enums, etc (everything that
+    * can be memopy'd.)
+    * @param name Name of the element.
+    * @param tag Tag that determines the type of the element.
+    * @returns Deserialized value.
+    */
     template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
-    IOResult<T> expect_element(const std::string& name, Tag<T>);
+    IOResult<T> expect_element(const std::string& name, Tag<T> tag);
 
+    /**
+    * Get deserializable element from this object.
+    * @param name Name of the element.
+    * @param tag Tag that determines the type of the element.
+    * @returns Deserialized value.
+    */
     template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*> = nullptr>
-    IOResult<T> expect_element(const std::string& name, Tag<T>);
+    IOResult<T> expect_element(const std::string& name, Tag<T> tag);
 
-    IOResult<std::string> expect_element(const std::string& name, Tag<std::string>);
+    /**
+    * Get serialized string element from this object.
+    * @param name Name of the element.
+    * @param tag Tag that determines the type of the element.
+    * @returns Deserialized value.
+    */
+    IOResult<std::string> expect_element(const std::string& name, Tag<std::string> tag);
 
+    /**
+    * Add optional element to this object.
+    * @param name Name of the element.
+    * @param value Value to be serialized. Nullptr if empty.
+    */
     template <class T>
     void add_optional(const std::string& name, const T* value);
 
+    /**
+    * Get optional element from this object.
+    * @param name Name of the element.
+    * @returns Deserialized optional value.
+    */
     template <class T>
     IOResult<boost::optional<T>> expect_optional(const std::string& name, Tag<T>);
 
+    /**
+    * Add a list of elements to this object.
+    * @param name Name of the list.
+    * @param b Iterator to beginning of the list.
+    * @param e Iterator to end of the list.
+    */
     template <class Iter>
     void add_list(const std::string& name, Iter b, Iter e);
 
+    /**
+    * Get a list of elements from this object.
+    * @param name Name of the list.
+    * @returns List of deserialized elements.
+    */
     template <class T>
     IOResult<std::vector<T>> expect_list(const std::string& name, Tag<T>);
 
 private:
-    ByteStream& m_stream;
+    ByteStream& m_stream; ///< Reference to a stream that stores the serialized bytes.
 };
 
 /**
@@ -182,40 +242,66 @@ private:
 class BinarySerializerContext : public SerializerBase
 {
 public:
-    BinarySerializerContext(std::shared_ptr<IOStatus> status, int flags, ByteStream& stream)
+    BinarySerializerContext(ByteStream& stream, std::shared_ptr<IOStatus> status, int flags)
         : SerializerBase(status, flags)
         , m_stream(stream)
     {
     }
 
-    BinarySerializerObject create_object(const std::string& /*type*/)
+    /**
+    * Begin serialization of a new object.
+    * @param type Name of the type of the object. Unused, not serialized.
+    */
+    BinarySerializerObject create_object(const std::string& type)
     {
-        return BinarySerializerObject(m_status, m_flags, m_stream);
+        unused(type);
+        return BinarySerializerObject(m_stream, m_status, m_flags);
     }
 
-    BinarySerializerObject expect_object(const std::string& /*type*/)
+    /**
+    * Begin deserialization of an object.
+    * @param type Name of the type of the object. Unused, not serialized.
+    */
+    BinarySerializerObject expect_object(const std::string& type)
     {
+        unused(type);
         //no way to do check if there really is an object here
         //maybe give option to add type info for debugging?
-        return BinarySerializerObject(m_status, m_flags, m_stream);
+        return BinarySerializerObject(m_stream, m_status, m_flags);
     }
 
+    /**
+    * Serialize "naked" ints, etc. that are not contained in a complex object hierarchy,
+    * because they don't have an object that they can be added to.
+    * @param ctxt The serialization context.
+    * @param t The value to be serialized.
+    */
     template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
     friend void serialize_internal(BinarySerializerContext& ctxt, const T& t)
     {
-        BinarySerializerObject obj(ctxt.m_status, ctxt.m_flags, ctxt.m_stream);
+        //add element to dummy object.
+        //objects don't store anything in the stream, so this has no overhead.
+        BinarySerializerObject obj(ctxt.m_stream, ctxt.m_status, ctxt.m_flags);
         obj.add_element("", t);
     }
 
+    /**
+    * Deserialize "naked" ints, etc. that are not contained in a complex object hierarchy.
+    * @param ctxt The serialization context.
+    * @param tag The value to be serialized.
+    * @returns The deserialized value.
+    */
     template <class T, std::enable_if_t<std::is_trivial<T>::value, void*> = nullptr>
-    friend IOResult<T> deserialize_internal(BinarySerializerContext& ctxt, Tag<T>)
+    friend IOResult<T> deserialize_internal(BinarySerializerContext& ctxt, Tag<T> tag)
     {
-        BinarySerializerObject obj(ctxt.m_status, ctxt.m_flags, ctxt.m_stream);
+        unused(tag);
+        //read element from on dummy object.
+        BinarySerializerObject obj(ctxt.m_stream, ctxt.m_status, ctxt.m_flags);
         return obj.expect_element("", Tag<T>{});
     }
 
 private:
-    ByteStream& m_stream;
+    ByteStream& m_stream; ///< Reference to a stream that stores the serialized bytes.
 };
 
 template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
@@ -230,7 +316,7 @@ template <class T, std::enable_if_t<negation_v<std::is_trivial<T>>, void*>>
 void BinarySerializerObject::add_element(const std::string& name, const T& value)
 {
     mio::unused(name);
-    auto ctxt = BinarySerializerContext(m_status, m_flags, m_stream);
+    auto ctxt = BinarySerializerContext(m_stream, m_status, m_flags);
     mio::serialize(ctxt, value);
 }
 
@@ -261,7 +347,7 @@ template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*>>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> tag)
 {
     mio::unused(name);
-    auto ctxt = BinarySerializerContext(m_status, m_flags, m_stream);
+    auto ctxt = BinarySerializerContext(m_stream, m_status, m_flags);
     return mio::deserialize(ctxt, tag);
 }
 
@@ -297,7 +383,7 @@ IOResult<std::vector<T>> BinarySerializerObject::expect_list(const std::string& 
     v.reserve(size);
     for (auto i = size_t(0); i < size; ++i) {
         BOOST_OUTCOME_TRY(t, expect_element("Item", Tag<T>{}));
-        v.push_back(t);
+        v.emplace_back(std::move(t));
     }
     return success(v);
 }
@@ -335,7 +421,7 @@ template <class T>
 ByteStream serialize_binary(const T& t)
 {
     ByteStream stream;
-    BinarySerializerContext ctxt(std::make_shared<IOStatus>(), 0, stream);
+    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), 0);
     mio::serialize(ctxt, t);
     return stream;
 }
@@ -351,7 +437,7 @@ ByteStream serialize_binary(const T& t)
 template <class T>
 IOResult<T> deserialize_binary(ByteStream& stream, Tag<T>)
 {
-    BinarySerializerContext ctxt(std::make_shared<IOStatus>(), 0, stream);
+    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), 0);
     return mio::deserialize(ctxt, Tag<T>{});
 }
 

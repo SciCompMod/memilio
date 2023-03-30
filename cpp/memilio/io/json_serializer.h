@@ -209,7 +209,7 @@ public:
      * @param value reference to the json value that will store the data.
      * @param flags flags to determine the behavior of serialization.
      */
-    JsonObject(const std::shared_ptr<IOStatus>& status, Json::Value& value, int flags)
+    JsonObject(Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
         : SerializerBase{status, flags}
         , m_value{value}
     {
@@ -336,7 +336,7 @@ public:
     {
         mio::unused(type);
         m_value = Json::Value(Json::objectValue);
-        return {m_status, m_value, m_flags};
+        return {m_value, m_status, m_flags};
     }
 
     /**
@@ -352,7 +352,7 @@ public:
         if (!m_value.isObject()) {
             *m_status = IOStatus(StatusCode::InvalidType, "Json value must be an object.");
         }
-        return JsonObject(m_status, m_value, m_flags);
+        return JsonObject(m_value, m_status, m_flags);
     }
 
     /**
