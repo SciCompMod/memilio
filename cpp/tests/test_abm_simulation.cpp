@@ -70,13 +70,13 @@ TEST(TestSimulation, advance_subpopulation)
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
     auto person1     = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
-                                        mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                        mio::abm::GlobalInfectionParameters(6));
     school.add_person(person1);
     auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     school.add_person(person2);
     auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     school.add_person(person3);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));

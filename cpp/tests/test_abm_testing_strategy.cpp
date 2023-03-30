@@ -22,10 +22,10 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
     auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                   mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                   mio::abm::GlobalInfectionParameters(6));
 
     auto testing_criteria = mio::abm::TestingCriteria();
     ASSERT_EQ(testing_criteria.evaluate(person, work), true);
@@ -89,12 +89,12 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
     auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                     mio::abm::GlobalInfectionParameters(6));
     auto person2  = mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(2),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                     mio::abm::GlobalInfectionParameters(6));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)

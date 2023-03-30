@@ -49,7 +49,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
     // lamda function that calculates the percentile of a single paramter
-    std::vector<Model> percentile(num_nodes, World((int)num_groups));
+    std::vector<World> percentile(num_nodes, World((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
         for (size_t run = 0; run < num_runs; run++) {
@@ -126,14 +126,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 node, [age_group](auto&& model) -> auto& {
                     return model.parameters.template get<DetectInfection>()[{age_group, VaccinationState::Count}];
                 });
-            //param_percentil(
-            //    node, [age_group](auto&& model) -> auto& {
-            //        return model.parameters.template get<MaskProtection>()[{MaskType::Count}];
-            //    });
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.populations.get_total();
+            single_element_ensemble[run] = params.get_persons().size();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
     }

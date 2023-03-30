@@ -51,11 +51,11 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
 LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
-
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
-        person.get_go_to_school_time(params) < t.time_since_midnight() + dt && person.get_age() == AgeGroup(1) &&
-        person.goes_to_school(t, params) && !person.is_in_quarantine()) {
+        person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
+        params.get<mio::abm::AgeGroupGotoSchool>().count(person.get_age()) && person.goes_to_school(t, params) &&
+        !person.is_in_quarantine()) {
         return LocationType::School;
     }
     //return home
@@ -70,7 +70,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Mi
     auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        (person.get_age() == AgeGroup(2) || person.get_age() == AgeGroup(3)) && t.day_of_week() < 5 &&
+        (params.get<mio::abm::AgeGroupGotoWork>().count(person.get_age())) && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {

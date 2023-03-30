@@ -193,16 +193,6 @@ const GlobalInfectionParameters& World::get_global_infection_parameters() const
     return m_infection_parameters;
 }
 
-SimulationParameters& World::get_simulation_parameters()
-{
-    return m_simulation_parameters;
-}
-
-const SimulationParameters& World::get_simulation_parameters() const
-{
-    return m_simulation_parameters;
-}
-
 TripList& World::get_trip_list()
 {
     return m_trip_list;

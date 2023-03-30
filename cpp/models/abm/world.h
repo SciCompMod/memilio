@@ -30,7 +30,6 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
-#include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 
 #include <vector>
@@ -45,42 +44,25 @@ namespace abm
  * @brief The World of the Simulation.
  * It consists of Location%s and Person%s (Agents).
  */
-class World : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, SimulationParameters>
+class World
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, SimulationParameters>;
 
 public:
     using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
     using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
     using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
     using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
-    /**
-     * @brief Create a World.
-     * @param[in] params Parameters of the simulation that are the same everywhere in the World.
-     */
-    World(SimulationParameters params)
-        : Base(Populations({params.get_num_groups(), InfectionState::Count}),
-               SimulationParameters(params.get_num_groups()))
-        , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(GlobalInfectionParameters(params.get_num_groups()))
-        , m_migration_parameters(MigrationParameters(params.get_num_groups()))
-        , m_simulation_parameters(params)
-        , m_trip_list()
-    {
-        use_migration_rules(true);
-    }
 
     /**
      * @brief Create a World.
      * @param[in] num_agegroups The number of age groups in the simulated world.
      */
-    World(int32_t num_agegroups)
-        : Base(Populations({AgeGroup(num_agegroups), InfectionState::Count}),
-               SimulationParameters(AgeGroup(num_agegroups)))
+    World(size_t num_agegroups)
+        : parameters(num_agegroups)
+        , populations({AgeGroup(num_agegroups), InfectionState::Count})
         , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(GlobalInfectionParameters(AgeGroup(num_agegroups)))
-        , m_migration_parameters(MigrationParameters(AgeGroup(num_agegroups)))
-        , m_simulation_parameters(SimulationParameters(AgeGroup(num_agegroups)))
+        , m_infection_parameters(GlobalInfectionParameters(num_agegroups))
+        , m_migration_parameters(MigrationParameters(num_agegroups))
         , m_trip_list()
     {
         use_migration_rules(true);
@@ -91,13 +73,17 @@ public:
      * @param[in] other The World that needs to be copied. 
      */
     World(const World& other)
-        : Base(other.populations, other.parameters)
+        : parameters(other.parameters.get_num_groups())
+        , populations({AgeGroup(other.parameters.get_num_groups()), InfectionState::Count})
         , m_locations(other.m_locations)
         , m_infection_parameters(other.m_infection_parameters)
         , m_migration_parameters(other.m_migration_parameters)
-        , m_simulation_parameters(other.m_simulation_parameters)
         , m_trip_list(other.m_trip_list)
     {
+        auto persons = other.get_persons();
+        for (auto& person : persons) {
+            add_person(person.get_location_id(), person.get_infection_state(), person.get_age());
+        }
         use_migration_rules(other.m_use_migration_rules);
     }
 
@@ -115,8 +101,6 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("World");
-        //obj.add_element("Parameters", parameters);
-        obj.add_element("Populations", populations);
     }
 
     /**
@@ -127,14 +111,6 @@ public:
     static IOResult<World> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("World");
-        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations>{});
-        return apply(
-            io,
-            [](auto&& par_, auto&& pop_) {
-                return World{pop_, par_};
-            },
-            par, pop);
     }
 
     /** 
@@ -235,14 +211,6 @@ public:
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
-    /** 
-     * @brief Get the SimulationParameters.
-     * @return Reference to the SimulationParameters.
-     */
-    SimulationParameters& get_simulation_parameters();
-
-    const SimulationParameters& get_simulation_parameters() const;
-
     /**
      * @brief Get the migration data.
      * @return Reference to the list of Trip%s that the Person%s make.
@@ -268,6 +236,9 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
+    SimulationParameters parameters;
+    Populations<AgeGroup, InfectionState> populations;
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
@@ -287,7 +258,6 @@ private:
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
-    SimulationParameters m_simulation_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),

@@ -32,14 +32,14 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
+Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
     , m_subpopulations(Eigen::Index(InfectionState::Count))
-    , m_cached_exposure_rate({AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS), VaccinationState::Count})
-    , m_cells(std::vector<Cell>(num_cells))
+    , m_cached_exposure_rate({AgeGroup(num_agegroups), VaccinationState::Count})
+    , m_cells(std::vector<Cell>(num_cells, num_agegroups))
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
@@ -108,8 +108,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     if (m_cells.empty() && m_num_persons == 0) {
-        m_cached_exposure_rate = {{AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS), VaccinationState::Count},
-                                  0.};
+        m_cached_exposure_rate = {{AgeGroup(6), VaccinationState::Count}, 0.};
     }
     else if (m_cells.empty()) {
         auto num_carriers               = get_subpopulation(InfectionState::Carrier);
@@ -124,8 +123,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     else {
         for (auto& cell : m_cells) {
             if (cell.num_people == 0) {
-                cell.cached_exposure_rate = {
-                    {AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS), VaccinationState::Count}, 0.};
+                cell.cached_exposure_rate = {{AgeGroup(6), VaccinationState::Count}, 0.};
             }
             else {
                 auto relative_transmission_risk = compute_relative_transmission_risk();

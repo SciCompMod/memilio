@@ -24,27 +24,26 @@
 
 int main()
 {
-    // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::SimulationParameters simulation_params = mio::abm::SimulationParameters(mio::AgeGroup(6));
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    simulation_params.get<mio::abm::IncubationPeriod>() = 4.;
-
     // Create the world with infection parameters.
-    auto world = mio::abm::World(simulation_params);
+    auto world = mio::abm::World(6);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     world.get_global_infection_parameters().get<mio::abm::IncubationPeriod>() = 4.;
+
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 
     // There are 3 households for each household group.
     int n_households = 3;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
+    auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(mio::AgeGroup(0), 1);
     child.set_age_weight(mio::AgeGroup(1), 1);
 
-    auto parent = mio::abm::HouseholdMember(); // A parent is 50/50% 15-34 or 35-59.
+    auto parent = mio::abm::HouseholdMember(6); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(mio::AgeGroup(2), 1);
     parent.set_age_weight(mio::AgeGroup(3), 1);
 

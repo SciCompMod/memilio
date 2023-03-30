@@ -25,8 +25,8 @@ TEST(TestLockdownRules, school_closure)
     auto t         = mio::abm::TimePoint(0);
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(6);
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto school    = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto school    = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
 
     //setup rng mock so one person is home schooled and the other goes to school
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -43,15 +43,18 @@ TEST(TestLockdownRules, school_closure)
         .WillRepeatedly(testing::Return(1.0));
 
     auto p1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::GlobalInfectionParameters(6));
     p1.set_assigned_location(home);
     p1.set_assigned_location(school);
     auto p2 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::GlobalInfectionParameters(6));
     p2.set_assigned_location(home);
     p2.set_assigned_location(school);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
-
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
     mio::abm::set_school_closure(t, 0.7, params);
 
     ASSERT_EQ(mio::abm::go_to_school(p1, t_morning, dt, params), mio::abm::LocationType::Home);
@@ -64,8 +67,8 @@ TEST(TestLockdownRules, school_opening)
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(7);
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto school    = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto school    = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
     //setup rng mock so the person is homeschooled in case of lockdown
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -76,11 +79,14 @@ TEST(TestLockdownRules, school_opening)
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
     auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                              mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                              mio::abm::GlobalInfectionParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(school);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
-
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
     mio::abm::set_school_closure(t_closing, 1., params);
     mio::abm::set_school_closure(t_opening, 0., params);
 
@@ -92,9 +98,14 @@ TEST(TestLockdownRules, home_office)
     auto t                               = mio::abm::TimePoint(0);
     auto t_morning                       = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto dt                              = mio::abm::hours(1);
-    auto home                            = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto work                            = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
+    auto home                            = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto work                            = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 
     mio::abm::set_home_office(t, 0.4, params);
 
@@ -109,9 +120,9 @@ TEST(TestLockdownRules, home_office)
         .WillRepeatedly(testing::Return(1.0));
 
     auto person1 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     person1.set_assigned_location(home);
     person1.set_assigned_location(work);
     person2.set_assigned_location(home);
@@ -127,8 +138,8 @@ TEST(TestLockdownRules, no_home_office)
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(8);
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto work      = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto work      = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
 
     //setup rng mock so the person works in home office
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -140,10 +151,14 @@ TEST(TestLockdownRules, no_home_office)
         .WillRepeatedly(testing::Return(1.0));
 
     auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2),
-                              mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                              mio::abm::GlobalInfectionParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(work);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 
     mio::abm::set_home_office(t_closing, 0.5, params);
     mio::abm::set_home_office(t_opening, 0., params);
@@ -156,13 +171,13 @@ TEST(TestLockdownRules, social_event_closure)
     auto t         = mio::abm::TimePoint(0);
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0, 6);
     auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                                      mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                      mio::abm::GlobalInfectionParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(event);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
 
     mio::abm::close_social_events(t, 1, params);
 
@@ -175,13 +190,13 @@ TEST(TestLockdownRules, social_events_opening)
     auto t_opening = mio::abm::TimePoint(0) + mio::abm::days(1);
     auto dt        = mio::abm::hours(1);
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(19);
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0, 6);
     auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                                      mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                      mio::abm::GlobalInfectionParameters(6));
     p.set_assigned_location(event);
     p.set_assigned_location(home);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(mio::AgeGroup(6));
+    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
 
     mio::abm::close_social_events(t_closing, 1, params);
     mio::abm::close_social_events(t_opening, 0, params);

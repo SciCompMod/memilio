@@ -84,11 +84,11 @@ struct Cell {
         cached_exposure_rate; /**< The parameter for the exponential
     distribution to decide if a Person becomes infected.*/
 
-    Cell()
+    Cell(size_t num_agegroups)
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS), VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup(num_agegroups), VaccinationState::Count}, 0.})
     {
     }
 
@@ -113,9 +113,10 @@ public:
      * construct a Location of a certain type.
      * @param type the type of the location
      * @param index the index of the location
+     * @param agegroups the number of age groups in the model
      * @param num_cells the number of cells in which the location is divided
      */
-    Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
+    Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells = 0);
 
     /**
      * @brief Get the LocationType of this Location.

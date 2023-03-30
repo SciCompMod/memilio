@@ -22,7 +22,7 @@
 
 TEST(TestLocation, init)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
     for (mio::abm::InfectionState i = mio::abm::InfectionState(0); i < mio::abm::InfectionState::Count;
          i                          = mio::abm::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(i), 0);
@@ -33,30 +33,30 @@ TEST(TestLocation, init)
 
 TEST(TestLocation, initCell)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
 TEST(TestLocation, getIndex)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     ASSERT_EQ((int)location.get_index(), 0);
 }
 
 TEST(TestLocation, addRemovePerson)
 {
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
     auto person1  = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                     mio::abm::GlobalInfectionParameters(6));                           
     home.add_person(person1);
     person1.migrate_to(home, location, {0, 1});
     auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     home.add_person(person2);
     person2.migrate_to(home, location, {0});
     auto person3 = mio::abm::Person(home, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     home.add_person(person3);
     person3.migrate_to(home, location, {0, 1});
 
@@ -91,7 +91,7 @@ TEST(TestLocation, beginStep)
         mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
             mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
-        mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(mio::AgeGroup(6));
+        mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(6);
         params.set<mio::abm::CarrierToInfected>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CarrierToRecovered>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
@@ -120,8 +120,8 @@ TEST(TestLocation, beginStep)
         params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
         //setup location with some chance of exposure
-        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
-        auto location1 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
+        auto location1 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
         auto infected1 =
             mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1), params, vaccination_state);
         home.add_person(infected1);
@@ -149,7 +149,7 @@ TEST(TestLocation, beginStep)
         mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState(
             mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
-        mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(mio::AgeGroup(6));
+        mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(6);
         params.set<mio::abm::CarrierToInfected>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
         params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
         params.set<mio::abm::CarrierToRecovered>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
@@ -178,8 +178,8 @@ TEST(TestLocation, beginStep)
         params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
         //setup location with some chance of exposure
-        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
-        auto location1 = mio::abm::Location(mio::abm::LocationType::School, 0);
+        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+        auto location1 = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
         location1.set_capacity(3, 18);
         auto infected1 =
             mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
@@ -207,7 +207,11 @@ TEST(TestLocation, reachCapacity)
 {
     using testing::Return;
 
-    auto world     = mio::abm::World(6);
+    auto world = mio::abm::World(6);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
 
@@ -256,11 +260,11 @@ TEST(TestLocation, computeRelativeTransmissionRisk)
     mio::abm::VaccinationState vaccination_state =
         mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
-    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(mio::AgeGroup(6));
+    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(6);
 
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     home.set_capacity(4, 264);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6);
     location.set_capacity(4, 264);
 
     auto infected1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, age, params, vaccination_state);
@@ -280,17 +284,17 @@ TEST(TestLocation, computeRelativeTransmissionRisk)
 TEST(TestLocation, changedState)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 1);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 1);
     auto p1       = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                     mio::abm::GlobalInfectionParameters(6));
     home.add_person(p1);
     p1.migrate_to(home, location, {0});
     auto p2 = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(5),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::GlobalInfectionParameters(6));
     home.add_person(p2);
     p2.migrate_to(home, location, {0});
     auto p3 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(5),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::GlobalInfectionParameters(6));
     home.add_person(p3);
     p3.migrate_to(home, location, {0});
 
@@ -316,7 +320,7 @@ TEST(TestLocation, interact)
     mio::abm::VaccinationState vaccination_state =
         mio::abm::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::abm::VaccinationState::Count) - 1));
 
-    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(mio::AgeGroup(6));
+    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters(6);
     params.set<mio::abm::CarrierToInfected>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
     params.get<mio::abm::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
     params.set<mio::abm::CarrierToRecovered>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 0.});
@@ -343,7 +347,7 @@ TEST(TestLocation, interact)
     params.get<mio::abm::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
     //setup location with some chance of exposure
-    auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
     auto infected1 =
         mio::abm::Person(location, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
     location.add_person(infected1);
@@ -454,8 +458,8 @@ TEST(TestLocation, interact)
     }
 
     //setup location with 2 cells with some chance of exposure
-    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
-    auto location2 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
+    auto location2 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
     auto infected4 =
         mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
     home.add_person(infected4);
@@ -492,7 +496,7 @@ TEST(TestLocation, interact)
 
 TEST(TestLocation, setCapacity)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     location.set_capacity(4, 200);
     ASSERT_EQ(location.get_capacity().persons, 4);
     ASSERT_EQ(location.get_capacity().volume, 200);
@@ -502,13 +506,13 @@ TEST(TestLocation, addSubpopulationsTimepoint)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
     auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                     mio::abm::GlobalInfectionParameters(6));
     location.add_person(person1);
     auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     location.add_person(person2);
     auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::GlobalInfectionParameters(6));
     location.add_person(person3);
 
     auto t1 = mio::abm::TimePoint(0) + mio::abm::days(7);
@@ -555,7 +559,7 @@ TEST(TestLocation, initializeSubpopulation)
 
 TEST(TestLocation, setRequiredMask)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     ASSERT_EQ(location.get_required_mask(), mio::abm::MaskType::Community);
 
     location.set_required_mask(mio::abm::MaskType::FFP2);
@@ -564,7 +568,7 @@ TEST(TestLocation, setRequiredMask)
 
 TEST(TestLocation, setNPIActive)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     location.set_npi_active(false);
     ASSERT_FALSE(location.get_npi_active());
 

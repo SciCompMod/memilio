@@ -142,7 +142,11 @@ TEST(TestWorld, evolveMigration)
     using testing::Return;
 
     {
-        auto world     = mio::abm::World(6);
+        auto world = mio::abm::World(6);
+        // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+        world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+        // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+        world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
         auto school_id = world.add_location(mio::abm::LocationType::School);
         auto work_id   = world.add_location(mio::abm::LocationType::Work);
@@ -291,24 +295,49 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 
 TEST(TestWorld, copyWorld)
 {
-    auto simulation_params = mio::abm::SimulationParameters(mio::AgeGroup(6));
-    simulation_params.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] =
-        4.;
-    auto world = mio::abm::World(simulation_params);
-    world.add_location(mio::abm::LocationType::School);
-    world.add_location(mio::abm::LocationType::School);
-    world.add_location(mio::abm::LocationType::Work);
-    world.add_location(mio::abm::LocationType::Home);
+    auto world = mio::abm::World(6);
+    world.get_global_infection_parameters()
+        .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 4.;
+    auto school_id1 = world.add_location(mio::abm::LocationType::School);
+    auto school_id2 = world.add_location(mio::abm::LocationType::School);
+    auto work_id    = world.add_location(mio::abm::LocationType::Work);
+    auto home_id    = world.add_location(mio::abm::LocationType::Home);
+
+    auto& school1 = world.get_individualized_location(school_id1);
+    school1.set_required_mask(mio::abm::MaskType::Surgical);
+    auto& school2 = world.get_individualized_location(school_id2);
+    school2.set_required_mask(mio::abm::MaskType::FFP2);
+    auto& work = world.get_individualized_location(work_id);
+    auto& home = world.get_individualized_location(home_id);
+
+    auto& p1 = world.add_person(school_id1, mio::abm::InfectionState::Recovered_Carrier);
+    auto& p2 = world.add_person(school_id2, mio::abm::InfectionState::Exposed);
 
     auto copied_world = mio::abm::World(world);
-    auto copied_simulation_params =
-        copied_world.get_simulation_parameters()
+    auto copied_infection_params =
+        copied_world.get_global_infection_parameters()
             .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 
+    // Assert the locations and persons of copied world are logically equal to that of original world
     ASSERT_EQ(copied_world.get_locations().size(), (uint32_t)mio::abm::LocationType::Count);
     ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School].size(), 2);
     ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Work].size(), 1);
     ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home].size(), 1);
-    ASSERT_EQ(copied_simulation_params, 4.);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School][0].get_required_mask(),
+              mio::abm::MaskType::Surgical);
+    ASSERT_EQ(copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School][1].get_required_mask(),
+              mio::abm::MaskType::FFP2);
+    ASSERT_EQ(copied_infection_params, 4.);
+    ASSERT_EQ(copied_world.get_persons().size(), 2);
+    ASSERT_EQ(copied_world.get_persons()[0].get_location_id(), p1.get_location_id());
+    ASSERT_EQ(copied_world.get_persons()[1].get_location_id(), p2.get_location_id());
+
+    // Assert the locations and persons of copied world are stored in different address of original world
+    ASSERT_NE(&copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School][0], &school1);
+    ASSERT_NE(&copied_world.get_locations()[(uint32_t)mio::abm::LocationType::School][1], &school2);
+    ASSERT_NE(&copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Work][0], &work);
+    ASSERT_NE(&copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home][0], &home);
+    ASSERT_NE(&copied_world.get_persons()[0], &p1);
+    ASSERT_NE(&copied_world.get_persons()[1], &p2);
 }

@@ -41,7 +41,7 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params
 
 void close_social_events(TimePoint t_begin, double p, MigrationParameters& params)
 {
-    auto damping1 = Eigen::VectorXd::Constant(SimulationParameters::DEFAULT_NUM_AGE_GROUPS, p);
+    auto damping1 = Eigen::VectorXd::Constant(6, p);
     params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
 

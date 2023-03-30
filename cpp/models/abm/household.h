@@ -54,9 +54,10 @@ class HouseholdMember
 public:
     /**
      * @brief Constructs a new HouseholdMember.
+     * @param[in] num_agegroups the number of age groups in the model. 
      */
-    HouseholdMember()
-        : m_age_weights({AgeGroup(SimulationParameters::DEFAULT_NUM_AGE_GROUPS)}, 0)
+    HouseholdMember(size_t num_agegroups)
+        : m_age_weights({AgeGroup(num_agegroups)}, 0)
     {
     }
 
