@@ -327,8 +327,7 @@ public:
         foreach (*this, [&obj](auto& p, auto t) mutable {
             using Tag = decltype(t);
             obj.add_element(Tag::name(), p);
-        })
-            ;
+        });
     }
 
 private:
@@ -337,23 +336,27 @@ private:
     {
     }
 
+    //IOContext: serializer
+    //IOObject: object that stores the serialized parameter set
+    //Rs: IOResult<T> for each Parameter Tag that has already been deserialized
     template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) < sizeof...(Tags)), void*> = nullptr>
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
-        //read next parameter, recurse
+        //read current parameter, append result to results of previous parameters, recurse to next parameter
         const size_t I = sizeof...(Rs);
         using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
-        return deserialize_recursive(io, obj, rs..., r);
+        return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }
 
     template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) == sizeof...(Tags)), void*> = nullptr>
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& /*obj*/, Rs&&... rs)
     {
-        //no more parameters to read, build ParameterSet, stop recursion
+        //one result for each parameters, so no more parameters to read
+        //expand results, build finished ParameterSet, stop recursion
         return mio::apply(io, [](const typename Tags::Type&... t) {
             return ParameterSet(t...);
-        }, rs...);
+        }, std::forward<Rs>(rs)...);
     }
 
 public:
