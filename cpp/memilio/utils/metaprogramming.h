@@ -92,6 +92,10 @@ template <class...>
 struct conjunction : std::true_type {
     //conjunction of no elements is true like in c++17
 };
+template <class B1>
+struct conjunction<B1> : B1 {
+    //conjunction of one element is identity
+};
 template <class B1, class... Bn>
 struct conjunction<B1, Bn...> : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {
     //conjunction of multiple elements is equal to the first element iff the first element is false.
@@ -109,7 +113,11 @@ constexpr bool conjunction_v = conjunction<Bs...>::value;
 */
 template<class...>
 struct disjunction : std::false_type {
-    //disjunction of no element is false like in c++177
+    //disjunction of no element is false like in c++17
+};
+template <class B1>
+struct disjunction<B1> : B1 {
+    //disjunction of one element is identity
 };
 template<class B1, class... Bn>
 struct disjunction<B1, Bn...> : std::conditional<bool(B1::value), B1, disjunction<Bn...>> {
