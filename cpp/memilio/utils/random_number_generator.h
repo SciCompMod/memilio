@@ -107,12 +107,12 @@ public:
         if (rank != 0) {
             m_seeds.assign(num_seeds, 0);
         }
-        MPI_Bcast(m_seeds.data(), num_seeds, MPI_UINT32_T, 0, mpi::get_world());
+        MPI_Bcast(m_seeds.data(), num_seeds, MPI_UNSIGNED, 0, mpi::get_world());
 #endif
     }
 
     /**
-    * Get/Set he the size of blocks of the generated sequence.
+    * Get/Set the the size of blocks of the generated sequence.
     * This affects the number of samples skipped by forward_to_block().
     * Skipping samples is an O(n) operation, where n is the number of skipped samples, so choose the block size with care.
     * @{
@@ -134,12 +134,12 @@ public:
     * This operation is O(n), where n is the number of skipped samples, so choose the block size with care.
     * @param i block index. May not be a block that is already passed or started.
     */
-    void forward_to_block(size_t i)
+    void forward_to_block(size_t block_idx)
     {
-        assert(((i > m_num_generated / m_block_size) ||
-                (i == m_num_generated / m_block_size && m_num_generated % m_block_size == 0)) &&
+        assert(((block_idx > m_num_generated / m_block_size) ||
+                (block_idx == m_num_generated / m_block_size && m_num_generated % m_block_size == 0)) &&
                "Can't forward to a previous block or one that is started.");
-        auto num_remaining = m_block_size * i - m_num_generated;
+        auto num_remaining = m_block_size * block_idx - m_num_generated;
         m_rng.discard(num_remaining);
         m_num_generated += num_remaining;
     }
@@ -147,8 +147,8 @@ public:
 private:
     std::vector<unsigned int> m_seeds;
     std::mt19937_64 m_rng;
-    size_t m_block_size = 1'000'000;
-    size_t m_num_generated = 0;
+    size_t m_block_size = 1'000'000; ///< number of samples in a block, will be skipped by forward_to_block
+    size_t m_num_generated = 0; ///< number of samples generated (or skipped) since the last seed
 };
 
 /**
