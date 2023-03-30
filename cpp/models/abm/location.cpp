@@ -32,7 +32,7 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells)
+Location::Location(LocationType type, uint32_t index, uint32_t num_agegroups, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity(LocationCapacity())

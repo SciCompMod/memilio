@@ -129,7 +129,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.get_persons().size();
+            single_element_ensemble[run] = params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
     }

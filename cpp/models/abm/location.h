@@ -84,7 +84,7 @@ struct Cell {
         cached_exposure_rate; /**< The parameter for the exponential
     distribution to decide if a Person becomes infected.*/
 
-    Cell(size_t num_agegroups)
+    Cell(uint32_t num_agegroups)
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
@@ -116,7 +116,7 @@ public:
      * @param agegroups the number of age groups in the model
      * @param num_cells the number of cells in which the location is divided
      */
-    Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells = 0);
+    Location(LocationType type, uint32_t index, uint32_t num_agegroups, uint32_t num_cells = 0);
 
     /**
      * @brief Get the LocationType of this Location.
