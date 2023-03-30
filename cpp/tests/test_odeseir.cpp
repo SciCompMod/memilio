@@ -25,9 +25,19 @@
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
-using real = double;
+TEST(TestOdeSeir, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
 
-class TestSeir : public testing::Test
+    mio::oseir::Model model;
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
+class TestOdeSeir : public testing::Test
 {
 protected:
     void SetUp() override
@@ -57,21 +67,21 @@ protected:
     }
 
 public:
-    real t0;
-    real tmax;
-    real dt;
+    double t0;
+    double tmax;
+    double dt;
     double total_population;
     mio::oseir::Model model;
 };
 
-TEST_F(TestSeir, CompareSeirWithPyBindings)
+TEST_F(TestOdeSeir, CompareSeirWithPyBindings)
 {
     /*
     This test test the cpp model. The same test is implemented in python to compare the results of both simulations.
     If this test is change the corresponding python test needs to be changed aswell (also updating the data file).
     */
-    std::vector<std::vector<real>> refData = load_test_data_csv<real>("seir-compare.csv");
-    auto result                            = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("seir-compare.csv");
+    auto result                              = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -100,7 +110,7 @@ TEST_F(TestSeir, CompareSeirWithPyBindings)
     }
 }
 
-TEST_F(TestSeir, checkPopulationConservation)
+TEST_F(TestOdeSeir, checkPopulationConservation)
 {
     auto result        = mio::simulate<mio::oseir::Model>(t0, tmax, dt, model);
     double num_persons = 0.0;
@@ -110,7 +120,7 @@ TEST_F(TestSeir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population, 1e-8);
 }
 
-TEST_F(TestSeir, check_constraints_parameters)
+TEST_F(TestOdeSeir, check_constraints_parameters)
 {
     model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);

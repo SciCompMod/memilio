@@ -34,15 +34,15 @@ runs:
       run: |
         cd cpp/build/bin
         sudo chmod a+x memilio-test
-        ./memilio-test  --gtest_output="xml:report.xml"      
+        ./memilio-test  --gtest_output="xml:report.xml"
     - name: Compute code coverage
       shell: bash
       # compute code coverage
-      run: |    
+      run: |
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
           cd cpp/build
           cmake --build . --target coverage/fast
-        fi        
+        fi
     - name: Upload test report
       uses: actions/upload-artifact@v3
       with:
