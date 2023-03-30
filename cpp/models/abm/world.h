@@ -101,16 +101,8 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("World");
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<World> deserialize(IOContext& io)
-    {
-        auto obj = io.expect_object("World");
+        obj.add_element("Parameters", parameters);
+        obj.add_element("Populations", populations);
     }
 
     /** 
