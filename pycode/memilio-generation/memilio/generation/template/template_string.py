@@ -61,7 +61,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
     if intermed_repr.simulation_class is not None:
         substition_string += (
-            "\n\"pybind11/stl_bind.h\"\n"
+            "\n#include \"pybind11/stl_bind.h\"\n"
             "#include <vector>\n"
         )
     return substition_string
