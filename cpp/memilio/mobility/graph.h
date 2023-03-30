@@ -327,6 +327,8 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
  * @param[in] migrating_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
+ * @param[in] min_commuter_age minimum commuter age
+ * @param[in] max_comuter_age maximum commuter age
  */
 template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
           class InfectionState, class ReadFunction>
