@@ -36,7 +36,7 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
-    , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
+    , m_time_at_location(0)
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)

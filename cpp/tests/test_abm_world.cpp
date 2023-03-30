@@ -27,7 +27,7 @@ TEST(TestWorld, init)
     }
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
-/*
+
 TEST(TestWorld, addLocation)
 {
     auto world      = mio::abm::World();
@@ -47,10 +47,10 @@ TEST(TestWorld, addLocation)
     ASSERT_EQ(world.get_locations().size(), (uint32_t)mio::abm::LocationType::Count);
     ASSERT_EQ(world.get_locations()[(uint32_t)mio::abm::LocationType::School].size(), 2);
 
-    ASSERT_EQ(&world.get_locations()[(uint32_t)mio::abm::LocationType::School][0], &school1);
-    ASSERT_EQ(&world.get_locations()[(uint32_t)mio::abm::LocationType::School][1], &school2);
-    ASSERT_EQ(&world.get_locations()[(uint32_t)mio::abm::LocationType::Work][0], &work);
-    ASSERT_EQ(&world.get_locations()[(uint32_t)mio::abm::LocationType::Home][0], &home);
+    ASSERT_EQ(world.get_locations()[(uint32_t)mio::abm::LocationType::School][0].get(), &school1);
+    ASSERT_EQ(world.get_locations()[(uint32_t)mio::abm::LocationType::School][1].get(), &school2);
+    ASSERT_EQ(world.get_locations()[(uint32_t)mio::abm::LocationType::Work][0].get(), &work);
+    ASSERT_EQ(world.get_locations()[(uint32_t)mio::abm::LocationType::Home][0].get(), &home);
 }
 
 TEST(TestWorld, addPerson)
@@ -73,11 +73,11 @@ TEST(TestWorld, getSubpopulationCombined)
     auto school1 = world.add_location(mio::abm::LocationType::School);
     auto school2 = world.add_location(mio::abm::LocationType::School);
     auto school3 = world.add_location(mio::abm::LocationType::School);
-    add_person_simple(world, school1, mio::abm::InfectionState::Carrier);
-    add_person_simple(world, school1, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school2, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school2, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school3, mio::abm::InfectionState::Carrier);
+    add_person_simple(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
+    add_person_simple(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_person_simple(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_person_simple(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_person_simple(world, school3, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
 
     ASSERT_EQ(
         world.get_subpopulation_combined(t, mio::abm::InfectionState::Susceptible, mio::abm::LocationType::School), 3);
@@ -99,11 +99,11 @@ TEST(TestWorld, findLocation)
     person.set_assigned_location(school);
     person.set_assigned_location({0, mio::abm::LocationType::Work});
 
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person), &work);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person), &school);
-    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person), &home);
+    ASSERT_EQ(&world.find_location(mio::abm::LocationType::Work, person), &work);
+    ASSERT_EQ(&world.find_location(mio::abm::LocationType::School, person), &school);
+    ASSERT_EQ(&world.find_location(mio::abm::LocationType::Home, person), &home);
 }
-
+/*
 TEST(TestWorld, evolveStateTransition)
 {
     using testing::Return;
@@ -243,17 +243,24 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(hospital.get_population().get_last_value().sum(), 1);
     }
 }
-
+*/
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
+    mio::abm::GlobalInfectionParameters params;
+    // make sure the infected person stay in Infected long enough
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34,
+                                                 mio::abm::VaccinationState::Unvaccinated}] = 100;
+    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34,
+                                              mio::abm::VaccinationState::Unvaccinated}]    = 100;
 
-    auto world   = mio::abm::World();
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34,
-                                    world.get_global_infection_parameters());
-    auto& home   = world.get_individualized_location(home_id);
-    auto& work   = world.get_individualized_location(work_id);
+    auto world        = mio::abm::World(params);
+    auto home_id      = world.add_location(mio::abm::LocationType::Home);
+    auto work_id      = world.add_location(mio::abm::LocationType::Work);
+    auto& home        = world.get_individualized_location(home_id);
+    auto& work        = world.get_individualized_location(work_id);
+    auto current_time = mio::abm::TimePoint(0);
+    auto person = add_person_simple(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected,
+                                    current_time, world.get_global_infection_parameters());
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
@@ -273,8 +280,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
-    auto current_time = mio::abm::TimePoint(0);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work),
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     world.get_testing_strategy().update_activity_status(current_time);
@@ -283,10 +289,9 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), false);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), false);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work), true); // no more testing_schemes
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), true); // no more testing_schemes
 }
-*/

@@ -80,7 +80,8 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectio
             random_transition(VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
-            person.add_new_infection(Infection(virus, age_receiver, global_params, t));
+            person.add_new_infection(
+                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
         }
     }
 }

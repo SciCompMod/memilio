@@ -44,8 +44,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    auto loc           = get_individualized_location(id);
-    m_persons.push_back(std::make_unique<Person>(loc, age, person_id));
+    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
     return person;
 }
@@ -120,11 +119,11 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::end_step(TimePoint t, TimeSpan /*dt*/)
+void World::end_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location->store_subpopulations(t);
+            location->store_subpopulations(t + dt);
         }
     }
 }
