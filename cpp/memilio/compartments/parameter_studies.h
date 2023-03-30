@@ -99,15 +99,20 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * This function is MPI-parallel. The MPI processes each contribute a share of the runs. 
-     * The result processing function is called in a process when a run in that process is finished.
-     * It receives the result of the run and an index that is ordered and unique across all processes.
-     * The values returned by the result processing function are gathered at the root process and returned as 
-     * a list in the same order as if the programm is running sequentially. Other processes than 
+     * The result processing function is called a run in that process is finished.
+     * It receives the result of the run and an ordered index. The values returned by the result processing function 
+     * are gathered and returned as a list.
+     * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
+     * The MPI processes each contribute a share of the runs. The sample function and result processing function 
+     * are called in the same process that performs the run. The results returned by the result processing function are 
+     * gathered at the root process and returned as a list by the root in the same order as if the programm 
+     * were running sequentially. Processes other than the root return an empty list.
      * @param sample_graph Function that receives the graph of parameters and returns a sampled copy.
      * @param result_processing_function Processing function for simulation results, e.g., output function.
      * @returns At the root process, a list of values per run that have been returned from the result processing function.
      *          At all other processes, an empty list.
+     * @tparam SampleGraphFunction Callable type, accepts graph of parameters and returns a sampled copy
+     * @tparam HandleSimulationResultFunction Callable type, accepts graph of simulations and may return a result to be gathered.
      */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
     std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>>
