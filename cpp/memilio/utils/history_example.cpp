@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Sascha Korf, Rene Schmieding 
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,79 +19,108 @@
 */
 #include <vector>
 #include <tuple>
+#include <iostream>
 
-template <class... Types>
-class Writer
-{
-    write(Types... args)
-    {
-    }
-    using Data = std::tuple<Types...>;
-};
-
-template <class Writer, class... Loggers>
-class History
+class example
 {
 public:
-    //TODO: maybe change this to arglist
-    template <class T>
-    void log(const T& t)
-    {
-        log_impl(t);
-        // write(Loggers::log(t)...);
-    }
-
-    TimeSeries<Writer::Data> get_data()
-    {
-        return m_data;
-    }
-
-private:
-    Writer::Data m_data;
-
-    template <class T, class Logger, class... Loggers>
-    std::enable_if_t<std::is_derived<Logger, LogOnce>> log_impl(const T& t)
-    {
-        Writer::write(Logger::log(t));
-        log_impl<T, Loggers...>(t);
-    }
-
-    template <class T, class Logger, class... Loggers>
-    std::enable_if_t<std::is_derived<Logger, LogAlways>> log_impl(const T& t)
-    {
-        Writer::write(Logger::log(t));
-        log_impl<T, Loggers...>(t);
-    }
-
-    template <class T>
-    log_impl(const T&)
-    {
-        // end of recursion
-    }
+    int a = 1;
+    int b = 2;
 };
-
 struct LogOnce {
 };
 
-struct LogLocId : public LogOnce {
-    using Type = std::vector<double>;
-    static Type log(const double id)
+struct LogA : LogOnce {
+    using Type = int;
+    static Type log(const example& ex)
     {
-        return [world.get_location().get_id()];
+        return ex.a;
     }
 };
 
 struct LogAlways {
 };
 
-struct LogTime : public LogAlways {
-    using Type = std::vector<double>;
-    static Type log(const double time)
+struct LogB : LogAlways {
+    using Type = int;
+    static Type log(const example& ex)
     {
-        [world.get_time()];
+        return ex.b;
+    }
+};
+
+template <class... Loggers>
+struct Writer {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    static void write(const typename Logger::Type& t, Data& data)
+    {
+        //std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
+        std::cout << t << std::endl;
+    }
+};
+
+template <template <class...> class Writer, class... Loggers>
+class History
+{
+public:
+    using Wri = Writer<Loggers...>;
+    template <class T>
+    void log(const T& t)
+    {
+        log_impl<T, Loggers...>(t);
+    }
+
+    const typename Wri::Data& get_log() const
+    {
+        return m_data;
+    }
+
+private:
+    typename Wri::Data m_data;
+
+    bool m_log_once_flag = true;
+
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
+    {
+
+        if (m_log_once_flag) {
+            Wri::write<logger>(logger::log(t), m_data);
+            m_log_once_flag = false;
+        }
+        log_impl<T, loggers...>(t);
+    }
+
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogAlways, logger>::value> log_impl(const T& t)
+    {
+        log_impl<T, loggers...>(t);
+        Wri::write<logger>(logger::log(t), m_data);
+    }
+
+    template <class T>
+    void log_impl(const T&)
+    {
+        // end of recursion
     }
 };
 
 int main()
 {
+
+    History<Writer, LogA, LogB> history;
+    example ex;
+
+    int step = 0;
+    while (step < 10) {
+        ex.a = step;
+        ex.b = -step;
+
+        history.log(ex);
+
+        step++;
+    }
+
+    history.get_log();
 }
