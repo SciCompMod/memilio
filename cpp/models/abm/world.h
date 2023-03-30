@@ -59,7 +59,7 @@ public:
      */
     World(uint32_t num_agegroups)
         : parameters(num_agegroups)
-        , populations({AgeGroup(num_agegroups), InfectionState::Count})
+        , populations(Populations<AgeGroup, InfectionState>({AgeGroup(num_agegroups), InfectionState::Count}))
         , m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(GlobalInfectionParameters(num_agegroups))
         , m_migration_parameters(MigrationParameters(num_agegroups))
