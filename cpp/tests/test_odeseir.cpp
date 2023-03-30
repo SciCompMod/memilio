@@ -25,7 +25,7 @@
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
-TEST(TestOdeSeir, simulateDefault)
+TEST(TestOdeSeirDef, simulateDefault)
 {
     double t0   = 0;
     double tmax = 1;

@@ -23,6 +23,6 @@ setup(
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
-    install_requires=[],
+    install_requires=['pandas>=1.2.2',],
     extras_require={'dev': ['numpy >= 1.22'], },
     long_description='', test_suite='memilio.simulation_test',)
