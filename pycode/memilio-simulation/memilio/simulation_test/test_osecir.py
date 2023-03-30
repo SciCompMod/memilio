@@ -107,8 +107,8 @@ class Test_osecir_integration(unittest.TestCase):
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/secihurd-compare.csv'),
-            sep='(?<!#)\s+')
-        refData.columns = pd.Series(refData.columns.str.replace("#\s", ""))
+            sep=r'(?<!#)\s+')
+        refData.columns = pd.Series(refData.columns.str.replace(r"#\s", ""))
 
         result = simulate(t0=self.t0, tmax=self.tmax,
                           dt=self.dt, model=self.model)
