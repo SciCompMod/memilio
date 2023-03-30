@@ -41,7 +41,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
 {
-    assert((uint32_t)age < parameters.get_num_groups());
+    assert((size_t)age < parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
                                                  VaccinationState::Unvaccinated, person_id));
