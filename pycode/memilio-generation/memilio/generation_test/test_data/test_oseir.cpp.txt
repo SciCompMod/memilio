@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert
 *
@@ -19,10 +19,16 @@
 */
 
 #include "pybind_util.h"
+
 //Includes from pymio
-//Includes for the model
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "utils/index.h"
+
 //Includes from Memilio
-//Optional Includes: "pybind11/stl_bind.h", "Eigen/Core"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "memilio/data/analyze_result.h"
 
 
 namespace py = pybind11;
