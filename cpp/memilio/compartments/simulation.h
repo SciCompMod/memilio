@@ -134,7 +134,7 @@ public:
     /**
      * @brief returns the next time step chosen by integrator
     */
-    double get_dt()
+    double get_dt() const
     {
         return m_integrator.get_dt();
     }

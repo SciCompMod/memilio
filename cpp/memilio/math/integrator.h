@@ -95,7 +95,7 @@ public:
         return m_result;
     }
 
-    double get_dt()
+    double get_dt() const
     {
         return m_next_dt;
     }
