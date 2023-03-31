@@ -345,6 +345,7 @@ private:
     {
     }
 
+    //entry to recursively deserialize all parameters in the set
     //IOContext: serializer
     //IOObject: object that stores the serialized parameter set
     //Rs: IOResult<T> for each Parameter Tag that has already been deserialized
@@ -358,6 +359,7 @@ private:
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }
 
+    //end of recursion to deserialize parameters in the set
     template<class IOContext, class IOObject, class... Rs, std::enable_if_t<(sizeof...(Rs) == sizeof...(Tags)), void*> = nullptr>
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& /*obj*/, Rs&&... rs)
     {
