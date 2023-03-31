@@ -374,8 +374,8 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
                         commuter_coeff_ij * commuting_weights[age_index];
-                    ++age_index;
                 }
+                ++age_index;
             }
             //others
             auto total_population = populations.get_total();

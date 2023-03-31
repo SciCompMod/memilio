@@ -238,6 +238,14 @@ TEST(TestGraph, set_edges)
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 
+    auto a = print_wrap(params_graph.edges()[0]
+                               .property.get_coefficients()[size_t(MockContactLocation::Work)]
+                               .get_baseline()
+                               .array()
+                               .cast<double>());
+    std::cout << a;
+    mio::unused(a);
+
     ASSERT_THAT(print_wrap(params_graph.edges()[0]
                                .property.get_coefficients()[size_t(MockContactLocation::Work)]
                                .get_baseline()
