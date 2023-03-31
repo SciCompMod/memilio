@@ -100,7 +100,7 @@ class Test_ParameterStudy(unittest.TestCase):
 
         handle_result_func.c = 0
         handle_result_func.results = []
-        mio.seed_random_number_generator() #must be seeded before ParameterStudy.run
+        mio.seed_random_number_generator()  # must be seeded before ParameterStudy.run
         study.run(handle_result_func)
 
         self.assertEqual(handle_result_func.c, num_runs)
@@ -115,7 +115,7 @@ class Test_ParameterStudy(unittest.TestCase):
 
         handle_single_result_func.c = 0
         handle_single_result_func.results = []
-        mio.seed_random_number_generator() #must be seeded before ParameterStudy.run
+        mio.seed_random_number_generator()  # must be seeded before ParameterStudy.run
         study.run_single(handle_single_result_func)
 
         self.assertEqual(handle_single_result_func.c, num_runs)
