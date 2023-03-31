@@ -490,7 +490,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, 0, false));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
-                                        read_function_edges, mio::AgeGroup(2), mio::AgeGroup(4)));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     return mio::success(params_graph);
 }
