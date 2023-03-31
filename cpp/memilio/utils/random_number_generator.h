@@ -136,8 +136,7 @@ public:
     */
     void forward_to_block(size_t block_idx)
     {
-        assert(((block_idx > m_num_generated / m_block_size) ||
-                (block_idx == m_num_generated / m_block_size && m_num_generated % m_block_size == 0)) &&
+        assert(block_idx * m_block_size >= m_num_generated &&
                "Can't forward to a previous block or one that is started.");
         auto num_remaining = m_block_size * block_idx - m_num_generated;
         m_rng.discard(num_remaining);
