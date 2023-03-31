@@ -74,6 +74,12 @@ enum IOFlags
      * from which new values can be sampled, e.g., UncertainValue.
      */
     IOF_OmitValues = 1 << 1,
+
+    /**
+    * Include type info in the serialization.
+    * Can Increase file size a lot, mostly for debugging.
+    */
+    IOF_IncludeTypeInfo = 1 << 2,
 };
 
 } // namespace mio

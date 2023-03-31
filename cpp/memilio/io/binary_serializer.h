@@ -254,8 +254,12 @@ public:
     */
     BinarySerializerObject create_object(const std::string& type)
     {
-        unused(type);
-        return BinarySerializerObject(m_stream, m_status, m_flags);
+        auto obj = BinarySerializerObject(m_stream, m_status, m_flags);
+        if (m_flags & IOF_IncludeTypeInfo)
+        {
+            obj.add_element("Type", type);
+        }
+        return obj;
     }
 
     /**
@@ -264,9 +268,16 @@ public:
     */
     BinarySerializerObject expect_object(const std::string& type)
     {
-        unused(type);
-        //no way to do check if there really is an object here
-        //maybe give option to add type info for debugging?
+        auto obj = BinarySerializerObject(m_stream, m_status, m_flags);
+        if (m_flags & IOF_IncludeTypeInfo)
+        {
+            auto type_result = obj.expect_element("Type", Tag<std::string>{});
+            if (!type_result) {
+                *m_status = IOStatus(StatusCode::InvalidType, "No TypeInfo in stream.");
+            } else if(type_result.value() != type) {
+                *m_status = IOStatus(StatusCode::InvalidType, "Unexpected type in stream:" + type_result.value() + ". Expected " + type);
+            }
+        }
         return BinarySerializerObject(m_stream, m_status, m_flags);
     }
 
@@ -334,34 +345,45 @@ template <class T, std::enable_if_t<std::is_trivial<T>::value, void*>>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> /*tag*/)
 {
     mio::unused(name);
-    T t;
-    if (m_stream.read(reinterpret_cast<unsigned char*>(std::addressof(t)), sizeof(t))) {
-        return mio::success(t);
+
+    if (*m_status) {
+        T t;
+        if (m_stream.read(reinterpret_cast<unsigned char*>(std::addressof(t)), sizeof(t))) {
+            return mio::success(t);
+        }
+        else {
+            *m_status =
+                IOStatus(mio::StatusCode::UnknownError, "Unexpected EOF reading " + name + " from binary stream.");
+        }
     }
-    else {
-        return mio::failure(mio::StatusCode::UnknownError, "Unexpected EOF reading " + name + " from binary stream.");
-    }
+    return failure(*m_status);
 }
 
 template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*>>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> tag)
 {
     mio::unused(name);
-    auto ctxt = BinarySerializerContext(m_stream, m_status, m_flags);
-    return mio::deserialize(ctxt, tag);
+    if (*m_status) {
+        auto ctxt = BinarySerializerContext(m_stream, m_status, m_flags);
+        return mio::deserialize(ctxt, tag);
+    }
+    return failure(*m_status);
 }
 
 inline IOResult<std::string> BinarySerializerObject::expect_element(const std::string& name, Tag<std::string>)
 {
     mio::unused(name);
-    size_t size;
-    if (m_stream.read(reinterpret_cast<unsigned char*>(&size), sizeof(size))) {
-        std::string t(size, 0);
-        if (m_stream.read(reinterpret_cast<unsigned char*>(&t[0]), size)) {
-            return success(t);
+    if (*m_status) {
+        size_t size;
+        if (m_stream.read(reinterpret_cast<unsigned char*>(&size), sizeof(size))) {
+            std::string t(size, 0);
+            if (m_stream.read(reinterpret_cast<unsigned char*>(&t[0]), size)) {
+                return success(t);
+            }
         }
+        *m_status = IOStatus(StatusCode::UnknownError, "Unexpected EOF reading " + name + " from binary stream.");
     }
-    return failure(StatusCode::UnknownError, "Unexpected EOF reading " + name + " from binary stream.");
+    return failure(*m_status);
 }
 
 template <class Iter>
@@ -418,10 +440,10 @@ IOResult<boost::optional<T>> BinarySerializerObject::expect_optional(const std::
 * @tparam T the type of the object to be serialized.
 */
 template <class T>
-ByteStream serialize_binary(const T& t)
+ByteStream serialize_binary(const T& t, int flags = 0)
 {
     ByteStream stream;
-    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), 0);
+    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), flags);
     mio::serialize(ctxt, t);
     return stream;
 }
@@ -435,9 +457,9 @@ ByteStream serialize_binary(const T& t)
 * @tparam T the type of the object to be serialized.
 */
 template <class T>
-IOResult<T> deserialize_binary(ByteStream& stream, Tag<T>)
+IOResult<T> deserialize_binary(ByteStream& stream, Tag<T>, int flags = 0)
 {
-    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), 0);
+    BinarySerializerContext ctxt(stream, std::make_shared<IOStatus>(), flags);
     return mio::deserialize(ctxt, Tag<T>{});
 }
 
