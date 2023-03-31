@@ -58,10 +58,10 @@ public:
      * @param[in] num_agegroups The number of age groups in the simulated world.
      */
     World(size_t num_agegroups)
-        : parameters(num_agegroups)
+        : parameters(AgeGroup(num_agegroups))
         , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(GlobalInfectionParameters(num_agegroups))
-        , m_migration_parameters(MigrationParameters(num_agegroups))
+        , m_infection_parameters(GlobalInfectionParameters(AgeGroup(num_agegroups)))
+        , m_migration_parameters(MigrationParameters(AgeGroup(num_agegroups)))
         , m_trip_list()
     {
         use_migration_rules(true);
