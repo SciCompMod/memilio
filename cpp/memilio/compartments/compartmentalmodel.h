@@ -99,11 +99,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     /**
      * @brief add_flow defines a flow from compartment A to another compartment B
@@ -131,7 +131,17 @@ public:
      * right-hand-side f of the ODE from the intercompartmental flows. It can be used in an ODE
      * solver
      *
-     * @param y the current state of the model as a flat array
+     * The distinction between pop and y is relevant if we want to track infections of people in y
+     * in a population pop. Therefore, later in the get_derivatives function, the number of 
+     * infectious individuals in a geographic unit is given by pop.
+     * Currently, we are using this for calculating the infection states of travelers at their 
+     * return. There, we are using the total population in the geographic unit that the people migrated 
+     * to as pop and the number of people that migrated as y, to compute their infection states when 
+     * they return.
+     * If we consider models without mobility, pop and y are equivalent.
+     *
+     * @param pop flat array containing the number of infections people
+     * @param y the current state of the model as a flat array with the people 
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
