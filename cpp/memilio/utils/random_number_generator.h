@@ -154,11 +154,7 @@ private:
  * get a random number generator that is static and local to this thread.
  * @return a random number generator that is static and local to this thread.
  */
-inline RandomNumberGenerator& thread_local_rng()
-{
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
-}
+RandomNumberGenerator& thread_local_rng();
 
 inline void log_rng_seeds(const RandomNumberGenerator& rng, LogLevel level)
 {
