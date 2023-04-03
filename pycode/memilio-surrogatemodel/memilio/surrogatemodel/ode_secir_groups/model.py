@@ -284,7 +284,7 @@ def network_fit(
 
     history = model.fit(train_inputs, train_labels, epochs=max_epochs,
                         validation_data=(valid_inputs, valid_labels),
-                        # batch_size=batch_size,
+                        batch_size=batch_size,
                         callbacks=[early_stopping])
 
     if (plot):

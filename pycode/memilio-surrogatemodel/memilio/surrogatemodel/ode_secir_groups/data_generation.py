@@ -35,11 +35,11 @@ from memilio.simulation.secir import (AgeGroup, Index_InfectionState,
                                       interpolate_simulation_result, simulate)
 
 
-def run_secir_simulation(days, damping_day, populations):
+def run_secir_groups_simulation(days, damping_day, populations):
     """! Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region. 
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
     @param Days Describes how many days we simulate within a single run.
-    @return List containing the populations in each compartment for each day of the simulation.
+    @return List containing the populations in each compartment used to initialize the run.
    """
     set_log_level(LogLevel.Off)
 
@@ -124,6 +124,7 @@ def run_secir_simulation(days, damping_day, populations):
 
     # Run Simulation
     result = simulate(0, days, dt, model)
+
     # Interpolate simulation result on days time scale
     result = interpolate_simulation_result(result)
 
@@ -137,16 +138,17 @@ def run_secir_simulation(days, damping_day, populations):
 
 
 def generate_data(
-        num_runs, path, input_width, label_width, normalize=True,
-        save_data=True):
+        num_runs, path_out, path_population, input_width, label_width,
+        normalize=True, save_data=True):
     """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
     In general, we have 8 different compartments and 6 age groups.  If we choose, 
     input_width = 5 and label_width = 20, the dataset has 
     - input with dimension 5 x 8 x 6
     - labels with dimension 20 x 8 x 6
-   @param num_runs Number of times, the function run_secir_simulation is called.
-   @param path Path, where the dataset is saved to.
+   @param num_runs Number of times, the function run_secir_groups_simulation is called.
+   @param path_out Path, where the dataset is saved to.
+   @param path_population Path, where we try to read the population data.
    @param input_width Int value that defines the number of time series used for the input.
    @param label_width Int value that defines the size of the labels.
    @param normalize [Default: true] Option to transform dataset by logarithmic normalization.
@@ -165,7 +167,7 @@ def generate_data(
     days = input_width + label_width - 1
 
     # Load population data
-    population = get_population()
+    population = get_population(path_population)
 
     # show progess in terminal for longer runs
     # Due to the random structure, theres currently no need to shuffle the data
@@ -177,7 +179,7 @@ def generate_data(
         damping_day = random.randrange(
             input_width, (input_width+label_width)-5)
 
-        data_run, damped_contact_matrix = run_secir_simulation(
+        data_run, damped_contact_matrix = run_secir_groups_simulation(
             days, damping_day, population[random.randint(0, len(population) - 1)])
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
@@ -205,11 +207,11 @@ def generate_data(
 
     if save_data:
         # check if data directory exists. If necessary, create it.
-        if not os.path.isdir(path):
-            os.mkdir(path)
+        if not os.path.isdir(path_out):
+            os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_simple.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -256,7 +258,10 @@ def getMinimumMatrix():
     return minimum
 
 
-def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population_dim401.json"):
+def get_population(path):
+    """! read population data in list from dataset
+    @param path Path to the dataset containing the population data
+    """
 
     with open(path) as f:
         data = json.load(f)
@@ -288,8 +293,11 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
 
+    path_population = os.path.abspath(
+        "data\pydata\Germany\county_population.json")
+
     input_width = 5
     label_width = 30
     num_runs = 10000
-    data = generate_data(num_runs, path_data, input_width,
+    data = generate_data(num_runs, path_data, path_population, input_width,
                          label_width)
