@@ -186,9 +186,6 @@ struct RecoveredToSusceptible {
 };
 
 struct ViralLoadDistributions {
-    ParameterDistributionUniform m_viral_load_peak;
-    ParameterDistributionUniform m_viral_load_incline;
-    ParameterDistributionUniform m_viral_load_decline;
 
     ViralLoadDistributions() = default;
     ViralLoadDistributions(ParameterDistributionUniform viral_load_peak,
@@ -204,6 +201,11 @@ struct ViralLoadDistributions {
     {
         return {m_viral_load_peak.get_sample(), m_viral_load_incline.get_sample(), m_viral_load_decline.get_sample()};
     }
+
+private:
+    ParameterDistributionUniform m_viral_load_peak;
+    ParameterDistributionUniform m_viral_load_incline;
+    ParameterDistributionUniform m_viral_load_decline;
 };
 
 struct ViralLoadParameters {
@@ -223,8 +225,6 @@ struct ViralLoadParameters {
 };
 
 struct InfectivityDistributions {
-    ParameterDistributionUniform m_infectivity_alpha;
-    ParameterDistributionUniform m_infectivity_beta;
 
     InfectivityDistributions() = default;
     InfectivityDistributions(ParameterDistributionUniform alpha, ParameterDistributionUniform beta)
@@ -237,6 +237,10 @@ struct InfectivityDistributions {
     {
         return {m_infectivity_alpha.get_sample(), m_infectivity_beta.get_sample()};
     }
+
+private:
+    ParameterDistributionUniform m_infectivity_alpha;
+    ParameterDistributionUniform m_infectivity_beta;
 };
 
 struct InfectivityParameters {

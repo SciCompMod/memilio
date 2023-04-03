@@ -358,10 +358,10 @@ private:
     bool m_quarantine = false;
     AgeGroup m_age;
     TimeSpan m_time_at_location;
-    ScalarType m_random_workgroup;
-    ScalarType m_random_schoolgroup;
-    ScalarType m_random_goto_work_hour;
-    ScalarType m_random_goto_school_hour;
+    double m_random_workgroup;
+    double m_random_schoolgroup;
+    double m_random_goto_work_hour;
+    double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
     Mask m_mask;
     bool m_wears_mask = false;

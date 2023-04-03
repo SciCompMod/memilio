@@ -44,10 +44,10 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_person_id(person_id)
     , m_cells{0}
 {
-    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()();
-    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()();
-    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()();
-    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()();
+    m_random_workgroup        = UniformDistribution<double>::get_instance()();
+    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
+    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
+    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
     location.add_person(*this);
 }
 

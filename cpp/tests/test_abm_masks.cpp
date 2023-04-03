@@ -66,7 +66,7 @@ TEST(TestMasks, maskProtection)
     auto infection_location = mio::abm::Location(mio::abm::Location(mio::abm::LocationType::School, 0));
     auto susc_person1       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
     auto susc_person2       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
-    auto infected1          = create_person_simple(infection_location, mio::abm::AgeGroup::Age15to34,
+    auto infected1          = make_test_person(infection_location, mio::abm::AgeGroup::Age15to34,
                                                    mio::abm::InfectionState::Infected, t, params); // infected 7 days prior
 
     //cache precomputed results

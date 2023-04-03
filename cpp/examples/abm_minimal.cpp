@@ -99,7 +99,7 @@ int main()
     for (auto& person : persons) {
         uint32_t infection_state = rand() % (uint32_t)mio::abm::InfectionState::Count;
         if (infection_state != (uint32_t)mio::abm::InfectionState::Susceptible)
-            add_infection_simple(person, infection_state, start_date, world.get_global_infection_parameters());
+            add_test_infection(person, infection_state, start_date, world.get_global_infection_parameters());
     }
 
     // Assign locations to the people

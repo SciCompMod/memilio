@@ -50,11 +50,11 @@ TEST(TestLocation, addRemovePerson)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = create_person_simple(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
+    auto person1  = make_test_person(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
     person1.migrate_to(location, {0, 1});
-    auto person2 = create_person_simple(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+    auto person2 = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
     person2.migrate_to(location, {0});
-    auto person3 = create_person_simple(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
+    auto person3 = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
     person3.migrate_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
@@ -154,8 +154,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)); // draw random school hour
     // .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = add_person_simple(world, home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p2 = add_person_simple(world, home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+    auto& p1 = add_test_person(world, home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
+    auto& p2 = add_test_person(world, home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
 
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);

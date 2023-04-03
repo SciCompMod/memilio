@@ -441,7 +441,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     for (auto& person : persons) {
         auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            add_infection_simple(person, infection_state, t, world.get_global_infection_parameters());
+            add_test_infection(person, infection_state, t, world.get_global_infection_parameters());
     }
 }
 

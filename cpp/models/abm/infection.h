@@ -24,10 +24,8 @@
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
 #include "abm/parameters.h"
-#include "memilio/utils/uncertain_value.h"
 
 #include <vector>
-#include <memory>
 
 namespace mio
 {
@@ -47,7 +45,7 @@ public:
      * @param[in] start_day TimePoint of construction.
      * @param[in,out] params Global infection parameters.
      */
-    explicit ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, GlobalInfectionParameters& params);
+    ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, GlobalInfectionParameters& params);
 
     /**
      * @brief Gets the viral load of the infection at a given TimePoint.
@@ -83,8 +81,8 @@ public:
      * @param[in] start_date Starting date of the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
      */
-    explicit Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
-                       bool detected = false);
+    Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
+              bool detected = false);
 
     /**
      * @brief Get infectivity at a given time.

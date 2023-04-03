@@ -25,9 +25,9 @@ TEST(TestPerson, init)
 
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto t        = mio::abm::TimePoint(0);
-    auto person   = create_person_simple(location, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Exposed);
+    auto person   = mio::abm::Person(location, mio::abm::AgeGroup::Age60to79);
 
-    ASSERT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Exposed);
+    ASSERT_EQ(person.get_infection_state(t), mio::abm::InfectionState::Susceptible);
     ASSERT_EQ(person.get_location(), location);
     ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 }
@@ -39,7 +39,7 @@ TEST(TestPerson, migrate)
     auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 1);
     auto loc2   = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
-    auto person = create_person_simple(home, mio::abm::AgeGroup::Age0to4, mio::abm::InfectionState::Recovered_Carrier);
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age0to4, mio::abm::InfectionState::Recovered_Carrier);
     person.migrate_to(loc1, {0});
 
     ASSERT_EQ(person.get_location(), loc1);
@@ -99,8 +99,8 @@ TEST(TestPerson, quarantine)
         mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
         0.5 * dt.seconds();
 
-    auto person = create_person_simple(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Infected,
-                                       t_morning, infection_parameters);
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Infected, t_morning,
+                                   infection_parameters);
 
     person.detect_infection(t_morning);
 
@@ -117,7 +117,7 @@ TEST(TestPerson, get_tested)
 
     mio::abm::TimePoint t(0);
     auto loc         = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto infected    = create_person_simple(loc, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+    auto infected    = make_test_person(loc, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
     auto susceptible = mio::abm::Person(loc, mio::abm::AgeGroup::Age15to34);
 
     auto pcr_test     = mio::abm::PCRTest();
@@ -162,7 +162,7 @@ TEST(TestPerson, getCells)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
-    auto person   = create_person_simple(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
+    auto person   = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
     home.add_person(person);
     person.migrate_to(location, {0, 1});
     ASSERT_EQ(person.get_cells().size(), 2);
@@ -185,7 +185,7 @@ TEST(TestPerson, applyMaskIntervention)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto target = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person = create_person_simple(home);
+    auto person = make_test_person(home);
     person.get_mask().change_mask(mio::abm::MaskType::Community);
 
     target.set_npi_active(false);
@@ -217,7 +217,7 @@ TEST(TestPerson, applyMaskIntervention)
 TEST(TestPerson, setWearMask)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person   = create_person_simple(location);
+    auto person   = make_test_person(location);
 
     person.set_wear_mask(false);
     ASSERT_FALSE(person.get_wear_mask());
@@ -229,16 +229,16 @@ TEST(TestPerson, setWearMask)
 TEST(TestPerson, getProtectiveFactor)
 {
     auto location         = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person_community = create_person_simple(location);
+    auto person_community = make_test_person(location);
     person_community.get_mask().change_mask(mio::abm::MaskType::Community);
     person_community.set_wear_mask(true);
-    auto person_surgical = create_person_simple(location);
+    auto person_surgical = make_test_person(location);
     person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
     person_surgical.set_wear_mask(true);
-    auto person_ffp2 = create_person_simple(location);
+    auto person_ffp2 = make_test_person(location);
     person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
     person_ffp2.set_wear_mask(true);
-    auto person_without = create_person_simple(location);
+    auto person_without = make_test_person(location);
     person_without.set_wear_mask(false);
 
     mio::abm::GlobalInfectionParameters params;

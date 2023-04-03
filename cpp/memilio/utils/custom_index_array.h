@@ -24,6 +24,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
+#include "memilio/utils/stl_util.h"
 
 #include <vector>
 #include <array>
@@ -189,9 +190,7 @@ public:
      * @param b begin of the range of values.
      * @param e end of the range of values.
      */
-    template <class Iter,
-              typename std::enable_if_t<std::is_base_of<
-                  std::input_iterator_tag, typename std::iterator_traits<Iter>::iterator_category>::value>* = nullptr>
+    template <class Iter, typename std::enable_if_t<is_iterator<Iter>::value>* = nullptr>
     CustomIndexArray(Index const& dims, Iter b, Iter e)
         : m_dimensions(dims)
         , m_numel(product(dims))

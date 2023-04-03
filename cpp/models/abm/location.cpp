@@ -59,6 +59,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectio
     // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
+    assert(person.get_cells().size() == 1 && "Person is in multiple cells. Interact logic is incorrect at the moment.");
     for (auto cell_index : person.get_cells()) { // the logic here is incorrect in case a person is in multiple cells
         std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
@@ -162,8 +163,7 @@ uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
         }
     }
     std::sort(loc_persons.begin(), loc_persons.end());
-    loc_persons.erase(std::unique(loc_persons.begin(), loc_persons.end()), loc_persons.end());
-    return count_if(loc_persons.begin(), loc_persons.end(), [&](Person* p) {
+    return count_if(loc_persons.begin(), std::unique(loc_persons.begin(), loc_persons.end()), [&](Person* p) {
         return p->get_infection_state(t) == state;
     });
 }

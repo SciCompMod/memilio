@@ -73,11 +73,11 @@ TEST(TestWorld, getSubpopulationCombined)
     auto school1 = world.add_location(mio::abm::LocationType::School);
     auto school2 = world.add_location(mio::abm::LocationType::School);
     auto school3 = world.add_location(mio::abm::LocationType::School);
-    add_person_simple(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
-    add_person_simple(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
-    add_person_simple(world, school3, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
+    add_test_person(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
+    add_test_person(world, school1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_test_person(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_test_person(world, school2, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
+    add_test_person(world, school3, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
 
     ASSERT_EQ(
         world.get_subpopulation_combined(t, mio::abm::InfectionState::Susceptible, mio::abm::LocationType::School), 3);
@@ -94,14 +94,14 @@ TEST(TestWorld, findLocation)
     auto& home     = world.get_individualized_location(home_id);
     auto& school   = world.get_individualized_location(school_id);
     auto& work     = world.get_individualized_location(work_id);
-    auto person    = create_person_simple(home);
+    auto person    = make_test_person(home);
     person.set_assigned_location(home);
     person.set_assigned_location(school);
     person.set_assigned_location({0, mio::abm::LocationType::Work});
 
-    ASSERT_EQ(&world.find_location(mio::abm::LocationType::Work, person), &work);
-    ASSERT_EQ(&world.find_location(mio::abm::LocationType::School, person), &school);
-    ASSERT_EQ(&world.find_location(mio::abm::LocationType::Home, person), &home);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Work, person), work);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::School, person), school);
+    ASSERT_EQ(world.find_location(mio::abm::LocationType::Home, person), home);
 }
 /*
 TEST(TestWorld, evolveStateTransition)
@@ -259,8 +259,8 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto& home        = world.get_individualized_location(home_id);
     auto& work        = world.get_individualized_location(work_id);
     auto current_time = mio::abm::TimePoint(0);
-    auto person = add_person_simple(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected,
-                                    current_time, world.get_global_infection_parameters());
+    auto person = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected,
+                                  current_time, world.get_global_infection_parameters());
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 

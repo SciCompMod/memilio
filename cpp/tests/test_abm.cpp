@@ -1,7 +1,7 @@
 #include "test_abm.h"
 
-void add_infection_simple(mio::abm::Person& p, mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                          mio::abm::GlobalInfectionParameters params)
+void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
+                        mio::abm::GlobalInfectionParameters params)
 {
     // compute start time of Infection to match InfectionState at desired TimePoint
     // always takes a path with the Infected status back to Exposed, if not starting with RecoveredCarrier
@@ -66,24 +66,24 @@ void add_infection_simple(mio::abm::Person& p, mio::abm::InfectionState infectio
            "Error in adding infection. Desired infection state does not match state of infection.");
 }
 
-mio::abm::Person create_person_simple(mio::abm::Location& location, mio::abm::AgeGroup age_group,
-                                      mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                      mio::abm::GlobalInfectionParameters params)
+mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGroup age_group,
+                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
+                                  mio::abm::GlobalInfectionParameters params)
 {
     mio::abm::Person p = mio::abm::Person(location, age_group);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        add_infection_simple(p, infection_state, t, params);
+        add_test_infection(p, infection_state, t, params);
     }
     return p;
 }
 
-mio::abm::Person& add_person_simple(mio::abm::World& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
-                                    mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                    mio::abm::GlobalInfectionParameters params)
+mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
+                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
+                                  mio::abm::GlobalInfectionParameters params)
 {
     mio::abm::Person& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        add_infection_simple(p, infection_state, t, params);
+        add_test_infection(p, infection_state, t, params);
     }
     return p;
 }
