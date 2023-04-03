@@ -118,9 +118,9 @@ TEST(TestPerson, quarantine)
     auto dt                              = mio::abm::hours(1);
     mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    // params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    //params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+    params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
     ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, params), mio::abm::LocationType::Home);
     //setup rng mock so the person has a state transition to Recovered_Infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>

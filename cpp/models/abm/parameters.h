@@ -429,50 +429,49 @@ struct GotoSchoolTimeMaximum {
     }
 };
 
-// /**
-//  * @brief The vector of AgeGroups that can go to school.
-//  */
-// struct AgeGroupGotoSchool {
-//     using Type = std::set<AgeGroup>;
-//     static Type get_default(AgeGroup /*size*/)
-//     {
-//         return std::set<AgeGroup>{};
-//     }
-//     static std::string name()
-//     {
-//         return "AgeGroupGotoSchool";
-//     }
-// };
+/**
+ * @brief The vector of AgeGroups that can go to school.
+ */
+struct AgeGroupGotoSchool {
+    using Type = std::set<AgeGroup>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return std::set<AgeGroup>{};
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoSchool";
+    }
+};
 
-// /**
-//  * @brief The vector of AgeGroups that can go to Work.
-//  */
-// struct AgeGroupGotoWork {
-//     using Type = set<AgeGroup>;
-//     static Type get_default(AgeGroup /*size*/)
-//     {
-//         return std::set<AgeGroup>{};
-//     }
-//     static std::string name()
-//     {
-//         return "AgeGroupGotoWork";
-//     }
-// };
+/**
+ * @brief The vector of AgeGroups that can go to Work.
+ */
+struct AgeGroupGotoWork {
+    using Type = std::set<AgeGroup>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return std::set<AgeGroup>{};
+    }
+    static std::string name()
+    {
+        return "AgeGroupGotoWork";
+    }
+};
 
 /**
  * @brief Parameters that control the migration between Location%s.
  */
-using MigrationParameters =
-    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
-                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
-// AgeGroupGotoSchool, AgeGroupGotoWork>;
+using MigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
+                                         GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
+                                         GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>;
 
 class SimulationParameters : public GlobalInfectionParameters
 {
 public:
     SimulationParameters(AgeGroup num_agegroups)
         : GlobalInfectionParameters(num_agegroups)
-        , m_num_groups(num_agegroups)
+        , m_num_groups{num_agegroups}
     {
     }
 
