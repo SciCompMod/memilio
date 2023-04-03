@@ -84,11 +84,11 @@ struct Cell {
         cached_exposure_rate; /**< The parameter for the exponential
     distribution to decide if a Person becomes infected.*/
 
-    Cell(size_t num_agegroups)
+    Cell()
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{AgeGroup(num_agegroups), VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup(6), VaccinationState::Count}, 0.})
     {
     }
 

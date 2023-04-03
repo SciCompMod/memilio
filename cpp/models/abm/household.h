@@ -56,8 +56,8 @@ public:
      * @brief Constructs a new HouseholdMember.
      * @param[in] agegroups the age groups in the model. 
      */
-    HouseholdMember(AgeGroup agegroups)
-        : m_age_weights({agegroups}, 0)
+    HouseholdMember(size_t num_agegroups)
+        : m_age_weights({AgeGroup(num_agegroups)}, 0)
     {
     }
 

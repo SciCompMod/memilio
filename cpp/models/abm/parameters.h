@@ -469,19 +469,19 @@ using MigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicSho
 class SimulationParameters : public GlobalInfectionParameters
 {
 public:
-    SimulationParameters(AgeGroup num_agegroups)
-        : GlobalInfectionParameters(num_agegroups)
-        , m_num_groups{num_agegroups}
+    SimulationParameters(size_t num_agegroups)
+        : GlobalInfectionParameters(AgeGroup(num_agegroups))
+        , m_num_groups(num_agegroups)
     {
     }
 
-    AgeGroup get_num_groups() const
+    size_t get_num_groups() const
     {
         return m_num_groups;
     }
 
 private:
-    AgeGroup m_num_groups;
+    size_t m_num_groups;
 };
 
 } // namespace abm

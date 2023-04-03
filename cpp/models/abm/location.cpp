@@ -32,14 +32,14 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells)
+Location::Location(LocationType type, uint32_t index, size_t /*num_agegroups*/, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity(LocationCapacity())
     , m_capacity_adapted_transmission_risk(false)
     , m_subpopulations(Eigen::Index(InfectionState::Count))
-    , m_cached_exposure_rate({AgeGroup(num_agegroups), VaccinationState::Count})
-    , m_cells(std::vector<Cell>(num_cells, num_agegroups))
+    , m_cached_exposure_rate({AgeGroup(6), VaccinationState::Count})
+    , m_cells(std::vector<Cell>(num_cells))
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
