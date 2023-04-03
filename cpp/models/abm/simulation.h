@@ -53,8 +53,8 @@ public:
      * @see Simulation::get_world
      * @param[in] t The starting time of the Simulation.
      */
-    Simulation(TimePoint t)
-        : Simulation(t, World(6))
+    Simulation(TimePoint t, size_t num_agegroups)
+        : Simulation(t, World(num_agegroups))
     {
     }
 

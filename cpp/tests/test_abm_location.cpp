@@ -48,7 +48,7 @@ TEST(TestLocation, addRemovePerson)
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
     auto person1  = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
-                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));                           
+                                     mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
     home.add_person(person1);
     person1.migrate_to(home, location, {0, 1});
     auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
@@ -203,54 +203,55 @@ TEST(TestLocation, beginStep)
     }
 }
 
-// TEST(TestLocation, reachCapacity)
-// {
-//     using testing::Return;
+TEST(TestLocation, reachCapacity)
+{
+    using testing::Return;
 
-//     auto world = mio::abm::World(6);
-//     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-//     world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
-//     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-//     world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
-//     auto home_id   = world.add_location(mio::abm::LocationType::Home);
-//     auto school_id = world.add_location(mio::abm::LocationType::School);
+    auto world = mio::abm::World(6);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 
-//     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-//     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-//         .Times(testing::AtLeast(8))
-//         .WillOnce(testing::Return(0.8)) // draw random work group
-//         .WillOnce(testing::Return(0.8)) // draw random school group
-//         .WillOnce(testing::Return(0.8)) // draw random work hour
-//         .WillOnce(testing::Return(0.8)) // draw random school hour
-//         .WillOnce(testing::Return(0.8)) // draw random work group
-//         .WillOnce(testing::Return(0.8)) // draw random school group
-//         .WillOnce(testing::Return(0.8)) // draw random work hour
-//         .WillOnce(testing::Return(0.8)); // draw random school hour
-//     // .WillRepeatedly(testing::Return(1.0));
+    auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    auto school_id = world.add_location(mio::abm::LocationType::School);
 
-//     auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::AgeGroup(1));
-//     auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)); // draw random school hour
+    // .WillRepeatedly(testing::Return(1.0));
 
-//     p1.set_assigned_location(school_id);
-//     p2.set_assigned_location(school_id);
-//     p1.set_assigned_location(home_id);
-//     p2.set_assigned_location(home_id);
+    auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::AgeGroup(1));
+    auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
 
-//     auto& home   = world.get_individualized_location(home_id);
-//     auto& school = world.get_individualized_location(school_id);
-//     school.set_capacity(1, 66);
+    p1.set_assigned_location(school_id);
+    p2.set_assigned_location(school_id);
+    p1.set_assigned_location(home_id);
+    p2.set_assigned_location(home_id);
 
-//     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
-//         mock_exponential_dist;
-//     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+    auto& home   = world.get_individualized_location(home_id);
+    auto& school = world.get_individualized_location(school_id);
+    school.set_capacity(1, 66);
 
-//     world.evolve(mio::abm::TimePoint(0) + mio::abm::hours(8), mio::abm::hours(1));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
-//     ASSERT_EQ(p1.get_location_id().type, mio::abm::LocationType::School);
-//     ASSERT_EQ(p2.get_location_id().type, mio::abm::LocationType::Home); // p2 should not be able to enter the school
-//     ASSERT_EQ(school.get_population().get_last_value().sum(), 1);
-//     ASSERT_EQ(home.get_population().get_last_value().sum(), 1);
-// }
+    world.evolve(mio::abm::TimePoint(0) + mio::abm::hours(8), mio::abm::hours(1));
+
+    ASSERT_EQ(p1.get_location_id().type, mio::abm::LocationType::School);
+    ASSERT_EQ(p2.get_location_id().type, mio::abm::LocationType::Home); // p2 should not be able to enter the school
+    ASSERT_EQ(school.get_population().get_last_value().sum(), 1);
+    ASSERT_EQ(home.get_population().get_last_value().sum(), 1);
+}
 
 TEST(TestLocation, computeRelativeTransmissionRisk)
 {

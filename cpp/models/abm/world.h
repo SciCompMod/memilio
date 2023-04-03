@@ -99,8 +99,24 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("World");
-        obj.add_element("Parameters", parameters);
-        // obj.add_element("Populations", populations);
+        obj.add_element("NumAgeGroups", parameters.get_num_groups());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<World> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("World");
+        auto size = obj.expect_element("NumAgeGroups", Tag<size_t>{});
+        return apply(
+            io,
+            [](auto&& size_) {
+                return World{size_};
+            },
+            size);
     }
 
     /** 
