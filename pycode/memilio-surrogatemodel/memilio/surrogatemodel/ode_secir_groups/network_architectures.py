@@ -20,71 +20,77 @@
 import tensorflow as tf
 
 
-def mlp_multi_input_single_output():
-    """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for all six age groups for one single time step.
+def mlp_multi_input_single_output(num_age_groups=6):
+    """! Simple MLP Network which takes the compartments for multiple time steps as input and
+    returns the 8 compartments for all six age groups for one single time step.
 
-    Reshaping adds an extra dimension to the output, so the shape of the output is 1x48. This makes the shape comparable to that of the multi-output models.
+    Reshaping adds an extra dimension to the output, so the shape of the output is 1x48.
+    This makes the shape comparable to that of the multi-output models.
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(units=32, activation='relu'),
         tf.keras.layers.Dense(units=32, activation='relu'),
-        tf.keras.layers.Dense(units=48),
+        tf.keras.layers.Dense(units=8*num_age_groups),
         tf.keras.layers.Reshape([1, -1]), ])
     return model
 
 
-def mlp_multi_input_multi_output(label_width):
-    """! Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for all age groups for multiple time steps in the future. 
+def mlp_multi_input_multi_output(label_width, num_age_groups=6):
+    """! Simple MLP Network which takes the compartments for multiple time steps as input and
+    returns the 8 compartments for all age groups for multiple time steps in the future. 
 
-    Reshaping adds an extra dimension to the output, so the shape of the output is 30x48. This makes the shape comparable to that of the multi-output models.
+    Reshaping adds an extra dimension to the output, so the shape of the output is 30x48.
+    This makes the shape comparable to that of the multi-output models.
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(units=32, activation='relu'),
         tf.keras.layers.Dense(units=32, activation='relu'),
-        tf.keras.layers.Dense(units=label_width*48),
-        tf.keras.layers.Reshape([label_width, 48])
+        tf.keras.layers.Dense(units=label_width*num_age_groups*8),
+        tf.keras.layers.Reshape([label_width, num_age_groups*8])
     ])
     return model
 
 
-def cnn_multi_input_multi_output(label_width):
-    """! CNN Network which uses multiple time steps as input and returns the 8 compartments for the six age groups for multiple time step in the future.
+def cnn_multi_input_multi_output(label_width, num_age_groups=6):
+    """! CNN Network which uses multiple time steps as input and returns the 8 compartments for
+    each age groups for multiple time step in the future.
 
-    Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
+    Input and output have shape [number of expert model simulations, time points in simulation,
+    number of individuals in infection states].
 
     @param label_width Number of time steps in the output.
 
     """
 
-    num_outputs = 48
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu',
-                               input_shape=(277, 1)),
+        tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
         tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
         tf.keras.layers.MaxPooling1D(pool_size=2),
         tf.keras.layers.Flatten(),
         tf.keras.layers.GaussianNoise(0.35),
         tf.keras.layers.Dense(512, activation='relu'),
         # tf.keras.layers.Dense(512, activation='relu'),
-        tf.keras.layers.Dense(1440, activation='linear'),
-        tf.keras.layers.Reshape([label_width, num_outputs])
+        tf.keras.layers.Dense(
+            label_width * num_age_groups * 8, activation='linear'),
+        tf.keras.layers.Reshape([label_width, 8 * num_age_groups])
     ])
     return model
 
 
-def lstm_multi_input_multi_output(label_width):
-    """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
+def lstm_multi_input_multi_output(label_width, num_age_groups=6):
+    """! LSTM Network which uses multiple time steps as input and returns the 8 compartments for
+    one single time step in the future.
 
-    Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
+    Input and output have shape [number of expert model simulations, time points in simulation,
+    number of individuals in infection states].
 
     @param label_width Number of time steps in the output.
     """
-    num_outputs = 48
     model = tf.keras.Sequential([
         tf.keras.layers.LSTM(32, return_sequences=False),
-        tf.keras.layers.Dense(label_width*num_outputs,
+        tf.keras.layers.Dense(label_width * 8 * num_age_groups,
                               kernel_initializer=tf.initializers.zeros()),
-        tf.keras.layers.Reshape([label_width, num_outputs])])
+        tf.keras.layers.Reshape([label_width, 8 * num_age_groups])])
     return model

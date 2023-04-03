@@ -24,6 +24,7 @@ The package currently provides the following modules:
 - `models`: models for different specific tasks
    Currently we have the following models: 
    - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
+   - `ode_secir_groups`: A model allowing for asymptomatic as well as symptomatic infection stratified by age groups and one damping.
 
      Each model folder contains the following files: 
      - `data_generation`: data generated from expert model simulation.

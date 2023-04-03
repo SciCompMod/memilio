@@ -122,7 +122,7 @@ def plot_compartment_prediction_model(
     plt.xlabel('days')
     if os.path.isdir("plots") == False:
         os.mkdir("plots")
-    plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
+    plt.savefig('plots/evaluation_secir_groups_' + plot_compartment + '.png')
 
 
 def network_fit(
@@ -137,10 +137,10 @@ def network_fit(
 
     """
 
-    if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
+    if not os.path.isfile(os.path.join(path, 'data_secir_groups.pickle')):
         ValueError("no dataset found in path: " + path)
 
-    file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
+    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
 
     data = pickle.load(file)
     data_splitted = split_data(data['inputs'], data['labels'])
@@ -463,7 +463,7 @@ def get_input_dim_lstm(path):
    @param path path to the data 
 
    """
-    file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
+    file = open(os.path.join(path, 'groups.pickle'), 'rb')
 
     data = pickle.load(file)
     input_dim = data['inputs'].shape[2] + np.asarray(
@@ -477,6 +477,7 @@ if __name__ == "__main__":
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
     max_epochs = 100
+    label_width = 30
 
     input_dim = get_input_dim_lstm(path_data)
 
@@ -486,15 +487,16 @@ if __name__ == "__main__":
         modeltype = 'classic'
 
     elif model == "Dense":
-        model = network_architectures.mlp_multi_input_multi_output(30)
+        model = network_architectures.mlp_multi_input_multi_output(label_width)
         modeltype = 'classic'
 
     elif model == "LSTM":
-        model = network_architectures.lstm_multi_input_multi_output(30)
+        model = network_architectures.lstm_multi_input_multi_output(
+            label_width)
         modeltype = 'timeseries'
 
     elif model == "CNN":
-        model = network_architectures.cnn_multi_input_multi_output(30)
+        model = network_architectures.cnn_multi_input_multi_output(label_width)
         modeltype = 'classic'
 
     model_output = network_fit(

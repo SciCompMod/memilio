@@ -175,9 +175,8 @@ def generate_data(
     for _ in range(0, num_runs):
 
         # Generate a random damping day
-        # The damping has to take place at least 5 days before the end of the simulation and should not be part of the input
         damping_day = random.randrange(
-            input_width, (input_width+label_width)-5)
+            input_width, input_width+label_width)
 
         data_run, damped_contact_matrix = run_secir_groups_simulation(
             days, damping_day, population[random.randint(0, len(population) - 1)])
@@ -211,7 +210,7 @@ def generate_data(
             os.mkdir(path_out)
 
         # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_simple.pickle'), 'wb') as f:
+        with open(os.path.join(path_out, 'data_secir_groups.pickle'), 'wb') as f:
             pickle.dump(data, f)
     return data
 
