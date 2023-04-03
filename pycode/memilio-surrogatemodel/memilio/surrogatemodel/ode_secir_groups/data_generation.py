@@ -293,7 +293,7 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
 
     path_population = os.path.abspath(
-        "data\pydata\Germany\county_population.json")
+        r"data//pydata//Germany//county_population.json")
 
     input_width = 5
     label_width = 30
