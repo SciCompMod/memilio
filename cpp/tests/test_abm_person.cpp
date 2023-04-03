@@ -21,8 +21,6 @@
 
 TEST(TestPerson, init)
 {
-    using testing::Return;
-
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto t        = mio::abm::TimePoint(0);
     auto person   = mio::abm::Person(location, mio::abm::AgeGroup::Age60to79);
