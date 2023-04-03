@@ -1,7 +1,7 @@
 name: "Linux Build"
 description: "Build the C++ library on Linux."
 inputs:
-  config: 
+  config:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
@@ -84,7 +84,7 @@ runs:
       run: |
         cd cpp
         tar -czf build.tar.gz build
-    - name: Upload built test directory
+    - name: Upload built directory
       uses: actions/upload-artifact@v3
       with:
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
