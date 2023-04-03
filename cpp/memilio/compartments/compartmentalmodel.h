@@ -131,17 +131,15 @@ public:
      * right-hand-side f of the ODE from the intercompartmental flows. It can be used in an ODE
      * solver
      *
-     * The distinction between pop and y is relevant if we want to track infections of people in y
-     * in a population pop. Therefore, later in the get_derivatives function, the number of 
-     * infectious individuals in a geographic unit is given by pop.
-     * Currently, we are using this for calculating the infection states of travelers at their 
-     * return. There, we are using the total population in the geographic unit that the people migrated 
-     * to as pop and the number of people that migrated as y, to compute their infection states when 
-     * they return.
-     * If we consider models without mobility, pop and y are equivalent.
+     * The distinction between pop and y is only for the case of mobility.
+     * There, for a small group of travelers (y) we want to evaluate the evolution of infection states
+     * while they are in any population (pop). It is important that pop > y always applies.
      *
-     * @param pop flat array containing the number of infections people
-     * @param y the current state of the model as a flat array with the people 
+     * If we consider a simulation without mobility, the function is called with
+     * model.eval_right_hand_side(y, y, t, dydt)
+     *
+     * @param pop the current state of the population in the geographic unit we are considering
+     * @param y the current state of the model (or a subpopulation) as a flat array
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
