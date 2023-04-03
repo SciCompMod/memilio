@@ -102,3 +102,4 @@ endif()
 
 
 add_executable(hist utils/history_example.cpp)
+target_link_libraries(hist memilio)

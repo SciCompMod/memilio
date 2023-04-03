@@ -20,7 +20,9 @@
 #include <vector>
 #include <tuple>
 #include <iostream>
+#include "memilio/utils/index.h"
 
+//TODO: Maybe rename Log... something like Reader or something similar.
 class example
 {
 public:
@@ -59,6 +61,32 @@ struct Writer {
         std::cout << t << std::endl;
     }
 };
+template <class... Loggers>
+struct DataWriter {
+    using Data  = std::tuple<std::vector<typename Loggers::Type>...>;
+    using Types = mio::Index<Loggers...>;
+    template <class Logger>
+    static void write(const typename Logger::Type& t, Data& data)
+    {
+        std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
+    }
+};
+
+template <class... Loggers>
+struct ToFileWriter {
+    using Data  = std::tuple<std::vector<typename Loggers::Type>...>;
+    using Types = mio::Index<Loggers...>;
+    template <class Logger>
+    static void write(const typename Logger::Type& t, Data& data)
+    {
+        std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
+    }
+};
+
+void write_to_file(const std::vector<int>& data)
+{
+    // write to file
+}
 
 template <template <class...> class Writer, class... Loggers>
 class History
@@ -108,8 +136,8 @@ private:
 
 int main()
 {
-
     History<Writer, LogA, LogB> history;
+
     example ex;
 
     int step = 0;
@@ -121,6 +149,5 @@ int main()
 
         step++;
     }
-
     history.get_log();
 }
