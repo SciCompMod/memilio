@@ -83,7 +83,7 @@ struct ToFileWriter {
     }
 };
 
-void write_to_file(const std::vector<int>& data)
+void write_to_file_julia(const std::vector<int>& data)
 {
     // write to file
 }
