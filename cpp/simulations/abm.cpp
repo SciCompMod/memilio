@@ -449,8 +449,7 @@ void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, Scal
     }
 }
 
-void set_parameters(mio::abm::GlobalInfectionParameters infection_params,
-                    mio::abm::MigrationParameters migration_params)
+void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 {
     infection_params.set<mio::abm::IncubationPeriod>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 4.});
 
@@ -769,9 +768,9 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params,
         .get<mio::abm::RecoveredToSusceptible>()[{mio::AgeGroup(5), mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    migration_params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // migration_params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    migration_params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+    //migration_params.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 }
 
 /**
@@ -786,7 +785,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     auto world = mio::abm::World(6);
 
-    set_parameters(world.get_global_infection_parameters(), world.get_migration_parameters());
+    set_parameters(world.get_global_infection_parameters());
 
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);

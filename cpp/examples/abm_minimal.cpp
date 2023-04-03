@@ -31,9 +31,9 @@ int main()
     world.get_global_infection_parameters().get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    // world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+    // world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
 
     // There are 3 households for each household group.
     int n_households = 3;
