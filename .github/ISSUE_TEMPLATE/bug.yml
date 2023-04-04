@@ -1,6 +1,5 @@
-name: "Bug report"
+name: ":bug: Bug report"
 description: "Use this template to report bugs."
-title: "[Bug]"
 labels:
   - "class::bug"
 body:
