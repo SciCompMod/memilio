@@ -132,12 +132,21 @@ TEST(TestLocation, CacheExposureRate)
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
     }
 }
-/*
+
 TEST(TestLocation, reachCapacity)
 {
     using testing::Return;
 
-    auto world     = mio::abm::World();
+    auto t      = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
+    auto dt     = mio::abm::hours(1);
+    auto params = mio::abm::GlobalInfectionParameters{};
+    //setup so p1 doesn't transition
+    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                               mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
+    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                                mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
+
+    auto world     = mio::abm::World(params);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
 
@@ -154,8 +163,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)); // draw random school hour
     // .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = add_test_person(world, home_id, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14);
-    auto& p2 = add_test_person(world, home_id, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age5to14);
+    auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Carrier);
+    auto& p2 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible);
 
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
@@ -170,14 +179,14 @@ TEST(TestLocation, reachCapacity)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
 
-    world.evolve(mio::abm::TimePoint(0) + mio::abm::hours(8), mio::abm::hours(1));
+    world.evolve(t, dt);
 
-    ASSERT_EQ(p1.get_location().get_type(), mio::abm::LocationType::School);
-    ASSERT_EQ(p2.get_location().get_type(), mio::abm::LocationType::Home); // p2 should not be able to enter the school
-    ASSERT_EQ(school.get_subpopulations().get_last_value().sum(), 1);
-    ASSERT_EQ(home.get_subpopulations().get_last_value().sum(), 1);
+    ASSERT_EQ(p1.get_location(), school);
+    ASSERT_EQ(p2.get_location(), home); // p2 should not be able to enter the school
+    ASSERT_EQ(school.get_number_persons(), 1);
+    ASSERT_EQ(home.get_number_persons(), 1);
 }
-
+/*
 TEST(TestLocation, computeRelativeTransmissionRisk)
 {
     using testing::Return;
@@ -420,7 +429,7 @@ TEST(TestLocation, interact)
         EXPECT_EQ(location2.interact(susceptible, dt, params), mio::abm::InfectionState::Susceptible);
     }
 }
-
+*/
 TEST(TestLocation, setCapacity)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
@@ -429,56 +438,63 @@ TEST(TestLocation, setCapacity)
     ASSERT_EQ(location.get_capacity().volume, 200);
 }
 
-TEST(TestLocation, addSubpopulationsTimepoint)
+TEST(TestLocation, storeSubpopulations)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age5to14);
-    location.add_person(person1);
-    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
-    location.add_person(person2);
-    auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::abm::AgeGroup::Age35to59);
-    location.add_person(person3);
+    auto t      = mio::abm::TimePoint(0);
+    auto dt     = mio::abm::days(7);
+    auto params = mio::abm::GlobalInfectionParameters{};
+    //setup so there are some transitions
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
+                                                 mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.seconds();
 
-    auto t1 = mio::abm::TimePoint(0) + mio::abm::days(7);
-    location.add_subpopulations_timepoint(t1);
-    auto v1 = location.get_population().get_value(1);
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                                 mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.seconds();
+
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
+                                              mio::abm::VaccinationState::Unvaccinated}]   = 0.4 * dt.seconds();
+    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
+                                                mio::abm::VaccinationState::Unvaccinated}] = 1.8 * dt.seconds();
+
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    auto person1 =
+        make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
+    auto person2 =
+        make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected, t, params);
+    auto person3 =
+        make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
+
+    location.initialize_subpopulations(t);
+    auto t1 = t + dt;
+    location.store_subpopulations(t1);
+    auto v1 = location.get_subpopulations().get_value(1);
     // Check whether the number of persons in infected state at the location is correct
     ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Infected)], 2);
+    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Carrier)], 1);
 
-    auto t2 = mio::abm::TimePoint(0) + mio::abm::days(14);
-    person1.set_infection_state(mio::abm::InfectionState::Infected_Critical);
-    location.changed_state(person1, mio::abm::InfectionState::Infected);
-    location.add_subpopulations_timepoint(t2);
-    auto v2 = location.get_population().get_value(2);
+    auto t2 = t1 + dt;
+    location.store_subpopulations(t2);
+    auto v2 = location.get_subpopulations().get_value(2);
     // Check whether the number of persons in infected state at the location is correct
     ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Infected)], 1);
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Recovered_Infected)], 1);
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Carrier)], 1);
 
-    auto t3 = mio::abm::TimePoint(0) + mio::abm::days(24);
-    person3.set_infection_state(mio::abm::InfectionState::Infected);
-    location.changed_state(person3, mio::abm::InfectionState::Exposed);
-    location.add_subpopulations_timepoint(t3);
-    auto v3 = location.get_population().get_value(3);
+    auto t3 = t2 + mio::abm::days(10);
+    location.store_subpopulations(t3);
+    auto v3 = location.get_subpopulations().get_value(3);
     // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Infected)], 2);
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Infected)], 1);
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered_Infected)], 1);
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered_Carrier)], 1);
 
     // Check total number of subpopulation is correct.
-    ASSERT_EQ(location.get_population().get_num_time_points(), 4);
-    for (auto&& v_iter : location.get_population()) {
+    ASSERT_EQ(location.get_subpopulations().get_num_time_points(), 4);
+    for (auto&& v_iter : location.get_subpopulations()) {
         ASSERT_EQ(v_iter.sum(), 3);
     }
-    ASSERT_EQ(location.get_population().get_time(1), 7);
-    ASSERT_EQ(location.get_population().get_time(2), 14);
-    ASSERT_EQ(location.get_population().get_time(3), 24);
-}
-
-TEST(TestLocation, initializeSubpopulation)
-{
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    ASSERT_EQ(location.get_population().get_time(0), 0);
-
-    auto t = mio::abm::TimePoint(0) + mio::abm::days(7);
-    location.initialize_subpopulation(t);
-    ASSERT_EQ(location.get_population().get_time(0), 7);
+    ASSERT_EQ(location.get_subpopulations().get_time(1), 7);
+    ASSERT_EQ(location.get_subpopulations().get_time(2), 14);
+    ASSERT_EQ(location.get_subpopulations().get_time(3), 24);
 }
 
 TEST(TestLocation, setRequiredMask)
@@ -498,4 +514,4 @@ TEST(TestLocation, setNPIActive)
 
     location.set_npi_active(true);
     ASSERT_TRUE(location.get_npi_active());
-}*/
+}

@@ -5,7 +5,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
 {
     // compute start time of Infection to match InfectionState at desired TimePoint
     // always takes a path with the Infected status back to Exposed, if not starting with RecoveredCarrier
-    // important: To create the correct path, mocks are used. A person will always recover.
+    // important: To create the correct path, mocks are used. A person will always recover in the shortest path.
     mio::abm::TimePoint inf_start(t);
     mio::abm::InfectionState start_state(infection_state);
     //setup rng mock so the person has a state transition to infection_state

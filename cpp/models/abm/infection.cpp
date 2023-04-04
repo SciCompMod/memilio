@@ -103,8 +103,8 @@ bool Infection::is_detected() const
 void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date)
 {
     auto t = start_date;
-    TimeSpan time_period; // time period for current infection state
-    InfectionState next_state; // next state to enter
+    TimeSpan time_period{}; // time period for current infection state
+    InfectionState next_state{}; // next state to enter
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Exposed));
     auto uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType v; // random draws

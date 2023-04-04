@@ -151,7 +151,7 @@ TEST(TestWorld, evolveMigration)
     using testing::Return;
 
     {
-        auto t      = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
+        auto t      = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt     = mio::abm::hours(1);
         auto params = mio::abm::GlobalInfectionParameters{};
         //setup so p1 doesn't transition
@@ -205,7 +205,7 @@ TEST(TestWorld, evolveMigration)
     }
 
     {
-        auto t      = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
+        auto t      = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt     = mio::abm::hours(2);
         auto params = mio::abm::GlobalInfectionParameters{};
         //setup so p1-p5 don't transition

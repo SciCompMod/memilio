@@ -86,3 +86,16 @@ TEST(TestSimulation, advance_subpopulation)
         ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }
 }
+
+TEST(TestSimulation, initializeSubpopulation)
+{
+    auto world  = mio::abm::World();
+    auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
+    auto loc    = world.get_individualized_location(loc_id);
+    ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
+
+    auto t   = mio::abm::TimePoint(0);
+    auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+
+    ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
+}
