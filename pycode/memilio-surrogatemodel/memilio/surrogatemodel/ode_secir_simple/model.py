@@ -222,7 +222,7 @@ def split_data(inputs, labels, split_train=0.7,
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_simple')
     max_epochs = 400
 
     model = "LSTM"

@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # Store data relative to current file two levels higher.
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'data')
+        os.path.dirname(os.path.realpath(path)))), 'data_simple')
 
     input_width = 5
     label_width = 30

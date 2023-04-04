@@ -476,7 +476,7 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 100
+    max_epochs = 10
 
     input_dim = get_input_dim_lstm(path_data)
 
