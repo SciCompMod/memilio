@@ -263,7 +263,7 @@ def read_files(directory, fine_resolution):
 def activate_npis_based_on_incidence(
         local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
         incid_threshold):
-    """! 
+    """!
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
 
@@ -272,15 +272,15 @@ def activate_npis_based_on_incidence(
     For a formerly active NPI to be lifted, the incidence has to be below
     the threshold for npi_lifting_days_threshold many days.
 
-    If one of the former cases holds true, then the activation or lifting happens 
-    two days after the satisfaction of the criterion. This is in accordance with 
-    case reporting that can only happen after the day has finished and as these 
-    reports generally appeared in the morning for the previous day, the NPI can 
-    not directly be activated or lifted that day but only on the next day. Hence 
+    If one of the former cases holds true, then the activation or lifting happens
+    two days after the satisfaction of the criterion. This is in accordance with
+    case reporting that can only happen after the day has finished and as these
+    reports generally appeared in the morning for the previous day, the NPI can
+    not directly be activated or lifted that day but only on the next day. Hence
     the incidence-dependent NPI is activated or lifted two days after the threshold
     is/ is not exceeded. Please see the examples for a better understanding.
 
-    Example (Threshold=3.5): 
+    Example (Threshold=3.5):
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
     Yesterdays incidence is over the threshold on following days:
     [?, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
@@ -299,7 +299,7 @@ def activate_npis_based_on_incidence(
     NPI should be activated on day 9 (and lifted on day 15; not in the vector)
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
 
-    Another example: 
+    Another example:
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
     npi_lifting_days_threshold=3, npi_activation_days_threshold=1
@@ -307,7 +307,7 @@ def activate_npis_based_on_incidence(
     int_active should then be:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
 
-    Please also note that the first column will always returned as false 
+    Please also note that the first column will always returned as false
     so the dataframe should not start with dates where NPIs are implemented.
     For the Corona Datenplattform frame which starts from 2020-03-01
     this is no problem for the first days as there were no NPIs.
@@ -352,7 +352,7 @@ def activate_npis_based_on_incidence(
 
 def drop_codes_and_categories(
         npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
-    """! Drops codes and categories from original data frame if they are not 
+    """! Drops codes and categories from original data frame if they are not
     used.
 
     @param npi_codes_prior NPI codes read from description sheet.
@@ -447,7 +447,7 @@ def get_npi_data(fine_resolution=2,
         -fine_resolution=1: germany_counties_npi_subcat_incgrouped
         -fine_resolution=0: germany_counties_npi_maincat
 
-    Needs the files 'cases_all_county_all_dates_repdate.json' and 
+    Needs the files 'cases_all_county_all_dates_repdate.json' and
     'county_current_population.json' which can be created by the functions
     getCasesData.py (with argument --rep-date) and getPopulationData.py.
 
@@ -478,7 +478,7 @@ def get_npi_data(fine_resolution=2,
         county IDs from 1001 to 16xxx.
     @param npi_activation_days_threshold [Default: 3]. Defines necessary number
          of days exceeding case incidence threshold to activate NPIs.
-    @param npi_alifting_days_threshold [Default: 5]. Defines necessary number 
+    @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
     """
 
@@ -879,15 +879,24 @@ def get_npi_data(fine_resolution=2,
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
-    df_count = copy.deepcopy(df_npis_combinations)
-    for code in df_count.keys():
-        df_count[code][1] *= 0
+    # used
+    # used to count number of codes that are deactivated
+    df_count_deactivation = copy.deepcopy(df_npis_combinations)
+    for code in df_count_deactivation.keys():
+        df_count_deactivation[code][1] *= 0
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_count_incid_depend = pd.DataFrame()
 
-    # count_codes(df_npis_old, df_count_incid_depend, counties_considered,
-    #            counties_considered=counties_considered)
+    # setup dataframe for each maingroup, same format as df_npi_combinations
+    # used
+    # used to count codes that occur simultaneously now (before any (de-)activation)
+    # df_count_joined_codes = copy.deepcopy(df_npis_combinations)
+    # for code in df_count_joined_codes.keys():
+    #     df_count_joined_codes[code][1] *= 0
+    # df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
+    #                                       counties_considered=counties_considered)
+    # save_counter(df_counted_joined_codes, 'joined_codes')
     # plot_counter('joined_codes')
 
     all_subcodes = []
@@ -1094,8 +1103,8 @@ def get_npi_data(fine_resolution=2,
                                       str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
                                 print('\n')
                                 df_merged.loc[subcode_active, nocombi_code] = 0
-                                df_count[maincode][1].loc[idx_strictness,
-                                                          nocombi_code] += len(days_deact)
+                                df_count_deactivation[maincode][1].loc[idx_strictness,
+                                                                       nocombi_code] += len(days_deact)
 
             # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
@@ -1105,6 +1114,8 @@ def get_npi_data(fine_resolution=2,
                 for subcode in all_subcodes:
                     for incidcode in ['', '_1', '_2', '_3', '_4', '_5']:
                         df_local_new[subcode+incidcode] *= df_merged[subcode]
+
+        save_counter(df_count_deactivation, 'count_deactivation')
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1188,41 +1199,33 @@ def get_npi_data(fine_resolution=2,
 
 
 def count_codes(df_npis_old, df_count, counties_considered):
-    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     for county in counties_considered:
         df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
         code_dict = {}
-        for code in df_npis_combinations.keys():
-            for column in df_npis_combinations[code][1].columns:
+        for code in df_count.keys():
+            for column in df_count[code][1].columns:
                 code_dict[column] = df_local.iloc[:, 6+np.where(
                     df_local[df_local.NPI_code.str.contains(column)].iloc[:, 6:].max() > 0)[0]].columns
 
-        # for code in df_npis_combinations.keys():
-        #    column_list = df_npis_combinations[code][1].columns
+        # with diag
+        # for code in df_count.keys():
+        #    column_list = df_count[code][1].columns
         #    for column in range(len(column_list)):
         #        for column_other in range(len(column_list)):
-        #            df_npis_combinations[code][1].iloc[column, column_other] += len(set(
+        #            df_count[code][1].iloc[column, column_other] += len(set(
         #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
-        #            df_npis_combinations[code][1].iloc[column_other, column] += len(set(
-        #                code_dict[column_list[column_other]]).intersection(set(code_dict[column_list[column]])))
 
         # no diag
-        for code in df_npis_combinations.keys():
-            column_list = df_npis_combinations[code][1].columns
+        for code in df_count.keys():
+            column_list = df_count[code][1].columns
             for column in range(len(column_list)):
                 for column_other in range(column):
-                    df_npis_combinations[code][1].iloc[column, column_other] += len(set(
+                    df_count[code][1].iloc[column, column_other] += len(set(
                         code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
-        # no diag
-        # for code in df_npis_combinations.keys():
-        #     column_list = df_npis_combinations[code][1].columns
-        #     for column in range(len(column_list)):
-        #         for column_other in range(column):
-        #             df_npis_combinations[code][1].iloc[column, column_other] += len(set(
-        #                 code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
-        #             df_npis_combinations[code][1].iloc[column_other, column] += len(set(
-        #                 code_dict[column_list[column_other]]).intersection(set(code_dict[column_list[column]])))
+    return df_count
 
+
+def save_counter(df_count, filename):
     # save results
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
 
@@ -1258,9 +1261,9 @@ def plot_counter(filename):
         plt.xticks(positions, [colname[-3:]
                    for colname in df.columns.to_list()[1:]])
         plt.yticks(positions, df.columns.to_list()[1:])
-        # set vmin =1 so that only combinations are of interest are in colour, else white
+        # set vmin = 1 so that only combinations that are of interest are in colour, else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
-        # this way colors of heatmaps are comparable (e.g. between codes or between joined_codes and exclusions)
+        # this way colours of heatmaps are comparable (e.g. between codes or between joined_codes and exclusions)
         plt.imshow(array_exclusion, cmap=cmap, vmin=1, vmax=300000)
         plt.colorbar()
         plt.savefig(
