@@ -51,6 +51,14 @@ struct LogB : LogAlways {
     }
 };
 
+struct LogC : LogAlways {
+    using Type = std::pair<int, int>;
+    static Type log(const example& ex)
+    {
+        return {ex.a, ex.b};
+    }
+};
+
 template <class... Loggers>
 struct Writer {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
@@ -64,11 +72,11 @@ struct Writer {
 template <class... Loggers>
 struct DataWriter {
     using Data  = std::tuple<std::vector<typename Loggers::Type>...>;
-    using Types = mio::Index<Loggers...>;
+    using Index = mio::Index<Loggers...>;
     template <class Logger>
     static void write(const typename Logger::Type& t, Data& data)
     {
-        std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
+        std::get<mio::details::IndexPosition<Logger, Index>::value>(data).push_back(t);
     }
 };
 
@@ -79,7 +87,7 @@ struct ToFileWriter {
     template <class Logger>
     static void write(const typename Logger::Type& t, Data& data)
     {
-        std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
+        //std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
     }
 };
 
@@ -112,7 +120,6 @@ private:
     template <class T, class logger, class... loggers>
     std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
     {
-
         if (m_log_once_flag) {
             Wri::write<logger>(logger::log(t), m_data);
             m_log_once_flag = false;
