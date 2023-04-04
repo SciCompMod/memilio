@@ -1,4 +1,4 @@
-name: "Bug report"
+name: ":bug: Bug report"
 description: "Use this template to report bugs."
 labels:
   - "class::bug"
