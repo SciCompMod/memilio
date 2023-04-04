@@ -303,7 +303,7 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
     //school and hospital is needed for migration rules
     bool has_school   = false;
     bool has_hospital = false;
-    for (auto loc = 0; loc < areas.size(); ++loc) {
+    for (auto loc = 0; loc < (int)areas.size(); ++loc) {
         std::vector<mio::abm::LocationId> locations;
         if (std::search((areas[loc].second).begin(), (areas[loc].second).end(), residential.begin(),
                         residential.end()) != (areas[loc].second).end()) {
