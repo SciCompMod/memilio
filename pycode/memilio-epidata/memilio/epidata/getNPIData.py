@@ -599,8 +599,9 @@ def get_npi_data(fine_resolution=2,
 
         # run through all groups and set possible combinations according to
         # read combination matrix
-        start_comb_matrix = list(
-            df_npis_combinations_pre.columns).index('Variablenname')+2
+        # find begin of combination matrix
+        # there may be multiple columns named '0', so find first '1' column
+        start_comb_matrix = list(df_npis_combinations_pre.columns).index(1)-1
         for i in range(len(npi_groups_idx)):
             codes_local = df_npis_combinations_pre.loc[npi_groups_idx[i],
                                                        'Variablenname'].values
@@ -878,13 +879,16 @@ def get_npi_data(fine_resolution=2,
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
-    df_count = df_npis_combinations.copy()
+    df_count = copy.deepcopy(df_npis_combinations)
     for code in df_count.keys():
         df_count[code][1] *= 0
 
-    count_codes(df_npis_old, df_count.copy(),
-                counties_considered=counties_considered)
-    plot_counter('joined_codes')
+    # create dataframe to count multiple codes after incidence dependent (de-)activation
+    df_count_incid_depend = pd.DataFrame()
+
+    # count_codes(df_npis_old, df_count_incid_depend, counties_considered,
+    #            counties_considered=counties_considered)
+    # plot_counter('joined_codes')
 
     all_subcodes = []
     for maincode in df_npis_combinations.keys():
@@ -1034,6 +1038,9 @@ def get_npi_data(fine_resolution=2,
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
+            df_count_incid_depend = pd.concat(
+                [df_count_incid_depend, df_local_new.copy()])
+
             # merge incidence dependent NPIs to have only one column for each subcode
             df_merged = df_local_new.iloc[:, :2].copy()
             for subcode in all_subcodes:
@@ -1174,8 +1181,8 @@ def get_npi_data(fine_resolution=2,
     else:
         filename = 'germany_counties_npi_maincat'
     gd.write_dataframe(df_npis, directory, filename, file_format)
-    gd.write_dataframe(pd.DataFrame(df_count), directory,
-                       'Exclusions', file_format)
+    gd.write_dataframe(df_count_incid_depend, directory,
+                       'joined_codes_incid_dependent', file_format)
 
     return df_npis
 
@@ -1190,12 +1197,21 @@ def count_codes(df_npis_old, df_count, counties_considered):
                 code_dict[column] = df_local.iloc[:, 6+np.where(
                     df_local[df_local.NPI_code.str.contains(column)].iloc[:, 6:].max() > 0)[0]].columns
 
-        # with diag
-        for code in df_count.keys():
-            column_list = df_count[code][1].columns
+        # for code in df_npis_combinations.keys():
+        #    column_list = df_npis_combinations[code][1].columns
+        #    for column in range(len(column_list)):
+        #        for column_other in range(len(column_list)):
+        #            df_npis_combinations[code][1].iloc[column, column_other] += len(set(
+        #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+        #            df_npis_combinations[code][1].iloc[column_other, column] += len(set(
+        #                code_dict[column_list[column_other]]).intersection(set(code_dict[column_list[column]])))
+
+        # no diag
+        for code in df_npis_combinations.keys():
+            column_list = df_npis_combinations[code][1].columns
             for column in range(len(column_list)):
-                for column_other in range(len(column_list)):
-                    df_count[code][1].iloc[column, column_other] += len(set(
+                for column_other in range(column):
+                    df_npis_combinations[code][1].iloc[column, column_other] += len(set(
                         code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
         # no diag
         # for code in df_npis_combinations.keys():
@@ -1217,12 +1233,12 @@ def count_codes(df_npis_old, df_count, counties_considered):
         df_count[code][1].to_excel(writer, sheet_name=code)
     writer.close()
 
-# saves plot in folder directory/heatmap_filename
+# saves plot in folder directory/heatmaps_filename
 
 
 def plot_counter(filename):
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
-    target_directory = os.path.join(directory, 'heatmap_' + filename)
+    target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
 
