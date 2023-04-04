@@ -1,6 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Elisabeth Kluth
 *

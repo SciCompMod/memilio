@@ -315,6 +315,7 @@ private:
     LocationType m_type; ///< Type of the Location.
     uint32_t m_index; ///< Index of the Location.
     int m_num_persons = 0;
+    size_t m_agegroups;
     LocationCapacity m_capacity;
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
