@@ -104,9 +104,8 @@ mio::abm::Person make_test_person(mio::abm::Location& location,
  * @brief Add a Person to the World. Intended for simple use in tests.
 */
 mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
-                                  mio::abm::AgeGroup age                     = mio::abm::AgeGroup::Age15to34,
-                                  mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Susceptible,
-                                  mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
-                                  mio::abm::GlobalInfectionParameters params = {});
+                                  mio::abm::AgeGroup age                   = mio::abm::AgeGroup::Age15to34,
+                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
 #endif //TEST_ABM_H

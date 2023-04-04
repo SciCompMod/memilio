@@ -9,8 +9,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     mio::abm::TimePoint inf_start(t);
     mio::abm::InfectionState start_state(infection_state);
     //setup rng mock so the person has a state transition to infection_state
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<ScalarType>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(testing::AnyNumber()).WillRepeatedly(testing::Return(1.0));
 
     if (start_state == mio::abm::InfectionState::Recovered_Infected) {
@@ -77,12 +76,11 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGro
 }
 
 mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id, mio::abm::AgeGroup age,
-                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t,
-                                  mio::abm::GlobalInfectionParameters params)
+                                  mio::abm::InfectionState infection_state, mio::abm::TimePoint t)
 {
     mio::abm::Person& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        add_test_infection(p, infection_state, t, params);
+        add_test_infection(p, infection_state, t, world.get_global_infection_parameters());
     }
     return p;
 }

@@ -139,8 +139,7 @@ public:
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
      * @returns Amount of average infections with the virus from the AgeGroup of the transmitter per day.
     */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                             AgeGroup age_transmitter) const;
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.

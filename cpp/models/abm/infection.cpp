@@ -106,7 +106,7 @@ void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParamet
     TimeSpan time_period; // time period for current infection state
     InfectionState next_state; // next state to enter
     m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Exposed));
-    auto uniform_dist = UniformDistribution<ScalarType>::get_instance();
+    auto uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType v; // random draws
     while ((m_infection_course.back().second != InfectionState::Recovered_Infected &&
             m_infection_course.back().second != InfectionState::Recovered_Carrier &&

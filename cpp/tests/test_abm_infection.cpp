@@ -23,8 +23,7 @@ TEST(TestInfection, init)
 {
     auto params = mio::abm::GlobalInfectionParameters{};
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<ScalarType>>>>
-        mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.4)) // Transition to Infected

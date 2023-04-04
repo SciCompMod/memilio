@@ -77,7 +77,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             });
             if (nonempty) {
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
-                auto target      = find_location(target_type, *person);
+                auto& target     = find_location(target_type, *person);
                 auto current     = person->get_location();
                 if (m_testing_strategy.run_strategy(*person, target, t)) {
                     if (target != current && target.get_number_persons() < target.get_capacity().persons) {
@@ -99,7 +99,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             auto current = person->get_location();
             if (!person->is_in_quarantine() && current == get_individualized_location(trip.migration_origin)) {
-                auto target = get_individualized_location(trip.migration_destination);
+                auto& target = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target, t)) {
                     person->apply_mask_intervention(target);
                     person->migrate_to(target);

@@ -167,7 +167,7 @@ void Person::remove_quarantine()
 
 bool Person::get_tested(TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<ScalarType>::get_instance()();
+    ScalarType random = UniformDistribution<double>::get_instance()();
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -227,7 +227,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {
             // draw if the person wears a mask even if not required
-            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()();
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()();
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
             }
@@ -237,7 +237,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = true;
         if (get_mask_compliance(target.get_type()) < 0.) {
             // draw if a person refuses to wear the required mask
-            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()(-1., 0.);
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }
