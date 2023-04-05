@@ -36,10 +36,6 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_b
     , m_N{N_init}
     , m_deaths_before{Dead_before}
 {
-    if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-        log_error("Initialization failed. Number of elements in init does not match the required number.");
-    }
-
     m_populations.add_time_point<Eigen::VectorXd>(
         0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
@@ -70,7 +66,7 @@ void Model::initialize(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
-    else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] != 0) {
+    else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] > 1e-12) {
         //take initialized value for Susceptibles if value can't be calculated via the standard formula
         //calculate other compartment sizes for t=0
         other_compartments_current_timestep(dt);
@@ -85,7 +81,7 @@ void Model::initialize(ScalarType dt)
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
             m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
-    else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] != 0) {
+    else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] > 1e-12) {
         //if value for Recovered is initialized and standard method is not applicable, calculate Susceptibles via other compartments
         //determining other compartment sizes is not dependent of Susceptibles(0), just of the transitions of the past.
         //calculate other compartment sizes for t=0

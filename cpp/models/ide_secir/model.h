@@ -54,32 +54,47 @@ public:
 
     /**
     * @brief Checks constraints on model parameters.
-    * @param[in] dt Time discretization step size. 
     */
-    void check_constraints() const
+    void check_constraints(ScalarType dt) const
     {
-        // ScalarType max_support = std::max(
-        //     {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-        //          .get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_max_support(),
-        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-        //          .get_max_support()});
+        if (!(m_populations.get_num_time_points() > 0)) {
+            log_error("Model construction failed. No initial time point for popualtions.");
+        }
 
-        // if (max_support / dt < m_transitions.get_num_elements()) {
-        //     log_error("Initialization failed. Not enough time points before start of simulation given for transitions.");
-        // }
+        for (int i = 0; i < (int)InfectionState::Count; i++) {
+            if (m_populations[0][i] < 0) {
+                log_error("Initialization failed. Initial values for populations are less than zero.");
+            }
+        }
+
+        if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
+            log_error("Initialization failed. Number of elements in init does not match the required number.");
+        }
+
+        ScalarType max_support = std::max(
+            {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
+                 .get_max_support(),
+             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+                 .get_max_support()});
+
+        if (m_transitions.get_num_time_points() < max_support / dt) {
+            log_error(
+                "Initialization failed. Not enough time points for transitions given before start of simulation.");
+        }
 
         parameters.check_constraints();
     }

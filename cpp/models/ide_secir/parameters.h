@@ -84,7 +84,7 @@ struct DelayDistribution {
      * 
      * @return ScalarType 
      */
-    ScalarType get_max_support()
+    ScalarType get_max_support() const
     {
         return m_max_support;
     }

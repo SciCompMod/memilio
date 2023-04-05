@@ -64,7 +64,8 @@ int main()
     // Initialize model.
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
-    // TODO: model.m_populations.get_last_value()[mio::isecir::InfectionState::Susceptible] = 17;
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Set working parameters
     // Set max_support for all Delay Distributions
@@ -90,7 +91,7 @@ int main()
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
 
-    model.check_constraints();
+    model.check_constraints(dt);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
