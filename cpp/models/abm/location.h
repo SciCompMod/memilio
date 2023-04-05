@@ -84,7 +84,7 @@ struct Cell {
     * @param[in] state InfectionState of interest.
     * @return Amount of persons of the InfectionState in the Cell.
     */
-    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
+    size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
 }; // namespace mio
 
@@ -286,7 +286,7 @@ public:
      * @brief Get the total number of Person%s at the Location.
      * @return Number of Person%s.
      */
-    uint32_t get_number_persons();
+    size_t get_number_persons();
 
     /**
      * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
@@ -294,7 +294,7 @@ public:
      * @param[in] state InfectionState of interest.
      * @return Amount of Person%s of the InfectionState in all Cell%s.
      */
-    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
+    size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
      * Add a timepoint to the subpopulations timeseries.

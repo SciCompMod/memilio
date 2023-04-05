@@ -124,9 +124,9 @@ void Location::remove_person(Person& p)
     }
 }
 
-uint32_t Location::get_number_persons()
+size_t Location::get_number_persons()
 {
-    return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](uint32_t sum, auto cell) {
+    return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](size_t sum, auto cell) {
         return sum + cell.m_persons.size();
     });
 }
@@ -145,14 +145,14 @@ ScalarType Cell::compute_space_per_person_relative()
     }
 }
 
-uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
+size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
     return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
         return p->get_infection_state(t) == state;
     });
 }
 
-uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
+size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
     std::vector<Person*> loc_persons{};
     for (auto&& cell : m_cells) {
