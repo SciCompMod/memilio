@@ -275,3 +275,8 @@ docs/html
 docs/xml
 
 # End of https://www.gitignore.io/api/c++,node,python
+pycode/memilio-simulation/_skbuild/*
+pycode/machine learning/data/*
+pycode/machine learning/model/GNN/data/commuter_migration_scaled.txt
+.vscode/settings.json
+data/pydata/Germany/county_population_dim401.json
