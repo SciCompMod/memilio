@@ -87,7 +87,7 @@ void Simulation::print_compartments() const
     }
 }
 
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& m_model)
+TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& m_model)
 {
     m_model.check_constraints();
     Simulation sim(m_model, t0, dt);

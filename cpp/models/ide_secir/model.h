@@ -54,9 +54,33 @@ public:
 
     /**
     * @brief Checks constraints on model parameters.
+    * @param[in] dt Time discretization step size. 
     */
     void check_constraints() const
     {
+        // ScalarType max_support = std::max(
+        //     {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
+        //          .get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_max_support(),
+        //      parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+        //          .get_max_support()});
+
+        // if (max_support / dt < m_transitions.get_num_elements()) {
+        //     log_error("Initialization failed. Not enough time points before start of simulation given for transitions.");
+        // }
+
         parameters.check_constraints();
     }
 
@@ -76,17 +100,6 @@ public:
     * @param[in] dt Time discretization step size.    
     */
     void compute_susceptibles(ScalarType dt);
-
-    /**
-     * @brief Computes force of infection for the current last time in m_transitions.
-     * 
-     * Computed value is stored in m_forceofinfection.
-     * 
-     * @param[in] dt Time discretization step size.          
-     * @param[in] initialization if true we are in the case of the initilization of the model. 
-     *      For this we need forceofinfection at timepoint -dt which differs to usually used timepoints.
-     */
-    void update_forceofinfection(ScalarType dt, bool initialization = false);
 
     /**
      * @brief Computes size of a flow.
@@ -120,12 +133,15 @@ public:
     void compute_deaths();
 
     /**
-     * @brief Computes total number of Recovered for the current last time in m_populations.
+     * @brief Computes force of infection for the current last time in m_transitions.
      * 
-     * Number is stored in m_populations.
-     *
+     * Computed value is stored in m_forceofinfection.
+     * 
+     * @param[in] dt Time discretization step size.          
+     * @param[in] initialization if true we are in the case of the initilization of the model. 
+     *      For this we need forceofinfection at timepoint -dt which differs to usually used timepoints.
      */
-    void compute_recovered();
+    void update_forceofinfection(ScalarType dt, bool initialization = false);
 
     /**
      * @brief Get the size of the compartment specified in idx_InfectionState at the current last time in m_populations.
@@ -154,6 +170,14 @@ public:
      * @param[in] dt Time discretization step size.
      */
     void other_compartments_current_timestep(ScalarType dt);
+
+    /**
+     * @brief Computes total number of Recovered for the current last time in m_populations.
+     * 
+     * Number is stored in m_populations.
+     *
+     */
+    void compute_recovered();
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
