@@ -172,9 +172,9 @@ def read_files(directory, fine_resolution):
 
                         dummy_to_append = pd.DataFrame(
                             columns=['code'] + dates_new,
-                            data=df_npis_per_code
-                            [df_npis_per_code.ags5 == counties[i]].
-                            iloc[:, 6:].T.reset_index().values.copy())
+                            data=copy.deepcopy(df_npis_per_code
+                                               [df_npis_per_code.ags5 == counties[i]].
+                                               iloc[:, 6:].T.reset_index().values))
 
                         df_local[i] = pd.concat([df_local[i], dummy_to_append])
 
@@ -631,8 +631,8 @@ def get_npi_data(fine_resolution=2,
         for i in range(len(npi_groups_combinations_unique)):
             codes_local = df_npis_combinations[npi_groups_combinations_unique[i]
                                                ][1].columns[1:]
-            df_out = df_npis_combinations[npi_groups_combinations_unique[i]][
-                1].copy()
+            df_out = copy.deepcopy(df_npis_combinations[npi_groups_combinations_unique[i]][
+                1])
             df_out.insert(
                 0, 'Description (German)',
                 [desc
@@ -878,26 +878,27 @@ def get_npi_data(fine_resolution=2,
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
-    # setup dataframe for each maingroup, same format as df_npi_combinations
-    # used
-    # used to count number of codes that are deactivated
-    df_count_deactivation = copy.deepcopy(df_npis_combinations)
-    for code in df_count_deactivation.keys():
-        df_count_deactivation[code][1] *= 0
-
-    # create dataframe to count multiple codes after incidence dependent (de-)activation
-    df_count_incid_depend = pd.DataFrame()
-
-    # setup dataframe for each maingroup, same format as df_npi_combinations
-    # used
-    # used to count codes that occur simultaneously now (before any (de-)activation)
+    # # setup dataframe for each maingroup, same format as df_npi_combinations
+    # # used to count codes that occur simultaneously now (before any (de-)activation)
     # df_count_joined_codes = copy.deepcopy(df_npis_combinations)
-    # for code in df_count_joined_codes.keys():
-    #     df_count_joined_codes[code][1] *= 0
+    # for subcode in df_count_joined_codes.keys():
+    #     df_count_joined_codes[subcode][1] *= 0
     # df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
     #                                       counties_considered=counties_considered)
     # save_counter(df_counted_joined_codes, 'joined_codes')
     # plot_counter('joined_codes')
+
+    # create dataframe to count multiple codes after incidence dependent (de-)activation
+    df_incid_depend = pd.DataFrame()
+    df_count_incid_depend = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_incid_depend.keys():
+        df_count_incid_depend[maincode][1] *= 0
+
+    # setup dataframe for each maingroup, same format as df_npi_combinations
+    # used to count number of codes that are deactivated
+    df_count_deactivation = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_deactivation.keys():
+        df_count_deactivation[maincode][1] *= 0
 
     all_subcodes = []
     for maincode in df_npis_combinations.keys():
@@ -912,8 +913,8 @@ def get_npi_data(fine_resolution=2,
 
         if fine_resolution > 0:
             # compute incidence based on previous data frames
-            df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
-            )
+            df_infec_local = copy.deepcopy(
+                df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID])
             pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
                                           == countyID, dd.EngEng['population']].values[0]
 
@@ -936,7 +937,7 @@ def get_npi_data(fine_resolution=2,
             df_infec_local = df_infec_local[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
                 df_infec_local[dd.EngEng['date']] <= end_date_new)].reset_index()
 
-            local_incid = df_infec_local['Incidence'].copy()
+            local_incid = copy.deepcopy(df_infec_local['Incidence'])
             # Count counties with start cases >= 1:
             # In this case NPI activation cannot be ensured to work as expected
             if cases_first_value >= 1:
@@ -944,8 +945,8 @@ def get_npi_data(fine_resolution=2,
 
         # get county-local data frame
         start_time = time.perf_counter()
-        df_local_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']]
-                                   == countyID].copy()
+        df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
+                                                 == countyID])
 
         # Consistency of incidence dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
@@ -989,8 +990,8 @@ def get_npi_data(fine_resolution=2,
 
         # old dataframe has npi codes as columns and date values as rows
         # new dataframe should be transposed
-        df_local_new = df_local_old.iloc[npi_rows, start_npi_cols-1:].set_index(
-            dd.EngEng['npiCode']).transpose().copy()
+        df_local_new = copy.deepcopy(df_local_old.iloc[npi_rows, start_npi_cols-1:].set_index(
+            dd.EngEng['npiCode']).transpose())
         # get datetime as a column (previously index after transposing)
         df_local_new = df_local_new.reset_index(
             drop=False).rename(
@@ -1047,15 +1048,15 @@ def get_npi_data(fine_resolution=2,
                     df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
-            df_count_incid_depend = pd.concat(
-                [df_count_incid_depend, df_local_new.copy()])
-
             # merge incidence dependent NPIs to have only one column for each subcode
             df_merged = df_local_new.iloc[:, :2].copy()
             for subcode in all_subcodes:
                 df_merged[subcode] = df_local_new.filter(
                     regex=subcode).sum(axis=1)
             # strictness deactivation is done with this merged dataframe
+
+            df_incid_depend = pd.concat(
+                [df_incid_depend, copy.deepcopy(df_merged)])
 
             if df_merged.max()[2:].max() > 1:
                 raise gd.DataError('Error in merging...')
@@ -1116,6 +1117,7 @@ def get_npi_data(fine_resolution=2,
                         df_local_new[subcode+incidcode] *= df_merged[subcode]
 
         save_counter(df_count_deactivation, 'count_deactivation')
+        plot_counter('count_deactivation')
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1149,6 +1151,12 @@ def get_npi_data(fine_resolution=2,
               'incidence-dependent NPIs cannot be ensured to work correctly. '
               'Please consider a start date of some weeks ahead of the '
               'time window to be analyzed for NPI\'s effects.')
+
+    # count joined codes from after incidence based activation
+    count_codes_incid_depend(
+        df_incid_depend, df_count_incid_depend, counties_considered)
+    save_counter(df_count_incid_depend, 'joined_codes_incid_depend')
+    plot_counter('joined_codes_incid_depend')
 
     # print sub counters
     print('Sub task counters are: ')
@@ -1202,8 +1210,8 @@ def count_codes(df_npis_old, df_count, counties_considered):
     for county in counties_considered:
         df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
         code_dict = {}
-        for code in df_count.keys():
-            for column in df_count[code][1].columns:
+        for maincode in df_count.keys():
+            for column in df_count[maincode][1].columns:
                 code_dict[column] = df_local.iloc[:, 6+np.where(
                     df_local[df_local.NPI_code.str.contains(column)].iloc[:, 6:].max() > 0)[0]].columns
 
@@ -1216,13 +1224,41 @@ def count_codes(df_npis_old, df_count, counties_considered):
         #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
 
         # no diag
-        for code in df_count.keys():
-            column_list = df_count[code][1].columns
+        for maincode in df_count.keys():
+            column_list = df_count[maincode][1].columns
             for column in range(len(column_list)):
                 for column_other in range(column):
-                    df_count[code][1].iloc[column, column_other] += len(set(
+                    df_count[maincode][1].iloc[column, column_other] += len(set(
                         code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
     return df_count
+
+
+def count_codes_incid_depend(df_incid_depend, df_count_incid_depend, counties_considered):
+    for county in counties_considered:
+        df_local = df_incid_depend[df_incid_depend[dd.EngEng['idCounty']] == county]
+        code_dict = {}
+        for maincode in df_count_incid_depend.keys():
+            for column in df_count_incid_depend[maincode][1].columns:
+                code_dict[column] = df_local.iloc[np.where(
+                    df_local.loc[:, df_local.columns.str.contains(column)].max(axis=1) > 0)[0], 0].to_list()
+
+        # with diag
+        # for maincode in df_count_incid_depend.keys():
+        #    column_list = df_count_incid_depend[maincode][1].columns
+        #    for column in range(len(column_list)):
+        #        for column_other in range(len(column_list)):
+        #            df_count_incid_depend[maincode][1].iloc[column, column_other] += len(set(
+        #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+
+        # no diag
+        for maincode in df_count_incid_depend.keys():
+            column_list = df_count_incid_depend[maincode][1].columns
+            for column in range(len(column_list)):
+                for column_other in range(column):
+                    df_count_incid_depend[maincode][1].iloc[column, column_other] += len(set(
+                        code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+
+    return df_count_incid_depend
 
 
 def save_counter(df_count, filename):
@@ -1261,7 +1297,8 @@ def plot_counter(filename):
         plt.xticks(positions, [colname[-3:]
                    for colname in df.columns.to_list()[1:]])
         plt.yticks(positions, df.columns.to_list()[1:])
-        # set vmin = 1 so that only combinations that are of interest are in colour, else white
+        # set vmin = 1 so that only combinations that are simultaneously active at least on one day are in colour,
+        # else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
         # this way colours of heatmaps are comparable (e.g. between codes or between joined_codes and exclusions)
         plt.imshow(array_exclusion, cmap=cmap, vmin=1, vmax=300000)
