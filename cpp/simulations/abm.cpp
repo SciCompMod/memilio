@@ -21,7 +21,7 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
-#include "tests/test_abm.h"
+//#include "tests/test_abm.h"
 
 namespace fs = boost::filesystem;
 
@@ -434,15 +434,15 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
-                            double carrier_pct, double recovered_pct)
+void assign_infection_state(mio::abm::World& /*world*/, mio::abm::TimePoint /*t*/, double /*exposed_pct*/,
+                            double /*infected_pct*/, double /*carrier_pct*/, double /*recovered_pct*/)
 {
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
-        if (infection_state != mio::abm::InfectionState::Susceptible)
-            add_test_infection(person, infection_state, t, world.get_global_infection_parameters());
-    }
+    //auto persons = world.get_persons();
+    //for (auto& person : persons) {
+    //    auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    //    if (infection_state != mio::abm::InfectionState::Susceptible)
+    //        add_test_infection(person, infection_state, t, world.get_global_infection_parameters());
+    //}
 }
 
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)

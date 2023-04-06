@@ -38,7 +38,8 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
-    assert(num_cells > 0 && "Number of cells has to be larger than 0.");
+    if (num_cells > 0)
+        log_error("Number of cells has to be larger than 0.");
 }
 
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
@@ -59,11 +60,13 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
 
 void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const
 {
-    // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
+    // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
-    assert(person.get_cells().size() == 1 && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-    for (auto cell_index : person.get_cells()) { // the logic here is incorrect in case a person is in multiple cells
+    if (person.get_cells().size())
+        log_error("Person is in multiple cells. Interact logic is incorrect at the moment.");
+    for (auto cell_index :
+         person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
         std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);

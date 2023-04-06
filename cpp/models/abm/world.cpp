@@ -45,8 +45,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
-    auto& person = *m_persons.back();
-    return person;
+    return *m_persons.back();
 }
 
 void World::evolve(TimePoint t, TimeSpan dt)
@@ -76,14 +75,15 @@ void World::migration(TimePoint t, TimeSpan dt)
                 return !m_locations[(uint32_t)type].empty();
             });
             if (nonempty) {
-                auto target_type = rule.first(*person, t, dt, m_migration_parameters);
-                auto& target     = find_location(target_type, *person);
-                auto current     = person->get_location();
-                if (m_testing_strategy.run_strategy(*person, target, t)) {
-                    if (target != current && target.get_number_persons() < target.get_capacity().persons) {
-                        bool wears_mask = person->apply_mask_intervention(target);
+                auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
+                auto& target_location = find_location(target_type, *person);
+                auto current_location = person->get_location();
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
-                            person->migrate_to(target);
+                            person->migrate_to(target_location);
                         }
                         break;
                     }
@@ -95,14 +95,14 @@ void World::migration(TimePoint t, TimeSpan dt)
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip   = m_trip_list.get_next_trip();
-            auto& person = m_persons[trip.person_id];
-            auto current = person->get_location();
-            if (!person->is_in_quarantine() && current == get_individualized_location(trip.migration_origin)) {
-                auto& target = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, target, t)) {
-                    person->apply_mask_intervention(target);
-                    person->migrate_to(target);
+            auto& trip            = m_trip_list.get_next_trip();
+            auto& person          = m_persons[trip.person_id];
+            auto current_location = person->get_location();
+            if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+                auto& target_location = get_individualized_location(trip.migration_destination);
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    person->apply_mask_intervention(target_location);
+                    person->migrate_to(target_location);
                 }
             }
             m_trip_list.increase_index();
