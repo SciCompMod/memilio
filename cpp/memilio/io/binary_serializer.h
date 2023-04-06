@@ -148,7 +148,7 @@ public:
     /**
     * Add element of basic type to this object.
     * As an optimization, also handles trivial structs, Enums, etc (everything that
-    * can be memopy'd.)
+    * can be memcpy'd.)
     * @param name Name of the element.
     * @param value Value to be serialized.
     */
@@ -173,7 +173,7 @@ public:
     /**
     * Get element of basic type from this object.
     * As an optimization, also handles trivial structs, Enums, etc (everything that
-    * can be memopy'd.)
+    * can be memcpy'd.)
     * @param name Name of the element.
     * @param tag Tag that determines the type of the element.
     * @returns Deserialized value.
@@ -250,7 +250,7 @@ public:
 
     /**
     * Begin serialization of a new object.
-    * @param type Name of the type of the object. Unused, not serialized.
+    * @param type Name of the type of the object. Only used if flag IOF_IncludeTypeInfo is set.
     */
     BinarySerializerObject create_object(const std::string& type)
     {
@@ -264,7 +264,7 @@ public:
 
     /**
     * Begin deserialization of an object.
-    * @param type Name of the type of the object. Unused, not serialized.
+    * @param type Name of the type of the object. Only used if flag IOF_IncludeTypeInfo is set.
     */
     BinarySerializerObject expect_object(const std::string& type)
     {
@@ -346,7 +346,7 @@ IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<
 {
     mio::unused(name);
 
-    if (*m_status) {
+    if (m_status->is_ok()) {
         T t;
         if (m_stream.read(reinterpret_cast<unsigned char*>(std::addressof(t)), sizeof(t))) {
             return mio::success(t);
@@ -363,7 +363,7 @@ template <class T, std::enable_if_t<negation<std::is_trivial<T>>::value, void*>>
 IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<T> tag)
 {
     mio::unused(name);
-    if (*m_status) {
+    if (m_status->is_ok()) {
         auto ctxt = BinarySerializerContext(m_stream, m_status, m_flags);
         return mio::deserialize(ctxt, tag);
     }
@@ -373,7 +373,7 @@ IOResult<T> BinarySerializerObject::expect_element(const std::string& name, Tag<
 inline IOResult<std::string> BinarySerializerObject::expect_element(const std::string& name, Tag<std::string>)
 {
     mio::unused(name);
-    if (*m_status) {
+    if (m_status->is_ok()) {
         size_t size;
         if (m_stream.read(reinterpret_cast<unsigned char*>(&size), sizeof(size))) {
             std::string t(size, 0);

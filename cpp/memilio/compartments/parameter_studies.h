@@ -99,8 +99,8 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * The result processing function is called a run in that process is finished.
-     * It receives the result of the run and an ordered index. The values returned by the result processing function 
+     * The result processing function is called when a run is finished. It receives the result of the run 
+     * (a Graph of SimulationNode) and an ordered index. The values returned by the result processing function 
      * are gathered and returned as a list.
      * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
      * The MPI processes each contribute a share of the runs. The sample function and result processing function 

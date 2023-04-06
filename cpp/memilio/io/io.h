@@ -55,6 +55,8 @@ enum class StatusCode
 
 /**
  * flags to determine the behavior of the serialization process.
+ * Objects must be deseralized with the same set of flags as
+ * they were serialized.
  */
 enum IOFlags
 {
