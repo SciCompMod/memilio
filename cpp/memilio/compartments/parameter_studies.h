@@ -21,6 +21,7 @@
 #define PARAMETER_STUDIES_H
 
 #include "memilio/io/binary_serializer.h"
+#include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
@@ -44,7 +45,20 @@ template <class S>
 class ParameterStudy
 {
 public:
+    /**
+    * The type of simulation of a single node of the graph.
+    */
     using Simulation = S;
+    /**
+    * The Graph type that stores the parametes of the simulation.
+    * This is the input of ParameterStudies.
+    */
+    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters>;
+    /**
+    * The Graph type that stores simulations and their results of each run.
+    * This is the output of ParameterStudies for each run.
+    */
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
     /**
      * create study for graph of compartment models.
@@ -54,8 +68,7 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0,
-                   double tmax, double graph_sim_dt, size_t num_runs)
+    ParameterStudy(const ParametersGraph& graph, double t0, double tmax, double graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
         , m_t0{t0}
@@ -74,8 +87,8 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0,
-                   double tmax, double dev_rel, double graph_sim_dt, size_t num_runs)
+    ParameterStudy(const ParametersGraph& graph, double t0, double tmax, double dev_rel, double graph_sim_dt,
+                   size_t num_runs)
         : ParameterStudy(graph, t0, tmax, graph_sim_dt, num_runs)
     {
         for (auto& params_node : m_graph.nodes()) {
@@ -100,22 +113,22 @@ public:
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
      * The result processing function is called when a run is finished. It receives the result of the run 
-     * (a Graph of SimulationNode) and an ordered index. The values returned by the result processing function 
+     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function 
      * are gathered and returned as a list.
      * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
      * The MPI processes each contribute a share of the runs. The sample function and result processing function 
      * are called in the same process that performs the run. The results returned by the result processing function are 
      * gathered at the root process and returned as a list by the root in the same order as if the programm 
      * were running sequentially. Processes other than the root return an empty list.
-     * @param sample_graph Function that receives the graph of parameters and returns a sampled copy.
+     * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
      * @param result_processing_function Processing function for simulation results, e.g., output function.
      * @returns At the root process, a list of values per run that have been returned from the result processing function.
      *          At all other processes, an empty list.
-     * @tparam SampleGraphFunction Callable type, accepts graph of parameters and returns a sampled copy
-     * @tparam HandleSimulationResultFunction Callable type, accepts graph of simulations and may return a result to be gathered.
+     * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
+     * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
      */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>>
+    std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>>
     run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
         int num_procs, rank;
@@ -131,7 +144,7 @@ public:
         auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        std::vector<std::result_of_t<HandleSimulationResultFunction(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>> ensemble_result;
+        std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
@@ -184,12 +197,12 @@ public:
      * @brief Carry out all simulations in the parameter study.
      * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
      * Unlike the other overload, this function is not MPI-parallel.
-     * @return vector of results of each run.
+     * @return vector of SimulationGraph for each run.
      */
     template <class SampleGraphFunction>
-    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run(SampleGraphFunction sample_graph)
+    std::vector<SimulationGraph> run(SampleGraphFunction sample_graph)
     {
-        std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
+        std::vector<SimulationGraph> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         for (size_t i = 0; i < m_num_runs; i++) {
@@ -270,11 +283,11 @@ public:
      * Use for graph simulations, use get_model for single node simulations.
      * @{
      */
-    const Graph<typename Simulation::Model, MigrationParameters>& get_model_graph() const
+    const ParametersGraph& get_model_graph() const
     {
         return m_graph;
     }
-    Graph<typename Simulation::Model, MigrationParameters>& get_model_graph()
+    ParametersGraph& get_model_graph()
     {
         return m_graph;
     }
@@ -283,10 +296,9 @@ public:
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
-    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>>
-    create_sampled_simulation(SampleGraphFunction sample_graph)
+    mio::GraphSimulation<SimulationGraph> create_sampled_simulation(SampleGraphFunction sample_graph)
     {
-        mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge> sim_graph;
+        SimulationGraph sim_graph;
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
@@ -315,7 +327,7 @@ private:
 
 private:
     // Stores Graph with the names and ranges of all parameters
-    mio::Graph<typename Simulation::Model, mio::MigrationParameters> m_graph;
+    ParametersGraph m_graph;
 
     size_t m_num_runs;
 
