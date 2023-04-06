@@ -232,13 +232,10 @@ TEST(TestLocation, interact)
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
     auto infected1 =
         make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier, t, params);
-    location.add_person(infected1);
     auto infected2 =
         make_test_person(location, mio::abm::AgeGroup::Age80plus, mio::abm::InfectionState::Infected, t, params);
-    location.add_person(infected2);
     auto infected3 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
-    location.add_person(infected3);
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt);
