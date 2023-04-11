@@ -429,12 +429,12 @@ def extrapolate_age_groups_vaccinations(
             # get total population in old agegroup
             total_pop = 0
             for j in age_old_to_all_ages_indices[i]:
-                total_pop += float(pop_state[str(j)].iloc[0])
+                total_pop += float(pop_state[str(min_all_ages[j])].iloc[0])
             # get population ratios in old agegroup
             ratios = [0 for zz in range(0, len(unique_age_groups_new))]
             for j in age_old_to_all_ages_indices[i]:
                 ratios[all_ages_to_age_new_share[j][0][1]
-                       ] += float(pop_state[str(j)].iloc[0])/total_pop
+                       ] += float(pop_state[str(min_all_ages[j])].iloc[0])/total_pop
             # split vaccinations in old agegroup to new agegroups
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
