@@ -209,7 +209,7 @@ def compare_estimated_and_rki_deathsnumbers(
     @param make_plot Defines if plots are generated
 
     """
-    df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="%Y-%m-%d")
+    df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="ISO8601")
     # we set january 2020 to week 1
     # 2020 had 53 weeks
     # meaning weak 45 is first week in 2021
