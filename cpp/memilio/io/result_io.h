@@ -125,7 +125,7 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
  * @brief Save the results of a parameter study.
  * Stores different percentiles (p5, p25, p50, p75, p90) and sums of the results and parameters. 
  * @param ensemble_results Result of each simulation run.
- * @param ensemble_params Üarameters used for each simulation run.
+ * @param ensemble_params Parameters used for each simulation run.
  * @param county_ids Ids of the county nodes.
  * @param result_dir Top level directory for all results of the parameter study.
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
