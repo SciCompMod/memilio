@@ -225,7 +225,8 @@ TEST(TestGraph, set_edges)
     auto result =
         mio::set_edges<MockContactLocation, mio::osecir::Model, mio::MigrationParameters,
                        mio::MigrationCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
-            dir, params_graph, migrating_compartments, size_t(2), read_function_edges, std::vector<ScalarType>{0.,0., 1.0, 1.0, 0.33, 0., 0.});
+            dir, params_graph, migrating_compartments, size_t(2), read_function_edges,
+            std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
     auto e_work = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0, 0.66, 0.66, 0.66, 0.66, 0, 0, 0.66,
@@ -239,12 +240,10 @@ TEST(TestGraph, set_edges)
     EXPECT_EQ(params_graph.edges().size(), 2);
 
     auto a = print_wrap(params_graph.edges()[0]
-                               .property.get_coefficients()[size_t(MockContactLocation::Work)]
-                               .get_baseline()
-                               .array()
-                               .cast<double>());
-    std::cout << a;
-    mio::unused(a);
+                            .property.get_coefficients()[size_t(MockContactLocation::Work)]
+                            .get_baseline()
+                            .array()
+                            .cast<double>());
 
     ASSERT_THAT(print_wrap(params_graph.edges()[0]
                                .property.get_coefficients()[size_t(MockContactLocation::Work)]

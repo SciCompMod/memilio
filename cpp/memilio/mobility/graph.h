@@ -327,8 +327,7 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
  * @param[in] migrating_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
- * @param[in] min_commuter_age minimum commuter age
- * @param[in] max_comuter_age maximum commuter age
+ * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
  */
 template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
           class InfectionState, class ReadFunction>
@@ -361,21 +360,17 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
                 (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
             //commuters
             auto working_population = 0.0;
-            int age_index           = 0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                working_population += populations.get_group_total(age) * commuting_weights[age_index];
-                ++age_index;
+                working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
             }
             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
-            age_index = 0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * commuting_weights[age_index];
+                        commuter_coeff_ij * commuting_weights[size_t(age)];
                 }
-                ++age_index;
             }
             //others
             auto total_population = populations.get_total();
