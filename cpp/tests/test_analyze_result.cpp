@@ -474,23 +474,21 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
     auto world1 = mio::abm::World(6);
     auto world2 = mio::abm::World(6);
 
-    auto& params1 = world1.parameters;
-    params1.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.1;
-    params1.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.1;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
 
-    auto& params2 = world2.parameters;
-    params2.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
-    params2.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.3;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.3;
 
     auto g1 = std::vector<mio::abm::World>({world1, world2});
 
-    params1.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
-    params1.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.3;
-    params1.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
+    world1.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.3;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
 
-    params2.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.7;
-    params2.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
-    params2.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.5;
+    world2.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.7;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.5;
 
     auto g2 = std::vector<mio::abm::World>({world1, world2});
 
