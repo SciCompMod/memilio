@@ -463,7 +463,7 @@ def get_input_dim_lstm(path):
    @param path path to the data 
 
    """
-    file = open(os.path.join(path, 'groups.pickle'), 'rb')
+    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
 
     data = pickle.load(file)
     input_dim = data['inputs'].shape[2] + np.asarray(
@@ -481,7 +481,7 @@ if __name__ == "__main__":
 
     input_dim = get_input_dim_lstm(path_data)
 
-    model = "LSTM"
+    model = "CNN"
     if model == "Dense_Single":
         model = network_architectures.mlp_multi_input_single_output()
         modeltype = 'classic'
@@ -497,7 +497,7 @@ if __name__ == "__main__":
 
     elif model == "CNN":
         model = network_architectures.cnn_multi_input_multi_output(label_width)
-        modeltype = 'classic'
+        modeltype = 'timeseries'
 
     model_output = network_fit(
         path_data, model=model, modeltype=modeltype,

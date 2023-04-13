@@ -169,7 +169,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         label_width = 5
         model_cnn = network_architectures.cnn_multi_input_multi_output(
             label_width, num_age_groups=1)
-        self.assertEqual(len(model_cnn.layers), 8)
+        self.assertEqual(len(model_cnn.layers), 7)
         input_zero = np.zeros((1, label_width, 41))
         output_zeros = model_cnn(input_zero)
         self.assertEqual(output_zeros.shape[0], 1)
@@ -241,25 +241,25 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             len(model_mlp_multi_input_multi_output.history['val_loss']),
             max_epochs)
 
-        # model_lstm_multi_output = model.network_fit(
-        #     self.path,
-        #     model=network_architectures.lstm_multi_input_multi_output(
-        #         label_width),
-        #     modeltype='classic', max_epochs=max_epochs, plot=False)
-        # self.assertEqual(
-        #     model_lstm_multi_output.model.output_shape[1], label_width)
-        # self.assertEqual(
-        #     len(model_lstm_multi_output.history['val_loss']), max_epochs)
+        model_lstm_multi_output = model.network_fit(
+            self.path,
+            model=network_architectures.lstm_multi_input_multi_output(
+                label_width),
+            modeltype='timeseries', max_epochs=max_epochs, plot=False)
+        self.assertEqual(
+            model_lstm_multi_output.model.output_shape[1], label_width)
+        self.assertEqual(
+            len(model_lstm_multi_output.history['val_loss']), max_epochs)
 
-        # cnn_output = model.network_fit(
-        #     self.path,
-        #     model=network_architectures.cnn_multi_input_multi_output(
-        #         label_width, num_age_groups=1),
-        #     modeltype='classic', max_epochs=max_epochs, plot=False)
-        # self.assertEqual(
-        #     cnn_output.model.output_shape[1], label_width)
-        # self.assertEqual(
-        #     len(cnn_output.history['val_loss']), max_epochs)
+        cnn_output = model.network_fit(
+            self.path,
+            model=network_architectures.cnn_multi_input_multi_output(
+                label_width),
+            modeltype='timeseries', max_epochs=max_epochs, plot=False)
+        self.assertEqual(
+            cnn_output.model.output_shape[1], label_width)
+        self.assertEqual(
+            len(cnn_output.history['val_loss']), max_epochs)
 
 
 if __name__ == '__main__':

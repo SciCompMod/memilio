@@ -26,6 +26,8 @@ def mlp_multi_input_single_output(num_age_groups=6):
 
     Reshaping adds an extra dimension to the output, so the shape of the output is 1x48.
     This makes the shape comparable to that of the multi-output models.
+
+    @param num_age_groups Number of age groups in population.
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
@@ -42,6 +44,9 @@ def mlp_multi_input_multi_output(label_width, num_age_groups=6):
 
     Reshaping adds an extra dimension to the output, so the shape of the output is 30x48.
     This makes the shape comparable to that of the multi-output models.
+
+    @param label_width Number of time steps in the output.
+    @param num_age_groups Number of age groups in population.
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(),
@@ -61,13 +66,14 @@ def cnn_multi_input_multi_output(label_width, num_age_groups=6):
     number of individuals in infection states].
 
     @param label_width Number of time steps in the output.
+    @param num_age_groups Number of age groups in population.
 
     """
 
     model = tf.keras.Sequential([
         tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
         tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu'),
-        tf.keras.layers.MaxPooling1D(pool_size=2),
+        # tf.keras.layers.MaxPooling1D(pool_size=2),
         tf.keras.layers.Flatten(),
         tf.keras.layers.GaussianNoise(0.35),
         tf.keras.layers.Dense(512, activation='relu'),
