@@ -245,7 +245,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             df['Meldedatum'])
 
     df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format="%Y-%m-%d")
+        df[dd.EngEng['date']], format="ISO8601")
 
     # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
