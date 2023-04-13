@@ -16,7 +16,7 @@ runs:
       run: |
         sudo apt-get -qq update
         if [[ "${{ inputs.package }}" == "generation" ]]; then
-          sudo apt-get -qq -y install python3-pip gnupg clang=14 libclang==14.0.6 cmake
+          sudo apt-get -qq -y install python3-pip gnupg clang cmake
         else
           sudo apt-get -qq -y install python3-pip gnupg
         fi
