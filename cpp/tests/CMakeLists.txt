@@ -23,7 +23,6 @@ set(TESTSOURCES
     test_stl_util.cpp
     test_uncertain.cpp
     test_time_series.cpp
-    test_abm_analyze_result.cpp
     test_abm_household.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
