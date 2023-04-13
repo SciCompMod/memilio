@@ -339,4 +339,13 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&copied_world.get_locations()[(uint32_t)mio::abm::LocationType::Home][0], &home);
     ASSERT_NE(&copied_world.get_persons()[0], &p1);
     ASSERT_NE(&copied_world.get_persons()[1], &p2);
+
+    // Evolve the world and check if the copied world is also involved accordingly
+    p1.migrate_to(school1,home);
+    p2.migrate_to(school2,work);
+    ASSERT_NE(copied_world.get_persons()[0].get_location_id(), home_id);
+    ASSERT_NE(copied_world.get_persons()[1].get_location_id(), work_id);
+    copied_world = mio::abm::World(world);
+    ASSERT_EQ(copied_world.get_persons()[0].get_location_id(), home_id);
+    ASSERT_EQ(copied_world.get_persons()[1].get_location_id(), work_id);
 }

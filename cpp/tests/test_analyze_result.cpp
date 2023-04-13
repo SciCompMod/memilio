@@ -19,6 +19,7 @@
 */
 #include "memilio/compartments/simulation.h"
 #include "ode_secir/analyze_result.h"
+#include "abm/analyze_result.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -371,7 +372,7 @@ TEST(TestEnsemblePercentile, basic)
     ASSERT_EQ(q4[1][0][0], 0.3);
 }
 
-TEST(TestEnsembleParamsPercentile, basic)
+TEST(TestEnsembleParamsPercentile, osecir_basic)
 {
     mio::osecir::Model model(2);
     mio::osecir::Model model2(2);
@@ -466,6 +467,85 @@ TEST(TestEnsembleParamsPercentile, basic)
               11);
     EXPECT_EQ((ensemble_p51_params[1].populations[{(mio::AgeGroup)1, mio::osecir::InfectionState::InfectedSevere}]),
               14);
+}
+
+TEST(TestEnsembleParamsPercentile, abm_basic)
+{
+    mio::abm::World world1(6);
+    mio::abm::World world2(6);
+
+    auto& params1 = world1.parameters;
+    params1.set<mio::abm::InfectedToSevere>(0.1);
+    params1.set<mio::abm::SevereToCritical>(0.2);
+
+    auto& params2 = world2.parameters;
+    params2.set<mio::abm::InfectedToSevere>(0.2);
+    params2.set<mio::abm::SevereToCritical>(0.3);
+
+    auto g1 = std::vector<mio::abm::World>({world1, world2});
+
+    params1.set<mio::abm::InfectedToRecovered>(0.2);
+    params1.set<mio::abm::InfectedToSevere>(0.3);
+    params1.set<mio::abm::SevereToCritical>(0.4);
+
+    params2.set<mio::abm::InfectedToRecovered>(0.7);
+    params2.set<mio::abm::InfectedToSevere>(0.4);
+    params2.set<mio::abm::SevereToCritical>(0.5);
+
+    auto g2 = std::vector<mio::abm::World>({world1, world2});
+
+    auto ensemble_params = std::vector<std::vector<mio::abm::World>>({g1, g2});
+
+    auto ensemble_p49_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.49);
+    auto ensemble_p51_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.51);
+
+    auto check1 =
+        ensemble_p49_params[0]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+    auto check2 =
+        ensemble_p49_params[1]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+
+    EXPECT_EQ(check1, 0.1);
+    EXPECT_EQ(check2, 0.2);
+
+    auto check3 =
+        ensemble_p51_params[0]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+    auto check4 =
+        ensemble_p51_params[1]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+
+    EXPECT_EQ(check3, 0.3);
+    EXPECT_EQ(check4, 0.4);
+
+    auto check5 =
+        ensemble_p49_params[0]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+    auto check6 =
+        ensemble_p49_params[1]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+
+    EXPECT_EQ(check5, 0.2);
+    EXPECT_EQ(check6, 0.3);
+
+    auto check7 =
+        ensemble_p51_params[0]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+    auto check8 =
+        ensemble_p51_params[1]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
+            .value();
+
+    EXPECT_EQ(check7, 0.4);
+    EXPECT_EQ(check8, 0.5);
 }
 
 TEST(TestDistance, same_result_zero_distance)
