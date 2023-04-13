@@ -1,8 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -46,49 +46,49 @@ class Person;
 /**
  * @brief Completely random migration to any other Location.
  */
-LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
-LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
-LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief Person%s might go to social events.
  */
-LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
-LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
 LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                              const MigrationParameters& /*params*/);
+                              const SimulationParameters& /*params*/);
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
-LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
-LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const SimulationParameters& params);
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
-                                        const MigrationParameters& params);
+                                        const SimulationParameters& params);
 /**@}*/
 
 } // namespace abm

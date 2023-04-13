@@ -1,7 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Elisabeth Kluth
+* Authors: Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -62,6 +63,34 @@ struct Trip {
         migration_destination = destination;
         migration_origin      = origin;
         cells                 = input_cells;
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Trip");
+        obj.add_element("id", person_id);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Trip> deserialize(IOContext& io)
+    {
+        auto obj       = io.expect_object("Trip");
+        auto person_id = obj.expect_element("PersonID", Tag<uint32_t>{});
+        return apply(
+            io,
+            [](auto&& person_id_) {
+                return Trip{person_id_};
+            },
+            person_id);
     }
 };
 

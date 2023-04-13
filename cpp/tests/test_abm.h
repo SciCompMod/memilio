@@ -25,6 +25,7 @@
 #include "abm/location_type.h"
 #include "abm/migration_rules.h"
 #include "abm/lockdown_rules.h"
+#include "abm/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "matchers.h"

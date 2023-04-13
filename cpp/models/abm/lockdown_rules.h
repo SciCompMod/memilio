@@ -1,7 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -45,17 +46,17 @@ namespace abm
  * @brief Person%s who are in home office are staying at home instead of going to work.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Percentage of Person%s that work in home office.
- * @param[in, out] params Migration parameters that include Damping.
+ * @param[in, out] params Simulation parameters that include Damping.
  */
-void set_home_office(TimePoint t_begin, double p, MigrationParameters& params);
+void set_home_office(TimePoint t_begin, double p, SimulationParameters& params);
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Percentage of Person%s that are homeschooled.
- * @param[in,out] params Migration parameters that include Damping.
+ * @param[in,out] params Simulation parameters that include Damping.
  */
-void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params);
+void set_school_closure(TimePoint t_begin, double p, SimulationParameters& params);
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -64,9 +65,9 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params
  * and a Damping of 1 means that no social events are happening.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
- * @param[in,out] params Migration parameters that include Damping.
+ * @param[in,out] params Simulation parameters that include Damping.
  */
-void close_social_events(TimePoint t_begin, double p, MigrationParameters& params);
+void close_social_events(TimePoint t_begin, double p, SimulationParameters& params);
 
 } // namespace abm
 } //namespace mio

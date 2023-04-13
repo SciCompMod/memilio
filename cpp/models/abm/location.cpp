@@ -48,8 +48,7 @@ Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint
     m_subpopulations.get_last_value().setZero();
 }
 
-InfectionState Location::interact(const Person& person, TimeSpan dt,
-                                  const GlobalInfectionParameters& global_params) const
+InfectionState Location::interact(const Person& person, TimeSpan dt, const SimulationParameters& global_params) const
 {
     auto infection_state       = person.get_infection_state();
     auto vaccination_state     = person.get_vaccination_state();
@@ -104,7 +103,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     }
 }
 
-void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::begin_step(TimeSpan /*dt*/, const SimulationParameters& global_params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

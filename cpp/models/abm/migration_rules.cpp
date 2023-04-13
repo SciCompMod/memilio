@@ -33,7 +33,7 @@ namespace mio
 namespace abm
 {
 
-LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params)
 {
     auto current_loc     = person.get_location_id().type;
     auto make_transition = [current_loc](auto l) {
@@ -48,7 +48,7 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
     return current_loc;
 }
 
-LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
@@ -65,7 +65,7 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const 
     return current_loc;
 }
 
-LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
 
@@ -83,7 +83,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Mi
     return current_loc;
 }
 
-LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
     //leave
@@ -101,7 +101,7 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Mi
     return current_loc;
 }
 
-LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const SimulationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
     //leave
@@ -123,7 +123,7 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const M
 }
 
 LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                              const MigrationParameters& /*params*/)
+                              const SimulationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
@@ -133,7 +133,7 @@ LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*
 }
 
 LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                            const MigrationParameters& /*params*/)
+                            const SimulationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Severe) {
@@ -142,7 +142,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const MigrationParameters& /*params*/)
+LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const SimulationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Critical) {
@@ -152,7 +152,7 @@ LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, c
 }
 
 LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                                        const MigrationParameters& /*params*/)
+                                        const SimulationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&

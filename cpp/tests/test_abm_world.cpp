@@ -90,11 +90,11 @@ TEST(TestWorld, findLocation)
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
-    auto person    = mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(4),
-                                      world.get_global_infection_parameters());
-    auto& home     = world.get_individualized_location(home_id);
-    auto& school   = world.get_individualized_location(school_id);
-    auto& work     = world.get_individualized_location(work_id);
+    auto person =
+        mio::abm::Person(home_id, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(4), world.parameters);
+    auto& home   = world.get_individualized_location(home_id);
+    auto& school = world.get_individualized_location(school_id);
+    auto& work   = world.get_individualized_location(work_id);
     person.set_assigned_location(home);
     person.set_assigned_location(school);
     person.set_assigned_location({0, mio::abm::LocationType::Work});
@@ -144,12 +144,12 @@ TEST(TestWorld, evolveMigration)
     {
         auto world = mio::abm::World(6);
         // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-        world.get_migration_parameters().get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+        world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
         // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-        world.get_migration_parameters().get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
-        auto home_id   = world.add_location(mio::abm::LocationType::Home);
-        auto school_id = world.add_location(mio::abm::LocationType::School);
-        auto work_id   = world.add_location(mio::abm::LocationType::Work);
+        world.parameters.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+        auto home_id                                       = world.add_location(mio::abm::LocationType::Home);
+        auto school_id                                     = world.add_location(mio::abm::LocationType::School);
+        auto work_id                                       = world.add_location(mio::abm::LocationType::Work);
 
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
             mock_uniform_dist;
@@ -253,8 +253,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto world   = mio::abm::World(6);
     auto home_id = world.add_location(mio::abm::LocationType::Home);
     auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                    world.get_global_infection_parameters());
+    auto person  = mio::abm::Person(home_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2), world.parameters);
     auto& home   = world.get_individualized_location(home_id);
     auto& work   = world.get_individualized_location(work_id);
     person.set_assigned_location(home);
@@ -296,8 +295,8 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 TEST(TestWorld, copyWorld)
 {
     auto world = mio::abm::World(6);
-    world.get_global_infection_parameters()
-        .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 4.;
+    world.parameters.get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] =
+        4.;
     auto school_id1 = world.add_location(mio::abm::LocationType::School);
     auto school_id2 = world.add_location(mio::abm::LocationType::School);
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
@@ -315,7 +314,7 @@ TEST(TestWorld, copyWorld)
 
     auto copied_world = mio::abm::World(world);
     auto copied_infection_params =
-        copied_world.get_global_infection_parameters()
+        copied_world.parameters
             .get<mio::abm::IncubationPeriod>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 

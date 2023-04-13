@@ -1,8 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn 
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -43,7 +43,7 @@ Person& World::add_person(LocationId id, InfectionState infection_state, AgeGrou
 {
     assert((size_t)age <= (size_t)parameters.get_num_groups());
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
+    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, parameters,
                                                  VaccinationState::Unvaccinated, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
@@ -62,7 +62,7 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc);
+        person->interact(dt, parameters, loc);
     }
 }
 
@@ -85,7 +85,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 return !m_locations[(uint32_t)type].empty();
             });
             if (nonempty) {
-                auto target_type = rule.first(*person, t, dt, m_migration_parameters);
+                auto target_type = rule.first(*person, t, dt, parameters);
                 Location* target = find_location(target_type, *person);
                 if (m_testing_strategy.run_strategy(*person, *target)) {
                     if (target != &get_location(*person) &&
@@ -122,7 +122,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location.begin_step(dt, m_infection_parameters);
+            location.begin_step(dt, parameters);
             location.add_subpopulations_timepoint(t + dt);
         }
     }
@@ -172,26 +172,6 @@ int World::get_subpopulation_combined(InfectionState s, LocationType type) const
     return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc) {
         return running_sum + loc.get_subpopulation(s);
     });
-}
-
-MigrationParameters& World::get_migration_parameters()
-{
-    return m_migration_parameters;
-}
-
-const MigrationParameters& World::get_migration_parameters() const
-{
-    return m_migration_parameters;
-}
-
-GlobalInfectionParameters& World::get_global_infection_parameters()
-{
-    return m_infection_parameters;
-}
-
-const GlobalInfectionParameters& World::get_global_infection_parameters() const
-{
-    return m_infection_parameters;
 }
 
 TripList& World::get_trip_list()

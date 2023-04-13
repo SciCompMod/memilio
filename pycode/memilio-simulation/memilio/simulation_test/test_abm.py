@@ -104,12 +104,12 @@ class TestAbm(unittest.TestCase):
         # parameters so that the infected person doesn't randomly change state and gets tested reliably
         # DUE TO THE CURRENT IMPLEMENTATION OF DIFFERENT TEST TYPES, THIS IS NOT POSSIBLE, NEEDS TO BE CHANGED IN THE FUTURE
         social_event = world.locations[social_event_id.type][social_event_id.index]
-        #social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
-        #world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
-        world.infection_parameters.InfectedToSevere[mio.AgeGroup(0),
-                                                    abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedToRecovered[mio.AgeGroup(0),
-                                                       abm.VaccinationState.Unvaccinated] = 0.0
+        # social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
+        # world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
+        # world.parameters.InfectedToSevere[mio.AgeGroup(0),
+        #                                            abm.VaccinationState.Unvaccinated] = 0.0
+        # world.parameters.InfectedToRecovered[mio.AgeGroup(0),
+        #                                               abm.VaccinationState.Unvaccinated] = 0.0
 
         # trips
         trip_list = abm.TripList()
@@ -128,7 +128,7 @@ class TestAbm(unittest.TestCase):
 
         # check effect of trips
         # self.assertEqual(p1.location_id, home_id) #person 1 is tested when goging to social event
-        #self.assertEqual(p1.is_in_quarantine, True)
+        # self.assertEqual(p1.is_in_quarantine, True)
         # self.assertEqual(p2.location_id, work_id) #person 2 goes to work
 
 

@@ -1,7 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -75,11 +76,11 @@ public:
      * @param infection_properties the initial infection state of the person and if infection is detected
      * @param vaccination_state the initial infection state of the person
      * @param age the age group of the person
-     * @param global_params the global infection parameters
+     * @param global_params the global simulation parameters
      * @param person_id index of the person
      */
     Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
-           const GlobalInfectionParameters& global_params,
+           const SimulationParameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
@@ -87,20 +88,20 @@ public:
      * @param location the initial location of the person
      * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
-     * @param global_params the global infection parameters
+     * @param global_params the global simulation parameters
      * @param person_id index of the person
      */
     Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
-           const GlobalInfectionParameters& global_params,
+           const SimulationParameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
      * The person might change infection state.
      * @param dt length of the current simulation time step
-     * @param global_infection_parameters infection parameters that are the same in all locations
+     * @param global_parameters simulation parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc);
+    void interact(TimeSpan dt, const SimulationParameters& global_parameters, Location& loc);
 
     /** 
      * migrate to a different location.
@@ -203,7 +204,7 @@ public:
      * lockdown.
      * @return if the person works from home
      */
-    bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_work(TimePoint t, const SimulationParameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -211,14 +212,14 @@ public:
      * Depending on this number person decides what time has to go to work;
      * @return the time of going to work
      */
-    TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_work_time(const SimulationParameters& params) const;
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
-    bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_school(TimePoint t, const SimulationParameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -226,7 +227,7 @@ public:
      * Depending on this number person decides what time has to go to school;
      * @return the time of going to school
      */
-    TimeSpan get_go_to_school_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_school_time(const SimulationParameters& params) const;
 
     /**
      * Answers the question if a person is currently in quarantine.
@@ -276,7 +277,7 @@ public:
      * @brief Get the protection of the Mask.
      * A value of 1 represents full protection and a value of 0 means no protection.
      */
-    double get_protective_factor(const GlobalInfectionParameters& params) const;
+    double get_protective_factor(const SimulationParameters& params) const;
 
     /**
      * @brief For every LocationType a Person has a compliance value between -1 and 1.
@@ -323,6 +324,34 @@ public:
     bool get_wear_mask() const
     {
         return m_wears_mask;
+    }
+
+    /**
+     * serialize this. 
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Person");
+        obj.add_element("Index", m_person_id);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Person> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Person");
+        auto id  = obj.expect_element("Index", Tag<uint32_t>{});
+        return apply(
+            io,
+            [](auto&& id_) {
+                return Location{id_};
+            },
+            id);
     }
 
 private:

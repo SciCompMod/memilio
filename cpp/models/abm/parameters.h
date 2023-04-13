@@ -217,14 +217,6 @@ struct MaskProtection {
 };
 
 /**
- * @brief Parameters of the Infection that are the same everywhere within the World.
- */
-using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
-                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection>;
-
-/**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
  */
 struct MaximumContacts {
@@ -359,9 +351,9 @@ struct SchoolRatio {
  */
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
-    static auto get_default(AgeGroup /*size*/)
+    static auto get_default(AgeGroup size)
     {
-        return Type(Eigen::VectorXd::Constant(6, 1.0));
+        return Type(Eigen::VectorXd::Constant((size_t)size, 1.0));
     }
     static std::string name()
     {
@@ -460,21 +452,31 @@ struct AgeGroupGotoWork {
 };
 
 /**
- * @brief Parameters that control the migration between Location%s.
+ * @brief Parameters of the simulation that are the same everywhere within the World.
  */
-using MigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                                         GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                                         GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>;
-
-class SimulationParameters : public GlobalInfectionParameters
+class SimulationParameters
+    : public ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected,
+                          CarrierToInfected, CarrierToRecovered, InfectedToRecovered, InfectedToSevere,
+                          SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
+                          RecoveredToSusceptible, DetectInfection, MaskProtection, LockdownDate, SocialEventRate,
+                          BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                          GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>
 {
 public:
     SimulationParameters(size_t num_agegroups)
-        : GlobalInfectionParameters(AgeGroup(num_agegroups))
+        : ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected,
+                       CarrierToInfected, CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical,
+                       SevereToRecovered, CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection,
+                       MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
+                       GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
+                       AgeGroupGotoSchool, AgeGroupGotoWork>(AgeGroup(num_agegroups))
         , m_num_groups(num_agegroups)
     {
     }
 
+    /**
+    * @brief Get the number of the age groups.
+    */
     size_t get_num_groups() const
     {
         return m_num_groups;

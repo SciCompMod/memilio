@@ -60,8 +60,6 @@ public:
     World(size_t num_agegroups)
         : parameters(num_agegroups)
         , m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(GlobalInfectionParameters(AgeGroup(num_agegroups)))
-        , m_migration_parameters(MigrationParameters(AgeGroup(num_agegroups)))
         , m_trip_list()
     {
         use_migration_rules(true);
@@ -72,15 +70,13 @@ public:
      * @param[in] other The World that needs to be copied. 
      */
     World(const World& other)
-        : parameters(other.parameters.get_num_groups())
+        : parameters(other.parameters)
         , m_locations(other.m_locations)
-        , m_infection_parameters(other.m_infection_parameters)
-        , m_migration_parameters(other.m_migration_parameters)
         , m_trip_list(other.m_trip_list)
     {
         auto persons = other.get_persons();
         for (auto& person : persons) {
-            add_person(person.get_location_id(), person.get_infection_state(), person.get_age());
+            m_persons.push_back(std::make_unique<Person>(Person(person)));
         }
         use_migration_rules(other.m_use_migration_rules);
     }
@@ -100,6 +96,16 @@ public:
     {
         auto obj = io.create_object("World");
         obj.add_element("NumAgeGroups", parameters.get_num_groups());
+        obj.add_list("Locations", get_locations().begin(), get_locations().end());
+        std::vector<Trip> trips;
+        TripList trip_list = get_trip_list();
+        for (size_t i = 0; i < trip_list.num_trips(); i++) {
+            trips.push_back(trip_list.get_next_trip());
+            trip_list.increase_index();
+        }
+        obj.add_list("Trips", trips.begin(), trips.end());
+        obj.add_list("Persons", get_persons().begin(), get_persons().end());
+        obj.add_element("UseMigrationRules", m_use_migration_rules);
     }
 
     /**
@@ -109,14 +115,18 @@ public:
     template <class IOContext>
     static IOResult<World> deserialize(IOContext& io)
     {
-        auto obj = io.expect_object("World");
-        auto size = obj.expect_element("NumAgeGroups", Tag<size_t>{});
+        auto obj                 = io.expect_object("World");
+        auto size                = obj.expect_element("NumAgeGroups", Tag<size_t>{});
+        auto locations           = obj.expect_list("Locations", Tag<Location>{});
+        auto trip_list           = obj.expect_list("TripList", Tag<Trip>{});
+        auto persons             = obj.expect_list("Persons", Tag<Person>{});
+        auto use_migration_rules = obj.expect_element("UseMigrationRules", Tag<bool>{});
         return apply(
             io,
-            [](auto&& size_) {
-                return World{size_};
+            [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_migration_rule_) {
+                return World{size_, locations_, trip_list_, persons_, use_migration_rule_};
             },
-            size);
+            size, locations, trip_list, persons, use_migration_rules);
     }
 
     /** 
@@ -201,22 +211,6 @@ public:
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
 
-    /** 
-     * @brief Get the MigrationParameters.
-     * @return Reference to the MigrationParameters.
-     */
-    MigrationParameters& get_migration_parameters();
-
-    const MigrationParameters& get_migration_parameters() const;
-
-    /** 
-     * @brief Get the GlobalInfectionParameters.
-     * @return Reference to the GlobalInfectionParameters.
-     */
-    GlobalInfectionParameters& get_global_infection_parameters();
-
-    const GlobalInfectionParameters& get_global_infection_parameters() const;
-
     /**
      * @brief Get the migration data.
      * @return Reference to the list of Trip%s that the Person%s make.
@@ -242,6 +236,9 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
+    /** 
+     * @brief The simulation parameters of the world.
+     */
     SimulationParameters parameters;
 
 private:
@@ -261,11 +258,9 @@ private:
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
     TestingStrategy m_testing_strategy;
-    GlobalInfectionParameters m_infection_parameters;
-    MigrationParameters m_migration_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const SimulationParameters&),
                           std::vector<LocationType>>>
         m_migration_rules;
 };

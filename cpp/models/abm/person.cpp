@@ -1,7 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -33,7 +34,7 @@ namespace abm
 {
 
 Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
-               const GlobalInfectionParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
+               const SimulationParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
@@ -63,13 +64,13 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
 }
 
 Person::Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
-               const GlobalInfectionParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
+               const SimulationParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, infection_properties, age, global_params, vaccination_state,
              person_id)
 {
 }
 
-void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc)
+void Person::interact(TimeSpan dt, const SimulationParameters& global_params, Location& loc)
 {
     auto infection_state     = m_infection_state;
     auto new_infection_state = infection_state;
@@ -81,10 +82,10 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         m_time_until_carrier -= dt;
     }
     else {
-        new_infection_state = loc.interact(*this, dt, global_infection_params);
+        new_infection_state = loc.interact(*this, dt, global_params);
         if (new_infection_state == InfectionState::Exposed) {
-            m_time_until_carrier = hours(
-                int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
+            m_time_until_carrier =
+                hours(int(global_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
         }
     }
 
@@ -135,12 +136,12 @@ uint32_t Person::get_assigned_location_index(LocationType type) const
     return m_assigned_locations[(uint32_t)type];
 }
 
-bool Person::goes_to_work(TimePoint t, const MigrationParameters& params) const
+bool Person::goes_to_work(TimePoint t, const SimulationParameters& params) const
 {
     return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
 }
 
-TimeSpan Person::get_go_to_work_time(const MigrationParameters& params) const
+TimeSpan Person::get_go_to_work_time(const SimulationParameters& params) const
 {
     TimeSpan minimum_goto_work_time = params.get<GotoWorkTimeMinimum>()[m_age];
     TimeSpan maximum_goto_work_time = params.get<GotoWorkTimeMaximum>()[m_age];
@@ -149,7 +150,7 @@ TimeSpan Person::get_go_to_work_time(const MigrationParameters& params) const
     return minimum_goto_work_time + seconds(seconds_after_minimum);
 }
 
-TimeSpan Person::get_go_to_school_time(const MigrationParameters& params) const
+TimeSpan Person::get_go_to_school_time(const SimulationParameters& params) const
 {
     TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
     TimeSpan maximum_goto_school_time = params.get<GotoSchoolTimeMaximum>()[m_age];
@@ -158,7 +159,7 @@ TimeSpan Person::get_go_to_school_time(const MigrationParameters& params) const
     return minimum_goto_school_time + seconds(seconds_after_minimum);
 }
 
-bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) const
+bool Person::goes_to_school(TimePoint t, const SimulationParameters& params) const
 {
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
@@ -211,7 +212,7 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-double Person::get_protective_factor(const GlobalInfectionParameters& params) const
+double Person::get_protective_factor(const SimulationParameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;

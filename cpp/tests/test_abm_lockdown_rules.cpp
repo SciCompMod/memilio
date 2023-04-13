@@ -9,7 +9,7 @@
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
-*
+*./
 *     http://www.apache.org/licenses/LICENSE-2.0
 *
 * Unless required by applicable law or agreed to in writing, software
@@ -43,14 +43,14 @@ TEST(TestLockdownRules, school_closure)
         .WillRepeatedly(testing::Return(1.0));
 
     auto p1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::SimulationParameters(6));
     p1.set_assigned_location(home);
     p1.set_assigned_location(school);
     auto p2 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                               mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                               mio::abm::SimulationParameters(6));
     p2.set_assigned_location(home);
     p2.set_assigned_location(school);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
@@ -79,10 +79,10 @@ TEST(TestLockdownRules, school_opening)
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
     auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                              mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                              mio::abm::SimulationParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(school);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
@@ -100,7 +100,7 @@ TEST(TestLockdownRules, home_office)
     auto dt                              = mio::abm::hours(1);
     auto home                            = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto work                            = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
@@ -120,9 +120,9 @@ TEST(TestLockdownRules, home_office)
         .WillRepeatedly(testing::Return(1.0));
 
     auto person1 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::SimulationParameters(6));
     auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                    mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                    mio::abm::SimulationParameters(6));
     person1.set_assigned_location(home);
     person1.set_assigned_location(work);
     person2.set_assigned_location(home);
@@ -151,10 +151,10 @@ TEST(TestLockdownRules, no_home_office)
         .WillRepeatedly(testing::Return(1.0));
 
     auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2),
-                              mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                              mio::abm::SimulationParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(work);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     params.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
@@ -174,10 +174,10 @@ TEST(TestLockdownRules, social_event_closure)
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0, 6);
     auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                                      mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                      mio::abm::SimulationParameters(6));
     p.set_assigned_location(home);
     p.set_assigned_location(event);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
 
     mio::abm::close_social_events(t, 1, params);
 
@@ -193,10 +193,10 @@ TEST(TestLockdownRules, social_events_opening)
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0, 6);
     auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1),
-                                      mio::abm::GlobalInfectionParameters(mio::AgeGroup(6)));
+                                      mio::abm::SimulationParameters(6));
     p.set_assigned_location(event);
     p.set_assigned_location(home);
-    mio::abm::MigrationParameters params = mio::abm::MigrationParameters(6);
+    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
 
     mio::abm::close_social_events(t_closing, 1, params);
     mio::abm::close_social_events(t_opening, 0, params);
