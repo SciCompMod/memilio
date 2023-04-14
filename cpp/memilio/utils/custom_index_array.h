@@ -186,6 +186,7 @@ public:
     /**
      * Initializes array with values from a range.
      * Each element of the array will be assigned the corresponding value from the range.
+     * @tparam Iter Iterator class.
      * @param dims dimensions of the array.
      * @param b begin of the range of values.
      * @param e end of the range of values.

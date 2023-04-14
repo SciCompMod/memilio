@@ -32,6 +32,7 @@ TEST(TestLocation, init)
     location.initialize_subpopulations(mio::abm::TimePoint(0));
     ASSERT_EQ(print_wrap(location.get_subpopulations().get_last_value()),
               print_wrap(mio::TimeSeries<double>::Vector::Zero((size_t)mio::abm::InfectionState::Count)));
+    EXPECT_EQ(location.get_number_persons(), 0);
 }
 
 TEST(TestLocation, initCell)
@@ -67,6 +68,7 @@ TEST(TestLocation, addRemovePerson)
 
     location.remove_person(person2);
 
+    EXPECT_EQ(location.get_number_persons(), 2u);
     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Infected), 1);
     ASSERT_EQ(location.get_subpopulation(t, mio::abm::InfectionState::Exposed), 1);
     ASSERT_EQ(location.get_cells()[0].m_persons.size(), 2u);

@@ -319,8 +319,10 @@ private:
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
-    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(InfectionState::Count)};
-    std::vector<Cell> m_cells;
+    std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
+    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
+        InfectionState::Count)}; ///< A TimeSeries of the InfectionState%s for each TimePoint at the Location.
+    std::vector<Cell> m_cells; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };
