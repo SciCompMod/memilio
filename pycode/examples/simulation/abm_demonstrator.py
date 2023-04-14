@@ -346,16 +346,29 @@ def create_locations_from_input(world, input_areas):
         elif (area.type == 'recreational'):
             location = world.add_location(abm.LocationType.SocialEvent)
             locationIds.append(location)
-            #world.get_individualized_location(location).infection_parameters.MaximumContacts = 30.
-            #world.get_individualized_location(location).set_capacity(30, 40)
+            world.get_individualized_location(
+                location).infection_parameters.MaximumContacts = 30.
+            world.get_individualized_location(location).set_capacity(30, 40)
         elif (area.type == 'shopping_business'):
             if (not has_school):
                 location = world.add_location(abm.LocationType.School)
                 locationIds.append(location)
+                world.get_individualized_location(
+                    location).infection_parameters.MaximumContacts = 40.
+                world.get_individualized_location(
+                    location).set_capacity(500, 2000)
                 has_school = True
             elif (not has_hospital):
                 locHosp = world.add_location(abm.LocationType.Hospital)
+                world.get_individualized_location(
+                    locHosp).infection_parameters.MaximumContacts = 5.
+                world.get_individualized_location(
+                    locHosp).set_capacity(300, 10000)
                 locICU = world.add_location(abm.LocationType.ICU)
+                world.get_individualized_location(
+                    locICU).infection_parameters.MaximumContacts = 5.
+                world.get_individualized_location(
+                    locICU).set_capacity(30, 1000)
                 locationIds.append(locHosp)
                 locationIds.append(locICU)
                 has_hospital = True
@@ -363,18 +376,33 @@ def create_locations_from_input(world, input_areas):
                 type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
                 if (type):
                     location = world.add_location(abm.LocationType.BasicsShop)
+                    world.get_individualized_location(
+                        location).infection_parameters.MaximumContacts = 20.
+                    world.get_individualized_location(
+                        location).set_capacity(100, 1000)
                     locationIds.append(location)
                 else:
                     location = world.add_location(abm.LocationType.Work)
+                    world.get_individualized_location(
+                        location).infection_parameters.MaximumContacts = 40.
+                    world.get_individualized_location(
+                        location).set_capacity(300, 2000)
                     locationIds.append(location)
         elif (area.type == 'university'):
             location = world.add_location(abm.LocationType.Work)
+            world.get_individualized_location(
+                location).infection_parameters.MaximumContacts = 50.
+            world.get_individualized_location(location).set_capacity(200, 4000)
             locationIds.append(location)
         elif (area.type == 'mixed'):
             type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
             if (type):
                 location = world.add_location(abm.LocationType.Work)
                 locationIds.append(location)
+                world.get_individualized_location(
+                    location).infection_parameters.MaximumContacts = 40.
+                world.get_individualized_location(
+                    location).set_capacity(100, 2000)
             else:
                 locationIds = add_households(
                     world, [0.2, 0.2, 0.2, 0.2, 0.2], area.inhabitants)

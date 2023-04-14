@@ -220,7 +220,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 0,
              py::return_value_policy::reference_internal)
         .def("add_person", &mio::abm::World::add_person, py::return_value_policy::reference_internal)
-        //.def("get_individualized_location", &mio::abm::World::get_individualized_location)
+        .def("get_individualized_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::World::get_individualized_location, py::const_), py::return_value_policy::reference_internal)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
@@ -252,7 +252,8 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal);
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
-        .def(py::init<mio::abm::TimePoint>()) //, mio::abm::World&&
+        .def(py::init<mio::abm::TimePoint>())
+        //.def(py::init<mio::abm::TimePoint, mio::abm::World&&>())
         .def("advance", &mio::abm::Simulation::advance)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
