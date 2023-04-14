@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Sascha Korf, Rene Schmieding 
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
 #ifndef MIO_ABM_HISTORY_H
 #define MIO_ABM_HISTORY_H
 namespace mio
@@ -24,78 +25,50 @@ namespace mio
 namespace abm
 {
 
-template <class... Types>
-class Writer
-{
-    write(Types... args)
-    {
-    }
-    using Data = std::tuple<Types...>;
-};
-
-template <class Writer, class... Loggers>
+template <template <class...> class Writer, class... Loggers>
 class History
 {
 public:
-    //TODO: maybe change this to arglist
+    using Wri = Writer<Loggers...>;
     template <class T>
     void log(const T& t)
     {
-        log_impl(t);
-        // write(Loggers::log(t)...);
+        log_impl<T, Loggers...>(t);
     }
 
-    TimeSeries<Writer::Data> get_data()
+    const typename Wri::Data& get_log() const
     {
         return m_data;
     }
 
 private:
-    Writer::Data m_data;
+    typename Wri::Data m_data;
 
-    template <class T, class Logger, class... Loggers>
-    std::enable_if_t<std::is_derived<Logger, LogOnce>> log_impl(const T& t)
+    bool m_log_once_flag = true;
+
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
     {
-        Writer::write(Logger::log(t));
-        log_impl<T, Loggers...>(t);
+        if (m_log_once_flag) { //TODO: Check if this really prints/writes all and not just the first logger
+            Wri::template write_this<logger>(logger::log(t), m_data);
+            m_log_once_flag = false;
+        }
+        log_impl<T, loggers...>(t);
     }
 
-    template <class T, class Logger, class... Loggers>
-    std::enable_if_t<std::is_derived<Logger, LogAlways>> log_impl(const T& t)
+    template <class T, class logger, class... loggers>
+    std::enable_if_t<std::is_base_of<LogAlways, logger>::value> log_impl(const T& t)
     {
-        Writer::write(Logger::log(t));
-        log_impl<T, Loggers...>(t);
+        log_impl<T, loggers...>(t);
+        Wri::template write_this<logger>(logger::log(t), m_data);
     }
 
     template <class T>
-    log_impl(const T&)
+    void log_impl(const T&)
     {
         // end of recursion
     }
 };
-
-struct LogOnce {
-};
-
-struct LogLocId : public LogOnce {
-    using Type = std::vector<location_id>;
-    static Type log(const World& world)
-    {
-        return [world.get_location().get_id()];
-    }
-};
-
-struct LogAlways {
-};
-
-struct LogTime : public LogAlways {
-    using Type = std::vector<double>;
-    static Type log(const World& world)
-    {
-        [world.get_time()];
-    }
-};
-
 } // namespace abm
 } // namespace mio
 

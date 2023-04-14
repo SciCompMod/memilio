@@ -32,22 +32,22 @@ public:
 struct LogOnce {
 };
 
+struct LogAlways {
+};
+
 struct LogA : LogOnce {
     using Type = int;
     static Type log(const example& ex)
     {
-        return ex.a;
+        return 90;
     }
-};
-
-struct LogAlways {
 };
 
 struct LogB : LogAlways {
     using Type = int;
     static Type log(const example& ex)
     {
-        return ex.b;
+        return 85;
     }
 };
 
@@ -59,41 +59,55 @@ struct LogC : LogAlways {
     }
 };
 
+struct LogD : LogOnce {
+    using Type = int;
+    static Type log(const example& ex)
+    {
+        return 99;
+    }
+};
+
 template <class... Loggers>
-struct Writer {
+struct WriterConsoleInt {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
-    static void write(const typename Logger::Type& t, Data& data)
+    static void write_this(const typename Logger::Type& t, const Data& data)
     {
-        //std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
         std::cout << t << std::endl;
     }
 };
+
 template <class... Loggers>
-struct DataWriter {
-    using Data  = std::tuple<std::vector<typename Loggers::Type>...>;
-    using Index = mio::Index<Loggers...>;
+struct WriterConsoleList {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
-    static void write(const typename Logger::Type& t, Data& data)
+    static void write_this(const typename Logger::Type& t, const Data& data)
     {
-        std::get<mio::details::IndexPosition<Logger, Index>::value>(data).push_back(t);
+        std::cout << t.first << " " << t.second << std::endl;
     }
 };
 
-template <class... Loggers>
-struct ToFileWriter {
-    using Data  = std::tuple<std::vector<typename Loggers::Type>...>;
-    using Types = mio::Index<Loggers...>;
-    template <class Logger>
-    static void write(const typename Logger::Type& t, Data& data)
-    {
-        //std::get<mio::details::IndexPosition<Logger, Types>::value>(data).push_back(t);
-    }
-};
-
-void write_to_file_julia(const std::vector<int>& data)
+template <typename T, typename U = void, typename... Types>
+constexpr size_t indexte()
 {
-    // write to file
+    return std::is_same<T, U>::value ? 0 : 1 + indexte<T, Types...>();
+}
+
+template <class... Loggers>
+struct DataWriterToBuffer {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    static void write_this(const typename Logger::Type& t, Data& data)
+    {
+        std::get<indexte<Logger, Loggers...>()>(data).push_back(t);
+    }
+};
+
+void write_data_to_file(const std::vector<std::pair<int, int>>& data)
+{
+    for (const auto& d : data) {
+        std::cout << d.first << " " << d.second << std::endl;
+    }
 }
 
 template <template <class...> class Writer, class... Loggers>
@@ -113,16 +127,18 @@ public:
     }
 
 private:
-    typename Wri::Data m_data;
+    bool logged          = false;
+    bool first_recursion = true;
 
-    bool m_log_once_flag = true;
+    int index_counter = sizeof...(Loggers);
+
+    typename Wri::Data m_data;
 
     template <class T, class logger, class... loggers>
     std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
     {
-        if (m_log_once_flag) {
-            Wri::write<logger>(logger::log(t), m_data);
-            m_log_once_flag = false;
+        if (!logged) {
+            Wri::template write_this<logger>(logger::log(t), m_data);
         }
         log_impl<T, loggers...>(t);
     }
@@ -131,19 +147,26 @@ private:
     std::enable_if_t<std::is_base_of<LogAlways, logger>::value> log_impl(const T& t)
     {
         log_impl<T, loggers...>(t);
-        Wri::write<logger>(logger::log(t), m_data);
+        Wri::template write_this<logger>(logger::log(t), m_data);
     }
 
     template <class T>
     void log_impl(const T&)
     {
-        // end of recursion
+
+        if (first_recursion) { //need this to make sure every "once" logger is written just once
+            logged          = true;
+            first_recursion = false;
+        }
+        index_counter = sizeof...(Loggers) - 1;
     }
 };
 
 int main()
 {
-    History<Writer, LogA, LogB> history;
+    // History<WriterConsoleInt, LogA, LogB, LogD> history;
+    // History<WriterConsoleList, LogC> history2;
+    History<DataWriterToBuffer, LogA, LogB, LogD> history3;
 
     example ex;
 
@@ -152,9 +175,12 @@ int main()
         ex.a = step;
         ex.b = -step;
 
-        history.log(ex);
+        // history.log(ex);
+        //history2.log(ex);
+        history3.log(ex);
 
         step++;
     }
-    history.get_log();
+
+    //auto logData = history.get_log();
 }
