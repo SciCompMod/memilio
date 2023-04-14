@@ -19,5 +19,5 @@
 #############################################################################
 
 """
-A surrogate model for a simple SECIR model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
+A surrogate model for a SECIR model allowing for asymptomatic as well as symptomatic infection stratified by age groups.
 """
