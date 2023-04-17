@@ -25,10 +25,10 @@ TEST(TestSimulation, advance_random)
     auto world     = mio::abm::World(6);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
-    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, mio::AgeGroup(1));
-    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
-    auto& p3       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::AgeGroup(1));
-    auto& p4       = world.add_person(location2, mio::abm::InfectionState::Infected, mio::AgeGroup(1));
+    auto& p1       = world.add_person(location1, mio::abm::InfectionState::Carrier, AGE_5_TO_14);
+    auto& p2       = world.add_person(location1, mio::abm::InfectionState::Susceptible, AGE_5_TO_14);
+    auto& p3       = world.add_person(location2, mio::abm::InfectionState::Infected, AGE_5_TO_14);
+    auto& p4       = world.add_person(location2, mio::abm::InfectionState::Infected, AGE_5_TO_14);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
@@ -69,13 +69,13 @@ TEST(TestSimulation, advance_subpopulation)
     auto world       = mio::abm::World(6);
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
-    auto person1     = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
+    auto person1     = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, AGE_5_TO_14,
                                         mio::abm::SimulationParameters(6));
     school.add_person(person1);
-    auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
+    auto person2 = mio::abm::Person(location_id, mio::abm::InfectionState::Infected, AGE_15_TO_34,
                                     mio::abm::SimulationParameters(6));
     school.add_person(person2);
-    auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
+    auto person3 = mio::abm::Person(location_id, mio::abm::InfectionState::Exposed, AGE_35_TO_59,
                                     mio::abm::SimulationParameters(6));
     school.add_person(person3);
 

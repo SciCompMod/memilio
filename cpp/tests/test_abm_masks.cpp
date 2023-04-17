@@ -56,15 +56,15 @@ TEST(TestMasks, changeMask)
 TEST(TestMasks, maskProtection)
 {
     mio::abm::VaccinationState vaccination_state = mio::abm::VaccinationState::Unvaccinated;
-    mio::abm::SimulationParameters params   = mio::abm::SimulationParameters(6);
+    mio::abm::SimulationParameters params        = mio::abm::SimulationParameters(6);
 
     //setup location with some chance of exposure
     auto infection_location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
-    auto susc_person1 = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                         params, vaccination_state);
-    auto susc_person2 = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible, mio::AgeGroup(2),
-                                         params, vaccination_state);
-    auto infected1 = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params,
+    auto susc_person1       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible, AGE_15_TO_34,
+                                               params, vaccination_state);
+    auto susc_person2       = mio::abm::Person(infection_location, mio::abm::InfectionState::Susceptible, AGE_15_TO_34,
+                                               params, vaccination_state);
+    auto infected1 = mio::abm::Person(infection_location, mio::abm::InfectionState::Carrier, AGE_15_TO_34, params,
                                       vaccination_state);
     infection_location.add_person(susc_person1);
     infection_location.add_person(susc_person2);

@@ -30,22 +30,28 @@ int main()
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
+    // Assign the name to general age group.
+    const auto AGE_0_TO_4   = mio::AgeGroup(0);
+    const auto AGE_5_TO_14  = mio::AgeGroup(1);
+    const auto AGE_15_TO_34 = mio::AgeGroup(2);
+    const auto AGE_35_TO_59 = mio::AgeGroup(3);
+
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_0_TO_4};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_15_TO_34, AGE_35_TO_59};
 
     // There are 3 households for each household group.
     int n_households = 3;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(mio::AgeGroup(0), 1);
-    child.set_age_weight(mio::AgeGroup(1), 1);
+    child.set_age_weight(AGE_0_TO_4, 1);
+    child.set_age_weight(AGE_0_TO_4, 1);
 
     auto parent = mio::abm::HouseholdMember(6); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(mio::AgeGroup(2), 1);
-    parent.set_age_weight(mio::AgeGroup(3), 1);
+    parent.set_age_weight(AGE_15_TO_34, 1);
+    parent.set_age_weight(AGE_35_TO_59, 1);
 
     // Two-person household with one parent and one child.
     auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
@@ -112,10 +118,10 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == mio::AgeGroup(1)) {
+        if (person.get_age() == AGE_0_TO_4) {
             person.set_assigned_location(school);
         }
-        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+        if (person.get_age() == AGE_15_TO_34 || person.get_age() == AGE_35_TO_59) {
             person.set_assigned_location(work);
         }
     }

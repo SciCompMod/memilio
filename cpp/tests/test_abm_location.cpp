@@ -48,15 +48,15 @@ TEST(TestLocation, addRemovePerson)
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
     auto person1 =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1), mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_5_TO_14, mio::abm::SimulationParameters(6));
     home.add_person(person1);
     person1.migrate_to(home, location, {0, 1});
     auto person2 =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2), mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_15_TO_34, mio::abm::SimulationParameters(6));
     home.add_person(person2);
     person2.migrate_to(home, location, {0});
     auto person3 =
-        mio::abm::Person(home, mio::abm::InfectionState::Exposed, mio::AgeGroup(3), mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Exposed, AGE_35_TO_59, mio::abm::SimulationParameters(6));
     home.add_person(person3);
     person3.migrate_to(home, location, {0, 1});
 
@@ -123,15 +123,15 @@ TEST(TestLocation, beginStep)
         auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
         auto location1 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 3);
         auto infected1 =
-            mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(1), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_5_TO_14, params, vaccination_state);
         home.add_person(infected1);
         infected1.migrate_to(home, location1, {0});
         auto infected2 =
-            mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(5), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_80_UP, params, vaccination_state);
         home.add_person(infected2);
         infected2.migrate_to(home, location1, {0, 1});
         auto infected3 =
-            mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_5_TO_14, params, vaccination_state);
         home.add_person(infected3);
         infected3.migrate_to(home, location1, {1});
 
@@ -182,15 +182,15 @@ TEST(TestLocation, beginStep)
         auto location1 = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
         location1.set_capacity(3, 18);
         auto infected1 =
-            mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_15_TO_34, params, vaccination_state);
         home.add_person(infected1);
         infected1.migrate_to(home, location1);
         auto infected2 =
-            mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(5), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_80_UP, params, vaccination_state);
         home.add_person(infected2);
         infected2.migrate_to(home, location1);
         auto infected3 =
-            mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1), params, vaccination_state);
+            mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_5_TO_14, params, vaccination_state);
         home.add_person(infected3);
         infected3.migrate_to(home, location1);
 
@@ -209,9 +209,9 @@ TEST(TestLocation, reachCapacity)
 
     auto world = mio::abm::World(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {mio::AgeGroup(1)};
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {mio::AgeGroup(2), mio::AgeGroup(3)};
+    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_15_TO_34, AGE_35_TO_59};
 
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
@@ -229,8 +229,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)); // draw random school hour
     // .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, mio::AgeGroup(1));
-    auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, mio::AgeGroup(1));
+    auto& p1 = world.add_person(home_id, mio::abm::InfectionState::Carrier, AGE_5_TO_14);
+    auto& p2 = world.add_person(home_id, mio::abm::InfectionState::Susceptible, AGE_5_TO_14);
 
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
@@ -287,14 +287,14 @@ TEST(TestLocation, changedState)
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 1);
     auto p1 =
-        mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_15_TO_34, mio::abm::SimulationParameters(6));
     home.add_person(p1);
     p1.migrate_to(home, location, {0});
     auto p2 =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(5), mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_80_UP, mio::abm::SimulationParameters(6));
     home.add_person(p2);
     p2.migrate_to(home, location, {0});
-    auto p3 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::AgeGroup(5),
+    auto p3 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_80_UP,
                                mio::abm::SimulationParameters(6));
     home.add_person(p3);
     p3.migrate_to(home, location, {0});
@@ -350,13 +350,13 @@ TEST(TestLocation, interact)
     //setup location with some chance of exposure
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
     auto infected1 =
-        mio::abm::Person(location, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
+        mio::abm::Person(location, mio::abm::InfectionState::Carrier, AGE_15_TO_34, params, vaccination_state);
     location.add_person(infected1);
     auto infected2 =
-        mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(5), params, vaccination_state);
+        mio::abm::Person(location, mio::abm::InfectionState::Infected, AGE_80_UP, params, vaccination_state);
     location.add_person(infected2);
     auto infected3 =
-        mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(1), params, vaccination_state);
+        mio::abm::Person(location, mio::abm::InfectionState::Infected, AGE_5_TO_14, params, vaccination_state);
     location.add_person(infected3);
 
     //cache precomputed results
@@ -461,16 +461,14 @@ TEST(TestLocation, interact)
     //setup location with 2 cells with some chance of exposure
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
     auto location2 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
-    auto infected4 =
-        mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2), params, vaccination_state);
+    auto infected4 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_15_TO_34, params, vaccination_state);
     home.add_person(infected4);
     infected4.migrate_to(home, location2, {0, 1});
     auto infected5 =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(5), params, vaccination_state);
+        mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_80_UP, params, vaccination_state);
     home.add_person(infected5);
     infected5.migrate_to(home, location2, {0});
-    auto infected6 =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(1), params, vaccination_state);
+    auto infected6 = mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_5_TO_14, params, vaccination_state);
     home.add_person(infected6);
     infected6.migrate_to(home, location2, {1});
 
@@ -506,13 +504,13 @@ TEST(TestLocation, setCapacity)
 TEST(TestLocation, addSubpopulationsTimepoint)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(1),
-                                     mio::abm::SimulationParameters(6));
+    auto person1 =
+        mio::abm::Person(location, mio::abm::InfectionState::Infected, AGE_5_TO_14, mio::abm::SimulationParameters(6));
     location.add_person(person1);
-    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
-                                    mio::abm::SimulationParameters(6));
+    auto person2 =
+        mio::abm::Person(location, mio::abm::InfectionState::Infected, AGE_15_TO_34, mio::abm::SimulationParameters(6));
     location.add_person(person2);
-    auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, mio::AgeGroup(3),
+    auto person3 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, AGE_35_TO_59,
                                     mio::abm::SimulationParameters(6));
     location.add_person(person3);
 

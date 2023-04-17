@@ -24,7 +24,7 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, mio::AgeGroup(2),
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_15_TO_34,
                                    mio::abm::SimulationParameters(6));
 
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -37,10 +37,10 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     ASSERT_EQ(testing_criteria.evaluate(person, work), true);
     ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
-    testing_criteria.add_age_group(mio::AgeGroup(3));
+    testing_criteria.add_age_group(AGE_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home),
               false); // now it isn't empty and get's evaluated against age group
-    testing_criteria.remove_age_group(mio::AgeGroup(3));
+    testing_criteria.remove_age_group(AGE_35_TO_59);
     ASSERT_EQ(testing_criteria.evaluate(person, home), true);
 
     testing_criteria.remove_infection_state(mio::abm::InfectionState::Infected);
@@ -91,9 +91,9 @@ TEST(TestTestingScheme, runScheme)
 
     auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, mio::AgeGroup(2),
+    auto person1  = mio::abm::Person(loc_home, mio::abm::InfectionState::Carrier, AGE_15_TO_34,
                                      mio::abm::SimulationParameters(6));
-    auto person2  = mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::AgeGroup(2),
+    auto person2  = mio::abm::Person(loc_home, mio::abm::InfectionState::Recovered_Carrier, AGE_15_TO_34,
                                      mio::abm::SimulationParameters(6));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
