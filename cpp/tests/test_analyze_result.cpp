@@ -474,21 +474,21 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
     auto world1 = mio::abm::World(6);
     auto world2 = mio::abm::World(6);
 
-    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.1;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.1;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
 
-    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.2;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.3;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.3;
 
     auto g1 = std::vector<mio::abm::World>({world1, world2});
 
-    world1.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.2;
-    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]    = 0.3;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]    = 0.4;
+    world1.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.3;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
 
-    world2.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}] = 0.7;
-    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]    = 0.4;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]    = 0.5;
+    world2.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.7;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.5;
 
     auto g2 = std::vector<mio::abm::World>({world1, world2});
 
@@ -499,11 +499,11 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
 
     auto check1 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
     auto check2 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 
     EXPECT_EQ(check1, 0.1);
@@ -511,11 +511,11 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
 
     auto check3 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
     auto check4 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 
     EXPECT_EQ(check3, 0.3);
@@ -523,11 +523,11 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
 
     auto check5 =
         ensemble_p49_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
     auto check6 =
         ensemble_p49_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 
     EXPECT_EQ(check5, 0.2);
@@ -535,11 +535,11 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
 
     auto check7 =
         ensemble_p51_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
     auto check8 =
         ensemble_p51_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Count}]
+            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
             .value();
 
     EXPECT_EQ(check7, 0.4);
