@@ -172,6 +172,7 @@ class ProgressIndicator:
 
         Must call stop() afterwards.
         """
+        print(ProgressIndicator._disable)
         if not ProgressIndicator._disable and not self._enabled:
             self._enabled = True
             # start new threat to render the animator in the background
@@ -305,12 +306,12 @@ class Percentage(ProgressIndicator):
             sys.stdout.write("\033[K")  # clear line
 
     def set_progress(self, percentage):
-        """! Updates the percentage shown by the indicator.
+        """! Updates the percentage shown by the indicator. Steps if delay = 0.
 
         @param percentage real number. Must be in the interval [0, 1].
         """
         self._progress = percentage
-        if not self._enabled:
+        if not ProgressIndicator._disable and not self._enabled:
             self.step()
 
     @staticmethod
