@@ -108,7 +108,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(dd.GerEng, axis=1, inplace=True)
 
     df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
+        df[dd.EngEng['date']], format='ISO8601')
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
