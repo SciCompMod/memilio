@@ -225,7 +225,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
         ScalarType infection_age = (num_time_points - 1 - i) * dt;
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>() *
+            parameters.get<TransmissionProbabilityOnContact<ExponentialDecay>>().Function(infection_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
@@ -236,7 +236,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
                       .Distribution(infection_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
-                 parameters.get<RelativeTransmissionNoSymptoms>() +
+                 parameters.get<RelativeTransmissionNoSymptoms<ExponentialDecay>>().Function(infection_age) +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
                       .Distribution(infection_age) +
@@ -244,7 +244,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
                       .Distribution(infection_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
-                 parameters.get<RiskOfInfectionFromSymptomatic>());
+                 parameters.get<RiskOfInfectionFromSymptomatic<ExponentialDecay>>().Function(infection_age));
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }

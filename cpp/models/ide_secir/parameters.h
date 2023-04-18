@@ -243,8 +243,8 @@ struct RiskOfInfectionFromSymptomatic {
 
 // Define Parameterset for IDE SECIR model.
 using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
-                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
+                 RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>, RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -263,22 +263,6 @@ public:
      */
     int check_constraints() const
     {
-        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->get<TransmissionProbabilityOnContact>() > 1.0) {
-            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
-            return 1;
-        }
-
-        if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
-            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
-            return 1;
-        }
-
-        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
-            log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
-            return 1;
-        }
-
         for (int i = 0; i < (int)InfectionTransition::Count; i++) {
             if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
                 log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
@@ -343,13 +327,13 @@ private:
         : ParametersBase(std::move(base))
     {
     }
-
+};
     // Define Parameterset for IDE SEIR model.
-    using ParametersBase =
-        ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
+    /*using ParametersBase =
+        ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns,
                      TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
                      RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>,
-                     RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
+                     RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;*/
 
 } // namespace isecir
 } // namespace mio
