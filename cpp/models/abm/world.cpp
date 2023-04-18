@@ -160,7 +160,7 @@ Location& World::find_location(LocationType type, const Person& person)
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
-    return std::accumulate(locs.begin(), locs.end(), 0UL,
+    return std::accumulate(locs.begin(), locs.end(), (size_t)0,
                            [&](size_t running_sum, const std::unique_ptr<Location>& loc) {
                                return running_sum + loc->get_subpopulation(t, s);
                            });
