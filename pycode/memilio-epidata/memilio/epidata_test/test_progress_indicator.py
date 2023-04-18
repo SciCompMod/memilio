@@ -24,6 +24,7 @@ from io import StringIO
 
 from memilio import progress_indicator
 
+
 class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
@@ -37,7 +38,8 @@ class Test_ProgressIndicator(unittest.TestCase):
         # test full progress
         with progress_indicator.Percentage(delay=0) as p:
             p.set_progress(100/100)
-        self.assertIn('##] 100.00%', mock_print.getvalue()) # TODO: how to check here either one or to empty spaces
+        # TODO: how to check here either one or to empty spaces
+        self.assertIn('##] 100.00%', mock_print.getvalue())
 
         # test empty progress
         with progress_indicator.Percentage(delay=0) as p:
@@ -48,11 +50,20 @@ class Test_ProgressIndicator(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_spinner(self, mock_print):
         s = progress_indicator.Spinner()
-        spinner_prints=[" |", " /", " -", " \\"]
+        spinner_prints = [" |", " /", " -", " \\"]
         for i in range(100):
             s.step()
-            p=mock_print.getvalue()[-3:-1]
-            self.assertEqual(p, spinner_prints[i%4], 'help '+str(i))
+            p = mock_print.getvalue()[-3:-1]
+            self.assertEqual(p, spinner_prints[i % 4], 'help '+str(i))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dots(self, mock_print):
+        d = progress_indicator.Dots(message="testing dots", delay=0.1)
+        for i in range(10):
+            d.step()
+            self.assertEqual(mock_print.getvalue(
+            )[-17:-1], "testing dots ." + '.'*(i % 3) + " "*(2-(i % 3)))
+
 
 if __name__ == '__main__':
     unittest.main()
