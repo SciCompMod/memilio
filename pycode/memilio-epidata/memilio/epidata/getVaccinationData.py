@@ -743,7 +743,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_joined,
             {dd.EngEng['idCounty']: df_data_joined[dd.EngEng['idCounty']].unique(),
-            dd.EngEng['ageRKI']: unique_age_groups_old},
+             dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
             min_date=start_date, max_date=end_date)

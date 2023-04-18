@@ -240,7 +240,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
         # get rid of unnecessary columns
         df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
-                    "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1)
+                      "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1)
 
         # merge Berlin counties
         if not split_berlin:
@@ -248,9 +248,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 df, 11000, geoger.CountyMerging[11000],
                 sorting=[dd.EngEng['date']],
                 columns=[dd.EngEng['date'],
-                        dd.EngEng['gender'],
-                        dd.EngEng['idState'],
-                        dd.EngEng['ageRKI']])
+                         dd.EngEng['gender'],
+                         dd.EngEng['idState'],
+                         dd.EngEng['ageRKI']])
 
     # dict for all files
     # filename -> [groupby_list, .agg({}), groupby_index, groupby_cols, mod_cols]
@@ -262,7 +262,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
                            {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]                                       : [k for k, v in dd.State.items()]},
+                      [IdBundesland], {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],
