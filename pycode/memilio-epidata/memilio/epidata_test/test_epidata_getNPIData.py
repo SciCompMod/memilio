@@ -24,6 +24,7 @@ from unittest.mock import patch
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from datetime import date
 
@@ -276,7 +277,8 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
            return_value=[[],
                          df_npis_desc['Variablenname'],
                          df_npis_old_renamed])
-    def test_get_npi_data(self, mock_codes, mock_read, mock_data):
+    @patch('memilio.epidata.getNPIData.plot_counter')
+    def test_get_npi_data(self, mock_plot, mock_codes, mock_read, mock_data):
         # print 'Additional errors in consistent naming' is expected.
         # print 'WARNING: DataFrame starts with reported cases > 0 for more than 5 percent...' is expected.
         npis_test = gnd.get_npi_data(

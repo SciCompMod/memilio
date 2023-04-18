@@ -1200,8 +1200,6 @@ def get_npi_data(fine_resolution=2,
     else:
         filename = 'germany_counties_npi_maincat'
     gd.write_dataframe(df_npis, directory, filename, file_format)
-    gd.write_dataframe(df_count_incid_depend, directory,
-                       'joined_codes_incid_dependent', file_format)
 
     return df_npis
 
