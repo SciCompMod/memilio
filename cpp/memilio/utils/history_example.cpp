@@ -164,8 +164,8 @@ private:
 
 int main()
 {
-    // History<WriterConsoleInt, LogA, LogB, LogD> history;
-    // History<WriterConsoleList, LogC> history2;
+    History<WriterConsoleInt, LogA, LogB, LogD> history;
+    History<WriterConsoleList, LogC> history2;
     History<DataWriterToBuffer, LogA, LogB, LogD> history3;
 
     example ex;
@@ -175,12 +175,13 @@ int main()
         ex.a = step;
         ex.b = -step;
 
-        // history.log(ex);
-        //history2.log(ex);
+        history.log(ex);
+        history2.log(ex);
         history3.log(ex);
 
         step++;
     }
 
-    //auto logData = history.get_log();
+    auto logData = history3.get_log();
+    std::cout << "EndFile and debug." << std::endl;
 }

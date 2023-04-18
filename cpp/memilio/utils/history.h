@@ -17,13 +17,32 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include <vector>
+#include <tuple>
+#include <iostream>
 
-#ifndef MIO_ABM_HISTORY_H
-#define MIO_ABM_HISTORY_H
-namespace mio
+//TODO: Maybe rename Log... something like Reader or something similar
+struct LogOnce {
+};
+
+struct LogAlways {
+};
+
+template <typename T, typename U = void, typename... Types>
+constexpr size_t indexte()
 {
-namespace abm
-{
+    return std::is_same<T, U>::value ? 0 : 1 + indexte<T, Types...>();
+}
+
+template <class... Loggers>
+struct DataWriterToBuffer {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    static void write_this(const typename Logger::Type& t, Data& data)
+    {
+        std::get<indexte<Logger, Loggers...>()>(data).push_back(t);
+    }
+};
 
 template <template <class...> class Writer, class... Loggers>
 class History
@@ -42,16 +61,18 @@ public:
     }
 
 private:
-    typename Wri::Data m_data;
+    bool logged          = false;
+    bool first_recursion = true;
 
-    bool m_log_once_flag = true;
+    int index_counter = sizeof...(Loggers);
+
+    typename Wri::Data m_data;
 
     template <class T, class logger, class... loggers>
     std::enable_if_t<std::is_base_of<LogOnce, logger>::value> log_impl(const T& t)
     {
-        if (m_log_once_flag) { //TODO: Check if this really prints/writes all and not just the first logger
+        if (!logged) {
             Wri::template write_this<logger>(logger::log(t), m_data);
-            m_log_once_flag = false;
         }
         log_impl<T, loggers...>(t);
     }
@@ -66,10 +87,11 @@ private:
     template <class T>
     void log_impl(const T&)
     {
-        // end of recursion
+
+        if (first_recursion) { //need this to make sure every "once" logger is written just once
+            logged          = true;
+            first_recursion = false;
+        }
+        index_counter = sizeof...(Loggers) - 1;
     }
 };
-} // namespace abm
-} // namespace mio
-
-#endif

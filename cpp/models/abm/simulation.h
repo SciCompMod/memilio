@@ -23,6 +23,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/history.h"
 
 namespace mio
 {
@@ -60,6 +61,14 @@ public:
      * @param[in] tmax Time to stop.
      */
     void advance(TimePoint tmax);
+
+     /** 
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
+     * @param[in] history History to store the result of the Simulation.
+     */
+    template <class History>
+    void advance(TimePoint tmax, History& history);
 
     /**
      * @brief Get the result of the Simulation.
