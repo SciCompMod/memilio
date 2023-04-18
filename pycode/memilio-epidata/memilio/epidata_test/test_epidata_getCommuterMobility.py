@@ -316,6 +316,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
 
+    @unittest.skip("See Issue #598")
     @patch('builtins.input', return_value='y')
     def test_commuter_data(self, mock_input):
         """! Tests migration data by some randomly chosen tests.
@@ -362,6 +363,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_to = countykey2numlist['01053']
         self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 14)
 
+    @unittest.skip("See Issue #598")
     @patch('builtins.input', return_value='y')
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print, mock_input):

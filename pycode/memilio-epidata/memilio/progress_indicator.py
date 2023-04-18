@@ -47,7 +47,12 @@ class ProgressIndicator:
     """
 
     _first_init = True
-    _disable = False
+    # no progress indicators in unittests
+    # TODO: maybe there is a better way to deactivate them
+    if 'unittest' in sys.modules:
+        _disable = True
+    else:
+        _disable = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
         """! Create a ProgressIndicator.
@@ -238,7 +243,7 @@ class Percentage(ProgressIndicator):
     """! Manages a ProgressIndicator with a predefined animation. """
 
     def __init__(self, delay=1, message="", percentage=0, use_bar=True,
-                 keep_output=True):
+                 keep_output=False):
         """! initializes ProgressIndicator displaying a percentage.
 
         The percentage can be updated using the `set_progress` method.
@@ -255,7 +260,7 @@ class Percentage(ProgressIndicator):
             percentage shown in the animation.
         @param use_bar [Default: True] bool. If True, adds a progress bar
             visualizing the current percentage.
-        @param keep_output [Default: True] bool. Whether the last animation
+        @param keep_output [Default: False] bool. Whether the last animation
             frame should be kept as a new line  when stopping.
         """
         if delay == 0:
