@@ -117,10 +117,9 @@ void Model::compute_susceptibles(ScalarType dt)
 void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
 {
     ScalarType sum = 0;
-    /* Let k such that there holds  TransitionDistribution(m_dt*i) = 0 for all i >= k.
-    Therefore k is determined by the support of the distribution.
-    Then we have that the derivative of TransitionDistribution(m_dt*i) = 0 for all i >= k+1,
-    since we are using a backwards difference scheme to compute the derivative.
+    /* In order to satisfy TransitionDistribution(m_dt*i) = 0 for all i >= k, k is determined by the maximum support of the distribution.
+    Since we are using a backwards difference scheme to compute the derivative, we have that the
+    derivative of TransitionDistribution(m_dt*i) = 0 for all i >= k+1.
 
     Hence calc_time_index goes until std::ceil(max_support/m_dt) since for std::ceil(max_support/m_dt)+1 all terms are already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
