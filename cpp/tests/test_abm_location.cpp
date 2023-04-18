@@ -85,20 +85,11 @@ TEST(TestLocation, CacheExposureRate)
             mio::abm::AgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::abm::AgeGroup::Count) - 1));
         mio::abm::VirusVariant variant =
             mio::abm::VirusVariant(mio::UniformIntDistribution<int>()(0, int(mio::abm::VirusVariant::Count) - 1));
-        mio::abm::VaccinationState vaccination_state =
-            mio::abm::VaccinationState::Unvaccinated; //draw viral load only for Unvaccinated
 
         auto t  = mio::abm::TimePoint(0);
         auto dt = mio::abm::seconds(10000);
 
         mio::abm::GlobalInfectionParameters params;
-        params.set_default<mio::abm::ViralLoadParameters>();
-        params.get<mio::abm::ViralLoadParameters>()[{variant, age, vaccination_state}] = {
-            mio::ParameterDistributionUniform(1., 1.), mio::ParameterDistributionUniform(0.0001, 0.0001),
-            mio::ParameterDistributionUniform(-0.0001, -0.0001)};
-        params.set_default<mio::abm::InfectivityParameters>();
-        params.get<mio::abm::InfectivityParameters>()[{variant, age}] = {mio::ParameterDistributionUniform(1., 1.),
-                                                                         mio::ParameterDistributionUniform(1., 1.)};
 
         // setup a location with some chance of exposure
         auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
@@ -113,12 +104,12 @@ TEST(TestLocation, CacheExposureRate)
         //cache precomputed results
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 1.6351489523872873,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.0020454543682044937,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 1.6351489523872873, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.81757447619364365,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0020454543682044937, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0010227271841022469,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.81757447619364365, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0010227271841022469, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
@@ -129,8 +120,8 @@ TEST(TestLocation, CacheExposureRate)
         location.set_capacity(2, 22, 2); // Capacity for Cell 3
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 4.9054468571618619, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 2.452723428580931, 1e-14);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0061363631046134817, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0030681815523067408, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
     }
 }
@@ -218,13 +209,11 @@ TEST(TestLocation, interact)
     auto dt = mio::abm::seconds(8640); //0.1 days
 
     mio::abm::GlobalInfectionParameters params;
-    params.set_default<mio::abm::ViralLoadParameters>();
-    params.get<mio::abm::ViralLoadParameters>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = {
-        mio::ParameterDistributionUniform(1., 1.), mio::ParameterDistributionUniform(0.0001, 0.0001),
-        mio::ParameterDistributionUniform(-0.0001, -0.0001)};
-    params.set_default<mio::abm::InfectivityParameters>();
-    params.get<mio::abm::InfectivityParameters>()[{variant, age}] = {mio::ParameterDistributionUniform(1., 1.),
-                                                                     mio::ParameterDistributionUniform(1., 1.)};
+    params.set_default<mio::abm::ViralLoadDistributions>();
+    params.get<mio::abm::ViralLoadDistributions>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = {
+        {1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
+    params.set_default<mio::abm::InfectivityDistributions>();
+    params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
 
     // set incubtion period to two days so that the newly infected person is still exposed
     params.get<mio::abm::IncubationPeriod>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] =

@@ -35,39 +35,12 @@ namespace abm
 /**
  * Models the ViralLoad for an Infection, modelled on a log_10 scale.
 */
-class ViralLoad
-{
-public:
-    /**
-     * @brief Constructor for ViralLoad.
-     * @param[in] virus VirusVariant to determine the ViralLoad course.
-     * @param[in] age AgeGroup to determine the ViralLoad course.
-     * @param[in] start_day TimePoint of construction.
-     * @param[in,out] params Global infection parameters.
-     */
-    ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, const GlobalInfectionParameters& params);
-
-    /**
-     * @brief Gets the viral load of the infection at a given TimePoint.
-     * @param[in] t TimePoint of querry.
-     */
-    ScalarType get_viral_load(TimePoint t) const;
-
-private:
-    /**
-     * @brief Draws the ViralLoad of the Infection from a set of distributions in the global parameters.
-     * @param[in] virus VirusVariant to determine the ViralLoad course.
-     * @param[in] age AgeGroup to determine the ViralLoad course.
-     * @param[in] params Global infection parameters.
-     */
-    void draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
-                         const GlobalInfectionParameters& params);
-
-    TimePoint m_start_date;
-    TimePoint m_end_date;
-    ScalarType m_peak;
-    ScalarType m_incline;
-    ScalarType m_decline; // always negative
+struct ViralLoad {
+    TimePoint start_date;
+    TimePoint end_date;
+    ScalarType peak;
+    ScalarType incline;
+    ScalarType decline; // always negative
 };
 
 class Infection
@@ -83,6 +56,12 @@ public:
      */
     Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
               bool detected = false);
+
+    /**
+     * @brief Gets the viral load of the infection at a given TimePoint.
+     * @param[in] t TimePoint of querry.
+     */
+    ScalarType get_viral_load(TimePoint t) const;
 
     /**
      * @brief Get infectivity at a given time.
