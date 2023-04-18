@@ -33,44 +33,90 @@ namespace mio
 namespace isecir
 {
 
-/*******************************************
-    * Define Parameters of the IDE-SECIHURD model *
-    *******************************************/
+/**********************************************
+* Define Parameters of the IDE-SECIHURD model *
+**********************************************/
 
 /**
-* @brief Distribution of the time spent in a compartment before transiting to next compartment.
+* @brief Function describing the time spent in a compartment before transiting to next compartment.
+
+* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain infection_age 
+* (i.e. time after entering the compartment) and has not yet progressed to the next.
+* See also function \gamma in Overleaf.
+* Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
+* TransitionDistribution implements a vector with DelayDistribution%s for each compartment.
 */
 struct DelayDistribution {
+    /**
+    * @brief Default constructor of the class. Default for m_max_support is 2.0 (relatively random.)
+    */
     DelayDistribution()
-        : xright{6.0}
-    {
-    }
-    DelayDistribution(ScalarType init_x_right)
-        : xright{init_x_right}
+        : m_max_support{2.0}
     {
     }
 
+    /**
+     * @brief Construct a new DelayDistribution object
+     * 
+     * @param init_max_support specifies the right bound and therefore the support of the function.
+     */
+    DelayDistribution(ScalarType init_max_support)
+        : m_max_support{init_max_support}
+    {
+    }
+    /**
+     * @brief DelayDistribution is currently defined as a smoothed cosine function.
+     * 
+     * Used function goes through points (0,1) and (m_max_suppor,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param infection_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the smoother cosine function
+     */
     ScalarType Distribution(ScalarType infection_age)
     {
-        return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
+        return smoother_cosine(infection_age, 0.0, m_max_support, 1.0, 0.0);
     }
 
-    ScalarType get_xright()
+    /**
+     * @brief Get the m_max_support object
+     * 
+     * Can be used to access the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_max_support() const
     {
-        return xright;
+        return m_max_support;
     }
 
-    //private:
-    ScalarType xright;
+    /**
+     * @brief Set the m_max_support object
+     * 
+     * Can be used to set the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    void set_max_support(ScalarType new_max_support)
+    {
+        m_max_support = new_max_support;
+    }
+
+private:
+    ScalarType m_max_support; ///< specifies the right bound of the support of the DelayDistribution.
 };
 
+/**
+ * @brief Transition distribution for each transition in InfectionTransition.
+ * 
+ * Note that Distribution from S->E is just a dummy.
+ * This transition is calculated in a different way.
+ * 
+ */
 struct TransitionDistributions {
-    /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
-    This transition is calculated in a different way. */
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
-        return std::vector<DelayDistribution>((int)InfectionTransitions::Count, DelayDistribution());
+        return std::vector<DelayDistribution>((int)InfectionTransition::Count, DelayDistribution());
     }
 
     static std::string name()
@@ -79,28 +125,20 @@ struct TransitionDistributions {
     }
 };
 
-struct TransitionParameters {
-    // we need to initialize transition distributions with some parameters (for now just use one parameter per distribution, i.e. xright)
-    // to be able to define different transition distributions for each transition
-    // Here also transition S-> E is just a dummy
-    using Type = std::vector<ScalarType>;
-    static Type get_default()
-    {
-        return std::vector<ScalarType>((int)InfectionTransitions::Count, 1.0);
-    }
-
-    static std::string name()
-    {
-        return "TransitionParameters";
-    }
-};
-
+/**
+ * @brief Defines the probability for each possible transition to take this flow/transition.
+ */
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions.*/
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
+    Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        return std::vector<ScalarType>((int)InfectionTransitions::Count, 0.5);
+        std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
+        // Set the following probablities to 1 as there is no other option to go anywhere else.
+        probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
+        probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+        return probs;
     }
 
     static std::string name()
@@ -110,15 +148,17 @@ struct TransitionProbabilities {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
- // TODO: Dependeny on infection age
+// TODO: Dependeny on infection age
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
 
     static Type get_default()
     {
-        return Type(1, static_cast<Eigen::Index>((size_t)1));
+        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
+        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        return Type(contact_matrix);
     }
     static std::string name()
     {
@@ -126,7 +166,7 @@ struct ContactPatterns {
     }
 };
 
-struct ExponentialDecay{
+struct ExponentialDecay {
     ExponentialDecay()
         : funcparam{1.0}
     {
@@ -139,27 +179,26 @@ struct ExponentialDecay{
 
     ScalarType Function(ScalarType infection_age)
     {
-        return std::exp(- funcparam * infection_age);
+        return std::exp(-funcparam * infection_age);
     }
 
     ScalarType get_funcparam()
     {
         return funcparam;
     }
-    
-    private:
-    ScalarType funcparam{};
 
- };
+private:
+    ScalarType funcparam{};
+};
 /**
-* @brief probability of getting infected from a contact
+* @brief Probability of getting infected from a contact.
 */
 template <class TransmissionProbabilityDecayFunction>
 struct TransmissionProbabilityOnContact {
     // corresponds to rho, depends on infection_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
-    {   
+    {
         return TransmissionProbabilityDecayFunction();
     }
     static std::string name()
@@ -168,9 +207,8 @@ struct TransmissionProbabilityOnContact {
     }
 };
 
-
 /**
-* @brief the relative InfectedNoSymptoms infectability
+* @brief The relative InfectedNoSymptoms infectability.
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RelativeTransmissionNoSymptoms {
@@ -186,9 +224,8 @@ struct RelativeTransmissionNoSymptoms {
     }
 };
 
-
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
+* @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RiskOfInfectionFromSymptomatic {
@@ -204,30 +241,115 @@ struct RiskOfInfectionFromSymptomatic {
     }
 };
 
-/* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-*/
-/*Martin sagt das sollen wir aktuell mal weglassen
-struct MaxRiskOfInfectionFromSymptomatic {
-    // Dies könnte man irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
-    //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
-    // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.0;
-    }
-    static std::string name()
-    {
-        return "MaxRiskOfInfectionFromSymptomatic";
-    }
-};*/
-
-// Define Parameterset for IDE SEIR model.
+// Define Parameterset for IDE SECIR model.
 using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
-                 TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>, 
-                 RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>, 
-                 RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
+                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+
+/**
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
+     */
+    int check_constraints() const
+    {
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
+            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
+            log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        for (int i = 0; i < (int)InfectionTransition::Count; i++) {
+            if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
+                log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed] != 1.0) {
+            log_error("Constraint check: Parameter transitiion probability for SusceptibleToExposed unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms] != 1.0) {
+            log_error(
+                "Constraint check: Parameter transitiion probability for ExposedToInfectedNoSymptoms unequal to {:d}",
+                1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedNoSymptomsToInfectedSymptoms and "
+                      "InfectedNoSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSymptomsToInfectedSevere and "
+                      "InfectedSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSevereToInfectedCritical and "
+                      "InfectedSevereToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedCriticalToDead and "
+                      "InfectedCriticalToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        return 0;
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+
+    // Define Parameterset for IDE SEIR model.
+    using ParametersBase =
+        ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
+                     TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
+                     RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>,
+                     RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
 
 } // namespace isecir
 } // namespace mio

@@ -32,7 +32,7 @@ namespace iseir
 using Pa  = ParametersBase;
 using Vec = TimeSeries<double>::Vector;
 
-Model::Model(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
+Model::Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init)
     : parameters{Parameterset_init}
     , m_result{std::move(init)}
     , m_result_SEIR{TimeSeries<double>(4)}
