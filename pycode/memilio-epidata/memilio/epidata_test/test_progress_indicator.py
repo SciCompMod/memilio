@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 import unittest
+import time
 
 from unittest.mock import patch
 from io import StringIO
@@ -38,13 +39,12 @@ class Test_ProgressIndicator(unittest.TestCase):
         # test full progress
         with progress_indicator.Percentage(delay=0) as p:
             p.set_progress(100/100)
-        # TODO: how to check here either one or to empty spaces
         self.assertIn('##] 100.00%', mock_print.getvalue())
 
         # test empty progress
         with progress_indicator.Percentage(delay=0) as p:
             p.set_progress(0/100)
-        self.assertIn(' ]  42.00%', mock_print.getvalue())
+        self.assertIn(' ]   0.00%', mock_print.getvalue())
         self.assertIn('[  ', mock_print.getvalue())
 
     @patch('sys.stdout', new_callable=StringIO)
@@ -58,11 +58,31 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_dots(self, mock_print):
-        d = progress_indicator.Dots(message="testing dots", delay=0.1)
+        p = progress_indicator.Dots(message="testing dots", delay=0.1)
         for i in range(10):
-            d.step()
+            p.step()
             self.assertEqual(mock_print.getvalue(
             )[-17:-1], "testing dots ." + '.'*(i % 3) + " "*(2-(i % 3)))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_start_stop(self, mock_print):
+        # progress indicator should be disabled
+        self.assertEqual(progress_indicator.ProgressIndicator._disable, True)
+        # enable progress indicators
+        progress_indicator.ProgressIndicator.disable_indicators(False)
+        self.assertEqual(progress_indicator.ProgressIndicator._disable, False)
+
+        # test start and stop functionality
+        p = progress_indicator.Dots(message="testing dots", delay=0.4)
+        p.start()
+        time.sleep(1.2)
+        p.stop()
+        output = mock_print.getvalue()
+        # last output should have 3 dots
+        self.assertEqual(output[-20:-4], "testing dots ...")
+
+        # disable progress indicator for other tests
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 if __name__ == '__main__':
