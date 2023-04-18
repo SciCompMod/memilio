@@ -58,7 +58,7 @@ public:
     void check_constraints(ScalarType dt) const
     {
         if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for popualtions.");
+            log_error("Model construction failed. No initial time point for populations.");
         }
 
         for (int i = 0; i < (int)InfectionState::Count; i++) {
@@ -68,7 +68,8 @@ public:
         }
 
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
-            log_error("Initialization failed. Number of elements in init does not match the required number.");
+            log_error(
+                "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
         ScalarType max_support = std::max(
@@ -91,7 +92,7 @@ public:
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
                  .get_max_support()});
 
-        if (m_transitions.get_num_time_points() < max_support / dt) {
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(max_support / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }

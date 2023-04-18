@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "boost/fusion/functional/invocation/invoke.hpp"
 #include "load_test_data.h"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
@@ -284,8 +285,8 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.5;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.5;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.6;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
@@ -305,10 +306,10 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     EXPECT_TRUE(secihurd_simulated[tmax / dt - 1] == secihurd_simulated[tmax / dt - 2]);
 
     // Check whether equilibrium has the right proportion between Recovered and Dead
-    // In our case we have that probabilities going from U to R or D are 0.5
-    // Hence the increase in both R and D should be equal between time 0 and tmax
-    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
-                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
+    EXPECT_NEAR((vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] /
+                 vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]) *
+                    (secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
+                     secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered]),
                 secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
                     secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
                 1e-8);
@@ -360,7 +361,7 @@ TEST(IdeSecir, compareEquilibria)
     // Here we set the max_support for the DelayDistribution differently for both models
     // For model
     std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 3;
+    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 2;
     std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
     for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
         vec_delaydistrib[i].set_max_support(vec_max_support[i]);

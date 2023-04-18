@@ -40,7 +40,7 @@ namespace isecir
 /**
 * @brief Function describing the time spent in a compartment before transiting to next compartment.
 
-* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain infection_age 
+* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain state_age 
 * (i.e. time after entering the compartment) and has not yet progressed to the next.
 * See also function \gamma in Overleaf.
 * Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
@@ -69,12 +69,12 @@ struct DelayDistribution {
      * 
      * Used function goes through points (0,1) and (m_max_suppor,0) and is interpolated in between using a smoothed cosine function.
      * 
-     * @param infection_age time at which the function should be evaluated
+     * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the smoother cosine function
      */
-    ScalarType Distribution(ScalarType infection_age)
+    ScalarType Distribution(ScalarType state_age)
     {
-        return smoother_cosine(infection_age, 0.0, m_max_support, 1.0, 0.0);
+        return smoother_cosine(state_age, 0.0, m_max_support, 1.0, 0.0);
     }
 
     /**
