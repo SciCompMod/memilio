@@ -64,6 +64,13 @@ class Test_ProgressIndicator(unittest.TestCase):
             self.assertEqual(mock_print.getvalue(
             )[-17:-1], "testing dots ." + '.'*(i % 3) + " "*(2-(i % 3)))
 
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_message_too_long(self, mock_print):
+        p = progress_indicator.Percentage(delay=20, keep_output=True)
+        p.start()
+        p.set_message("A"*1000)
+        p.stop()
+        self.assertEqual(p._message, "")
 
 if __name__ == '__main__':
     unittest.main()
