@@ -172,7 +172,6 @@ class ProgressIndicator:
 
         Must call stop() afterwards.
         """
-        print(ProgressIndicator._disable)
         if not ProgressIndicator._disable and not self._enabled:
             self._enabled = True
             # start new threat to render the animator in the background
