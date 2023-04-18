@@ -35,7 +35,7 @@ with progress_indicator.Percentage(message="download 1", delay=0.4) as p:
         time.sleep(0.1467)
         p.set_progress((i+1)/13)
 with progress_indicator.Percentage(message="download 2", use_bar=False,
-                delay=0, keep_output=False) as p:
+                                   delay=0, keep_output=False) as p:
     for i in range(97):
         time.sleep(0.0367)
         p.set_progress((i+1)/97)
