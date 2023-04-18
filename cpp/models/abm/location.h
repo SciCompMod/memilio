@@ -30,6 +30,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/memory.h"
 #include <array>
 #include <random>
 
@@ -55,16 +56,15 @@ struct CellCapacity {
 };
 
 /**
- * The location can be split up into several Cell%s. This allows a finer division of the people in public transport.
- * By default, each Location consists of one Cell.
+ * The Location can be split up into several Cell%s. This allows a finer division of the people at the Location.
  */
 struct Cell {
-    std::vector<std::shared_ptr<Person>> m_persons;
+    std::vector<observer_ptr<Person>> m_persons;
     CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<std::shared_ptr<Person>> persons = {})
+    explicit Cell(std::vector<observer_ptr<Person>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -84,14 +84,14 @@ struct Cell {
     * @param[in] state InfectionState of interest.
     * @return Amount of persons of the InfectionState in the Cell.
     */
-    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
+    size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
 }; // namespace mio
 
 /**
  * All locations in the simulated world where persons gather.
  */
-class Location : public std::enable_shared_from_this<Location>
+class Location
 {
 public:
     /**
@@ -139,8 +139,7 @@ public:
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
      * @returns Amount of average infections with the virus from the AgeGroup of the transmitter per day.
     */
-    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                             AgeGroup age_transmitter) const;
+    ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const;
 
     /**
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
@@ -156,20 +155,20 @@ public:
      * @param dt Length of the current simulation time step.
      * @param global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const;
+    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.
      * @param person The Person arriving.
      * @param cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(std::shared_ptr<Person> person, uint32_t cell_idx = 0);
+    void add_person(Person& person, std::vector<uint32_t> cells = {0});
 
     /** 
      * @brief Remove a Person from the population of this Location.
      * @param person The Person leaving.
      */
-    void remove_person(const std::shared_ptr<Person>& person);
+    void remove_person(Person& person);
 
     /** 
      * @brief Prepare the location for the next simulation step.
@@ -234,10 +233,10 @@ public:
     }
 
     /**
-     * @brief Set the capacity of a cell in the Location in persons and volume.
-     * @param persons Maximum number of Person%s that can visit the Cell at the same time.
-     * @param volume Volume of the Cell in m^3.
-     */
+    * @brief Set the capacity of a cell in the Location in persons and volume.
+    * @param persons Maximum number of Person%s that can visit the Cell at the same time.
+    * @param volume Volume of the Cell in m^3.
+    */
     void set_capacity(uint32_t persons, uint32_t volume, uint32_t cell_idx = 0)
     {
         m_cells[cell_idx].m_capacity.persons = persons;
@@ -250,38 +249,22 @@ public:
     CellCapacity get_capacity(uint32_t cell_idx = 0)
     {
         return m_cells[cell_idx].m_capacity;
-    } 
+    }
+
     /**
-    * Set the capacity adapted transmission risk flag
-    * @param consider_capacity if true considers the capacity of the location for the computation of relative 
-    * transmission risk
-    */
+     * @brief Set the capacity adapted transmission risk flag.
+     * @param[in] consider_capacity If true considers the capacity of the location for the computation of relative 
+     * transmission risk.
+     */
     void set_capacity_adapted_transmission_risk_flag(bool consider_capacity)
     {
         m_capacity_adapted_transmission_risk = consider_capacity;
     }
 
     /**
-     * @brief Add a TimePoint to the subpopulations TimeSeries.
-     * @param t The TimePoint to be added.
+     * @brief Get the information whether NPIs are active at this Location.
+     * If true requires e.g. Mask%s when entering a Location.
      */
-    void add_subpopulations_timepoint(const TimePoint& t);
-
-    /**
-     * Return the time series object of the current number of individuals in the each infection state
-     * @return the time series object of the current number of individuals in the each infection state
-     */
-    const TimeSeries<ScalarType>& get_population() const
-    {
-        return m_subpopulations;
-    }
-
-    /**
-     * * Initialize the first TimePoint in the subpopulation TimeSeries, sets its value from 0 to t. 
-     * @param t The first TimePoint in subpopulation
-     */
-    void initialize_subpopulation(const TimePoint& t);
-
     bool get_npi_active() const
     {
         return m_npi_active;
@@ -296,7 +279,7 @@ public:
      * @brief Get the total number of Person%s at the Location.
      * @return Number of Person%s.
      */
-    uint32_t get_number_persons();
+    size_t get_number_persons();
 
     /**
      * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
@@ -304,7 +287,7 @@ public:
      * @param[in] state InfectionState of interest.
      * @return Amount of Person%s of the InfectionState in all Cell%s.
      */
-    uint32_t get_subpopulation(TimePoint t, InfectionState state) const;
+    size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
     /**
      * Add a timepoint to the subpopulations timeseries.
@@ -324,14 +307,17 @@ public:
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
 private:
-    LocationType m_type;
-    uint32_t m_index;
-    bool m_capacity_adapted_transmission_risk;
-    LocalInfectionParameters m_parameters;
-    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(InfectionState::Count)};
-    std::vector<Cell> m_cells;
-    MaskType m_required_mask;
-    bool m_npi_active;
+    LocationType m_type; ///< Type of the Location.
+    uint32_t m_index; ///< Index of the Location.
+    bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
+    transmission risk.*/
+    LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
+    std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
+    TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
+        InfectionState::Count)}; ///< A TimeSeries of the InfectionState%s for each TimePoint at the Location.
+    std::vector<Cell> m_cells; ///< A vector of all Cell%s that the Location is divided in.
+    MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
+    bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };
 
 } // namespace abm

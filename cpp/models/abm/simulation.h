@@ -39,7 +39,7 @@ class Simulation
 public:
     /**
      * @brief Create a simulation.
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      * @param[in] world The World to simulate.
      */
     Simulation(TimePoint t0, World&& world);
@@ -48,10 +48,10 @@ public:
      * @brief Create a Simulation with an empty World.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t)
-        : Simulation(t, World())
+    Simulation(TimePoint t0)
+        : Simulation(t0, World())
     {
     }
 
@@ -86,10 +86,10 @@ private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
 
-    World m_world;
-    TimeSeries<ScalarType> m_result;
-    TimePoint m_t;
-    TimeSpan m_dt;
+    World m_world; ///< The World to simulate.
+    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
+    TimePoint m_t; ///< The current TimePoint of the Simulation.
+    TimeSpan m_dt; ///< The length of the time steps.
 };
 
 } // namespace abm

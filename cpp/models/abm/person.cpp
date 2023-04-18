@@ -32,24 +32,26 @@ namespace abm
 {
 
 Person::Person(Location& location, AgeGroup age, uint32_t person_id)
-    : m_location(location.shared_from_this())
+    : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
-    , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
+    , m_time_at_location(0)
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
     , m_mask(Mask(MaskType::Community))
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
+    , m_cells{0}
 {
-    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()();
-    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()();
-    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()();
-    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()();
+    m_random_workgroup        = UniformDistribution<double>::get_instance()();
+    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
+    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
+    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
+    location.add_person(*this);
 }
 
-void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params)
+void Person::interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params)
 {
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
         m_location->interact(*this, t, dt, params);
@@ -57,13 +59,13 @@ void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& param
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
+void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
 {
-    if (loc_old != loc_new) {
-        loc_old.remove_person(shared_from_this());
-        m_location = loc_new.shared_from_this();
+    if (*m_location != loc_new) {
+        m_location->remove_person(*this);
+        m_location = &loc_new;
         m_cells    = cells;
-        loc_new.add_person(shared_from_this());
+        loc_new.add_person(*this, cells);
         m_time_at_location = TimeSpan(0);
     }
 }
@@ -150,9 +152,22 @@ bool Person::goes_to_school(TimePoint t, const MigrationParameters& params) cons
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
+void Person::detect_infection(TimePoint t)
+{
+    if (is_infected(t)) {
+        m_infections.back().set_detected();
+        m_quarantine = true;
+    }
+}
+
+void Person::remove_quarantine()
+{
+    m_quarantine = false;
+}
+
 bool Person::get_tested(TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<ScalarType>::get_instance()();
+    ScalarType random = UniformDistribution<double>::get_instance()();
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -212,7 +227,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = false;
         if (get_mask_compliance(target.get_type()) > 0.) {
             // draw if the person wears a mask even if not required
-            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()();
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()();
             if (wear_mask < get_mask_compliance(target.get_type())) {
                 m_wears_mask = true;
             }
@@ -222,7 +237,7 @@ bool Person::apply_mask_intervention(const Location& target)
         m_wears_mask = true;
         if (get_mask_compliance(target.get_type()) < 0.) {
             // draw if a person refuses to wear the required mask
-            ScalarType wear_mask = UniformDistribution<ScalarType>::get_instance()(-1., 0.);
+            ScalarType wear_mask = UniformDistribution<double>::get_instance()(-1., 0.);
             if (wear_mask > get_mask_compliance(target.get_type())) {
                 m_wears_mask = false;
             }

@@ -45,10 +45,10 @@ namespace abm
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::shared_ptr<Location>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::shared_ptr<Person>>::const_iterator>;
+    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
+    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
+    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
+    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
 
     /**
      * @brief Create a World.
@@ -64,10 +64,10 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /** 
      * Prepare the World for the next simulation step.
@@ -110,8 +110,8 @@ public:
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator,
-                    std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator>>
+    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
     get_locations() const;
 
     /**
@@ -151,7 +151,7 @@ public:
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    int get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      * @brief Get the MigrationParameters.
@@ -208,8 +208,8 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::shared_ptr<Person>> m_persons;
-    std::vector<std::vector<std::shared_ptr<Location>>> m_locations;
+    std::vector<std::unique_ptr<Person>> m_persons;
+    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;

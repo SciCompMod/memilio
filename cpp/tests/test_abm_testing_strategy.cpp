@@ -23,7 +23,7 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person = create_person_simple(home, mio::abm::InfectionState::Infected, mio::abm::AgeGroup::Age15to34);
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
 
     mio::abm::TimePoint t{0};
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -90,9 +90,9 @@ TEST(TestTestingScheme, runScheme)
 
     auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person1  = create_person_simple(loc_home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34);
+    auto person1  = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
     auto person2 =
-        create_person_simple(loc_home, mio::abm::InfectionState::Recovered_Carrier, mio::abm::AgeGroup::Age15to34);
+        make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered_Carrier);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)

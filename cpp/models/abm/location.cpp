@@ -34,17 +34,21 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_capacity_adapted_transmission_risk(false)
-    , m_cells(std::vector<Cell>(num_cells))
+    , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
+    assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver,
-                                                   AgeGroup age_transmitter) const
+ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
 {
-    return m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, age_receiver}] *
-           m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+    ScalarType prob = 0;
+    for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count); ++age_transmitter) {
+        prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
+                m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+    }
+    return prob;
 }
 
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const
@@ -53,35 +57,33 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const
+void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
+    // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
     ScalarType mask_protection = person.get_mask_protective_factor(global_params);
-    for (auto cell_index : person.get_cells()) { // should be changed so that persons can only be in one cell
+    assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
+    for (auto cell_index :
+         person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
         std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
-            VirusVariant virus                  = static_cast<VirusVariant>(v);
-            ScalarType local_indiv_trans_prob_v = 0;
-            for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count);
-                 ++age_transmitter) {
-                local_indiv_trans_prob_v +=
-                    (std::min(m_parameters.get<MaximumContacts>(),
-                              transmission_contacts_per_day(cell_index, virus, age_receiver,
-                                                            static_cast<AgeGroup>(age_transmitter))) +
-                     transmission_air_per_day(cell_index, virus)) *
-                    (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
-            }
+            VirusVariant virus = static_cast<VirusVariant>(v);
+            ScalarType local_indiv_trans_prob_v =
+                (std::min(m_parameters.get<MaximumContacts>(),
+                          transmission_contacts_per_day(cell_index, virus, age_receiver)) +
+                 transmission_air_per_day(cell_index, virus)) *
+                (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
+
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
-
         VirusVariant virus =
             random_transition(VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
-            person.add_new_infection(Infection(virus, age_receiver, global_params, t));
+            person.add_new_infection(
+                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
         }
     }
-    // we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
 }
 
 void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
@@ -97,8 +99,8 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
                 /* average infectivity over the time step 
-                    *  to second order accuracy using midpoint rule
-                    */
+                 *  to second order accuracy using midpoint rule
+                */
                 cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
                 cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
             }
@@ -109,24 +111,24 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
     }
 }
 
-void Location::add_person(std::shared_ptr<Person> p, uint32_t cell_idx)
+void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
-    m_cells[cell_idx].m_persons.push_back(std::move(p));
+    m_persons.push_back(&p);
+    for (uint32_t cell_idx : cells)
+        m_cells[cell_idx].m_persons.push_back(&p);
 }
 
-void Location::remove_person(const std::shared_ptr<Person>& p)
+void Location::remove_person(Person& p)
 {
+    m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
     for (auto&& cell : m_cells) {
-        auto it = std::remove(cell.m_persons.begin(), cell.m_persons.end(), p);
-        cell.m_persons.erase(it, cell.m_persons.end());
+        cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
     }
 }
 
-uint32_t Location::get_number_persons()
+size_t Location::get_number_persons()
 {
-    return std::accumulate(m_cells.begin(), m_cells.end(), 0, [](uint32_t sum, auto cell) {
-        return sum + cell.m_persons.size();
-    });
+    return m_persons.size();
 }
 
 /*
@@ -143,39 +145,38 @@ ScalarType Cell::compute_space_per_person_relative()
     }
 }
 
-uint32_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
+size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    return count_if(m_persons.begin(), m_persons.end(), [&](std::shared_ptr<Person> p) {
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
         return p->get_infection_state(t) == state;
     });
 }
 
-uint32_t Location::get_subpopulation(TimePoint t, InfectionState state) const
+size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    uint32_t n_persons = 0;
-    for (auto&& cell : m_cells) {
-        n_persons += cell.get_subpopulation(t, state);
-    }
-    return n_persons;
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+        return p->get_infection_state(t) == state;
+    });
 }
 
 void Location::store_subpopulations(const TimePoint t)
 {
     m_subpopulations.add_time_point(t.days());
-    std::array<int, size_t(InfectionState::Count)> subpopulations;
-    for (uint32_t i = 0; i < subpopulations.size(); ++i) {
-        for (auto&& cell : m_cells) {
-            subpopulations[i] += cell.get_subpopulation(t, static_cast<InfectionState>(i));
-        }
-    }
-    m_subpopulations.get_last_value() =
-        Eigen::Map<const Eigen::VectorXi>(subpopulations.data(), subpopulations.size()).cast<ScalarType>();
+    std::array<ScalarType, size_t(InfectionState::Count)> subpopulations{};
+    for (auto p : m_persons)
+        ++subpopulations[(size_t)p->get_infection_state(t)];
+    m_subpopulations.get_last_value() = Eigen::Map<const Eigen::VectorXd>(subpopulations.data(), subpopulations.size());
 }
 
 void Location::initialize_subpopulations(const TimePoint t)
 {
-    if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+    if (m_subpopulations.get_num_time_points() == 0) {
         store_subpopulations(t);
+    }
+    else {
+        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+            store_subpopulations(t);
+        }
     }
 }
 const TimeSeries<ScalarType>& Location::get_subpopulations() const

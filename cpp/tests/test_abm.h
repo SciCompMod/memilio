@@ -86,40 +86,26 @@ struct ScopedMockDistribution {
 /**
  * @brief Add an Infection to the Person with the demanded InfectionState at the given time. Intended for simple use in tests.
 */
-void add_infection_simple(mio::abm::Person& p, mio::abm::TimePoint t,
-                          mio::abm::InfectionState infection_state = mio::abm::InfectionState::Infected)
-{
-    mio::abm::GlobalInfectionParameters params;
-    p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), static_cast<mio::abm::AgeGroup>(0),
-                                            params, t, infection_state));
-}
+void add_test_infection(mio::abm::Person& p,
+                        mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Infected,
+                        mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
+                        mio::abm::GlobalInfectionParameters params = {});
 
 /**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
-mio::abm::Person create_person_simple(mio::abm::Location& location,
-                                      mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                      mio::abm::AgeGroup age_group             = mio::abm::AgeGroup::Age15to34)
-{
-    mio::abm::Person p = mio::abm::Person(location, age_group);
-    if (infection_state != mio::abm::InfectionState::Susceptible) {
-        add_infection_simple(p, mio::abm::TimePoint(0), infection_state);
-    }
-    return p;
-}
+mio::abm::Person make_test_person(mio::abm::Location& location,
+                                  mio::abm::AgeGroup age_group               = mio::abm::AgeGroup::Age15to34,
+                                  mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
+                                  mio::abm::GlobalInfectionParameters params = {});
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.
 */
-mio::abm::Person& add_person_simple(mio::abm::World& world, mio::abm::LocationId loc_id,
-                                    mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
-                                    mio::abm::AgeGroup age                   = mio::abm::AgeGroup::Age15to34)
-{
-    mio::abm::Person& p = world.add_person(loc_id, age);
-    if (infection_state != mio::abm::InfectionState::Susceptible) {
-        add_infection_simple(p, mio::abm::TimePoint(0), infection_state);
-    }
-    return p;
-}
+mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
+                                  mio::abm::AgeGroup age                   = mio::abm::AgeGroup::Age15to34,
+                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
 #endif //TEST_ABM_H

@@ -27,7 +27,7 @@ int main()
     mio::abm::GlobalInfectionParameters infection_params;
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.;
+    infection_params.get<mio::abm::IncubationPeriod>() = 4. * 24 * 3600;
 
     // Create the world with infection parameters.
     auto world = mio::abm::World(infection_params);
@@ -59,6 +59,7 @@ int main()
     threePersonHousehold_full.add_members(parent, 2);
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
+
 
     // Assign an infection state to each person.
     // The infection states are chosen randomly.
@@ -100,15 +101,15 @@ int main()
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
-    // Assign infection state to each person.
-    // The infection states are chosen randomly.
+    /* Assign infections to some persons.
+    * Infections always start with Exposed, so if you want to set up persons with
+    * progressed infections, the start date has to be shifted.
+    */
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        uint32_t infection_state = rand() % (uint32_t)mio::abm::InfectionState::Count;
-        if (infection_state != (uint32_t)mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date,
-                                                         (mio::abm::InfectionState)infection_state));
+        if (rand() % 5 == 1)
+            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date));
     }
 
     // Assign locations to the people

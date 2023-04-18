@@ -29,6 +29,7 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 
+#include "memilio/utils/memory.h"
 #include <functional>
 
 namespace mio
@@ -44,7 +45,7 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
  */
-class Person : public std::enable_shared_from_this<Person>
+class Person
 {
 public:
     /**
@@ -70,14 +71,14 @@ public:
      * @param[in] dt Length of the current simulation time step.
      * @param[in,out] global_infection_parameters Infection parameters that are the same in all locations.
      */
-    void interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params);
+    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
 
     /** 
      * @brief Migrate to a different location.
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -193,7 +194,7 @@ public:
      * @brief Draw if the Person goes to work or is in home office during lockdown.
      * Every person has a random number. Depending on this number and the time, the person works from home in case of a
      * lockdown.
-     * @return if the person works from home
+     * @return If the person works from home.
      */
     bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
 
@@ -228,6 +229,16 @@ public:
     {
         return m_quarantine;
     }
+
+    /**
+     * @brief Sets the current Infection to detected and moves the Person into quarantine.
+    */
+    void detect_infection(TimePoint t);
+
+    /**
+     * @brief Removes the quarantine status of the Person.
+    */
+    void remove_quarantine();
 
     /**
      * @brief Simulates a Corona test and returns the test result of the person.
@@ -282,7 +293,7 @@ public:
     }
 
     /**
-     * @brief Get the mask compliance of the person for the current location.
+     * @brief Get the mask compliance of the Person for the current location.
      * @param[in] location The current location of the person.
      * @return The probability that the person does not comply to any mask duty/wears a
      * mask even if it is not required.
@@ -294,7 +305,7 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param[in] target The target location.
+     * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
     bool apply_mask_intervention(const Location& target);
@@ -318,63 +329,59 @@ public:
     }
 
     /**
-     * Give a vaccine to a person
-     * @param vaccine The vaccine given to the person
-     * @param t The time the vaccine is given
-     */
-    void add_vaccination(const Vaccine& vaccine, const TimePoint& t);
-
-private:
-    struct ImmunityLevel {
-        /**
          * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
          * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
+    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    {
+        return 1.; // put implementation in .cpp
+    }
 
-        /**
+    /**
          * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
          * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
         */
-        ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
-    };
+    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+    {
+        return 1.; // put implementation in .cpp
+    }
+};
 
 public:
-    /**
+/**
      * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
      * @param[in] v VirusVariant to take into consideration.
      * @param[in] t TimePoint of check.
      * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
     */
-    ScalarType get_protection_factor(VirusVariant v, TimePoint t) const
-    {
-        return m_immunity_level.get_protection_factor(v, t);
-    }
-    //ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
+ScalarType get_protection_factor(VirusVariant v, TimePoint t) const
+{
+    return m_immunity_level.get_protection_factor(v, t);
+}
+//ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
-    std::shared_ptr<Location> m_location;
-    std::vector<uint32_t> m_assigned_locations;
-    std::vector<Vaccination> m_vaccinations;
-    std::vector<Infection> m_infections;
-    ImmunityLevel m_immunity_level; // do we need this? Or can we call p.ImmunityLevel.get_...() ?
-    bool m_quarantine = false;
-    AgeGroup m_age;
-    TimeSpan m_time_at_location;
-    ScalarType m_random_workgroup;
-    ScalarType m_random_schoolgroup;
-    ScalarType m_random_goto_work_hour;
-    ScalarType m_random_goto_school_hour;
-    TimeSpan m_time_since_negative_test;
-    Mask m_mask;
-    bool m_wears_mask = false;
-    std::vector<ScalarType> m_mask_compliance;
-    uint32_t m_person_id;
-    std::vector<uint32_t> m_cells;
+observer_ptr<Location> m_location;
+std::vector<uint32_t> m_assigned_locations;
+std::vector<Vaccination> m_vaccinations;
+std::vector<Infection> m_infections;
+bool m_quarantine = false;
+AgeGroup m_age;
+TimeSpan m_time_at_location;
+double m_random_workgroup;
+double m_random_schoolgroup;
+double m_random_goto_work_hour;
+double m_random_goto_school_hour;
+TimeSpan m_time_since_negative_test;
+Mask m_mask;
+bool m_wears_mask = false;
+std::vector<ScalarType> m_mask_compliance;
+uint32_t m_person_id;
+std::vector<uint32_t> m_cells;
 };
 
 } // namespace abm

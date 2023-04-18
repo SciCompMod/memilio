@@ -37,18 +37,15 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     auto& locations = m_locations[(uint32_t)type];
     uint32_t index  = static_cast<uint32_t>(locations.size());
-    locations.emplace_back(std::make_shared<Location>(type, index, num_cells));
+    locations.emplace_back(std::make_unique<Location>(type, index, num_cells));
     return {index, type};
 }
 
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    auto loc           = get_individualized_location(id);
-    m_persons.push_back(std::make_shared<Person>(loc, age, person_id));
-    loc.add_person(m_persons.back());
-    auto& person = *m_persons.back();
-    return person;
+    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
+    return *m_persons.back();
 }
 
 void World::evolve(TimePoint t, TimeSpan dt)
@@ -78,14 +75,15 @@ void World::migration(TimePoint t, TimeSpan dt)
                 return !m_locations[(uint32_t)type].empty();
             });
             if (nonempty) {
-                auto target_type = rule.first(*person, t, dt, m_migration_parameters);
-                auto target      = find_location(target_type, *person);
-                auto current     = person->get_location();
-                if (m_testing_strategy.run_strategy(*person, target, t)) {
-                    if (target != current && target.get_number_persons() < target.get_capacity().persons) {
-                        bool wears_mask = person->apply_mask_intervention(target);
+                auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
+                auto& target_location = find_location(target_type, *person);
+                auto current_location = person->get_location();
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
-                            person->migrate_to(current, target);
+                            person->migrate_to(target_location);
                         }
                         break;
                     }
@@ -97,14 +95,14 @@ void World::migration(TimePoint t, TimeSpan dt)
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip   = m_trip_list.get_next_trip();
-            auto& person = m_persons[trip.person_id];
-            auto current = person->get_location();
-            if (!person->is_in_quarantine() && current == get_individualized_location(trip.migration_origin)) {
-                auto target = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, target, t)) {
-                    person->apply_mask_intervention(target);
-                    person->migrate_to(current, target);
+            auto& trip            = m_trip_list.get_next_trip();
+            auto& person          = m_persons[trip.person_id];
+            auto current_location = person->get_location();
+            if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+                auto& target_location = get_individualized_location(trip.migration_destination);
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    person->apply_mask_intervention(target_location);
+                    person->migrate_to(target_location);
                 }
             }
             m_trip_list.increase_index();
@@ -121,18 +119,18 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     }
 }
 
-void World::end_step(TimePoint t, TimeSpan /*dt*/)
+void World::end_step(TimePoint t, TimeSpan dt)
 {
     for (auto&& locations : m_locations) {
         for (auto& location : locations) {
-            location->store_subpopulations(t);
+            location->store_subpopulations(t + dt);
         }
     }
 }
 
 auto World::get_locations() const
-    -> Range<std::pair<std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator,
-                       std::vector<std::vector<std::shared_ptr<Location>>>::const_iterator>>
+    -> Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                       std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
 {
     return std::make_pair(m_locations.begin(), m_locations.end());
 }
@@ -159,10 +157,10 @@ Location& World::find_location(LocationType type, const Person& person)
     return get_individualized_location({index, type});
 }
 
-int World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
+size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
-    return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const std::shared_ptr<Location>& loc) {
+    return std::accumulate(locs.begin(), locs.end(), 0, [&](size_t running_sum, const std::unique_ptr<Location>& loc) {
         return running_sum + loc->get_subpopulation(t, s);
     });
 }

@@ -21,8 +21,23 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
+//#include "tests/test_abm.h"
 
 namespace fs = boost::filesystem;
+
+/**
+ * Set a value and distribution of an UncertainValue.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
+ * @param p uncertain value to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
+void assign_uniform_distribution(mio::UncertainValue& p, ScalarType min, ScalarType max)
+{
+    p = mio::UncertainValue(0.5 * (max + min));
+    p.set_distribution(mio::ParameterDistributionUniform(min, max));
+}
+
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -419,17 +434,15 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
-                            double carrier_pct, double recovered_pct)
+void assign_infection_state(mio::abm::World& /*world*/, mio::abm::TimePoint /*t*/, double /*exposed_pct*/,
+                            double /*infected_pct*/, double /*carrier_pct*/, double /*recovered_pct*/)
 {
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
-        if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state));
-    }
+    //auto persons = world.get_persons();
+    //for (auto& person : persons) {
+    //    auto infection_state = determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    //    if (infection_state != mio::abm::InfectionState::Susceptible)
+    //        add_test_infection(person, infection_state, t, world.get_global_infection_parameters());
+    //}
 }
 
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
@@ -750,7 +763,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto&& locations : sim.get_world().get_locations()) {
-            for (auto location : locations) {
+            for (auto&& location : locations) {
                 loc_ids.push_back(location->get_index());
             }
         }
