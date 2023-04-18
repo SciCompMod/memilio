@@ -885,8 +885,8 @@ def get_npi_data(fine_resolution=2,
     #     df_count_joined_codes[subcode][1] *= 0
     # df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
     #                                       counties_considered=counties_considered)
-    # save_counter(df_counted_joined_codes, 'joined_codes')
-    # plot_counter('joined_codes')
+    # save_counter(df_counted_joined_codes, 'joined_codes', directory)
+    # plot_counter('joined_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_incid_depend = pd.DataFrame()
@@ -1116,8 +1116,8 @@ def get_npi_data(fine_resolution=2,
                     for incidcode in ['', '_1', '_2', '_3', '_4', '_5']:
                         df_local_new[subcode+incidcode] *= df_merged[subcode]
 
-        save_counter(df_count_deactivation, 'count_deactivation')
-        plot_counter('count_deactivation')
+        save_counter(df_count_deactivation, 'count_deactivation', directory)
+        plot_counter('count_deactivation', directory)
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1155,8 +1155,8 @@ def get_npi_data(fine_resolution=2,
     # count joined codes from after incidence based activation
     count_codes_incid_depend(
         df_incid_depend, df_count_incid_depend, counties_considered)
-    save_counter(df_count_incid_depend, 'joined_codes_incid_depend')
-    plot_counter('joined_codes_incid_depend')
+    save_counter(df_count_incid_depend, 'joined_codes_incid_depend', directory)
+    plot_counter('joined_codes_incid_depend', directory)
 
     # print sub counters
     print('Sub task counters are: ')
@@ -1261,9 +1261,8 @@ def count_codes_incid_depend(df_incid_depend, df_count_incid_depend, counties_co
     return df_count_incid_depend
 
 
-def save_counter(df_count, filename):
+def save_counter(df_count, filename, directory):
     # save results
-    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
 
     writer = pd.ExcelWriter(
         os.path.join(directory, filename + '.xlsx'),
@@ -1275,8 +1274,7 @@ def save_counter(df_count, filename):
 # saves plot in folder directory/heatmaps_filename
 
 
-def plot_counter(filename):
-    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
+def plot_counter(filename, directory):
     target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
