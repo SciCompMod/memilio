@@ -158,10 +158,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         # try another possibility if df was empty or incomplete
         print("Note: Case data is incomplete. Trying another source.")
         try:
-            url="https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
+            url = "https://opendata.arcgis.com/datasets/66876b81065340a4a48710b062319336_0.csv"
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
-            df = gd.get_file(path, url, False, param_dict={"encoding": 'utf_8_sig'})
+            df = gd.get_file(path, url, False, param_dict={
+                             "encoding": 'utf_8_sig'})
             complete = check_for_completeness(df, merge_eisenach=True)
         except:
             pass
@@ -178,11 +179,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             except:
                 pass
         if not complete:
-            raise FileNotFoundError("Something went wrong, dataframe is empty for csv and geojson!")
-        
+            raise FileNotFoundError(
+                "Something went wrong, dataframe is empty for csv and geojson!")
+
         # drop columns that do not exist in data from github
         df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
-                    "Bundesland", "Landkreis"], axis=1)
+                      "Bundesland", "Landkreis"], axis=1)
 
     df = df.convert_dtypes()
 
@@ -259,7 +261,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
                            {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : [k for k, v in dd.State.items()]},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],

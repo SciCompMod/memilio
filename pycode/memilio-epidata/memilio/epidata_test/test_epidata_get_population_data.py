@@ -192,5 +192,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         # TODO: How to test hdf5 export?
 
+
 if __name__ == '__main__':
     unittest.main()

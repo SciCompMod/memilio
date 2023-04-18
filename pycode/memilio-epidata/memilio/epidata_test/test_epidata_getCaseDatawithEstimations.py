@@ -580,8 +580,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         with patch('requests.get') as mock_request:
             df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
-                sheet_name = 'COVID_Todesfälle', header = 0,
-                            engine = 'openpyxl')
+                               sheet_name='COVID_Todesfälle', header=0,
+                               engine='openpyxl')
             towrite = io.BytesIO()
             df.to_excel(towrite, index=False)
             towrite.seek(0)
@@ -592,7 +592,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         df_real_deaths_per_week = pd.read_excel(
             directory + 'Cases_deaths_weekly.xlsx',
-            sheet_name = 0, header = 0, engine = 'openpyxl')
+            sheet_name=0, header=0, engine='openpyxl')
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
         self.assertEqual(pd.to_numeric(
             df_real_deaths_per_week['Sterbejahr'])[0], 2020)

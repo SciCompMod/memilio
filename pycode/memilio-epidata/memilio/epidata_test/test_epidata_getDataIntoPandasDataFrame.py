@@ -58,7 +58,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     test_data_file = os.path.join(
         here, "test_data", "TestSetFullHospitalizationData.json")
     # Load JSON file data to a python dict object.
-    with open(test_data_file, 'r') as file_object:
+    with open(test_data_file) as file_object:
         dict_object = json.load(file_object)
 
     test_string_file = json.dumps(dict_object)

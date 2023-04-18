@@ -316,7 +316,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
 
-    @patch('builtins.input', return_value= 'y')
+    @patch('builtins.input', return_value='y')
     def test_commuter_data(self, mock_input):
         """! Tests migration data by some randomly chosen tests.
         """

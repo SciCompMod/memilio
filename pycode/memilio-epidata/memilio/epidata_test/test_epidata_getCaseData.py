@@ -200,11 +200,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
         # test case where csv files are incorrect
         mock_file.side_effect = [pd.DataFrame(),
-                                    pd.DataFrame(),
-                                    pd.read_json(
-                                        os.path.join(
-                                            directory,
-                                            "CaseDataArcgis.json"))]
+                                 pd.DataFrame(),
+                                 pd.read_json(
+            os.path.join(
+                directory,
+                "CaseDataArcgis.json"))]
 
         gcd.get_case_data(
             read_data=read_data, file_format=file_format,
