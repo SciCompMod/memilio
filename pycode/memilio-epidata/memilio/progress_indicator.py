@@ -46,6 +46,7 @@ class ProgressIndicator:
     """
 
     _first_init = True
+    _disable = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
         """! Create a ProgressIndicator.
@@ -86,6 +87,15 @@ class ProgressIndicator:
 
     def __exit__(self, exception, value, trace):
         self.stop()
+
+    @staticmethod
+    def disable_indicators(disable):
+        """! Globally prevents new indicators from starting.
+
+        @param disable Bool. If True, no new indicators can be started.
+            If False, resume default behaviour.
+        """
+        ProgressIndicator._disable = disable
 
     @staticmethod
     def _console_setup():
@@ -156,7 +166,7 @@ class ProgressIndicator:
 
         Must call stop() afterwards.
         """
-        if not self._enabled:
+        if not ProgressIndicator._disable and not self._enabled:
             self._enabled = True
             # start new threat to render the animator in the background
             self._thread = threading.Thread(target=self._render)
