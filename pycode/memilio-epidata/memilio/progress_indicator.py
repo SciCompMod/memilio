@@ -47,7 +47,12 @@ class ProgressIndicator:
     """
 
     _first_init = True
-    _disable = False
+    # no progress indicators in unittests
+    # TODO: maybe there is a better way to deactivate them
+    if 'unittest' in sys.modules:
+        _disable = True
+    else:
+        _disable = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
         """! Create a ProgressIndicator.
