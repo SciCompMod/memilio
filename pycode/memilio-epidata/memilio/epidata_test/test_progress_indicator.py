@@ -30,6 +30,7 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_percentage_indicator(self, mock_print):
+        progress_indicator.ProgressIndicator.disable_indicators(False)
         # test not full progress
         with progress_indicator.Percentage(delay=0) as p:
             p.set_progress(42/100)
@@ -46,6 +47,8 @@ class Test_ProgressIndicator(unittest.TestCase):
             p.set_progress(0/100)
         self.assertIn(' ]   0.00%', mock_print.getvalue())
         self.assertIn('[  ', mock_print.getvalue())
+
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_spinner(self, mock_print):
