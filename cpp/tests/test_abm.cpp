@@ -34,7 +34,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Recovered_Infected) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::InfectedToRecovered>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::InfectedToRecovered>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
         start_state = mio::abm::InfectionState::Infected;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.6)).RetiresOnSaturation();
@@ -42,7 +42,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Recovered_Carrier) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::CarrierToRecovered>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::CarrierToRecovered>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
         start_state = mio::abm::InfectionState::Carrier;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.6)).RetiresOnSaturation();
@@ -50,7 +50,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Infected_Critical) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::SevereToCritical>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::SevereToCritical>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
         start_state = mio::abm::InfectionState::Infected_Severe;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.4)).RetiresOnSaturation();
@@ -58,7 +58,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Infected_Severe) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::InfectedToSevere>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::InfectedToSevere>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
         start_state = mio::abm::InfectionState::Infected;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.4)).RetiresOnSaturation();
@@ -66,7 +66,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Infected) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::CarrierToInfected>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::CarrierToInfected>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
         start_state = mio::abm::InfectionState::Carrier;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.4)).RetiresOnSaturation();
@@ -74,7 +74,7 @@ void add_test_infection(mio::abm::Person& p, mio::abm::InfectionState infection_
     if (start_state == mio::abm::InfectionState::Carrier) {
         inf_start =
             inf_start -
-            mio::abm::TimeSpan(params.get<mio::abm::IncubationPeriod>()[{
+            mio::abm::TimeSpan((int)params.get<mio::abm::IncubationPeriod>()[{
                 static_cast<mio::abm::VirusVariant>(0), p.get_age(), mio::abm::VaccinationState::Unvaccinated}]);
     }
 

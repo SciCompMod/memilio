@@ -52,7 +52,7 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    uint32_t state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
     return (mio::abm::InfectionState)state;
 }
 

@@ -250,8 +250,8 @@ TEST(TestLocation, setCapacity)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
     location.set_capacity(4, 200);
-    ASSERT_EQ(location.get_capacity().persons, 4);
-    ASSERT_EQ(location.get_capacity().volume, 200);
+    ASSERT_EQ(location.get_capacity().persons, (uint32_t)4);
+    ASSERT_EQ(location.get_capacity().volume, (uint32_t)200);
 }
 
 TEST(TestLocation, storeSubpopulations)
