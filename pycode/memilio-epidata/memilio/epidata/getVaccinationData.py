@@ -357,7 +357,7 @@ def sanitizing_extrapolation_mobility(
     for id in geoger.get_county_ids():
         for age in age_groups:
             a = df_san[(df_san.ID_County == id) & (
-                df_san.Age_RKI == age)].sum()[column_names]
+                df_san.Age_RKI == age)][column_names].sum()
             b = df[(df.ID_County == id) & (
                 df.Age_RKI == age)].loc[:, column_names].iloc[-1]
             if sum(a-b) > 1e-8:
