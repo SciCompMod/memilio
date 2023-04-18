@@ -51,7 +51,7 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     location.add_person(*this);
 }
 
-void Person::interact(TimePoint t, TimeSpan dt, GlobalInfectionParameters& params)
+void Person::interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params)
 {
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
         m_location->interact(*this, t, dt, params);

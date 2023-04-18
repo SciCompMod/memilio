@@ -134,8 +134,27 @@ public:
      * The type that contains the parameters of the distribution.
      * The template parameter must be constructible from this type.
      */
-    using ParamType = typename DistT::param_type;
+    struct ParamType {
+        using DistType = DistributionAdapter<DistT>;
 
+        template <typename... Ps,
+                  typename std::enable_if_t<std::is_constructible<typename DistT::param_type, Ps...>::value>* = nullptr>
+        ParamType(Ps&&... ps)
+            : params(std::forward<Ps>(ps)...)
+        {
+        }
+
+        /**
+        * get a static thread local instance of the contained Distribution class.
+        * Calls DistributionAdapter::get_instance().
+        */
+        static DistributionAdapter& get_distribution_instance()
+        {
+            return DistType::get_instance();
+        }
+
+        typename DistT::param_type params;
+    };
     /**
      * The function that generates a random value from the distribution with the specified parameters.
      */

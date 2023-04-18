@@ -155,7 +155,7 @@ public:
      * @param dt Length of the current simulation time step.
      * @param global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const;
+    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.

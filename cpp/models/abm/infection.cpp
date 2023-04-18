@@ -26,7 +26,7 @@ namespace mio
 namespace abm
 {
 
-ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, GlobalInfectionParameters& params)
+ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, const GlobalInfectionParameters& params)
     : m_start_date(start_date)
 {
     draw_viral_load(virus, age, VaccinationState::Unvaccinated,
@@ -34,13 +34,13 @@ ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, Glo
 }
 
 void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
-                                GlobalInfectionParameters& params)
+                                const GlobalInfectionParameters& params)
 {
-    auto draws = params.get<ViralLoadParameters>()[{virus, age, vaccination_state}].draw_samples();
-    m_peak     = draws[0];
-    m_incline  = draws[1];
-    m_decline  = draws[2];
-    m_end_date = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
+    auto vl_params = params.get<ViralLoadParameters>()[{virus, age, vaccination_state}];
+    m_peak         = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak);
+    m_incline      = vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline);
+    m_decline      = vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline);
+    m_end_date     = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
 }
 
 ScalarType ViralLoad::get_viral_load(TimePoint t) const
@@ -58,7 +58,7 @@ ScalarType ViralLoad::get_viral_load(TimePoint t) const
     }
 }
 
-Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
+Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
                      bool detected)
     : m_virus_variant(virus)
     , m_viral_load(virus, age, start_date, params)
@@ -66,9 +66,9 @@ Infection::Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters
 {
     draw_infection_course(age, params, start_date);
 
-    auto draws       = params.get<InfectivityParameters>()[{virus, age}].draw_samples();
-    m_log_norm_alpha = draws[0];
-    m_log_norm_beta  = draws[1];
+    auto inf_params  = params.get<InfectivityParameters>()[{virus, age}];
+    m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha);
+    m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta);
 }
 
 ScalarType Infection::get_infectivity(TimePoint t) const

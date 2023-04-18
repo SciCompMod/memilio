@@ -185,37 +185,20 @@ struct RecoveredToSusceptible {
     }
 };
 
-struct ViralLoadDistributions {
-
-    ViralLoadDistributions() = default;
-    ViralLoadDistributions(ParameterDistributionUniform viral_load_peak,
-                           ParameterDistributionUniform viral_load_incline,
-                           ParameterDistributionUniform viral_load_decline)
-        : m_viral_load_peak(viral_load_peak)
-        , m_viral_load_incline(viral_load_incline)
-        , m_viral_load_decline(viral_load_decline)
-    {
-    }
-
-    std::array<ScalarType, 3> draw_samples()
-    {
-        return {m_viral_load_peak.get_sample(), m_viral_load_incline.get_sample(), m_viral_load_decline.get_sample()};
-    }
-
-private:
-    ParameterDistributionUniform m_viral_load_peak;
-    ParameterDistributionUniform m_viral_load_incline;
-    ParameterDistributionUniform m_viral_load_decline;
+struct ViralLoadParameters {
+    UniformDistribution<double>::ParamType viral_load_peak;
+    UniformDistribution<double>::ParamType viral_load_incline;
+    UniformDistribution<double>::ParamType viral_load_decline;
 };
 
-struct ViralLoadParameters {
-    using Type = CustomIndexArray<ViralLoadDistributions, VirusVariant, AgeGroup, VaccinationState>;
+struct ViralLoadDistributions {
+    using Type = CustomIndexArray<ViralLoadParameters, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
-                         ParameterDistributionUniform(8.1, 8.1),
-                         ParameterDistributionUniform(2. / days(1).seconds(), 2. / days(1).seconds()),
-                         ParameterDistributionUniform(-0.17 / days(1).seconds(), -0.17 / days(1).seconds()));
+                         ViralLoadParameters{{8.1, 8.1},
+                                             {2. / days(1).seconds(), 2. / days(1).seconds()},
+                                             {-0.17 / days(1).seconds(), -0.17 / days(1).seconds()}});
         return default_val;
     }
     static std::string name()
@@ -224,31 +207,16 @@ struct ViralLoadParameters {
     }
 };
 
-struct InfectivityDistributions {
-
-    InfectivityDistributions() = default;
-    InfectivityDistributions(ParameterDistributionUniform alpha, ParameterDistributionUniform beta)
-        : m_infectivity_alpha(alpha)
-        , m_infectivity_beta(beta)
-    {
-    }
-
-    std::array<ScalarType, 2> draw_samples()
-    {
-        return {m_infectivity_alpha.get_sample(), m_infectivity_beta.get_sample()};
-    }
-
-private:
-    ParameterDistributionUniform m_infectivity_alpha;
-    ParameterDistributionUniform m_infectivity_beta;
+struct InfectivityParameters {
+    UniformDistribution<double>::ParamType infectivity_alpha;
+    UniformDistribution<double>::ParamType infectivity_beta;
 };
 
-struct InfectivityParameters {
-    using Type = CustomIndexArray<InfectivityDistributions, VirusVariant, AgeGroup>;
+struct InfectivityDistributions {
+    using Type = CustomIndexArray<InfectivityParameters, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, ParameterDistributionUniform(-7., -7.),
-                         ParameterDistributionUniform(1., 1.));
+        Type default_val({VirusVariant::Count, AgeGroup::Count}, InfectivityParameters{{-7., -7.}, {1., 1.}});
         return default_val;
     }
     static std::string name()
@@ -293,8 +261,8 @@ struct MaskProtection {
 using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadParameters,
-                 InfectivityParameters, DetectInfection, MaskProtection>;
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

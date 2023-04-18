@@ -57,7 +57,7 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, GlobalInfectionParameters& global_params) const
+void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();

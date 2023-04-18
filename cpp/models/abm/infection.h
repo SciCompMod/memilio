@@ -45,7 +45,7 @@ public:
      * @param[in] start_day TimePoint of construction.
      * @param[in,out] params Global infection parameters.
      */
-    ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, GlobalInfectionParameters& params);
+    ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_day, const GlobalInfectionParameters& params);
 
     /**
      * @brief Gets the viral load of the infection at a given TimePoint.
@@ -61,7 +61,7 @@ private:
      * @param[in] params Global infection parameters.
      */
     void draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
-                         GlobalInfectionParameters& params);
+                         const GlobalInfectionParameters& params);
 
     TimePoint m_start_date;
     TimePoint m_end_date;
@@ -81,7 +81,7 @@ public:
      * @param[in] start_date Starting date of the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
      */
-    Infection(VirusVariant virus, AgeGroup age, GlobalInfectionParameters& params, TimePoint start_date,
+    Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
               bool detected = false);
 
     /**

@@ -151,7 +151,7 @@ public:
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    int get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      * @brief Get the MigrationParameters.
