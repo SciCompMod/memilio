@@ -38,7 +38,7 @@ TEST(ModelTestIdeSeirMin, simulateDefault)
         init.add_time_point(init.get_last_time() + dt, Vec::Constant(1, 10.));
     }
 
-    mio::iseir::IdeSeirModel model(std::move(init), dt, 10);
+    mio::iseir::Model model(std::move(init), dt, 10);
     model.simulate(tmax);
     auto result = model.calculate_EIR();
 

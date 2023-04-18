@@ -303,7 +303,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
     // Check whether equilibrium has been reached, only then can we expect the right proportion
     // between Recovered and Dead
-    EXPECT_TRUE(secihurd_simulated[tmax / dt - 1] == secihurd_simulated[tmax / dt - 2]);
+    EXPECT_TRUE(secihurd_simulated[Eigen::Index(tmax / dt - 1)] == secihurd_simulated[Eigen::Index(tmax / dt - 2)]);
 
     // Check whether equilibrium has the right proportion between Recovered and Dead
     EXPECT_NEAR((vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] /
