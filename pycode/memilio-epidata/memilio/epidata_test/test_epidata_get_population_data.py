@@ -42,6 +42,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     test_new_counties[:, 0] = [3159, 13071, 13072, 13073, 13074, 13075, 13076]
     test_new_counties[:, 1] = [1, 14, 13, 27, 23, 42, 33]
 
+    test_consistent_counties = np.zeros((5, 2))
+    test_consistent_counties[:, 0] = [1001, 1002, 1003, 1004, 1005]
+    test_consistent_counties[:, 1] = [12, 47, 19, 900, 13]
+
     data = np.zeros((5, 30))
     data[:, 0] = np.arange(1, 6)
     for i in range(len(data)):
@@ -124,8 +128,13 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def test_get_new_counties(self):
+        # test merging odf old counties
         test = gpd.get_new_counties(self.test_old_counties)
         self.assertTrue(np.array_equal(test, self.test_new_counties))
+
+        # if no old counties were available nothing should be changed
+        test = gpd.get_new_counties(self.test_consistent_counties)
+        self.assertTrue(np.array_equal(test, self.test_consistent_counties))
 
     @patch('memilio.epidata.getPopulationData.load_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
@@ -135,10 +144,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             read_data=True, file_format='json', out_folder=self.path,
             no_raw=False, split_gender=False, merge_eisenach=False)
 
-        # add seven to the number of test_counties as this is the current workaround to add counties which are
-        # not mentioned in old data sets
-        test_df = pd.read_json(os.path.join(
-            self.path, 'Germany/', 'county_current_population_dim' + str(len(self.test_counties)+7) + '.json'))
+        test_df = pd.read_json(
+            os.path.join(
+                self.path, 'Germany/', 'county_current_population_dim' +
+                str(len(self.test_counties)) + '.json'))
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
@@ -155,7 +164,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
-            test_df.astype('int64'), self.test_current_population_gender_result)
+            test_df.astype('int64'),
+            self.test_current_population_gender_result)
 
     @ patch('pandas.read_excel', return_value=test_counties)
     @ patch('pandas.read_excel', return_value=test_reg_key)
@@ -181,6 +191,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             zensus_read, zensus_write, check_dtype=False)
 
         # TODO: How to test hdf5 export?
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -49,6 +49,21 @@ def get_new_counties(data):
     # create 7 new counties
     data_temp = np.append(data, np.zeros((7, data.shape[1])), axis=0)
 
+    old_to_new_counties = {
+        3159: [3152, 3156],
+        13071: [13056, 13002, 13055, 13052],
+        13072: [13051, 13053],
+        13073: [13061, 13005, 13057],
+        13074: [13006, 13058],
+        13075: [13059, 13062, 13001],
+        13076: [13054, 13060]}
+
+    no_data_avail = []
+    for new_county in old_to_new_counties.keys():
+        if not all(item in data_temp[:, 0]
+                   for item in old_to_new_counties[new_county]):
+            no_data_avail.append(new_county)
+
     # Göttingen
     data_temp[-7, 0] = 3159
 
@@ -74,47 +89,51 @@ def get_new_counties(data):
 
     for i in range(len(data_temp[:, 0])):
         # fuse "Göttingen" and "Osterode am Harz" into Göttingen
-        if data_temp[i, 0] in [3152, 3156]:
+        if data_temp[i, 0] in old_to_new_counties[3159]:
             data_temp[-7, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Müritz", "Neubrandenburg", "Mecklenburg-Sterlitz"
         # and "Demmin" into "Mecklenburgische Seenplatte"
-        if data_temp[i, 0] in [13056, 13002, 13055, 13052]:
+        if data_temp[i, 0] in old_to_new_counties[13071]:
             data_temp[-6, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Bad Doberan and Güstrow" into "Landkreis Rostosck"
-        if data_temp[i, 0] in [13051, 13053]:
+        if data_temp[i, 0] in old_to_new_counties[13072]:
             data_temp[-5, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Rügen", "Stralsund" and "Nordvorpommern" into
         # "Vorpommern Rügen"
-        if data_temp[i, 0] in [13061, 13005, 13057]:
+        if data_temp[i, 0] in old_to_new_counties[13073]:
             data_temp[-4, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Wismar" and "Nordwestmecklenburg" into
         # "Nordwestmecklenburg"
-        if data_temp[i, 0] in [13006, 13058]:
+        if data_temp[i, 0] in old_to_new_counties[13074]:
             data_temp[-3, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Ostvorpommern", "Uecker-Randow" and "Greifswald"
         # into "Vorpommern Greifswald"
-        if data_temp[i, 0] in [13059, 13062, 13001]:
+        if data_temp[i, 0] in old_to_new_counties[13075]:
             data_temp[-2, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Ludwigslust" and "Parchim" into "Ludwigslust-Parchim"
-        if data_temp[i, 0] in [13054, 13060]:
+        if data_temp[i, 0] in old_to_new_counties[13076]:
             data_temp[-1, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
     data_temp = np.delete(data_temp, to_delete, 0)
     sorted_inds = np.argsort(data_temp[:, 0])
     data_temp = data_temp[sorted_inds, :]
+    # potentially remove new counties if there was no data available
+    for county in no_data_avail:
+        data_temp = np.delete(arr=data_temp, obj=np.where(
+            data_temp[:, 0] == county)[0][0], axis=0)
     return data_temp
 
 

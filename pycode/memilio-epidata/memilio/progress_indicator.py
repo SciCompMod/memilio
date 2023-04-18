@@ -24,6 +24,7 @@ from shutil import get_terminal_size
 from warnings import warn
 from os import name as os_name
 
+
 class ProgressIndicator:
     """! Print an animation to show that something is happening.
 
@@ -66,14 +67,14 @@ class ProgressIndicator:
             of the animation should be forced to fit in a single line. Can be
             usefull for long, line filling animations.
         """
-        assert(delay > 0)
+        assert (delay > 0)
         self._message = message
         self._animator = animator
         self._delay = delay
         self._thread = None
-        self._enabled = False # whether _thread is running
+        self._enabled = False  # whether _thread is running
         self._auto_adjust = auto_adjust
-        self._space = 0 # free space in a line, set by _adjust_to_terminal_size
+        self._space = 0  # free space in a line, set by _adjust_to_terminal_size
         self._frame = ""
 
         self._adjust_to_terminal_size()
@@ -99,7 +100,7 @@ class ProgressIndicator:
 
     @staticmethod
     def _console_setup():
-        if os_name == 'nt': # os name can be nt, posix, or java
+        if os_name == 'nt':  # os name can be nt, posix, or java
             # Windows uses nt, which does not support carriage returns by
             # default. the following Windows specific module should fix this.
             try:
@@ -114,7 +115,7 @@ class ProgressIndicator:
             except (ImportError):
                 msg = "Failed to set console mode for 'nt' system (e.g."\
                       " Windows). ProgressIndicator(s) may be displayed"\
-                      " incorrectly." 
+                      " incorrectly."
                 warn(msg, category=RuntimeWarning, stacklevel=2)
 
     def _adjust_to_terminal_size(self, reserve=0):
@@ -153,7 +154,7 @@ class ProgressIndicator:
     def show(self):
         """! Print the animation without advancing it."""
         # prepend a space to fit the cursor
-        sys.stdout.write(" {}{}\r".format(self._message, self._frame))
+        sys.stdout.write(f" {self._message}{self._frame}\r")
         sys.stdout.flush()
 
     def step(self):
@@ -170,7 +171,7 @@ class ProgressIndicator:
             self._enabled = True
             # start new threat to render the animator in the background
             self._thread = threading.Thread(target=self._render)
-            self._thread.daemon = True # stops thread on main thread exit
+            self._thread.daemon = True  # stops thread on main thread exit
             self._thread.start()
 
     def stop(self):
@@ -179,10 +180,12 @@ class ProgressIndicator:
             self._enabled = False
             if self._thread and self._thread.is_alive():
                 self._thread.join()
-            sys.stdout.write("\033[K") # clear line
+            sys.stdout.write("\033[K")  # clear line
+
 
 class Spinner(ProgressIndicator):
     """! Subclass of ProgressIndicator with a predefined animation. """
+
     def __init__(self, delay=0.1, message=""):
         """! initializes a ProgressIndicator with a rotating line animation.
 
@@ -195,13 +198,14 @@ class Spinner(ProgressIndicator):
         @param message [Default: ""] string. Text shown before the indicator.
         """
         def _spin():
-            while True: # loop animation
-                for s in "|/-\\": # iterate animation frames
-                    yield s # return single frame
+            while True:  # loop animation
+                yield from "|/-\\"
         super().__init__(message + " ", _spin(), delay)
+
 
 class Dots(ProgressIndicator):
     """! Subclass of ProgressIndicator with a predefined animation. """
+
     def __init__(self, delay=1, message="", num_dots=3, dot=".", blank=" "):
         """! initializes ProgressIndicator with a 'dot, dot, dot' animation.
 
@@ -218,19 +222,22 @@ class Dots(ProgressIndicator):
         @param blank [Default: " "] string. Placeholder for yet to be drawn
             dots. Must have same length as dot.
         """
-        assert(len(dot) == len(blank))
-        assert(num_dots > 0)
+        assert (len(dot) == len(blank))
+        assert (num_dots > 0)
+
         def _dots():
-            while True: # loop animation
-                for n in range(1, num_dots+1): # iterate animation frames
+            while True:  # loop animation
+                for n in range(1, num_dots+1):  # iterate animation frames
                     # return single frame
-                    yield "{}{}".format(dot*n, blank*(num_dots-n))
+                    yield f"{dot*n}{blank*(num_dots-n)}"
         super().__init__(message + " ", _dots(), delay)
+
 
 class Percentage(ProgressIndicator):
     """! Manages a ProgressIndicator with a predefined animation. """
+
     def __init__(self, delay=1, message="", percentage=0, use_bar=True,
-            keep_output=True):
+                 keep_output=True):
         """! initializes ProgressIndicator displaying a percentage.
 
         The percentage can be updated using the `set_progress` method.
@@ -252,15 +259,16 @@ class Percentage(ProgressIndicator):
         """
         if delay == 0:
             self._use_thread = False
-            delay = 1 # arbitrary, will not be used outside of init
+            delay = 1  # arbitrary, will not be used outside of init
         else:
             self._use_thread = True
         self._keep_output = keep_output
         self._use_bar = use_bar
         self._progress = percentage
+
         def _perc():
             while True:
-                yield "{:6.2f}%".format(100*self._progress)
+                yield f"{100*self._progress:6.2f}%"
         super().__init__(message + " ", _perc(), delay, use_bar)
 
     def _advance(self):
@@ -274,7 +282,7 @@ class Percentage(ProgressIndicator):
 
     def start(self):
         """! Start the animation. Must call stop() afterwards.
-        
+
         If delay > 0, this method spawns a new thread.
         """
         if self._use_thread:
@@ -285,11 +293,11 @@ class Percentage(ProgressIndicator):
         if self._use_thread:
             self.step()
         if self._keep_output:
-            sys.stdout.write("\n") # newline to 'save' output
+            sys.stdout.write("\n")  # newline to 'save' output
         if self._use_thread:
             super().stop()
         else:
-            sys.stdout.write("\033[K") # clear line
+            sys.stdout.write("\033[K")  # clear line
 
     def set_progress(self, percentage):
         """! Updates the percentage shown by the indicator.
@@ -308,7 +316,7 @@ class Percentage(ProgressIndicator):
         @param percentage Float in [0,1].
         @return String of length width, visualizing percentage.
         """
-        w = width - 3 # 3 == len("[] ")
+        w = width - 3  # 3 == len("[] ")
         n = int(w * percentage)
         return "[" + "#" * n + " " * (w - n) + "] "
 
@@ -326,7 +334,7 @@ if __name__ == "__main__":
             time.sleep(0.1467)
             p.set_progress((i+1)/13)
     with Percentage(message="download 2", use_bar=False,
-            delay=0, keep_output=False) as p:
+                    delay=0, keep_output=False) as p:
         for i in range(97):
             time.sleep(0.0367)
             p.set_progress((i+1)/97)
