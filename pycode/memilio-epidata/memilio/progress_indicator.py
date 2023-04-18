@@ -324,25 +324,3 @@ class Percentage(ProgressIndicator):
         w = width - 3  # 3 == len("[] ")
         n = int(w * percentage)
         return "[" + "#" * n + " " * (w - n) + "] "
-
-
-if __name__ == "__main__":
-    print("This is only a usage example, and does not actually do anything.")
-    # using start/stop
-    p = Dots(message="waiting", delay=0.5)
-    p.start()
-    time.sleep(1.6)
-    p.stop()
-    # using with as block
-    with Percentage(message="download 1", delay=0.4) as p:
-        for i in range(13):
-            time.sleep(0.1467)
-            p.set_progress((i+1)/13)
-    with Percentage(message="download 2", use_bar=False,
-                    delay=0, keep_output=False) as p:
-        for i in range(97):
-            time.sleep(0.0367)
-            p.set_progress((i+1)/97)
-    # using with block ('as' is not usefull without Percentage)
-    with Spinner(message="finish"):
-        time.sleep(2)
