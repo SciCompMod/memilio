@@ -79,8 +79,7 @@ public:
      * @param global_params the global simulation parameters
      * @param person_id index of the person
      */
-    Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
-           const SimulationParameters& global_params,
+    Person(LocationId id, InfectionProperties infection_properties, AgeGroup age, const Parameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
@@ -91,8 +90,7 @@ public:
      * @param global_params the global simulation parameters
      * @param person_id index of the person
      */
-    Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
-           const SimulationParameters& global_params,
+    Person(Location& location, InfectionProperties infection_properties, AgeGroup age, const Parameters& global_params,
            VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /** 
@@ -101,7 +99,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_parameters simulation parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const SimulationParameters& global_parameters, Location& loc);
+    void interact(TimeSpan dt, const Parameters& global_parameters, Location& loc);
 
     /** 
      * migrate to a different location.
@@ -204,7 +202,7 @@ public:
      * lockdown.
      * @return if the person works from home
      */
-    bool goes_to_work(TimePoint t, const SimulationParameters& params) const;
+    bool goes_to_work(TimePoint t, const Parameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -212,14 +210,14 @@ public:
      * Depending on this number person decides what time has to go to work;
      * @return the time of going to work
      */
-    TimeSpan get_go_to_work_time(const SimulationParameters& params) const;
+    TimeSpan get_go_to_work_time(const Parameters& params) const;
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
-    bool goes_to_school(TimePoint t, const SimulationParameters& params) const;
+    bool goes_to_school(TimePoint t, const Parameters& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -227,7 +225,7 @@ public:
      * Depending on this number person decides what time has to go to school;
      * @return the time of going to school
      */
-    TimeSpan get_go_to_school_time(const SimulationParameters& params) const;
+    TimeSpan get_go_to_school_time(const Parameters& params) const;
 
     /**
      * Answers the question if a person is currently in quarantine.
@@ -277,7 +275,7 @@ public:
      * @brief Get the protection of the Mask.
      * A value of 1 represents full protection and a value of 0 means no protection.
      */
-    double get_protective_factor(const SimulationParameters& params) const;
+    double get_protective_factor(const Parameters& params) const;
 
     /**
      * @brief For every LocationType a Person has a compliance value between -1 and 1.

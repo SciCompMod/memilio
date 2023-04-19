@@ -26,10 +26,10 @@
 TEST(TestHouseholds, test_add_household_to_world)
 {
     auto member1 = mio::abm::HouseholdMember(6);
-    member1.set_age_weight(AGE_0_TO_4, 1);
+    member1.set_age_weight(AGE_GROUP_0_TO_4, 1);
 
     auto member2 = mio::abm::HouseholdMember(6);
-    member2.set_age_weight(AGE_5_TO_14, 1);
+    member2.set_age_weight(AGE_GROUP_5_TO_15, 1);
 
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
@@ -44,10 +44,10 @@ TEST(TestHouseholds, test_add_household_to_world)
     EXPECT_EQ(persons.size(), 4);
 
     // Test age
-    EXPECT_EQ(persons[0].get_age(), AGE_0_TO_4);
-    EXPECT_EQ(persons[1].get_age(), AGE_0_TO_4);
-    EXPECT_EQ(persons[2].get_age(), AGE_5_TO_14);
-    EXPECT_EQ(persons[3].get_age(), AGE_5_TO_14);
+    EXPECT_EQ(persons[0].get_age(), AGE_GROUP_0_TO_4);
+    EXPECT_EQ(persons[1].get_age(), AGE_GROUP_0_TO_4);
+    EXPECT_EQ(persons[2].get_age(), AGE_GROUP_5_TO_15);
+    EXPECT_EQ(persons[3].get_age(), AGE_GROUP_5_TO_15);
 
     // Test location
     EXPECT_EQ(persons[0].get_location_id().index, persons[1].get_location_id().index);
@@ -58,10 +58,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
 {
 
     auto member1 = mio::abm::HouseholdMember(6);
-    member1.set_age_weight(AGE_35_TO_59, 1);
+    member1.set_age_weight(AGE_GROUP_35_TO_59, 1);
 
     auto member2 = mio::abm::HouseholdMember(6);
-    member2.set_age_weight(AGE_5_TO_14, 1);
+    member2.set_age_weight(AGE_GROUP_5_TO_15, 1);
 
     auto household_group = mio::abm::HouseholdGroup();
 
@@ -87,10 +87,10 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
 
     for (auto& person : persons) {
-        if (person.get_age() == AGE_5_TO_14) {
+        if (person.get_age() == AGE_GROUP_5_TO_15) {
             number_of_age5to14_year_olds++;
         }
-        if (person.get_age() == AGE_35_TO_59) {
+        if (person.get_age() == AGE_GROUP_35_TO_59) {
             number_of_age35to59_year_olds++;
         }
     }

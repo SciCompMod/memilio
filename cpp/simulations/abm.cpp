@@ -30,12 +30,12 @@
 namespace fs = boost::filesystem;
 
 // Assign the name to general age group.
-const auto AGE_0_TO_4   = mio::AgeGroup(0);
-const auto AGE_5_TO_14  = mio::AgeGroup(1);
-const auto AGE_15_TO_34 = mio::AgeGroup(2);
-const auto AGE_35_TO_59 = mio::AgeGroup(3);
-const auto AGE_60_TO_79 = mio::AgeGroup(4);
-const auto AGE_80_UP    = mio::AgeGroup(5);
+const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
+const auto AGE_GROUP_5_TO_15  = mio::AgeGroup(1);
+const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
+const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(4);
+const auto AGE_GROUP_80_UP    = mio::AgeGroup(5);
 
 /**
  * Set a value and distribution of an UncertainValue.
@@ -184,12 +184,12 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // Refugee
     auto refugee = mio::abm::HouseholdMember(6);
-    refugee.set_age_weight(AGE_0_TO_4, 25);
-    refugee.set_age_weight(AGE_5_TO_14, 12);
-    refugee.set_age_weight(AGE_15_TO_34, 25);
-    refugee.set_age_weight(AGE_35_TO_59, 9);
-    refugee.set_age_weight(AGE_60_TO_79, 1);
-    refugee.set_age_weight(AGE_80_UP, 1);
+    refugee.set_age_weight(AGE_GROUP_0_TO_4, 25);
+    refugee.set_age_weight(AGE_GROUP_5_TO_15, 12);
+    refugee.set_age_weight(AGE_GROUP_15_TO_34, 25);
+    refugee.set_age_weight(AGE_GROUP_35_TO_59, 9);
+    refugee.set_age_weight(AGE_GROUP_60_TO_79, 1);
+    refugee.set_age_weight(AGE_GROUP_80_UP, 1);
     int refugee_number_of_people     = 74;
     int refugee_number_of_households = 12;
     auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
@@ -198,12 +198,12 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // Disabled
     auto disabled = mio::abm::HouseholdMember(6);
-    disabled.set_age_weight(AGE_0_TO_4, 2);
-    disabled.set_age_weight(AGE_5_TO_14, 6);
-    disabled.set_age_weight(AGE_15_TO_34, 13);
-    disabled.set_age_weight(AGE_35_TO_59, 42);
-    disabled.set_age_weight(AGE_60_TO_79, 97);
-    disabled.set_age_weight(AGE_80_UP, 32);
+    disabled.set_age_weight(AGE_GROUP_0_TO_4, 2);
+    disabled.set_age_weight(AGE_GROUP_5_TO_15, 6);
+    disabled.set_age_weight(AGE_GROUP_15_TO_34, 13);
+    disabled.set_age_weight(AGE_GROUP_35_TO_59, 42);
+    disabled.set_age_weight(AGE_GROUP_60_TO_79, 97);
+    disabled.set_age_weight(AGE_GROUP_80_UP, 32);
     int disabled_number_of_people     = 194;
     int disabled_number_of_households = 8;
 
@@ -213,10 +213,10 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // Retirement
     auto retired = mio::abm::HouseholdMember(6);
-    retired.set_age_weight(AGE_15_TO_34, 1);
-    retired.set_age_weight(AGE_35_TO_59, 30);
-    retired.set_age_weight(AGE_60_TO_79, 185);
-    retired.set_age_weight(AGE_80_UP, 530);
+    retired.set_age_weight(AGE_GROUP_15_TO_34, 1);
+    retired.set_age_weight(AGE_GROUP_35_TO_59, 30);
+    retired.set_age_weight(AGE_GROUP_60_TO_79, 185);
+    retired.set_age_weight(AGE_GROUP_80_UP, 530);
     int retirement_number_of_people     = 744;
     int retirement_number_of_households = 16;
 
@@ -227,12 +227,12 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // Others
     auto other = mio::abm::HouseholdMember(6);
-    other.set_age_weight(AGE_0_TO_4, 30);
-    other.set_age_weight(AGE_5_TO_14, 40);
-    other.set_age_weight(AGE_15_TO_34, 72);
-    other.set_age_weight(AGE_35_TO_59, 40);
-    other.set_age_weight(AGE_60_TO_79, 30);
-    other.set_age_weight(AGE_80_UP, 10);
+    other.set_age_weight(AGE_GROUP_0_TO_4, 30);
+    other.set_age_weight(AGE_GROUP_5_TO_15, 40);
+    other.set_age_weight(AGE_GROUP_15_TO_34, 72);
+    other.set_age_weight(AGE_GROUP_35_TO_59, 40);
+    other.set_age_weight(AGE_GROUP_60_TO_79, 30);
+    other.set_age_weight(AGE_GROUP_80_UP, 10);
     int others_number_of_people     = 222;
     int others_number_of_households = 20;
 
@@ -242,10 +242,10 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // One Person Household (we have exact age data about this)
     auto one_person_household_member = mio::abm::HouseholdMember(6);
-    one_person_household_member.set_age_weight(AGE_15_TO_34, 4364);
-    one_person_household_member.set_age_weight(AGE_35_TO_59, 7283);
-    one_person_household_member.set_age_weight(AGE_60_TO_79, 4100);
-    one_person_household_member.set_age_weight(AGE_80_UP, 1800);
+    one_person_household_member.set_age_weight(AGE_GROUP_15_TO_34, 4364);
+    one_person_household_member.set_age_weight(AGE_GROUP_35_TO_59, 7283);
+    one_person_household_member.set_age_weight(AGE_GROUP_60_TO_79, 4100);
+    one_person_household_member.set_age_weight(AGE_GROUP_80_UP, 1800);
     int one_person_number_of_people     = 15387;
     int one_person_number_of_households = 15387;
 
@@ -256,21 +256,21 @@ void create_world_from_statistical_data(mio::abm::World& world)
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.
-    child.set_age_weight(AGE_0_TO_4, 1);
-    child.set_age_weight(AGE_5_TO_14, 1);
+    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
+    child.set_age_weight(AGE_GROUP_5_TO_15, 1);
 
     auto parent = mio::abm::HouseholdMember(6); // A child is 40/40/20% 15-34, 35-59 or 60-79.
-    parent.set_age_weight(AGE_15_TO_34, 2);
-    parent.set_age_weight(AGE_35_TO_59, 2);
-    parent.set_age_weight(AGE_60_TO_79, 1);
+    parent.set_age_weight(AGE_GROUP_15_TO_34, 2);
+    parent.set_age_weight(AGE_GROUP_35_TO_59, 2);
+    parent.set_age_weight(AGE_GROUP_60_TO_79, 1);
 
     auto random = mio::abm::HouseholdMember(6); // Randoms are distributed according to the left over persons.
-    random.set_age_weight(AGE_0_TO_4, 5000);
-    random.set_age_weight(AGE_5_TO_14, 6000);
-    random.set_age_weight(AGE_15_TO_34, 14943);
-    random.set_age_weight(AGE_35_TO_59, 22259);
-    random.set_age_weight(AGE_60_TO_79, 11998);
-    random.set_age_weight(AGE_80_UP, 5038);
+    random.set_age_weight(AGE_GROUP_0_TO_4, 5000);
+    random.set_age_weight(AGE_GROUP_5_TO_15, 6000);
+    random.set_age_weight(AGE_GROUP_15_TO_34, 14943);
+    random.set_age_weight(AGE_GROUP_35_TO_59, 22259);
+    random.set_age_weight(AGE_GROUP_60_TO_79, 11998);
+    random.set_age_weight(AGE_GROUP_80_UP, 5038);
 
     // Two person households
     int two_person_full_families  = 11850;
@@ -387,11 +387,11 @@ void create_assign_locations(mio::abm::World& world)
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == AGE_5_TO_14) {
+        if (person.get_age() == AGE_GROUP_5_TO_15) {
             person.set_assigned_location(school);
             counter_school++;
         }
-        if (person.get_age() == AGE_15_TO_34 || person.get_age() == AGE_35_TO_59) {
+        if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
             person.set_assigned_location(work);
             counter_work++;
         }
@@ -456,190 +456,210 @@ void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, Scal
     }
 }
 
-void set_parameters(mio::abm::SimulationParameters params)
+void set_parameters(mio::abm::Parameters params)
 {
     params.set<mio::abm::IncubationPeriod>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 4.});
 
     //0-4
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] =
         0.05;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] =
         0.05;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]      = 0.276;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]     = 0.092;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]    = 0.142;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]       = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]      = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]       = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]    = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]         = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]   = 0.276;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]  = 0.092;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] = 0.142;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]   = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}]      = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //5-14
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}] =
         0.1;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}] =
-        0.1;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]      = 0.276;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]     = 0.092;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]    = 0.142;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]       = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]      = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]       = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]    = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}]         = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_5_TO_14, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_5_TO_15,
+                                                            mio::abm::VaccinationState::Unvaccinated}]         = 0.1;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]   = 0.276;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]  = 0.092;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}] = 0.142;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]   = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]    = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}] = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}]      = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //15-34
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] =
-        0.13;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] =
-        0.13;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]      = 0.315;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]     = 0.079;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]    = 0.139;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]       = 0.003;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]      = 0.157;
-    params.get<mio::abm::SevereToCritical>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]       = 0.013;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]    = 0.126;
-    params.get<mio::abm::CriticalToDead>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]         = 0.021;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_15_TO_34,
+                                                           mio::abm::VaccinationState::Unvaccinated}]           = 0.13;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_15_TO_34,
+                                                            mio::abm::VaccinationState::Unvaccinated}]          = 0.13;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]   = 0.315;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]  = 0.079;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] = 0.139;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]    = 0.003;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]   = 0.157;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]    = 0.013;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] = 0.126;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}]      = 0.021;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //35-59
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] =
-        0.11;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] =
-        0.11;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]      = 0.315;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]     = 0.079;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]    = 0.136;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]       = 0.009;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]      = 0.113;
-    params.get<mio::abm::SevereToCritical>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]       = 0.02;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]    = 0.05;
-    params.get<mio::abm::CriticalToDead>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]         = 0.008;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_35_TO_59,
+                                                           mio::abm::VaccinationState::Unvaccinated}]           = 0.11;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_35_TO_59,
+                                                            mio::abm::VaccinationState::Unvaccinated}]          = 0.11;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]   = 0.315;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]  = 0.079;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] = 0.136;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]    = 0.009;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]   = 0.113;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]    = 0.02;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] = 0.05;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}]      = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //60-79
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] =
-        0.04;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] =
-        0.04;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]      = 0.315;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]     = 0.079;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]    = 0.123;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]       = 0.024;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]      = 0.083;
-    params.get<mio::abm::SevereToCritical>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]       = 0.035;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]    = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]         = 0.023;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_60_TO_79,
+                                                           mio::abm::VaccinationState::Unvaccinated}]           = 0.04;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_60_TO_79,
+                                                            mio::abm::VaccinationState::Unvaccinated}]          = 0.04;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]   = 0.315;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]  = 0.079;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] = 0.123;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]    = 0.024;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]   = 0.083;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]    = 0.035;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}]      = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     //80+
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}] = 0.07;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}] =
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}] =
         0.07;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]      = 0.315;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]     = 0.079;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]    = 0.115;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]       = 0.033;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]      = 0.055;
-    params.get<mio::abm::SevereToCritical>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]       = 0.036;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]    = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}]         = 0.052;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_80_UP, mio::abm::VaccinationState::Unvaccinated}] = 0.;
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}] =
+        0.07;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]      = 0.315;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]     = 0.079;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]    = 0.115;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]       = 0.033;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]      = 0.055;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]       = 0.036;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]    = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}]         = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Unvaccinated}] = 0.;
 
     // Set each parameter for vaccinated people
 
     //0-4
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]  = 0.01;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}] = 0.01;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]      = 0.161;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]     = 0.132;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]       = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]      = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]       = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}]         = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_0_TO_4, mio::abm::VaccinationState::Vaccinated}] = 0.0;
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}] =
+        0.01;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}] =
+        0.01;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]      = 0.161;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]     = 0.132;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]       = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]      = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]       = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}]         = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_0_TO_4, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     //5-14
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}] = 0.03;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}] =
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}] =
         0.03;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]      = 0.161;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]     = 0.132;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]       = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]      = 0.186;
-    params.get<mio::abm::SevereToCritical>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]       = 0.015;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
-    params.get<mio::abm::CriticalToDead>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}]         = 0.001;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_5_TO_14, mio::abm::VaccinationState::Vaccinated}] = 0.0;
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}] =
+        0.03;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]      = 0.161;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]     = 0.132;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]       = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]      = 0.186;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]       = 0.015;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]    = 0.143;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}]         = 0.001;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_5_TO_15, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     //15-34
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}] =
         0.03;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}] =
         0.03;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]      = 0.179;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]     = 0.126;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]    = 0.142;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]       = 0.001;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]      = 0.157;
-    params.get<mio::abm::SevereToCritical>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]       = 0.013;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]    = 0.126;
-    params.get<mio::abm::CriticalToDead>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}]         = 0.021;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_15_TO_34, mio::abm::VaccinationState::Vaccinated}] = 0.0;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]   = 0.179;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]  = 0.126;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}] = 0.142;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]    = 0.001;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]   = 0.157;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]    = 0.013;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}] = 0.126;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}]      = 0.021;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_15_TO_34, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     //35-59
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}] =
         0.03;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}] =
         0.03;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]      = 0.179;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]     = 0.126;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]    = 0.141;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]       = 0.003;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]      = 0.113;
-    params.get<mio::abm::SevereToCritical>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]       = 0.02;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]    = 0.05;
-    params.get<mio::abm::CriticalToDead>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}]         = 0.008;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_35_TO_59, mio::abm::VaccinationState::Vaccinated}] = 0.0;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]   = 0.179;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]  = 0.126;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}] = 0.141;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]    = 0.003;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]   = 0.113;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]    = 0.02;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}] = 0.05;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}]      = 0.008;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_35_TO_59, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     //60-79
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}] =
         0.01;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}] =
+    params
+        .get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}] =
         0.01;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]      = 0.179;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]     = 0.126;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]    = 0.136;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]       = 0.009;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]      = 0.083;
-    params.get<mio::abm::SevereToCritical>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]       = 0.035;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]    = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}]         = 0.023;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_60_TO_79, mio::abm::VaccinationState::Vaccinated}] = 0.0;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]   = 0.179;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]  = 0.126;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}] = 0.136;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]    = 0.009;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]   = 0.083;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]    = 0.035;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}] = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}]      = 0.023;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_60_TO_79, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
     //80+
-    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]  = 0.02;
-    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}] = 0.02;
-    params.get<mio::abm::CarrierToInfected>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]              = 0.179;
-    params.get<mio::abm::CarrierToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]             = 0.126;
-    params.get<mio::abm::InfectedToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]            = 0.133;
-    params.get<mio::abm::InfectedToSevere>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]               = 0.012;
-    params.get<mio::abm::SevereToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]              = 0.055;
-    params.get<mio::abm::SevereToCritical>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]               = 0.036;
-    params.get<mio::abm::CriticalToRecovered>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]            = 0.035;
-    params.get<mio::abm::CriticalToDead>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]                 = 0.052;
-    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_80_UP, mio::abm::VaccinationState::Vaccinated}]         = 0.0;
+    params.get<mio::abm::SusceptibleToExposedByCarrier>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}] =
+        0.02;
+    params.get<mio::abm::SusceptibleToExposedByInfected>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}] =
+        0.02;
+    params.get<mio::abm::CarrierToInfected>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]      = 0.179;
+    params.get<mio::abm::CarrierToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]     = 0.126;
+    params.get<mio::abm::InfectedToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]    = 0.133;
+    params.get<mio::abm::InfectedToSevere>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]       = 0.012;
+    params.get<mio::abm::SevereToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]      = 0.055;
+    params.get<mio::abm::SevereToCritical>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]       = 0.036;
+    params.get<mio::abm::CriticalToRecovered>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]    = 0.035;
+    params.get<mio::abm::CriticalToDead>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}]         = 0.052;
+    params.get<mio::abm::RecoveredToSusceptible>()[{AGE_GROUP_80_UP, mio::abm::VaccinationState::Vaccinated}] = 0.0;
 
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_5_TO_14};
-    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_15_TO_34, AGE_35_TO_59};
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14).
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59).
+    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+
+    // Check if the parameters satisfy their contraints.
+    params.check_constraints();
 }
 
 /**

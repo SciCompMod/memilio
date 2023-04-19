@@ -428,7 +428,7 @@ struct AgeGroupGotoSchool {
     using Type = std::set<AgeGroup>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return std::set<AgeGroup>{};
+        return std::set<AgeGroup>{AgeGroup(1)};
     }
     static std::string name()
     {
@@ -443,7 +443,7 @@ struct AgeGroupGotoWork {
     using Type = std::set<AgeGroup>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return std::set<AgeGroup>{};
+        return std::set<AgeGroup>{AgeGroup(2), AgeGroup(3)};
     }
     static std::string name()
     {
@@ -451,25 +451,22 @@ struct AgeGroupGotoWork {
     }
 };
 
+using ParametersBase =
+    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
+                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, MaskProtection,
+                 LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool,
+                 AgeGroupGotoWork>;
+
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
  */
-class SimulationParameters
-    : public ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected,
-                          CarrierToInfected, CarrierToRecovered, InfectedToRecovered, InfectedToSevere,
-                          SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                          RecoveredToSusceptible, DetectInfection, MaskProtection, LockdownDate, SocialEventRate,
-                          BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
-                          GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>
+class Parameters : public ParametersBase
 {
 public:
-    SimulationParameters(size_t num_agegroups)
-        : ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected,
-                       CarrierToInfected, CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical,
-                       SevereToRecovered, CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection,
-                       MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                       GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
-                       AgeGroupGotoSchool, AgeGroupGotoWork>(AgeGroup(num_agegroups))
+    Parameters(size_t num_agegroups)
+        : ParametersBase(AgeGroup(num_agegroups))
         , m_num_groups(num_agegroups)
     {
     }
@@ -480,6 +477,161 @@ public:
     size_t get_num_groups() const
     {
         return m_num_groups;
+    }
+
+    /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * if constraints are not satisfied.
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     */
+    int check_constraints() const
+    {
+        for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
+
+            if (this->get<IncubationPeriod>()[{i, VaccinationState::Count}] < 0) {
+                log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller {:.4f}", (size_t)i,
+                          0);
+                return 1;
+            }
+
+            if (this->get<SusceptibleToExposedByCarrier>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<SusceptibleToExposedByCarrier>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error(
+                    "Constraint check: Parameter SusceptibleToExposedByCarrier of age group {:.0f} smaller {:d} or "
+                    "larger {:d}",
+                    (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<SusceptibleToExposedByInfected>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<SusceptibleToExposedByInfected>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error(
+                    "Constraint check: Parameter SusceptibleToExposedByInfected of age group {:.0f} smaller {:d} or "
+                    "larger {:d}",
+                    (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<CarrierToInfected>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<CarrierToInfected>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter CarrierToInfected of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<CarrierToRecovered>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<CarrierToRecovered>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter CarrierToInfected of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<InfectedToRecovered>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<InfectedToRecovered>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter InfectedToRecovered of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<InfectedToSevere>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<InfectedToSevere>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter InfectedToSevere of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<SevereToCritical>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<SevereToCritical>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<SevereToRecovered>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<SevereToRecovered>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<CriticalToDead>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<CriticalToDead>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<CriticalToRecovered>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<CriticalToRecovered>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<RecoveredToSusceptible>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<RecoveredToSusceptible>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<DetectInfection>()[{i, VaccinationState::Count}] < 0.0 ||
+                this->get<DetectInfection>()[{i, VaccinationState::Count}] > 1.0) {
+                log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, 1);
+                return 1;
+            }
+
+            if (this->get<GotoWorkTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoWorkTimeMinimum>()[i].seconds() > this->get<GotoWorkTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoWorkTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
+                return 1;
+            }
+
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d}", (size_t)i,
+                          this->get<GotoWorkTimeMinimum>()[i].seconds());
+                return 1;
+            }
+
+            if (this->get<GotoSchoolTimeMinimum>()[i].seconds() < 0.0 ||
+                this->get<GotoSchoolTimeMinimum>()[i].seconds() > this->get<GotoSchoolTimeMaximum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoSchoolTimeMinimum of age group {:.0f} smaller {:d} or "
+                          "larger {:d}",
+                          (size_t)i, 0, this->get<GotoWorkTimeMaximum>()[i].seconds());
+                return 1;
+            }
+
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds()) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d}", (size_t)i,
+                          this->get<GotoSchoolTimeMinimum>()[i].seconds());
+                return 1;
+            }
+        }
+
+        if (this->get<MaskProtection>()[MaskType::Count] < 0.0 || this->get<MaskProtection>()[MaskType::Count] > 1.0) {
+            log_error("Constraint check: Parameter MaskProtection smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<LockdownDate>().seconds() < 0.0) {
+            log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
+            return 1;
+        }
+
+        return 0;
     }
 
 private:

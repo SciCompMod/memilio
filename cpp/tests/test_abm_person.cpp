@@ -30,8 +30,7 @@ TEST(TestPerson, init)
         mock_uniform_int_dist;
     EXPECT_CALL(mock_uniform_int_dist.get_mock(), invoke).Times(testing::AtLeast(1)).WillRepeatedly(Return(0));
 
-    auto person =
-        mio::abm::Person(location, mio::abm::InfectionState::Exposed, AGE_60_TO_79, mio::abm::SimulationParameters(6));
+    auto person = mio::abm::Person(location, mio::abm::InfectionState::Exposed, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
     location.add_person(person);
 
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Exposed);
@@ -39,23 +38,23 @@ TEST(TestPerson, init)
     ASSERT_EQ(person.get_location_id().type, location.get_type());
     ASSERT_EQ(person.get_person_id(), mio::abm::INVALID_PERSON_ID);
 
-    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, AGE_60_TO_79,
-                                    mio::abm::SimulationParameters(6), mio::abm::VaccinationState::Unvaccinated, 0);
+    auto person2 = mio::abm::Person(location, mio::abm::InfectionState::Exposed, AGE_GROUP_60_TO_79, mio::abm::Parameters(6),
+                                    mio::abm::VaccinationState::Unvaccinated, 0);
     ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::abm::TimeSpan dt = mio::abm::hours(1);
-    person.interact(dt, mio::abm::SimulationParameters(6), location);
+    person.interact(dt, mio::abm::Parameters(6), location);
     ASSERT_EQ(person.get_infection_state(), mio::abm::InfectionState::Carrier);
 }
 
 TEST(TestPerson, migrate)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
-    auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 1);
-    auto loc2   = mio::abm::Location(mio::abm::LocationType::School, 0, 6, 0);
-    auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
-    auto person = mio::abm::Person(home, mio::abm::InfectionState::Recovered_Carrier, AGE_0_TO_4,
-                                   mio::abm::SimulationParameters(6));
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6, 0);
+    auto loc1 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 1);
+    auto loc2 = mio::abm::Location(mio::abm::LocationType::School, 0, 6, 0);
+    auto loc3 = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 6, 2);
+    auto person =
+        mio::abm::Person(home, mio::abm::InfectionState::Recovered_Carrier, AGE_GROUP_0_TO_4, mio::abm::Parameters(6));
     home.add_person(person);
     person.migrate_to(home, loc1, {0});
 
@@ -85,8 +84,8 @@ TEST(TestPerson, migrate)
 TEST(TestPerson, setGetAssignedLocation)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 2, 6);
-    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Recovered_Carrier, AGE_60_TO_79,
-                                     mio::abm::SimulationParameters(6));
+    auto person =
+        mio::abm::Person(location, mio::abm::InfectionState::Recovered_Carrier, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
     person.set_assigned_location(location);
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
 
@@ -98,7 +97,7 @@ TEST(TestPerson, quarantine)
 {
     using testing::Return;
 
-    auto infection_parameters = mio::abm::SimulationParameters(6);
+    auto infection_parameters = mio::abm::Parameters(6);
     auto home                 = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto work                 = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
 
@@ -111,15 +110,15 @@ TEST(TestPerson, quarantine)
         .WillRepeatedly(testing::Return(1.0));
 
     auto person = mio::abm::Person(home, mio::abm::InfectionProperties(mio::abm::InfectionState::Infected, true),
-                                   AGE_15_TO_34, infection_parameters);
+                                   AGE_GROUP_15_TO_34, infection_parameters);
     home.add_person(person);
-    auto t_morning                        = mio::abm::TimePoint(0) + mio::abm::hours(7);
-    auto dt                               = mio::abm::hours(1);
-    mio::abm::SimulationParameters params = mio::abm::SimulationParameters(6);
+    auto t_morning              = mio::abm::TimePoint(0) + mio::abm::hours(7);
+    auto dt                     = mio::abm::hours(1);
+    mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_5_TO_14};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_15_TO_34, AGE_35_TO_59};
+    params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
     ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, params), mio::abm::LocationType::Home);
     //setup rng mock so the person has a state transition to Recovered_Infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -138,9 +137,9 @@ TEST(TestPerson, get_tested)
 
     auto loc = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto infected =
-        mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_15_TO_34, mio::abm::SimulationParameters(6));
+        mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
     auto susceptible =
-        mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, AGE_15_TO_34, mio::abm::SimulationParameters(6));
+        mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
 
     auto pcr_test     = mio::abm::PCRTest();
     auto antigen_test = mio::abm::AntigenTest();
@@ -185,7 +184,7 @@ TEST(TestPerson, getCells)
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
     auto person =
-        mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_15_TO_34, mio::abm::SimulationParameters(6));
+        mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
     home.add_person(person);
     person.migrate_to(home, location, {0, 1});
     ASSERT_EQ(person.get_cells().size(), 2);
@@ -195,12 +194,12 @@ TEST(TestPerson, interact)
 {
     using testing::Return;
 
-    auto infection_parameters = mio::abm::SimulationParameters(6);
+    auto infection_parameters = mio::abm::Parameters(6);
     auto loc                  = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto person = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_15_TO_34, infection_parameters);
+    auto person = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_GROUP_15_TO_34, infection_parameters);
     loc.add_person(person);
     auto dt = mio::abm::seconds(8640); //0.1 days
-    loc.begin_step(dt, mio::abm::SimulationParameters(6));
+    loc.begin_step(dt, mio::abm::Parameters(6));
 
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -219,20 +218,21 @@ TEST(TestPerson, interact_exposed)
 {
     using testing::Return;
 
-    auto infection_parameters = mio::abm::SimulationParameters(6);
+    auto infection_parameters = mio::abm::Parameters(6);
     infection_parameters.set<mio::abm::IncubationPeriod>({{mio::AgeGroup(6), mio::abm::VaccinationState::Count}, 2.});
 
     //setup location with some chance of exposure
     auto loc       = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto infected1 = mio::abm::Person(loc, mio::abm::InfectionState::Carrier, AGE_15_TO_34, infection_parameters);
+    auto infected1 = mio::abm::Person(loc, mio::abm::InfectionState::Carrier, AGE_GROUP_15_TO_34, infection_parameters);
     loc.add_person(infected1);
-    auto infected2 = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_5_TO_14, infection_parameters);
+    auto infected2 = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_GROUP_5_TO_15, infection_parameters);
     loc.add_person(infected2);
-    auto infected3 = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_60_TO_79, infection_parameters);
+    auto infected3 = mio::abm::Person(loc, mio::abm::InfectionState::Infected, AGE_GROUP_60_TO_79, infection_parameters);
     loc.add_person(infected3);
-    auto person = mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, AGE_15_TO_34, infection_parameters);
+    auto person =
+        mio::abm::Person(loc, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, infection_parameters);
     loc.add_person(person);
-    loc.begin_step(mio::abm::hours(1), mio::abm::SimulationParameters(6));
+    loc.begin_step(mio::abm::hours(1), mio::abm::Parameters(6));
 
     //setup rng mock so the person becomes exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -269,8 +269,7 @@ TEST(TestPerson, applyMaskIntervention)
 {
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto target = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto person =
-        mio::abm::Person(home, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::SimulationParameters(6));
+    auto person = mio::abm::Person(home, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
     person.get_mask().change_mask(mio::abm::MaskType::Community);
 
     target.set_npi_active(false);
@@ -302,8 +301,8 @@ TEST(TestPerson, applyMaskIntervention)
 TEST(TestPerson, setWearMask)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
-    auto person   = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6),
-                                     mio::abm::SimulationParameters(6));
+    auto person =
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
 
     person.set_wear_mask(false);
     ASSERT_FALSE(person.get_wear_mask());
@@ -314,24 +313,24 @@ TEST(TestPerson, setWearMask)
 
 TEST(TestPerson, getProtectiveFactor)
 {
-    auto location         = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
-    auto person_community = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6),
-                                             mio::abm::SimulationParameters(6));
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
+    auto person_community =
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
     person_community.get_mask().change_mask(mio::abm::MaskType::Community);
     person_community.set_wear_mask(true);
-    auto person_surgical = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6),
-                                            mio::abm::SimulationParameters(6));
+    auto person_surgical =
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
     person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
     person_surgical.set_wear_mask(true);
-    auto person_ffp2 = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6),
-                                        mio::abm::SimulationParameters(6));
+    auto person_ffp2 =
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
     person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
     person_ffp2.set_wear_mask(true);
-    auto person_without = mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6),
-                                           mio::abm::SimulationParameters(6));
+    auto person_without =
+        mio::abm::Person(location, mio::abm::InfectionState::Count, mio::AgeGroup(6), mio::abm::Parameters(6));
     person_without.set_wear_mask(false);
 
-    mio::abm::SimulationParameters params                                   = mio::abm::SimulationParameters(6);
+    mio::abm::Parameters params                                             = mio::abm::Parameters(6);
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
     params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;

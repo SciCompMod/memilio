@@ -48,15 +48,15 @@ namespace abm
  * @param[in] p Percentage of Person%s that work in home office.
  * @param[in, out] params Simulation parameters that include Damping.
  */
-void set_home_office(TimePoint t_begin, double p, SimulationParameters& params);
+void set_home_office(TimePoint t_begin, double p, Parameters& params);
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Percentage of Person%s that are homeschooled.
- * @param[in,out] params Simulation parameters that include Damping.
+ * @param[in,out] params Simulation parameters.
  */
-void set_school_closure(TimePoint t_begin, double p, SimulationParameters& params);
+void set_school_closure(TimePoint t_begin, double p, Parameters& params);
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -65,9 +65,9 @@ void set_school_closure(TimePoint t_begin, double p, SimulationParameters& param
  * and a Damping of 1 means that no social events are happening.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
- * @param[in,out] params Simulation parameters that include Damping.
+ * @param[in,out] params Simulation parameters.
  */
-void close_social_events(TimePoint t_begin, double p, SimulationParameters& params);
+void close_social_events(TimePoint t_begin, double p, Parameters& params);
 
 } // namespace abm
 } //namespace mio

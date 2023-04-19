@@ -33,8 +33,8 @@ namespace mio
 namespace abm
 {
 
-Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup age,
-               const SimulationParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
+Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup age, const Parameters& global_params,
+               VaccinationState vaccination_state, uint32_t person_id)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
@@ -64,13 +64,13 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
 }
 
 Person::Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
-               const SimulationParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
+               const Parameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
     : Person({location.get_index(), location.get_type()}, infection_properties, age, global_params, vaccination_state,
              person_id)
 {
 }
 
-void Person::interact(TimeSpan dt, const SimulationParameters& global_params, Location& loc)
+void Person::interact(TimeSpan dt, const Parameters& global_params, Location& loc)
 {
     auto infection_state     = m_infection_state;
     auto new_infection_state = infection_state;
@@ -136,12 +136,12 @@ uint32_t Person::get_assigned_location_index(LocationType type) const
     return m_assigned_locations[(uint32_t)type];
 }
 
-bool Person::goes_to_work(TimePoint t, const SimulationParameters& params) const
+bool Person::goes_to_work(TimePoint t, const Parameters& params) const
 {
     return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
 }
 
-TimeSpan Person::get_go_to_work_time(const SimulationParameters& params) const
+TimeSpan Person::get_go_to_work_time(const Parameters& params) const
 {
     TimeSpan minimum_goto_work_time = params.get<GotoWorkTimeMinimum>()[m_age];
     TimeSpan maximum_goto_work_time = params.get<GotoWorkTimeMaximum>()[m_age];
@@ -150,7 +150,7 @@ TimeSpan Person::get_go_to_work_time(const SimulationParameters& params) const
     return minimum_goto_work_time + seconds(seconds_after_minimum);
 }
 
-TimeSpan Person::get_go_to_school_time(const SimulationParameters& params) const
+TimeSpan Person::get_go_to_school_time(const Parameters& params) const
 {
     TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
     TimeSpan maximum_goto_school_time = params.get<GotoSchoolTimeMaximum>()[m_age];
@@ -159,7 +159,7 @@ TimeSpan Person::get_go_to_school_time(const SimulationParameters& params) const
     return minimum_goto_school_time + seconds(seconds_after_minimum);
 }
 
-bool Person::goes_to_school(TimePoint t, const SimulationParameters& params) const
+bool Person::goes_to_school(TimePoint t, const Parameters& params) const
 {
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
@@ -212,7 +212,7 @@ const std::vector<uint32_t>& Person::get_cells() const
     return m_cells;
 }
 
-double Person::get_protective_factor(const SimulationParameters& params) const
+double Person::get_protective_factor(const Parameters& params) const
 {
     if (m_wears_mask == false) {
         return 0.;

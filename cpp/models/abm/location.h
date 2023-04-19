@@ -141,7 +141,7 @@ public:
      * @param global_params global simulation parameters
      * @return new infection state of the person
      */
-    InfectionState interact(const Person& person, TimeSpan dt, const SimulationParameters& global_params) const;
+    InfectionState interact(const Person& person, TimeSpan dt, const Parameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
@@ -167,7 +167,7 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global simulation parameters
      */
-    void begin_step(TimeSpan dt, const SimulationParameters& global_params);
+    void begin_step(TimeSpan dt, const Parameters& global_params);
 
     /** 
      * number of persons at this location in one infection state.

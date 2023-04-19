@@ -24,7 +24,7 @@ The result of the simulation is for each time step the count of persons in each 
 An example can also be found at examples/abm.cpp
 ```
     //setup the infection parameters
-    mio::abm::SimulationParameters params;
+    mio::abm::Parameters params;
     params.incubation_period = 4.7;
     //...
 

@@ -239,7 +239,7 @@ public:
     /** 
      * @brief The simulation parameters of the world.
      */
-    SimulationParameters parameters;
+    Parameters parameters;
 
 private:
     /**
@@ -260,8 +260,8 @@ private:
     TestingStrategy m_testing_strategy;
     TripList m_trip_list;
     bool m_use_migration_rules;
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const SimulationParameters&),
-                          std::vector<LocationType>>>
+    std::vector<
+        std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&), std::vector<LocationType>>>
         m_migration_rules;
 };
 

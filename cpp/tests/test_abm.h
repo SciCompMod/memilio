@@ -90,11 +90,11 @@ struct ScopedMockDistribution {
 };
 
 // Assign the name to general age group.
-const auto AGE_0_TO_4   = mio::AgeGroup(0);
-const auto AGE_5_TO_14  = mio::AgeGroup(1);
-const auto AGE_15_TO_34 = mio::AgeGroup(2);
-const auto AGE_35_TO_59 = mio::AgeGroup(3);
-const auto AGE_60_TO_79 = mio::AgeGroup(4);
-const auto AGE_80_UP    = mio::AgeGroup(5);
+const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
+const auto AGE_GROUP_5_TO_15  = mio::AgeGroup(1);
+const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
+const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(4);
+const auto AGE_GROUP_80_UP    = mio::AgeGroup(5);
 
 #endif //TEST_ABM_H
