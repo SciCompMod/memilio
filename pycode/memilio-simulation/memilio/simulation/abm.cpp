@@ -69,8 +69,12 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::abm::VaccinationState>(
         m, "_AgeVaccinationParameterArray");
-    pymio::bind_ParameterSet<mio::abm::SimulationParameters::ParameterSet>(m, "SimulationParameters")
-        .def(py::init<size_t>());
+
+    pymio::bind_ParameterSet<mio::abm::ParametersBase>(m, "ParametersBase");
+    py::class_<mio::abm::Parameters, mio::abm::ParametersBase>(m, "Parameters")
+        .def(py::init<int>())
+        .def("check_constraints", &mio::abm::Parameters::check_constraints);
+
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<size_t>());
 
     py::class_<mio::abm::TimeSpan>(m, "TimeSpan")
@@ -205,9 +209,7 @@ PYBIND11_MODULE(_simulation_abm, m)
             py::return_value_policy::reference_internal)
         .def_property("use_migration_rules", py::overload_cast<>(&mio::abm::World::use_migration_rules, py::const_),
                       py::overload_cast<bool>(&mio::abm::World::use_migration_rules))
-        .def(
-            "parameters", [](mio::abm::World & self) -> auto& { return self.parameters; },
-            py::return_value_policy::reference_internal)
+        .def_readwrite("parameters", &mio::abm::World::parameters)
         .def_property(
             "testing_strategy", py::overload_cast<>(&mio::abm::World::get_testing_strategy, py::const_),
             [](mio::abm::World& self, mio::abm::TestingStrategy strategy) {
