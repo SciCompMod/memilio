@@ -185,43 +185,44 @@ struct RecoveredToSusceptible {
     }
 };
 
-struct ViralLoadParameters {
+struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
     UniformDistribution<double>::ParamType viral_load_decline;
 };
 
 struct ViralLoadDistributions {
-    using Type = CustomIndexArray<ViralLoadParameters, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
-                         ViralLoadParameters{{8.1, 8.1},
-                                             {2. / days(1).seconds(), 2. / days(1).seconds()},
-                                             {-0.17 / days(1).seconds(), -0.17 / days(1).seconds()}});
+                         ViralLoadDistributionsParameters{{8.1, 8.1},
+                                                          {2. / days(1).seconds(), 2. / days(1).seconds()},
+                                                          {-0.17 / days(1).seconds(), -0.17 / days(1).seconds()}});
         return default_val;
     }
     static std::string name()
     {
-        return "ViralLoadParameters";
+        return "ViralLoadDistributions";
     }
 };
 
-struct InfectivityParameters {
+struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
 };
 
 struct InfectivityDistributions {
-    using Type = CustomIndexArray<InfectivityParameters, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<InfectivityDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default()
     {
-        Type default_val({VirusVariant::Count, AgeGroup::Count}, InfectivityParameters{{-7., -7.}, {1., 1.}});
+        Type default_val({VirusVariant::Count, AgeGroup::Count},
+                         InfectivityDistributionsParameters{{-7., -7.}, {1., 1.}});
         return default_val;
     }
     static std::string name()
     {
-        return "InfectivityParameters";
+        return "InfectivityDistributions";
     }
 };
 
