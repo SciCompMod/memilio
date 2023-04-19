@@ -47,7 +47,7 @@ TEST(TestInfection, init)
         .WillRepeatedly(testing::Return(1.0));
 
     auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
-                                         mio::abm::TimePoint(0), true);
+                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed, true);
 
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
     EXPECT_EQ(infection.is_detected(), true);

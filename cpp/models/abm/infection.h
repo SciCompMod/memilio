@@ -51,11 +51,12 @@ public:
      * @brief Create an Infection for a single Person.
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup to determine the ViralLoad course.
-     * @param[in] start_date Starting date of the Infection.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] init_state [Default: InfectionState::Exposed] InfectionState at time of initializing the the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
      */
     Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-              bool detected = false);
+              InfectionState start_state = InfectionState::Exposed, bool detected = false);
 
     /**
      * @brief Gets the viral load of the infection at a given TimePoint.
@@ -97,12 +98,35 @@ public:
 
 private:
     /**
-     * @brief Determine ViralLoad course and Infection course.
+     * @brief Determine ViralLoad course and Infection course based on init_state. Calls draw_infection_course_backward for all InfectionState%s prior and draw_infection_course_forward for all subsequent InfectionState%s.
      * @param[in] age AgeGroup of the person.
-     * @param[in] start_date Start date of the Infection.
      * @param[in] params GlobalInfectionParameters.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] init_state InfectionState at time of initializing the the Infection.
+     *
      */
-    void draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date);
+    TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+                                    InfectionState init_state);
+
+    /**
+     * @brief Determine ViralLoad course and Infection course prior to the given start_state.
+     * @param[in] age AgeGroup of the person.
+     * @param[in] params GlobalInfectionParameters.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] init_state InfectionState at time of initializing the the Infection.
+     */
+    void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+                                       InfectionState init_state);
+
+    /**
+     * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
+     * @param[in] age AgeGroup of the person.
+     * @param[in] params GlobalInfectionParameters.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] init_state InfectionState at time of initializing the the Infection.
+     */
+    TimePoint draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+                                             InfectionState init_state);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; // start date of each infection state
     VirusVariant m_virus_variant;

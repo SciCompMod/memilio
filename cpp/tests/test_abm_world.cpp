@@ -168,7 +168,7 @@ TEST(TestWorld, evolveMigration)
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
             mock_uniform_dist;
         EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-            .Times(testing::Exactly(8))
+            .Times(testing::AtLeast(8))
             .WillOnce(testing::Return(0.8)) // draw random work group
             .WillOnce(testing::Return(0.8)) // draw random school group
             .WillOnce(testing::Return(0.8)) // draw random work hour
@@ -178,9 +178,9 @@ TEST(TestWorld, evolveMigration)
             .WillOnce(testing::Return(0.8)) // draw random work hour
             .WillOnce(testing::Return(0.8)); // draw random school hour
 
-        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier, t);
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
+        auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier, t);
 
         p1.set_assigned_location(school_id);
         p2.set_assigned_location(school_id);

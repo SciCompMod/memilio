@@ -259,23 +259,48 @@ TEST(TestLocation, storeSubpopulations)
     auto t      = mio::abm::TimePoint(0);
     auto dt     = mio::abm::days(7);
     auto params = mio::abm::GlobalInfectionParameters{};
-    //setup so there are some transitions
+
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+
+    //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to Carrier to RecoveredCarrier
     params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
                                                  mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.seconds();
 
     params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
                                                  mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.seconds();
+    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                              mio::abm::VaccinationState::Unvaccinated}]    = 5 * dt.seconds();
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
                                               mio::abm::VaccinationState::Unvaccinated}]   = 0.4 * dt.seconds();
     params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
                                                 mio::abm::VaccinationState::Unvaccinated}] = 1.8 * dt.seconds();
 
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+
+    // mock person 1
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.6)); // transition to RecoveredInfected
     auto person1 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
+
+    // mock person 2 not needed due to high setup of transition times
     auto person2 =
         make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected, t, params);
+
+    // mock person 3
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.8)) // draw random work group
+        .WillOnce(testing::Return(0.8)) // draw random school group
+        .WillOnce(testing::Return(0.8)) // draw random work hour
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillOnce(testing::Return(0.6)); // transition to RecoveredCarrier
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
 
