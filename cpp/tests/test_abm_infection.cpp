@@ -24,7 +24,6 @@ TEST(TestInfection, init)
     auto params             = mio::abm::GlobalInfectionParameters{};
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = mio::abm::AgeGroup::Age15to34;
-    auto vac_state_test     = mio::abm::VaccinationState::Unvaccinated;
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -32,13 +31,13 @@ TEST(TestInfection, init)
         .WillOnce(testing::Return(0.4)) // Transition to Infected
         .WillOnce(testing::Return(0.6)) // Transition to Recovered_Infected
         .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test, vac_state_test}]
+            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
                 .viral_load_peak.params.a())) // Viral load draws
         .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test, vac_state_test}]
+            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
                 .viral_load_incline.params.a()))
         .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test, vac_state_test}]
+            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
                 .viral_load_decline.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
                                       .infectivity_alpha.params.a())) // Infectivity draws

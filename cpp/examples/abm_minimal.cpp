@@ -60,15 +60,6 @@ int main()
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
 
-
-    // Assign an infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
-        world.set_infection_state(person, (mio::abm::InfectionState)state);
-    }
-
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);

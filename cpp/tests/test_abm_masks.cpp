@@ -57,8 +57,7 @@ TEST(TestMasks, maskProtection)
     mio::abm::GlobalInfectionParameters params;
 
     // set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}] =
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
         2 * mio::abm::days(1).seconds();
 
     //setup location with some chance of exposure

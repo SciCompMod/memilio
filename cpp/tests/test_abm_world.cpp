@@ -113,16 +113,16 @@ TEST(TestWorld, evolveStateTransition)
 
     auto params = mio::abm::GlobalInfectionParameters{};
     //setup so p1 and p3 don't transition
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 2 * dt.seconds();
-    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                               mio::abm::VaccinationState::Unvaccinated}]   = 2 * dt.seconds();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
-    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 2 * dt.seconds();
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
+    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
+    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
+    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
 
     auto world     = mio::abm::World(params);
     auto location1 = world.add_location(mio::abm::LocationType::School);
@@ -155,10 +155,10 @@ TEST(TestWorld, evolveMigration)
         auto dt     = mio::abm::hours(1);
         auto params = mio::abm::GlobalInfectionParameters{};
         //setup so p1 doesn't transition
-        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
-        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                    mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
+        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
+        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
 
         auto world     = mio::abm::World(params);
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -209,14 +209,14 @@ TEST(TestWorld, evolveMigration)
         auto dt     = mio::abm::hours(2);
         auto params = mio::abm::GlobalInfectionParameters{};
         //setup so p1-p5 don't transition
-        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
-        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                    mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
-        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                  mio::abm::VaccinationState::Unvaccinated}]   = 2 * dt.seconds();
-        params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
+        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
+        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
+        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
+        params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+            2 * dt.seconds();
 
         auto world = mio::abm::World(params);
         world.use_migration_rules(false);
@@ -283,10 +283,8 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
     mio::abm::GlobalInfectionParameters params;
     // make sure the infected person stay in Infected long enough
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 100;
-    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 100;
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34}] = 100;
+    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34}]    = 100;
 
     auto world        = mio::abm::World(params);
     auto home_id      = world.add_location(mio::abm::LocationType::Home);

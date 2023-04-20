@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -349,39 +349,25 @@ public:
     {
         return 1.; // put implementation in .cpp
     }
-};
-
-public:
-/**
-     * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
-     * @param[in] t TimePoint of check.
-     * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
-    */
-ScalarType get_protection_factor(VirusVariant v, TimePoint t) const
-{
-    return m_immunity_level.get_protection_factor(v, t);
-}
-//ScalarType get_severity_factor = ImmunityLevel::get_severity_factor;
 
 private:
-observer_ptr<Location> m_location;
-std::vector<uint32_t> m_assigned_locations;
-std::vector<Vaccination> m_vaccinations;
-std::vector<Infection> m_infections;
-bool m_quarantine = false;
-AgeGroup m_age;
-TimeSpan m_time_at_location;
-double m_random_workgroup;
-double m_random_schoolgroup;
-double m_random_goto_work_hour;
-double m_random_goto_school_hour;
-TimeSpan m_time_since_negative_test;
-Mask m_mask;
-bool m_wears_mask = false;
-std::vector<ScalarType> m_mask_compliance;
-uint32_t m_person_id;
-std::vector<uint32_t> m_cells;
+    observer_ptr<Location> m_location;
+    std::vector<uint32_t> m_assigned_locations;
+    std::vector<Vaccination> m_vaccinations;
+    std::vector<Infection> m_infections;
+    bool m_quarantine = false;
+    AgeGroup m_age;
+    TimeSpan m_time_at_location;
+    double m_random_workgroup;
+    double m_random_schoolgroup;
+    double m_random_goto_work_hour;
+    double m_random_goto_school_hour;
+    TimeSpan m_time_since_negative_test;
+    Mask m_mask;
+    bool m_wears_mask = false;
+    std::vector<ScalarType> m_mask_compliance;
+    uint32_t m_person_id;
+    std::vector<uint32_t> m_cells;
 };
 
 } // namespace abm

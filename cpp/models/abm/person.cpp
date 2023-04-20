@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -251,24 +251,6 @@ bool Person::apply_mask_intervention(const Location& target)
         }
     }
     return true;
-}
-
-void Person::add_vaccination(const Vaccine& vaccine, const TimePoint& t)
-{
-    Vaccination vaccination;
-    vaccination.vaccine = vaccine;
-    vaccination.t = t;
-    m_vaccinations.push_back(vaccination);
-}
-
-double Person::ImmunityLevel::get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-{
-    return 1.;
-}
-
-double Person::ImmunityLevel::get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
-{
-    return 1.;
 }
 
 } // namespace abm

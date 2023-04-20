@@ -134,10 +134,10 @@ TEST(TestLocation, reachCapacity)
     auto dt     = mio::abm::hours(1);
     auto params = mio::abm::GlobalInfectionParameters{};
     //setup so p1 doesn't transition
-    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                               mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
+    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
+    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        2 * dt.seconds();
 
     auto world     = mio::abm::World(params);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -210,14 +210,12 @@ TEST(TestLocation, interact)
 
     mio::abm::GlobalInfectionParameters params;
     params.set_default<mio::abm::ViralLoadDistributions>();
-    params.get<mio::abm::ViralLoadDistributions>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = {
-        {1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
+    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
     params.set_default<mio::abm::InfectivityDistributions>();
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
 
     // set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] =
-        2 * mio::abm::days(1).seconds();
+    params.get<mio::abm::IncubationPeriod>()[{variant, age}] = 2 * mio::abm::days(1).seconds();
 
     //setup location with some chance of exposure
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
@@ -263,18 +261,18 @@ TEST(TestLocation, storeSubpopulations)
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
     //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to Carrier to RecoveredCarrier
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.seconds();
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14}] =
+        1.5 * dt.seconds();
 
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.seconds();
-    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 5 * dt.seconds();
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        5 * dt.seconds();
+    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
+        5 * dt.seconds();
 
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                              mio::abm::VaccinationState::Unvaccinated}]   = 0.4 * dt.seconds();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                                mio::abm::VaccinationState::Unvaccinated}] = 1.8 * dt.seconds();
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
+        0.4 * dt.seconds();
+    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
+        1.8 * dt.seconds();
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
 
