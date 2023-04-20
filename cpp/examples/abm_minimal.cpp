@@ -20,6 +20,8 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
+#include "abm/world.h"
+#include "memilio/io/io.h"
 
 int main()
 {
@@ -124,7 +126,34 @@ int main()
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
-    sim.advance(tmax);
+
+    struct LogTimePoint : LogAlways {
+        using Type = double;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            return sim.get_time().days();
+        }
+    };
+    struct LogTimeCompartments : LogAlways {
+        using Type = std::vector<double>;
+        static Type log(const mio::abm::Simulation& sim)
+        {   
+            std::vector<double> result;
+            for (auto& compartment : compartments) {
+                result.push_back(compartment.second);
+            }
+            return result;
+        }
+    };
+
+
+
+    History<DataWriterToBuffer, LogTimePoint, Log> history;
+
+
+
+    sim.advance(tmax, history);
+    auto logg = history.get_log();
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:

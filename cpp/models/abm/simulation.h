@@ -67,8 +67,18 @@ public:
      * @param[in] tmax Time to stop.
      * @param[in] history History to store the result of the Simulation.
      */
-    template <class History>
-    void advance(TimePoint tmax, History& history);
+    template<typename History>
+    void advance(TimePoint tmax, History& history)
+    {
+        auto t = m_t;
+        while (t < tmax) {
+            auto dt = std::min(m_dt, tmax - t);
+            m_world.evolve(t, dt);
+            t += m_dt;
+            history.log(this);
+        }
+    }
+
 
     /**
      * @brief Get the result of the Simulation.
@@ -77,6 +87,14 @@ public:
     const TimeSeries<double>& get_result() const
     {
         return m_result;
+    }
+
+    /**
+     * @brief Get the current time of the Simulation.
+     */
+    TimePoint get_time() const
+    {
+        return m_t;
     }
 
     /**
