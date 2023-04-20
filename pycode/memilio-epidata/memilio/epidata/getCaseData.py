@@ -249,7 +249,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     except ValueError:
         try:
             df[dd.EngEng['date']] = pd.to_datetime(
-            df[dd.EngEng['date']], format="%Y-%m-%d")
+                df[dd.EngEng['date']], format="%Y-%m-%d")
         except:
             raise gd.DataError(
                 "Time data can't be transformed to intended format")
@@ -289,7 +289,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
                            {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
+                      [IdBundesland], {dd.EngEng["idState"]
+                          : [k for k, v in dd.State.items()]},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],

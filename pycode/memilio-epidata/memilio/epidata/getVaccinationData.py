@@ -541,7 +541,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     except ValueError:
         try:
             df_data[dd.EngEng['date']] = pd.to_datetime(
-            df_data[dd.EngEng['date']], format="%Y-%m-%d")
+                df_data[dd.EngEng['date']], format="%Y-%m-%d")
         except:
             raise gd.DataError(
                 "Time data can't be transformed to intended format")
