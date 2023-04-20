@@ -535,8 +535,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
-    df_data[dd.EngEng['date']] = pd.to_datetime(
-        df_data[dd.EngEng['date']], format="ISO8601")
+    try:
+        df_data[dd.EngEng['date']] = pd.to_datetime(
+            df_data[dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df_data[dd.EngEng['date']] = pd.to_datetime(
+            df_data[dd.EngEng['date']], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[

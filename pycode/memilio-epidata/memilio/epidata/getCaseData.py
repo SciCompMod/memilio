@@ -243,9 +243,16 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         df[dd.EngEng['date']] = np.where(
             df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
             df['Meldedatum'])
-
-    df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format="ISO8601")
+    try:
+        df[dd.EngEng['date']] = pd.to_datetime(
+            df[dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df[dd.EngEng['date']] = pd.to_datetime(
+            df[dd.EngEng['date']], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
