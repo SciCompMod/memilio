@@ -87,9 +87,12 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(1.0);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    //mio::isecir::ProbabilityProgress prob= static_cast<mio::isecir::ProbabilityProgress>(mio::isecir::ExponentialDecay(0.5));
+    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(mio::isecir::TransmissionProbabilityOnContact());
+    
     model.check_constraints(dt);
 
     // Carry out simulation.

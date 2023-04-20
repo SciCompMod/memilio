@@ -165,7 +165,24 @@ struct ContactPatterns {
     }
 };
 
-struct ExponentialDecay {
+
+/**
+ * @brief 
+ * 
+ */
+struct StateAgeFunction {
+    ScalarType Function(ScalarType state_age)
+    {
+        return std::exp(-1.0 * state_age);
+    }
+};
+
+/**
+ * @brief 
+ * 
+ */
+struct ExponentialDecay : public StateAgeFunction {
+
     ExponentialDecay()
         : funcparam{1.0}
     {
@@ -189,16 +206,68 @@ struct ExponentialDecay {
 private:
     ScalarType funcparam{};
 };
+
+/**
+ * @brief 
+ * 
+ */
+struct SmootherCosine : public StateAgeFunction {
+
+    SmootherCosine()
+        : funcparam{1.0}
+    {
+    }
+
+    SmootherCosine(ScalarType init_funcparam)
+        : funcparam{init_funcparam}
+    {
+    }
+
+    ScalarType Function(ScalarType state_age)
+    {
+        return smoother_cosine(state_age, 0.0, funcparam, 1.0, 0.0);;
+    }
+
+    ScalarType get_funcparam()
+    {
+        return funcparam;
+    }
+
+private:
+    ScalarType funcparam{};
+};
+
+/**
+ * @brief 
+ * 
+ */
+struct ProbabilityProgress {
+    ProbabilityProgress() =default;
+    
+    void setStateAgeFunction(const StateAgeFunction& new_function)
+    {
+        m_function.reset(new_function.clone());
+    }
+
+    ScalarType Function(ScalarType state_age)
+    {
+        return m_function->Function(state_age);
+    }
+
+private:
+    std::unique_ptr<StateAgeFunction> m_function;
+};
+
+
 /**
 * @brief Probability of getting infected from a contact.
 */
-template <class TransmissionProbabilityDecayFunction>
 struct TransmissionProbabilityOnContact {
     // corresponds to rho, depends on state_age
-    using Type = TransmissionProbabilityDecayFunction;
+    using Type = ProbabilityProgress;
     static Type get_default()
     {
-        return TransmissionProbabilityDecayFunction();
+        return ProbabilityProgress();
     }
     static std::string name()
     {
@@ -209,13 +278,12 @@ struct TransmissionProbabilityOnContact {
 /**
 * @brief The relative InfectedNoSymptoms infectability.
 */
-template <class TransmissionProbabilityDecayFunction>
 struct RelativeTransmissionNoSymptoms {
     // correspond to xi_C, depends on state_age
-    using Type = TransmissionProbabilityDecayFunction;
+    using Type = ProbabilityProgress;
     static Type get_default()
     {
-        return TransmissionProbabilityDecayFunction();
+        return ProbabilityProgress();
     }
     static std::string name()
     {
@@ -226,13 +294,12 @@ struct RelativeTransmissionNoSymptoms {
 /**
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
-template <class TransmissionProbabilityDecayFunction>
 struct RiskOfInfectionFromSymptomatic {
     // corresponds to xi_I, depends on state_age
-    using Type = TransmissionProbabilityDecayFunction;
+    using Type = ProbabilityProgress;
     static Type get_default()
     {
-        return TransmissionProbabilityDecayFunction();
+        return ProbabilityProgress();
     }
     static std::string name()
     {
@@ -241,10 +308,9 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 // Define Parameterset for IDE SECIR model.
-using ParametersBase = ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns,
-                                    TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
-                                    RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>,
-                                    RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
+using ParametersBase =
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
+                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

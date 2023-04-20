@@ -79,9 +79,9 @@ protected:
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        model->parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-        model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
-        model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(0.5);
+        //model->parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+        //model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
+        //model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(0.5);
     }
 
     virtual void TearDown()
@@ -205,9 +205,9 @@ TEST(IdeSecir, checksimulationFunctions)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
@@ -296,9 +296,9 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
@@ -398,14 +398,14 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    /*model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
     model2.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
     model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
-
+    */
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
