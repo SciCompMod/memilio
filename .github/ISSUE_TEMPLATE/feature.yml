@@ -1,0 +1,32 @@
+name: "⭐️ Feature"
+description: "Use this template to propose a new feature for MEmilio"
+labels:
+  - "class::feature"
+body:
+- type: markdown
+  attributes:
+    value: "Please check our [existing issues](https://github.com/DLR-SC/memilio/issues) beforehand."
+- type: textarea
+  id: Feature-description
+  attributes:
+    label: "Feature description"
+    description: "Describe the feature."
+  validations:
+    required: true
+
+- type: textarea
+  id: -context
+  attributes:
+    label: "Additional context"
+    description: "Code location/examples, Papers, Mathematics, put them here."
+
+- type: checkboxes
+  id: checks
+  attributes:
+    label: Checklist
+    description: Add Labels and add this issue to a project.
+    options:
+      - label: "Attached labels, especially loc:: or model:: labels."
+        required: false
+      - label: Linked to project.
+        required: false

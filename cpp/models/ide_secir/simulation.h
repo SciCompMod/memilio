@@ -107,6 +107,24 @@ public:
     }
 
     /**
+     * @brief get the starting time of the simulation.
+     * 
+     */
+    ScalarType get_t0()
+    {
+        return m_t0;
+    }
+
+    /**
+     * @brief get the time step of the simulation.
+     * 
+     */
+    ScalarType get_dt()
+    {
+        return m_dt;
+    }
+
+    /**
      * @brief Print the transition part of the simulation result.
      * 
      * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 

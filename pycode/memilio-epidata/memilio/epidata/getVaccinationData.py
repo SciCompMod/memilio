@@ -429,12 +429,12 @@ def extrapolate_age_groups_vaccinations(
             # get total population in old agegroup
             total_pop = 0
             for j in age_old_to_all_ages_indices[i]:
-                total_pop += float(pop_state[str(min_all_ages[j])])
+                total_pop += float(pop_state[str(min_all_ages[j])].iloc[0])
             # get population ratios in old agegroup
             ratios = [0 for zz in range(0, len(unique_age_groups_new))]
             for j in age_old_to_all_ages_indices[i]:
                 ratios[all_ages_to_age_new_share[j][0][1]
-                       ] += float(pop_state[str(min_all_ages[j])])/total_pop
+                       ] += float(pop_state[str(min_all_ages[j])].iloc[0])/total_pop
             # split vaccinations in old agegroup to new agegroups
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
@@ -536,7 +536,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
     df_data[dd.EngEng['date']] = pd.to_datetime(
-        df_data[dd.EngEng['date']], format="%Y-%m-%d")
+        df_data[dd.EngEng['date']], format="ISO8601")
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[
@@ -835,14 +835,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             population_old_ages, merge_2022=True)
 
     # store data for all counties
-    filename = 'all_county_agevacc_vacc'
+    filename = 'vacc_county_agevacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_agevacc_county_cs,
                        directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_agevacc_vacc'
+    filename = 'vacc_states_agevacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_agevacc_state_cs = df_data_agevacc_county_cs.groupby(
         [dd.EngEng['date'],
@@ -868,10 +868,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              [dd.EngEng['date'],
               dd.EngEng['vaccPartial']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_old]
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_old],
-            'Partial vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_PartialVacination_Absolute")
+            title='Partial vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_PartialVacination_Absolute")
 
         # plot full vaccination curves for different age groups
         yvals = [
@@ -880,10 +880,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              [dd.EngEng['date'],
               dd.EngEng['vaccComplete']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_old]
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_old],
-            'Full vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_FullVacination_Absolute")
+            title='Full vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_FullVacination_Absolute")
 
     ######## data without age resolution ###########
     # write data frame resolved per county
@@ -894,13 +894,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         {col_new: sum for col_new in vacc_column_names}).reset_index()
 
     # store data for all counties
-    filename = 'all_county_vacc'
+    filename = 'vacc_county'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_county_cs, directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_vacc'
+    filename = 'vacc_states'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_state_cs = df_data_county_cs.groupby(
         [dd.EngEng['date'],
@@ -923,14 +923,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     df_data_ageinf_county_cs = df_data_ageinf_county_cs.reset_index(drop=True)
 
     # store data for all counties
-    filename = 'all_county_ageinf_vacc'
+    filename = 'vacc_county_ageinf'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_ageinf_county_cs,
                        directory, filename, file_format)
 
     # store data for all federal states: group information on date, state and age level
     # (i.e., aggregate information of all counties per federal state)
-    filename = 'all_states_ageinf_vacc'
+    filename = 'vacc_states_ageinf'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     df_data_ageinf_state_cs = df_data_ageinf_county_cs.groupby(
         [dd.EngEng['date'],
@@ -1005,10 +1005,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng['vaccPartial']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_new]
 
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_new],
-            'Partial vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_PartialVacination_AgeExtr_Absolute")
+            title='Partial vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_PartialVacination_AgeExtr_Absolute")
 
         # consider full vaccination for new age groups
         yvals = [
@@ -1018,10 +1018,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng['vaccComplete']]].groupby(dd.EngEng['date']).sum()
             for age in unique_age_groups_new]
 
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             date_vals, yvals, [age for age in unique_age_groups_new],
-            'Full vaccination over different age groups', dd.EngEng['date'],
-            'Number', "Germany_FullVacination_AgeExtr_Absolute")
+            title='Full vaccination over different age groups', xlabel=dd.EngEng['date'],
+            ylabel='Number', fig_name="Germany_FullVacination_AgeExtr_Absolute")
 
 
 def main():

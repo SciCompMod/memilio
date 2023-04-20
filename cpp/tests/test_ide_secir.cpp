@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "boost/fusion/functional/invocation/invoke.hpp"
 #include "load_test_data.h"
 #include "ide_secir/infection_state.h"
 #include "ide_secir/model.h"
@@ -68,16 +69,19 @@ protected:
         // Set working parameters.
         model->parameters.set<mio::isecir::TransitionDistributions>(
             std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
         model->parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-        model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-        model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-        model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+
+        model->parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+        model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
+        model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(0.5);
     }
 
     virtual void TearDown()
@@ -201,9 +205,9 @@ TEST(IdeSecir, checksimulationFunctions)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
@@ -284,17 +288,18 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.5;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.5;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = 0.6;
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
@@ -302,13 +307,13 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
     // Check whether equilibrium has been reached, only then can we expect the right proportion
     // between Recovered and Dead
-    EXPECT_TRUE(secihurd_simulated[tmax / dt - 1] == secihurd_simulated[tmax / dt - 2]);
+    EXPECT_TRUE(secihurd_simulated[Eigen::Index(tmax / dt - 1)] == secihurd_simulated[Eigen::Index(tmax / dt - 2)]);
 
     // Check whether equilibrium has the right proportion between Recovered and Dead
-    // In our case we have that probabilities going from U to R or D are 0.5
-    // Hence the increase in both R and D should be equal between time 0 and tmax
-    EXPECT_NEAR(secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
-                    secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered],
+    EXPECT_NEAR((vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)] /
+                 vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]) *
+                    (secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] -
+                     secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Recovered]),
                 secihurd_simulated.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Dead] -
                     secihurd_simulated[0][(Eigen::Index)mio::isecir::InfectionState::Dead],
                 1e-8);
@@ -360,7 +365,7 @@ TEST(IdeSecir, compareEquilibria)
     // Here we set the max_support for the DelayDistribution differently for both models
     // For model
     std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 3;
+    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 2;
     std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
     for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
         vec_delaydistrib[i].set_max_support(vec_max_support[i]);
@@ -393,12 +398,13 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model2.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(1.0);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
-    model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(1.0);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+
+    model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
+    model2.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
+    model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);

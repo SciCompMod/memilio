@@ -40,7 +40,7 @@ namespace isecir
 /**
 * @brief Function describing the time spent in a compartment before transiting to next compartment.
 
-* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain infection_age 
+* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain state_age 
 * (i.e. time after entering the compartment) and has not yet progressed to the next.
 * See also function \gamma in Overleaf.
 * Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
@@ -69,12 +69,12 @@ struct DelayDistribution {
      * 
      * Used function goes through points (0,1) and (m_max_suppor,0) and is interpolated in between using a smoothed cosine function.
      * 
-     * @param infection_age time at which the function should be evaluated
+     * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the smoother cosine function
      */
-    ScalarType Distribution(ScalarType infection_age)
+    ScalarType Distribution(ScalarType state_age)
     {
-        return smoother_cosine(infection_age, 0.0, m_max_support, 1.0, 0.0);
+        return smoother_cosine(state_age, 0.0, m_max_support, 1.0, 0.0);
     }
 
     /**
@@ -150,7 +150,6 @@ struct TransitionProbabilities {
 /**
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
-// TODO: Dependeny on infection age
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
 
@@ -177,9 +176,9 @@ struct ExponentialDecay {
     {
     }
 
-    ScalarType Function(ScalarType infection_age)
+    ScalarType Function(ScalarType state_age)
     {
-        return std::exp(-funcparam * infection_age);
+        return std::exp(-funcparam * state_age);
     }
 
     ScalarType get_funcparam()
@@ -195,7 +194,7 @@ private:
 */
 template <class TransmissionProbabilityDecayFunction>
 struct TransmissionProbabilityOnContact {
-    // corresponds to rho, depends on infection_age
+    // corresponds to rho, depends on state_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
@@ -212,7 +211,7 @@ struct TransmissionProbabilityOnContact {
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RelativeTransmissionNoSymptoms {
-    // correspond to xi_C, depends on infection_age
+    // correspond to xi_C, depends on state_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
@@ -229,7 +228,7 @@ struct RelativeTransmissionNoSymptoms {
 */
 template <class TransmissionProbabilityDecayFunction>
 struct RiskOfInfectionFromSymptomatic {
-    // corresponds to xi_I, depends on infection_age
+    // corresponds to xi_I, depends on state_age
     using Type = TransmissionProbabilityDecayFunction;
     static Type get_default()
     {
@@ -242,9 +241,10 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 // Define Parameterset for IDE SECIR model.
-using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
-                 RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>, RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
+using ParametersBase = ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns,
+                                    TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
+                                    RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>,
+                                    RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -328,12 +328,6 @@ private:
     {
     }
 };
-    // Define Parameterset for IDE SEIR model.
-    /*using ParametersBase =
-        ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns,
-                     TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>,
-                     RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>,
-                     RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>;*/
 
 } // namespace isecir
 } // namespace mio

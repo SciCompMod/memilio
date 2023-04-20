@@ -89,7 +89,7 @@ void Simulation::print_compartments() const
 
 TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& m_model)
 {
-    //m_model.check_constraints(dt);
+    m_model.check_constraints(dt);
     Simulation sim(m_model, t0, dt);
     sim.advance(tmax);
     return sim.get_result();

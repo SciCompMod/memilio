@@ -34,21 +34,26 @@ namespace abm
 {
 
 /**
- * Overview:
- *  A household member has an vector with weighted age distribution from which the age can be calculated.
- *  A household holds a vector with household members.
- *  A household group holds a vector with a tuple of a household and the amount of times the household is in the group.
- *  E.g. if 10 households hold a member of "child and parent" and that household would be parentAndChildHousehold the vector would contain <parentAndChildHousehold, 10>. parentAndChildHousehold would consist of a vector with the members parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with resprect to the AgeGroup class. The child would have, for example, {1,1,0,0,0}, meaning that the age group 0-4 and 5-14 are the only possible ages and are both equally likely.
+ * @file
+ * A HouseholdMember has a vector with weighted age distribution from which the age can be calculated.
+ * A Household holds a vector with HouseholdMembers.
+ * A HouseholdGroup holds a vector with a tuple of a Household and the amount of times the Household is in the group.
+ * E.g. if 10 households hold a member of "child and parent" and that Household would be parentAndChildHousehold the
+ * vector would contain <parentAndChildHousehold, 10>. parentAndChildHousehold would consist of a vector with the
+ * HouseholdMembers parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with respect to the 
+ * AgeGroup class. The child would have, for example, {1,1,0,0,0}, meaning that the AgeGroups 0-4 and 5-14 are the only
+ * possible ages and are both equally likely.
  */
 
 /**
- * A household member represented by a weighted age distribution.
+ * @brief A HouseholdMember represented by a weighted age distribution.
+ * For every AgeGroup there is a weight which is used to calculate the age of the Person living in this Household.
  */
 class HouseholdMember
 {
 public:
     /**
-     * Constructs a newhousehold member.
+     * @brief Constructs a new HouseholdMember.
      */
     HouseholdMember()
         : m_age_weights({AgeGroup::Count}, 0)
@@ -56,7 +61,10 @@ public:
     }
 
     /**
-     * @brief Sets the weight of an age group.
+     * @brief Sets the weight of an AgeGroup.
+     * The weights correspond to the probability that a Person has the corresponding age.
+     * @param[in] age_group The AgeGroup.
+     * @param[in] weight The weight of the AgeGroup.
      */
     void set_age_weight(AgeGroup age_group, int weight)
     {
@@ -64,8 +72,7 @@ public:
     }
 
     /**
-     * @brief Returns the Array with the weight of each age group.
-     * @returns An CustomIndexArray with the integer weights of the age groups.
+     * @brief Returns the CustomIndexArray with the weights of each AgeGroup.
      */
     const CustomIndexArray<int, AgeGroup>& get_age_weights() const
     {
@@ -73,18 +80,18 @@ public:
     }
 
 private:
-    CustomIndexArray<int, AgeGroup> m_age_weights;
+    CustomIndexArray<int, AgeGroup> m_age_weights; ///< Weights of every AgeGroup.
 };
 
 /**
- * A household group represented by a vector with household members.
- * The household may contain multiple members of the same type.
+ * @brief A Household represented by a vector with HouseholdMember%s.
+ * The Household may contain multiple members of the same type.
  */
 class Household
 {
 public:
     /**
-     * Constructs a new household.
+     * @brief Constructs a new Household.
      */
     Household()
         : m_household_member_list()
@@ -94,8 +101,7 @@ public:
     }
 
     /**
-     * @brief Returns the number of members in the household.
-     * @return Integer of number of members.
+     * @brief Returns the number of members, i.e.\ Person%s in the Household.
      */
     int get_total_number_of_members() const
     {
@@ -103,8 +109,8 @@ public:
     }
 
     /**
-     * @brief Set the space per member in cubic meters
-     * @param space_per_member 
+     * @brief Set the space per member for the computation of the LocationCapacity of the Household.
+     * @param[in] space_per_member Space per member in cubic meters.
      */
     void set_space_per_member(int space_per_member)
     {
@@ -112,8 +118,7 @@ public:
     }
 
     /**
-     * @brief Get the space per member in the household
-     * @return Integer of space per member in cubic meters
+     * @brief Get the space per member of the Household, measured in cubic meters.
      */
     int get_space_per_member() const
     {
@@ -121,8 +126,7 @@ public:
     }
 
     /**
-     * @brief Returns the number of households in the household group.
-     * @return Integer of number of households.
+     * @brief Get the HouseholdMember%s of the Household.
      */
     const std::vector<std::tuple<HouseholdMember, int>>& get_members() const
     {
@@ -130,28 +134,28 @@ public:
     }
 
     /**
-     * Adds a number of the same members to a household.
-     * @param household_member A household member from the HouseholdMember class.
-     * @param number_of_members The amount of members to be added.
+     * @brief Adds a number of the same HouseholdMember%s to a Household.
+     * @param[in] household_member A HouseholdMember.
+     * @param[in] number_of_members The amount of members to be added.
      */
     void add_members(HouseholdMember household_member, int number_of_members);
 
 private:
-    int m_number_of_members;
-    int m_space_per_member; // space in cubic meters per person
-    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list;
+    int m_number_of_members; ///< Total number of Person%s in the Household.
+    int m_space_per_member; ///< Space per Person in cubic meters (constant maximal capacity over time).
+    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list; /**< HouseholdMember%s of the Household and 
+    the respective number of Person%s.*/
 };
 
 /**
- * A group of households represented by different households.
- * The group may contain multiple households of the same type.
+ * @brief A HouseholdGroup represented by different Household%s.
+ * The group may contain multiple Household%s of the same type.
  */
-
 class HouseholdGroup
 {
 public:
     /**
-     * Constructs a new household group.
+     * @brief Constructs a new HouseholdGroup.
      */
     HouseholdGroup()
         : m_household_list()
@@ -160,8 +164,7 @@ public:
     }
 
     /**
-     * @brief Returns the number of households in the household group.
-     * @return Integer of number of households.
+     * @brief Returns the number of Household%s in the HouseholdGroup.
      */
     int get_total_number_of_households() const
     {
@@ -169,8 +172,8 @@ public:
     }
 
     /**
-     * @brief Returns a vector of tuples. It contains the household and the amount of times that household is in the group.
-     * @return std::vector of tuples.
+     * @brief Returns the Household%s of the HouseholdGroup.
+     * @return A vector of tuples that contains the Houshold and the amount of times that Household is in the group.
      */
     const std::vector<std::tuple<Household, int>>& get_households() const
     {
@@ -178,28 +181,30 @@ public:
     }
 
     /**
-     * Adds a number of households of the same kind, e.g. same members, to a household group.
-     * @param household A household.
-     * @param number_of_households The amount of same kind households.
+     * @brief Adds a number of Household%s of the same kind, e.g.\ same members, to a HouseholdGroup.
+     * @param[in] household A Household.
+     * @param[in] number_of_households The amount of times that Household is in the group.
      */
     void add_households(Household household, int number_of_households);
 
 private:
-    int m_number_of_households;
-    std::vector<std::tuple<Household, int>> m_household_list;
+    int m_number_of_households; ///< Number of Household%s in this group.
+    std::vector<std::tuple<Household, int>> m_household_list; /**< A list of types of Household%s and the amount of 
+    times it is in the group.*/
 };
 
 /**
- * Adds a specific household to the world class.
- * @param world The world class to which the household has to be added.
- * @param household The household to add to world.
+ * @brief Adds a specific Household to the World.
+ * Adds Person%s to the World according to the age distribution of the HouseholdMember%s of the Household.
+ * @param[in,out] world The World to which the Household has to be added.
+ * @param[in] household The Household to add to World.
  */
 void add_household_to_world(World& world, const Household& household);
 
 /**
- * Adds households from a household group to the world modell.
- * @param world The world class to which the group has to be added.
- * @param household_group The household group to add.
+ * @brief Adds Household%s from a HouseholdGroup to the World.
+ * @param[in,out] world The World to which the group has to be added.
+ * @param[in] household_group The HouseholdGroup to add.
  */
 void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
 
