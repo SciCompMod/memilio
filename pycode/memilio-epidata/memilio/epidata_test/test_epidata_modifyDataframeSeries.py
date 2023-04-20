@@ -401,7 +401,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
         col_dict = {1: 'Vacc_partially', 2: 'Vacc_completed',
-                    3: 'Vacc_refreshed', 'x': 'Vacc_refreshed'}
+                    3: 'Vacc_refreshed', 'additional identifiers': 'Vacc_refreshed'}
 
         test_labels = test_df.columns
         returned_column_labels, df_split = mdfs.split_column_based_on_values(
@@ -437,7 +437,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
         col_dict = {1: 'Vacc_partially', 2: 'Vacc_completed',
-                    3: 'Vacc_refreshed', 'x': 'Vacc_refreshed'}
+                    3: 'Vacc_refreshed', 'additional identifiers': 'Vacc_refreshed'}
         test_labels = ['Vacc_partially', 'Vacc_completed',
                        'Vacc_refreshed', 'Vacc_refreshed_2']
         returned_column_labels, df_split = mdfs.split_column_based_on_values(
