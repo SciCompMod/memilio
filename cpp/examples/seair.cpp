@@ -43,7 +43,7 @@ int main()
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     mio::oseair::Model model;
-    const double N = 327167434;// total population of the US
+    const double N = 327167434;// total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Exposed)}]   = 0.0003451395725394549;
@@ -58,12 +58,12 @@ int main()
 
     model.check_constraints();
     // print_seir_params(model);
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
-    integrator->set_dt_max(dt);
-    integrator->set_abs_tolerance(1e-6);
-    integrator->set_rel_tolerance(1e-6);
+//    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+//    integrator->set_dt_max(dt);
+//    integrator->set_abs_tolerance(1e-6);
+//    integrator->set_rel_tolerance(1e-6);
 
-    auto seair = simulate(t0, tmax, dt, model, integrator);
+    auto seair = simulate(t0, tmax, dt, model);
     const std::string file_name = "seair.txt";
     std::cout << "Writing output to " << file_name << std::endl;
     mio::time_series_to_file(seair, file_name);
