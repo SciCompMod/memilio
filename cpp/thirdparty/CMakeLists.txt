@@ -48,7 +48,6 @@ else()
     find_package(Eigen3 ${MEMILIO_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
-
 # ## IPOPT
 if(MEMILIO_USE_BUNDLED_IPOPT)
     message(STATUS "Downloading Ipopt library")
@@ -60,8 +59,6 @@ if(MEMILIO_USE_BUNDLED_IPOPT)
         GIT_TAG 3.14.12)
 
     FetchContent_MakeAvailable(Ipopt)
-
-
 endif()
 
 # ## BOOST
