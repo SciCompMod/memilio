@@ -741,7 +741,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         2: dd.EngEng['vaccComplete'],
         3: dd.EngEng['vaccRefresh'],
         11: dd.EngEng['vaccNotComplete'],
-        'x': dd.EngEng['vaccRefresh']}
+        'additional identifiers': dd.EngEng['vaccRefresh']}
 
     vacc_column_names, df_data_joined = mdfs.split_column_based_on_values(
         df_data, "Impfschutz", "Number", groupby_list, column_names_dict,

@@ -202,17 +202,18 @@ def split_column_based_on_values(
     """
     column_identifiers = sorted(df_to_split[column_to_split].unique())
     new_column_labels = []
-    # for column identifiers not in dict.keys() use the dict value with key 'x' and add _2,3,4...
+    # for column identifiers not in column_identifiers_to_names_dict.keys()
+    # use the dict value with key 'additional identifiers' and add _2,_3,_4...
     key_to_start_count = [
         key for key, value in column_identifiers_to_names_dict.items()
-        if value == column_identifiers_to_names_dict['x']][0]
+        if value == column_identifiers_to_names_dict['additional identifiers']][0]
 
     for i in column_identifiers:
         if i in column_identifiers_to_names_dict.keys():
             new_column_labels.append(column_identifiers_to_names_dict[i])
         else:
             new_column_labels.append(
-                column_identifiers_to_names_dict['x'] + '_' +
+                column_identifiers_to_names_dict['additional identifiers'] + '_' +
                 str(i - key_to_start_count + 1))
 
     # create empty copy of the df_to_split
