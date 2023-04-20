@@ -70,12 +70,11 @@ public:
     template<typename History>
     void advance(TimePoint tmax, History& history)
     {
-        auto t = m_t;
-        while (t < tmax) {
-            auto dt = std::min(m_dt, tmax - t);
-            m_world.evolve(t, dt);
-            t += m_dt;
-            history.log(this);
+        while (m_t < tmax) {
+            auto dt = std::min(m_dt, tmax - m_t);
+            m_world.evolve(m_t, dt);
+            m_t += m_dt;
+            history.log(*this);
         }
     }
 

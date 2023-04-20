@@ -22,6 +22,7 @@
 #include <cstdio>
 #include "abm/world.h"
 #include "memilio/io/io.h"
+#include "abm/location_type.h"
 
 int main()
 {
@@ -131,28 +132,40 @@ int main()
         using Type = double;
         static Type log(const mio::abm::Simulation& sim)
         {
-            return sim.get_time().days();
+            return sim.get_time().hours();
         }
     };
-    struct LogTimeCompartments : LogAlways {
-        using Type = std::vector<double>;
+    struct LogLocationIds : LogOnce {
+        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
         static Type log(const mio::abm::Simulation& sim)
-        {   
-            std::vector<double> result;
-            for (auto& compartment : compartments) {
-                result.push_back(compartment.second);
+        {
+            std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+            for (auto&& locations : sim.get_world().get_locations()) {
+                for (auto location : locations) {
+                    location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+                }
             }
-            return result;
+            return location_ids;
         }
     };
 
+    struct LogPersonsPerLocationAndInfectionTime : LogAlways {
+        using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan>>;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan>> location_ids_person{};
+            for (auto&& person : sim.get_world().get_persons()) {
+                location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
+                                                              person.get_time_since_transmission()));
+            }
+            return location_ids_person;
+        }
+    };
 
-
-    History<DataWriterToBuffer, LogTimePoint, Log> history;
-
-
+    History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime> history;
 
     sim.advance(tmax, history);
+
     auto logg = history.get_log();
 
     // The results are saved in a table with 9 rows.
