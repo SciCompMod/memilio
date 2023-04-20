@@ -376,3 +376,9 @@ plt.show()
 
 
 x = 42
+
+
+### draft to compute number of locations of type 6?
+x = bd[bd.ActivityAfter==6].loc[:, 'loc_id_end'].nunique()
+# downscaling of locations of type 6 to 2000 agents
+x / (bd['personID'].nunique()/2000)
