@@ -101,15 +101,16 @@ int main()
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
-    /* Assign infections to some persons.
-    * Infections always start with Exposed, so if you want to set up persons with
-    * progressed infections, the start date has to be shifted.
-    */
+    // Assign infection state to each person.
+    // The infection states are chosen randomly.
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        if (rand() % 5 == 1)
+        mio::abm::InfectionState infection_state =
+            (mio::abm::InfectionState)(rand() % (uint32_t)mio::abm::InfectionState::Count);
+        if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), start_date));
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         infection_state));
     }
 
     // Assign locations to the people

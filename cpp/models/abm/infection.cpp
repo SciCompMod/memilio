@@ -26,30 +26,42 @@ namespace mio
 namespace abm
 {
 
-ViralLoad::ViralLoad(VirusVariant virus, AgeGroup age, TimePoint start_date, const GlobalInfectionParameters& params)
-    : m_start_date(start_date)
+Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+                     InfectionState init_state, bool detected)
+    : m_virus_variant(virus)
+    , m_detected(detected)
 {
-    draw_viral_load(virus, age, params); // TODO: to be changed once the immunity level is implemented
+    m_viral_load.start_date = draw_infection_course(age, params, init_date, init_state);
+
+    auto vl_params    = params.get<ViralLoadDistributions>()[{
+        virus, age, VaccinationState::Unvaccinated}]; // TODO: change vaccination state
+    m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak.params);
+    m_viral_load.incline =
+        vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline.params);
+    m_viral_load.decline =
+        vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline.params);
+    m_viral_load.end_date =
+        m_viral_load.start_date +
+        TimeSpan(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+
+    m_viral_load.end_date =
+        m_viral_load.start_date +
+        TimeSpan(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+
+    auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
+    m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
+    m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta.params);
 }
 
-void ViralLoad::draw_viral_load(VirusVariant virus, AgeGroup age, VaccinationState vaccination_state,
-                                const GlobalInfectionParameters& params)
+ScalarType Infection::get_viral_load(TimePoint t) const
 {
-    auto vl_params = params.get<ViralLoadParameters>()[{virus, age, vaccination_state}];
-    m_peak         = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak);
-    m_incline      = vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline);
-    m_decline      = vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline);
-    m_end_date     = m_start_date + TimeSpan(int(m_peak / m_incline - m_peak / m_decline));
-}
-
-ScalarType ViralLoad::get_viral_load(TimePoint t) const
-{
-    if (t >= m_start_date && t <= m_end_date) {
-        if (t.seconds() <= m_start_date.seconds() + m_peak / m_incline) {
-            return m_incline * (t - m_start_date).seconds();
+    if (t >= m_viral_load.start_date && t <= m_viral_load.end_date) {
+        if (t.seconds() <= m_viral_load.start_date.seconds() + m_viral_load.peak / m_viral_load.incline) {
+            return m_viral_load.incline * (t - m_viral_load.start_date).seconds();
         }
         else {
-            return m_peak + m_decline * (t.seconds() - m_peak / m_incline - m_start_date.seconds());
+            return m_viral_load.peak + m_viral_load.decline * (t.seconds() - m_viral_load.peak / m_viral_load.incline -
+                                                               m_viral_load.start_date.seconds());
         }
     }
     else {
@@ -57,22 +69,11 @@ ScalarType ViralLoad::get_viral_load(TimePoint t) const
     }
 }
 
-Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-                     bool detected)
-    : m_virus_variant(virus)
-    , m_viral_load(virus, age, start_date, params)
-    , m_detected(detected)
-{
-    draw_infection_course(age, params, start_date);
-
-    auto inf_params  = params.get<InfectivityParameters>()[{virus, age}];
-    m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha);
-    m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta);
-}
-
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * m_viral_load.get_viral_load(t))));
+    if (m_viral_load.start_date >= t)
+        return 0;
+    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
 const VirusVariant& Infection::get_virus_variant() const
@@ -99,18 +100,26 @@ bool Infection::is_detected() const
     return m_detected;
 }
 
-void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date)
+TimePoint Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+                                           InfectionState init_state)
 {
-    auto t = start_date;
+    TimePoint start_date = draw_infection_course_backward(age, params, init_date, init_state);
+    draw_infection_course_forward(age, params, init_date, init_state);
+    return start_date;
+}
+
+void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params,
+                                              TimePoint init_date, InfectionState start_state)
+{
+    auto t = init_date;
     TimeSpan time_period{}; // time period for current infection state
-    InfectionState next_state{}; // next state to enter
-    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, InfectionState::Exposed));
+    InfectionState next_state{start_state}; // next state to enter
+    m_infection_course.push_back(std::pair<TimePoint, InfectionState>(t, next_state));
     auto uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType v; // random draws
-    while ((m_infection_course.back().second != InfectionState::Recovered_Infected &&
-            m_infection_course.back().second != InfectionState::Recovered_Carrier &&
-            m_infection_course.back().second != InfectionState::Dead)) {
-        switch (m_infection_course.back().second) {
+    while ((next_state != InfectionState::Recovered_Infected && next_state != InfectionState::Recovered_Carrier &&
+            next_state != InfectionState::Dead)) {
+        switch (next_state) {
         case InfectionState::Exposed:
             // roll out how long until carrier
             time_period = TimeSpan((int)params.get<IncubationPeriod>()[{
@@ -180,6 +189,78 @@ void Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParamet
         t = t + time_period;
         m_infection_course.push_back({t, next_state});
     }
+}
+
+TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params,
+                                                    TimePoint init_date, InfectionState init_state)
+{
+    assert(init_state != InfectionState::Dead && "Cannot initialize dead person.");
+
+    auto start_date = init_date;
+    TimeSpan time_period{}; // time period for current infection state
+    InfectionState previous_state{init_state}; // next state to enter
+    auto uniform_dist = UniformDistribution<double>::get_instance();
+    ScalarType v; // random draws
+    while ((previous_state != InfectionState::Exposed)) {
+        switch (previous_state) {
+
+        case InfectionState::Carrier:
+            time_period    = TimeSpan((int)params.get<IncubationPeriod>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::Exposed;
+            break;
+
+        case InfectionState::Infected:
+            time_period    = TimeSpan((int)params.get<CarrierToInfected>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::Carrier;
+            break;
+
+        case InfectionState::Infected_Severe:
+            time_period    = TimeSpan((int)params.get<InfectedToSevere>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::Infected;
+            break;
+
+        case InfectionState::Infected_Critical:
+            time_period    = TimeSpan((int)params.get<SevereToCritical>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::Infected_Severe;
+            break;
+
+        case InfectionState::Recovered_Carrier:
+            time_period    = TimeSpan((int)params.get<CarrierToRecovered>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::Carrier;
+            break;
+
+        case InfectionState::Recovered_Infected:
+            // roll out next infection step
+            v = uniform_dist();
+            if (v < 1 / 3) { // TODO: subject to change
+                time_period    = TimeSpan((int)params.get<InfectedToRecovered>()[{
+                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+                previous_state = InfectionState::Infected;
+            }
+            else if (v < 2 / 3) {
+                time_period    = TimeSpan((int)params.get<SevereToRecovered>()[{
+                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+                previous_state = InfectionState::Infected_Severe;
+            }
+            else {
+                time_period    = TimeSpan((int)params.get<CriticalToRecovered>()[{
+                    m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+                previous_state = InfectionState::Infected_Critical;
+            }
+            break;
+
+        default:
+            break;
+        }
+        start_date = start_date - time_period;
+        m_infection_course.insert(m_infection_course.begin(), {start_date, previous_state});
+    }
+    return start_date;
 }
 
 } // namespace abm

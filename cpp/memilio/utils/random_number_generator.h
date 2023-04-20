@@ -158,7 +158,7 @@ public:
     /**
      * The function that generates a random value from the distribution with the specified parameters.
      */
-    using GeneratorFunction = std::function<ResultType(const ParamType& p)>;
+    using GeneratorFunction = std::function<ResultType(const typename DistT::param_type& p)>;
 
     /**
      * the default generator function invokes an instance of the template parameter
@@ -181,7 +181,7 @@ public:
     template <class... T>
     ResultType operator()(T&&... params)
     {
-        return m_generator(ParamType{std::forward<T>(params)...});
+        return m_generator(typename DistT::param_type{std::forward<T>(params)...});
     }
 
     /**

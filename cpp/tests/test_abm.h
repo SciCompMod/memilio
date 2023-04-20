@@ -84,14 +84,6 @@ struct ScopedMockDistribution {
 };
 
 /**
- * @brief Add an Infection to the Person with the demanded InfectionState at the given time. Intended for simple use in tests.
-*/
-void add_test_infection(mio::abm::Person& p,
-                        mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Infected,
-                        mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
-                        mio::abm::GlobalInfectionParameters params = {});
-
-/**
  * @brief Create a Person without a World object. Intended for simple use in tests.
 */
 mio::abm::Person make_test_person(mio::abm::Location& location,
