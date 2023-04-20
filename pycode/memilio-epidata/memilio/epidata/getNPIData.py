@@ -1116,9 +1116,6 @@ def get_npi_data(fine_resolution=2,
                     for incidcode in ['', '_1', '_2', '_3', '_4', '_5']:
                         df_local_new[subcode+incidcode] *= df_merged[subcode]
 
-        save_counter(df_count_deactivation, 'count_deactivation', directory)
-        plot_counter('count_deactivation', directory)
-
         counters[cid] += time.perf_counter()-start_time
         cid += 1
         ### ###
@@ -1143,6 +1140,9 @@ def get_npi_data(fine_resolution=2,
                   str(len(counties_considered)) +
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
+
+    save_counter(df_count_deactivation, 'count_deactivation', directory)
+    plot_counter('count_deactivation', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
         print('WARNING: DataFrame starts with reported cases > 0 '
