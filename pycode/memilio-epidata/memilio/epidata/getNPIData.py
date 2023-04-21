@@ -878,21 +878,26 @@ def get_npi_data(fine_resolution=2,
     df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
     counter_cases_start = 0
 
-    # # setup dataframe for each maingroup, same format as df_npi_combinations
-    # # used to count codes that occur simultaneously now (before any (de-)activation)
-    # df_count_joined_codes = copy.deepcopy(df_npis_combinations)
-    # for subcode in df_count_joined_codes.keys():
-    #     df_count_joined_codes[subcode][1] *= 0
-    # df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
-    #                                       counties_considered=counties_considered)
-    # save_counter(df_counted_joined_codes, 'joined_codes', directory)
-    # plot_counter('joined_codes', directory)
+    # setup dataframe for each maingroup, same format as df_npi_combinations
+    # used to count codes that occur simultaneously now (before any (de-)activation)
+    df_count_joined_codes = copy.deepcopy(df_npis_combinations)
+    for subcode in df_count_joined_codes.keys():
+        df_count_joined_codes[subcode][1] *= 0
+    df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
+                                          counties_considered=counties_considered)
+    save_counter(df_counted_joined_codes, 'joined_codes', directory)
+    plot_counter('joined_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_incid_depend = pd.DataFrame()
     df_count_incid_depend = copy.deepcopy(df_npis_combinations)
     for maincode in df_count_incid_depend.keys():
         df_count_incid_depend[maincode][1] *= 0
+
+    # create dataframe to count multiple codes after strictness deactivation
+    df_count_active = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_active.keys():
+        df_count_active[maincode][1] *= 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
     # used to count number of codes that are deactivated
@@ -1106,6 +1111,10 @@ def get_npi_data(fine_resolution=2,
                                 df_merged.loc[subcode_active, nocombi_code] = 0
                                 df_count_deactivation[maincode][1].loc[idx_strictness,
                                                                        nocombi_code] += len(days_deact)
+            
+            count_codes_active(df_merged, df_count_active, counties_considered)
+            save_counter(df_count_active, 'joined_codes_active', directory)
+            plot_counter('joined_codes_active', directory)
 
             # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
@@ -1229,6 +1238,33 @@ def count_codes(df_npis_old, df_count, counties_considered):
                     df_count[maincode][1].iloc[column, column_other] += len(set(
                         code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
     return df_count
+
+def count_codes_active(df_merged, df_count_active, counties_considered):
+    for county in counties_considered:
+        df_local = df_merged[df_merged[dd.EngEng['idCounty']] == county]
+        code_dict = {}
+        for maincode in df_count_active.keys():
+            for column in df_count_active[maincode][1].columns:
+                code_dict[column] = df_local.iloc[np.where(
+                    df_local.loc[:, df_local.columns.str.contains(column)].max(axis=1) > 0)[0], 0].to_list()
+
+        # with diag
+        # for maincode in df_count_active.keys():
+        #    column_list = df_count_active[maincode][1].columns
+        #    for column in range(len(column_list)):
+        #        for column_other in range(len(column_list)):
+        #            df_count_active[maincode][1].iloc[column, column_other] += len(set(
+        #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+
+        # no diag
+        for maincode in df_count_active.keys():
+            column_list = df_count_active[maincode][1].columns
+            for column in range(len(column_list)):
+                for column_other in range(column):
+                    df_count_active[maincode][1].iloc[column, column_other] += len(set(
+                        code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+
+    return df_count_active
 
 
 def count_codes_incid_depend(df_incid_depend, df_count_incid_depend, counties_considered):
