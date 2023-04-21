@@ -17,15 +17,49 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/miompi.h"
+
+#ifdef MEMILIO_ENABLE_MPI
+#include <mpi.h>
+#endif
 
 namespace mio
 {
-    
-RandomNumberGenerator& thread_local_rng()
+namespace mpi
 {
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
+Comm get_world()
+{
+#ifdef MEMILIO_ENABLE_MPI
+    static Comm world = MPI_COMM_WORLD;
+#else
+    static Comm world = nullptr;
+#endif
+    return world;
 }
 
+void init()
+{
+#ifdef MEMILIO_ENABLE_MPI
+    MPI_Init(nullptr, nullptr);
+#endif
+}
+
+void finalize()
+{
+#ifdef MEMILIO_ENABLE_MPI
+    MPI_Finalize();
+#endif
+}
+
+bool is_root()
+{
+#ifdef MEMILIO_ENABLE_MPI
+    int rank;
+    MPI_Comm_rank(get_world(), &rank);
+    return rank == 0;
+#endif
+    return true;
+}
+
+} // namespace mpi
 } // namespace mio
