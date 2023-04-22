@@ -165,7 +165,6 @@ struct ContactPatterns {
     }
 };
 
-
 /**
  * @brief 
  * 
@@ -175,6 +174,14 @@ struct StateAgeFunction {
     {
         return std::exp(-1.0 * state_age);
     }
+
+    auto clone() const
+    {
+        return std::unique_ptr<StateAgeFunction>(clone_impl());
+    }
+
+protected:
+    virtual StateAgeFunction* clone_impl() const = 0;
 };
 
 /**
@@ -203,6 +210,12 @@ struct ExponentialDecay : public StateAgeFunction {
         return funcparam;
     }
 
+protected:
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ExponentialDecay(*this);
+    }
+
 private:
     ScalarType funcparam{};
 };
@@ -225,12 +238,18 @@ struct SmootherCosine : public StateAgeFunction {
 
     ScalarType Function(ScalarType state_age)
     {
-        return smoother_cosine(state_age, 0.0, funcparam, 1.0, 0.0);;
+        return smoother_cosine(state_age, 0.0, funcparam, 1.0, 0.0);
     }
 
     ScalarType get_funcparam()
     {
         return funcparam;
+    }
+
+protected:
+    StateAgeFunction* clone_impl() const override
+    {
+        return new SmootherCosine(*this);
     }
 
 private:
@@ -242,8 +261,26 @@ private:
  * 
  */
 struct ProbabilityProgress {
-    ProbabilityProgress() =default;
-    
+    ProbabilityProgress() = default;
+
+    // based on https://stackoverflow.com/questions/16030081/copy-constructor-for-a-class-with-unique-ptr
+    ~ProbabilityProgress() = default;
+
+    ProbabilityProgress(ProbabilityProgress const& other)
+        : m_function(other.m_function->clone())
+    {
+    }
+
+    ProbabilityProgress(ProbabilityProgress&& other) = default;
+
+    ProbabilityProgress& operator=(ProbabilityProgress const& other)
+    {
+        m_function = other.m_function->clone();
+        return *this;
+    }
+
+    ProbabilityProgress& operator=(ProbabilityProgress&& other) = default;
+
     void setStateAgeFunction(const StateAgeFunction& new_function)
     {
         m_function.reset(new_function.clone());
@@ -257,7 +294,6 @@ struct ProbabilityProgress {
 private:
     std::unique_ptr<StateAgeFunction> m_function;
 };
-
 
 /**
 * @brief Probability of getting infected from a contact.
@@ -325,7 +361,7 @@ public:
 
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.
      */
     int check_constraints() const
     {
