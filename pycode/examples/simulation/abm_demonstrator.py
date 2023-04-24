@@ -337,7 +337,6 @@ def create_locations_from_input(world, input_areas):
     mapping = []
     has_school = False
     has_hospital = False
-    print(input_areas)
     for index, area in input_areas.iterrows():
         locationIds = []
         if ('residential' in area.type):
@@ -407,6 +406,7 @@ def create_locations_from_input(world, input_areas):
                 locationIds = add_households(
                     world, [0.2, 0.2, 0.2, 0.2, 0.2], area.inhabitants)
         insert_locations_to_map(mapping, area.id, locationIds)
+    return mapping
 
 
 def assign_infection_states(world, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
@@ -476,20 +476,21 @@ def assign_locations(world):
 
 def run_abm_simulation():
 
-    LocationIds = []
-
     infection_params = set_infection_parameters()
-    world = abm.World(infection_params)
 
     t0 = abm.TimePoint(0)
     tmax = t0 + abm.days(14)
 
     areas = read_txt(
         '/home/bick_ju/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt')
-    create_locations_from_input(world, areas)
-    assign_infection_states(world, 0.005, 0.001, 0.001, 0.0001, 0.0, 0.0, 0.0)
-    assign_locations(world)
     sim = abm.Simulation(t0)
+    sim.world.infection_parameters = infection_params
+    mapping = create_locations_from_input(sim.world, areas)
+    assign_infection_states(sim.world, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    assign_locations(sim.world)
+    for m in mapping:
+        print(m.inputId)
+        print(m.modelId)
     sim.advance(tmax)
     print('done')
 

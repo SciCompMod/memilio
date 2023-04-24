@@ -256,5 +256,5 @@ PYBIND11_MODULE(_simulation_abm, m)
         //.def(py::init<mio::abm::TimePoint, mio::abm::World&&>())
         .def("advance", &mio::abm::Simulation::advance)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
-        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
+        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world), py::return_value_policy::reference_internal);
 }
