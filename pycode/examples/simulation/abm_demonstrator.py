@@ -25,12 +25,16 @@ from memilio.simulation import abm
 from memilio.simulation.abm import AgeGroup
 from memilio.simulation.abm import VaccinationState
 
+# class used to map input area ids to abm location ids
+
 
 class LocationMapping:
 
     def __init__(self):
         self.inputId = None
         self.modelId = []
+
+# infection parameters are dependent on age group and vaccination state
 
 
 def set_infection_parameters():
@@ -196,6 +200,7 @@ def set_infection_parameters():
 
 
 def read_txt(path):
+    # read input file and save it in a pd.Dataframe
     input = pd.read_csv(path, sep='\t')
     return input
 
@@ -203,6 +208,7 @@ def read_txt(path):
 def make_one_person_households(number_of_households):
     # one-person household member
     one_person_household_member = abm.HouseholdMember()
+    # set weights for household member
     one_person_household_member.set_age_weight(AgeGroup.Age15to34, 5)
     one_person_household_member.set_age_weight(AgeGroup.Age35to59, 6)
     one_person_household_member.set_age_weight(AgeGroup.Age60to79, 4)
@@ -265,6 +271,7 @@ def add_households(world, distribution, num_inhabitants):
     household_sizes = np.zeros(len(distribution))
     locationIds = []
     new_index = len(world.locations[int(abm.LocationType.Home)])
+    # distribute inhabintants to households
     while num_inhabitants > 0:
         size = np.random.choice(
             np.arange(0, len(distribution)), p=distribution)
@@ -333,37 +340,49 @@ def insert_locations_to_map(mapping, inputId, locationIds):
     return mapping
 
 
-def create_locations_from_input(world, input_areas):
+def create_locations_from_input(world, input_areas, household_distribution):
+    # mapping to map input area ids to abm location ids
     mapping = []
+    # bools to make sure the world has a school and a hospital
     has_school = False
     has_hospital = False
     for index, area in input_areas.iterrows():
+        # locations ids; relevant for the mapping
         locationIds = []
         if ('residential' in area.type):
+            # area 'residential' corresponds to location type 'Home'
             locationIds = add_households(
-                world, [0.2, 0.2, 0.2, 0.2, 0.2], area.inhabitants)
+                world, household_distribution, area.inhabitants)
         elif (area.type == 'recreational'):
+            # area 'recreational' corresponds to location type 'SocialEvent'
             location = world.add_location(abm.LocationType.SocialEvent)
-            locationIds.append(location)
+            # set maximum contacts and capacity for social events
             world.get_individualized_location(
                 location).infection_parameters.MaximumContacts = 30.
             world.get_individualized_location(location).set_capacity(30, 40)
+            locationIds.append(location)
         elif (area.type == 'shopping_business'):
+            # area 'shopping_business' corresponds to location type School, Hospital, BasicsShops, Work
             if (not has_school):
+                # if world does not have a school yet, a school is added
                 location = world.add_location(abm.LocationType.School)
-                locationIds.append(location)
+                # set maximum contacts and capacity for school
                 world.get_individualized_location(
                     location).infection_parameters.MaximumContacts = 40.
                 world.get_individualized_location(
                     location).set_capacity(500, 2000)
+                locationIds.append(location)
                 has_school = True
             elif (not has_hospital):
+                # if world does not have a hospital yet, a hospital and a icu is added
                 locHosp = world.add_location(abm.LocationType.Hospital)
+                # set maximum contacts and capacity for hospital
                 world.get_individualized_location(
                     locHosp).infection_parameters.MaximumContacts = 5.
                 world.get_individualized_location(
                     locHosp).set_capacity(300, 10000)
                 locICU = world.add_location(abm.LocationType.ICU)
+                # set maximum contacts and capacity for icu
                 world.get_individualized_location(
                     locICU).infection_parameters.MaximumContacts = 5.
                 world.get_individualized_location(
@@ -372,9 +391,12 @@ def create_locations_from_input(world, input_areas):
                 locationIds.append(locICU)
                 has_hospital = True
             else:
+                # when hospital and school has been added, the area 'shopping_business' is either
+                # transformed to location type BasicsShop or location type Work with same probability
                 type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
                 if (type):
                     location = world.add_location(abm.LocationType.BasicsShop)
+                    # set maximum contacts and capacity for basics shops
                     world.get_individualized_location(
                         location).infection_parameters.MaximumContacts = 20.
                     world.get_individualized_location(
@@ -382,29 +404,34 @@ def create_locations_from_input(world, input_areas):
                     locationIds.append(location)
                 else:
                     location = world.add_location(abm.LocationType.Work)
+                    # set maximum contacts and capacity for work
                     world.get_individualized_location(
                         location).infection_parameters.MaximumContacts = 40.
                     world.get_individualized_location(
                         location).set_capacity(300, 2000)
                     locationIds.append(location)
         elif (area.type == 'university'):
+            # area 'university' corresponds to location type 'Work'
             location = world.add_location(abm.LocationType.Work)
+            # set maximum contacts and capacity for work
             world.get_individualized_location(
                 location).infection_parameters.MaximumContacts = 50.
             world.get_individualized_location(location).set_capacity(200, 4000)
             locationIds.append(location)
         elif (area.type == 'mixed'):
+            # area 'mixed' corresponds either to location type 'Work' or location type 'Home' with same probability
             type = np.random.choice(np.arange(0, 2), p=[0.5, 0.5])
             if (type):
                 location = world.add_location(abm.LocationType.Work)
-                locationIds.append(location)
+                # set maximum contacts and capacity for work
                 world.get_individualized_location(
                     location).infection_parameters.MaximumContacts = 40.
                 world.get_individualized_location(
                     location).set_capacity(100, 2000)
+                locationIds.append(location)
             else:
                 locationIds = add_households(
-                    world, [0.2, 0.2, 0.2, 0.2, 0.2], area.inhabitants)
+                    world, household_distribution, area.inhabitants)
         insert_locations_to_map(mapping, area.id, locationIds)
     return mapping
 
@@ -424,6 +451,7 @@ def assign_infection_states(world, exposed_pct, infected_no_symptoms_pct, infect
 
 
 def assign_locations(world):
+    # get locations from world
     schools = world.locations[abm.LocationType.School]
     school_weights = [(1/len(schools)) for i in range(len(schools))]
 
@@ -442,6 +470,7 @@ def assign_locations(world):
     social_events = world.locations[abm.LocationType.SocialEvent]
     event_weights = [(1/len(social_events)) for i in range(len(social_events))]
 
+    # assign locations to persons
     for person in world.persons:
         shop = np.random.choice(np.arange(0, len(basic_shops)), p=shop_weights)
         person.set_assigned_location(abm.LocationId(
@@ -461,12 +490,13 @@ def assign_locations(world):
         person.set_assigned_location(abm.LocationId(
             social_events[int(event)].index, social_events[int(event)].type))
 
+        # assign school for persons between 5 and 14 years
         if (person.age == AgeGroup.Age5to14):
             school = np.random.choice(
                 np.arange(0, len(schools)), p=school_weights)
             person.set_assigned_location(abm.LocationId(
                 schools[int(school)].index, schools[int(school)].type))
-
+        # assign work for persons between 15 and 59
         if (person.age == AgeGroup.Age15to34 or person.age == AgeGroup.Age35to59):
             work = np.random.choice(
                 np.arange(0, len(workplaces)), p=workplace_weights)
@@ -476,16 +506,23 @@ def assign_locations(world):
 
 def run_abm_simulation():
 
+    # set infection parameters
     infection_params = set_infection_parameters()
-
+    # create abm world with infection parameters
+    # starting time point
     t0 = abm.TimePoint(0)
+    # simulation will run 14 days
     tmax = t0 + abm.days(14)
+    # distribution to distribute the residential areas to one, two-, three-, four- and five-person households
+    household_distribution = [0.2, 0.2, 0.2, 0.2, 0.2]
 
+    # read txt file with inputs
     areas = read_txt(
         '/home/bick_ju/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt')
     sim = abm.Simulation(t0)
     sim.world.infection_parameters = infection_params
-    mapping = create_locations_from_input(sim.world, areas)
+    mapping = create_locations_from_input(
+        sim.world, areas, household_distribution)
     assign_infection_states(sim.world, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     assign_locations(sim.world)
     for m in mapping:
