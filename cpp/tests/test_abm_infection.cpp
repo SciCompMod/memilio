@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestInfection, init)
 {
@@ -52,6 +52,9 @@ TEST(TestInfection, init)
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
     EXPECT_EQ(infection.is_detected(), true);
 
-    EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(3600)), mio::abm::InfectionState::Recovered_Infected);
-    EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(72 * 3600)), 0.2689414213699951, 1e-14);
+    EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
+              mio::abm::InfectionState::Exposed);
+    EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
+              mio::abm::InfectionState::Carrier);
+    EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
 }

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestMasks, init)
 {
@@ -56,10 +56,9 @@ TEST(TestMasks, maskProtection)
 {
     mio::abm::GlobalInfectionParameters params;
 
-    // set incubtion period to two days so that the newly infected person is still exposed
+    // set incubation period to two days so that the newly infected person is still exposed
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}] =
-        2 * mio::abm::days(1).seconds();
+                                              mio::abm::VaccinationState::Unvaccinated}] = 2.;
 
     //setup location with some chance of exposure
     auto t                  = mio::abm::TimePoint(0);
@@ -67,7 +66,7 @@ TEST(TestMasks, maskProtection)
     auto susc_person1       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
     auto susc_person2       = mio::abm::Person(infection_location, mio::abm::AgeGroup::Age15to34);
     auto infected1          = make_test_person(infection_location, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::InfectionState::Infected, t, params); // infected 7 days prior
+                                               mio::abm::InfectionState::Infected, t, params); // infected 7 days prior
 
     //cache precomputed results
     auto dt = mio::abm::days(1);

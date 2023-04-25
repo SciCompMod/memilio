@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef TEST_ABM_H
-#define TEST_ABM_H
+#ifndef ABM_HELPERS_H
+#define ABM_HELPERS_H
 
 #include "abm/abm.h"
 #include "memilio/math/eigen_util.h"
@@ -100,4 +100,4 @@ mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId l
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
 
-#endif //TEST_ABM_H
+#endif //ABM_HELPERS_H

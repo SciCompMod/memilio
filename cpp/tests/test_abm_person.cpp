@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestPerson, init)
 {
@@ -94,7 +94,7 @@ TEST(TestPerson, quarantine)
     auto dt        = mio::abm::hours(1);
     infection_parameters.get<mio::abm::InfectedToRecovered>()[{
         mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
-        0.5 * dt.seconds();
+        0.5 * dt.days();
 
     auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Infected, t_morning,
                                    infection_parameters);

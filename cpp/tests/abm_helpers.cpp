@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGroup age,
                                   mio::abm::InfectionState infection_state, mio::abm::TimePoint t,

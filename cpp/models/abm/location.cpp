@@ -162,10 +162,10 @@ size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 void Location::store_subpopulations(const TimePoint t)
 {
     m_subpopulations.add_time_point(t.days());
-    std::array<ScalarType, size_t(InfectionState::Count)> subpopulations{};
+    Eigen::VectorXd subpopulations(Eigen::VectorXd::Zero((size_t)InfectionState::Count));
     for (auto p : m_persons)
         ++subpopulations[(size_t)p->get_infection_state(t)];
-    m_subpopulations.get_last_value() = Eigen::Map<const Eigen::VectorXd>(subpopulations.data(), subpopulations.size());
+    m_subpopulations.get_last_value() = subpopulations;
 }
 
 void Location::initialize_subpopulations(const TimePoint t)

@@ -196,9 +196,7 @@ struct ViralLoadDistributions {
     static Type get_default()
     {
         Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
-                         ViralLoadDistributionsParameters{{8.1, 8.1},
-                                                          {2. / days(1).seconds(), 2. / days(1).seconds()},
-                                                          {-0.17 / days(1).seconds(), -0.17 / days(1).seconds()}});
+                         ViralLoadDistributionsParameters{{8.1, 8.1}, {2., 2.}, {-0.17, -0.17}});
         return default_val;
     }
     static std::string name()
