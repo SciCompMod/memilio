@@ -283,7 +283,7 @@ struct ProbabilityProgress {
 
     void setStateAgeFunction(const StateAgeFunction& new_function)
     {
-        m_function.reset(new_function.clone());
+        m_function = new_function.clone();
     }
 
     ScalarType Function(ScalarType state_age)
