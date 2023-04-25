@@ -62,12 +62,12 @@ public:
      */
     void advance(TimePoint tmax);
 
-     /** 
+    /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
      * @param[in] history History to store the result of the Simulation.
      */
-    template<typename History>
+    template <typename History>
     void advance(TimePoint tmax, History& history)
     {
         while (m_t < tmax) {
@@ -75,9 +75,9 @@ public:
             m_world.evolve(m_t, dt);
             m_t += m_dt;
             history.log(*this);
+            store_result_at(m_t);
         }
     }
-
 
     /**
      * @brief Get the result of the Simulation.

@@ -23,6 +23,28 @@
 #include "abm/world.h"
 #include "memilio/io/io.h"
 #include "abm/location_type.h"
+#include <fstream>
+#include <string>
+#include <iostream>
+
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
+{
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+std::vector<uint32_t> get_agents_per_location(
+    std::tuple<mio::abm::LocationType, uint32_t> loc_id,
+    std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>& log)
+{
+    std::vector<uint32_t> agents_per_location;
+    for (auto& log_tuple : log) {
+        if (std::get<0>(log_tuple).type == std::get<0>(loc_id) && std::get<0>(log_tuple).index == std::get<1>(loc_id)) {
+            agents_per_location.push_back(std::get<1>(log_tuple));
+        }
+    }
+    return agents_per_location;
+}
 
 int main()
 {
@@ -150,13 +172,16 @@ int main()
     };
 
     struct LogPersonsPerLocationAndInfectionTime : LogAlways {
-        using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan>>;
+        using Type =
+            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
         static Type log(const mio::abm::Simulation& sim)
         {
-            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan>> location_ids_person{};
+            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
+                location_ids_person{};
             for (auto&& person : sim.get_world().get_persons()) {
                 location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
-                                                              person.get_time_since_transmission()));
+                                                              person.get_time_since_transmission(),
+                                                              person.get_infection_state()));
             }
             return location_ids_person;
         }
@@ -167,6 +192,21 @@ int main()
     sim.advance(tmax, history);
 
     auto logg = history.get_log();
+
+    // Write the results to a file.
+    auto loc_id = std::get<1>(logg);
+    auto rest   = std::get<2>(logg);
+    std::string input;
+    std::ofstream myfile("julias_output.txt");
+    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
+        input  = convert_loc_id_to_string(loc_id[0][loc_id_index]);
+        auto a = get_agents_per_location(loc_id[0][loc_id_index], rest[0]);
+        // for (auto rest_index = 0; rest_index < rest[0].size(); ++rest_index) {
+
+        // }
+        myfile << input << "\n";
+    }
+    myfile.close();
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
@@ -188,4 +228,5 @@ int main()
         }
     }
     fclose(f_abm);
+    std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
