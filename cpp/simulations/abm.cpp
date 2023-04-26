@@ -21,7 +21,6 @@
 #include "memilio/io/result_io.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
-//#include "tests/test_abm.h"
 
 namespace fs = boost::filesystem;
 

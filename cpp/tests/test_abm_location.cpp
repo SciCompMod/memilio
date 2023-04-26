@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 #include "abm/infection.h"
-#include "test_abm.h"
-#include "test_abm.cpp"
+#include "abm_helpers.h"
+#include "abm_helpers.cpp"
 #include <memory>
 
 TEST(TestLocation, init)
@@ -153,8 +153,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)) // draw random work group
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
-        .WillOnce(testing::Return(0.8)); // draw random school hour
-    // .WillRepeatedly(testing::Return(1.0));
+        .WillOnce(testing::Return(0.8)) // draw random school hour
+        .WillRepeatedly(testing::Return(1.0));
 
     auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Carrier);
     auto& p2 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible);
@@ -215,7 +215,7 @@ TEST(TestLocation, interact)
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
 
     // set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{variant, age}] = 2 * mio::abm::days(1).seconds();
+    params.get<mio::abm::IncubationPeriod>()[{variant, age}] = 2.;
 
     //setup location with some chance of exposure
     auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
@@ -261,18 +261,20 @@ TEST(TestLocation, storeSubpopulations)
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
     //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to Carrier to RecoveredCarrier
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14}] =
-        1.5 * dt.seconds();
+    params.get<mio::abm::InfectedToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype,
+        mio::abm::AgeGroup::Age5to14,
+    }] = 1.5 * dt.days();
 
     params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        5 * dt.seconds();
+        5 * dt.days();
     params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        5 * dt.seconds();
+        5 * dt.days();
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
-        0.4 * dt.seconds();
+        0.4 * dt.days();
     params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
-        1.8 * dt.seconds();
+        1.8 * dt.days();
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
 
@@ -283,7 +285,9 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)); // transition to RecoveredInfected
+        .WillOnce(testing::Return(0.6)) // transition to RecoveredInfected
+        .WillRepeatedly(testing::Return(1.0));
+
     auto person1 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
 
@@ -298,7 +302,8 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)); // transition to RecoveredCarrier
+        .WillOnce(testing::Return(0.6)) // transition to RecoveredCarrier
+        .WillRepeatedly(testing::Return(1.0));
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
 

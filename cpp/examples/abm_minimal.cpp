@@ -27,7 +27,7 @@ int main()
     mio::abm::GlobalInfectionParameters infection_params;
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod>() = 4. * 24 * 3600;
+    infection_params.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Create the world with infection parameters.
     auto world = mio::abm::World(infection_params);

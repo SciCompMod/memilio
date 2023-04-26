@@ -316,6 +316,11 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
+inline TimeSpan days(double days)
+{
+    return TimeSpan((int)(days * 24 * 60 * 60));
+}
+
 } // namespace abm
 } // namespace mio
 

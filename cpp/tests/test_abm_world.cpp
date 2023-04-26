@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestWorld, init)
 {
@@ -176,7 +176,8 @@ TEST(TestWorld, evolveMigration)
             .WillOnce(testing::Return(0.8)) // draw random work group
             .WillOnce(testing::Return(0.8)) // draw random school group
             .WillOnce(testing::Return(0.8)) // draw random work hour
-            .WillOnce(testing::Return(0.8)); // draw random school hour
+            .WillOnce(testing::Return(0.8)) // draw random school hour
+            .WillRepeatedly(testing::Return(1.0));
 
         auto& p2 =
             add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
