@@ -253,5 +253,32 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
+ScalarType Person::get_protection_factor(VirusVariant /*v*/, TimePoint t) const
+{
+    TimeSpan time_since_vaccination = t - m_vaccinations.back().time;
+    ScalarType init_efficacy;
+    switch (m_vaccinations.back().vaccine) {
+        case Vaccine::Moderna:
+            init_efficacy = 99;
+            break;
+        default:
+            init_efficacy = 50;
+    }
+    //TimeSpan time_since_infection = t - m_infections.back().get_start_date();
+    if (time_since_vaccination.days() > 0) {
+        return init_efficacy / time_since_vaccination.days();
+    }
+    return 1;
+}
+
+ScalarType Person::get_severity_factor(VirusVariant /*v*/, TimePoint t) const
+{
+    TimeSpan time_since_vaccination = t - m_vaccinations.back().time;
+    if (time_since_vaccination.days() > 0) {
+        return 1 / time_since_vaccination.days();
+    }
+    return 1;
+}
+
 } // namespace abm
 } // namespace mio

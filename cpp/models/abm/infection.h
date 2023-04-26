@@ -96,6 +96,13 @@ public:
     */
     bool is_detected() const;
 
+    /**
+     * @returns Get the infection start date. 
+    */
+    TimePoint get_start_date() const {
+        return m_start_date;
+    }
+
 private:
     /**
      * @brief Determine ViralLoad course and Infection course based on init_state. Calls draw_infection_course_backward for all InfectionState%s prior and draw_infection_course_forward for all subsequent InfectionState%s.
@@ -133,6 +140,7 @@ private:
     ViralLoad m_viral_load;
     ScalarType m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
     bool m_detected;
+    TimePoint m_start_date;
 };
 
 } // namespace abm

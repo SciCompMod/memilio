@@ -21,6 +21,7 @@
 #define EPI_ABM_VACCINE_H
 
 #include "abm/time.h"
+#include "memilio/config.h"
 
 #include <cstdint>
 
@@ -35,8 +36,13 @@ namespace abm
  */
 enum class Vaccine : std::uint32_t
 {
-    Generic = 0,
-
+    Moderna           = 0,
+    Pfizer            = 1,
+    Astrazeneca       = 2,
+    JohnsonAndJohnson = 3,
+    Novavax           = 4,
+    Sinovac           = 5,
+    Sputnik           = 6,
     Count //last!!
 };
 
@@ -45,8 +51,14 @@ enum class Vaccine : std::uint32_t
  * The TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
-    TimePoint t;
+    Vaccination(Vaccine v, TimePoint t)
+    {
+        vaccine = v;
+        time    = t;
+    }
+
     Vaccine vaccine;
+    TimePoint time;
 };
 
 } // namespace abm
