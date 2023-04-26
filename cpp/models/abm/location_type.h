@@ -29,7 +29,7 @@ namespace abm
 {
 
 /**
- * type of a location.
+ * @brief Type of a Location.
  */
 enum class LocationType : std::uint32_t
 {

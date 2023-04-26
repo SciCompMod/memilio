@@ -26,7 +26,7 @@
 #include "utils/parameter_set.h"
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
-#include "mobility/mobility.h"
+#include "mobility/meta_mobility_instant.h"
 #include "ode_secir/model.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
@@ -79,16 +79,20 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("secir_model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def(
-            "run",
+        .def("run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)> handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
-                    [&handle_result](auto&& g) {
-                        handle_result(std::move(g));
+                    [&handle_result](auto&& g, auto&& run_idx) {
+                        //handle_result_function needs to return something
+                        //we don't want to run an unknown python object through parameterstudies, so 
+                        //we just return 0 and ignore the list returned by run().
+                        //So python will behave slightly different than c++
+                        handle_result(std::move(g), run_idx);
+                        return 0; 
                     });
             },
             py::arg("handle_result_func"))
@@ -100,13 +104,14 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
              })
         .def(
             "run_single",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation, size_t)> handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
-                    [&handle_result](auto&& r) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()));
+                    [&handle_result](auto&& r, auto&& run_idx) {
+                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
+                        return 0;
                     });
             },
             py::arg("handle_result_func"))
