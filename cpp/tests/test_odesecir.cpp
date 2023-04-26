@@ -623,32 +623,6 @@ TEST(TestSecir, testModelConstraints)
     for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
         EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
     }
-
-    // params.set_icu_capacity(max_icu_cap - 3);
-
-    // secihurd = simulate(t0, tmax, dt, params);
-    // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
-    //     EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2.5) << " at row " << i;
-    // }
-
-    // temporary test for random variables
-    set_params_distributions_normal(model, t0, tmax, 0.1);
-
-    for (size_t j = 0; j < 10; j++) {
-        draw_sample(model);
-        model.parameters.set<mio::osecir::ICUCapacity>(8000);
-        secihurd = simulate(t0, tmax, dt, model);
-        // max_icu_cap = 0;
-        // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
-        //     if (secihurd.get_value(i)[5] > max_icu_cap) {
-        //         max_icu_cap = secihurd.get_value(i)[5];
-        //     }
-        // }
-        // printf("\n max cap: %.4f ", max_icu_cap);
-        for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
-            EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
-        }
-    }
 }
 
 TEST(Secir, testAndTraceCapacity)

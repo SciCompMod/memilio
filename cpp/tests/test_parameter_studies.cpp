@@ -46,7 +46,7 @@ TEST(ParameterStudies, sample_from_secir_params)
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
@@ -277,7 +277,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.6;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 

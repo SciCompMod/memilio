@@ -102,7 +102,7 @@ def run_secir_simulation(days):
         (num_groups, num_groups)) * 0
 
     # Apply mathematical constraints to parameters
-    model.apply_constraints()
+    model.check_constraints()
 
     # Run Simulation
     result = simulate(0, days, dt, model)

@@ -174,8 +174,7 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
     return (
         "py::class_<{namespace}{parameterset_wrapper}, {namespace}{parameterset}>(m, \"{parameterset_wrapper}\")\n"
         "\t.def(py::init<mio::AgeGroup>())\n"
-        "\t.def(\"check_constraints\", &{namespace}{parameterset_wrapper}::check_constraints)\n"
-        "\t.def(\"apply_constraints\", &{namespace}{parameterset_wrapper}::apply_constraints);\n"
+        "\t.def(\"check_constraints\", &{namespace}{parameterset_wrapper}::check_constraints);\n"
     ).format(
         namespace=intermed_repr.namespace,
         parameterset=intermed_repr.parameterset,

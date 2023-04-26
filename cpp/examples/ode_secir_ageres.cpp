@@ -61,7 +61,7 @@ int main()
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = -fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
