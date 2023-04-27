@@ -5,6 +5,63 @@ import numpy as np
 import os
 
 
+####### minimal sanity check on data #######
+
+bd = pd.read_csv('/home/gers_ca/code/braunschweig_microscopic.csv', sep=';', header=None, skiprows=1)
+
+# setup dictionary for the leisure activities, and vehicle choice and column names
+bd.rename(
+    columns={0: 'idTrafficZone', 1: 'tripID', 2: 'personID', 3: 'tripChain', 4: 'startZone', 5: 'destZone', 6: 'loc_id_start', 7: 'loc_id_end',
+             8: 'countyStart', 9: 'countyEnd', 10: 'hhID', 11: 'TripID', 12: 'tripDistance', 13: 'startTime', 14: 'travelTime', 19: 'vehicleChoice', 20:
+             'ActivityBefore', 21: 'ActivityAfter', 15: 'loCs', 16: 'laCs', 17: 'loCe', 18: 'laCe', 22: 'age'},
+    inplace=True)
+
+dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
+                5: 'private matters', 6: 'others', 7: 'home', 0: 'not specified'}
+dict_vehicle = {1: 'bicyle', 2: 'car_driver',
+                3: 'car_codriver', 4: 'public transport', 5: 'walk'}
+
+# check if people do the same trip more than once
+trips = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime']]
+duplicate_trips = trips.duplicated()
+if (duplicate_trips.any()):
+    print('Error: The Person does the same trip more than once. Number of duplicate trips: ' + str(duplicate_trips[duplicate_trips==True].size))
+    if (~bd[['tripID']].duplicated().any()):
+        print('There are no duplicate TripIDs. There are multiple TripIDs for the same Trip. \n')
+activities_after_duplicate_trips  = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime', 'ActivityAfter']].loc[trips.duplicated(keep=False)]
+if (activities_after_duplicate_trips.duplicated().any()):
+    print('Error: Multiple acitivities after the same trip. \n')
+
+# check if persons have more than one home
+person_homes = bd[['personID', 'loc_id_end', 'ActivityAfter']].loc[bd['ActivityAfter']==7]
+person_homes = person_homes.groupby(['personID']).size().reset_index(name='counts')
+person_homes.drop(person_homes.loc[person_homes['counts']<2].index, inplace=True)
+if(person_homes.size > 0):
+    print('Error: There are people that have more than one home. \n')
+    print(person_homes)
+
+# check if the number of possible activities is correct
+if (bd['ActivityAfter'].nunique() > 8):
+    print('Error: Number of activities not correct. \n')
+
+# check if there are empty cells
+for header in bd.columns:
+    if (bd[header].isna().any()):
+        print('Error: ' + str(len(bd[bd[header].isna()])) + ' empty entries in column' + str(header) + '. \n')
+
+
+
+
+
+
+###############################################
+
+
+
+
+
+####### visual check on values in data frame #######
+
 def get_trip_chain_activity_after(person_id):
     bd_persons_trip_chain_activity_after = bd.loc[bd['personID'] == person_id, [
         'tripChain', 'ActivityAfter']]
@@ -23,24 +80,11 @@ def get_trip_chain_activity_after(person_id):
 
 
 # read in the data
-bd = pd.read_csv(r'~/Documents/HZI/memilio/data/mobility/bs.csv', header=None)
 if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figs_bs_data')):
     os.makedirs(os.path.join(os.path.dirname(
         os.path.abspath(__file__)), 'figs_bs_data'))
 figs_path = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'figs_bs_data')
-
-# setup dictionary for the leisure activities, and vehicle choice and column names
-bd.rename(
-    columns={0: 'idTrafficZone', 1: 'tripID', 2: 'personID', 3: 'tripChain', 4: 'startZone', 5: 'destZone', 6: 'loc_id_start', 7: 'loc_id_end',
-             8: 'countyStart', 9: 'countyEnd', 10: 'hhID', 11: 'TripID', 12: 'tripDistance', 13: 'startTime', 14: 'travelTime', 19: 'vehicleChoice', 20:
-             'ActivityBefore', 21: 'ActivityAfter', 15: 'loCs', 16: 'laCs', 17: 'loCe', 18: 'laCe', 22: 'age'},
-    inplace=True)
-
-dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
-                5: 'private matters', 6: 'others', 7: 'home', 0: 'not specified'}
-dict_vehicle = {1: 'bicyle', 2: 'car_driver',
-                3: 'car_codriver', 4: 'public transport', 5: 'walk'}
 
 # probably the traffic zones that are in braunschweig because in idTrafficzones the people of bs are located
 bd_tz_bs = bd.groupby(['idTrafficZone']).size().reset_index(
