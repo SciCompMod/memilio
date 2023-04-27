@@ -22,6 +22,7 @@
 
 #include "memilio/math/matrix_shape.h"
 #include "pickle_serializer.h"
+#include "memilio/io/io.h"
 
 #include "pybind11/pybind11.h"
 
@@ -53,6 +54,21 @@ decltype(auto) pybind_pickle_class(pybind11::module& m, const char* name)
             }
         }));
     return pickle_class;
+}
+
+template <typename T>
+T check_and_throw(mio::IOResult<T>& result)
+{
+    if (result.has_error()) {
+        auto status = result.error();
+        if (status.code() == std::errc::no_such_file_or_directory) {
+            throw pybind11::value_error(status.message());
+        } else {
+            throw std::runtime_error(status.message());
+        }
+    } else {
+        return result.value();
+    }
 }
 
 // the following functions help bind class template realizations
