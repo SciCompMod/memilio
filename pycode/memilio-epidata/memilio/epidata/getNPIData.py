@@ -880,13 +880,13 @@ def get_npi_data(fine_resolution=2,
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
     # used to count codes that occur simultaneously now (before any (de-)activation)
-    df_count_joined_codes = copy.deepcopy(df_npis_combinations)
-    for subcode in df_count_joined_codes.keys():
-        df_count_joined_codes[subcode][1] *= 0
-    df_counted_joined_codes = count_codes(df_npis_old, df_count_joined_codes,
+    df_count_joint_codes = copy.deepcopy(df_npis_combinations)
+    for maincode in df_count_joint_codes.keys():
+        df_count_joint_codes[maincode][1] *= 0
+    df_counted_joint_codes = count_code_multiplicities_init(df_npis_old, df_count_joint_codes,
                                           counties_considered=counties_considered)
-    save_counter(df_counted_joined_codes, 'joined_codes', directory)
-    plot_counter('joined_codes', directory)
+    save_counter(df_counted_joint_codes, 'joint_codes', directory)
+    plot_counter('joint_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_incid_depend = pd.DataFrame()
@@ -1112,10 +1112,10 @@ def get_npi_data(fine_resolution=2,
                                 df_count_deactivation[maincode][1].loc[idx_strictness,
                                                                        nocombi_code] += len(days_deact)
 
-            # count joined codes from after strictness based deactivation
+            # count joint codes from after strictness based deactivation
             count_codes_active(df_merged, df_count_active, countyID)
 
-            # count joined codes from after incidence based activation
+            # count joint codes from after incidence based activation
             count_codes_incid_depend(
                 df_incid_depend, df_count_incid_depend, countyID)
 
@@ -1164,11 +1164,11 @@ def get_npi_data(fine_resolution=2,
               'Please consider a start date of some weeks ahead of the '
               'time window to be analyzed for NPI\'s effects.')
 
-    save_counter(df_count_incid_depend, 'joined_codes_incid_depend', directory)
-    plot_counter('joined_codes_incid_depend', directory)
+    save_counter(df_count_incid_depend, 'joint_codes_incid_depend', directory)
+    plot_counter('joint_codes_incid_depend', directory)
 
-    save_counter(df_count_active, 'joined_codes_active', directory)
-    plot_counter('joined_codes_active', directory)
+    save_counter(df_count_active, 'joint_codes_active', directory)
+    plot_counter('joint_codes_active', directory)
 
     # print sub counters
     print('Sub task counters are: ')
@@ -1216,30 +1216,52 @@ def get_npi_data(fine_resolution=2,
     return df_npis
 
 
-def count_codes(df_npis_old, df_count, counties_considered):
+def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
+    """! Count multiply for all pairs of NPI codes how many times they were
+    mentioned at the same day in the initial data frame.
+
+    @param df_npis_old Initial data frame read from Corona Datenplattform.
+    @param df_count Dictionnary of main NPI codes with empty interaction
+         matrix (to be filled) for all codes under main code in df_count[maincode][1]
+    @param counties_considered County IDs for which initial data frame is 
+        considered.
+    """
     for county in counties_considered:
         df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
-        code_dict = {}
+        # get column where dates start
+        npi_date_start_col = np.where(
+            df_local.columns.str.startswith('d20') == True)[0][0]
+        # prepare dictionnary for dates when code was mentioned
+        code_dates = {}
+        # run through all maincodes (i.e., first 3-4 characters like M01a or M11)
         for maincode in df_count.keys():
-            for column in df_count[maincode][1].columns:
-                code_dict[column] = df_local.iloc[:, 6+np.where(
-                    df_local[df_local.NPI_code.str.contains(column)].iloc[:, 6:].max() > 0)[0]].columns
+            code_list = df_count[maincode][1].columns
+            # iterate over code/row indices 0 to n
+            for code_idx in range(len(code_list)):
+                # get dates where NPI is mentioned as existing in potential intervention set
+                npi_rows = df_local.NPI_code.str.contains(code_list[code_idx])
+                npi_dates_in_df = np.where(
+                    df_local[npi_rows].iloc[:, npi_date_start_col:].max() > 0)[0]
+                # store non-transforemed dates in code_dict
+                code_dates[code_list[code_idx]] = df_local.iloc[:,
+                                                                npi_date_start_col + npi_dates_in_df].columns
 
-        # with diag
-        # for code in df_count.keys():
-        #    column_list = df_count[code][1].columns
-        #    for column in range(len(column_list)):
-        #        for column_other in range(len(column_list)):
-        #            df_count[code][1].iloc[column, column_other] += len(set(
-        #                code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+                # count number of multiply mentionned NPIs with different incidence thresholds for the same day
+                df_count[maincode][1].iloc[code_idx, code_idx] = df_local[npi_rows].iloc[:,
+                                                                                         npi_date_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
         # no diag
         for maincode in df_count.keys():
-            column_list = df_count[maincode][1].columns
-            for column in range(len(column_list)):
-                for column_other in range(column):
-                    df_count[maincode][1].iloc[column, column_other] += len(set(
-                        code_dict[column_list[column]]).intersection(set(code_dict[column_list[column_other]])))
+            code_list = df_count[maincode][1].columns
+            # iterate over rows in matrix df_count with code/row indices 0 to n
+            for code_idx in range(len(code_list)):
+                # iterate over code/column indices 0 to code_idx-1 (not filling diagonal)
+                # Note that the upper diagonal part of the matrix does not
+                # need to be considered as matrix is symmetric.
+                for code_idx_other in range(code_idx):
+                    df_count[maincode][1].iloc[code_idx, code_idx_other] += len(set(
+                        code_dates[code_list[code_idx]]).intersection(set(code_dates[code_list[code_idx_other]])))
+
     return df_count
 
 
@@ -1334,7 +1356,7 @@ def plot_counter(filename, directory):
         # set vmin = 1 so that only combinations that are simultaneously active at least on one day are in colour,
         # else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
-        # this way colours of heatmaps are comparable (e.g. between codes or between joined_codes and exclusions)
+        # this way colours of heatmaps are comparable (e.g. between codes or between joint_codes and exclusions)
         plt.imshow(array_exclusion, cmap=cmap, vmin=1, vmax=300000)
         plt.colorbar()
         plt.savefig(
