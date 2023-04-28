@@ -101,7 +101,7 @@ int main()
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
         params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
         params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::SerialInterval>()[i]       = 3.6;
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
