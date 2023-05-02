@@ -95,6 +95,9 @@ public:
         return m_result;
     }
 
+    /**
+     * @brief returns the time step width determined by the IntegratorCore for the next integration step
+    */
     double get_dt() const
     {
         return m_next_dt;
@@ -109,7 +112,7 @@ private:
     DerivFunction m_f;
     TimeSeries<double> m_result;
     double m_dt;
-    double m_next_dt{};
+    double m_next_dt;
     std::shared_ptr<IntegratorCore> m_core;
 };
 

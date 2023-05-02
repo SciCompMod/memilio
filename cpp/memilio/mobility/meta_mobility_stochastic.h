@@ -27,9 +27,6 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/meta_mobility_instant.h"
 
-//rausnehmen
-#include "memilio/utils/compiler_diagnostics.h"
-
 #include "boost/filesystem.hpp"
 
 #include <cassert>
@@ -205,8 +202,8 @@ template <class Sim>
 void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>& node_from,
                                               SimulationNode<Sim>& node_to)
 {
-    node_from.get_result().get_last_value()[event] -= 1;
-    node_to.get_result().get_last_value()[event] += 1;
+    node_from.get_result().get_last_value()[event] -= std::min(node_from.get_result().get_last_value()[event], 1.0);
+    node_to.get_result().get_last_value()[event] += std::min(node_from.get_result().get_last_value()[event], 1.0);
 }
 
 /**
