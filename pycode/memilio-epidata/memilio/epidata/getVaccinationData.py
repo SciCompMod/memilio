@@ -524,16 +524,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df_data.rename(dd.GerEng, axis=1, inplace=True)
 
-       try:
-          df_data[dd.EngEng['date']] = pd.to_datetime(
-              df_data[dd.EngEng['date']], format="ISO8601")
-      except ValueError:
-          try:
-              df_data[dd.EngEng['date']] = pd.to_datetime(
-                  df_data[dd.EngEng['date']], format="%Y-%m-%d")
-          except:
-              raise gd.DataError(
-                  "Time data can't be transformed to intended format")
+        try:
+            df_data[dd.EngEng['date']] = pd.to_datetime(
+                df_data[dd.EngEng['date']], format="ISO8601")
+        except ValueError:
+            try:
+                df_data[dd.EngEng['date']] = pd.to_datetime(
+                    df_data[dd.EngEng['date']], format="%Y-%m-%d")
+            except:
+                raise gd.DataError(
+                    "Time data can't be transformed to intended format")
 
         # remove unknown locations if only modest number (i.e. less than 0.1%)
         if df_data[
@@ -759,7 +759,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs = mdfs.impute_and_reduce_df(
             df_data_joined,
             {dd.EngEng['idCounty']: df_data_joined[dd.EngEng['idCounty']].unique(),
-            dd.EngEng['ageRKI']: unique_age_groups_old},
+             dd.EngEng['ageRKI']: unique_age_groups_old},
             vacc_column_names,
             impute=impute_sanit, moving_average=moving_average_sanit,
             min_date=start_date, max_date=end_date)
