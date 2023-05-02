@@ -17,15 +17,50 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/random_number_generator.h"
+#ifndef MIO_UTILS_MPI_H
+#define MIO_UTILS_MPI_H
+
+#include "memilio/config.h"
+
+#ifdef MEMILIO_ENABLE_MPI
+#include "mpi.h"
+#endif
 
 namespace mio
 {
-    
-RandomNumberGenerator& thread_local_rng()
+namespace mpi
 {
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
-}
+/**
+* Alias for MPI_Comm, to be used in APIs to avoid
+* having to use #ifdef everywhere.
+*/
+#ifdef MEMILIO_ENABLE_MPI
+using Comm = MPI_Comm;
+#else
+using Comm = void*;
+#endif
 
+/**
+* Get the global MPI communicator.
+*/
+Comm get_world();
+
+/**
+* Initialize MPI.
+*/
+void init();
+
+/**
+* Finalize MPI.
+*/
+void finalize();
+
+/**
+* Returns true if the calling process is the root process.
+*/
+bool is_root();
+
+} // namespace mpi
 } // namespace mio
+
+#endif

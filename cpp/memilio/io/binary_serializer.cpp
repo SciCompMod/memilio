@@ -17,15 +17,5 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/utils/random_number_generator.h"
 
-namespace mio
-{
-    
-RandomNumberGenerator& thread_local_rng()
-{
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
-}
-
-} // namespace mio
+#include "memilio/io/binary_serializer.h"
