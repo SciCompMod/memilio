@@ -35,6 +35,9 @@ target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 
+add_executable(ide_secir_example ide_secir.cpp)
+target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
+
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
   target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
