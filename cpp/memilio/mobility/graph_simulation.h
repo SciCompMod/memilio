@@ -122,7 +122,8 @@ class GraphSimulationStochastic
     using Base =
         GraphSimulationBase<Graph, std::function<void(typename Graph::EdgeProperty&, size_t,
                                                       typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>;
-    using Base::GraphSimulationBase;
+    using  GraphSimulationBase<Graph, std::function<void(typename Graph::EdgeProperty&, size_t,
+                                                      typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>::GraphSimulationBase;
 
 public:
     void advance(double t_max)
