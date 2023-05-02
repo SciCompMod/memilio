@@ -125,8 +125,16 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format='ISO8601')
+    try:
+        df[dd.EngEng['date']] = pd.to_datetime(
+            df[dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df[dd.EngEng['date']] = pd.to_datetime(
+                df[dd.EngEng['date']], format="%Y-%m-%d %H:%M:%S")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
