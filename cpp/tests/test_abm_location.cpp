@@ -51,11 +51,17 @@ TEST(TestLocation, addRemovePerson)
 {
     auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
-    auto person1  = make_test_person(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
-    person1.migrate_to(location, {0, 1});
+
+    auto person1 = make_test_person(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
     auto person2 = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
-    person2.migrate_to(location, {0});
     auto person3 = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
+
+    home.add_person(person1, {0});
+    home.add_person(person2, {0});
+    home.add_person(person3, {0});
+
+    person1.migrate_to(location, {0, 1});
+    person2.migrate_to(location, {0});
     person3.migrate_to(location, {0, 1});
 
     auto t = mio::abm::TimePoint(0);
@@ -159,13 +165,14 @@ TEST(TestLocation, reachCapacity)
     auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Carrier);
     auto& p2 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible);
 
+    auto& home   = world.get_individualized_location(home_id);
+    auto& school = world.get_individualized_location(school_id);
+
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
     p1.set_assigned_location(home_id);
     p2.set_assigned_location(home_id);
 
-    auto& home   = world.get_individualized_location(home_id);
-    auto& school = world.get_individualized_location(school_id);
     school.set_capacity(1, 66);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -226,6 +233,10 @@ TEST(TestLocation, interact)
         make_test_person(location, mio::abm::AgeGroup::Age80plus, mio::abm::InfectionState::Infected, t, params);
     auto infected3 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
+
+    location.add_person(infected1, {0});
+    location.add_person(infected2, {0});
+    location.add_person(infected3, {0});
 
     //cache precomputed results
     location.cache_exposure_rates(t, dt);
@@ -289,10 +300,12 @@ TEST(TestLocation, storeSubpopulations)
 
     auto person1 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
+    location.add_person(person1, {0});
 
     // mock person 2 not needed due to high setup of transition times
     auto person2 =
         make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected, t, params);
+    location.add_person(person2, {0});
 
     // mock person 3
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -305,6 +318,7 @@ TEST(TestLocation, storeSubpopulations)
         .WillRepeatedly(testing::Return(1.0));
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
+    location.add_person(person3, {0});
 
     location.initialize_subpopulations(t);
     auto t1 = t + dt;
