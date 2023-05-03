@@ -33,14 +33,14 @@ std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t
            std::to_string(std::get<1>(tuple_id));
 }
 
-std::vector<uint32_t> get_agents_per_location(
+std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> get_agents_per_location(
     std::tuple<mio::abm::LocationType, uint32_t> loc_id,
     std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>& log)
 {
-    std::vector<uint32_t> agents_per_location;
+    std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> agents_per_location;
     for (auto& log_tuple : log) {
         if (std::get<0>(log_tuple).type == std::get<0>(loc_id) && std::get<0>(log_tuple).index == std::get<1>(loc_id)) {
-            agents_per_location.push_back(std::get<1>(log_tuple));
+            agents_per_location.push_back(std::make_tuple(std::get<1>(log_tuple), std::get<2>(log_tuple)));
         }
     }
     return agents_per_location;
@@ -194,16 +194,27 @@ int main()
     auto logg = history.get_log();
 
     // Write the results to a file.
-    auto loc_id = std::get<1>(logg);
-    auto rest   = std::get<2>(logg);
+    auto loc_id      = std::get<1>(logg);
+    auto agents      = std::get<2>(logg);
+    auto time_points = std::get<0>(logg);
     std::string input;
-    std::ofstream myfile("julias_output.txt");
+    std::ofstream myfile("test_output.txt");
     for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
-        input  = convert_loc_id_to_string(loc_id[0][loc_id_index]);
-        auto a = get_agents_per_location(loc_id[0][loc_id_index], rest[0]);
-        // for (auto rest_index = 0; rest_index < rest[0].size(); ++rest_index) {
-
-        // }
+        input = convert_loc_id_to_string(loc_id[0][loc_id_index]) + " " + std::to_string(time_points.size());
+        for (int t = 0; t < time_points.size(); ++t) {
+            auto a_per_loc = get_agents_per_location(loc_id[0][loc_id_index], agents[t]);
+            input += " " + std::to_string(time_points[t]) + " " + std::to_string(a_per_loc.size());
+            for (auto& agent : a_per_loc) {
+                double time_since_transmission;
+                if (std::get<1>(agent) > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
+                    time_since_transmission = -1;
+                }
+                else {
+                    time_since_transmission = std::get<1>(agent).hours();
+                }
+                input += " " + std::to_string(std::get<0>(agent)) + " " + std::to_string(time_since_transmission);
+            }
+        }
         myfile << input << "\n";
     }
     myfile.close();
