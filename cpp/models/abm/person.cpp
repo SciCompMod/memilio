@@ -61,6 +61,9 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(
             0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
     }
+    if (is_infected()) {
+        m_time_since_transmission = mio::abm::TimeSpan(0);
+    }
 }
 
 Person::Person(Location& location, InfectionProperties infection_properties, AgeGroup age,
@@ -165,6 +168,9 @@ void Person::set_assigned_location(LocationId id)
 void Person::set_infection_state(InfectionState inf_state)
 {
     m_infection_state = inf_state;
+    if (is_infected()) {
+        m_time_since_transmission = mio::abm::TimeSpan(0);
+    }
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const

@@ -70,15 +70,16 @@ public:
     template <typename History>
     void advance(TimePoint tmax, History& history)
     {
+        //log initial system state
+        history.log(*this);
+
         while (m_t < tmax) {
             auto dt = std::min(m_dt, tmax - m_t);
             m_world.evolve(m_t, dt);
-            history.log(*this);
             m_t += m_dt;
+            history.log(*this);
             store_result_at(m_t);
         }
-        //log last time point
-        history.log(*this);
     }
 
     /**
