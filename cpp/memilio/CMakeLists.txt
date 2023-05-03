@@ -28,6 +28,8 @@ add_library(memilio
     io/hdf5_cpp.h
     io/json_serializer.h
     io/json_serializer.cpp
+    io/binary_serializer.h
+    io/binary_serializer.cpp
     io/mobility_io.h
     io/mobility_io.cpp
     io/result_io.h
@@ -74,6 +76,8 @@ add_library(memilio
     utils/date.cpp
     utils/random_number_generator.h
     utils/random_number_generator.cpp
+    utils/miompi.h
+    utils/miompi.cpp
 )
 
 target_include_directories(memilio PUBLIC
@@ -100,6 +104,9 @@ if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
 endif()
 
-
 add_executable(hist utils/history_example.cpp)
 target_link_libraries(hist memilio)
+
+if(MEMILIO_ENABLE_MPI)
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
+endif()

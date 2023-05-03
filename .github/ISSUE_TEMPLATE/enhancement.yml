@@ -1,6 +1,5 @@
 name: "🚀 Enhancement"
 description: "Use this template to describe an Enhancement of MEmilio"
-title: "[Enhancement]"
 labels:
   - "class::improvement"
 body:
