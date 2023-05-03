@@ -20,12 +20,14 @@
 #ifndef IDE_SECIR_PARAMS_H
 #define IDE_SECIR_PARAMS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/smoother.h"
 
+#include <memory>
 #include <vector>
 
 namespace mio
@@ -175,7 +177,12 @@ struct StateAgeFunction {
         return std::exp(-1.0 * state_age);
     }
 
-    auto clone() const
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        unused(new_funcparam);
+    }
+
+    std::unique_ptr<StateAgeFunction> clone() const
     {
         return std::unique_ptr<StateAgeFunction>(clone_impl());
     }
@@ -191,23 +198,23 @@ protected:
 struct ExponentialDecay : public StateAgeFunction {
 
     ExponentialDecay()
-        : funcparam{1.0}
+        : m_funcparam{1.0}
     {
     }
 
     ExponentialDecay(ScalarType init_funcparam)
-        : funcparam{init_funcparam}
+        : m_funcparam{init_funcparam}
     {
     }
 
     ScalarType Function(ScalarType state_age)
     {
-        return std::exp(-funcparam * state_age);
+        return std::exp(-m_funcparam * state_age);
     }
 
-    ScalarType get_funcparam()
+    void set_funcparam(ScalarType new_funcparam)
     {
-        return funcparam;
+        m_funcparam = new_funcparam;
     }
 
 protected:
@@ -217,7 +224,7 @@ protected:
     }
 
 private:
-    ScalarType funcparam{};
+    ScalarType m_funcparam{};
 };
 
 /**
@@ -227,23 +234,23 @@ private:
 struct SmootherCosine : public StateAgeFunction {
 
     SmootherCosine()
-        : funcparam{1.0}
+        : m_funcparam{1.0}
     {
     }
 
     SmootherCosine(ScalarType init_funcparam)
-        : funcparam{init_funcparam}
+        : m_funcparam{init_funcparam}
     {
     }
 
     ScalarType Function(ScalarType state_age)
     {
-        return smoother_cosine(state_age, 0.0, funcparam, 1.0, 0.0);
+        return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
 
-    ScalarType get_funcparam()
+    void set_funcparam(ScalarType new_funcparam)
     {
-        return funcparam;
+        m_funcparam = new_funcparam;
     }
 
 protected:
@@ -253,7 +260,7 @@ protected:
     }
 
 private:
-    ScalarType funcparam{};
+    ScalarType m_funcparam{};
 };
 
 /**
@@ -281,7 +288,7 @@ struct ProbabilityProgress {
 
     ProbabilityProgress& operator=(ProbabilityProgress&& other) = default;
 
-    void setStateAgeFunction(const StateAgeFunction& new_function)
+    void setStateAgeFunction(StateAgeFunction& new_function)
     {
         m_function = new_function.clone();
     }
@@ -289,6 +296,11 @@ struct ProbabilityProgress {
     ScalarType Function(ScalarType state_age)
     {
         return m_function->Function(state_age);
+    }
+
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        m_function->set_funcparam(new_funcparam);
     }
 
 private:

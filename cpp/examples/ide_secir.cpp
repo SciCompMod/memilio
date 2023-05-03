@@ -20,6 +20,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
@@ -90,9 +91,16 @@ int main()
     //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(1.0);
     //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
     //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
-    //mio::isecir::ProbabilityProgress prob= static_cast<mio::isecir::ProbabilityProgress>(mio::isecir::ExponentialDecay(0.5));
+    //mio::isecir::ProbabilityProgress prob = static_cast<mio::isecir::ProbabilityProgress>.set_funcparam(0.5);
     //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(mio::isecir::TransmissionProbabilityOnContact());
-    
+    // TODO: do this in a more elegant way?
+    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::ExponentialDecay expdecay;
+    // expdecay.set_funcparam(0.8);
+    prob.setStateAgeFunction(expdecay);
+    prob.set_funcparam(0.9);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+
     model.check_constraints(dt);
 
     // Carry out simulation.
