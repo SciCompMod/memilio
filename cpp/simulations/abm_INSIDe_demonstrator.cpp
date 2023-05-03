@@ -36,6 +36,25 @@ struct LocationMapping {
     std::vector<std::string> modelId{};
 };
 
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
+{
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> get_agents_per_location(
+    std::tuple<mio::abm::LocationType, uint32_t> loc_id,
+    std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>& log)
+{
+    std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> agents_per_location;
+    for (auto& log_tuple : log) {
+        if (std::get<0>(log_tuple).type == std::get<0>(loc_id) && std::get<0>(log_tuple).index == std::get<1>(loc_id)) {
+            agents_per_location.push_back(std::make_tuple(std::get<1>(log_tuple), std::get<2>(log_tuple)));
+        }
+    }
+    return agents_per_location;
+}
+
 /**
  * read input test file and save input areas and inhabitants per area
  * @param[in, out] areas vector that is filled with area types and area ids from input file
@@ -696,6 +715,79 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, co
     return sim;
 }
 
+//Loggers used for output object
+
+//time point logger
+struct LogTimePoint : LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
+
+//LocationId logger
+struct LogLocationIds : LogOnce {
+    using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+        for (auto&& locations : sim.get_world().get_locations()) {
+            for (auto location : locations) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            }
+        }
+        return location_ids;
+    }
+};
+
+//agent logger
+struct LogPersonsPerLocationAndInfectionTime : LogAlways {
+    using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
+            location_ids_person{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
+                                                          person.get_time_since_transmission(),
+                                                          person.get_infection_state()));
+        }
+        return location_ids_person;
+    }
+};
+
+void write_results_to_file(
+    std::string path,
+    History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>::Wri::Data& logg)
+{
+    auto location_ids = std::get<1>(logg);
+    auto agents       = std::get<2>(logg);
+    auto time_points  = std::get<0>(logg);
+
+    std::string input;
+    std::ofstream myfile(path);
+    for (auto loc_id_index = 0; loc_id_index < location_ids[0].size(); ++loc_id_index) {
+        input = convert_loc_id_to_string(location_ids[0][loc_id_index]) + " " + std::to_string(time_points.size());
+        for (int t = 0; t < time_points.size(); ++t) {
+            auto a_per_loc = get_agents_per_location(location_ids[0][loc_id_index], agents[t]);
+            input += " " + std::to_string(time_points[t]) + " " + std::to_string(a_per_loc.size());
+            for (auto& agent : a_per_loc) {
+                double time_since_transmission;
+                if (std::get<1>(agent) > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
+                    time_since_transmission = -1;
+                }
+                else {
+                    time_since_transmission = std::get<1>(agent).hours();
+                }
+                input += " " + std::to_string(std::get<0>(agent)) + " " + std::to_string(time_since_transmission);
+            }
+        }
+        myfile << input << "\n";
+    }
+    myfile.close();
+}
+
 mio::IOResult<void> run(const fs::path& input_dir)
 {
     auto t0      = mio::abm::TimePoint(0); // Start time per simulation
@@ -706,8 +798,16 @@ mio::IOResult<void> run(const fs::path& input_dir)
     std::vector<LocationMapping> LocationIds;
     //create sampled simulation
     auto sim = create_sampled_simulation(t0, input_dir, LocationIds);
+
+    //output object
+    History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime> history;
+
     //advance until tmax
-    sim.advance(tmax);
+    sim.advance(tmax, history);
+
+    //output
+    auto logg = history.get_log();
+    write_results_to_file("C:/Users/bick_ju/Documents/output_abm_demonstrator.txt", logg);
 
     std::cout << "# t S E C I I_s I_c R_C R_I D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
