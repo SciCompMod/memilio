@@ -130,7 +130,7 @@ int main()
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.1);
 
     auto write_parameters_status = mio::write_json("parameters.json", model);
     if (!write_parameters_status) {
@@ -150,7 +150,7 @@ int main()
         auto write_result_status = write_single_run_result(run, graph);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
-        }       
+        }
         return 0; //Result handler must return something, but only meaningful when using MPI.
     };
     parameter_study.run(sample_graph, handle_result);
