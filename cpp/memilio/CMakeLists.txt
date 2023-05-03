@@ -99,3 +99,7 @@ endif()
 if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
 endif()
+
+
+add_executable(hist utils/history_example.cpp)
+target_link_libraries(hist memilio)

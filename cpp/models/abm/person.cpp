@@ -39,6 +39,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     , m_infection_state(infection_properties.state)
     , m_vaccination_state(vaccination_state)
     , m_time_until_carrier(std::numeric_limits<int>::max())
+    , m_time_since_transmission(std::numeric_limits<int>::max() / 2)
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
@@ -59,6 +60,9 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AgeGroup
     if (infection_properties.state == InfectionState::Exposed) {
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(
             0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
+    }
+    if (is_infected()) {
+        m_time_since_transmission = mio::abm::TimeSpan(0);
     }
 }
 
@@ -96,12 +100,48 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         m_quarantine = false;
     }
 
+    change_time_since_transmission(m_infection_state, new_infection_state, dt);
+
     m_infection_state = new_infection_state;
     if (infection_state != new_infection_state) {
         loc.changed_state(*this, infection_state);
     }
 
     m_time_at_location += dt;
+}
+
+bool Person::is_infected()
+{
+    return m_infection_state == InfectionState::Exposed || m_infection_state == InfectionState::Carrier ||
+           m_infection_state == InfectionState::Infected || m_infection_state == InfectionState::Infected_Severe ||
+           m_infection_state == InfectionState::Infected_Critical;
+}
+
+void Person::change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
+                                            const TimeSpan dt)
+{
+    if (curr_inf_state != new_inf_state) {
+        if (new_inf_state == InfectionState::Recovered_Carrier || new_inf_state == InfectionState::Recovered_Infected ||
+            new_inf_state == InfectionState::Dead) {
+            m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
+        }
+        else if (new_inf_state == InfectionState::Exposed) {
+            m_time_since_transmission = mio::abm::TimeSpan(0);
+        }
+        else {
+            m_time_since_transmission += dt;
+        }
+    }
+    else {
+        if (is_infected()) {
+            if (m_time_since_transmission > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
+                m_time_since_transmission = mio::abm::TimeSpan(0);
+            }
+            else {
+                m_time_since_transmission += dt;
+            }
+        }
+    }
 }
 
 void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
@@ -128,6 +168,9 @@ void Person::set_assigned_location(LocationId id)
 void Person::set_infection_state(InfectionState inf_state)
 {
     m_infection_state = inf_state;
+    if (is_infected()) {
+        m_time_since_transmission = mio::abm::TimeSpan(0);
+    }
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const

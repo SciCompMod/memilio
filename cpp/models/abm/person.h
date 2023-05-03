@@ -325,12 +325,22 @@ public:
         return m_wears_mask;
     }
 
+    bool is_infected();
+    TimeSpan get_time_since_transmission()
+    {
+        return m_time_since_transmission;
+    };
+
 private:
+    void change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
+                                        const TimeSpan dt);
+
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     InfectionState m_infection_state;
     VaccinationState m_vaccination_state;
     TimeSpan m_time_until_carrier;
+    TimeSpan m_time_since_transmission;
     bool m_quarantine;
     AgeGroup m_age;
     TimeSpan m_time_at_location;

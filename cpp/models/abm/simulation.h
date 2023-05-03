@@ -23,6 +23,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/history.h"
 
 namespace mio
 {
@@ -61,6 +62,26 @@ public:
      */
     void advance(TimePoint tmax);
 
+    /** 
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
+     * @param[in] history History to store the result of the Simulation.
+     */
+    template <typename History>
+    void advance(TimePoint tmax, History& history)
+    {
+        //log initial system state
+        history.log(*this);
+
+        while (m_t < tmax) {
+            auto dt = std::min(m_dt, tmax - m_t);
+            m_world.evolve(m_t, dt);
+            m_t += m_dt;
+            history.log(*this);
+            store_result_at(m_t);
+        }
+    }
+
     /**
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
@@ -68,6 +89,14 @@ public:
     const TimeSeries<double>& get_result() const
     {
         return m_result;
+    }
+
+    /**
+     * @brief Get the current time of the Simulation.
+     */
+    TimePoint get_time() const
+    {
+        return m_t;
     }
 
     /**
