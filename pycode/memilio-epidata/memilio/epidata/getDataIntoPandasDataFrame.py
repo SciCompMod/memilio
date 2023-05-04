@@ -180,31 +180,27 @@ def get_file(
                     " does not exist. Call program without -r flag to get it."
                 raise FileNotFoundError(error_message)
     else:
-
-        try:
-            try:  # to download file from url and show download progress
-                with progress_indicator.Percentage(message="Downloading " + url) as p:
-                    file = download_file(
-                        url, 1024, None, p.set_progress,
-                        verify="interactive" if interactive else True)
-                    # read first 2048 bytes to find file type
-                    ftype = magic.from_buffer(file.read(2048))
-                    # set pointer back to starting position
-                    file.seek(0)
-                    # find file type in dict and use function to read
-                    func_to_use = [
-                        val for key, val in filetype_dict.items()
-                        if key in ftype]
-                    # use different default dict for different functions
-                    dict_to_use = param_dict_dict[func_to_use[0]]
-                    # adjust dict
-                    for k in dict_to_use:
-                        if k not in param_dict:
-                            param_dict[k] = dict_to_use[k]
-                    # create dataframe
-                    df = func_to_use[0](file, **param_dict)
-            except requests.exceptions.RequestException:
-                raise FileNotFoundError('Error: Request failed.')
+        try:  # to download file from url and show download progress
+            with progress_indicator.Percentage(message="Downloading " + url) as p:
+                file = download_file(
+                    url, 1024, None, p.set_progress,
+                    verify="interactive" if interactive else True)
+                # read first 2048 bytes to find file type
+                ftype = magic.from_buffer(file.read(2048))
+                # set pointer back to starting position
+                file.seek(0)
+                # find file type in dict and use function to read
+                func_to_use = [
+                    val for key, val in filetype_dict.items()
+                    if key in ftype]
+                # use different default dict for different functions
+                dict_to_use = param_dict_dict[func_to_use[0]]
+                # adjust dict
+                for k in dict_to_use:
+                    if k not in param_dict:
+                        param_dict[k] = dict_to_use[k]
+                # create dataframe
+                df = func_to_use[0](file, **param_dict)
         except OSError:
             raise FileNotFoundError(
                 "Error: URL " + url + " could not be opened.")
