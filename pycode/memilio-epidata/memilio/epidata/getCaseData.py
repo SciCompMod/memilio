@@ -140,7 +140,6 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     filename = "CaseDataFull"
 
     complete = False
-    filename = "CaseDataFull"
     path = os.path.join(directory + filename + ".json")
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
