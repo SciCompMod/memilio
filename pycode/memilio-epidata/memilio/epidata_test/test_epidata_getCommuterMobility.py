@@ -171,18 +171,22 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                'Wohnort2': ['', '', 'Herzogtum Lauenburg', 'Bremen',
                                             'Lahn-Dill-Kreis'],
                                'Insgesamt': ['', '', 23230, 4628, 92]})
-        sheet3 = pd.DataFrame({'Arbeitsort': ['nothing', '03101', '', '', ''],
-                               'Arbeitsort2': ['', 'Braunschweig, Stadt', '', '', ''],
-                               'Wohnort': ['nothing', '', '01053', '07', '14511'],
-                               'Wohnort2': ['', '', 'Herzogtum Lauenburg', 'Rheinland-Pfalz',
-                                            'Chemnitz, Stadt'],
-                               'Insgesamt': ['', '', 17, 123, 15]})
-        sheet4 = pd.DataFrame({'Arbeitsort': ['nothing', '04012', '', '', ''],
-                               'Arbeitsort2': ['', 'Bremerhaven, Stadt', '', '', ''],
-                               'Wohnort': ['nothing', '', '06532', '05', '12051'],
-                               'Wohnort2': ['', '', 'Lahn-Dill-Kreis', 'Nordrhein-Westfalen',
-                                            'Brandenburg an der Havel, St.'],
-                               'Insgesamt': ['', '', 22, 299, 10]})
+        sheet3 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '03101', '', '', ''],
+             'Arbeitsort2': ['', 'Braunschweig, Stadt', '', '', ''],
+             'Wohnort': ['nothing', '', '01053', '07', '14511'],
+             'Wohnort2':
+             ['', '', 'Herzogtum Lauenburg', 'Rheinland-Pfalz',
+              'Chemnitz, Stadt'],
+             'Insgesamt': ['', '', 17, 123, 15]})
+        sheet4 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '04012', '', '', ''],
+             'Arbeitsort2': ['', 'Bremerhaven, Stadt', '', '', ''],
+             'Wohnort': ['nothing', '', '06532', '05', '12051'],
+             'Wohnort2':
+             ['', '', 'Lahn-Dill-Kreis', 'Nordrhein-Westfalen',
+              'Brandenburg an der Havel, St.'],
+             'Insgesamt': ['', '', 22, 299, 10]})
         sheet5 = pd.DataFrame({'Arbeitsort': ['nothing', '05112', '', '', '', '05316', '', ''],
                                'Arbeitsort2': ['', 'Duisburg, Stadt', '', '', '', 'Leverkusen, Stadt', '', ''],
                                'Wohnort': ['nothing', '', '12066', '13003', 'ZZ', '', '14511', 'ZZ'],
@@ -202,57 +206,76 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                'Wohnort2': ['', '', 'Hamburg, Freie und Hansestadt', 'Trier-Saarburg',
                                             '', 'Hamburg, Freie und Hansestadt'],
                                'Insgesamt': ['', '', 18, 19, '', 10]})
-        sheet8 = pd.DataFrame({'Arbeitsort': ['nothing', '08111', '', ''],
-                               'Arbeitsort2': ['', 'Stuttgart, Landeshauptstadt', '', ''],
-                               'Wohnort': ['nothing', '', '01053', '13003'],
-                               'Wohnort2': ['', '', 'Herzogtum Lauenburg', 'Rostock, Hansestadt'],
-                               'Insgesamt': ['', '', 32, 38]})
-        sheet9 = pd.DataFrame({'Arbeitsort': ['nothing', '09181', '', ''],
-                               'Arbeitsort2': ['', 'Landsberg am Lech', '', ''],
-                               'Wohnort': ['nothing', '', '08111', '11000'],
-                               'Wohnort2': ['', '', 'Stuttgart, Landeshauptstadt', 'Berlin, Stadt'],
-                               'Insgesamt': ['', '', 57, 43]})
+        sheet8 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '08111', '', ''],
+             'Arbeitsort2': ['', 'Stuttgart, Landeshauptstadt', '', ''],
+             'Wohnort': ['nothing', '', '01053', '13003'],
+             'Wohnort2':
+             ['', '', 'Herzogtum Lauenburg', 'Rostock, Hansestadt'],
+             'Insgesamt': ['', '', 32, 38]})
+        sheet9 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '09181', '', ''],
+             'Arbeitsort2': ['', 'Landsberg am Lech', '', ''],
+             'Wohnort': ['nothing', '', '08111', '11000'],
+             'Wohnort2':
+             ['', '', 'Stuttgart, Landeshauptstadt', 'Berlin, Stadt'],
+             'Insgesamt': ['', '', 57, 43]})
         sheet10 = pd.DataFrame({'Arbeitsort': ['nothing', '10044', ''],
                                 'Arbeitsort2': ['', 'Saarlouis', ''],
                                 'Wohnort': ['nothing', '', '07235'],
                                 'Wohnort2': ['', '', 'Trier-Saarburg'],
                                 'Insgesamt': ['', '', 220]})
-        sheet11 = pd.DataFrame({'Arbeitsort': ['nothing', '11000', '', ''],
-                                'Arbeitsort2': ['', 'Berlin, Stadt', '', ''],
-                                'Wohnort': ['nothing', '', '01053', '08111'],
-                                'Wohnort2': ['', '', 'Herzogtum Lauenburg', 'Stuttgart, Landeshauptstadt'],
-                                'Insgesamt': ['', '', 297, 1186]})
-        sheet12 = pd.DataFrame({'Arbeitsort': ['nothing', '12051', '', '', '12066', ''],
-                                'Arbeitsort2': ['', 'Brandenburg an der Havel, St.', '', '', 'Oberspreewald-Lausitz',
-                                                ''],
-                                'Wohnort': ['nothing', '', '11000', '12066', '', '05112'],
-                                'Wohnort2': ['', '', 'Berlin, Stadt', 'Oberspreewald-Lausitz', '', 'Duisburg, Stadt'],
-                                'Insgesamt': ['', '', 571, 24, '', 10]})
-        sheet13 = pd.DataFrame({'Arbeitsort': ['nothing', '13003', '', ''],
-                                'Arbeitsort2': ['', 'Rostock, Hansestadt', '', ''],
-                                'Wohnort': ['nothing', '', '01053', '12066'],
-                                'Wohnort2': ['', '', 'Herzogtum Lauenburg', 'Oberspreewald-Lausitz'],
-                                'Insgesamt': ['', '', 42, 12]})
-        sheet14 = pd.DataFrame({'Arbeitsort': ['nothing', '14511', '', ''],
-                                'Arbeitsort2': ['', 'Chemnitz, Stadt', '', ''],
-                                'Wohnort': ['nothing', '', '02000', '11000'],
-                                'Wohnort2': ['', '', 'Hamburg, Freie und Hansestadt', 'Berlin, Stadt'],
-                                'Insgesamt': ['', '', 74, 524]})
-        sheet15 = pd.DataFrame({'Arbeitsort': ['nothing', '15082', '', ''],
-                                'Arbeitsort2': ['', 'Anhalt-Bitterfeld', '', ''],
-                                'Wohnort': ['nothing', '', '12066', '14511'],
-                                'Wohnort2': ['', '', 'Oberspreewald-Lausitz', 'Chemnitz, Stadt'],
-                                'Insgesamt': ['', '', 27, 26]})
-        sheet16 = pd.DataFrame({'Arbeitsort': ['nothing', '16069', '', ''],
-                                'Arbeitsort2': ['', 'Hildburghausen', '', ''],
-                                'Wohnort': ['nothing', '', '03', '05'],
-                                'Wohnort2': ['', '', 'Niedersachsen', 'Nordrhein-Westfalen'],
-                                'Insgesamt': ['', '', 29, 34]})
+        sheet11 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '11000', '', ''],
+             'Arbeitsort2': ['', 'Berlin, Stadt', '', ''],
+             'Wohnort': ['nothing', '', '01053', '08111'],
+             'Wohnort2':
+             ['', '', 'Herzogtum Lauenburg', 'Stuttgart, Landeshauptstadt'],
+             'Insgesamt': ['', '', 297, 1186]})
+        sheet12 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '12051', '', '', '12066', ''],
+             'Arbeitsort2':
+             ['', 'Brandenburg an der Havel, St.', '', '',
+              'Oberspreewald-Lausitz', ''],
+             'Wohnort': ['nothing', '', '11000', '12066', '', '05112'],
+             'Wohnort2':
+             ['', '', 'Berlin, Stadt', 'Oberspreewald-Lausitz', '',
+              'Duisburg, Stadt'],
+             'Insgesamt': ['', '', 571, 24, '', 10]})
+        sheet13 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '13003', '', ''],
+             'Arbeitsort2': ['', 'Rostock, Hansestadt', '', ''],
+             'Wohnort': ['nothing', '', '01053', '12066'],
+             'Wohnort2':
+             ['', '', 'Herzogtum Lauenburg', 'Oberspreewald-Lausitz'],
+             'Insgesamt': ['', '', 42, 12]})
+        sheet14 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '14511', '', ''],
+             'Arbeitsort2': ['', 'Chemnitz, Stadt', '', ''],
+             'Wohnort': ['nothing', '', '02000', '11000'],
+             'Wohnort2':
+             ['', '', 'Hamburg, Freie und Hansestadt', 'Berlin, Stadt'],
+             'Insgesamt': ['', '', 74, 524]})
+        sheet15 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '15082', '', ''],
+             'Arbeitsort2': ['', 'Anhalt-Bitterfeld', '', ''],
+             'Wohnort': ['nothing', '', '12066', '14511'],
+             'Wohnort2':
+             ['', '', 'Oberspreewald-Lausitz', 'Chemnitz, Stadt'],
+             'Insgesamt': ['', '', 27, 26]})
+        sheet16 = pd.DataFrame(
+            {'Arbeitsort': ['nothing', '16069', '', ''],
+             'Arbeitsort2': ['', 'Hildburghausen', '', ''],
+             'Wohnort': ['nothing', '', '03', '05'],
+             'Wohnort2': ['', '', 'Niedersachsen', 'Nordrhein-Westfalen'],
+             'Insgesamt': ['', '', 29, 34]})
         states = (
-            sheet1, sheet2, sheet3, sheet4, sheet5, sheet6, sheet7, sheet8, sheet9, sheet10, sheet11, sheet12, sheet13,
-            sheet14, sheet15, sheet16)
+            sheet1, sheet2, sheet3, sheet4, sheet5, sheet6, sheet7, sheet8,
+            sheet9, sheet10, sheet11, sheet12, sheet13, sheet14, sheet15,
+            sheet16)
         for i in range(16):
-            sheets = {'Deckblatt': sheet0, 'Impressum': sheet0, 'Auspendler Kreise': sheet0,
+            sheets = {'Deckblatt': sheet0, 'Impressum': sheet0,
+                      'Auspendler Kreise': sheet0,
                       'Einpendler Kreise': states[i]}
             if i < 9:
                 name = 'krpend_0' + str(i + 1) + "_0.xlsx"
@@ -274,8 +297,10 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
     @patch('builtins.print')
     def test_assign_geographical_entities(self, mock_print):
-        (countykey2govkey, countykey2localnumlist, gov_county_table,
-         state_gov_table) = gcm.assign_geographical_entities(self.countykey_list, self.govkey_list)
+        (
+            countykey2govkey, countykey2localnumlist, gov_county_table,
+            state_gov_table) = gcm.assign_geographical_entities(
+            self.countykey_list, self.govkey_list)
         for item in self.test_countykey2govkey.keys():
             self.assertEqual(
                 self.test_countykey2govkey.get(item),
@@ -370,7 +395,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         testcountyid = 1051
         tci = testcountyid
-        #direction = both
+        # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             tci, direction='both', abs_tol=0, rel_tol=0,
             tol_comb='or', merge_eisenach=True, out_folder=self.path)

@@ -86,7 +86,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         print("Warning: First data available on 2020-04-24. "
-              "You asked for " + start_date.strftime("%Y-%m-%d") + ". Changed it to 2020-04-24.")
+              "You asked for " + start_date.strftime("%Y-%m-%d") +
+              ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
     directory = os.path.join(out_folder, 'Germany/')

@@ -55,7 +55,9 @@ def user_choice(message, default=False):
             print("Please answer with y (yes) or n (no)")
 
 
-def download_file(url, chunk_size=1024, timeout=None, progress_function=None, verify=True, interactive=True):
+def download_file(
+        url, chunk_size=1024, timeout=None, progress_function=None,
+        verify=True):
     """! Download a file using GET over HTTP.
 
     @param url Full url of the file to download.
@@ -67,19 +69,22 @@ def download_file(url, chunk_size=1024, timeout=None, progress_function=None, ve
     @param timeout Timeout in seconds for the GET request.
     @param progress_function Function called regularly, with the current
         download progress in [0,1] as a float argument.
-    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
+    @param verify bool or "interactive". If False, ignores the connection's
+        security. If True, only downloads from secure connections are made,
+        and insecure connections raise a FileNotFoundError. If "interactive",
+        prompts the user whether or not to allow insecure connections. 
     @return File as BytesIO
     """
-    if verify == False:
-        # suppress this warning since the insecure requests is intentional
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     # send GET request as stream so the content is not downloaded at once
     try:
-        req = requests.get(url, stream=True, timeout=timeout, verify=verify)
+        req = requests.get(
+            url, stream=True, timeout=timeout,
+            verify=verify == True or verify == "interactive")
     except OSError:
-        if interactive and user_choice(url + " could not be opened due to an "
-                                       "unsecure connection. Do you want to "
-                                       "open it anyways?\n"):
+        if verify == "interactive" and user_choice(
+            url +
+            " could not be opened due to an insecure connection. "
+                "Do you want to open it anyways?\n"):
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             req = requests.get(url, stream=True, timeout=timeout, verify=False)
         else:
@@ -132,12 +137,15 @@ def extract_zip(file, **param_dict):
     return all_dfs
 
 
-def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_dict={}, interactive=True):
+def get_file(
+        filepath='', url='', read_data=dd.defaultDict['read_data'],
+        param_dict={},
+        interactive=True):
     """! Loads data from filepath and stores it in a pandas dataframe.
-    If data can't be read from given filepath the user is asked wether the file should be downloaded from the given url or not.
+    If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.
 
-    @param filepath String. Filepath where data es read from.
+    @param filepath String. Filepath from where the data is read.
     @param url String. URL to download the dataset.
     @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
     @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
@@ -149,18 +157,22 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
-    filetype_dict = {'text': pd.read_csv, 'Composite Document File V2 Document': pd.read_excel,
-                     'Excel': pd.read_excel, 'Zip': extract_zip}
-    param_dict_dict = {pd.read_csv: param_dict_csv,
-                       pd.read_excel: param_dict_excel, extract_zip: param_dict_zip}
+    filetype_dict = {
+        'text': pd.read_csv,
+        'Composite Document File V2 Document': pd.read_excel,
+        'Excel': pd.read_excel, 'Zip': extract_zip}
+    param_dict_dict = {
+        pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel,
+        extract_zip: param_dict_zip}
 
     if read_data:
         try:
             df = pd.read_json(filepath)
         except FileNotFoundError:
-            if interactive and user_choice("Warning: The file: " + filepath +
-                                           " does not exist in the directory. Do you want to download "
-                                           "the file from " + url + " instead?\n"):
+            if interactive and user_choice(
+                "Warning: The file: " + filepath +
+                " does not exist in the directory. Do you want to download "
+                    "the file from " + url + " instead?\n"):
                 df = get_file(filepath=filepath, url=url,
                               read_data=False, param_dict={})
             else:
@@ -173,14 +185,16 @@ def get_file(filepath='', url='', read_data=dd.defaultDict['read_data'], param_d
             try:  # to download file from url and show download progress
                 with progress_indicator.Percentage(message="Downloading " + url) as p:
                     file = download_file(
-                        url, 1024, None, p.set_progress, interactive=interactive)
+                        url, 1024, None, p.set_progress,
+                        verify="interactive" if interactive else True)
                     # read first 2048 bytes to find file type
                     ftype = magic.from_buffer(file.read(2048))
                     # set pointer back to starting position
                     file.seek(0)
                     # find file type in dict and use function to read
-                    func_to_use = [val for key,
-                                   val in filetype_dict.items() if key in ftype]
+                    func_to_use = [
+                        val for key, val in filetype_dict.items()
+                        if key in ftype]
                     # use different default dict for different functions
                     dict_to_use = param_dict_dict[func_to_use[0]]
                     # adjust dict
@@ -330,7 +344,9 @@ def cli(what):
     return vars(args)
 
 
-def append_filename(filename='', impute_dates=False, moving_average=0, split_berlin=False, rep_date=False):
+def append_filename(
+        filename='', impute_dates=False, moving_average=0, split_berlin=False,
+        rep_date=False):
     """! Creates consistent file names for all output.
     """
     # split_berlin and repdate especially for case data

@@ -445,7 +445,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
         # TODO: Why does check of hdf5 not work?
-        #gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
+        # gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
         # file = "test_hdf.h5"
         # self.assertEqual(len(os.listdir(self.path)), 3)
         # self.assertEqual(os.listdir(self.path), [file])

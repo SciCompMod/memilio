@@ -95,5 +95,6 @@ class Test_ProgressIndicator(unittest.TestCase):
         p.stop()
         self.assertEqual(p._message, "")
 
+
 if __name__ == '__main__':
     unittest.main()

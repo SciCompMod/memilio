@@ -327,15 +327,15 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             if dict_files[file][2] == None:
                 df_local_cs = df_local.cumsum().reset_index(drop=False)
             else:
-                df_local_cs = df_local.groupby(
-                    level=[dict_files[file][0].index(level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
+                df_local_cs = df_local.groupby(level=[dict_files[file][0].index(
+                    level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
 
             if impute_dates or moving_average > 0:
-                df_local_cs = mdfs.impute_and_reduce_df(df_local_cs,
-                                                        group_by_cols=dict_files[file][3],
-                                                        mod_cols=dict_files[file][4],
-                                                        impute='forward', moving_average=moving_average,
-                                                        min_date=start_date, max_date=end_date)
+                df_local_cs = mdfs.impute_and_reduce_df(
+                    df_local_cs, group_by_cols=dict_files[file][3],
+                    mod_cols=dict_files[file][4],
+                    impute='forward', moving_average=moving_average,
+                    min_date=start_date, max_date=end_date)
 
             df_local_cs = mdfs.extract_subframe_based_on_dates(
                 df_local_cs, start_date, end_date)
@@ -362,10 +362,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                     plt.show()
 
                 if file == 'all_gender':
-                    df.groupby(Geschlecht) \
-                        .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
-                        .plot(title='COVID-19 infections, deaths, recovered', grid=True,
-                              kind='bar')
+                    df.groupby(Geschlecht).agg(
+                        {AnzahlFall: sum, AnzahlTodesfall: sum,
+                         AnzahlGenesen: sum}).plot(
+                        title='COVID-19 infections, deaths, recovered',
+                        grid=True, kind='bar')
                     plt.tight_layout()
                     plt.show()
 

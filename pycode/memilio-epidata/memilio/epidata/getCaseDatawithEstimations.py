@@ -84,8 +84,9 @@ WARNING: This file is experimental and has not been tested.
             rep_date)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
-                        start_date, end_date, impute_dates, moving_average, make_plot_jh)
+        gjd.get_jh_data(
+            read_data, file_format, out_folder, no_raw, start_date, end_date,
+            impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data
