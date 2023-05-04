@@ -149,12 +149,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         complete = check_for_completeness(df, merge_eisenach=True)
     except:
         pass
-    if complete:
-        if not read_data:
-            # add column with state ids
-            county_to_state_map = geoger.get_countyid_to_stateid_map(
-                merge_berlin=False)
-            df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
+    if complete and not read_data:
+        # add column with state ids
+        county_to_state_map = geoger.get_countyid_to_stateid_map(
+            merge_berlin=False)
+        df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
     else:
         # try another possibility if df was empty or incomplete
         print("Note: Case data is incomplete. Trying another source.")
