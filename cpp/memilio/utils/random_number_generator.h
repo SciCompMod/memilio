@@ -23,15 +23,50 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/span.h"
+#include "memilio/utils/type_safe.h"
 
 #include <cassert>
 #include <functional>
 #include <numeric>
 #include <random>
 #include <sstream>
+#include <type_traits>
 
 namespace mio
 {
+
+    template<class T>
+    struct RNGKey : TypeSafe<T, RNGKey<T>>, OperatorComparison<RNGKey<T>>
+    {
+        static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
+        using TypeSafe<T, RNGKey<T>>::TypeSafe;
+    };
+
+    template<class T>
+    struct RNGCounter : TypeSafe<T, RNGCounter<T>>, OperatorComparison<RNGCounter<T>>, OperatorAdditionSubtraction<RNGCounter<T>>
+    {
+        static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
+        using TypeSafe<T, RNGCounter<T>>::TypeSafe;
+    };
+
+    template<class K, class C>
+    uint64_t rng_generate(K key, C counter)
+    {
+        auto c = static_cast<uint64_t>(counter.get());
+        auto k = static_cast<uint64_t>(key.get());
+        return 0; //TODO: add rng
+    }
+
+    template<class U, class T, class C>
+    RNGCounter<U> rng_subsequence_counter(T subsequence_idx, C counter)
+    {
+        static_assert(sizeof(U) > sizeof(C), "");
+        //TODO allow sizeof(C) = sizeof(U) and check actual values?
+        //TODO: assert value of subequence_idx
+        static const U bytes_shift = sizeof(U) - sizeof(C);
+        auto s = static_cast<U>(subsequence_idx);
+        return RNGCounter<U>{ (subsequence_idx << (bytes_shift * 8)) + counter };
+    }
 
 /**
  * Models a uniform_random_bit_generator.

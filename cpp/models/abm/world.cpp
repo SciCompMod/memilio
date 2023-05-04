@@ -49,10 +49,10 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     return person;
 }
 
-void World::evolve(TimePoint t, TimeSpan dt)
+void World::evolve(TimePoint t, TimeSpan dt, RNGKey<uint64_t> rng_key)
 {
     begin_step(t, dt);
-    interaction(t, dt);
+    interaction(t, dt, rng_key);
     m_testing_strategy.update_activity_status(t);
     migration(t, dt);
     end_step(t, dt);

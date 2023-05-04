@@ -119,6 +119,7 @@ private:
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
+    RNGKey<uint64_t> m_rng_key;
 };
 
 } // namespace abm

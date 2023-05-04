@@ -54,7 +54,7 @@ void Simulation::advance(TimePoint tmax)
 void Simulation::evolve_world(TimePoint tmax)
 {
     auto dt = std::min(m_dt, tmax - m_t);
-    m_world.evolve(m_t, dt);
+    m_world.evolve(m_t, dt, m_rng_key);
     m_t += m_dt;
 }
 

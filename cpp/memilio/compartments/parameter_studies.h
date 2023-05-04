@@ -31,6 +31,7 @@
 
 #include <cmath>
 #include <iterator>
+#include <limits>
 #include <numeric>
 
 namespace mio
@@ -59,6 +60,36 @@ public:
     * This is the output of ParameterStudies for each run.
     */
     using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+
+    struct RandomNumberGenerator
+    {
+    public:
+        RandomNumberGenerator(RNGKey<uint64_t> key, size_t run_idx) 
+        : m_key(key)
+        , m_counter(rng_subsequence_counter<uint64_t>(run_idx, RNGCounter<uint32_t>(0)))
+        {}
+        using result_type = uint64_t;
+
+        static result_type min() {
+            return 0;
+        }
+        static result_type max() {
+            return std::numeric_limits<uint64_t>::max();
+        }
+
+        result_type operator()() {
+            return rng_generate(m_key, m_counter);
+        }
+
+        RNGCounter<uint64_t> counter() const
+        {
+            return m_counter;
+        }
+
+    private:
+        RNGKey<uint64_t> m_key;
+        RNGCounter<uint64_t> m_counter;
+    };
 
     /**
      * create study for graph of compartment models.
@@ -148,17 +179,12 @@ public:
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-            //ensure reproducible results if the number of runs or MPI process changes.
-            //assumptions:
-            //- the sample_graph functor uses the RNG provided by our library
-            //- the RNG has been freshly seeded/initialized before this call
-            //- the seeds are identical on all MPI processes
-            //- the block size of the RNG is sufficiently big to cover one run
-            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length 
-            //   of the mt19937 RNG is huge)
-            mio::thread_local_rng().forward_to_block(run_idx);
+            auto rng = RandomNumberGenerator(m_rng_key, run_idx);
 
-            auto sim = create_sampled_simulation(sample_graph);
+            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
+            auto sim = create_sampled_simulation(sample_graph, rng);
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", rng.counter().get());
+
             sim.advance(m_tmax);
 
             ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
@@ -339,6 +365,8 @@ private:
     double m_dt_graph_sim;
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
+    //
+    RNGKey<uint64_t> m_rng_key;
 };
 
 } // namespace mio

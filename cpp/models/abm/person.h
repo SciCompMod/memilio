@@ -48,6 +48,38 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 class Person
 {
 public:
+    class RandomNumberGenerator
+    {
+        public:
+        using result_type = uint64_t;
+
+        RandomNumberGenerator(RNGKey<uint64_t> key, Person& person) 
+        : m_key(key)
+        , m_counter(rng_subsequence_counter<uint64_t>(person.get_person_id(), person.get_rng_counter())) 
+        , m_person(person)
+        {
+        }
+
+        result_type operator()() {
+            return rng_generate(m_key, m_counter);
+        }
+
+        ~RandomNumberGenerator() 
+        {
+            m_person.get_rng_counter() = m_counter;
+        }
+
+        static constexpr result_type min() { return 0; }
+        static constexpr result_type max() {
+            return std::numeric_limits<result_type>::max();
+        }
+
+    private:
+        RNGKey<uint64_t> m_key;
+        RNGKey<uint64_t> m_counter;
+        Person& m_person;
+    };
+
     /**
      * @brief Create a Person.
      * @param[in, out] location Initial location of the Person.
@@ -388,6 +420,7 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
+    RNGCounter<uint32_t> m_rng_counter; ///< counter for RandomNumberGenerator
 };
 
 } // namespace abm
