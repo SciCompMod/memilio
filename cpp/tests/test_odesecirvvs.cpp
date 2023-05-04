@@ -1004,4 +1004,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+    
+    mio::set_log_level(mio::LogLevel::warn);
 }

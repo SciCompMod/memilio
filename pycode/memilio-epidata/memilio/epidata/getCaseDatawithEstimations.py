@@ -210,7 +210,15 @@ def compare_estimated_and_rki_deathsnumbers(
     @param make_plot Defines if plots are generated
 
     """
-    df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="ISO8601")
+    try:
+        df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="ISO8601")
+    except ValueError:
+        try:
+            df_cases['Date'] = pd.to_datetime(
+                df_cases['Date'], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
     # we set january 2020 to week 1
     # 2020 had 53 weeks
     # meaning weak 45 is first week in 2021
