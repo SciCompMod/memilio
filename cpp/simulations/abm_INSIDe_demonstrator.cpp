@@ -330,14 +330,14 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
     //school and hospital is needed for migration rules
     bool has_school   = false;
     bool has_hospital = false;
-    for (auto loc = 0; loc < (int)areas.size(); ++loc) {
+    for (size_t loc = 0; loc < areas.size(); ++loc) {
         std::vector<mio::abm::LocationId> locations;
         if (std::search((areas[loc].second).begin(), (areas[loc].second).end(), residential.begin(),
                         residential.end()) != (areas[loc].second).end()) {
             //Home
             locations = add_households(world, household_distribution, inhabitants[loc]);
         }
-        else if (areas[loc].second == "mixed") {
+        else if (areas[loc].second == "mixed" || areas[loc].second == "mixed\r") {
             //areas of type "mixed" are equally distributed to  of location of type Home amd type Work
             size_t location_type = mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>{1, 1});
             if (location_type) {
@@ -349,11 +349,11 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
             }
         }
         else {
-            if (areas[loc].second == "recreational") {
+            if (areas[loc].second == "recreational" || areas[loc].second == "recreational\r") {
                 //Social Event
                 locations.emplace_back(add_location(world, mio::abm::LocationType::SocialEvent, 30., 30, 40));
             }
-            else if (areas[loc].second == "shopping_business") {
+            else if (areas[loc].second == "shopping_business" || areas[loc].second == "shopping_business\r") {
                 //school, hospital and icu are added first
                 if (!has_school) {
                     locations.emplace_back(add_location(world, mio::abm::LocationType::School, 40., 500, 2000));
@@ -375,7 +375,7 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
                     }
                 }
             }
-            else if (areas[loc].second == "university") {
+            else if (areas[loc].second == "university" || areas[loc].second == "university\r") {
                 //area of type 'university' is converted to location of type Work
                 locations.emplace_back(add_location(world, mio::abm::LocationType::Work, 50., 200, 4000));
             }
@@ -775,9 +775,9 @@ void write_results_to_file(
 
     std::string input;
     std::ofstream myfile(path);
-    for (auto loc_id_index = 0; loc_id_index < location_ids[0].size(); ++loc_id_index) {
+    for (size_t loc_id_index = 0; loc_id_index < location_ids[0].size(); ++loc_id_index) {
         input = convert_loc_id_to_string(location_ids[0][loc_id_index]) + " " + std::to_string(time_points.size());
-        for (int t = 0; t < time_points.size(); ++t) {
+        for (size_t t = 0; t < time_points.size(); ++t) {
             auto a_per_loc = get_agents_per_location(location_ids[0][loc_id_index], agents[t]);
             input += " " + std::to_string(time_points[t]) + " " + std::to_string(a_per_loc.size());
             for (auto& agent : a_per_loc) {
@@ -863,7 +863,7 @@ void print(T& data)
 int main()
 {
     const fs::path input_dir =
-        "C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
+        "/home/bick_ju/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
     auto result = run(input_dir);
 
     return 0;
