@@ -22,6 +22,7 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
+//#include "memilio/utils/history.h"
 #include "abm/abm.h"
 #include "abm/household.h"
 #include "pybind11/attr.h"
@@ -31,6 +32,46 @@
 #include <type_traits>
 
 namespace py = pybind11;
+
+//time point logger
+struct LogTimePoint : LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
+
+//LocationId logger
+struct LogLocationIds : LogOnce {
+    using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+        for (auto&& locations : sim.get_world().get_locations()) {
+            for (auto location : locations) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            }
+        }
+        return location_ids;
+    }
+};
+
+//agent logger
+struct LogPersonsPerLocationAndInfectionTime : LogAlways {
+    using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
+            location_ids_person{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
+                                                          person.get_time_since_transmission(),
+                                                          person.get_infection_state()));
+        }
+        return location_ids_person;
+    }
+};
 
 PYBIND11_MODULE(_simulation_abm, m)
 {
@@ -254,7 +295,11 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
         //.def(py::init<mio::abm::TimePoint, mio::abm::World&&>())
-        .def("advance", &mio::abm::Simulation::advance)
+        .def("advance", &mio::abm::Simulation::advance<History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world), py::return_value_policy::reference_internal);
+
+    py::class_<History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>(m, "History")
+        .def(py::init<>())
+        .def_property_readonly("log", &History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>::get_log);
 }

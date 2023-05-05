@@ -24,6 +24,7 @@ import numpy as np
 from memilio.simulation import abm
 from memilio.simulation.abm import AgeGroup
 from memilio.simulation.abm import VaccinationState
+from memilio.simulation.abm import History
 
 # class used to map input area ids to abm location ids
 
@@ -514,7 +515,7 @@ def run_abm_simulation():
     # simulation will run 14 days
     tmax = t0 + abm.days(14)
     # distribution to distribute the residential areas to one, two-, three-, four- and five-person households
-    household_distribution = [0.2, 0.2, 0.2, 0.2, 0.2]
+    household_distribution = [0.37, 0.33, 0.15, 0.1, 0.05]
 
     # read txt file with inputs
     areas = read_txt(
@@ -523,12 +524,15 @@ def run_abm_simulation():
     sim.world.infection_parameters = infection_params
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
-    assign_infection_states(sim.world, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    assign_infection_states(sim.world, 0.005, 0.001,
+                            0.001, 0.0001, 0.0, 0.0, 0.0)
     assign_locations(sim.world)
-    for m in mapping:
-        print(m.inputId)
-        print(m.modelId)
-    sim.advance(tmax)
+    history = History()
+    # for m in mapping:
+    #     print(m.inputId)
+    #     print(m.modelId)
+    sim.advance(tmax, history)
+    log = history.log
     print('done')
 
 
