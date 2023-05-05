@@ -38,8 +38,16 @@ struct LocationMapping {
 
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
-    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
-           std::to_string(std::get<1>(tuple_id));
+    std::string locationType  = std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id)));
+    std::string locationIndex = std::to_string(std::get<1>(tuple_id));
+    if (static_cast<std::uint32_t>(std::get<0>(tuple_id)) < 10) {
+        locationType = "0" + locationType;
+    }
+    if (std::get<1>(tuple_id) < 10) {
+        locationIndex = "0" + locationIndex;
+    }
+
+    return locationType + locationIndex;
 }
 
 std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> get_agents_per_location(
@@ -788,6 +796,21 @@ void write_results_to_file(
     myfile.close();
 }
 
+void write_location_mapping_to_file(std::string path, std::vector<LocationMapping>& LocationIds)
+{
+    std::string input;
+    std::ofstream myfile(path);
+    for (auto& id : LocationIds) {
+        input = id.inputId + " ";
+        for (auto& model_id : id.modelId) {
+            input += model_id + " ";
+        }
+        myfile << input << "\n";
+    }
+
+    myfile.close();
+}
+
 mio::IOResult<void> run(const fs::path& input_dir)
 {
     auto t0      = mio::abm::TimePoint(0); // Start time per simulation
@@ -807,7 +830,8 @@ mio::IOResult<void> run(const fs::path& input_dir)
 
     //output
     auto logg = history.get_log();
-    write_results_to_file("C:/Users/bick_ju/Documents/output_abm_demonstrator.txt", logg);
+    write_results_to_file("output_abm_demonstrator.txt", logg);
+    write_location_mapping_to_file("location_mapping.txt", LocationIds);
 
     std::cout << "# t S E C I I_s I_c R_C R_I D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
