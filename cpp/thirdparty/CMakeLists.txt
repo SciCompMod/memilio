@@ -3,6 +3,7 @@
 set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
+set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 
 # ## SPDLOG
 set(SPDLOG_INSTALL ON)
@@ -116,3 +117,21 @@ endif()
 if (MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP COMPONENTS CXX REQUIRED)
 endif()
+
+#Random123 library for random number generators
+message(STATUS "Downloading Random123 library")
+
+include(FetchContent)
+FetchContent_Declare(Random123
+    GIT_REPOSITORY https://github.com/DEShawResearch/random123
+    GIT_TAG ${MEMILIO_RANDOM123_VERSION}
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND "")
+FetchContent_GetProperties(Random123)
+
+if(NOT Random123_POPULATED)
+    FetchContent_Populate(Random123)
+endif()
+
+add_library(Random123 INTERFACE)
+target_include_directories(Random123 INTERFACE ${random123_SOURCE_DIR}/include)

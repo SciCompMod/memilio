@@ -28,6 +28,7 @@
 #include "abm/vaccine.h"
 #include "abm/mask_type.h"
 #include "abm/mask.h"
+#include "memilio/utils/random_number_generator.h"
 
 #include "memilio/utils/memory.h"
 #include <functional>
@@ -48,36 +49,60 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 class Person
 {
 public:
+    /**
+    * Random number generator of individual persons.
+    * Copies the rng counter from a person on construction and updates it on destruction.
+    * For each person, only one generator must be active at the same time.
+    * Satisifes the requirments of UniformRandomBitGenerator.
+    */
     class RandomNumberGenerator
     {
         public:
         using result_type = uint64_t;
 
-        RandomNumberGenerator(RNGKey<uint64_t> key, Person& person) 
-        : m_key(key)
-        , m_counter(rng_subsequence_counter<uint64_t>(person.get_person_id(), person.get_rng_counter())) 
-        , m_person(person)
+        RandomNumberGenerator(RNGKey<uint64_t> key, Person& person)
+            : m_person(person)
+            , m_key(key)
+            , m_counter(rng_subsequence_counter<uint64_t>(person.get_person_id(), person.rng_counter()))
+#ifndef NDEBUG
+            , m_initial_counter(m_counter)
+#endif
         {
         }
 
-        result_type operator()() {
-            return rng_generate(m_key, m_counter);
-        }
-
-        ~RandomNumberGenerator() 
+        ~RandomNumberGenerator()
         {
-            m_person.get_rng_counter() = m_counter;
+            //store the updated counter after the RNG is done
+            assert(m_person.rng_counter() == m_initial_counter && "Inconsistent RNG Counter. Make sure there is only one active per person.");
+            auto subcounter        = rng_subsequence_counter<uint32_t>(m_counter);
+            m_person.rng_counter() = subcounter;
         }
 
-        static constexpr result_type min() { return 0; }
-        static constexpr result_type max() {
+        result_type operator()()
+        {
+            //generate sample and increment the counter
+            auto r = rng_generate(m_key, m_counter);
+            m_counter++;
+            return r;
+        }
+
+        static constexpr result_type min()
+        {
+            return 0;
+        }
+
+        static constexpr result_type max()
+        {
             return std::numeric_limits<result_type>::max();
         }
 
     private:
-        RNGKey<uint64_t> m_key;
-        RNGKey<uint64_t> m_counter;
         Person& m_person;
+        RNGKey<uint64_t> m_key;
+        RNGCounter<uint64_t> m_counter;
+#ifndef NDEBUG
+        RNGCounter<uint64_t> m_initial_counter; //for sanity checks during debugging
+#endif
     };
 
     /**
@@ -399,6 +424,11 @@ public:
     ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
     {
         return 1.; // put implementation in .cpp
+    }
+
+    RNGCounter<uint32_t>& rng_counter()
+    {
+        return m_rng_counter;
     }
 
 private:
