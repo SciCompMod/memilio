@@ -67,6 +67,8 @@ TEST(TestMasks, maskProtection)
     auto infected1          = make_test_person(infection_location, mio::abm::AgeGroup::Age15to34,
                                                mio::abm::InfectionState::Infected, t, params); // infected 7 days prior
 
+    infection_location.add_person(infected1);
+
     //cache precomputed results
     auto dt = mio::abm::days(1);
     infection_location.cache_exposure_rates(t, dt);
