@@ -25,6 +25,8 @@ from io import StringIO
 
 from memilio.epidata import progress_indicator
 
+progress_indicator.ProgressIndicator.disable_indicators(True)
+
 
 class Test_ProgressIndicator(unittest.TestCase):
 

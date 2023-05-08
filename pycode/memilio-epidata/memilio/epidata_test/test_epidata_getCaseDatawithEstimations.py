@@ -31,6 +31,10 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseDatawithEstimations as gcdwe
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
+
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     path = '/home/CaseEstimationData'
