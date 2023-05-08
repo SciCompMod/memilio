@@ -74,6 +74,7 @@ setup(
         'numpy>=1.21',
         'openpyxl',
         'xlrd',
+        'xlsxwriter',
         'requests',
 	    'pyxlsb',
         'wget'

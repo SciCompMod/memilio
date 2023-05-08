@@ -506,6 +506,11 @@ def get_npi_data(fine_resolution=2,
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
         directory, fine_resolution)
 
+    print('Download completed.')
+
+    npi_start_col = np.where(
+        df_npis_old.columns.str.contains('d2') == True)[0][0]
+
     # get existing codes that are used
     # for fine resolution we don't have codes M22 - M24 but are still listed in description
     if fine_resolution > 0:
@@ -556,14 +561,14 @@ def get_npi_data(fine_resolution=2,
         except KeyError:
             pass
         # rename essential columns and throw away others
-        columns_combinations = np.where((df_npis_combinations_pre == 'x').any() == True)[
-            0]  # maybe rename columns_used ?
+        columns_used = np.where(
+            (df_npis_combinations_pre == 'x').any() == True)[0]
         column_names = [
-            'Unnamed: ' + str(i) for i in range(columns_combinations[0], columns_combinations[-1]+1)]
+            'Unnamed: ' + str(i) for i in range(columns_used[0], columns_used[-1]+1)]
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
         df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
         df_npis_combinations_pre = df_npis_combinations_pre[[
-            'Variablenname', 'Massnahmenindex'] + [i for i in range(0, len(columns_combinations))]]
+            'Variablenname', 'Massnahmenindex'] + [i for i in range(0, len(columns_used))]]
         # replace empty cells by zeros and x-marked cells by ones
         df_npis_combinations_pre = df_npis_combinations_pre.replace(np.nan, 0)
         df_npis_combinations_pre = df_npis_combinations_pre.replace('x', 1)
@@ -582,9 +587,9 @@ def get_npi_data(fine_resolution=2,
                     [npi_groups_combinations == code].index))
 
         # TODO: look at:
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M16_100', 'M16_100_1', 'M16_100_2', 'M16_100_3', 'M16_100_4', 'M16_100_5']))].iloc[:,6:]==1)
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01a_020', 'M01a_020_1', 'M01a_020_2', 'M01a_020_3', 'M01a_020_4', 'M01a_020_5']))].iloc[:,6:]==1)
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01b_020', 'M01b_020_1', 'M01b_020_2', 'M01b_020_3', 'M01b_020_4', 'M01b_020_5']))].iloc[:,6:]==1)
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M16_100', 'M16_100_1', 'M16_100_2', 'M16_100_3', 'M16_100_4', 'M16_100_5']))].iloc[:,npi_start_col:]==1)
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01a_020', 'M01a_020_1', 'M01a_020_2', 'M01a_020_3', 'M01a_020_4', 'M01a_020_5']))].iloc[:,npi_start_col:]==1)
+        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01b_020', 'M01b_020_1', 'M01b_020_2', 'M01b_020_3', 'M01b_020_4', 'M01b_020_5']))].iloc[:,npi_start_col:]==1)
 
         # create hash table of main code to strictness rankings inside main
         # code and combination matrix inside the same strictness rank
@@ -954,13 +959,15 @@ def get_npi_data(fine_resolution=2,
         df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                                  == countyID])
 
+        inc_codes = 6  # Is this always 6?
+
         # Consistency of incidence dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
         # for different thresholds. In order to avoid contradictions, only
         # retain the strictest mentioned implementation.
-        for i in range(int(len(df_local_old)/6)):
+        for i in range(int(len(df_local_old)/inc_codes)):
             sum_npi_inc = np.where(
-                df_local_old.iloc[6*i:6*(i+1), 6:].sum() > 1)
+                df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
             if len(sum_npi_inc[0]):
                 print(
                     'Reduce multiple prescription in county ' + str(countyID) +
@@ -968,15 +975,16 @@ def get_npi_data(fine_resolution=2,
                 for j in sum_npi_inc[0]:
                     # get lowest index (i.e., strictest implementation of NPI).
                     idx_start = np.where(
-                        df_local_old.iloc[6*i:6*(i+1), 6+j])[0].min()
+                        df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col+j])[0].min()
                     # Remove less strict and thus contradictory
                     # implementations of the same NPI the same day.
-                    df_local_old.iloc[6*i+idx_start+1:6*(i+1), 6+j] = 0
+                    df_local_old.iloc[inc_codes*i+idx_start +
+                                      1:inc_codes*(i+1), npi_start_col+j] = 0
 
                 if not all(
                     df_local_old.iloc
-                    [6 * i: 6 * (i + 1),
-                     6 + sum_npi_inc[0]].sum() == 1):
+                    [inc_codes * i: inc_codes * (i + 1),
+                     npi_start_col + sum_npi_inc[0]].sum() == 1):
                     raise gd.DataError('Consistency correction failed.')
 
         ## end of consistency correction ##
@@ -1249,7 +1257,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
 
                 # count number of multiply mentionned NPIs with different incidence thresholds for the same day
                 df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
-                                                                                         npi_date_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
+                                                                                          npi_date_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
         # no diag
         for maincode in df_count.keys():
@@ -1333,7 +1341,8 @@ def plot_counter(filename, directory):
 
 
 def plot_multiple_prescriptions(filename, directory):
-    target_directory = os.path.join(directory, 'heatmaps_mult_presc_' + filename)
+    target_directory = os.path.join(
+        directory, 'heatmaps_mult_presc_' + filename)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
 
