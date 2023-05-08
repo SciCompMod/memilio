@@ -30,7 +30,7 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources

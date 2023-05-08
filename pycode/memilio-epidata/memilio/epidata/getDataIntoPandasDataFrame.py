@@ -42,7 +42,7 @@ from warnings import warn
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 
 
 def user_choice(message, default=False):

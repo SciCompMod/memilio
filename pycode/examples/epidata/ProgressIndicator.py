@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 import time
 
 print("This is only a usage example, and does not actually do anything.")

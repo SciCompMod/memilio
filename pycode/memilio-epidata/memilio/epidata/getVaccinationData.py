@@ -24,7 +24,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger

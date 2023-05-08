@@ -23,7 +23,7 @@ import time
 from unittest.mock import patch
 from io import StringIO
 
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 
 
 class Test_ProgressIndicator(unittest.TestCase):

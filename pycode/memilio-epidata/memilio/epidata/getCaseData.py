@@ -40,7 +40,7 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 
 
 def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
