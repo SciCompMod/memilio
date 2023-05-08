@@ -37,6 +37,7 @@ import magic
 import urllib3
 from io import BytesIO
 from zipfile import ZipFile
+from warnings import warn
 
 import pandas as pd
 
@@ -70,16 +71,21 @@ def download_file(
     @param progress_function Function called regularly, with the current
         download progress in [0,1] as a float argument.
     @param verify bool or "interactive". If False, ignores the connection's
-        security. If True, only downloads from secure connections are made,
-        and insecure connections raise a FileNotFoundError. If "interactive",
-        prompts the user whether or not to allow insecure connections. 
+        security. If True, only starts downloads from secure connections, and
+        insecure connections raise a FileNotFoundError. If "interactive",
+        prompts the user whether or not to allow insecure connections.
     @return File as BytesIO
     """
+    if verify not in [True, False, "interactive"]:
+        warn('Invalid input for argument verify. Expected True, False, or'
+             ' "interactive", got ' + str(verify) +  '.'
+             ' Proceeding with "verify=True".', category=RuntimeWarning)
+        verify = True
     # send GET request as stream so the content is not downloaded at once
     try:
         req = requests.get(
             url, stream=True, timeout=timeout,
-            verify=verify == True or verify == "interactive")
+            verify=verify in [True, "interactive"])
     except OSError:
         if verify == "interactive" and user_choice(
             url +
