@@ -884,9 +884,10 @@ def get_npi_data(fine_resolution=2,
     for maincode in df_count_joint_codes.keys():
         df_count_joint_codes[maincode][1] *= 0
     df_counted_joint_codes = count_code_multiplicities_init(df_npis_old, df_count_joint_codes,
-                                          counties_considered=counties_considered)
+                                                            counties_considered=counties_considered)
     save_counter(df_counted_joint_codes, 'joint_codes', directory)
     plot_counter('joint_codes', directory)
+    plot_multiple_prescriptions('joint_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_incid_depend = pd.DataFrame()
@@ -1230,7 +1231,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
         df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
         # get column where dates start
         npi_date_start_col = np.where(
-            df_local.columns.str.startswith('d20') == True)[0][0]
+            df_local.columns.str.startswith('d2') == True)[0][0]
         # prepare dictionnary for dates when code was mentioned
         code_dates = {}
         # run through all maincodes (i.e., first 3-4 characters like M01a or M11)
@@ -1247,7 +1248,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
                                                                 npi_date_start_col + npi_dates_in_df].columns
 
                 # count number of multiply mentionned NPIs with different incidence thresholds for the same day
-                df_count[maincode][1].iloc[code_idx, code_idx] = df_local[npi_rows].iloc[:,
+                df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
                                                                                          npi_date_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
         # no diag
@@ -1349,15 +1350,41 @@ def plot_counter(filename, directory):
         array_exclusion = df.iloc[:, 1:].to_numpy()
         fig = plt.figure()
         positions = [i for i in range(len(df.columns)-1)]
-        plt.xticks(positions, [colname[-3:]
-                   for colname in df.columns.to_list()[1:]])
+        plt.xticks(positions, df.columns.to_list()[1:], rotation='vertical')
         plt.yticks(positions, df.columns.to_list()[1:])
         # set vmin = 1 so that only combinations that are simultaneously active at least on one day are in colour,
         # else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
         # this way colours of heatmaps are comparable (e.g. between codes or between joint_codes and exclusions)
-        plt.imshow(array_exclusion, cmap=cmap, norm=mpl.colors.LogNorm(vmin = 1, vmax=300000))
+        plt.imshow(array_exclusion, cmap=cmap,
+                   norm=mpl.colors.LogNorm(vmin=1, vmax=300000))
         plt.colorbar()
+        plt.savefig(
+            os.path.join(target_directory, filename + '_{}'.format(
+                code)))
+        plt.close()
+
+
+def plot_multiple_prescriptions(filename, directory):
+    target_directory = os.path.join(directory, 'heatmaps_mult_presc_' + filename)
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
+
+    codelist = pd.ExcelFile(os.path.join(
+        directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+
+    cmap = copy.copy(mpl.cm.get_cmap('OrRd'))
+
+    for code in codelist:
+        df = pd.read_excel(
+            os.path.join(directory, filename + '.xlsx'),
+            sheet_name=code, engine='openpyxl')
+        array_exclusion = df.iloc[:, 1:].to_numpy()
+        fig = plt.figure()
+        positions = [i for i in range(len(df.columns)-1)]
+        plt.yticks(positions, df.columns.to_list()[1:])
+        plt.imshow(array_exclusion.diagonal(), cmap=cmap)
+        plt.title(code)
         plt.savefig(
             os.path.join(target_directory, filename + '_{}'.format(
                 code)))
