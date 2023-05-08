@@ -1340,8 +1340,7 @@ def plot_counter(filename, directory):
     codelist = pd.ExcelFile(os.path.join(
         directory, filename + '.xlsx'), engine='openpyxl').sheet_names
 
-    cmap = copy.copy(mpl.cm.get_cmap('cool'))
-    cmap.set_under('white')
+    cmap = copy.copy(mpl.cm.get_cmap('OrRd'))
 
     for code in codelist:
         df = pd.read_excel(
@@ -1357,7 +1356,7 @@ def plot_counter(filename, directory):
         # else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
         # this way colours of heatmaps are comparable (e.g. between codes or between joint_codes and exclusions)
-        plt.imshow(array_exclusion, cmap=cmap, vmin=1, vmax=300000)
+        plt.imshow(array_exclusion, cmap=cmap, norm=mpl.colors.LogNorm(vmin = 1, vmax=300000))
         plt.colorbar()
         plt.savefig(
             os.path.join(target_directory, filename + '_{}'.format(
