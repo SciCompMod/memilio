@@ -297,7 +297,7 @@ class Percentage(ProgressIndicator):
             super().start()
 
     def stop(self):
-        """! Stops the animation. """ 
+        """! Stops the animation. """
         if not self._disabled:
             if self._use_thread:
                 self.step()

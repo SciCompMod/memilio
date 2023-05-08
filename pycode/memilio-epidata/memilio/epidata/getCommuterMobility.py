@@ -208,7 +208,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         param_dict = {"sheet_name": 3, "engine": "pyxlsb"}
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
 
-        commuter_migration_file = gd.get_file('', url, False, param_dict)
+        commuter_migration_file = gd.get_file(
+            '', url, False, param_dict, interactive=True)
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from

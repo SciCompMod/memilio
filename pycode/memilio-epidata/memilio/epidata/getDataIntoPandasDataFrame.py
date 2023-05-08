@@ -78,7 +78,7 @@ def download_file(
     """
     if verify not in [True, False, "interactive"]:
         warn('Invalid input for argument verify. Expected True, False, or'
-             ' "interactive", got ' + str(verify) +  '.'
+             ' "interactive", got ' + str(verify) + '.'
              ' Proceeding with "verify=True".', category=RuntimeWarning)
         verify = True
     # send GET request as stream so the content is not downloaded at once
@@ -146,7 +146,7 @@ def extract_zip(file, **param_dict):
 def get_file(
         filepath='', url='', read_data=dd.defaultDict['read_data'],
         param_dict={},
-        interactive=True):
+        interactive=False):
     """! Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.

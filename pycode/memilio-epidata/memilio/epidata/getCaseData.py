@@ -144,7 +144,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
-        df = gd.get_file(path, url, read_data, param_dict={})
+        df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
         complete = check_for_completeness(df, merge_eisenach=True)
     except:
         pass
@@ -162,7 +162,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             df = gd.get_file(path, url, False, param_dict={
-                             "encoding": 'utf_8_sig'})
+                             "encoding": 'utf_8_sig'}, interactive=True)
             complete = check_for_completeness(df, merge_eisenach=True)
         except:
             pass
@@ -173,7 +173,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
                     "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
-                                 "encoding": 'utf_8_sig'})
+                                 "encoding": 'utf_8_sig'}, interactive=True)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(df, merge_eisenach=True)
             except:

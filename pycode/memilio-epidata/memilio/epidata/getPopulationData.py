@@ -173,9 +173,9 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     path_zensus = os.path.join(directory, filename_zensus + ".json")
     path_reg_key = os.path.join(directory, filename_zensus + ".json")
     zensus = gd.get_file(
-        path_zensus, url_zensus, read_data, param_dict={})
+        path_zensus, url_zensus, read_data, param_dict={}, interactive=True)
     reg_key = gd.get_file(path_reg_key, url_reg_key, read_data, param_dict={
-        "engine": None, "sheet_name": 'Tabelle_1A', "header": 12},)
+        "engine": None, "sheet_name": 'Tabelle_1A', "header": 12}, interactive=True)
     counties = geoger.get_official_county_table()
 
     if not read_data:
@@ -257,7 +257,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.get_file(
             new_data_file, apiUrl='', extension='.xlsx',
-            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4})
+            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4}, interactive=True)
         column_names = list(df_pop_raw.columns)
         # rename columns
         rename_columns = {

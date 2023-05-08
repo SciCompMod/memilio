@@ -96,7 +96,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "FullData_DIVI"
     url = "https://diviexchange.blob.core.windows.net/%24web/zeitreihe-tagesdaten.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={})
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
     if not df_raw.empty:
         if not no_raw:
