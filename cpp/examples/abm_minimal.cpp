@@ -97,7 +97,7 @@ int main()
     auto persons = world.get_persons();
     for (auto& person : persons) {
         mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % (uint32_t)mio::abm::InfectionState::Count);
+            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), start_date,
@@ -126,13 +126,13 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(5);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
     sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
+    // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     auto f_abm = fopen("abm_minimal.txt", "w");
     fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");

@@ -19,7 +19,6 @@
 */
 #include "abm/infection.h"
 #include "abm_helpers.h"
-#include "abm_helpers.cpp"
 #include <memory>
 
 TEST(TestLocation, init)

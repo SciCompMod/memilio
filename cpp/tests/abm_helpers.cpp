@@ -39,8 +39,5 @@ mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId l
         p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age,
                                                 world.get_global_infection_parameters(), t, infection_state));
     }
-
-    world.get_individualized_location(loc_id).add_person(p);
-
     return p;
 }
