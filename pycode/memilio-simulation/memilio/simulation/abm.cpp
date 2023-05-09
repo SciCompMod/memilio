@@ -22,7 +22,9 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
+//#include "memilio/utils/history.h"
 #include "abm/abm.h"
+#include "abm/household.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
@@ -30,6 +32,46 @@
 #include <type_traits>
 
 namespace py = pybind11;
+
+//time point logger
+struct LogTimePoint : LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
+
+//LocationId logger
+struct LogLocationIds : LogOnce {
+    using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+        for (auto&& locations : sim.get_world().get_locations()) {
+            for (auto location : locations) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            }
+        }
+        return location_ids;
+    }
+};
+
+//agent logger
+struct LogPersonsPerLocationAndInfectionTime : LogAlways {
+    using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
+            location_ids_person{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
+                                                          person.get_time_since_transmission(),
+                                                          person.get_infection_state()));
+        }
+        return location_ids_person;
+    }
+};
 
 PYBIND11_MODULE(_simulation_abm, m)
 {
@@ -42,7 +84,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Infected_Critical", mio::abm::InfectionState::Infected_Critical)
         .value("Recovered_Carrier", mio::abm::InfectionState::Recovered_Carrier)
         .value("Recovered_Infected", mio::abm::InfectionState::Recovered_Infected)
-        .value("Dead", mio::abm::InfectionState::Dead);
+        .value("Dead", mio::abm::InfectionState::Dead)
+        .value("Count", mio::abm::InfectionState::Count);
 
     pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
         .value("Age0to4", mio::abm::AgeGroup::Age0to4)
@@ -149,6 +192,20 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
+    py::class_<mio::abm::HouseholdMember>(m, "HouseholdMember")
+        .def(py::init<>())
+        .def("set_age_weight", &mio::abm::HouseholdMember::set_age_weight);
+    
+    py::class_<mio::abm::Household>(m, "Household")
+        .def(py::init<>())
+        .def("add_members", &mio::abm::Household::add_members);
+
+    m.def("add_household_group_to_world", &mio::abm::add_household_group_to_world);
+    
+    py::class_<mio::abm::HouseholdGroup>(m, "HouseholdGroup")
+        .def(py::init<>())
+        .def("add_households", &mio::abm::HouseholdGroup::add_households);
+
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
                       const std::vector<mio::abm::InfectionState>&>(),
@@ -169,8 +226,10 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
 
     py::class_<mio::abm::Location>(m, "Location")
+        .def("set_capacity", &mio::abm::Location::set_capacity)
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
+        .def_property_readonly("population", &mio::abm::Location::get_population, py::return_value_policy::reference_internal)
         .def_property("infection_parameters",
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
@@ -203,6 +262,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 0,
              py::return_value_policy::reference_internal)
         .def("add_person", &mio::abm::World::add_person, py::return_value_policy::reference_internal)
+        .def("get_individualized_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::World::get_individualized_location, py::const_), py::return_value_policy::reference_internal)
+        .def("set_infection_state", &mio::abm::World::set_infection_state)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
@@ -235,7 +296,12 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
-        .def("advance", &mio::abm::Simulation::advance)
+        //.def(py::init<mio::abm::TimePoint, mio::abm::World&&>())
+        .def("advance", &mio::abm::Simulation::advance<History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
-        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
+        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world), py::return_value_policy::reference_internal);
+
+    py::class_<History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>(m, "History")
+        .def(py::init<>())
+        .def_property_readonly("log", &History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>::get_log);
 }
