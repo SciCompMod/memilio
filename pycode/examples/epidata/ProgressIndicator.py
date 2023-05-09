@@ -17,28 +17,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-"""@ProgressIndicator.py
-WARNING: This file is currently not tested and maintained.
-"""
-from memilio import progress_indicator
+
+from memilio.epidata import progress_indicator
 import time
 
 print("This is only a usage example, and does not actually do anything.")
+# Also, the following values for delay, sleep etc. are chosen arbitrary,
+# and have no further relevancy other than to demonstrate the indicator.
+
 # using start/stop
 p = progress_indicator.Dots(message="waiting", delay=0.5)
 p.start()
 time.sleep(1.6)
 p.stop()
-# using with as block
+
+# using with-as block
 with progress_indicator.Percentage(message="download 1", delay=0.4) as p:
     for i in range(13):
         time.sleep(0.1467)
-        p.set_progress((i+1)/13)
+        p.set_progress((i + 1) / 13)
+
 with progress_indicator.Percentage(message="download 2", use_bar=False,
                                    delay=0, keep_output=False) as p:
     for i in range(97):
         time.sleep(0.0367)
-        p.set_progress((i+1)/97)
-# using with block ('as' is not usefull without Percentage)
+        p.set_progress((i + 1) / 97)
+
+# using with block
+# the 'as' is only required for calling e.g. message() or set_progress()
 with progress_indicator.Spinner(message="finish"):
     time.sleep(2)

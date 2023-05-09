@@ -29,6 +29,9 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
@@ -321,8 +324,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         df_state = pd.read_json(f_read)
         self.assertEqual(df_state.shape[0], 286)
 
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file', return_value=pd.read_json(
-        test_string_all_federal_states_and_counties_read).copy())
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
+           return_value=pd.read_json(
+               test_string_all_federal_states_and_counties_read).copy())
     def test_get_case_data_moving_average(self, mock_file):
 
         read_data = True
@@ -468,8 +472,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             ['Deaths'].item(),
             1.0)
 
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file', return_value=pd.read_json(
-        test_string_all_federal_states_and_counties_read).copy())
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
+           return_value=pd.read_json(
+               test_string_all_federal_states_and_counties_read).copy())
     def test_get_case_data_impute_dates(self, mock_file):
         read_data = True
         file_format = 'json_timeasstring'
@@ -551,8 +556,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             df_ad[(df_ad['Date'] == "2020-08-20")]["Recovered"].item(),
             25)
 
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file', return_value=pd.read_json(
-        test_string_all_federal_states_and_counties_read).copy())
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
+           return_value=pd.read_json(
+               test_string_all_federal_states_and_counties_read).copy())
     def test_get_case_data_moving_average_and_split_berlin(self, mock_file):
         # test if split_berlin and moving_average = True are working together
 
@@ -797,10 +803,14 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         # dataframes should be equal
         self.assertEqual(len(df_germany_start_end_date), len(
             df_germany), "Dataframes don't have the same length.")
-        self.assertEqual(list(df_germany_start_end_date['Confirmed']), list(
-            df_germany['Confirmed']), "Dataframes don't have the same confirmed cases.")
-        self.assertEqual(list(df_germany_start_end_date['Recovered']), list(
-            df_germany['Recovered']), "Dataframes don't have the same recovered cases.")
+        self.assertEqual(
+            list(df_germany_start_end_date['Confirmed']),
+            list(df_germany['Confirmed']),
+            "Dataframes don't have the same confirmed cases.")
+        self.assertEqual(
+            list(df_germany_start_end_date['Recovered']),
+            list(df_germany['Recovered']),
+            "Dataframes don't have the same recovered cases.")
         self.assertEqual(list(df_germany_start_end_date['Deaths']), list(
             df_germany['Deaths']), "Dataframes don't have the same death cases.")
 

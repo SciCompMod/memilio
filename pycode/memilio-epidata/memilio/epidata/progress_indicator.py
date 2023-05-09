@@ -47,12 +47,7 @@ class ProgressIndicator:
     """
 
     _first_init = True
-    # no progress indicators in unittests
-    # TODO: maybe there is a better way to deactivate them
-    if 'unittest' in sys.modules:
-        _disable = True
-    else:
-        _disable = False
+    _disabled = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
         """! Create a ProgressIndicator.
@@ -60,12 +55,12 @@ class ProgressIndicator:
         @param message String. Shown in front of the animation without
             seperator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
-            animation instead. Must not contain `\r` or `\n`.
+            animation instead. Must not contain `\\r` or `\\n`.
         @param animator Generator expression. The expression must loop, i.e.
             it should never return StopIteration. `next(animator)` must be a
             string of length < `os.get_terminal_size().columns`. The length
             should be constant, otherwise animations may leave artifacts (this
-            can be worked around by prepending `"\033[K"` to each string).
+            can be worked around by prepending `"\\033[K"` to each string).
         @param delay Positive real number. Sets delay in seconds between
             drawing animation frames.
         @param auto_adjust [Default: False] Bool. Specify whether each frame
@@ -77,7 +72,7 @@ class ProgressIndicator:
         self._animator = animator
         self._delay = delay
         self._thread = None
-        self._enabled = False  # whether _thread is running
+        self._thread_is_running = False  # whether _thread is running
         self._auto_adjust = auto_adjust
         self._space = 0  # free space in a line, set by _adjust_to_terminal_size
         self._frame = ""
@@ -98,10 +93,12 @@ class ProgressIndicator:
     def disable_indicators(disable):
         """! Globally prevents new indicators from starting.
 
+        This does not affect currently running indicators.
+
         @param disable Bool. If True, no new indicators can be started.
             If False, resume default behaviour.
         """
-        ProgressIndicator._disable = disable
+        ProgressIndicator._disabled = disable
 
     @staticmethod
     def _console_setup():
@@ -141,7 +138,7 @@ class ProgressIndicator:
 
     def _render(self):
         """! Regularly update the animation. Do not call manually! """
-        while self._enabled:
+        while self._thread_is_running:
             self.step()
             # wait before writing next frame
             time.sleep(self._delay)
@@ -151,7 +148,7 @@ class ProgressIndicator:
         @param message String. Shown in front of the animation without
             seperator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
-            animation instead. Must not contain `\r` or `\n`.
+            animation instead. Must not contain `\\r` or `\\n`.
         """
         self._message = message
         self._adjust_to_terminal_size()
@@ -172,8 +169,8 @@ class ProgressIndicator:
 
         Must call stop() afterwards.
         """
-        if not ProgressIndicator._disable and not self._enabled:
-            self._enabled = True
+        if not ProgressIndicator._disabled and not self._thread_is_running:
+            self._thread_is_running = True
             # start new threat to render the animator in the background
             self._thread = threading.Thread(target=self._render)
             self._thread.daemon = True  # stops thread on main thread exit
@@ -181,8 +178,8 @@ class ProgressIndicator:
 
     def stop(self):
         """! Stop the animation and join the thread. """
-        if self._enabled:
-            self._enabled = False
+        if self._thread_is_running:
+            self._thread_is_running = False
             if self._thread and self._thread.is_alive():
                 self._thread.join()
             sys.stdout.write("\033[K")  # clear line
@@ -270,6 +267,7 @@ class Percentage(ProgressIndicator):
         self._keep_output = keep_output
         self._use_bar = use_bar
         self._progress = percentage
+        self._disabled = False
 
         def _perc():
             while True:
@@ -279,9 +277,8 @@ class Percentage(ProgressIndicator):
     def _advance(self):
         """! Advance the animation to the next frame. """
         self._frame = next(self._animator)
-        if self._auto_adjust:
-            self._adjust_to_terminal_size(5)
         if self._use_bar:
+            self._adjust_to_terminal_size(5)
             # prepend bar to frame
             self._frame = self._bar(self._space, self._progress) + self._frame
 
@@ -290,19 +287,21 @@ class Percentage(ProgressIndicator):
 
         If delay > 0, this method spawns a new thread.
         """
+        self._disabled = ProgressIndicator._disabled
         if self._use_thread:
             super().start()
 
     def stop(self):
         """! Stops the animation. """
-        if self._use_thread:
-            self.step()
-        if self._keep_output:
-            sys.stdout.write("\n")  # newline to 'save' output
+        if not self._disabled:
+            if self._use_thread:
+                self.step()
+            if self._keep_output:
+                sys.stdout.write("\n")  # newline to 'save' output
+            else:
+                sys.stdout.write("\033[K")  # clear line
         if self._use_thread:
             super().stop()
-        else:
-            sys.stdout.write("\033[K")  # clear line
 
     def set_progress(self, percentage):
         """! Updates the percentage shown by the indicator. Steps if delay = 0.
@@ -310,7 +309,7 @@ class Percentage(ProgressIndicator):
         @param percentage real number. Must be in the interval [0, 1].
         """
         self._progress = percentage
-        if not ProgressIndicator._disable and not self._enabled:
+        if not self._disabled and not self._thread_is_running:
             self.step()
 
     @staticmethod

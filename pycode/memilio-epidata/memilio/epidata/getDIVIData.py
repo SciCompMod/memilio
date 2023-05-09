@@ -86,7 +86,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         print("Warning: First data available on 2020-04-24. "
-              "You asked for " + start_date.strftime("%Y-%m-%d") + ". Changed it to 2020-04-24.")
+              "You asked for " + start_date.strftime("%Y-%m-%d") +
+              ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -95,7 +96,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "FullData_DIVI"
     url = "https://diviexchange.blob.core.windows.net/%24web/zeitreihe-tagesdaten.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={})
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
     if not df_raw.empty:
         if not no_raw:

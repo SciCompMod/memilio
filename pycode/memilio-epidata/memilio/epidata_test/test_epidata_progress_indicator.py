@@ -23,7 +23,9 @@ import time
 from unittest.mock import patch
 from io import StringIO
 
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class Test_ProgressIndicator(unittest.TestCase):
@@ -70,10 +72,10 @@ class Test_ProgressIndicator(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_start_stop(self, mock_print):
         # progress indicator should be disabled
-        self.assertEqual(progress_indicator.ProgressIndicator._disable, True)
+        self.assertEqual(progress_indicator.ProgressIndicator._disabled, True)
         # enable progress indicators
         progress_indicator.ProgressIndicator.disable_indicators(False)
-        self.assertEqual(progress_indicator.ProgressIndicator._disable, False)
+        self.assertEqual(progress_indicator.ProgressIndicator._disabled, False)
 
         # test start and stop functionality
         p = progress_indicator.Dots(message="testing dots", delay=0.4)

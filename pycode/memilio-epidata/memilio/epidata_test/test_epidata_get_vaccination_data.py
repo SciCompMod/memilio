@@ -27,6 +27,9 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):

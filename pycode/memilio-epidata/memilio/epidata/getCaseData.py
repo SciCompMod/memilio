@@ -40,7 +40,7 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
-from memilio import progress_indicator
+from memilio.epidata import progress_indicator
 
 
 def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
@@ -140,12 +140,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     filename = "CaseDataFull"
 
     complete = False
-    filename = "CaseDataFull"
     path = os.path.join(directory + filename + ".json")
     try:
         url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
             "SARS-CoV-2-Infektionen_in_Deutschland/main/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
-        df = gd.get_file(path, url, read_data, param_dict={})
+        df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
         complete = check_for_completeness(df, merge_eisenach=True)
     except:
         pass
@@ -163,7 +162,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             df = gd.get_file(path, url, False, param_dict={
-                             "encoding": 'utf_8_sig'})
+                             "encoding": 'utf_8_sig'}, interactive=True)
             complete = check_for_completeness(df, merge_eisenach=True)
         except:
             pass
@@ -174,7 +173,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 url = "https://npgeo-de.maps.arcgis.com/sharing/rest/content/" +\
                     "items/f10774f1c63e40168479a1feb6c7ca74/data"
                 df = gd.get_file(path, url, False, param_dict={
-                                 "encoding": 'utf_8_sig'})
+                                 "encoding": 'utf_8_sig'}, interactive=True)
                 df.rename(columns={'FID': "OBJECTID"}, inplace=True)
                 complete = check_for_completeness(df, merge_eisenach=True)
             except:
@@ -336,15 +335,15 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             if dict_files[file][2] == None:
                 df_local_cs = df_local.cumsum().reset_index(drop=False)
             else:
-                df_local_cs = df_local.groupby(
-                    level=[dict_files[file][0].index(level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
+                df_local_cs = df_local.groupby(level=[dict_files[file][0].index(
+                    level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
 
             if impute_dates or moving_average > 0:
-                df_local_cs = mdfs.impute_and_reduce_df(df_local_cs,
-                                                        group_by_cols=dict_files[file][3],
-                                                        mod_cols=dict_files[file][4],
-                                                        impute='forward', moving_average=moving_average,
-                                                        min_date=start_date, max_date=end_date)
+                df_local_cs = mdfs.impute_and_reduce_df(
+                    df_local_cs, group_by_cols=dict_files[file][3],
+                    mod_cols=dict_files[file][4],
+                    impute='forward', moving_average=moving_average,
+                    min_date=start_date, max_date=end_date)
 
             df_local_cs = mdfs.extract_subframe_based_on_dates(
                 df_local_cs, start_date, end_date)
@@ -371,10 +370,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                     plt.show()
 
                 if file == 'all_gender':
-                    df.groupby(Geschlecht) \
-                        .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
-                        .plot(title='COVID-19 infections, deaths, recovered', grid=True,
-                              kind='bar')
+                    df.groupby(Geschlecht).agg(
+                        {AnzahlFall: sum, AnzahlTodesfall: sum,
+                         AnzahlGenesen: sum}).plot(
+                        title='COVID-19 infections, deaths, recovered',
+                        grid=True, kind='bar')
                     plt.tight_layout()
                     plt.show()
 

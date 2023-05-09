@@ -174,7 +174,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     filename = "RKIHospitFull"
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
     path = os.path.join(directory + filename + ".json")
-    df_raw = gd.get_file(path, url, read_data, param_dict={})
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
     hospit_sanity_checks(df_raw)
 

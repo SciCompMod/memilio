@@ -445,7 +445,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
         # TODO: Why does check of hdf5 not work?
-        #gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
+        # gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
         # file = "test_hdf.h5"
         # self.assertEqual(len(os.listdir(self.path)), 3)
         # self.assertEqual(os.listdir(self.path), [file])
@@ -582,7 +582,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_in.return_value = 'N'
 
         with self.assertRaises(FileNotFoundError) as error:
-            gd.get_file(filepath, url, read_data, param_dict)
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
 
         error_message = "Error: The file from " + filepath + \
             " does not exist. Call program without -r flag to get it."
@@ -594,7 +594,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         type(mock_request).status_code = PropertyMock(return_value=404)
 
         with self.assertRaises(FileNotFoundError) as error:
-            gd.get_file(filepath, url, read_data, param_dict)
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
 
         error_message = 'Error: URL test_url.com could not be opened.'
         self.assertEqual(str(error.exception), error_message)
