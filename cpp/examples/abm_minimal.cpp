@@ -126,7 +126,7 @@ int main()
     mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(5);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
     sim.advance(tmax);
 
