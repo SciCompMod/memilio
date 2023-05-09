@@ -229,6 +229,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("set_capacity", &mio::abm::Location::set_capacity)
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
+        .def_property_readonly("population", &mio::abm::Location::get_population, py::return_value_policy::reference_internal)
         .def_property("infection_parameters",
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
@@ -262,6 +263,7 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::return_value_policy::reference_internal)
         .def("add_person", &mio::abm::World::add_person, py::return_value_policy::reference_internal)
         .def("get_individualized_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::World::get_individualized_location, py::const_), py::return_value_policy::reference_internal)
+        .def("set_infection_state", &mio::abm::World::set_infection_state)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})

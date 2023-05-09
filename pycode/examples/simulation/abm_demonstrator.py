@@ -433,7 +433,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
             else:
                 locationIds = add_households(
                     world, household_distribution, area.inhabitants)
-        insert_locations_to_map(mapping, area.id, locationIds)
+        insert_locations_to_map(mapping, str(area.id), locationIds)
     return mapping
 
 
@@ -448,7 +448,8 @@ def assign_infection_states(world, exposed_pct, infected_no_symptoms_pct, infect
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_infected_no_symptoms,
                                                recovered_infected, 0.0])
-        person.infection_state = abm.InfectionState(infection_state)
+        world.set_infection_state(person, abm.InfectionState(infection_state))
+        #person.infection_state = abm.InfectionState(infection_state)
 
 
 def assign_locations(world):
@@ -505,6 +506,67 @@ def assign_locations(world):
                 workplaces[int(work)].index, workplaces[int(work)].type))
 
 
+def convert_loc_id_to_string(loc_id):
+    type = str(int(loc_id[0]))
+    index = str(loc_id[1])
+    if int(int(loc_id[0])) < 10:
+        type = "0" + type
+    if int(loc_id[1]) < 10:
+        index = "0" + index
+
+    return type + index
+
+
+def get_agents_per_location(loc_id, agents):
+    agents_per_loc = []
+    for a in agents:
+        if (int(a[0].type) == int(loc_id[0]) and a[0].index == loc_id[1]):
+            agents_per_loc.append(a)
+    return agents_per_loc
+
+
+def write_results_to_file(path, log):
+    location_ids = log[1][0]
+    time_points = log[0]
+    agents = log[2]
+    with open(path, 'w') as f:
+        for location_id_index in range(len(location_ids)):
+            line = convert_loc_id_to_string(location_ids[location_id_index])
+            for t in range(len(time_points)):
+                agents_per_loc = get_agents_per_location(
+                    location_ids[location_id_index], agents[t])
+                line += " " + str(time_points[t]) + \
+                    " " + str(len(agents_per_loc))
+                for a in agents_per_loc:
+                    if (a[2].days > 1000):
+                        time_since_transmission = -1.0
+                    else:
+                        time_since_transmission = a[2].hours
+                    line += " " + str(a[1]) + " " + \
+                        str(time_since_transmission)
+            f.write(line)
+            f.write('\n')
+    f.close()
+
+
+def write_location_mapping_to_file(path, mapping):
+    with open(path, 'w') as f:
+        for id in mapping:
+            line = id.inputId + " "
+            for modelId in id.modelId:
+                line += modelId + " "
+            f.write(line)
+            f.write('\n')
+        f.close()
+
+
+def set_sim_result_at_start(sim):
+    for locations in sim.world.locations:
+        for location in locations:
+            result = sim.result.get_last_value()
+            result += location.population.get_last_value()
+
+
 def run_abm_simulation():
 
     # set infection parameters
@@ -527,13 +589,21 @@ def run_abm_simulation():
     assign_infection_states(sim.world, 0.005, 0.001,
                             0.001, 0.0001, 0.0, 0.0, 0.0)
     assign_locations(sim.world)
+    set_sim_result_at_start(sim)
     history = History()
-    # for m in mapping:
-    #     print(m.inputId)
-    #     print(m.modelId)
     sim.advance(tmax, history)
     log = history.log
-    print('done')
+    write_results_to_file('output.txt', log)
+    write_location_mapping_to_file('location_mapping.txt', mapping)
+
+    # print compartment values
+    print("t S E C I I_s I_c R_C R_I D")
+    for t in range(sim.result.get_num_time_points()):
+        line = str(sim.result.get_time(t)) + " "
+        comps = sim.result.get_value(t)
+        for c in range(len(comps)):
+            line += str(comps[c]) + " "
+        print(line)
 
 
 if __name__ == "__main__":
