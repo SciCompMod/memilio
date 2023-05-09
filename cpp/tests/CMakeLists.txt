@@ -25,6 +25,7 @@ set(TESTSOURCES
     test_random_number_generator.cpp
     test_time_series.cpp
     test_abm_household.cpp
+    test_abm_infection.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
@@ -49,6 +50,8 @@ set(TESTSOURCES
     test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_ide_seir.cpp
+    abm_helpers.h
+    abm_helpers.cpp
     test_ide_secir.cpp
     distributions_helpers.h
     distributions_helpers.cpp

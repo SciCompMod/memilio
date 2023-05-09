@@ -1,8 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,26 +17,36 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-/** single include header for ABM */
+#ifndef EPI_ABM_INFECTION_STATE_H
+#define EPI_ABM_INFECTION_STATE_H
 
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
+#include <cstdint>
 
-#include "abm/parameters.h"
-#include "abm/simulation.h"
-#include "abm/world.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/location_type.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_strategy.h"
-#include "abm/infection.h"
-#include "abm/infection_state.h"
-#include "abm/virus_variant.h"
-#include "abm/vaccine.h"
-#include "abm/age.h"
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
+namespace mio
+{
+namespace abm
+{
+
+/** 
+ * @brief #InfectionState in ABM.
+ * Can be used as 0-based index.
+ */
+enum class InfectionState : std::uint32_t
+{
+    Susceptible = 0,
+    Exposed,
+    Carrier,
+    Infected,
+    Infected_Severe,
+    Infected_Critical,
+    Recovered_Carrier,
+    Recovered_Infected,
+    Dead,
+
+    Count //last!!
+};
+
+} // namespace abm
+} // namespace mio
 
 #endif
