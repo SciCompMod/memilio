@@ -41,7 +41,7 @@ class LocationMapping:
 def set_infection_parameters():
     infection_params = abm.GlobalInfectionParameters()
 
-    # 0-4
+    # AgeGroup 0-4
     infection_params.IncubationPeriod[AgeGroup.Age0to4,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age0to4,
@@ -67,7 +67,7 @@ def set_infection_parameters():
     infection_params.RecoveredToSusceptible[AgeGroup.Age0to4,
                                             VaccinationState.Unvaccinated] = 0
 
-    # 5-14
+    # AgeGroup 5-14
     infection_params.IncubationPeriod[AgeGroup.Age5to14,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age5to14,
@@ -93,7 +93,7 @@ def set_infection_parameters():
     infection_params.RecoveredToSusceptible[AgeGroup.Age5to14,
                                             VaccinationState.Unvaccinated] = 0.
 
-    # 15-34
+    # AgeGroup 15-34
     infection_params.IncubationPeriod[AgeGroup.Age15to34,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age15to34,
@@ -119,7 +119,7 @@ def set_infection_parameters():
     infection_params.RecoveredToSusceptible[AgeGroup.Age15to34,
                                             VaccinationState.Unvaccinated] = 0.
 
-    # 35-59
+    # AgeGroup 35-59
     infection_params.IncubationPeriod[AgeGroup.Age35to59,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age35to59,
@@ -145,7 +145,7 @@ def set_infection_parameters():
     infection_params.RecoveredToSusceptible[AgeGroup.Age35to59,
                                             VaccinationState.Unvaccinated] = 0.
 
-    # 60-79
+    # AgeGroup 60-79
     infection_params.IncubationPeriod[AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age60to79,
@@ -171,7 +171,7 @@ def set_infection_parameters():
     infection_params.RecoveredToSusceptible[AgeGroup.Age60to79,
                                             VaccinationState.Unvaccinated] = 0.
 
-    # 80+
+    # AgeGroup 80+
     infection_params.IncubationPeriod[AgeGroup.Age80plus,
                                       VaccinationState.Unvaccinated] = 4
     infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age80plus,
@@ -202,9 +202,7 @@ def set_infection_parameters():
 
 def read_txt(path):
     # read input file and save it in a pd.Dataframe
-    input = pd.read_csv(path, sep='\t')
-    return input
-
+    return pd.read_csv(path, sep='\t')
 
 def make_one_person_households(number_of_households):
     # one-person household member
@@ -569,19 +567,19 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
 
+    input_path = 'H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt'
+    output_path = 'H:/Documents/INSIDeDemonstrator/'
     # set infection parameters
     infection_params = set_infection_parameters()
-    # create abm world with infection parameters
     # starting time point
     t0 = abm.TimePoint(0)
-    # simulation will run 14 days
+    # end time point: simulation will run 14 days
     tmax = t0 + abm.days(14)
     # distribution to distribute the residential areas to one, two-, three-, four- and five-person households
     household_distribution = [0.37, 0.33, 0.15, 0.1, 0.05]
 
     # read txt file with inputs
-    areas = read_txt(
-        '/home/bick_ju/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt')
+    areas = read_txt(input_path)
     sim = abm.Simulation(t0)
     sim.world.infection_parameters = infection_params
     mapping = create_locations_from_input(
@@ -593,8 +591,8 @@ def run_abm_simulation():
     history = History()
     sim.advance(tmax, history)
     log = history.log
-    write_results_to_file('output.txt', log)
-    write_location_mapping_to_file('location_mapping.txt', mapping)
+    write_results_to_file(output_path + 'output.txt', log)
+    write_location_mapping_to_file(output_path + 'location_mapping.txt', mapping)
 
     # print compartment values
     print("t S E C I I_s I_c R_C R_I D")
