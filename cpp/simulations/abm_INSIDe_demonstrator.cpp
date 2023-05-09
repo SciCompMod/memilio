@@ -39,7 +39,7 @@ struct LocationMapping {
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
     std::string locationType  = std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id)));
-    std::string locationIndex = std::to_string(std::get<1>(tuple_id));
+    std::string locationIndex = std::to_string(std::get<1>(tuple_id)) + "\"";
     if (static_cast<std::uint32_t>(std::get<0>(tuple_id)) < 10) {
         locationType = "0" + locationType;
     }
@@ -813,9 +813,8 @@ void write_location_mapping_to_file(std::string path, std::vector<LocationMappin
 
 mio::IOResult<void> run(const fs::path& input_dir)
 {
-    auto t0      = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax    = mio::abm::TimePoint(0) + mio::abm::days(14); // End time per simulation
-    auto results = std::vector<mio::TimeSeries<ScalarType>>{}; // Vector of collected results
+    auto t0   = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(14); // End time per simulation
 
     //mapping of input areas to abm locations
     std::vector<LocationMapping> LocationIds;
@@ -862,9 +861,8 @@ void print(T& data)
 
 int main()
 {
-    const fs::path input_dir =
-        "/home/bick_ju/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
-    auto result = run(input_dir);
+    const fs::path input_dir = "H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
+    auto result              = run(input_dir);
 
     return 0;
 }
