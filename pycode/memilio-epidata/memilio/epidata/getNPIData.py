@@ -368,14 +368,14 @@ def drop_codes_and_categories(
     @return Returns dropped codes, prior codes and reduced original data frame.
     """
     if fine_resolution > 0:
+
+        for i in range(1, 6):
         # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
         # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
-        for i in range(2, 6):
-            npi_codes_prior[npi_codes_prior == 'M04_'+str(i)] = ['M04_120_'+str(
-                i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
-
+            if i != 1:
+                npi_codes_prior[npi_codes_prior == 'M04_'+str(i)] = ['M04_120_'+str(
+                    i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
         # correct M05_N codes to M_05_M_N, N in {1,...,5}, M in {130,150,120,140,110,100,160}
-        for i in range(1, 6):
             npi_codes_prior[npi_codes_prior == 'M05_'+str(i)] = ['M05_130_'+str(i), 'M05_150_'+str(
                 i), 'M05_120_'+str(i), 'M05_140_'+str(i), 'M05_110_'+str(i), 'M05_100_'+str(i), 'M05_160_'+str(i)]
 
@@ -959,7 +959,7 @@ def get_npi_data(fine_resolution=2,
         df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                                  == countyID])
 
-        inc_codes = 6  # Is this always 6?
+        inc_codes = len(np.where(df_npis.columns.str.contains('M01a_010'))[0])
 
         # Consistency of incidence dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
@@ -971,7 +971,7 @@ def get_npi_data(fine_resolution=2,
             if len(sum_npi_inc[0]):
                 print(
                     'Reduce multiple prescription in county ' + str(countyID) +
-                    ' for NPI ' + str(npis.loc[i, 'Description']))
+                    ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
                 for j in sum_npi_inc[0]:
                     # get lowest index (i.e., strictest implementation of NPI).
                     idx_start = np.where(
@@ -1323,7 +1323,7 @@ def plot_counter(filename, directory):
             os.path.join(directory, filename + '.xlsx'),
             sheet_name=code, engine='openpyxl')
         array_exclusion = df.iloc[:, 1:].to_numpy()
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10,12))
         positions = [i for i in range(len(df.columns)-1)]
         plt.xticks(positions, df.columns.to_list()[1:], rotation='vertical')
         plt.yticks(positions, df.columns.to_list()[1:])
@@ -1359,7 +1359,10 @@ def plot_multiple_prescriptions(filename, directory):
         fig = plt.figure()
         positions = [i for i in range(len(df.columns)-1)]
         plt.yticks(positions, df.columns.to_list()[1:])
-        plt.imshow(array_exclusion.diagonal(), cmap=cmap)
+        plt.xticks([])
+        plt.imshow(np.array([array_exclusion.diagonal()]).T,
+                   cmap=cmap, norm=mpl.colors.LogNorm(vmin=1, vmax=50000))
+        plt.colorbar()
         plt.title(code)
         plt.savefig(
             os.path.join(target_directory, filename + '_{}'.format(
