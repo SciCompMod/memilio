@@ -85,14 +85,6 @@ int main()
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
 
-    // Assign an infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
-        world.set_infection_state(person, (mio::abm::InfectionState)state);
-    }
-
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
@@ -124,6 +116,18 @@ int main()
     auto testing_scheme_work =
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+
+    // Assign infection state to each person.
+    // The infection states are chosen randomly.
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        mio::abm::InfectionState infection_state =
+            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         infection_state));
+    }
 
     // Assign locations to the people
     for (auto& person : persons) {
@@ -221,7 +225,7 @@ int main()
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
+    // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     auto f_abm = fopen("abm_minimal.txt", "w");
     fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");

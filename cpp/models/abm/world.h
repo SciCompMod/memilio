@@ -64,52 +64,54 @@ public:
     }
 
     //type is move-only for stable references of persons/locations
-    World(World&& other) = default;
+    World(World&& other)            = default;
     World& operator=(World&& other) = default;
     World(const World&)             = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /** 
-     * prepare the world for the next simulation step.
-     * @param dt length of the time step 
+     * Prepare the World for the next simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * evolve the world one time step.
-     * @param dt length of the time step
+     * Follow up on the World after the simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
+     */
+    void end_step(TimePoint t, TimeSpan dt);
+
+    /** 
+     * Evolve the world one time step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void evolve(TimePoint t, TimeSpan dt);
 
     /** 
-     * add a location to the world.
-     * @param type type of location to add
-     * @param num_cells number of cells that the location is divided into
-     * @return index and type of the newly created location
+     * Add a Location to the world.
+     * @param[in] type Type of Location to add.
+     * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
+     * @return Index and type of the newly created Location.
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 0);
+    LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
-    /** add a person to the world 
-     * @param id index and type of the initial location of the person
-     * @param state initial infection state of the person
-     * @return reference to the newly created person
+    /** 
+     * @brief Add a Person to the world.
+     * @param[in] id Index and type of the initial Location of the Person.
+     * @param[in] age AgeGroup of the person.
+     * @return Reference to the newly created Person.
      */
-    Person& add_person(LocationId id, InfectionState infection_state, AgeGroup age = AgeGroup::Age15to34);
-
-    /**
-     * Sets the current infection state of the person.
-     * Use only during setup, may distort the simulation results
-     * @param person
-     * @param inf_state
-     */
-    void set_infection_state(Person& person, InfectionState inf_state);
+    Person& add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
-                    std::vector<std::vector<Location>>::const_iterator>>
+    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
     get_locations() const;
 
     /**
@@ -142,14 +144,14 @@ public:
      * @param[in] person The Person.
      * @return Pointer to the assigned Location.
      */
-    Location* find_location(LocationType type, const Person& person);
+    Location& find_location(LocationType type, const Person& person);
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    int get_subpopulation_combined(InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      * @brief Get the MigrationParameters.
@@ -207,7 +209,7 @@ private:
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::vector<Location>> m_locations;
+    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;

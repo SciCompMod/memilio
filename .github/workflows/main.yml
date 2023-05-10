@@ -1,30 +1,30 @@
 name: CI
 
-on: 
+on:
   schedule:
     - cron: "40 2 * * *"
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
       - version-*
     paths-ignore:
-      - '**/memilio-epidata/**'
+      - "**/memilio-epidata/**"
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
-      - '**/memilio-epidata/**'
+      - "**/memilio-epidata/**"
   workflow_dispatch:
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - uses: pre-commit/action@v3.0.0
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - uses: pre-commit/action@v3.0.0
 
   build-cpp-gcc_clang:
     if: github.event.pull_request.draft == false
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
-        with: 
+        with:
           compiler: ${{ matrix.compiler }}
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
@@ -77,7 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
-        with: 
+        with:
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
 
@@ -87,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
-        with: 
+        with:
           config: Release
           version: latest
           optional-dependencies: OFF
@@ -109,10 +109,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
-        with: 
+        with:
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
-  
+
   test-linux-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-no-optional-deps
@@ -120,7 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
-        with: 
+        with:
           build-artifact: build-cpp-linux-gcc-latest-Release-part
 
   test-cpp-msvc:
@@ -139,7 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
-        with: 
+        with:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
 
   test-windows-no-optional-deps:
@@ -149,9 +149,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
-        with: 
+        with:
           build-artifact: build-cpp-windows-msvc-latest-Release-part
-  
+
+  run_examples-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-run_examples
+        with:
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+
+  run_examples-cpp-msvc:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-msvc
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-2022"
+          - version: "min"
+            os: "windows-2019"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/windows-run_examples
+        with:
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
+
   build-py-generation:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -170,7 +209,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
-        with: 
+        with:
           package: generation
 
   build-py-simulation:
@@ -183,7 +222,7 @@ jobs:
       - uses: ./.github/actions/build-py
         with:
           package: simulation
- 
+
   build-py-surrogatemodel:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -202,7 +241,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
-        with: 
+        with:
           package: simulation
 
   test-py-surrogatemodel:
@@ -212,7 +251,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
-        with: 
+        with:
           package: surrogatemodel
           coverage: ON
 
@@ -301,4 +340,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-
