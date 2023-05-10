@@ -31,7 +31,6 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_dt(hours(1))
 {
     initialize_locations(t);
-    store_result_at(t);
 }
 
 void Simulation::initialize_locations(TimePoint t)
@@ -45,13 +44,19 @@ void Simulation::initialize_locations(TimePoint t)
 
 void Simulation::advance(TimePoint tmax)
 {
-    auto t = m_t;
-    while (t < tmax) {
-        auto dt = std::min(m_dt, tmax - t);
-        m_world.evolve(t, dt);
-        t += m_dt;
-        store_result_at(t);
+    //log initial system state
+    store_result_at(m_t);
+    while (m_t < tmax) {
+        evolve_world(tmax);
+        store_result_at(m_t);
     }
+}
+
+void Simulation::evolve_world(TimePoint tmax)
+{
+    auto dt = std::min(m_dt, tmax - m_t);
+    m_world.evolve(m_t, dt);
+    m_t += m_dt;
 }
 
 void Simulation::store_result_at(TimePoint t)

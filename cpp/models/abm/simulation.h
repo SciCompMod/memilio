@@ -65,20 +65,18 @@ public:
     /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
-     * @param[in] history History to store the result of the Simulation.
+     * @param[in] history History object to log data of the Simulation.
      */
     template <typename History>
     void advance(TimePoint tmax, History& history)
     {
         //log initial system state
+        store_result_at(m_t);
         history.log(*this);
-
         while (m_t < tmax) {
-            auto dt = std::min(m_dt, tmax - m_t);
-            m_world.evolve(m_t, dt);
-            m_t += m_dt;
-            history.log(*this);
+            evolve_world(tmax);
             store_result_at(m_t);
+            history.log(*this);
         }
     }
 
@@ -114,6 +112,7 @@ public:
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
+    void evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
