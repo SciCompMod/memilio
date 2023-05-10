@@ -173,7 +173,6 @@ void Person::set_infection_state(InfectionState inf_state)
     }
     if (m_infection_state == InfectionState::Exposed) {
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(0, int(4.0 * 24)));
-        std::cout << "time_until_carrier " << m_time_until_carrier.days();
     }
 }
 

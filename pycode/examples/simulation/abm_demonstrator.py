@@ -26,9 +26,7 @@ from memilio.simulation.abm import AgeGroup
 from memilio.simulation.abm import VaccinationState
 from memilio.simulation.abm import History
 
-# class used to map input area ids to abm location ids
-
-
+# class used to map input areas to abm locations
 class LocationMapping:
 
     def __init__(self):
@@ -36,8 +34,6 @@ class LocationMapping:
         self.modelId = []
 
 # infection parameters are dependent on age group and vaccination state
-
-
 def set_infection_parameters():
     infection_params = abm.GlobalInfectionParameters()
 
@@ -208,10 +204,10 @@ def make_one_person_households(number_of_households):
     # one-person household member
     one_person_household_member = abm.HouseholdMember()
     # set weights for household member
-    one_person_household_member.set_age_weight(AgeGroup.Age15to34, 5)
-    one_person_household_member.set_age_weight(AgeGroup.Age35to59, 6)
-    one_person_household_member.set_age_weight(AgeGroup.Age60to79, 4)
-    one_person_household_member.set_age_weight(AgeGroup.Age80plus, 2)
+    one_person_household_member.set_age_weight(AgeGroup.Age15to34, 4364)
+    one_person_household_member.set_age_weight(AgeGroup.Age35to59, 7283)
+    one_person_household_member.set_age_weight(AgeGroup.Age60to79, 4100)
+    one_person_household_member.set_age_weight(AgeGroup.Age80plus, 1800)
 
     # create one-person household group
     household_group = abm.HouseholdGroup()
@@ -238,12 +234,12 @@ def make_multiple_person_households(household_size,
     parent.set_age_weight(AgeGroup.Age60to79, 1)
 
     other = abm.HouseholdMember()
-    other.set_age_weight(AgeGroup.Age0to4, 1)
-    other.set_age_weight(AgeGroup.Age5to14, 2)
-    other.set_age_weight(AgeGroup.Age15to34, 3)
-    other.set_age_weight(AgeGroup.Age35to59, 3)
-    other.set_age_weight(AgeGroup.Age60to79, 2)
-    other.set_age_weight(AgeGroup.Age80plus, 2)
+    other.set_age_weight(AgeGroup.Age0to4, 5000)
+    other.set_age_weight(AgeGroup.Age5to14, 6000)
+    other.set_age_weight(AgeGroup.Age15to34, 14943)
+    other.set_age_weight(AgeGroup.Age35to59, 22259)
+    other.set_age_weight(AgeGroup.Age60to79, 11998)
+    other.set_age_weight(AgeGroup.Age80plus, 5038)
 
     household_group = abm.HouseholdGroup()
     # add two parent households
@@ -282,8 +278,8 @@ def add_households(world, distribution, num_inhabitants):
     abm.add_household_group_to_world(world, one_person_household_group)
 
     # two-person households
-    two_person_two_parents = int(0.4 * household_sizes[1])
-    two_person_one_parent = int(0.4 * household_sizes[1])
+    two_person_two_parents = int(0.85 * household_sizes[1])
+    two_person_one_parent = int(0.13 * household_sizes[1])
     two_person_other = int(
         household_sizes[1] - two_person_two_parents - two_person_one_parent)
     two_person_household_group = make_multiple_person_households(2, two_person_two_parents,
@@ -291,8 +287,8 @@ def add_households(world, distribution, num_inhabitants):
     abm.add_household_group_to_world(world, two_person_household_group)
 
     # three-person households
-    three_person_two_parents = int(0.4 * household_sizes[2])
-    three_person_one_parent = int(0.4 * household_sizes[2])
+    three_person_two_parents = int(0.83 * household_sizes[2])
+    three_person_one_parent = int(0.13 * household_sizes[2])
     three_person_other = int(
         household_sizes[2] - three_person_two_parents - three_person_one_parent)
     three_person_household_group = make_multiple_person_households(3, three_person_two_parents,
@@ -300,8 +296,8 @@ def add_households(world, distribution, num_inhabitants):
     abm.add_household_group_to_world(world, three_person_household_group)
 
     # four-person households
-    four_person_two_parents = int(0.5 * household_sizes[3])
-    four_person_one_parent = int(0.2 * household_sizes[3])
+    four_person_two_parents = int(0.93 * household_sizes[3])
+    four_person_one_parent = int(0.03 * household_sizes[3])
     four_person_other = int(
         household_sizes[3] - four_person_two_parents - four_person_one_parent)
     four_person_household_group = make_multiple_person_households(4, four_person_two_parents,
@@ -309,8 +305,8 @@ def add_households(world, distribution, num_inhabitants):
     abm.add_household_group_to_world(world, four_person_household_group)
 
     # five-person households
-    five_person_two_parents = int(0.6 * household_sizes[4])
-    five_person_one_parent = int(0.1 * household_sizes[4])
+    five_person_two_parents = int(0.88 * household_sizes[4])
+    five_person_one_parent = int(0.05 * household_sizes[4])
     five_person_other = int(
         household_sizes[4] - five_person_two_parents - five_person_one_parent)
     five_person_household_group = make_multiple_person_households(5, five_person_two_parents,
@@ -338,15 +334,13 @@ def insert_locations_to_map(mapping, inputId, locationIds):
     mapping.append(map)
     return mapping
 
-
 def create_locations_from_input(world, input_areas, household_distribution):
-    # mapping to map input area ids to abm location ids
+    # map input area ids to corresponding abm location ids
     mapping = []
     # bools to make sure the world has a school and a hospital
     has_school = False
     has_hospital = False
     for index, area in input_areas.iterrows():
-        # locations ids; relevant for the mapping
         locationIds = []
         if ('residential' in area.type):
             # area 'residential' corresponds to location type 'Home'
@@ -438,39 +432,32 @@ def create_locations_from_input(world, input_areas, household_distribution):
 def assign_infection_states(world, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
                             infected_severe_pct, infected_critical_pct, recovered_infected_no_symptoms,
                             recovered_infected):
-    susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - infected_symptoms_pct - \
-        infected_severe_pct - infected_critical_pct - \
-        recovered_infected_no_symptoms - recovered_infected
+    susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - infected_symptoms_pct - infected_severe_pct - infected_critical_pct - recovered_infected_no_symptoms - recovered_infected
     for person in world.persons:
+        #draw infection state from distribution for every agent
         infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_infected_no_symptoms,
                                                recovered_infected, 0.0])
         world.set_infection_state(person, abm.InfectionState(infection_state))
-        #person.infection_state = abm.InfectionState(infection_state)
 
 
 def assign_locations(world):
     # get locations from world
     schools = world.locations[abm.LocationType.School]
     school_weights = [(1/len(schools)) for i in range(len(schools))]
-
     hospitals = world.locations[abm.LocationType.Hospital]
     hospital_weights = [(1/len(hospitals)) for i in range(len(hospitals))]
-
     icus = world.locations[abm.LocationType.ICU]
     icu_weights = [(1/len(icus)) for i in range(len(icus))]
-
     workplaces = world.locations[abm.LocationType.Work]
     workplace_weights = [(1/len(workplaces)) for i in range(len(workplaces))]
-
     basic_shops = world.locations[abm.LocationType.BasicsShop]
     shop_weights = [(1/len(basic_shops)) for i in range(len(basic_shops))]
-
     social_events = world.locations[abm.LocationType.SocialEvent]
     event_weights = [(1/len(social_events)) for i in range(len(social_events))]
 
-    # assign locations to persons
+    # assign locations to agents
     for person in world.persons:
         shop = np.random.choice(np.arange(0, len(basic_shops)), p=shop_weights)
         person.set_assigned_location(abm.LocationId(
@@ -490,13 +477,13 @@ def assign_locations(world):
         person.set_assigned_location(abm.LocationId(
             social_events[int(event)].index, social_events[int(event)].type))
 
-        # assign school for persons between 5 and 14 years
+        # assign school to agents between 5 and 14 years
         if (person.age == AgeGroup.Age5to14):
             school = np.random.choice(
                 np.arange(0, len(schools)), p=school_weights)
             person.set_assigned_location(abm.LocationId(
                 schools[int(school)].index, schools[int(school)].type))
-        # assign work for persons between 15 and 59
+        # assign work to agents between 15 and 59
         if (person.age == AgeGroup.Age15to34 or person.age == AgeGroup.Age35to59):
             work = np.random.choice(
                 np.arange(0, len(workplaces)), p=workplace_weights)
@@ -567,34 +554,45 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
 
-    input_path = 'H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt'
+    input_path = 'H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt/'
     output_path = 'H:/Documents/INSIDeDemonstrator/'
-    # set infection parameters
-    infection_params = set_infection_parameters()
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point: simulation will run 14 days
     tmax = t0 + abm.days(14)
-    # distribution to distribute the residential areas to one, two-, three-, four- and five-person households
-    household_distribution = [0.37, 0.33, 0.15, 0.1, 0.05]
+    # distribution used to distribute the residential areas to one-, two-, three-, four- and five-person households
+    household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
 
     # read txt file with inputs
     areas = read_txt(input_path)
+    #create simulation
     sim = abm.Simulation(t0)
-    sim.world.infection_parameters = infection_params
+    #set infection parameters
+    sim.world.infection_parameters = set_infection_parameters()
+    #as input areas do fit one-to-one to abm location types they have there has to be a mapping
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
+    #assign initial infection states according to distribution
     assign_infection_states(sim.world, 0.005, 0.001,
                             0.001, 0.0001, 0.0, 0.0, 0.0)
+    #assign locations to agents
     assign_locations(sim.world)
+    #as the simulation results for t=0 is set in the simulation constructor 
+    #but we assign the infection states afterwars, we have to reset the simulation's result attribute
     set_sim_result_at_start(sim)
+    #output object
     history = History()
+    #advance simulation until tmax
     sim.advance(tmax, history)
+    #results collected during the simulation
     log = history.log
+    #write simulation results to txt file
     write_results_to_file(output_path + 'output.txt', log)
+    #write location mapping to txt file
     write_location_mapping_to_file(output_path + 'location_mapping.txt', mapping)
 
-    # print compartment values
+    # print compartment values 
+    # only used for validation purposes
     print("t S E C I I_s I_c R_C R_I D")
     for t in range(sim.result.get_num_time_points()):
         line = str(sim.result.get_time(t)) + " "
