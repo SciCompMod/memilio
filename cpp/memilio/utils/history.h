@@ -21,19 +21,36 @@
 #include <tuple>
 #include <iostream>
 
-//TODO: Maybe rename Log... something like Reader or something similar
+// This class is used to log data to a buffer, where the buffer is a tuple of vectors.
+// The vectors are filled with the data of the loggers.
+// For this The loggers should be structs that have a static function log() that returns the data to be logged.
+// log takes as input the type of the class that is logged via the history class.
+// The loggers can currently be of two types: LogOnce and LogAlways.
+// LogOnce loggers are only logged once at the first call, LogAlways loggers are logged every call.
+// For example this is an implementation of a logger:
+// struct Logger : LogOnce{
+//     using Type = int;
+//     static Type log(const example& example) {
+//         return example.t;
+//     }
+// };
+// Here example is a class with a public int t that is logged via the history class, e.g. history.log(example).
+// The History class has a get_log() function that returns the buffer.
+
 struct LogOnce {
 };
 
 struct LogAlways {
 };
 
+// This helper function returns the index of a type in a parameter pack. It is used to get the index of a logger in the buffer.
 template <typename T, typename U = void, typename... Types>
 constexpr size_t indexte()
 {
     return std::is_same<T, U>::value ? 0 : 1 + indexte<T, Types...>();
 }
 
+// This class is used to write data to the buffer. It is used for LogAlways loggers.
 template <class... Loggers>
 struct DataWriterToBuffer {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
@@ -44,6 +61,7 @@ struct DataWriterToBuffer {
     }
 };
 
+// This class is used to write data to the buffer. It is used for LogOnce logger
 template <template <class...> class Writer, class... Loggers>
 class History
 {
