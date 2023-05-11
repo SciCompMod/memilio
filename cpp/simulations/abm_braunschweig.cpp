@@ -54,10 +54,42 @@ namespace fs = boost::filesystem;
 //     }
 // }
 
-void split_line(std::string string, std::vector<uint32_t>* row){
+void split_line(std::string string, std::vector<uint32_t>* row)
+{
     std::vector<std::string> strings;
     boost::split(strings, string, boost::is_any_of(";"));
-    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s){ return stoi(s);});
+    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
+        return stoi(s);
+    });
+}
+
+mio::abm::LocationType get_location_type(uint32_t acitivity_end)
+{
+    mio::abm::LocationType type;
+    switch (acitivity_end) {
+    case 1:
+        type = mio::abm::LocationType::Work;
+        break;
+    case 2:
+        type = mio::abm::LocationType::School;
+        break;
+    case 3:
+        type = mio::abm::LocationType::BasicsShop;
+        break;
+    case 4:
+        type = mio::abm::LocationType::SocialEvent; // Freizeit
+        break;
+    case 5:
+        type = mio::abm::LocationType::Home; // Private Erledigung
+        break;
+    case 6:
+        type = mio::abm::LocationType::SocialEvent; // Sonstiges
+        break;
+    case 7:
+        type = mio::abm::LocationType::Home;
+        break;
+    }
+    return type;
 }
 
 void create_world_from_data(mio::abm::World& world, const std::string& filename)
@@ -83,6 +115,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         row_string.push_back(title);
         count++;
     }
+    std::map<uint32_t, mio::abm::LocationId> locations = {};
+    std::map<uint32_t, mio::abm::Person&> persons      = {};
 
     while (getline(fin, line)) {
         row.clear();
@@ -90,29 +124,25 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         //read columns in this row
         split_line(line, &row);
 
-        uint32_t person_id = row[index["puid"]]; // TODO
-        uint32_t home_id   = row[index["huid"]];
-        uint32_t home_idx  = 0;
-        uint32_t age       = row[index["age"]]; // TODO
+        uint32_t person_id   = row[index["puid"]]; // TODO
+        uint32_t age         = row[index["age"]]; // TODO
+        uint32_t location_id = row[index["loc_id_end"]];
+        uint32_t activity    = row[index["activity_end"]];
 
-        auto it_home = find(home_ids.begin(), home_ids.end(), home_id);
-        if (it_home != home_ids.end()) {
-            home_idx = it_home - home_ids.begin();
+        auto check_location = locations.find(location_id);
+        if (check_location == locations.end()) {
+            auto location = world.add_location(get_location_type(activity), 0); // TODO: adjust LocationType
+            locations.insert({location_id, location});
         }
-        else {
-            home_idx = home_ids.size();
-            home_ids.push_back(home_id);
-            world.add_location(mio::abm::LocationType::Home, 0);
+        auto it_person = persons.find(person_id);
+        if (it_person == persons.end()) {
+            if ((locations.find(location_id))->second.type == mio::abm::LocationType::Home) {
+                auto person = world.add_person(check_location->second, mio::abm::InfectionState::Susceptible,
+                                               static_cast<mio::abm::AgeGroup>(age));
+                persons.insert({person_id, person});
+            }
         }
-
-        auto it_person = find(person_ids.begin(), person_ids.end(), person_id);
-        if (it_person == person_ids.end()) {
-            mio::abm::LocationId home = {home_idx, mio::abm::LocationType::Home};
-            auto person =
-                world.add_person(home, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
-            person.set_assigned_location(home);
-            person_ids.push_back(person_id);
-        }
+        it_person->second.set_assigned_location(check_location->second);
     }
 }
 
@@ -131,7 +161,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "/home/gers_ca/code/braunschweig_microscopic.csv");
+    create_world_from_data(world, "../../../Documents/HZI/memilio/data/mobility/bs.csv");
 
     // Assign an infection state to each person.
     // assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
