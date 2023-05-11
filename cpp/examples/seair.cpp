@@ -26,6 +26,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/time_series_to_file.h"
 #include <fstream>
+#include "ad/ad.hpp"
 
 
 
@@ -36,11 +37,11 @@ int main()
 
 
 
-    double t0   = 0;
-    double tmax = 100;
-    double dt   = 0.2;
+    ad::gt1s<double>::type  t0   = 0;
+    ad::gt1s<double>::type  tmax = 100;
+    ad::gt1s<double>::type  dt   = 0.2;
 
-    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
 
     mio::oseair::Model model;
     const double N = 327167434;// total population of the United States
@@ -57,11 +58,9 @@ int main()
 
 
     model.check_constraints();
-    // print_seir_params(model);
-//    auto integrator = std::make_shared<mio::RKIntegratorCore>();
-//    integrator->set_dt_max(dt);
-//    integrator->set_abs_tolerance(1e-6);
-//    integrator->set_rel_tolerance(1e-6);
+
+
+
 
     auto seair = simulate(t0, tmax, dt, model);
     const std::string file_name = "seair.txt";

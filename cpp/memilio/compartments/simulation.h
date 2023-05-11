@@ -33,8 +33,9 @@ namespace mio
 /**
  * @brief A class for the simulation of a compartment model.
  * @tparam M a CompartmentModel type
+ * @tparam FP floating point type, e.g., double
  */
-template <class M>
+template <class M, typename FP=double>
 class Simulation
 {
     static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
@@ -48,7 +49,7 @@ public:
      * @param[in] t0 start time
      * @param[in] dt initial step size of integration
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
+    Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
         : m_integratorCore(
               std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
@@ -92,7 +93,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> advance(FP tmax)
     {
         return m_integrator.advance(tmax);
     }
@@ -102,7 +103,7 @@ public:
      * Return the number of persons in all InfectionState%s.
      * @return The result of the simulation.
      */
-    TimeSeries<ScalarType>& get_result()
+    TimeSeries<FP>& get_result()
     {
         return m_integrator.get_result();
     }
@@ -111,7 +112,7 @@ public:
      * @brief get_result returns the final simulation result
      * @return a TimeSeries to represent the final simulation result
      */
-    const TimeSeries<ScalarType>& get_result() const
+    const TimeSeries<FP>& get_result() const
     {
         return m_integrator.get_result();
     }
@@ -135,7 +136,7 @@ public:
 private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
-    OdeIntegrator m_integrator;
+    OdeIntegrator<FP> m_integrator;
 }; // namespace mio
 
 /**
@@ -158,6 +159,29 @@ using is_compartment_model_simulation =
     std::integral_constant<bool, (is_expression_valid<advance_expr_t, Sim>::value &&
                                   is_compartment_model<typename Sim::Model>::value)>;
 
+///**
+// * @brief simulate simulates a compartmental model
+// * @param[in] t0 start time
+// * @param[in] tmax end time
+// * @param[in] dt initial step size of integration
+// * @param[in] model: An instance of a compartmental model
+// * @return a TimeSeries to represent the final simulation result
+// * @tparam Model a compartment model type
+// * @tparam Sim a simulation type that can simulate the model.
+// */
+//template <class Model, class Sim = Simulation<Model>>
+//TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
+//                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+//{
+//    model.check_constraints();
+//    Sim sim(model, t0, dt);
+//    if (integrator) {
+//        sim.set_integrator(integrator);
+//    }
+//    sim.advance(tmax);
+//    return sim.get_result();
+//}
+
 /**
  * @brief simulate simulates a compartmental model
  * @param[in] t0 start time
@@ -167,19 +191,22 @@ using is_compartment_model_simulation =
  * @return a TimeSeries to represent the final simulation result
  * @tparam Model a compartment model type
  * @tparam Sim a simulation type that can simulate the model.
+ * @tparam FP floating point type, e.g., double
  */
-template <class Model, class Sim = Simulation<Model>>
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
+template <class Model, class Sim = Simulation<Model>, typename FP=double>
+TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
                                 std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     model.check_constraints();
-    Sim sim(model, t0, dt);
+    Simulation<Model,FP> sim(model, t0, dt);
     if (integrator) {
         sim.set_integrator(integrator);
     }
     sim.advance(tmax);
     return sim.get_result();
 }
+
+
 
 } // namespace mio
 

@@ -23,10 +23,12 @@
 #include "memilio/utils/time_series.h"
 
 #include "memilio/math/eigen.h" // IWYU pragma: keep
+#include "memilio/utils/logging.h"
 #include <memory>
 #include <vector>
 #include <functional>
 #include <algorithm>
+
 
 namespace mio
 {
@@ -57,7 +59,9 @@ public:
 
 /**
  * Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
+ * tparam FP a floating point type accepted by Eigen
  */
+template<typename FP=double>
 class OdeIntegrator
 {
 public:
@@ -70,7 +74,7 @@ public:
      * @param core implements the solution method
      */
     template <class F, class Vector>
-    OdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
+    OdeIntegrator(F&& f, FP t0, Vector&& y0, FP dt_init, std::shared_ptr<IntegratorCore> core)
         : m_f(std::forward<F>(f))
         , m_result(t0, y0)
         , m_dt(dt_init)
@@ -82,14 +86,62 @@ public:
      * @brief advance the integrator.
      * @param tmax end point. must be greater than get_t().back()
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
+    Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> advance(FP tmax)
 
-    TimeSeries<double>& get_result()
+    {
+        using std::fabs;
+        using std::min;
+
+        const auto t0 = m_result.get_time(m_result.get_num_time_points() - 1);
+        assert(tmax > t0);
+
+        const size_t nb_steps = (int)(ceil((tmax - t0) / m_dt)); // estimated number of time steps (if equidistant)
+
+        m_result.reserve(m_result.get_num_time_points() + nb_steps);
+
+        bool step_okay = true;
+
+        auto t = t0;
+        size_t i = m_result.get_num_time_points() - 1;
+        while (fabs((tmax - t) / (tmax - t0)) > 1e-10) {
+            //we don't make timesteps too small as the error estimator of an adaptive integrator
+            //may not be able to handle it. this is very conservative and maybe unnecessary,
+            //but also unlikely to happen. may need to be reevaluated
+
+            auto dt_eff = min(m_dt, tmax - t);
+            m_result.add_time_point();
+            step_okay &= m_core->step(m_f, m_result[i], t, dt_eff, m_result[i + 1]);
+            m_result.get_last_time() = t;
+
+            ++i;
+
+            if (fabs((tmax - t) / (tmax - t0)) > 1e-10 || dt_eff > m_dt) {
+                //store dt only if it's not the last step as it is probably smaller than required for tolerances
+                //except if the step function returns a bigger step size so as to not lose efficiency
+                m_dt = dt_eff;
+            }
+        }
+
+        if (!step_okay) {
+            log_warning("Adaptive step sizing failed.");
+        }
+        else if (fabs((tmax - t) / (tmax - t0)) > 1e-15) {
+            log_warning("Last time step too small. Could not reach tmax exactly.");
+        }
+        else {
+            log_info("Adaptive step sizing successful to tolerances.");
+        }
+
+        return m_result.get_last_value();
+    }
+
+
+    TimeSeries<FP>& get_result()
     {
         return m_result;
     }
 
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<FP>& get_result() const
     {
         return m_result;
     }
@@ -101,8 +153,8 @@ public:
 
 private:
     DerivFunction m_f;
-    TimeSeries<double> m_result;
-    double m_dt;
+    TimeSeries<FP> m_result;
+    FP m_dt;
     std::shared_ptr<IntegratorCore> m_core;
 };
 
