@@ -132,7 +132,7 @@ public:
      * solver
      *
      * The distinction between pop and y is only for the case of mobility.
-     * There, for a small group of travelers (y) we want to evaluate the evolution of infection states
+     * If we have mobility, we want to evaluate the evolution of infection states for a small group of travellers (y)
      * while they are in any population (pop). It is important that pop > y always applies.
      *
      * If we consider a simulation without mobility, the function is called with
