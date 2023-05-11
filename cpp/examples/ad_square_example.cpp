@@ -23,10 +23,10 @@ int main() {
   ad::derivative(a1_x) = 0.0;
   ad::ga1s<double>::global_tape->register_variable(a1_x);
   ad::ga1s<double>::type a1_y = square(a1_x);
+  std::cout << "value of square(" << ad::value(a1_x) << ") is " << ad::value(t1_y) << std::endl;
   ad::ga1s<double>::global_tape->register_output_variable(a1_y);
   ad::derivative(a1_y) = 1.0;
   ad::ga1s<double>::global_tape->interpret_adjoint();
-  std::cout << "value of square(" << ad::value(a1_x) << ") is " << ad::value(t1_y) << std::endl;
   std::cout << "adjoint derivative is " << ad::derivative(a1_x) << std::endl;
   ad::ga1s<double>::tape_t::remove(ad::ga1s<double>::global_tape);
 
