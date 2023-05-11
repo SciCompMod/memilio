@@ -88,18 +88,15 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(1.0);
-    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
-    //mio::isecir::ProbabilityProgress prob = static_cast<mio::isecir::ProbabilityProgress>.set_funcparam(0.5);
-    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(mio::isecir::TransmissionProbabilityOnContact());
-    // TODO: do this in a more elegant way?
     mio::isecir::ProbabilityProgress prob;
-    mio::isecir::ExponentialDecay expdecay;
-    // expdecay.set_funcparam(0.8);
+    mio::isecir::ExponentialDecay expdecay{0.9};
     prob.setStateAgeFunction(expdecay);
-    prob.set_funcparam(0.9);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+
+    mio::isecir::ProbabilityProgress prob2;
+    mio::isecir::SmootherCosine smoothcos(3);
+    prob2.setStateAgeFunction(smoothcos);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob2);
 
     model.check_constraints(dt);
 
