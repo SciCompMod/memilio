@@ -17,15 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MOBILITY_STOCHASTIC_H
-#define MOBILITY_STOCHASTIC_H
+#ifndef METAPOPULATION_MOBILITY_STOCHASTIC_H
+#define METAPOPULATION_MOBILITY_STOCHASTIC_H
 
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/mobility/graph_simulation.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 
 #include "boost/filesystem.hpp"
 
@@ -174,14 +174,10 @@ public:
     Eigen::VectorXd get_transition_rates(SimulationNode<Sim>& node_from)
     {
         Eigen::VectorXd transitionRates(node_from.get_last_state().size());
-        //std::cout << "node from last state" << node_from.get_last_state() << std::endl;
-        //std::cout << "transition coefficients" << m_parameters.get_coefficients().get_baseline() << std::endl;
         for (Eigen::Index i = 0; i < node_from.get_last_state().size(); ++i) {
             transitionRates[i] =
                 node_from.get_last_state()(i) * m_parameters.get_coefficients().get_baseline()[(size_t)i];
         }
-        //std::cout << "transition rates \n" << transitionRates << std::endl;
-        //(node_from.get_last_state().array() * m_parameters.get_coefficients().get_baseline().array()).matrix();
         return transitionRates;
     }
 
@@ -202,8 +198,8 @@ template <class Sim>
 void MigrationEdgeStochastic::apply_migration(size_t event, SimulationNode<Sim>& node_from,
                                               SimulationNode<Sim>& node_to)
 {
-    node_from.get_result().get_last_value()[event] -= std::min(node_from.get_result().get_last_value()[event], 1.0);
-    node_to.get_result().get_last_value()[event] += std::min(node_from.get_result().get_last_value()[event], 1.0);
+    node_from.get_result().get_last_value()[event] -= 1;
+    node_to.get_result().get_last_value()[event] += 1;
 }
 
 /**
@@ -246,4 +242,4 @@ make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdg
 
 } // namespace mio
 
-#endif //MOBILITY_STOCHASTIC_H
+#endif //METAPOPULATION_MOBILITY_STOCHASTIC_H

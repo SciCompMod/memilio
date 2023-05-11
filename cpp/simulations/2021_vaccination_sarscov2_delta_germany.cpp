@@ -26,7 +26,7 @@
 #include "memilio/utils/date.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
