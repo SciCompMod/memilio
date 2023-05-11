@@ -22,6 +22,8 @@
 
 #include "memilio/math/matrix_shape.h"
 #include "pickle_serializer.h"
+#include "memilio/io/json_serializer.h"
+#include "memilio/io/io.h"
 
 #include "pybind11/pybind11.h"
 
@@ -53,6 +55,22 @@ decltype(auto) pybind_pickle_class(pybind11::module& m, const char* name)
             }
         }));
     return pickle_class;
+}
+
+template <class T, class... Args>
+decltype(auto) bind_class(pybind11::module& m, std::string const& name)
+{
+    // Deduce if the class is serializable
+    bool is_serializable =
+        mio::has_serialize<mio::JsonContext, T>::value && mio::has_deserialize<mio::JsonContext, T>::value;
+
+    // Bind the class depending on its features
+    if (is_serializable) {
+        return pybind_pickle_class<T, Args...>(m, name.c_str());
+    }
+    else {
+        return pybind11::class_<T, Args...>(m, name.c_str());
+    }
 }
 
 // the following functions help bind class template realizations
@@ -110,7 +128,8 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
     };
     pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
-            "__next__", [](Iterator & self) -> auto&& {
+            "__next__",
+            [](Iterator& self) -> auto&& {
                 if (self.iter_pair.first != self.iter_pair.second) {
                     auto&& ref = *self.iter_pair.first;
                     ++self.iter_pair.first;
@@ -129,7 +148,10 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
             },
             pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(
-            "__getitem__", [](Range & self, size_t idx) -> auto&& { return self[idx]; },
+            "__getitem__",
+            [](Range& self, size_t idx) -> auto&& {
+                return self[idx];
+            },
             pybind11::return_value_policy::reference_internal)
         .def("__len__", &Range::size);
 }
