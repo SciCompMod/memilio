@@ -33,22 +33,22 @@ void write_results_to_file(const mio::abm::Simulation& sim)
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    auto f_abm = fopen("abm_minimal.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    std::ofstream myfile("abm_minimal.txt");
+    myfile << "# t S E C I I_s I_c R_C R_I D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
+        myfile << sim.get_result().get_time(i);
         auto v = sim.get_result().get_value(i);
         for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
+            myfile << v[j];
             if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
+                myfile << " ";
             }
         }
         if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
+            myfile << "\n";
         }
     }
-    fclose(f_abm);
+    myfile.close();
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
