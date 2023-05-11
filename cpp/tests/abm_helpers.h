@@ -1,6 +1,5 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -18,20 +17,24 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef TEST_ABM_H
-#define TEST_ABM_H
+#ifndef ABM_HELPERS_H
+#define ABM_HELPERS_H
 
 #include "abm/abm.h"
-#include "abm/location_type.h"
-#include "abm/migration_rules.h"
-#include "abm/lockdown_rules.h"
-#include "abm/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <memory>
+
+// Assign the name to general age group.
+const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
+const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
+const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
+const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(4);
+const auto AGE_GROUP_80_UP    = mio::AgeGroup(5);
 
 /**
  * mock of the generator function of DistributionAdapter<DistT>.
@@ -89,12 +92,20 @@ struct ScopedMockDistribution {
     typename Distribution::GeneratorFunction old;
 };
 
-// Assign the name to general age group.
-const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
-const auto AGE_GROUP_5_TO_15  = mio::AgeGroup(1);
-const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
-const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
-const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(4);
-const auto AGE_GROUP_80_UP    = mio::AgeGroup(5);
+/**
+ * @brief Create a Person without a World object. Intended for simple use in tests.
+*/
+mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = AGE_GROUP_15_TO_34,
+                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
+                                  mio::abm::Parameters params              = mio::abm::Parameters(6));
 
-#endif //TEST_ABM_H
+/**
+ * @brief Add a Person to the World. Intended for simple use in tests.
+*/
+mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
+                                  mio::AgeGroup age                        = AGE_GROUP_15_TO_34,
+                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+
+#endif //ABM_HELPERS_H

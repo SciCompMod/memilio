@@ -64,61 +64,58 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     for (size_t node = 0; node < num_nodes; node++) {
         for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_groups); age_group++) {
             // Global infection parameters
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<IncubationPeriod>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters
-                        .template get<SusceptibleToExposedByCarrier>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters
-                        .template get<SusceptibleToExposedByInfected>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<CarrierToInfected>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<CarrierToRecovered>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedToRecovered>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<InfectedToSevere>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<SevereToCritical>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<SevereToRecovered>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<CriticalToDead>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<CriticalToRecovered>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters
-                        .template get<RecoveredToSusceptible>()[{age_group, VaccinationState::Unvaccinated}];
-                });
-            param_percentil(
-                node, [age_group](auto&& model) -> auto& {
-                    return model.parameters.template get<DetectInfection>()[{age_group, VaccinationState::Unvaccinated}];
-                });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<IncubationPeriod>()[{VirusVariant::Wildtype, age_group,
+                                                                          VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<SusceptibleToExposedByCarrier>()[{
+                    VirusVariant::Wildtype, age_group, VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<SusceptibleToExposedByInfected>()[{
+                    VirusVariant::Wildtype, age_group, VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<CarrierToInfected>()[{VirusVariant::Wildtype, age_group,
+                                                                           VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<CarrierToRecovered>()[{VirusVariant::Wildtype, age_group,
+                                                                            VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<InfectedToRecovered>()[{VirusVariant::Wildtype, age_group,
+                                                                             VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<InfectedToSevere>()[{VirusVariant::Wildtype, age_group,
+                                                                          VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<SevereToCritical>()[{VirusVariant::Wildtype, age_group,
+                                                                          VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<SevereToRecovered>()[{VirusVariant::Wildtype, age_group,
+                                                                           VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<CriticalToDead>()[{VirusVariant::Wildtype, age_group,
+                                                                        VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<CriticalToRecovered>()[{VirusVariant::Wildtype, age_group,
+                                                                             VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, age_group,
+                                                                                VaccinationState::Unvaccinated}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group,
+                                                                         VaccinationState::Unvaccinated}];
+            });
         }
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params           = ensemble_params[run][node];

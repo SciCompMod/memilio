@@ -42,19 +42,19 @@ class Simulation
 public:
     /**
      * @brief Create a simulation.
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      * @param[in] world The World to simulate.
      */
-    Simulation(TimePoint t, World&& world);
+    Simulation(TimePoint t0, World&& world);
 
     /**
      * @brief Create a Simulation with an empty World.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t, size_t num_agegroups)
-        : Simulation(t, World(num_agegroups))
+    Simulation(TimePoint t0, size_t num_agegroups)
+        : Simulation(t0, World(num_agegroups))
     {
     }
 
@@ -68,7 +68,7 @@ public:
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
@@ -86,10 +86,11 @@ public:
     }
 
 private:
+    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
 
     World m_world; ///< The World to simulate.
-    TimeSeries<double> m_result; ///< The result of the Simulation.
+    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

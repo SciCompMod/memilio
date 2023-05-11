@@ -94,6 +94,7 @@ EngEng = {
     'vaccPartial': "Vacc_partially",
     'vaccComplete': "Vacc_completed",
     'vaccRefresh': "Vacc_refreshed",
+    'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
     # NPI data

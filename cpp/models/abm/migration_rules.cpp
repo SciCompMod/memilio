@@ -35,7 +35,7 @@ namespace abm
 
 LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto current_loc     = person.get_location_id().type;
+    auto current_loc     = person.get_location().get_type();
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
@@ -50,7 +50,8 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
 
 LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
+
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
@@ -67,10 +68,10 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan dt, const 
 
 LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        (params.get<mio::abm::AgeGroupGotoWork>().count(person.get_age())) && t.day_of_week() < 5 &&
+        params.get<mio::abm::AgeGroupGotoWork>().count(person.get_age()) && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine()) {
@@ -85,7 +86,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const Pa
 
 LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
     //leave
     if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine()) {
@@ -103,7 +104,7 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Pa
 
 LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
@@ -124,37 +125,37 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const P
 
 LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
     if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
         return LocationType::Home;
     }
     return current_loc;
 }
 
-LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const Parameters& /*params*/)
+LocationType go_to_hospital(const Person& person, const TimePoint t, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Severe) {
+    auto current_loc = person.get_location().get_type();
+    if (person.get_infection_state(t) == InfectionState::Infected_Severe) {
         return LocationType::Hospital;
     }
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const Parameters& /*params*/)
+LocationType go_to_icu(const Person& person, const TimePoint t, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Critical) {
+    auto current_loc = person.get_location().get_type();
+    if (person.get_infection_state(t) == InfectionState::Infected_Critical) {
         return LocationType::ICU;
     }
     return current_loc;
 }
 
-LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+LocationType return_home_when_recovered(const Person& person, const TimePoint t, TimeSpan /*dt*/,
                                         const Parameters& /*params*/)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc = person.get_location().get_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
-        person.get_infection_state() == InfectionState::Recovered_Infected) {
+        person.get_infection_state(t) == InfectionState::Recovered_Infected) {
         return LocationType::Home;
     }
     return current_loc;

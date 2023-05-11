@@ -18,7 +18,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestMigrationRules, student_goes_to_school)
 {
@@ -31,17 +31,16 @@ TEST(TestMigrationRules, student_goes_to_school)
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_child =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
-    auto p_adult =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto home    = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto p_child = mio::abm::Person(home, AGE_GROUP_5_TO_14);
+    auto p_adult = mio::abm::Person(home, AGE_GROUP_15_TO_34);
+
     auto t_morning              = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto t_weekend              = mio::abm::TimePoint(0) + mio::abm::days(5) + mio::abm::hours(7);
     auto dt                     = mio::abm::hours(1);
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -69,11 +68,9 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         .WillOnce(testing::Return(0.8))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_child_goes_to_school_at_6 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
-    auto p_child_goes_to_school_at_8 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
+    auto home                        = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto p_child_goes_to_school_at_6 = mio::abm::Person(home, AGE_GROUP_5_TO_14);
+    auto p_child_goes_to_school_at_8 = mio::abm::Person(home, AGE_GROUP_5_TO_14);
 
     auto t_morning_6 = mio::abm::TimePoint(0) + mio::abm::hours(6);
     auto t_morning_8 = mio::abm::TimePoint(0) + mio::abm::hours(8);
@@ -81,7 +78,7 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
 
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -117,18 +114,16 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
         .WillOnce(testing::Return(0.9))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_child_goes_to_school_at_6 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
-    auto p_child_goes_to_school_at_8_30 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
+    auto home                           = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto p_child_goes_to_school_at_6    = mio::abm::Person(home, AGE_GROUP_5_TO_14);
+    auto p_child_goes_to_school_at_8_30 = mio::abm::Person(home, AGE_GROUP_5_TO_14);
 
     auto t_morning_6            = mio::abm::TimePoint(0) + mio::abm::hours(6);
     auto t_morning_8_30         = mio::abm::TimePoint(0) + mio::abm::hours(8) + mio::abm::seconds(1800);
     auto dt                     = mio::abm::seconds(1800);
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -144,9 +139,8 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
 
 TEST(TestMigrationRules, school_return)
 {
-    auto school = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
-    auto p_child =
-        mio::abm::Person(school, mio::abm::InfectionState::Susceptible, AGE_GROUP_5_TO_15, mio::abm::Parameters(6));
+    auto school  = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
+    auto p_child = mio::abm::Person(school, AGE_GROUP_5_TO_14);
 
     auto t  = mio::abm::TimePoint(0) + mio::abm::hours(15);
     auto dt = mio::abm::hours(1);
@@ -170,10 +164,8 @@ TEST(TestMigrationRules, worker_goes_to_work)
         .WillOnce(testing::Return(0.))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p_retiree =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
-    auto p_adult =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p_retiree = mio::abm::Person(home, AGE_GROUP_60_TO_79);
+    auto p_adult   = mio::abm::Person(home, AGE_GROUP_15_TO_34);
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
@@ -181,7 +173,7 @@ TEST(TestMigrationRules, worker_goes_to_work)
 
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -206,10 +198,8 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
         .WillOnce(testing::Return(0.))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p_retiree =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
-    auto p_adult =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p_retiree = mio::abm::Person(home, AGE_GROUP_60_TO_79);
+    auto p_adult   = mio::abm::Person(home, AGE_GROUP_15_TO_34);
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(8);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(4);
@@ -217,7 +207,7 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -243,10 +233,8 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p_adult_goes_to_work_at_6 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
-    auto p_adult_goes_to_work_at_8 =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p_adult_goes_to_work_at_6 = mio::abm::Person(home, AGE_GROUP_15_TO_34);
+    auto p_adult_goes_to_work_at_8 = mio::abm::Person(home, AGE_GROUP_15_TO_34);
 
     auto t_morning_6            = mio::abm::TimePoint(0) + mio::abm::hours(6);
     auto t_morning_8            = mio::abm::TimePoint(0) + mio::abm::hours(8);
@@ -254,7 +242,7 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
     auto dt                     = mio::abm::hours(1);
     mio::abm::Parameters params = mio::abm::Parameters(6);
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_15};
+    params.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
     params.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
@@ -268,11 +256,10 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 
 TEST(TestMigrationRules, work_return)
 {
-    auto work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto p_adult =
-        mio::abm::Person(work, mio::abm::InfectionState::Susceptible, AGE_GROUP_35_TO_59, mio::abm::Parameters(6));
-    auto t  = mio::abm::TimePoint(0) + mio::abm::hours(17);
-    auto dt = mio::abm::hours(1);
+    auto work    = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    auto p_adult = mio::abm::Person(work, AGE_GROUP_35_TO_59);
+    auto t       = mio::abm::TimePoint(0) + mio::abm::hours(17);
+    auto dt      = mio::abm::hours(1);
     ASSERT_EQ(mio::abm::go_to_work(p_adult, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Home);
 }
 
@@ -285,50 +272,46 @@ TEST(TestMigrationRules, quarantine)
     auto work     = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0, 6);
 
-    auto p_inf1 =
-        mio::abm::Person(work, {mio::abm::InfectionState::Infected, true}, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p_inf1 = make_test_person(work, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected, t);
+    p_inf1.detect_infection(t);
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf1, t, dt, mio::abm::Parameters(6)),
               mio::abm::LocationType::Home); //detected infected person quarantines at home
 
-    auto p_inf2 = mio::abm::Person(work, {mio::abm::InfectionState::Infected, false}, AGE_GROUP_15_TO_34,
-                                   mio::abm::Parameters(6));
+    auto p_inf2 = make_test_person(work, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected, t);
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf2, t, dt, mio::abm::Parameters(6)),
               mio::abm::LocationType::Work); //undetected infected person does not quaratine
 
-    auto p_inf3 = mio::abm::Person(hospital, {mio::abm::InfectionState::Infected_Severe, true}, AGE_GROUP_15_TO_34,
-                                   mio::abm::Parameters(6));
+    auto p_inf3 = make_test_person(hospital, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected_Severe, t);
+    p_inf3.detect_infection(t);
     ASSERT_EQ(mio::abm::go_to_quarantine(p_inf3, t, dt, mio::abm::Parameters(6)),
               mio::abm::LocationType::Hospital); //detected infected person does not leave hospital to quarantine
 }
 
 TEST(TestMigrationRules, hospital)
 {
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_inf =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected_Severe, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
-    auto t  = mio::abm::TimePoint(12346);
-    auto dt = mio::abm::hours(1);
+    auto home  = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto t     = mio::abm::TimePoint(12346);
+    auto dt    = mio::abm::hours(1);
+    auto p_inf = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected_Severe, t);
 
     ASSERT_EQ(mio::abm::go_to_hospital(p_inf, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Hospital);
 
-    auto p_car =
-        mio::abm::Person(home, mio::abm::InfectionState::Infected, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p_car = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected);
     ASSERT_EQ(mio::abm::go_to_hospital(p_car, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Home);
 }
 
 TEST(TestMigrationRules, go_shopping)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0, 6);
-    auto p_hosp =
-        mio::abm::Person(hospital, mio::abm::InfectionState::Infected, AGE_GROUP_0_TO_4, mio::abm::Parameters(6));
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_home =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
 
     auto t_weekday = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
     auto t_sunday  = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(9);
     auto t_night   = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(1);
     auto dt        = mio::abm::hours(1);
+
+    auto p_hosp = make_test_person(hospital, AGE_GROUP_0_TO_4, mio::abm::InfectionState::Infected, t_weekday);
+    auto p_home = mio::abm::Person(home, AGE_GROUP_60_TO_79);
 
     ASSERT_EQ(mio::abm::go_to_shop(p_hosp, t_weekday, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Hospital);
     ASSERT_EQ(mio::abm::go_to_shop(p_home, t_sunday, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Home);
@@ -342,28 +325,26 @@ TEST(TestMigrationRules, go_shopping)
 
 TEST(TestMigrationRules, shop_return)
 {
-    auto t  = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
-    auto dt = mio::abm::hours(1);
+    auto params = mio::abm::Parameters(6);
+    auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(9);
+    auto dt     = mio::abm::hours(1);
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto shop = mio::abm::Location(mio::abm::LocationType::BasicsShop, 0, 6);
-    auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p    = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Carrier, t);
     home.add_person(p);
-    p.migrate_to(home, shop);
-    p.interact(dt, mio::abm::Parameters(6),
-               shop); //person only returns home after some time passed
+    p.migrate_to(shop);
+    p.interact(t, dt, params); //person only returns home after some time passed
 
     ASSERT_EQ(mio::abm::go_to_shop(p, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Home);
 }
 
 TEST(TestMigrationRules, go_event)
 {
-    auto work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto p_work =
-        mio::abm::Person(work, mio::abm::InfectionState::Susceptible, AGE_GROUP_35_TO_59, mio::abm::Parameters(6));
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto p_home =
-        mio::abm::Person(home, mio::abm::InfectionState::Susceptible, AGE_GROUP_60_TO_79, mio::abm::Parameters(6));
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    auto p_work = mio::abm::Person(work, AGE_GROUP_35_TO_59);
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
+    auto p_home = mio::abm::Person(home, AGE_GROUP_60_TO_79);
 
     auto t_weekday  = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(20);
     auto t_saturday = mio::abm::TimePoint(0) + mio::abm::days(5) + mio::abm::hours(10);
@@ -386,15 +367,16 @@ TEST(TestMigrationRules, go_event)
 
 TEST(TestMigrationRules, event_return)
 {
-    auto t  = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(21);
-    auto dt = mio::abm::hours(3);
+    auto params = mio::abm::Parameters(6);
+    auto t      = mio::abm::TimePoint(0) + mio::abm::days(4) + mio::abm::hours(21);
+    auto dt     = mio::abm::hours(3);
 
     auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
     auto shop = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0, 6);
-    auto p    = mio::abm::Person(home, mio::abm::InfectionState::Carrier, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto p    = mio::abm::Person(home, AGE_GROUP_15_TO_34);
     home.add_person(p);
-    p.migrate_to(home, shop);
-    p.interact(dt, mio::abm::Parameters(6), shop);
+    p.migrate_to(shop);
+    p.interact(t, dt, params);
 
     ASSERT_EQ(mio::abm::go_to_event(p, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Home);
 }
@@ -402,28 +384,24 @@ TEST(TestMigrationRules, event_return)
 TEST(TestMigrationRules, icu)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0, 6);
-    auto p_hosp   = mio::abm::Person(hospital, mio::abm::InfectionState::Infected_Critical, AGE_GROUP_15_TO_34,
-                                     mio::abm::Parameters(6));
     auto t        = mio::abm::TimePoint(12346);
     auto dt       = mio::abm::hours(1);
+    auto p_hosp   = make_test_person(hospital, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected_Critical, t);
 
     ASSERT_EQ(mio::abm::go_to_icu(p_hosp, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::ICU);
 
-    auto work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
-    auto p_work =
-        mio::abm::Person(work, mio::abm::InfectionState::Infected, AGE_GROUP_15_TO_34, mio::abm::Parameters(6));
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    auto p_work = make_test_person(work, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected, t);
     ASSERT_EQ(mio::abm::go_to_icu(p_work, t, dt, mio::abm::Parameters(6)), mio::abm::LocationType::Work);
 }
 
 TEST(TestMigrationRules, recover)
 {
     auto hospital = mio::abm::Location(mio::abm::LocationType::Hospital, 0, 6);
-    auto p_rec    = mio::abm::Person(hospital, mio::abm::InfectionState::Recovered_Infected, AGE_GROUP_60_TO_79,
-                                     mio::abm::Parameters(6));
-    auto p_inf    = mio::abm::Person(hospital, mio::abm::InfectionState::Infected_Severe, AGE_GROUP_60_TO_79,
-                                     mio::abm::Parameters(6));
     auto t        = mio::abm::TimePoint(12346);
     auto dt       = mio::abm::hours(1);
+    auto p_rec    = make_test_person(hospital, AGE_GROUP_60_TO_79, mio::abm::InfectionState::Recovered_Infected, t);
+    auto p_inf    = make_test_person(hospital, AGE_GROUP_60_TO_79, mio::abm::InfectionState::Infected_Severe, t);
 
     ASSERT_EQ(mio::abm::return_home_when_recovered(p_rec, t, dt, mio::abm::Parameters(6)),
               mio::abm::LocationType::Home);

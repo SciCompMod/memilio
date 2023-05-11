@@ -28,6 +28,7 @@ GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wc++17-extensions")
 #include "boost/outcome/result.hpp"
 #include "boost/outcome/try.hpp"
+#include "boost/optional.hpp"
 GCC_CLANG_DIAGNOSTIC(pop)
 #include <tuple>
 #include <iostream>
@@ -54,6 +55,8 @@ enum class StatusCode
 
 /**
  * flags to determine the behavior of the serialization process.
+ * Objects must be deseralized with the same set of flags as
+ * they were serialized.
  */
 enum IOFlags
 {
@@ -73,6 +76,12 @@ enum IOFlags
      * from which new values can be sampled, e.g., UncertainValue.
      */
     IOF_OmitValues = 1 << 1,
+
+    /**
+    * Include type info in the serialization.
+    * Can Increase file size a lot, mostly for debugging.
+    */
+    IOF_IncludeTypeInfo = 1 << 2,
 };
 
 } // namespace mio

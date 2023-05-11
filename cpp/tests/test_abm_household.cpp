@@ -20,7 +20,7 @@
 */
 #include "abm/household.h"
 #include "abm/abm.h"
-#include "test_abm.h"
+#include "abm_helpers.h"
 #include <gtest/gtest.h>
 
 TEST(TestHouseholds, test_add_household_to_world)
@@ -29,7 +29,7 @@ TEST(TestHouseholds, test_add_household_to_world)
     member1.set_age_weight(AGE_GROUP_0_TO_4, 1);
 
     auto member2 = mio::abm::HouseholdMember(6);
-    member2.set_age_weight(AGE_GROUP_5_TO_15, 1);
+    member2.set_age_weight(AGE_GROUP_5_TO_14, 1);
 
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
@@ -46,12 +46,12 @@ TEST(TestHouseholds, test_add_household_to_world)
     // Test age
     EXPECT_EQ(persons[0].get_age(), AGE_GROUP_0_TO_4);
     EXPECT_EQ(persons[1].get_age(), AGE_GROUP_0_TO_4);
-    EXPECT_EQ(persons[2].get_age(), AGE_GROUP_5_TO_15);
-    EXPECT_EQ(persons[3].get_age(), AGE_GROUP_5_TO_15);
+    EXPECT_EQ(persons[2].get_age(), AGE_GROUP_5_TO_14);
+    EXPECT_EQ(persons[3].get_age(), AGE_GROUP_5_TO_14);
 
     // Test location
-    EXPECT_EQ(persons[0].get_location_id().index, persons[1].get_location_id().index);
-    EXPECT_EQ(persons[2].get_location_id().index, persons[3].get_location_id().index);
+    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
+    EXPECT_EQ(persons[2].get_location().get_index(), persons[3].get_location().get_index());
 }
 
 TEST(TestHouseholds, test_add_household_group_to_world)
@@ -61,7 +61,7 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     member1.set_age_weight(AGE_GROUP_35_TO_59, 1);
 
     auto member2 = mio::abm::HouseholdMember(6);
-    member2.set_age_weight(AGE_GROUP_5_TO_15, 1);
+    member2.set_age_weight(AGE_GROUP_5_TO_14, 1);
 
     auto household_group = mio::abm::HouseholdGroup();
 
@@ -87,7 +87,7 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     int number_of_age5to14_year_olds = 0, number_of_age35to59_year_olds = 0;
 
     for (auto& person : persons) {
-        if (person.get_age() == AGE_GROUP_5_TO_15) {
+        if (person.get_age() == AGE_GROUP_5_TO_14) {
             number_of_age5to14_year_olds++;
         }
         if (person.get_age() == AGE_GROUP_35_TO_59) {
@@ -98,11 +98,11 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     EXPECT_EQ(number_of_age35to59_year_olds, 70);
 
     // Test location for some people
-    EXPECT_EQ(persons[0].get_location_id().index, persons[1].get_location_id().index);
-    EXPECT_EQ(persons[1].get_location_id().index, persons[5].get_location_id().index);
-    EXPECT_EQ(persons[5].get_location_id().index, persons[10].get_location_id().index);
+    EXPECT_EQ(persons[0].get_location().get_index(), persons[1].get_location().get_index());
+    EXPECT_EQ(persons[1].get_location().get_index(), persons[5].get_location().get_index());
+    EXPECT_EQ(persons[5].get_location().get_index(), persons[10].get_location().get_index());
 
-    EXPECT_EQ(persons[60].get_location_id().index, persons[61].get_location_id().index);
-    EXPECT_EQ(persons[61].get_location_id().index, persons[62].get_location_id().index);
-    EXPECT_EQ(persons[62].get_location_id().index, persons[63].get_location_id().index);
+    EXPECT_EQ(persons[60].get_location().get_index(), persons[61].get_location().get_index());
+    EXPECT_EQ(persons[61].get_location().get_index(), persons[62].get_location().get_index());
+    EXPECT_EQ(persons[62].get_location().get_index(), persons[63].get_location().get_index());
 }

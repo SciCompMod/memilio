@@ -474,21 +474,31 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
     auto world1 = mio::abm::World(6);
     auto world2 = mio::abm::World(6);
 
-    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.1;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}] = 0.1;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}] = 0.2;
 
-    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.3;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}] = 0.3;
 
     auto g1 = std::vector<mio::abm::World>({world1, world2});
 
-    world1.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.2;
-    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.3;
-    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
+    world1.parameters.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                            mio::abm::VaccinationState::Unvaccinated}] = 0.2;
+    world1.parameters.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}]    = 0.3;
+    world1.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
 
-    world2.parameters.get<mio::abm::InfectedToRecovered>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}] = 0.7;
-    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
-    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]    = 0.5;
+    world2.parameters.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                            mio::abm::VaccinationState::Unvaccinated}] = 0.7;
+    world2.parameters.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}]    = 0.4;
+    world2.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                         mio::abm::VaccinationState::Unvaccinated}]    = 0.5;
 
     auto g2 = std::vector<mio::abm::World>({world1, world2});
 
@@ -497,50 +507,58 @@ TEST(TestEnsembleParamsPercentile, abm_basic)
     auto ensemble_p49_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.49);
     auto ensemble_p51_params = mio::abm::ensemble_params_percentile(ensemble_params, 0.51);
 
-    auto check1 =
-        ensemble_p49_params[0]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
-    auto check2 =
-        ensemble_p49_params[1]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
+    auto check1 = ensemble_p49_params[0]
+                      .parameters
+                      .get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
+    auto check2 = ensemble_p49_params[1]
+                      .parameters
+                      .get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
 
     EXPECT_EQ(check1, 0.1);
     EXPECT_EQ(check2, 0.2);
 
-    auto check3 =
-        ensemble_p51_params[0]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
-    auto check4 =
-        ensemble_p51_params[1]
-            .parameters.get<mio::abm::InfectedToSevere>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
+    auto check3 = ensemble_p51_params[0]
+                      .parameters
+                      .get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
+    auto check4 = ensemble_p51_params[1]
+                      .parameters
+                      .get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
 
     EXPECT_EQ(check3, 0.3);
     EXPECT_EQ(check4, 0.4);
 
-    auto check5 =
-        ensemble_p49_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
-    auto check6 =
-        ensemble_p49_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
+    auto check5 = ensemble_p49_params[0]
+                      .parameters
+                      .get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
+    auto check6 = ensemble_p49_params[1]
+                      .parameters
+                      .get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
 
     EXPECT_EQ(check5, 0.2);
     EXPECT_EQ(check6, 0.3);
 
-    auto check7 =
-        ensemble_p51_params[0]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
-    auto check8 =
-        ensemble_p51_params[1]
-            .parameters.get<mio::abm::SevereToCritical>()[{mio::AgeGroup(0), mio::abm::VaccinationState::Unvaccinated}]
-            .value();
+    auto check7 = ensemble_p51_params[0]
+                      .parameters
+                      .get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
+    auto check8 = ensemble_p51_params[1]
+                      .parameters
+                      .get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0),
+                                                          mio::abm::VaccinationState::Unvaccinated}]
+                      .value();
 
     EXPECT_EQ(check7, 0.4);
     EXPECT_EQ(check8, 0.5);

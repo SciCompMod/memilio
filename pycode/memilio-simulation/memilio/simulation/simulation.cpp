@@ -117,5 +117,9 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_logging(m, "LogLevel");
 
+    m.def("seed_random_number_generator", [] {
+        mio::thread_local_rng().seed(mio::RandomNumberGenerator::generate_seeds());
+    });
+
     m.attr("__version__") = "dev";
 }

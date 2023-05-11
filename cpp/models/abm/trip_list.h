@@ -23,7 +23,7 @@
 
 #include "abm/parameters.h"
 #include "abm/location.h"
-#include "abm/state.h"
+#include "abm/infection.h"
 #include "abm/location_type.h"
 
 #include "memilio/math/eigen.h"
