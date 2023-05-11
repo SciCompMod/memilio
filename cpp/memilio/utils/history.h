@@ -56,6 +56,7 @@ struct LogAlways {
 * @tparam T The Type that is searched for.
 * @tparam Types All Types  in the pack of Types.
 * This function is used to get the index of a logger in a pack of loggers, e.g. index_templ_pack<Logger, Loggers...> gets the index of Logger in the pack Loggers.
+* Only for use in a Data Writer, not at runtime.
 */
 template <typename T, typename U = void, typename... Types>
 constexpr size_t index_templ_pack()
