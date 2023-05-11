@@ -79,9 +79,12 @@ protected:
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        //model->parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-        //model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
-        //model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(0.5);
+        mio::isecir::ProbabilityProgress prob;
+        mio::isecir::ExponentialDecay expdecay(0.5);
+        prob.setStateAgeFunction(expdecay);
+        model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+        model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+        model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
     }
 
     virtual void TearDown()
@@ -202,12 +205,15 @@ TEST(IdeSecir, checksimulationFunctions)
     model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
     mio::ContactMatrixGroup contact_matrix               = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
+    contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::SmootherCosine smoothcos(2);
+    prob.setStateAgeFunction(smoothcos);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
@@ -296,9 +302,12 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    //model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    //model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(1.0);
-    //model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::ExponentialDecay expdecay(0.5);
+    prob.setStateAgeFunction(expdecay);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
@@ -398,14 +407,17 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    /*model.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
+    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::ExponentialDecay expdecay(0.5);
+    prob.setStateAgeFunction(expdecay);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
-    model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact<mio::isecir::ExponentialDecay>>(0.5);
-    model2.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms<mio::isecir::ExponentialDecay>>(0.5);
-    model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic<mio::isecir::ExponentialDecay>>(1.0);
-    */
+    model2.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model2.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model2.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+
     // Carry out simulation.
     mio::isecir::Simulation sim(model, 0, dt);
     sim.advance(tmax);
