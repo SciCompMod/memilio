@@ -25,25 +25,34 @@
 #include <data_dir.h>
 #include <iostream>
 
-void print_usage()
+std::string setup(int argc, char** argv, const std::string data_dir)
 {
-    std::cout << "Usage: read_graph MIGRATION_FILE"
-              << "\n\n";
-    std::cout << "This example performs a simulation based on twitter "
-                 "migration data."
-              << std::endl;
+    if (argc == 2) {
+        std::cout << "Using file " << argv[1] << " in data/mobility." << std::endl;
+        return mio::path_join(data_dir, "mobility", (std::string)argv[1]);
+    }
+    else {
+        if (argc > 2) {
+            mio::log_error("Too many arguments given.");
+        }
+        else {
+            mio::log_warning("No arguments given.");
+        }
+        std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
+        std::cout << "Usage: read_graph MIGRATION_FILE"
+                  << "\n\n";
+        std::cout << "This example performs a simulation based on twitter "
+                     "migration data."
+                  << std::endl;
+        return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
+    }
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 2) {
-        print_usage();
-        return -1;
-    }
+    std::string data_dir = DATA_DIR;
+    std::string filename = setup(argc, argv, data_dir);
 
-    std::string dir = DATA_DIR;
-
-    auto filename   = mio::path_join(dir, "migration", (std::string)argv[1]);
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration

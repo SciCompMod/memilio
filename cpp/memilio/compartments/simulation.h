@@ -98,8 +98,9 @@ public:
     }
 
     /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all InfectionState%s.
+     * @return The result of the simulation.
      */
     TimeSeries<ScalarType>& get_result()
     {
@@ -190,4 +191,4 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
 
 } // namespace mio
 
-#endif // POPULATIONS_H
+#endif // SIMULATION_H

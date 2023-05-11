@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_STATE_H
-#define EPI_ABM_STATE_H
+#ifndef EPI_VIRUS_VARIANT_H
+#define EPI_VIRUS_VARIANT_H
 
 #include <cstdint>
 
@@ -26,36 +26,19 @@ namespace mio
 {
 namespace abm
 {
-
-/** 
- * infection state in ABM.
- * can be used as 0-based index
- */
-enum class InfectionState : std::uint32_t
-{
-    Susceptible = 0,
-    Exposed,
-    Carrier,
-    Infected,
-    Infected_Severe,
-    Infected_Critical,
-    Recovered_Carrier,
-    Recovered_Infected,
-    Dead,
-
-    Count //last!!
-};
+// Virus Variant handling to be discussed for better solutions
+// Ultimately, one would like to read in all Virus Variants from
+// a config file.
 
 /**
- * vaccination state in ABM.
- * can be used as 0-based index.
- */
-enum class VaccinationState : std::uint32_t
+ * Virus variants in ABM.
+ * can be used as 0-based index
+*/
+enum class VirusVariant : std::uint32_t
 {
-    Unvaccinated = 0,
-    Vaccinated,
+    Wildtype = 0,
 
-    Count //last!!
+    Count // last!!
 };
 
 } // namespace abm

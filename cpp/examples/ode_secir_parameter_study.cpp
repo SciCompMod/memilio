@@ -143,15 +143,15 @@ int main()
     mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, num_runs);
 
     //run study
-    int run           = 0;
     auto sample_graph = [](auto&& graph) {
         return mio::osecir::draw_sample(graph);
     };
-    auto handle_result = [&run](auto&& graph) {
-        auto write_result_status = write_single_run_result(run++, graph);
+    auto handle_result = [](auto&& graph, auto&& run) {
+        auto write_result_status = write_single_run_result(run, graph);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
-        }
+        }       
+        return 0; //Result handler must return something, but only meaningful when using MPI.
     };
     parameter_study.run(sample_graph, handle_result);
 

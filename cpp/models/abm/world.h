@@ -39,8 +39,8 @@ namespace abm
 {
 
 /**
- * The world of the simulation.
- * consists of Locations and Persons (Agents)
+ * @brief The World of the Simulation.
+ * It consists of Location%s and Person%s (Agents).
  */
 class World
 {
@@ -51,8 +51,8 @@ public:
     using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
 
     /**
-     * create a World.
-     * @param params parameters of the infection that are the same everywhere in the world.
+     * @brief Create a World.
+     * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
     World(const GlobalInfectionParameters& params = {})
         : m_locations((uint32_t)LocationType::Count)
@@ -70,133 +70,154 @@ public:
     World& operator=(const World&)  = delete;
 
     /** 
-     * prepare the world for the next simulation step.
-     * @param dt length of the time step 
+     * Prepare the World for the next simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * evolve the world one time step.
-     * @param dt length of the time step
+     * Follow up on the World after the simulation step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
+     */
+    void end_step(TimePoint t, TimeSpan dt);
+
+    /** 
+     * Evolve the world one time step.
+     * @param[in] t Current time.
+     * @param[in] dt Length of the time step.
      */
     void evolve(TimePoint t, TimeSpan dt);
 
     /** 
-     * add a location to the world.
-     * @param type type of location to add
-     * @param num_cells number of cells that the location is divided into
-     * @return index and type of the newly created location
+     * Add a Location to the world.
+     * @param[in] type Type of Location to add.
+     * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
+     * @return Index and type of the newly created Location.
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 0);
+    LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
-    /** add a person to the world 
-     * @param id index and type of the initial location of the person
-     * @param state initial infection state of the person
-     * @return reference to the newly created person
+    /** 
+     * @brief Add a Person to the world.
+     * @param[in] id Index and type of the initial Location of the Person.
+     * @param[in] age AgeGroup of the person.
+     * @return Reference to the newly created Person.
      */
-    Person& add_person(LocationId id, InfectionState infection_state, AgeGroup age = AgeGroup::Age15to34);
-
-    /**
-     * Sets the current infection state of the person.
-     * Use only during setup, may distort the simulation results
-     * @param person
-     * @param inf_state
-     */
-    void set_infection_state(Person& person, InfectionState inf_state);
+    Person& add_person(const LocationId id, AgeGroup age);
 
     /**
-     * get a range of all locations in the world.
-     * @return a range of all locations.
+     * @brief Get a range of all Location%s in the World.
+     * @return A range of all Location%s.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
-                    std::vector<std::vector<Location>>::const_iterator>>
+    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
+                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
     get_locations() const;
 
     /**
-     * get a range of all persons in the world.
-     * @return a range of all persons.
+     * @brief Get a range of all Person%s in the World.
+     * @return A range of all Person%s.
      */
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
 
     /**
-     * get an individualized location
-     * @param id LocationId of the location
-     * @return reference to the location
+     * @brief Get an individualized Location.
+     * @param[in] id LocationId of the Location.
+     * @return Reference to the Location.
      */
     const Location& get_individualized_location(LocationId id) const;
 
     Location& get_individualized_location(LocationId id);
 
     /**
-     * get the current location of a person
-     * @return reference to the current location of the person
+     * @brief Get the current Location of a Person.
+     * @param[in] person The Person.
+     * @return Reference to the current Location of the Person.
      */
     const Location& get_location(const Person& person) const;
 
     Location& get_location(const Person& person);
 
     /**
-     * find an assigned location of a person
-     * @param type the location type that specifies the assigned location
-     * @return pointer to the assigned location
+     * @brief Find an assigned Location of a Person.
+     * @param[in] type The #LocationType that specifies the assigned Location.
+     * @param[in] person The Person.
+     * @return Pointer to the assigned Location.
      */
-    Location* find_location(LocationType type, const Person& person);
+    Location& find_location(LocationType type, const Person& person);
 
     /** 
-     * number of persons in one infection state at all locations of a type.
-     * @param type specified location type
-     * @return number of persons that are in the specified infection state
+     * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
+     * @param[in] s Specified #InfectionState.
+     * @param[in] type Specified #LocationType.
      */
-    int get_subpopulation_combined(InfectionState s, LocationType type) const;
+    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
-     * get migration parameters
+     * @brief Get the MigrationParameters.
+     * @return Reference to the MigrationParameters.
      */
     MigrationParameters& get_migration_parameters();
 
     const MigrationParameters& get_migration_parameters() const;
 
     /** 
-     * get global infection parameters
+     * @brief Get the GlobalInfectionParameters.
+     * @return Reference to the GlobalInfectionParameters.
      */
     GlobalInfectionParameters& get_global_infection_parameters();
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
     /**
-     * get migration data
+     * @brief Get the migration data.
+     * @return Reference to the list of Trip%s that the Person%s make.
      */
     TripList& get_trip_list();
 
     const TripList& get_trip_list() const;
 
     /** 
-     * decide if migration rules (like go to school/work) are used or not
-     * the migration rules regarding hospitalization/ICU/quarantine are always used
+     * @brief Decide if migration rules (like go to school/work) are used or not;
+     * The migration rules regarding hospitalization/ICU/quarantine are always used.
+     * @param[in] param If true uses the migration rules for migration to school/work etc., else only the rules 
+     * regarding hospitalization/ICU/quarantine.
      */
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
 
     /** 
-     * get testing strategy
+     * @brief Get the TestingStrategy.
+     * @return Refernce to the list of TestingSchemes that are checked for testing.
      */
     TestingStrategy& get_testing_strategy();
 
     const TestingStrategy& get_testing_strategy() const;
 
 private:
+    /**
+     * @brief Person%s interact at their Location and may become infected.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
     void interaction(TimePoint t, TimeSpan dt);
+    /**
+     * @brief Person%s move in the World according to rules.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::vector<Location>> m_locations;
+    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
-                          std::vector<LocationType>>> m_migration_rules;
+                          std::vector<LocationType>>>
+        m_migration_rules;
 };
 
 } // namespace abm

@@ -429,12 +429,12 @@ def extrapolate_age_groups_vaccinations(
             # get total population in old agegroup
             total_pop = 0
             for j in age_old_to_all_ages_indices[i]:
-                total_pop += float(pop_state[str(min_all_ages[j])])
+                total_pop += float(pop_state[str(min_all_ages[j])].iloc[0])
             # get population ratios in old agegroup
             ratios = [0 for zz in range(0, len(unique_age_groups_new))]
             for j in age_old_to_all_ages_indices[i]:
                 ratios[all_ages_to_age_new_share[j][0][1]
-                       ] += float(pop_state[str(min_all_ages[j])])/total_pop
+                       ] += float(pop_state[str(min_all_ages[j])].iloc[0])/total_pop
             # split vaccinations in old agegroup to new agegroups
             for j in range(0, len(ratios)):
                 new_dataframe = county_age_df[column_names]*ratios[j]
@@ -535,8 +535,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
-    df_data[dd.EngEng['date']] = pd.to_datetime(
-        df_data[dd.EngEng['date']], format="%Y-%m-%d")
+    try:
+        df_data[dd.EngEng['date']] = pd.to_datetime(
+            df_data[dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df_data[dd.EngEng['date']] = pd.to_datetime(
+                df_data[dd.EngEng['date']], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[
@@ -717,11 +725,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             age_new_to_all_ages_indices[i])+start_age_data].sum(axis=1)
     # end of output meta information purposes
 
-    vacc_column_names = [
-        dd.EngEng['vaccPartial'],
-        dd.EngEng['vaccComplete'],
-        dd.EngEng['vaccRefresh']]
-
     groupby_list = [
         dd.EngEng['date'],
         dd.EngEng['idCounty'],
@@ -740,8 +743,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         moving_average_sanit = 0
         impute_sanit = 'zeros'
 
+    # define new column names
+    column_names_dict = {
+        1: dd.EngEng['vaccPartial'],
+        2: dd.EngEng['vaccComplete'],
+        3: dd.EngEng['vaccRefresh'],
+        11: dd.EngEng['vaccNotComplete'],
+        'additional identifiers': dd.EngEng['vaccRefresh']}
+
     vacc_column_names, df_data_joined = mdfs.split_column_based_on_values(
-        df_data, "Impfschutz", "Number", groupby_list, vacc_column_names,
+        df_data, "Impfschutz", "Number", groupby_list, column_names_dict,
         compute_cumsum)
 
     ######## data with age resolution as provided in original frame ########
