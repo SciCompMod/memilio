@@ -7,7 +7,7 @@ import os
 
 ####### minimal sanity check on data #######
 
-bd = pd.read_csv('/home/gers_ca/code/braunschweig_microscopic.csv', sep=';', header=None, skiprows=1)
+bd = pd.read_csv(r'~/Documents/HZI/memilio/data/mobility/bs.csv', sep=';', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
@@ -38,11 +38,33 @@ person_homes = person_homes.groupby(['personID']).size().reset_index(name='count
 person_homes.drop(person_homes.loc[person_homes['counts']<2].index, inplace=True)
 if(person_homes.size > 0):
     print('Error: There are people that have more than one home. \n')
-    print(person_homes)
 
-# check if the number of possible activities is correct
-if (bd['ActivityAfter'].nunique() > 8):
-    print('Error: Number of activities not correct. \n')
+# check if the proportion of single-person-households is too high
+households = bd[['personID', 'hhID']].drop_duplicates().groupby(['hhID']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
+
+if households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size >= 0.4:
+    print("Error: The proportion of single-person-households is too high: " + 
+          str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
+
+# check if there are invalid entries
+if not bd['tripID'].gt(100000000).all():
+    print('Error: There is an entry in "tripID" that is not assignable. \n')
+if not bd['personID'].gt(100000000).all():
+    print('Error: There is an entry in "personID" that is not assignable. \n')
+if not bd['tripChain'].between(1, 10).all():
+    print('Error: There is an entry in "tripChain" that is not assignable. \n')
+if not bd['countyStart'].between(1001, 16077).all():
+    print('Error: There is an entry in "countyStart" that is not assignable. \n')
+if not bd['countyEnd'].between(1001, 16077).all():
+    print('Error: There is an entry in "countyEnd" that is not assignable. \n')
+if not bd['hhID'].gt(100000000).all():
+    print('Error: There is an entry in "hhID" that is not assignable. \n')
+if not bd['TripID'].between(1, 10).all():
+    print('Error: There is an entry in "TripID" that is not assignable. \n')
+if not bd['vehicleChoice'].between(1, 5).all():
+    print('Error: There is an entry in "vehicleChoice" that is not assignable. \n')
+if not bd['ActivityAfter'].between(0, 7).all():
+    print('Error: There is an entry in "ActivityAfter" that is not assignable. \n')
 
 # check if there are empty cells
 for header in bd.columns:
