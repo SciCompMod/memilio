@@ -192,6 +192,100 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     }
 }
 
+TEST(TestSaveParameters, read_graph_without_edges)
+{
+    // set up parameter study
+    double cont_freq    = 10; // see Polymod study
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
+
+    size_t num_groups = 3;
+    mio::osecir::Model model((int)num_groups);
+    double fact = 1.0 / (double)num_groups;
+
+    auto& params = model.parameters;
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
+        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.;
+        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
+        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
+                                                                         fact * num_total_t0);
+
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
+    }
+
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+
+    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
+    graph.add_node(0, model);
+    graph.add_node(1, model);
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+
+    TempFileRegister tmp_file_register;
+    std::string tmp_results_dir = tmp_file_register.get_unique_path();
+    ASSERT_THAT(mio::create_directory(tmp_results_dir), IsSuccess());
+
+    std::vector<mio::osecir::Model> models = {model, model};
+    std::vector<int> ids                   = {0, 1};
+    auto graph_no_edges = mio::create_graph_without_edges<mio::osecir::Model, mio::MigrationParameters>(models, ids);
+    auto write_status   = mio::write_graph(graph_no_edges, tmp_results_dir);
+    ASSERT_THAT(print_wrap(write_status), IsSuccess());
+
+    auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir, mio::IOF_OmitDistributions, false);
+
+    for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::IncubationTime>()[i],
+                  params.get<mio::osecir::IncubationTime>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i],
+                  params.get<mio::osecir::TimeInfectedSymptoms>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::SerialInterval>()[i],
+                  params.get<mio::osecir::SerialInterval>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedSevere>()[i],
+                  params.get<mio::osecir::TimeInfectedSevere>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TimeInfectedCritical>()[i],
+                  params.get<mio::osecir::TimeInfectedCritical>()[i]);
+
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i],
+            params.get<mio::osecir::TransmissionProbabilityOnContact>()[i]);
+
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i],
+            params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]);
+
+        EXPECT_EQ(
+            read_graph.value().nodes()[0].property.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i],
+            params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i],
+                  params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]);
+
+        EXPECT_EQ(read_graph.value().nodes()[0].property.parameters.get<mio::osecir::DeathsPerCritical>()[i],
+                  params.get<mio::osecir::DeathsPerCritical>()[i]);
+    }
+}
+
 TEST(TestSaveParameters, json_uncertain_matrix_write_read_compare)
 {
     enum class InterventionLevelMock

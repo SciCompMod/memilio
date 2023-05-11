@@ -50,7 +50,26 @@
 #include <iterator>
 #include <limits>
 
-TEST(TestSecir, reduceToSecirAndCompareWithPreviousRun)
+TEST(TestOdeSECIRVVS, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
+
+    mio::osecirvvs::Model model(1);
+    model.populations.set_total(10);
+    model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                10);
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
+TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 {
     // double t0   = 0;
     // double tmax = 50;
@@ -985,4 +1004,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+    
+    mio::set_log_level(mio::LogLevel::warn);
 }
