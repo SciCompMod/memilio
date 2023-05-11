@@ -6,6 +6,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/replace.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
 namespace fs = boost::filesystem;
@@ -54,9 +55,10 @@ namespace fs = boost::filesystem;
 //     }
 // }
 
-void split_line(std::string string, std::vector<uint32_t>* row)
+void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
+    boost::replace_all(string, ";;", ";-1;");
     boost::split(strings, string, boost::is_any_of(";"));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
         return stoi(s);
@@ -99,11 +101,9 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     // Open an existing file
     fin.open(filename, std::ios::in);
-    std::vector<uint32_t> row;
+    std::vector<int32_t> row;
     std::vector<std::string> row_string;
     std::string line;
-    std::vector<uint32_t> home_ids;
-    std::vector<uint32_t> person_ids;
 
     getline(fin, line);
     std::vector<std::string> titles;
@@ -121,26 +121,27 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     while (getline(fin, line)) {
         row.clear();
 
-        //read columns in this row
+        // read columns in this row
         split_line(line, &row);
 
-        uint32_t person_id   = row[index["puid"]]; // TODO
+        uint32_t person_id   = row[index["puid"]];
         uint32_t age         = row[index["age"]]; // TODO
         uint32_t location_id = row[index["loc_id_end"]];
         uint32_t activity    = row[index["activity_end"]];
 
-        auto check_location = locations.find(location_id);
+        auto check_location           = locations.find(location_id);
+        // mio::abm::LocationId location = check_location->second;
         if (check_location == locations.end()) {
             auto location = world.add_location(get_location_type(activity), 0); // TODO: adjust LocationType
             locations.insert({location_id, location});
+            check_location = locations.find(location_id);
         }
-        auto it_person = persons.find(person_id);
+        auto it_person           = persons.find(person_id);
         if (it_person == persons.end()) {
-            if ((locations.find(location_id))->second.type == mio::abm::LocationType::Home) {
-                auto person = world.add_person(check_location->second, mio::abm::InfectionState::Susceptible,
-                                               static_cast<mio::abm::AgeGroup>(age));
-                persons.insert({person_id, person});
-            }
+            auto person =
+                world.add_person(check_location->second, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
+            persons.insert({person_id, person});
+            it_person = persons.find(person_id);
         }
         it_person->second.set_assigned_location(check_location->second);
     }
