@@ -278,9 +278,11 @@ public:
      */
     using GeneratorFunction = std::function<ResultType(const typename DistT::param_type& p)>;
 
+private:
     /**
      * the default generator function invokes an instance of the template parameter
      * with a static thread local RNG engine.
+     * Constructors are private, use get_instance to get the current version.
      */
     DistributionAdapter()
     {
@@ -288,7 +290,12 @@ public:
             return DistT(params)(thread_local_rng());
         };
     }
+    DistributionAdapter(const DistributionAdapter&) = default;
+    DistributionAdapter& operator=(const DistributionAdapter&) = default;
+    DistributionAdapter(DistributionAdapter&&) = default;
+    DistributionAdapter& operator=(DistributionAdapter&&) = default;
 
+public:
     /**
      * get a random sample from the distribution.
      * accepts the same arguments as the constructors of the template parameter type.
@@ -324,7 +331,7 @@ public:
      */
     static DistributionAdapter& get_instance()
     {
-        static thread_local DistributionAdapter instance;
+        static DistributionAdapter instance;
         return instance;
     }
 
