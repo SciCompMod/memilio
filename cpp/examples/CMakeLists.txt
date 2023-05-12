@@ -14,8 +14,8 @@ target_link_libraries(adapt_rk_example PRIVATE memilio)
 add_executable(seir_example seir.cpp)
 target_link_libraries(seir_example PRIVATE memilio ode_seir)
 
-add_executable(seair_example seair.cpp)
-target_link_libraries(seair_example PRIVATE memilio ode_seair AD::AD)
+#add_executable(seair_example seair.cpp)
+#target_link_libraries(seair_example PRIVATE memilio ode_seair AD::AD)
 
 add_executable(ad_square_example ad_square_example.cpp)
 target_link_libraries(ad_square_example PRIVATE AD::AD)

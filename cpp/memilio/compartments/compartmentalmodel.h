@@ -70,7 +70,7 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Comp, class Pop, class Params>
+template <class Comp, class Pop, class Params, typename FP=double>
 struct CompartmentalModel {
 public:
     using Compartments = Comp;
@@ -80,8 +80,8 @@ public:
     // The flow function takes a set of parameters, the current time t and the
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
-    using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> pop,
-                                                  Eigen::Ref<const Eigen::VectorXd> y, double t)>;
+    using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
+                                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, double t)>;
 
     // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
     // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
@@ -119,8 +119,9 @@ public:
 
 #if USE_DERIV_FUNC
     //REMARK: Not pure virtual for easier java/python bindings
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>,
+                                 Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> /*y*/,
+                                 double /*t*/, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> /*dydt*/) const {};
 #endif // USE_DERIV_FUNC
 
     /**
@@ -135,8 +136,9 @@ public:
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                              Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
+                              Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, double t,
+                              Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const
     {
         dydt.setZero();
 
@@ -156,7 +158,7 @@ public:
      * This can be used as initial conditions in an ODE solver
      * @return the initial populatoins
      */
-    Eigen::VectorXd get_initial_values() const
+    Eigen::Matrix<FP,Eigen::Dynamic,1> get_initial_values() const
     {
         return populations.get_compartments();
     }
