@@ -42,32 +42,33 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
+    m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
     get_individualized_location(id).add_person(person);
     return person;
 }
 
-void World::evolve(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
+void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
-    interaction(t, dt, rng);
+    interaction(t, dt);
     m_testing_strategy.update_activity_status(t);
-    migration(t, dt, rng);
+    migration(t, dt);
     end_step(t, dt);
 }
 
-void World::interaction(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
+void World::interaction(TimePoint t, TimeSpan dt)
 {
     #pragma omp parallel for
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
-        person->interact(t, dt, m_infection_parameters, rng);
+        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
+        person->interact(personal_rng, t, dt, m_infection_parameters);
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
+void World::migration(TimePoint t, TimeSpan dt)
 {
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
@@ -90,15 +91,16 @@ void World::migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
     #pragma omp parallel for
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
+        auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
-            auto target_type       = rule.first(*person, t, dt, m_migration_parameters);
+            auto target_type       = rule.first(personal_rng, *person, t, dt, m_migration_parameters);
             auto& target_location  = find_location(target_type, *person);
             auto& current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
                 if (target_location != current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(target_location);
+                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
                     if (wears_mask) {
                         person->migrate_to(target_location);
                     }
@@ -111,14 +113,15 @@ void World::migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip            = m_trip_list.get_next_trip();
-            auto& person          = m_persons[trip.person_id];
+            auto& trip             = m_trip_list.get_next_trip();
+            auto& person           = m_persons[trip.person_id];
+            auto personal_rng      = Person::RandomNumberGenerator(m_rng, *person);
             auto& current_location = person->get_location();
             if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
                 current_location == get_individualized_location(trip.migration_origin)) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-                    person->apply_mask_intervention(target_location);
+                if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                    person->apply_mask_intervention(personal_rng, target_location);
                     person->migrate_to(target_location);
                 }
             }

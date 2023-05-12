@@ -31,7 +31,6 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
     , m_dt(hours(1))
-    , m_rng()
 {
     initialize_locations(m_t);
 }
@@ -57,7 +56,7 @@ void Simulation::advance(TimePoint tmax)
 void Simulation::evolve_world(TimePoint tmax)
 {
     auto dt = std::min(m_dt, tmax - m_t);
-    m_world.evolve(m_t, dt, m_rng_key);
+    m_world.evolve(m_t, dt);
     m_t += m_dt;
 }
 

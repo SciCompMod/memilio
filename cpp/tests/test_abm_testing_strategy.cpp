@@ -17,12 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    mio::abm::Location home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location work(mio::abm::LocationType::Work, 0);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
@@ -60,10 +62,12 @@ TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
 TEST(TestTestingScheme, runScheme)
 {
+    auto rng = mio::RandomNumberGenerator();
+
     std::vector<mio::abm::InfectionState> test_infection_states1 = {mio::abm::InfectionState::InfectedSymptoms,
                                                                     mio::abm::InfectionState::InfectedNoSymptoms};
     std::vector<mio::abm::LocationType> test_location_types1     = {mio::abm::LocationType::Home,
-                                                                    mio::abm::LocationType::Work};
+                                                                mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
@@ -89,11 +93,13 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto person1  = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
+    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
+    mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
+    auto person1     = make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto rng_person1 = mio::abm::Person::RandomNumberGenerator(rng, person1);
     auto person2 =
         make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
+    auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -103,13 +109,15 @@ TEST(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.5))
         .WillOnce(testing::Return(0.9));
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme.run_scheme(person2, loc_work, start_date), true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date),
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
+              false); // Person tests and tests positive
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person2, person2, loc_work, start_date),
+              true); // Person tests and  tests negative
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
               true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_work, start_date), true); // Person doesn't test
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
 
     testing_scheme.add_testing_criteria(testing_criteria1);
     testing_scheme.remove_testing_criteria(testing_criteria1);
-    ASSERT_EQ(testing_scheme.run_scheme(person1, loc_home, start_date), true);
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date), true);
 }

@@ -160,11 +160,13 @@ public:
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
+     * @param[in, out] rng Random number generator for this person.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
      * @param[in] global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                  const GlobalInfectionParameters& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.

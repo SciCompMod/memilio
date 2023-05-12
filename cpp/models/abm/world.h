@@ -88,7 +88,7 @@ public:
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void evolve(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
+    void evolve(TimePoint t, TimeSpan dt);
 
     /** 
      * @brief Add a Location to the World.
@@ -183,19 +183,29 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
+    /**
+    * Get the random number generator used by this world for random events.
+    * Persons use their own generators with the same key as the global one. 
+    * @return The random number generator.
+    */
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
+    }
+
 private:
     /**
      * @brief Person%s interact at their Location and may become infected.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void interaction(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
+    void interaction(TimePoint t, TimeSpan dt);
     /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
+    void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
@@ -209,6 +219,7 @@ private:
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
+    RandomNumberGenerator m_rng; ///< Global random number generator
 };
 
 } // namespace abm

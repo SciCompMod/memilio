@@ -17,7 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/age.h"
+#include "abm/location_type.h"
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestInfection, init)
 {
@@ -25,6 +29,13 @@ TEST(TestInfection, init)
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = mio::abm::AgeGroup::Age15to34;
     auto vac_state_test     = mio::abm::VaccinationState::Unvaccinated;
+
+    //set up a personal RNG for infections
+    //uses uniformdistribution but result doesn't matter, so init before the mock
+    mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
+    auto rng    = mio::RandomNumberGenerator();
+    auto person = mio::abm::Person(rng, loc, mio::abm::AgeGroup::Age15to34, 0);
+    auto prng   = mio::abm::Person::RandomNumberGenerator(rng, person);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -46,7 +57,7 @@ TEST(TestInfection, init)
                                       .infectivity_beta.params.a()))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
+    auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
                                          mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed, true);
 
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);

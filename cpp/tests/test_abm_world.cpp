@@ -17,7 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/random_number_generator.h"
 
 TEST(TestWorld, init)
 {
@@ -351,6 +353,8 @@ TEST(TestWorld, evolveMigration)
 
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
+    auto rng = mio::RandomNumberGenerator();
+
     mio::abm::GlobalInfectionParameters params;
     // make sure the infected person stay in Infected long enough
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), mio::abm::AgeGroup::Age15to34,
@@ -366,6 +370,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto current_time = mio::abm::TimePoint(0);
     auto person       = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
                                         mio::abm::InfectionState::InfectedSymptoms, current_time);
+    auto rng_person   = mio::abm::Person::RandomNumberGenerator(rng, person);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
@@ -385,7 +390,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         mio::abm::TestingScheme({testing_criteria}, testing_frequency, start_date, end_date, test_type, probability);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time),
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
     world.get_testing_strategy().update_activity_status(current_time);
@@ -394,9 +399,10 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .Times(testing::AtLeast(2))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.4));
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), false);
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time), false);
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme); //doesn't get added because of == operator
     world.get_testing_strategy().remove_testing_scheme(testing_scheme);
-    ASSERT_EQ(world.get_testing_strategy().run_strategy(person, work, current_time), true); // no more testing_schemes
+    ASSERT_EQ(world.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+              true); // no more testing_schemes
 }

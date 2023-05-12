@@ -20,9 +20,9 @@
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
-
+#include "abm/infection.h"
+#include "memilio/utils/random_number_generator.h"
 #include <mutex>
 #include <numeric>
 
@@ -57,7 +57,8 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
            m_parameters.get<AerosolTransmissionRates>()[{virus}];
 }
 
-void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                        const GlobalInfectionParameters& global_params) const
 {
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
     auto age_receiver          = person.get_age();
@@ -77,11 +78,11 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
         VirusVariant virus =
-            random_transition(VirusVariant::Count, dt,
+            random_transition(rng, VirusVariant::Count, dt,
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
             person.add_new_infection(
-                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+                Infection(rng, virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
         }
     }
 }

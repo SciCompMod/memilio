@@ -52,26 +52,6 @@ TEST(TestSimulation, advance_random)
     }
 }
 
-TEST(TestDiscreteDistribution, generate)
-{
-    using namespace mio;
-    auto distribution = mio::DiscreteDistribution<size_t>();
-
-    std::vector<double> weights;
-    for (size_t i = 0; i < 50; i++) {
-        weights = {};
-        ASSERT_EQ(distribution(weights), 0);
-
-        weights = {0.5};
-        ASSERT_EQ(distribution(weights), 0);
-
-        weights = {0.5, 1.3, 0.1, 0.4, 0.3};
-        auto d  = distribution(weights);
-        ASSERT_GE(d, 0);
-        ASSERT_LE(d, 4);
-    }
-}
-
 TEST(TestSimulation, advance_subpopulation)
 {
     auto world       = mio::abm::World();
@@ -103,7 +83,7 @@ TEST(TestSimulation, initializeSubpopulation)
 {
     auto world  = mio::abm::World();
     auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
-    auto loc    = world.get_individualized_location(loc_id);
+    auto& loc   = world.get_individualized_location(loc_id);
     ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
 
     auto t   = mio::abm::TimePoint(0);

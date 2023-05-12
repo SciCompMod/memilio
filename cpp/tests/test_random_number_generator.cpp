@@ -4,35 +4,43 @@
 #include <algorithm>
 #include <iterator>
 
-TEST(RandomNumberGenerator, blocks)
-{
-    mio::RandomNumberGenerator rng1, rng2;
-    std::vector<unsigned int> seeds = { 1, 2, 3, 4 };
-    rng1.seed(seeds);
-    rng2.seed(seeds);
-
-    std::vector<mio::RandomNumberGenerator::result_type> samples1;
-    std::generate_n(std::back_inserter(samples1), 100, [&rng1] { return rng1(); });
-
-    rng2.set_block_size(5);
-    std::vector<mio::RandomNumberGenerator::result_type> dump;
-    std::generate_n(std::back_inserter(dump), 23, [&rng2] { return rng2(); });
-    rng2.forward_to_block(19);
-    std::vector<mio::RandomNumberGenerator::result_type> samples2;
-    std::generate_n(std::back_inserter(samples2), 5, [&rng2] { return rng2(); });
-
-    ASSERT_THAT(samples2, testing::ElementsAreArray(samples1.begin() + 95, samples1.end()));
-}
-
-#ifndef NDEBUG
-TEST(RandomNumberGenerator, block_error)
+TEST(RandomNumberGenerator, set_counter)
 {
     mio::RandomNumberGenerator rng;
-    rng.set_block_size(5);
-    std::vector<mio::RandomNumberGenerator::result_type> dump;
-    std::generate_n(std::back_inserter(dump), 123, [&rng] {
-        return rng();
-    });
-    ASSERT_DEATH(rng.forward_to_block(19), ".*");
+    uint64_t n = 10;
+    for (auto i = uint64_t(0); i < n; ++i) {
+        rng();
+    }
+    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(n));
+    auto s1 = rng();
+    for (auto i = uint64_t(0); i < n; ++i) {
+        rng();
+    }
+    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(2 * n + 1));
+
+    rng.set_counter(mio::RNGCounter<uint64_t>{n});
+    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(n));
+    auto s2 = rng();
+
+    ASSERT_EQ(s1, s2);
 }
-#endif
+
+TEST(TestDiscreteDistribution, generate)
+{
+    auto distribution = mio::DiscreteDistributionInPlace<size_t>();
+    auto rng = mio::RandomNumberGenerator();
+
+    std::vector<double> weights;
+    for (size_t i = 0; i < 50; i++) {
+        weights = {};
+        ASSERT_EQ(distribution(rng, {weights}), 0);
+
+        weights = {0.5};
+        ASSERT_EQ(distribution(rng, {weights}), 0);
+
+        weights = {0.5, 1.3, 0.1, 0.4, 0.3};
+        auto d  = distribution(rng, {weights});
+        ASSERT_GE(d, 0);
+        ASSERT_LE(d, 4);
+    }
+}

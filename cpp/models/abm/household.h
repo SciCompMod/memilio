@@ -22,8 +22,8 @@
 #ifndef EPI_ABM_HOUSEHOLD_H
 #define EPI_ABM_HOUSEHOLD_H
 
-#include "abm/abm.h"
 #include "abm/age.h"
+#include "abm/world.h"
 #include "memilio/utils/custom_index_array.h"
 #include <numeric>
 #include <vector>

@@ -22,14 +22,13 @@
 
 #include "abm/age.h"
 #include "abm/location_type.h"
+#include "abm/infection_state.h"
 #include "abm/parameters.h"
 #include "abm/time.h"
-#include "abm/infection.h"
 #include "abm/vaccine.h"
 #include "abm/mask_type.h"
 #include "abm/mask.h"
 #include "memilio/utils/random_number_generator.h"
-
 #include "memilio/utils/memory.h"
 #include <functional>
 
@@ -40,6 +39,7 @@ namespace abm
 
 struct LocationId;
 class Location;
+class Infection;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
@@ -51,31 +51,53 @@ class Person
 public:
     /**
     * Random number generator of individual persons.
-    * Copies the rng counter from a person on construction and updates it on destruction.
-    * For each person, only one generator must be active at the same time.
+    * Increments the rng counter of the person when used.
     * Satisifes the requirments of UniformRandomBitGenerator.
     */
-    class RandomNumberGenerator : RandomNumberGeneratorBase<RandomNumberGenerator>
+    class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
     {
-        public:
-        using result_type = uint64_t;
-
+    public:
+        /**
+        * Creates a random number generator for a person.
+        * @param key Key to be used by the generator.
+        * @param person Person who's counter will be used. 
+        */
         RandomNumberGenerator(RNGKey<uint64_t> key, Person& person)
             : m_person(person)
             , m_key(key)
         {
         }
 
+        /**
+        * Creates a random number generator for a person.
+        * Uses the same key as another random number generator.
+        * @param rng Random number generator who's key will be used.
+        * @param person Person who's counter will be used. 
+        */
+        RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
+            : RandomNumberGenerator(rng.get_key(), person)
+        {
+        }
+
+        /**
+        * @return Get the key.
+        */
         RNGKey<uint64_t> get_key() const
         {
             return m_key;
         }
 
+        /**
+        * @return Get the current counter.
+        */
         RNGCounter<uint64_t> get_counter() const
         {
             return rng_subsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
         }
 
+        /**
+        * Increment the counter.
+        */
         void increment_counter()
         {
             ++m_person.get_rng_counter();
@@ -88,11 +110,13 @@ public:
 
     /**
      * @brief Create a Person.
+     * @param[in, out] rng Random number generator.
      * @param[in, out] location Initial location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age,
+                    uint32_t person_id = INVALID_PERSON_ID);
 
     /**
      * @brief Compare two Person%s.
@@ -109,7 +133,7 @@ public:
      * @param[in] dt Length of the current Simulation TimeStep.
      * @param[in, out] global_infection_parameters Infection parameters that are the same in all Location%s.
      */
-    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
+    void interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
 
     /** 
      * @brief Migrate to a different Location.
@@ -122,15 +146,8 @@ public:
      * @brief Get the latest Infection of the Person.
      * @return The latest Infection of the Person.
      */
-    Infection& get_infection()
-    {
-        return m_infections.back();
-    }
-
-    const Infection& get_infection() const
-    {
-        return m_infections.back();
-    }
+    Infection& get_infection();
+    const Infection& get_infection() const;
 
     /** 
      * @brief Get all Vaccination%s of the Person.
@@ -295,11 +312,12 @@ public:
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
+     * @param[inout] rng Random number generator.
      * @param[in] t TimePoint of the test.
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(TimePoint t, const TestParameters& params);
+    bool get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParameters& params);
 
     /**
      * @brief Get the PersonID of the Person.
@@ -362,10 +380,11 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
+     * @param[inout] rng Random number generator.
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(const Location& target);
+    bool apply_mask_intervention(RandomNumberGenerator& rng, const Location& target);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -431,7 +450,7 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
-    RNGCounter<uint32_t> m_rng_counter; ///< counter for RandomNumberGenerator
+    RNGCounter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
 };
 
 } // namespace abm

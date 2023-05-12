@@ -37,15 +37,17 @@ namespace abm
  * S begin the sum of all rates. Which transition happens is determined by sampling from a discrete distribution
  * with the rates as weights. It's also possible that no transition happens in this time step.
  * In this case the current state is returned.
+ * @tparam RNG Type that satisfies the UniformRandomBitGenerator concept.
  * @tparam T Type that represents the states.
  * @tparam NumTransitions Number of possible transitions.
+ * @param[inout] rng Random number generator.
  * @param[in] current_state Current state before transition.
  * @param[in] dt Length of the time step.
  * @param[in] transitions Array of pairs of new states and their rates (probabilities).
  * @return New state from the list if transition happens, current_state otherwise.
  */
-template <class T, size_t NumTransitions>
-T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&transitions)[NumTransitions])
+template <class RNG, class T, size_t NumTransitions>
+T random_transition(RNG& rng, T current_state, TimeSpan dt, const std::pair<T, double> (&transitions)[NumTransitions])
 {
     assert(std::all_of(std::begin(transitions), std::end(transitions),
                        [](auto& p) {
@@ -60,14 +62,14 @@ T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&t
     if (sum <= 0) { //no transitions or all transitions have rate zero
         return current_state;
     }
-    auto v = ExponentialDistribution<double>::get_instance()(sum);
+    auto v = ExponentialDistribution<double>::get_instance()(rng, sum);
     if (v < dt.days()) {
         //pick one of the possible transitions using discrete distribution
         std::array<double, NumTransitions> rates;
         std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) {
             return t.second;
         });
-        auto random_idx = DiscreteDistribution<size_t>::get_instance()(rates);
+        auto random_idx = DiscreteDistribution<size_t>::get_instance()(rng, rates);
         return transitions[random_idx].first;
     }
 

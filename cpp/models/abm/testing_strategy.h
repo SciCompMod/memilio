@@ -25,6 +25,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include "memilio/utils/random_number_generator.h"
 
 namespace mio
 {
@@ -176,12 +177,13 @@ public:
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
+     * @param[inout] rng Random number generator for the person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person& person, const Location& location, TimePoint t) const;
+    bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingCriteria> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
@@ -227,12 +229,13 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
+     * @param[inout] rng Random number generator for the person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person& person, const Location& location, TimePoint t) const;
+    bool run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t) const;
 
 private:
     std::vector<TestingScheme> m_testing_schemes; ///< Set of schemes that are checked for testing.

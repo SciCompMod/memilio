@@ -111,10 +111,6 @@ public:
         return m_world;
     }
 
-    RandomNumberGenerator& get_rng() {
-        return m_rng;
-    }
-
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
@@ -124,7 +120,6 @@ private:
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
-    RandomNumberGenerator m_rng;
 };
 
 } // namespace abm

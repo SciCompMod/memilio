@@ -165,16 +165,17 @@ void TestingScheme::update_activity_status(TimePoint t)
     m_is_active = (m_start_date <= t && t <= m_end_date);
 }
 
-bool TestingScheme::run_scheme(Person& person, const Location& location, TimePoint t) const
+bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
+                               TimePoint t) const
 {
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
-        double random = UniformDistribution<double>::get_instance()();
+        double random = UniformDistribution<double>::get_instance()(rng);
         if (random < m_probability) {
             if (std::any_of(m_testing_criteria.begin(), m_testing_criteria.end(),
-                            [person, location, t](TestingCriteria tr) {
+                            [&person, &location, t](TestingCriteria tr) {
                                 return tr.evaluate(person, location, t);
                             })) {
-                return !person.get_tested(t, m_test_type.get_default());
+                return !person.get_tested(rng, t, m_test_type.get_default());
             }
         }
     }
@@ -206,18 +207,20 @@ void TestingStrategy::update_activity_status(TimePoint t)
     }
 }
 
-bool TestingStrategy::run_strategy(Person& person, const Location& location, TimePoint t) const
+bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& person, const Location& location,
+                                   TimePoint t) const
 {
     // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
     if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
         return true;
     }
-    return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, t](TestingScheme ts) {
-        if (ts.is_active()) {
-            return ts.run_scheme(person, location, t);
-        }
-        return true;
-    });
+    return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(),
+                       [&person, &location, &rng, t](TestingScheme ts) {
+                           if (ts.is_active()) {
+                               return ts.run_scheme(rng, person, location, t);
+                           }
+                           return true;
+                       });
 }
 
 } // namespace abm
