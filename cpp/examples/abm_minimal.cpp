@@ -20,9 +20,6 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
-#include "abm/world.h"
-#include "memilio/io/io.h"
-#include "abm/location_type.h"
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -33,7 +30,7 @@ void write_results_to_file(const mio::abm::Simulation& sim)
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
+    std::ofstream myfile("abm_minimal.txt", std::ios::out);
     myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         myfile << sim.get_result().get_time(i);
@@ -48,7 +45,6 @@ void write_results_to_file(const mio::abm::Simulation& sim)
             myfile << "\n";
         }
     }
-    myfile.close();
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
