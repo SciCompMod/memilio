@@ -77,14 +77,14 @@ public:
      * @brief: Get VirusVariant.
      * @return VirusVariant of the Infection.
      */
-    const VirusVariant& get_virus_variant() const;
+    VirusVariant get_virus_variant() const;
 
     /**
      * @brief Get the InfectionState of the Infection.
      * @param[in] t TimePoint of the querry.
      * @return InfectionState at the given TimePoint.
      */
-    const InfectionState& get_infection_state(TimePoint t) const;
+    InfectionState get_infection_state(TimePoint t) const;
 
     /**
      * @brief Set the Infection to detected.
