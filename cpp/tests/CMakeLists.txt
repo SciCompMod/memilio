@@ -41,6 +41,7 @@ set(TESTSOURCES
     test_damping_sampling.cpp
     test_dynamic_npis.cpp
     test_regions.cpp
+    test_io_cli.cpp
     test_io_framework.cpp
     test_compartmentsimulation.cpp
     test_mobility_io.cpp
