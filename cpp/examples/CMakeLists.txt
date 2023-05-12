@@ -48,10 +48,11 @@ target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WA
 
 add_executable(twitter_migration_example twitter_migration.cpp)
 target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
+target_compile_options(twitter_migration_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
-target_compile_options(twitter_migration_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_options(ide_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ide_secir_example ide_secir.cpp)
 target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)

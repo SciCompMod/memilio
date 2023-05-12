@@ -22,10 +22,11 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/migration_rules.h"
-#include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/stl_util.h"
 #include "abm/infection.h"
 #include "abm/vaccine.h"
+#include "memilio/utils/mioomp.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/stl_util.h"
 
 namespace mio
 {
@@ -60,7 +61,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    #pragma omp parallel for
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -88,7 +89,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             m_enhanced_migration_rules.push_back(rule);
         }
     }
-    #pragma omp parallel for
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
@@ -132,7 +133,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
-    #pragma omp parallel for
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt);
@@ -141,7 +142,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
 
 void World::end_step(TimePoint t, TimeSpan dt)
 {
-    #pragma omp parallel for
+    PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
         location->store_subpopulations(t + dt);

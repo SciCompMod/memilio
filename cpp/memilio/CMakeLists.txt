@@ -82,6 +82,7 @@ add_library(memilio
     utils/random_number_generator.cpp
     utils/miompi.h
     utils/miompi.cpp
+    utils/mioomp.h
 )
 
 target_include_directories(memilio PUBLIC

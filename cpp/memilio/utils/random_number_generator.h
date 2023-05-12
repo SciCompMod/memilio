@@ -86,7 +86,7 @@ uint64_t rng_generate(K key, C counter)
 template <class U, class T, class C>
 RNGCounter<U> rng_subsequence_counter(T subsequence_idx, C counter)
 {
-    static_assert(sizeof(U) > sizeof(C), "");
+    static_assert(sizeof(U) > sizeof(typename C::ValueType), "Subsequence counter must be smaller than requested total counter.");
     //TODO allow sizeof(C) = sizeof(U) and check actual values?
     //TODO: assert value of subequence_idx
 
