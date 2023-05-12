@@ -137,7 +137,7 @@ public:
     }
 };
 
-class RandomNumberGenerator : RandomNumberGeneratorBase<RandomNumberGenerator>
+class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
 {
 public:
     RandomNumberGenerator()
@@ -284,12 +284,7 @@ private:
      * with a static thread local RNG engine.
      * Constructors are private, use get_instance to get the current version.
      */
-    DistributionAdapter()
-    {
-        m_generator = [](auto&& params) {
-            return DistT(params)(thread_local_rng());
-        };
-    }
+    DistributionAdapter() = default;
     DistributionAdapter(const DistributionAdapter&) = default;
     DistributionAdapter& operator=(const DistributionAdapter&) = default;
     DistributionAdapter(DistributionAdapter&&) = default;
@@ -303,10 +298,15 @@ public:
      * std::uniform_int_distribution is constructed from two integers, so 
      * DistributionAdapter<std::uniform_int_distribution>::operator() accepts two integers as well.
      */
-    template <class... T>
-    ResultType operator()(T&&... params)
+    template <class RNG, class... T>
+    ResultType operator()(RNG& rng, T&&... params)
     {
-        return m_generator(typename DistT::param_type{std::forward<T>(params)...});
+        if (m_generator) { 
+            //unlikely outside of tests
+            return m_generator(typename DistT::param_type{std::forward<T>(params)...});
+        } else {
+            return DistT(std::forward<T>(params)...)(rng);
+        }
     }
 
     /**
