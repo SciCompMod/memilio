@@ -46,14 +46,14 @@ namespace mio
 {
 namespace details
 {
-static uint64_t to_uint64(r123array2x32 tf_array)
+inline uint64_t to_uint64(r123array2x32 tf_array)
 {
     uint64_t i;
     std::memcpy(&i, tf_array.data(), sizeof(uint64_t));
     return i;
 }
 
-static r123array2x32 to_r123_array(uint64_t i)
+inline r123array2x32 to_r123_array(uint64_t i)
 {
     threefry2x32_ctr_t c;
     std::memcpy(c.data(), &i, sizeof(uint64_t));
