@@ -37,7 +37,7 @@ Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint
     , m_agegroups(num_agegroups)
     , m_capacity_adapted_transmission_risk(false)
     , m_parameters(num_agegroups)
-    , m_cells(std::vector<Cell>(num_cells, 6))
+    , m_cells(num_cells, num_agegroups)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {

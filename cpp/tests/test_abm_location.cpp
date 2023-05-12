@@ -87,7 +87,7 @@ TEST(TestLocation, CacheExposureRate)
     using testing::Return;
 
     {
-        mio::AgeGroup age = mio::AgeGroup(1);
+        mio::AgeGroup age              = mio::AgeGroup(1);
         mio::abm::VirusVariant variant = mio::abm::VirusVariant::Wildtype;
 
         auto t  = mio::abm::TimePoint(0);
@@ -134,9 +134,9 @@ TEST(TestLocation, reachCapacity)
 {
     using testing::Return;
 
-    auto t      = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
-    auto dt     = mio::abm::hours(1);
-    auto world  = mio::abm::World(6);
+    auto t     = mio::abm::TimePoint{mio::abm::hours(8).seconds()};
+    auto dt    = mio::abm::hours(1);
+    auto world = mio::abm::World(6);
 
     //setup so p1 doesn't transition
     world.parameters.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34,

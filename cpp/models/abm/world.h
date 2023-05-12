@@ -71,20 +71,30 @@ public:
      */
     World(const World& other)
         : parameters(other.parameters)
+        , m_locations((uint32_t)LocationType::Count)
         , m_trip_list(other.m_trip_list)
     {
+        // Create copies of persons in the world
         auto persons = other.get_persons();
         for (auto& person : persons) {
-            m_persons.push_back(std::make_unique<Person>(Person(person)));
+            m_persons.push_back(std::make_unique<Person>(person));
         }
+
+        // Create copies of locations in the world
+        for (auto&& other_locations : other.get_locations()) {
+            for (auto&& other_location : other_locations) {
+                auto& locations = m_locations[(uint32_t)other_location->get_type()];
+                locations.emplace_back(std::make_unique<Location>(*other_location));
+            }
+        }
+
         use_migration_rules(other.m_use_migration_rules);
     }
 
     //type is move-only for stable references of persons/locations
     World(World&& other)            = default;
     World& operator=(World&& other) = default;
-    // World(const World&)            = delete;
-    World& operator=(const World&) = delete;
+    World& operator=(const World&)  = delete;
 
     /**
      * serialize this. 
@@ -95,7 +105,7 @@ public:
     {
         auto obj = io.create_object("World");
         obj.add_element("NumAgeGroups", parameters.get_num_groups());
-        obj.add_list("Locations", get_locations().begin(), get_locations().end());
+        // obj.add_list("Locations", get_locations().begin(), get_locations().end());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
         for (size_t i = 0; i < trip_list.num_trips(); i++) {

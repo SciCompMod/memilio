@@ -824,13 +824,12 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Option to save the current run result to file
         if (save_result_result && save_single_runs) {
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
-            // save_result_result =
-                //save_result_with_params(ensemble_results.back(), ensemble_params.back(), loc_ids, result_dir, run_idx);
+            
         }
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
-    //BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, loc_ids, result_dir, save_single_runs));
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, loc_ids, result_dir, save_single_runs));
     return mio::success();
 }
 

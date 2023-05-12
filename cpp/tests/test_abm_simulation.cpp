@@ -77,7 +77,7 @@ TEST(TestSimulation, advance_subpopulation)
         add_test_person(world, location_id, AGE_GROUP_35_TO_59, mio::abm::InfectionState::Exposed);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-    // sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
 
     for (size_t i = 0; i < 51; i++) {
         auto v = school.get_subpopulations().get_value(i);
