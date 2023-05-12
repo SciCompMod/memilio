@@ -61,36 +61,6 @@ public:
     */
     using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
-    struct RandomNumberGenerator
-    {
-    public:
-        RandomNumberGenerator(RNGKey<uint64_t> key, size_t run_idx) 
-        : m_key(key)
-        , m_counter(rng_subsequence_counter<uint64_t>(run_idx, RNGCounter<uint32_t>(0)))
-        {}
-        using result_type = uint64_t;
-
-        static result_type min() {
-            return 0;
-        }
-        static result_type max() {
-            return std::numeric_limits<uint64_t>::max();
-        }
-
-        result_type operator()() {
-            return rng_generate(m_key, m_counter);
-        }
-
-        RNGCounter<uint64_t> counter() const
-        {
-            return m_counter;
-        }
-
-    private:
-        RNGKey<uint64_t> m_key;
-        RNGCounter<uint64_t> m_counter;
-    };
-
     /**
      * create study for graph of compartment models.
      * @param graph graph of parameters
@@ -169,7 +139,8 @@ public:
 #else
         num_procs = 1;
         rank      = 0;
-#endif
+#endif  
+        m_rng.synchronize();
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
         auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
@@ -179,14 +150,24 @@ public:
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-            auto rng = RandomNumberGenerator(m_rng_key, run_idx);
+            //prepare rng for this run
+            //assume that sampling the graph uses the thread local rng and isn't multithreaded
+            auto initial_rng_counter =
+                rng_subsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), RNGCounter<uint32_t>(0));
+            m_rng.set_counter(initial_rng_counter);
+            thread_local_rng() = m_rng;
 
+            //sample
             log(LogLevel::info, "ParameterStudies: run {}", run_idx);
-            auto sim = create_sampled_simulation(sample_graph, rng);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", rng.counter().get());
+            auto sim = create_sampled_simulation(sample_graph);
 
+            m_rng = thread_local_rng();
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (m_rng.get_counter() - initial_rng_counter).get());
+
+            //perform run
             sim.advance(m_tmax);
 
+            //handle result and store
             ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
         }
 
@@ -319,6 +300,10 @@ public:
     }
     /** @} */
 
+    RandomNumberGenerator& get_rng() {
+        return m_rng;
+    }
+
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
@@ -366,7 +351,7 @@ private:
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
     //
-    RNGKey<uint64_t> m_rng_key;
+    RandomNumberGenerator m_rng;
 };
 
 } // namespace mio

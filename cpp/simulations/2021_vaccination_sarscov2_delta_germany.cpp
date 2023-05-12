@@ -812,7 +812,7 @@ int main(int argc, char** argv)
 
     //mio::thread_local_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize_seeds();
+    mio::thread_local_rng().synchronize();
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
         for (auto s : mio::thread_local_rng().get_seeds()) {

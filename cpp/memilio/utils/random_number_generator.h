@@ -28,19 +28,36 @@
 
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wexpansion-to-defined") //Random123 handles the portability of this warning internally
+#include "Random123/array.h"
 #include "Random123/threefry.h"
 GCC_CLANG_DIAGNOSTIC(pop)
 
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <numeric>
 #include <random>
-#include <sstream>
 #include <type_traits>
 
 namespace mio
 {
+namespace details
+{
+static uint64_t to_uint64(r123array2x32 tf_array)
+{
+    uint64_t i;
+    std::memcpy(&i, tf_array.data(), sizeof(uint64_t));
+    return i;
+}
+
+static r123array2x32 to_r123_array(uint64_t i)
+{
+    threefry2x32_ctr_t c;
+    std::memcpy(c.data(), &i, sizeof(uint64_t));
+    return c;
+}
+}
 
 template <class T>
 struct RNGKey : TypeSafe<T, RNGKey<T>>, OperatorComparison<RNGKey<T>> {
@@ -56,33 +73,12 @@ struct RNGCounter : TypeSafe<T, RNGCounter<T>>,
     using TypeSafe<T, RNGCounter<T>>::TypeSafe;
 };
 
-static uint64_t to_uint64(threefry2x32_ctr_t c)
-{
-    uint64_t i;
-    std::memcpy(&i, c.data(), sizeof(uint64_t));
-    return i;
-}
-
-static threefry2x32_ctr_t to_r123_ctr(uint64_t i)
-{
-    threefry2x32_ctr_t c;
-    std::memcpy(c.data(), &i, sizeof(uint64_t));
-    return c;
-}
-
-static threefry2x32_key_t to_r123_key(uint64_t i)
-{
-    threefry2x32_key_t c;
-    std::memcpy(c.data(), &i, sizeof(uint64_t));
-    return c;
-}
-
 template <class K, class C>
 uint64_t rng_generate(K key, C counter)
 {
     auto c = static_cast<uint64_t>(counter.get());
     auto k = static_cast<uint64_t>(key.get());
-    return to_uint64(threefry2x32(to_r123_key(k), to_r123_ctr(c)));
+    return details::to_uint64(threefry2x32(details::to_r123_array(k), details::to_r123_array(c)));
 }
 
 template <class U, class T, class C>
@@ -111,68 +107,79 @@ RNGCounter<U> rng_subsequence_counter(C counter)
     return RNGCounter<U>(static_cast<U>(counter.get()));
 }
 
-/**
- * Models a uniform_random_bit_generator.
- * Keeps track of its seeds so they can be logged or set.
- * The generated sequence can be segmented into blocks that can help to reproduce 
- * simulations involving random numbers by reliably generating a specific part 
- * of the sequence or to assign each thread/process a different sequence.
- * @see thread_local_rng for a static instance.
- */
-class RandomNumberGenerator
+template<class SeedSeq>
+RNGKey<uint64_t> seed_rng_key(SeedSeq& seed_seq)
+{
+    auto tf_key = threefry2x32_key_t::seed(seed_seq);
+    return RNGKey<uint64_t>(details::to_uint64(tf_key));
+}
+
+template<class Derived>
+class RandomNumberGeneratorBase
 {
 public:
-    using result_type = std::mt19937_64::result_type;
+    using result_type = uint64_t;
 
     static constexpr result_type min()
     {
-        return std::mt19937_64::min();
+        return std::numeric_limits<result_type>::min();
     }
     static constexpr result_type max()
     {
-        return std::mt19937_64::max();
+        return std::numeric_limits<result_type>::max();
     }
     result_type operator()()
     {
-        ++m_num_generated;
-        return m_rng();
+        auto self = static_cast<Derived*>(this);
+        auto r = rng_generate(self->get_key(), self->get_counter());
+        self->increment_counter();
+        return r;
+    }
+};
+
+class RandomNumberGenerator : RandomNumberGeneratorBase<RandomNumberGenerator>
+{
+public:
+    RandomNumberGenerator()
+        : m_counter(0)
+    {
+        seed(generate_seeds());
     }
 
-    static std::vector<unsigned int> generate_seeds()
+    RNGKey<uint64_t> get_key() const {
+        return m_key;
+    }
+    RNGCounter<uint64_t> get_counter() const {
+        return m_counter;
+    }
+    void set_counter(RNGCounter<uint64_t> counter) {
+        m_counter = counter;
+    }
+    void increment_counter() {
+        ++m_counter;
+    }
+    static std::vector<uint32_t> generate_seeds()
     {
         std::random_device rd;
         return {rd(), rd(), rd(), rd(), rd(), rd()};
     }
 
-    RandomNumberGenerator()
-        : m_seeds(generate_seeds())
+    void seed(const std::vector<uint32_t>& seeds) 
     {
-        std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
-        m_rng.seed(sseq);
+        m_seeds = seeds;
+        std::seed_seq seed_seq(m_seeds.begin(), m_seeds.end());
+        m_key = seed_rng_key(seed_seq);
     }
-    std::vector<unsigned int> get_seeds() const
+
+    const std::vector<uint32_t> get_seeds() const 
     {
         return m_seeds;
     }
 
     /**
-    * Seed this random number generator.
-    * Starts a new random sequence at block 0.
-    * @param seeds at least one seed, e.g., generated using std::random_device. More seeds increase quality.
-    */
-    void seed(const std::vector<unsigned int>& seeds)
-    {
-        assert(seeds.size() > 0);
-        m_seeds = seeds;
-        std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
-        m_rng.seed(sseq);
-        m_num_generated = 0;
-    }
-
-    /**
     * Set the seeds in all MPI processes the same as in the root.
     */
-    void synchronize_seeds()
+    void synchronize()
     {
 #ifdef MEMILIO_ENABLE_MPI
         int rank;
@@ -186,46 +193,16 @@ public:
             m_seeds.assign(num_seeds, 0);
         }
         MPI_Bcast(m_seeds.data(), num_seeds, MPI_UNSIGNED, 0, mpi::get_world());
+        if (rank != 0) {
+            seed(m_seeds);
+        }
 #endif
     }
 
-    /**
-    * Get/Set the the size of blocks of the generated sequence.
-    * This affects the number of samples skipped by forward_to_block().
-    * Skipping samples is an O(n) operation, where n is the number of skipped samples, so choose the block size with care.
-    * @{
-    */
-    void set_block_size(size_t block_size)
-    {
-        m_block_size = block_size;
-    }
-    size_t get_block_size() const
-    {
-        return m_block_size;
-    }
-    /**@}*/
-
-    /**
-    * Forward to block index i.
-    * Skips numbers in the generated sequence up to the beginning of the block.
-    * The next number generated will be element block_size * i of the random sequence.
-    * This operation is O(n), where n is the number of skipped samples, so choose the block size with care.
-    * @param i block index. May not be a block that is already passed or started.
-    */
-    void forward_to_block(size_t block_idx)
-    {
-        assert(block_idx * m_block_size >= m_num_generated &&
-               "Can't forward to a previous block or one that is started.");
-        auto num_remaining = m_block_size * block_idx - m_num_generated;
-        m_rng.discard(num_remaining);
-        m_num_generated += num_remaining;
-    }
-
 private:
-    std::vector<unsigned int> m_seeds;
-    std::mt19937_64 m_rng;
-    size_t m_block_size = 1'000'000; ///< number of samples in a block, will be skipped by forward_to_block
-    size_t m_num_generated = 0; ///< number of samples generated (or skipped) since the last seed
+    RNGKey<uint64_t> m_key;
+    RNGCounter<uint64_t> m_counter;
+    std::vector<uint32_t> m_seeds;
 };
 
 /**
