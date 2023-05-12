@@ -227,18 +227,57 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::arg("model"));
 
-    m.def("set_nodes", [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
-                          const std::string& population_data_path, bool is_node_for_county,
-                          mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph, decltype(mio::osecir::read_input_data_county<mio::osecir::Model>)&& read_func,
-                          decltype(mio::get_node_ids)&& node_func, const std::vector<double>& scaling_factor_inf,
-                          double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
-                          bool export_time_series = false) {
-        auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-                       mio::MigrationParameters, mio::osecir::Parameters, decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
-                       decltype(mio::get_node_ids)>(
-            params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph, read_func,
-            node_func, scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
-        return pymio::check_and_throw(result);}, py::return_value_policy::move);
+    // TODO: These functions are in general not secir dependent, only with the current config
+    m.def(
+        "set_nodes",
+        [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
+           const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           decltype(mio::osecir::read_input_data_county<mio::osecir::Model>)&& read_func,
+           decltype(mio::get_node_ids)&& node_func, const std::vector<double>& scaling_factor_inf,
+           double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0, bool export_time_series = false) {
+            auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns,
+                                         mio::osecir::Model, mio::MigrationParameters, mio::osecir::Parameters,
+                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
+                                         decltype(mio::get_node_ids)>(
+                params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
+                read_func, node_func, scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days,
+                export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "set_edges",
+        [](const fs::path& data_dir, io::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
+           ReadFunction&& read_func) {
+            auto result = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+                                         mio::osecir::InfectionState, mio::osecir::Parameters,
+                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model>)>(
+                data_dir, params_graph, migrating_compartments, contact_locations_size, read_func);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "read_input_data_county",
+        [](mio::osecir::Model, mio::Date date, const std::vector<int>& county,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days = 0,
+           bool export_time_series = false) {
+            auto result = mio::read_input_data_county<mio::osecir::Model>(
+                model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    m.def(
+        "get_node_ids",
+        [](const std::string& path, bool is_node_for_county) {
+            auto result = mio::get_node_ids(path, is_node_for_county);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));

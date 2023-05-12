@@ -6,6 +6,7 @@ import memilio.simulation as mio
 from enum import Enum, auto
 
 from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
+import memilio.simulation.secir as secir
 from memilio.simulation.secir import AgeGroup, Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
@@ -207,14 +208,40 @@ class Simulation:
         for i in range(num_nodes):
             params_nodes.append(copy.copy(params))
 
+        graph = secir.ModelGraph()
+
+        scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+        scaling_factor_icu = 1.0
+        tnt_capacity_factor = 7.5 / 100000.
+        migrating_compartments = [State.Susceptible, State.Exposed,
+                                  State.InfectedNoSymptoms, State.InfectedSymptoms, State.Recovered]
+
+        # TODO: Call with templates
+        read_function_nodes = mio.read_input_data_county()
+        read_function_edges = np.loadtxt()
+        node_id_function = mio.get_node_ids()
+
+        # TODO: How to call io functions
+    #     set_node_function = mio.set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
+    #                    mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
+    #                    decltype(node_id_function)>;
+    #      =
+    #     mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+    #                    mio::osecir::InfectionState, decltype(read_function_edges)>;
+    # BOOST_OUTCOME_TRY(
+    #     set_node_function(params, start_date, end_date, data_dir,
+    #                       mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
+    #                       true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+    #                       scaling_factor_icu, tnt_capacity_factor, 0, false));
+    # BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+    #                                     read_function_edges));
+
         params_nodes = read_population_data_county(
             path.join(data_dir, "pydata", "Germany"),
             (self._start_date.year, self._start_date.month, self._start_date.day),
             county_ids,
             [2.5], 1.0,
             params_nodes)
-
-        graph = SecirParamsGraph()
 
         # set counties
         for i in range(num_nodes):
