@@ -17,13 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef CLI_H_
-#define CLI_H_
+#ifndef IO_CLI_H_
+#define IO_CLI_H_
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/parameter_set.h"
 
+#include <ostream>
 #include <string>
 #include <iostream>
 #include <functional>
@@ -186,13 +187,13 @@ inline bool name_matches_parameter(const std::string& name)
 }
 
 /// @brief End recursion
-inline void write_help_impl(const typelist<>)
+inline void write_help_impl(const typelist<>, std::ostream&)
 {
 }
 
 /// @brief Recursively write a line of the --help output for Parameter T
 template <class T, class... Ts>
-void write_help_impl(const typelist<T, Ts...>)
+void write_help_impl(const typelist<T, Ts...>, std::ostream& os)
 {
     // Max. space and offsets used to print everything nicely.
     const size_t name_space         = 16;
@@ -205,26 +206,26 @@ void write_help_impl(const typelist<T, Ts...>)
     const std::string description = Description<T>::get();
     const std::string alias       = Alias<T>::get();
     // Write name with "--" prefix and "  " indent
-    std::cout << "  --" << name;
+    os << "  --" << name;
     if (name.size() <= name_space) {
-        std::cout << std::string(name_space - name.size(), ' ');
+        os << std::string(name_space - name.size(), ' ');
     }
     else if (description.size() > 0 || alias.size() > 0) {
-        std::cout << "\n" << std::string(name_space + name_indent, ' ');
+        os << "\n" << std::string(name_space + name_indent, ' ');
     }
     // Write alias (if available) with "-" prefix and "  " indent
     size_t space = alias_space - alias.size();
     if (alias.size() > 0) {
-        std::cout << "  -" << alias;
+        os << "  -" << alias;
     }
     else {
         space += alias_indent;
     }
     // Write description (if available) and end line indentation
-    std::cout << std::string(space + description_indent, ' ');
-    std::cout << description << "\n";
+    os << std::string(space + description_indent, ' ');
+    os << description << "\n";
     // Write next entry
-    write_help_impl(typelist<Ts...>());
+    write_help_impl(typelist<Ts...>(), os);
 }
 
 /**
@@ -235,14 +236,14 @@ void write_help_impl(const typelist<T, Ts...>)
  * @tparam Set A parameter set.
  */
 template <class... T, template <class...> class Set>
-void write_help(const std::string& executable_name, const Set<T...>& /* parameters */)
+void write_help(const std::string& executable_name, const Set<T...>& /* parameters */, std::ostream& os)
 {
     // help text preamble
-    std::cout << "Usage: " << executable_name << " <option> <value> ...\n"
-              << "Values must be entered as json values, i.e. the expression to the right of \"Name : \".\n"
-              << "Options:\n";
+    os << "Usage: " << executable_name << " <option> <value> ...\n"
+       << "Values must be entered as json values, i.e. the expression to the right of \"Name : \".\n"
+       << "Options:\n";
     // print options recursively
-    write_help_impl(typelist<Help, PrintOption, T...>());
+    write_help_impl(typelist<Help, PrintOption, T...>(), os);
 }
 
 /// @brief End recursion
@@ -352,7 +353,7 @@ struct OptionVerifier {
     {
         const auto field_a     = Field<OptionA>::get();
         const auto is_optional = !is_required<Field, OptionA>::value;
-        assert(is_optional || field_a != "" && "Option is missing required field.");
+        assert((is_optional || field_a != "") && "Option is missing required field.");
     }
 
     template <template <class> class Field, class OptionA, class OptionB>
@@ -360,7 +361,7 @@ struct OptionVerifier {
     {
         const auto field_a = Name<OptionA>::get();
         const auto field_b = Name<OptionB>::get();
-        assert(field_a != field_b && "Options may not have duplicate fields.");
+        assert((field_a != field_b) && "Options may not have duplicate fields. (field required)");
     }
 
     template <template <class> class Field, class OptionA, class OptionB>
@@ -368,7 +369,8 @@ struct OptionVerifier {
     {
         auto field_a = Field<OptionA>::get();
         auto field_b = Field<OptionB>::get();
-        assert(field_a == "" || field_b == "" || field_a != field_b && "Options may not have duplicate fields.");
+        assert((field_a == "" || field_b == "" || field_a != field_b) &&
+               "Options may not have duplicate fields. (field optional)");
     }
 };
 
@@ -434,7 +436,7 @@ void verify_options(Set<T...> /* parameters */)
  */
 template <class Set>
 mio::IOResult<void> command_line_interface(const std::string& executable_name, const int argc, char** argv,
-                                           Set& parameters)
+                                           Set& parameters, std::ostream& os = std::cout)
 {
     using namespace mio::details::cli;
     // make sure there are no duplicate names or aliases
@@ -443,7 +445,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
     for (int i = 1; i < argc; i++) {
         if (Identifier(argv[i]).matches_parameter<Help>()) {
             // print the help dialogue and exit
-            write_help(executable_name, parameters);
+            write_help(executable_name, parameters, os);
             std::exit(0);
         }
     }
@@ -455,7 +457,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
                 // try to get the parameter's json value
                 BOOST_OUTCOME_TRY(value, get_param(parameters, argv[i]));
                 // print the name (or alias) and value
-                std::cout << argv[i] << ":\n" << value << "\n";
+                os << "Option " << argv[i] << ":\n" << value << "\n";
             }
             // exit after all values are printed
             std::exit(0);
@@ -506,14 +508,19 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
  */
 template <class... Parameters, template <class...> class Set = ParameterSet>
 mio::IOResult<Set<Parameters...>> command_line_interface(const std::string& executable_name, const int argc,
-                                                         char** argv)
+                                                         char** argv, std::ostream& os = std::cout)
 {
     static_assert(sizeof...(Parameters) != 0, "At least one Parameter is required.");
     Set<Parameters...> parameters;
-    command_line_interface(executable_name, argc, argv, parameters);
-    return parameters;
+    auto result = command_line_interface(executable_name, argc, argv, parameters, os);
+    if (result) {
+        return mio::IOResult<Set<Parameters...>>(mio::success(std::move(parameters)));
+    }
+    else {
+        return mio::IOResult<Set<Parameters...>>(mio::failure(result.error().code(), result.error().message()));
+    }
 }
 
 } // namespace mio
 
-#endif
+#endif // IO_CLI_H_
