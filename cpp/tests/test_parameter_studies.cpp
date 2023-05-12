@@ -154,6 +154,7 @@ TEST(ParameterStudies, sample_graph)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study   = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 0.0, 0.5, 1);
+    mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
     auto results = study.run([](auto&& g) {
         return draw_sample(g);
     });
@@ -306,6 +307,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
     mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, 1);
+    mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
     parameter_study.set_num_runs(1);

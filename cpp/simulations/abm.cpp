@@ -775,6 +775,14 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     set_parameters(infection_params);
     auto world = mio::abm::World(infection_params);
 
+    // world.get_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    printf("Seeds: ");
+    for (auto s : world.get_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
+
     // Create the world object from statistical data.
     create_world_from_statistical_data(world);
 
@@ -871,13 +879,6 @@ int main(int argc, char** argv)
         printf("\tStore the results in <result_dir>.\n");
         return 0;
     }
-
-    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
-    //printf("Seeds: ");
-    //for (auto s : mio::thread_local_rng().get_seeds()) {
-    //    printf("%u, ", s);
-    //}
-    //printf("\n");
 
     auto result = run(result_dir, num_runs, save_single_runs);
     if (!result) {

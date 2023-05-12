@@ -150,6 +150,8 @@ public:
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
+            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
+
             //prepare rng for this run
             //assume that sampling the graph uses the thread local rng and isn't multithreaded
             auto initial_rng_counter =
@@ -158,7 +160,6 @@ public:
             thread_local_rng() = m_rng;
 
             //sample
-            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
             auto sim = create_sampled_simulation(sample_graph);
 
             m_rng = thread_local_rng();
@@ -212,12 +213,25 @@ public:
         std::vector<SimulationGraph> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
+        thread_local_rng() = m_rng;
+
         for (size_t i = 0; i < m_num_runs; i++) {
+            log(LogLevel::info, "ParameterStudies: run {}", i);
+
+            //prepare rng for this run
+            //assume that sampling the graph uses the thread local rng and isn't multithreaded
+            auto initial_rng_counter =
+                rng_subsequence_counter<uint64_t>(static_cast<uint32_t>(i), RNGCounter<uint32_t>(0));
+            thread_local_rng().set_counter(initial_rng_counter);
             auto sim = create_sampled_simulation(sample_graph);
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (m_rng.get_counter() - initial_rng_counter).get());
+
             sim.advance(m_tmax);
 
             ensemble_result.emplace_back(std::move(sim).get_graph());
         }
+
+        m_rng = thread_local_rng();
 
         return ensemble_result;
     }

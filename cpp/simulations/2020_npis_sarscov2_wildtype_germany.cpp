@@ -546,6 +546,17 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::osecir::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+
+    // parameter_study.get_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : parameter_study.get_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+
     auto save_single_run_result = mio::IOResult<void>(mio::success());
     auto ensemble = parameter_study.run(
         [](auto&& graph) {
@@ -650,17 +661,6 @@ int main(int argc, char** argv)
     }
     if (mio::mpi::is_root()) {
         printf("Saving results to \"%s\".\n", result_dir.c_str());
-    }
-
-    // mio::thread_local_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize();
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : mio::thread_local_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
     }
 
     auto result = run(mode, data_dir, save_dir, result_dir, save_single_runs);
