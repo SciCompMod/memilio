@@ -26,11 +26,13 @@
 #include "memilio/utils/span.h"
 #include "memilio/utils/type_safe.h"
 
+MSVC_WARNING_DISABLE_PUSH(4127)
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wexpansion-to-defined") //Random123 handles the portability of this warning internally
 #include "Random123/array.h"
 #include "Random123/threefry.h"
 GCC_CLANG_DIAGNOSTIC(pop)
+MSVC_WARNING_POP
 
 #include <cassert>
 #include <cstdint>
