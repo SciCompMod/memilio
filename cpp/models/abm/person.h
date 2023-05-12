@@ -52,7 +52,7 @@ public:
     /**
     * Random number generator of individual persons.
     * Increments the rng counter of the person when used.
-    * Satisifes the requirments of UniformRandomBitGenerator.
+    * @see mio::RandomNumberGeneratorBase
     */
     class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
     {
@@ -62,7 +62,7 @@ public:
         * @param key Key to be used by the generator.
         * @param person Person who's counter will be used. 
         */
-        RandomNumberGenerator(RNGKey<uint64_t> key, Person& person)
+        RandomNumberGenerator(Key<uint64_t> key, Person& person)
             : m_person(person)
             , m_key(key)
         {
@@ -82,7 +82,7 @@ public:
         /**
         * @return Get the key.
         */
-        RNGKey<uint64_t> get_key() const
+        Key<uint64_t> get_key() const
         {
             return m_key;
         }
@@ -90,7 +90,7 @@ public:
         /**
         * @return Get the current counter.
         */
-        RNGCounter<uint64_t> get_counter() const
+        Counter<uint64_t> get_counter() const
         {
             return rng_subsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
         }
@@ -105,7 +105,7 @@ public:
 
     private:
         Person& m_person;
-        RNGKey<uint64_t> m_key;
+        Key<uint64_t> m_key;
     };
 
     /**
@@ -426,7 +426,11 @@ public:
         return 1.; // put implementation in .cpp
     }
 
-    RNGCounter<uint32_t>& get_rng_counter()
+    /**
+    * Get this persons random number generator counter.
+    * @see mio::abm::Person::RandomNumberGenerator.
+    */
+    Counter<uint32_t>& get_rng_counter()
     {
         return m_rng_counter;
     }
@@ -450,7 +454,7 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
-    RNGCounter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
+    Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator
 };
 
 } // namespace abm

@@ -46,6 +46,9 @@ namespace mio
 {
 namespace details
 {
+/**
+* Convert a Random123 array type (rng counters and keys) to uint64_t.
+*/
 inline uint64_t to_uint64(r123array2x32 tf_array)
 {
     uint64_t i;
@@ -53,6 +56,9 @@ inline uint64_t to_uint64(r123array2x32 tf_array)
     return i;
 }
 
+/**
+* Convert a uint64_t to a Random123 array type (rng counters and keys).
+*/
 inline r123array2x32 to_r123_array(uint64_t i)
 {
     threefry2x32_ctr_t c;
@@ -61,30 +67,75 @@ inline r123array2x32 to_r123_array(uint64_t i)
 }
 }
 
+/**
+* A key type for counter based random number generators.
+* @tparam an unsigned integer type that determines the size of the key, i.e., the number of different sequences.
+*/
 template <class T>
-struct RNGKey : TypeSafe<T, RNGKey<T>>, OperatorComparison<RNGKey<T>> {
+struct Key : TypeSafe<T, Key<T>>, OperatorComparison<Key<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
-    using TypeSafe<T, RNGKey<T>>::TypeSafe;
+    using TypeSafe<T, Key<T>>::TypeSafe;
 };
 
+/**
+* A counter type for counter based random number generators.
+* @tparam an unsigned integer type that determines the size of the counter, i.e., the length of the random sequence.
+*/
 template <class T>
-struct RNGCounter : TypeSafe<T, RNGCounter<T>>,
-                    OperatorComparison<RNGCounter<T>>,
-                    OperatorAdditionSubtraction<RNGCounter<T>> {
+struct Counter : TypeSafe<T, Counter<T>>,
+                    OperatorComparison<Counter<T>>,
+                    OperatorAdditionSubtraction<Counter<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
-    using TypeSafe<T, RNGCounter<T>>::TypeSafe;
+    using TypeSafe<T, Counter<T>>::TypeSafe;
 };
 
-template <class K, class C>
-uint64_t rng_generate(K key, C counter)
+/**
+* Generate a random 64-bit number.
+* A counter based generator with no internal state, increment the counter
+* to get the next value in the random sequence.
+* Flexible counter size (as many bits as you need) and trivially parallelizable by either 
+* using subsequences of counters or different keys.
+* @tparam C An instance of Counter template type with up to 64 bit.
+* @param key Generator key. Can be seeded with initial randomness using mio::seed_rng_key
+* @param counter Sequence counter. Increment to get the next value in the sequence.
+* @return 64-bit random number.
+*/
+template <class C>
+uint64_t random(Key<uint64_t> key, C counter)
 {
     auto c = static_cast<uint64_t>(counter.get());
     auto k = static_cast<uint64_t>(key.get());
     return details::to_uint64(threefry2x32(details::to_r123_array(k), details::to_r123_array(c)));
 }
 
+/**
+* Seed a counter based random number generator key.
+* @tparam A type that satisfies standard SeedSeq.
+* @param seed_seq A seed sequence, e.g. initialized using std::random_device.
+* @return A seeded key.
+*/
+template<class SeedSeq>
+Key<uint64_t> seed_rng_key(SeedSeq& seed_seq)
+{
+    auto tf_key = threefry2x32_key_t::seed(seed_seq);
+    return Key<uint64_t>(details::to_uint64(tf_key));
+}
+
+/**
+* Get the counter in the total random sequence for a counter in a given subsequence.
+* The total random sequence is split into contiguous subsequences whose length is determined by the size
+* of the given subsequence counter. The total sequence has length 2^u, where u is the size in bits
+* of the requested counter type. The subsequences have length 2^n, where n is the size in bits of the 
+* provided counter type. There are up to 2^(u - n) subsequences.
+* @tparam U The desired counter type of the total sequence.
+* @tparam T Any integer type.
+* @tparam C A counter type. Must be smaller than U.
+* @param subsequence_idx The index of the subsequence.
+* @param counter The counter in the subsequence.
+* @param return The counter in the total sequence.
+*/
 template <class U, class T, class C>
-RNGCounter<U> rng_subsequence_counter(T subsequence_idx, C counter)
+Counter<U> rng_subsequence_counter(T subsequence_idx, C counter)
 {
     static_assert(sizeof(U) > sizeof(typename C::ValueType), "Subsequence counter must be smaller than requested total counter.");
     //TODO allow sizeof(C) = sizeof(U) and check actual values?
@@ -95,27 +146,32 @@ RNGCounter<U> rng_subsequence_counter(T subsequence_idx, C counter)
     //low bits: subsequence counter
     static const U bytes_shift = sizeof(U) - sizeof(C);
     auto s                     = static_cast<U>(subsequence_idx);
-    return RNGCounter<U>{(s << (bytes_shift * 8)) + static_cast<U>(counter.get())};
+    return Counter<U>{(s << (bytes_shift * 8)) + static_cast<U>(counter.get())};
 }
 
+/**
+* Get the counter in the given subsequence for the counter in the total sequence.
+* @tparam U The desired counter type of the subsequence. Its size defines the length of the subsequence.
+* @tparam C The counter type of the total sequence. Must be bigger than U.
+* @param counter The counter in the total sequence.
+* @return The counter in the subsequence.
+*/
 template <class U, class C>
-RNGCounter<U> rng_subsequence_counter(C counter)
+Counter<U> rng_subsequence_counter(C counter)
 {
-    static_assert(sizeof(U) < sizeof(C), "");
+    static_assert(sizeof(U) < sizeof(C::ValueType), "");
     //TODO allow sizeof(C) = sizeof(U) and check actual values?
     //TODO: assert value of subequence_idx
 
     //truncate to get the subsequence counter
-    return RNGCounter<U>(static_cast<U>(counter.get()));
+    return Counter<U>(static_cast<U>(counter.get()));
 }
 
-template<class SeedSeq>
-RNGKey<uint64_t> seed_rng_key(SeedSeq& seed_seq)
-{
-    auto tf_key = threefry2x32_key_t::seed(seed_seq);
-    return RNGKey<uint64_t>(details::to_uint64(tf_key));
-}
-
+/**
+* Base class for counter based random number generator.
+* Counter and key are supplied by the derived class.
+* Satisfies the standard UniformRandomBitGenerator concept.
+*/
 template<class Derived>
 class RandomNumberGeneratorBase
 {
@@ -126,19 +182,26 @@ public:
     {
         return std::numeric_limits<result_type>::min();
     }
+
     static constexpr result_type max()
     {
         return std::numeric_limits<result_type>::max();
     }
+
     result_type operator()()
     {
         auto self = static_cast<Derived*>(this);
-        auto r = rng_generate(self->get_key(), self->get_counter());
+        auto r = random(self->get_key(), self->get_counter());
         self->increment_counter();
         return r;
     }
 };
 
+/**
+* Counter based random number generator.
+* Stores its own key and counter.
+* @see RandomNumberGeneratorBase.
+*/
 class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
 {
 public:
@@ -148,13 +211,13 @@ public:
         seed(generate_seeds());
     }
 
-    RNGKey<uint64_t> get_key() const {
+    Key<uint64_t> get_key() const {
         return m_key;
     }
-    RNGCounter<uint64_t> get_counter() const {
+    Counter<uint64_t> get_counter() const {
         return m_counter;
     }
-    void set_counter(RNGCounter<uint64_t> counter) {
+    void set_counter(Counter<uint64_t> counter) {
         m_counter = counter;
     }
     void increment_counter() {
@@ -202,8 +265,8 @@ public:
     }
 
 private:
-    RNGKey<uint64_t> m_key;
-    RNGCounter<uint64_t> m_counter;
+    Key<uint64_t> m_key;
+    Counter<uint64_t> m_counter;
     std::vector<uint32_t> m_seeds;
 };
 

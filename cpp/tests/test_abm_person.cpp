@@ -274,12 +274,12 @@ TEST(Person, rng)
     mio::abm::Location loc(mio::abm::LocationType::Home, 0);
     auto p = mio::abm::Person(rng, loc, mio::abm::AgeGroup::Age35to59, 13);
 
-    ASSERT_EQ(p.get_rng_counter(), mio::RNGCounter<uint32_t>(0));
+    ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
     auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::RNGCounter<uint32_t>{0}));
+    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
-    ASSERT_EQ(p.get_rng_counter(), mio::RNGCounter<uint32_t>(1));
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::RNGCounter<uint32_t>{1}));
+    ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
+    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }

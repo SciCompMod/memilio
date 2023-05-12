@@ -11,15 +11,15 @@ TEST(RandomNumberGenerator, set_counter)
     for (auto i = uint64_t(0); i < n; ++i) {
         rng();
     }
-    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(n));
+    ASSERT_EQ(rng.get_counter(), mio::Counter<uint64_t>(n));
     auto s1 = rng();
     for (auto i = uint64_t(0); i < n; ++i) {
         rng();
     }
-    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(2 * n + 1));
+    ASSERT_EQ(rng.get_counter(), mio::Counter<uint64_t>(2 * n + 1));
 
-    rng.set_counter(mio::RNGCounter<uint64_t>{n});
-    ASSERT_EQ(rng.get_counter(), mio::RNGCounter<uint64_t>(n));
+    rng.set_counter(mio::Counter<uint64_t>{n});
+    ASSERT_EQ(rng.get_counter(), mio::Counter<uint64_t>(n));
     auto s2 = rng();
 
     ASSERT_EQ(s1, s2);
