@@ -55,7 +55,7 @@ public:
     * For each person, only one generator must be active at the same time.
     * Satisifes the requirments of UniformRandomBitGenerator.
     */
-    class RandomNumberGenerator
+    class RandomNumberGenerator : RandomNumberGeneratorBase<RandomNumberGenerator>
     {
         public:
         using result_type = uint64_t;
@@ -63,46 +63,27 @@ public:
         RandomNumberGenerator(RNGKey<uint64_t> key, Person& person)
             : m_person(person)
             , m_key(key)
-            , m_counter(rng_subsequence_counter<uint64_t>(person.get_person_id(), person.rng_counter()))
-#ifndef NDEBUG
-            , m_initial_counter(m_counter)
-#endif
         {
         }
 
-        ~RandomNumberGenerator()
+        RNGKey<uint64_t> get_key() const
         {
-            //store the updated counter after the RNG is done
-            assert(m_person.rng_counter() == m_initial_counter && "Inconsistent RNG Counter. Make sure there is only one active per person.");
-            auto subcounter        = rng_subsequence_counter<uint32_t>(m_counter);
-            m_person.rng_counter() = subcounter;
+            return m_key;
         }
 
-        result_type operator()()
+        RNGCounter<uint64_t> get_counter() const
         {
-            //generate sample and increment the counter
-            auto r = rng_generate(m_key, m_counter);
-            m_counter++;
-            return r;
+            return rng_subsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
         }
 
-        static constexpr result_type min()
+        void increment_counter()
         {
-            return 0;
-        }
-
-        static constexpr result_type max()
-        {
-            return std::numeric_limits<result_type>::max();
+            ++m_person.get_rng_counter();
         }
 
     private:
         Person& m_person;
         RNGKey<uint64_t> m_key;
-        RNGCounter<uint64_t> m_counter;
-#ifndef NDEBUG
-        RNGCounter<uint64_t> m_initial_counter; //for sanity checks during debugging
-#endif
     };
 
     /**
@@ -426,7 +407,7 @@ public:
         return 1.; // put implementation in .cpp
     }
 
-    RNGCounter<uint32_t>& rng_counter()
+    RNGCounter<uint32_t>& get_rng_counter()
     {
         return m_rng_counter;
     }

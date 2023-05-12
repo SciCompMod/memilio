@@ -23,6 +23,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
 
+#include <mutex>
 #include <numeric>
 
 namespace mio
@@ -112,6 +113,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
 
 void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
+    std::lock_guard<std::mutex> lk(m_mut);
     m_persons.push_back(&p);
     for (uint32_t cell_idx : cells)
         m_cells[cell_idx].m_persons.push_back(&p);
@@ -119,13 +121,14 @@ void Location::add_person(Person& p, std::vector<uint32_t> cells)
 
 void Location::remove_person(Person& p)
 {
+    std::lock_guard<std::mutex> lk(m_mut);
     m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
     for (auto&& cell : m_cells) {
         cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
     }
 }
 
-size_t Location::get_number_persons()
+size_t Location::get_number_persons() const
 {
     return m_persons.size();
 }
@@ -178,6 +181,7 @@ void Location::initialize_subpopulations(const TimePoint t)
         }
     }
 }
+
 const TimeSeries<ScalarType>& Location::get_subpopulations() const
 {
     return m_subpopulations;

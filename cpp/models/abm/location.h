@@ -232,7 +232,7 @@ public:
      * @param[in] cell_idx Cell index of interest.
      * @return Air exposure rate in the Cell.
      */
-    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx)
+    CustomIndexArray<ScalarType, VirusVariant, AgeGroup> get_cached_exposure_rate_contacts(uint32_t cell_idx) const
     {
         return m_cells[cell_idx].m_cached_exposure_rate_contacts;
     }
@@ -242,7 +242,7 @@ public:
      * @param[in] cell_idx Cell index of interest.
      * @return Contact exposure rate in the cell.
      */
-    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx)
+    CustomIndexArray<ScalarType, VirusVariant> get_cached_exposure_rate_air(uint32_t cell_idx) const
     {
         return m_cells[cell_idx].m_cached_exposure_rate_air;
     }
@@ -264,7 +264,7 @@ public:
      * @param[in] cell_idx The index of the Cell.
      * @return The CellCapacity of the Cell.
      */
-    CellCapacity get_capacity(uint32_t cell_idx = 0)
+    CellCapacity get_capacity(uint32_t cell_idx = 0) const
     {
         return m_cells[cell_idx].m_capacity;
     }
@@ -302,7 +302,7 @@ public:
      * @brief Get the total number of Person%s at the Location.
      * @return Number of Person%s.
      */
-    size_t get_number_persons();
+    size_t get_number_persons() const;
 
     /**
      * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.

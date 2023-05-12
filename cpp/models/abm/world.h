@@ -27,6 +27,7 @@
 #include "abm/trip_list.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
 #include <vector>
@@ -87,7 +88,7 @@ public:
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void evolve(TimePoint t, TimeSpan dt, RNGKey<uint64_t> rng_key);
+    void evolve(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
 
     /** 
      * @brief Add a Location to the World.
@@ -188,13 +189,13 @@ private:
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void interaction(TimePoint t, TimeSpan dt, RNGKey<uint64_t> rng_key);
+    void interaction(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
     /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void migration(TimePoint t, TimeSpan dt, RNGKey<uint64_t> rng_key);
+    void migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng);
 
     std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.

@@ -49,23 +49,25 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     return person;
 }
 
-void World::evolve(TimePoint t, TimeSpan dt, RNGKey<uint64_t> rng_key)
+void World::evolve(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
 {
     begin_step(t, dt);
-    interaction(t, dt, rng_key);
+    interaction(t, dt, rng);
     m_testing_strategy.update_activity_status(t);
-    migration(t, dt);
+    migration(t, dt, rng);
     end_step(t, dt);
 }
 
-void World::interaction(TimePoint t, TimeSpan dt)
+void World::interaction(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
 {
-    for (auto&& person : m_persons) {
-        person->interact(t, dt, m_infection_parameters);
+    #pragma omp parallel for
+    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+        auto&& person = m_persons[i];
+        person->interact(t, dt, m_infection_parameters, rng);
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void World::migration(TimePoint t, TimeSpan dt, RandomNumberGenerator& rng)
 {
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
@@ -85,12 +87,14 @@ void World::migration(TimePoint t, TimeSpan dt)
             m_enhanced_migration_rules.push_back(rule);
         }
     }
-    for (auto& person : m_persons) {
-        for (auto rule : m_enhanced_migration_rules) {
+    #pragma omp parallel for
+    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+        auto&& person = m_persons[i];
+        for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
-            auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
-            auto& target_location = find_location(target_type, *person);
-            auto current_location = person->get_location();
+            auto target_type       = rule.first(*person, t, dt, m_migration_parameters);
+            auto& target_location  = find_location(target_type, *person);
+            auto& current_location = person->get_location();
             if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                 if (target_location != current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
@@ -109,7 +113,7 @@ void World::migration(TimePoint t, TimeSpan dt)
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
             auto& trip            = m_trip_list.get_next_trip();
             auto& person          = m_persons[trip.person_id];
-            auto current_location = person->get_location();
+            auto& current_location = person->get_location();
             if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
                 current_location == get_individualized_location(trip.migration_origin)) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
@@ -125,14 +129,18 @@ void World::migration(TimePoint t, TimeSpan dt)
 
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
-    for (auto& location : m_locations) {
+    #pragma omp parallel for
+    for (auto i = size_t(0); i < m_locations.size(); ++i) {
+        auto&& location = m_locations[i];
         location->cache_exposure_rates(t, dt);
     }
 }
 
 void World::end_step(TimePoint t, TimeSpan dt)
 {
-    for (auto& location : m_locations) {
+    #pragma omp parallel for
+    for (auto i = size_t(0); i < m_locations.size(); ++i) {
+        auto&& location = m_locations[i];
         location->store_subpopulations(t + dt);
     }
 }

@@ -18,6 +18,8 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "memilio/utils/random_number_generator.h"
+#include <random>
 
 namespace mio
 {
@@ -29,6 +31,7 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
     , m_dt(hours(1))
+    , m_rng()
 {
     initialize_locations(m_t);
 }

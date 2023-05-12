@@ -22,6 +22,7 @@
 
 #include "abm/world.h"
 #include "abm/time.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/history.h"
 
@@ -110,6 +111,10 @@ public:
         return m_world;
     }
 
+    RandomNumberGenerator& get_rng() {
+        return m_rng;
+    }
+
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
@@ -119,7 +124,7 @@ private:
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
-    RNGKey<uint64_t> m_rng_key;
+    RandomNumberGenerator m_rng;
 };
 
 } // namespace abm
