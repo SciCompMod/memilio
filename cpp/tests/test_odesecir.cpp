@@ -27,7 +27,7 @@
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
-TEST(TestSecir, compareWithPreviousRun)
+TEST(TestOdeSecir, compareWithPreviousRun)
 {
     double t0   = 0;
     double tmax = 50;
@@ -95,7 +95,19 @@ TEST(TestSecir, compareWithPreviousRun)
     }
 }
 
-TEST(TestSecir, checkPopulationConservation)
+TEST(TestOdeSecir, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
+
+    mio::osecir::Model model(1);
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
+TEST(TestOdeSecir, checkPopulationConservation)
 {
     double t0   = 0;
     double tmax = 50;
@@ -150,7 +162,7 @@ TEST(TestSecir, checkPopulationConservation)
     EXPECT_NEAR(num_persons, nb_total_t0, 1e-10);
 }
 
-TEST(TestSecir, testParamConstructors)
+TEST(TestOdeSecir, testParamConstructors)
 {
 
     double cont_freq = 10;
@@ -411,7 +423,7 @@ TEST(TestSecir, testParamConstructors)
               model3.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat());
 }
 
-TEST(TestSecir, testSettersAndGetters)
+TEST(TestOdeSecir, testSettersAndGetters)
 {
     std::vector<mio::UncertainValue> vec;
 
@@ -541,7 +553,7 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[21], model.parameters.get<mio::osecir::Seasonality>());
 }
 
-TEST(TestSecir, testValueConstraints)
+TEST(TestOdeSecir, testValueConstraints)
 {
     double cont_freq = 10;
 
@@ -594,7 +606,7 @@ TEST(TestSecir, testValueConstraints)
     EXPECT_NEAR(4.6, model.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0], 1e-14);
 }
 
-TEST(TestSecir, testModelConstraints)
+TEST(TestOdeSecir, testModelConstraints)
 {
     double t0   = 0;
     double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
@@ -860,4 +872,5 @@ TEST(Secir, check_constraints_parameters)
     model.parameters.set<mio::osecir::CriticalPerSevere>(0.5);
     model.parameters.set<mio::osecir::DeathsPerCritical>(1.1);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+    mio::set_log_level(mio::LogLevel::warn);
 }
