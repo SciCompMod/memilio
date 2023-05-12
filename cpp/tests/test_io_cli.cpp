@@ -20,19 +20,14 @@
 * limitations under the License.
 */
 #include "memilio/io/cli.h"
-#include "memilio/utils/logging.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include <cstdlib>
 #include <sstream>
 #include <string>
-#include <tuple>
-#include <type_traits>
 #include <vector>
 #include <list>
-#include <stdlib.h>
 
 struct A {
     using Type = double;
@@ -204,7 +199,7 @@ TEST(TestCLI, test_write_help)
     c[1]    = 'h';
     argv[1] = c;
     Params p;
-    EXPECT_EXIT(mio::command_line_interface("TestSuite", 2, argv, p, std::cerr), testing::ExitedWithCode(0),
+    EXPECT_EXIT((void)mio::command_line_interface("TestSuite", 2, argv, p, std::cerr), testing::ExitedWithCode(0),
                 testing::StrEq(help));
 }
 
@@ -221,7 +216,7 @@ TEST(TestCLI, test_print_options)
         }
     }
     Params p;
-    EXPECT_EXIT(mio::command_line_interface("TestSuite", argc, argv, p, std::cerr), testing::ExitedWithCode(0),
+    EXPECT_EXIT((void)mio::command_line_interface("TestSuite", argc, argv, p, std::cerr), testing::ExitedWithCode(0),
                 testing::StrEq("Option a:\n0.0\nOption D:\n[]\n"));
 }
 

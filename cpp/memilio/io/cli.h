@@ -20,12 +20,15 @@
 #ifndef IO_CLI_H_
 #define IO_CLI_H_
 
+#include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/parameter_set.h"
 
-#include <ostream>
+#include "json/json.h"
+
 #include <string>
+#include <ostream>
 #include <iostream>
 #include <functional>
 
@@ -322,7 +325,7 @@ template <class T, class... Ts, class Set>
 mio::IOResult<Json::Value> get_param_impl(typelist<T, Ts...>, Set& parameters, const std::string& name)
 {
     if (name_matches_parameter<T>(name)) {
-        return serialize_json(parameters.template get<T>());
+        return mio::serialize_json(parameters.template get<T>());
     }
     else {
         return get_param_impl(typelist<Ts...>(), parameters, name);
