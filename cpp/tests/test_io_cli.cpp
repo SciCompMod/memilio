@@ -19,7 +19,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
 #include "memilio/io/cli.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -154,7 +157,7 @@ TEST(TestCLI, test_get_param)
     EXPECT_FALSE(mio::details::cli::get_param(p, "b").has_value());
     // D (default value)
     ASSERT_TRUE(mio::details::cli::get_param(p, "D").has_value());
-    EXPECT_EQ(mio::details::cli::get_param(p, "D").value().size(), 0); // empty vector
+    EXPECT_EQ(mio::details::cli::get_param(p, "D").value().size(), Json::Value::ArrayIndex(0)); // empty vector
     // Errors
     EXPECT_EQ(mio::details::cli::get_param(p, "NoName").error().formatted_message(),
               "Key not found: No such option \"NoName\".");
@@ -269,3 +272,5 @@ TEST(TestCLI, test_command_line_interface)
         delete[] argv[i];
     }
 }
+
+#endif // MEMILIO_HAS_JSONCPP

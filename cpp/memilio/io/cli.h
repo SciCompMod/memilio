@@ -20,12 +20,14 @@
 #ifndef IO_CLI_H_
 #define IO_CLI_H_
 
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/parameter_set.h"
-
-#include "json/json.h"
 
 #include <string>
 #include <ostream>
@@ -352,23 +354,24 @@ struct OptionVerifier {
     using is_required = std::is_same<Field<T>, Name<T>>;
 
     template <template <class> class Field, class OptionA, class OptionB>
-    static std::enable_if_t<std::is_same<OptionA, OptionB>::value> verify()
+    inline static std::enable_if_t<std::is_same<OptionA, OptionB>::value> verify()
     {
-        const auto field_a     = Field<OptionA>::get();
-        const auto is_optional = !is_required<Field, OptionA>::value;
-        assert((is_optional || field_a != "") && "Option is missing required field.");
+        const auto field_a = Field<OptionA>::get();
+        assert((!is_required<Field, OptionA>::value || field_a != "") && "Option is missing required field.");
     }
 
     template <template <class> class Field, class OptionA, class OptionB>
-    static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && is_required<Field, OptionA>::value> verify()
+    inline static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && is_required<Field, OptionA>::value>
+    verify()
     {
-        const auto field_a = Name<OptionA>::get();
-        const auto field_b = Name<OptionB>::get();
+        const auto field_a = Field<OptionA>::get();
+        const auto field_b = Field<OptionB>::get();
         assert((field_a != field_b) && "Options may not have duplicate fields. (field required)");
     }
 
     template <template <class> class Field, class OptionA, class OptionB>
-    static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && !is_required<Field, OptionA>::value> verify()
+    inline static std::enable_if_t<!std::is_same<OptionA, OptionB>::value && !is_required<Field, OptionA>::value>
+    verify()
     {
         auto field_a = Field<OptionA>::get();
         auto field_b = Field<OptionB>::get();
@@ -408,8 +411,10 @@ inline void verify_options_impl(typelist<A, As...>, typelist<B, Bs...>)
 template <class... T, template <class...> class Set>
 void verify_options(Set<T...> /* parameters */)
 {
-    verify_options_impl<Name, T...>(typelist<T...>(), typelist<T...>());
-    verify_options_impl<Alias, T...>(typelist<T...>(), typelist<T...>());
+    verify_options_impl<Name, Help, PrintOption, T...>(typelist<Help, PrintOption, T...>(),
+                                                       typelist<Help, PrintOption, T...>());
+    verify_options_impl<Alias, Help, PrintOption, T...>(typelist<Help, PrintOption, T...>(),
+                                                        typelist<Help, PrintOption, T...>());
 }
 
 } // namespace cli
@@ -525,5 +530,7 @@ mio::IOResult<Set<Parameters...>> command_line_interface(const std::string& exec
 }
 
 } // namespace mio
+
+#endif // MEMILIO_HAS_JSONCPP
 
 #endif // IO_CLI_H_

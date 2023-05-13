@@ -29,9 +29,6 @@ target_link_libraries(graph_example PRIVATE memilio ode_seir)
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 
-add_executable(cli_example cli.cpp)
-target_link_libraries(cli_example PRIVATE memilio)
-
 add_executable(twitter_migration_example twitter_migration.cpp)
 target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
 
@@ -50,6 +47,11 @@ endif()
 if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
   target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
+endif()
+
+if(MEMILIO_HAS_JSONCPP)
+  add_executable(cli_example cli.cpp)
+  target_link_libraries(cli_example PRIVATE memilio)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
