@@ -558,16 +558,16 @@ public:
     {
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationPeriod>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0) {
+            if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0) {
                 log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller {:.4f}", (size_t)i,
                           0);
                 return 1;
             }
 
-            if (this->get<SusceptibleToExposedByCarrier>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] <
-                    0.0 ||
-                this->get<SusceptibleToExposedByCarrier>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] >
-                    1.0) {
+            if (this->get<SusceptibleToExposedByCarrier>()[{VirusVariant::Wildtype, i,
+                                                            VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<SusceptibleToExposedByCarrier>()[{VirusVariant::Wildtype, i,
+                                                            VaccinationState::Unvaccinated}] > 1.0) {
                 log_error(
                     "Constraint check: Parameter SusceptibleToExposedByCarrier of age group {:.0f} smaller {:d} or "
                     "larger {:d}",
@@ -575,10 +575,10 @@ public:
                 return 1;
             }
 
-            if (this->get<SusceptibleToExposedByInfected>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] <
-                    0.0 ||
-                this->get<SusceptibleToExposedByInfected>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] >
-                    1.0) {
+            if (this->get<SusceptibleToExposedByInfected>()[{VirusVariant::Wildtype, i,
+                                                             VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<SusceptibleToExposedByInfected>()[{VirusVariant::Wildtype, i,
+                                                             VaccinationState::Unvaccinated}] > 1.0) {
                 log_error(
                     "Constraint check: Parameter SusceptibleToExposedByInfected of age group {:.0f} smaller {:d} or "
                     "larger {:d}",
@@ -586,80 +586,82 @@ public:
                 return 1;
             }
 
-            if (this->get<CarrierToInfected>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<CarrierToInfected>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<CarrierToInfected>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<CarrierToInfected>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter CarrierToInfected of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<CarrierToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<CarrierToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<CarrierToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<CarrierToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter CarrierToInfected of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<InfectedToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<InfectedToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<InfectedToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<InfectedToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter InfectedToRecovered of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<InfectedToSevere>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<InfectedToSevere>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<InfectedToSevere>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<InfectedToSevere>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter InfectedToSevere of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<SevereToCritical>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<SevereToCritical>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<SevereToCritical>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<SevereToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<SevereToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<CriticalToDead>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<CriticalToDead>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<CriticalToDead>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<CriticalToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<CriticalToRecovered>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<RecoveredToSusceptible>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] <
+                    0.0 ||
+                this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] >
+                    1.0) {
                 log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }
 
-            if (this->get<DetectInfection>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] < 0.0 ||
-                this->get<DetectInfection>()[{VirusVariant::Count, i, VaccinationState::Unvaccinated}] > 1.0) {
+            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] < 0.0 ||
+                this->get<DetectInfection>()[{VirusVariant::Wildtype, i, VaccinationState::Unvaccinated}] > 1.0) {
                 log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller {:d} or "
                           "larger {:d}",
                           (size_t)i, 0, 1);
