@@ -21,8 +21,6 @@
 #define IO_CLI_H_
 
 #include "memilio/config.h"
-#include "json/reader.h"
-#include <memory>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -31,6 +29,7 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/parameter_set.h"
 
+#include <memory>
 #include <string>
 #include <ostream>
 #include <iostream>
