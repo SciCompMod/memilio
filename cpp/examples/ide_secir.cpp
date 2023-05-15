@@ -90,7 +90,7 @@ int main()
 
     mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
-    prob.setStateAgeFunction(expdecay);
+    prob.set_state_age_function(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);

@@ -81,7 +81,7 @@ protected:
 
         mio::isecir::StateAgeFunctionWrapper prob;
         mio::isecir::ExponentialDecay expdecay(0.5);
-        prob.setStateAgeFunction(expdecay);
+        prob.set_state_age_function(expdecay);
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -210,7 +210,7 @@ TEST(IdeSecir, checksimulationFunctions)
 
     mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::SmootherCosine smoothcos(2);
-    prob.setStateAgeFunction(smoothcos);
+    prob.set_state_age_function(smoothcos);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -304,7 +304,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
     mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
-    prob.setStateAgeFunction(expdecay);
+    prob.set_state_age_function(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -409,7 +409,7 @@ TEST(IdeSecir, compareEquilibria)
 
     mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
-    prob.setStateAgeFunction(expdecay);
+    prob.set_state_age_function(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);

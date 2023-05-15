@@ -69,7 +69,7 @@ struct DelayDistribution {
     /**
      * @brief DelayDistribution is currently defined as a smoothed cosine function.
      * 
-     * Used function goes through points (0,1) and (m_max_suppor,0) and is interpolated in between using a smoothed cosine function.
+     * Used function goes through points (0,1) and (m_max_support,0) and is interpolated in between using a smoothed cosine function.
      * 
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the smoother cosine function
@@ -168,69 +168,123 @@ struct ContactPatterns {
 };
 
 /**
- * @brief 
- * 
+ * @brief Function depending on the state age, i.e. the time time already spent in some InfectionState.
  */
 struct StateAgeFunction {
-
+    /**
+    * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
+    */
     StateAgeFunction()
         : m_funcparam{1.0}
     {
     }
 
+    /**
+     * @brief Constructs a new StateAgeFunction object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
     StateAgeFunction(ScalarType init_funcparam)
         : m_funcparam{init_funcparam}
     {
     }
 
+    /**
+     * @brief Defines function depending on state_age. The default is an exponential function.
+     *
+     * The function also depends on the function parameter m_funcparam which allows to further specify the function.
+     * (depending on the used function).
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
     virtual ScalarType Function(ScalarType state_age)
     {
-        return std::exp(-1.0 * state_age);
+        return std::exp(-m_funcparam * state_age);
     }
 
-    void set_funcparam(ScalarType new_funcparam)
-    {
-        m_funcparam = new_funcparam;
-    }
-
+    /**
+     * @brief Get the m_funcparam object
+     * 
+     * Can be used to access the m_funcparam object, which specifies the used function.
+     * 
+     * @return ScalarType 
+     */
     ScalarType get_funcparam()
     {
         return m_funcparam;
     }
 
+    /**
+     * @brief Set the m_funcparam object.
+     * 
+     * Can be used to set the m_funcparam object, which specifies the used function.
+     */
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        m_funcparam = new_funcparam;
+    }
+
+    /**
+     * @brief Clones unique pointer to a StateAgeFunction.
+     * 
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     */
     std::unique_ptr<StateAgeFunction> clone() const
     {
         return std::unique_ptr<StateAgeFunction>(clone_impl());
     }
 
 protected:
+    // pure virtual function that implements cloning in derived classes
     virtual StateAgeFunction* clone_impl() const = 0;
 
+    // specifies Function
     ScalarType m_funcparam{};
 };
 
 /**
- * @brief 
- * 
+ * @brief Class that defines an exponential decay function depending on the state age.
  */
 struct ExponentialDecay : public StateAgeFunction {
 
+    /**
+    * @brief Default constructor of the class.
+    */
     ExponentialDecay()
         : StateAgeFunction{}
     {
     }
 
+    /**
+     * @brief Constructs a new ExponentialDecay object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
     ExponentialDecay(ScalarType init_funcparam)
         : StateAgeFunction{init_funcparam}
     {
     }
 
+    /**
+     * @brief Defines exponential decay function depending on state_age.
+     *
+     * The parameter m_funcparam defines how fast the exponential function decays.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
     ScalarType Function(ScalarType state_age) override
     {
         return std::exp(-m_funcparam * state_age);
     }
 
 protected:
+    /**
+     * @brief Implements clone for ExponentialDecay.
+     * 
+     * @return StateAgeFunction* 
+     */
     StateAgeFunction* clone_impl() const override
     {
         return new ExponentialDecay(*this);
@@ -238,27 +292,47 @@ protected:
 };
 
 /**
- * @brief 
- * 
+ * @brief Class that defines an smoother cosine function depending on the state age.
  */
 struct SmootherCosine : public StateAgeFunction {
 
+    /**
+    * @brief Default constructor of the class.
+    */
     SmootherCosine()
         : StateAgeFunction{}
     {
     }
 
+    /**
+     * @brief Constructs a new SmootherCosine object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
     SmootherCosine(ScalarType init_funcparam)
         : StateAgeFunction{init_funcparam}
     {
     }
 
+    /**
+     * @brief Defines smoother cosine function depending on state_age.
+     *
+     * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
     ScalarType Function(ScalarType state_age) override
     {
         return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
 
 protected:
+    /**
+     * @brief Clones unique pointer to a StateAgeFunction.
+     * 
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     */
     StateAgeFunction* clone_impl() const override
     {
         return new SmootherCosine(*this);
@@ -266,13 +340,13 @@ protected:
 };
 
 /**
- * @brief 
- * 
+ * @brief Wrapper for StateAgeFunction that allows to set a StateAgeFunction from outside. 
  */
 struct StateAgeFunctionWrapper {
 
-    // based on https://stackoverflow.com/questions/16030081/copy-constructor-for-a-class-with-unique-ptr
-
+    /**
+    * @brief Default constructor of the class. Sets m_function to constant function 1 as default.
+    */
     StateAgeFunctionWrapper()
         : m_function{}
     {
@@ -281,41 +355,75 @@ struct StateAgeFunctionWrapper {
         m_function = expdecay.clone();
     }
 
+    /**
+     * @brief Copy constructor for StateAgeFunctionWrapper. 
+     */
     StateAgeFunctionWrapper(StateAgeFunctionWrapper const& other)
         : m_function(other.m_function->clone())
     {
     }
 
+    /**
+     * @brief Move constructor for StateAgeFunctionWrapper. 
+     */
     StateAgeFunctionWrapper(StateAgeFunctionWrapper&& other) = default;
 
+    /**
+     * @brief Copy assignment for StateAgeFunctionWrapper. 
+     */
     StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper const& other)
     {
         m_function = other.m_function->clone();
         return *this;
     }
 
+    /**
+     * @brief Move assignment for StateAgeFunctionWrapper. 
+     */
     StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper&& other) = default;
 
+    /**
+     * @brief Destructor for StateAgeFunctionWrapper. 
+     */
     ~StateAgeFunctionWrapper() = default;
 
-    void setStateAgeFunction(StateAgeFunction& new_function)
+    /**
+     * @brief Set the StateAgeFunction object
+     *
+     * @return std::unique_ptr<StateAgeFunction>
+     */
+    void set_state_age_function(StateAgeFunction& new_function)
     {
         m_function = new_function.clone();
     }
 
+    /**
+     * @brief Accesses Function of m_function.
+     *
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
     ScalarType Function(ScalarType state_age)
     {
         return m_function->Function(state_age);
     }
 
-    void set_funcparam(ScalarType new_funcparam)
-    {
-        m_function->set_funcparam(new_funcparam);
-    }
-
+    /**
+     * @brief Get the m_funcparam object of m_function.
+     * 
+     * @return ScalarType 
+     */
     ScalarType get_funcparam()
     {
         return m_function->get_funcparam();
+    }
+
+    /**
+     * @brief Set the m_funcparam object of m_function. 
+     */
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        m_function->set_funcparam(new_funcparam);
     }
 
 private:
