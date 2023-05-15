@@ -35,7 +35,7 @@ std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t
 }
 
 template <typename T>
-void write_logg_to_file(const T& history)
+void write_log_to_file(const T& history)
 {
     auto logg = history.get_log();
     // Write the results to a file.
@@ -190,5 +190,5 @@ int main()
 
     sim.advance(tmax, history);
 
-    write_logg_to_file(history);
+    write_log_to_file(history);
 }
