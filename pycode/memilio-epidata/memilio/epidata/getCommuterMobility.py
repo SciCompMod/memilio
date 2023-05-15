@@ -23,11 +23,10 @@
 @brief gets data related to county mobility from "Bundesagentur fuer Arbeit"
 """
 import collections
+import time
 import os
 import numpy as np
 import pandas as pd
-import wget
-from zipfile import ZipFile
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -132,7 +131,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       out_folder=dd.defaultDict['out_folder'],
                       no_raw=dd.defaultDict['no_raw'],
                       make_plot=dd.defaultDict['make_plot'],
-                      setup_dict=''):
+                      setup_dict='',
+                      ref_year=2022):
     """! Computes DataFrame of commuter migration patterns based on the Federal
     Agency of Work data.
 
@@ -147,6 +147,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         'path': String with datapath where migration files can be found
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
+    @param ref_year int 2013-2022 year to take data from. Default 2022
     @return df_commuter_migration DataFrame of commuter migration.
         df_commuter_migration[i][j]= number of commuters from county with county-id i to county with county-id j
     In commuter migration files is a cumulative value per county for number of commuters from whole Germany given.
@@ -154,7 +155,6 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     this cumulative values.
     """
     if setup_dict == '':
-        ref_year = 2020
         abs_tol = 100  # maximum absolute error allowed per county migration
         rel_tol = 0.01  # maximum relative error allowed per county migration
         path = 'https://statistik.arbeitsagentur.de/Statistikdaten/Detail/' + \
@@ -164,8 +164,29 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                       'rel_tol': rel_tol,
                       'path': path}
 
+    # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
+    param_dict = {"sheet_name": 3, "engine": None}
+
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
+
+    # states 01 - 16
+    states = [str(i+1).zfill(2) for i in range(16)]
+
+    commuter_migration_files = [[] for i in range(len(states))]
+
+    if ref_year < 2013 or ref_year < 2022:
+        raise gd.DataError('No Data available for year ' + str(ref_year) + '.')
+    for i in range(len(states)):
+        if ref_year <= 2020:
+            # These files are in a zip folder.
+            url = setup_dict['path'] + 'krpend-' + \
+                states[i] + '-0-' + str(ref_year) + '12-zip.zip'
+        else:
+            url = setup_dict['path'] + 'krpend-' + states[i] + '-0-' + \
+                str(ref_year) + '12-xlsx.xlsx?__blob=publicationFile&v=2'
+        commuter_migration_files[i] = gd.get_file(
+            '', url, False, param_dict, interactive=True)
 
     countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
     govkey_list = geoger.get_governing_regions()
@@ -194,22 +215,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     max_rel_err = 0
 
     files = []
-    for n in range(1, 17):
-        # files.append('krpend_' + str(n).zfill(2) + "_0.xlsx")
-        files.append(
-            'krpend-' + str(n).zfill(2) + "-0-20" +
-            setup_dict['path'].split('/20')[1][0:4] + "-zip.zip")
-
-    n = 0
-
-    for item in files:
-        # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
-        # This File is in a zip folder so it has to be unzipped first before it can be read.
-        param_dict = {"sheet_name": 3, "engine": "pyxlsb"}
-        url = setup_dict['path'] + item.split('.')[0] + '.zip'
-
-        commuter_migration_file = gd.get_file(
-            '', url, False, param_dict, interactive=True)
+    for i in range(len(commuter_migration_files)):
+        commuter_migration_file = commuter_migration_files[i]
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -349,7 +356,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     elif ((str(commuter_migration_file.iloc[i][3]) == 'Übrige Regierungsbezirke (Bundesland)' and str(
                             commuter_migration_file.iloc[i][4]).isdigit())
                           or ((commuter_migration_file.iloc[i][2]).isdigit() and str(
-                              commuter_migration_file.iloc[i - 1][2]).startswith('nan'))
+                            commuter_migration_file.iloc[i - 1][2]).startswith('nan'))
                           or (len(str(commuter_migration_file.iloc[i][2])) == 2 and
                               abs(float(commuter_migration_file.iloc[i][2]) - float(
                                   commuter_migration_file.iloc[i - 1][2])) == 1)
@@ -412,24 +419,21 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     print('Absolute error:', abs_err,
                           ', relative error:', abs_err / checksum)
 
-        n += 1
-        print(' Federal state read. Progress ', n, '/ 16')
+        # print(' Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
             raise gd.DataError(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
-    if n != 16:
-        print('Error. Files missing.')
+    # if n != 16:
+    #    print('Error. Files missing.')
 
     print('Maximum absolute error:', max_abs_err)
     print('Maximum relative error:', max_rel_err)
 
     countykey_list = [int(id) for id in countykey_list]
     df_commuter_migration = pd.DataFrame(
-        data=mat_commuter_migration, columns=countykey_list)
-    df_commuter_migration.index = countykey_list
-    filename = 'migration_bfa_20' + files[0].split(
-        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+        data=mat_commuter_migration, columns=countykey_list, index=countykey_list)
+    filename = 'migration_bfa_' + str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
 
     # this is neither a very elegant nor a very general way to merge...
@@ -452,13 +456,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         data=mat_commuter_migration, columns=countykey_list)
     df_commuter_migration.index = countykey_list
     commuter_sanity_checks(df_commuter_migration)
-    filename = 'migration_bfa_20' + files[0].split(
-        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+    filename = 'migration_bfa_' + str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
     gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
     gd.write_dataframe(
         df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
-        'commuter_migration_scaled_20' + files[0].split('-20')[1][0: 2],
+        'commuter_migration_scaled_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 
     return df_commuter_migration
@@ -574,7 +577,7 @@ def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("commuter_official")
-    ref_year = 2020
+    ref_year = 2022
 
     abs_tol = 100  # maximum absolute error allowed per county migration
     rel_tol = 0.01  # maximum relative error allowed per county migration
@@ -595,4 +598,7 @@ def main():
 
 
 if __name__ == "__main__":
+    start_time = time.perf_counter()
     main()
+    end_time = time.perf_counter()
+    print(str(end_time-start_time))
