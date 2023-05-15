@@ -120,19 +120,22 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         """! Tests migration data by some randomly chosen tests.
         """
 
-        df_commuter_migration = gcm.get_commuter_data(out_folder=self.path, ref_year=2022)
+        df_commuter_migration = gcm.get_commuter_data(
+            out_folder=self.path, ref_year=2022)
 
         # just do some tests on randomly chosen migrations
 
         # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
         city_from = 5316
         city_to = 16069
-        self.assertAlmostEqual(df_commuter_migration.loc[city_from, city_to], 0.257, 2)
+        self.assertAlmostEqual(
+            df_commuter_migration.loc[city_from, city_to], 0.257, 2)
 
         # check migration from Duisburg to Oberspreewald-Lausitz
         city_from = 5112
         city_to = 12066
-        self.assertAlmostEqual(df_commuter_migration.loc[city_from, city_to], 4.218, 2)
+        self.assertAlmostEqual(
+            df_commuter_migration.loc[city_from, city_to], 4.218, 2)
 
         # check migration from Lahn-Dill-Kreis to Hamburg
         city_from = 6532
