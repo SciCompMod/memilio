@@ -88,16 +88,7 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    // mio::isecir::ProbabilityProgress prob;
-    // mio::isecir::ExponentialDecay expdecay{0.9};
-    // prob.setStateAgeFunction(expdecay);
-    // model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-
-    // mio::isecir::ProbabilityProgress prob2;
-    // mio::isecir::SmootherCosine smoothcos(3);
-    // prob2.setStateAgeFunction(smoothcos);
-    // model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob2);
-    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
     prob.setStateAgeFunction(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);

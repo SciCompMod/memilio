@@ -79,7 +79,7 @@ protected:
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        mio::isecir::ProbabilityProgress prob;
+        mio::isecir::StateAgeFunctionWrapper prob;
         mio::isecir::ExponentialDecay expdecay(0.5);
         prob.setStateAgeFunction(expdecay);
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
@@ -208,7 +208,7 @@ TEST(IdeSecir, checksimulationFunctions)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::SmootherCosine smoothcos(2);
     prob.setStateAgeFunction(smoothcos);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
@@ -302,7 +302,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
     prob.setStateAgeFunction(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
@@ -407,7 +407,7 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ProbabilityProgress prob;
+    mio::isecir::StateAgeFunctionWrapper prob;
     mio::isecir::ExponentialDecay expdecay(0.5);
     prob.setStateAgeFunction(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);

@@ -174,7 +174,12 @@ struct ContactPatterns {
 struct StateAgeFunction {
 
     StateAgeFunction()
-        : m_funcparam{10.0}
+        : m_funcparam{1.0}
+    {
+    }
+
+    StateAgeFunction(ScalarType init_funcparam)
+        : m_funcparam{init_funcparam}
     {
     }
 
@@ -183,12 +188,12 @@ struct StateAgeFunction {
         return std::exp(-1.0 * state_age);
     }
 
-    virtual void set_funcparam(ScalarType new_funcparam)
+    void set_funcparam(ScalarType new_funcparam)
     {
         m_funcparam = new_funcparam;
     }
 
-    virtual ScalarType get_funcparam()
+    ScalarType get_funcparam()
     {
         return m_funcparam;
     }
@@ -201,8 +206,7 @@ struct StateAgeFunction {
 protected:
     virtual StateAgeFunction* clone_impl() const = 0;
 
-private:
-    ScalarType m_funcparam{2.0};
+    ScalarType m_funcparam{};
 };
 
 /**
@@ -212,12 +216,12 @@ private:
 struct ExponentialDecay : public StateAgeFunction {
 
     ExponentialDecay()
-        : m_funcparam{1.0}
+        : StateAgeFunction{}
     {
     }
 
     ExponentialDecay(ScalarType init_funcparam)
-        : m_funcparam{init_funcparam}
+        : StateAgeFunction{init_funcparam}
     {
     }
 
@@ -226,24 +230,11 @@ struct ExponentialDecay : public StateAgeFunction {
         return std::exp(-m_funcparam * state_age);
     }
 
-    void set_funcparam(ScalarType new_funcparam) override
-    {
-        m_funcparam = new_funcparam;
-    }
-
-    ScalarType get_funcparam() override
-    {
-        return m_funcparam;
-    }
-
 protected:
     StateAgeFunction* clone_impl() const override
     {
         return new ExponentialDecay(*this);
     }
-
-private:
-    ScalarType m_funcparam{};
 };
 
 /**
@@ -253,12 +244,12 @@ private:
 struct SmootherCosine : public StateAgeFunction {
 
     SmootherCosine()
-        : m_funcparam{3.0}
+        : StateAgeFunction{}
     {
     }
 
     SmootherCosine(ScalarType init_funcparam)
-        : m_funcparam{init_funcparam}
+        : StateAgeFunction{init_funcparam}
     {
     }
 
@@ -267,35 +258,22 @@ struct SmootherCosine : public StateAgeFunction {
         return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
 
-    void set_funcparam(ScalarType new_funcparam) override
-    {
-        m_funcparam = new_funcparam;
-    }
-
-    ScalarType get_funcparam() override
-    {
-        return m_funcparam;
-    }
-
 protected:
     StateAgeFunction* clone_impl() const override
     {
         return new SmootherCosine(*this);
     }
-
-private:
-    ScalarType m_funcparam{};
 };
 
 /**
  * @brief 
  * 
  */
-struct ProbabilityProgress {
+struct StateAgeFunctionWrapper {
 
     // based on https://stackoverflow.com/questions/16030081/copy-constructor-for-a-class-with-unique-ptr
 
-    ProbabilityProgress()
+    StateAgeFunctionWrapper()
         : m_function{}
     {
         // Set m_function to a default function, choose constant function 1
@@ -303,22 +281,22 @@ struct ProbabilityProgress {
         m_function = expdecay.clone();
     }
 
-    ProbabilityProgress(ProbabilityProgress const& other)
+    StateAgeFunctionWrapper(StateAgeFunctionWrapper const& other)
         : m_function(other.m_function->clone())
     {
     }
 
-    ProbabilityProgress(ProbabilityProgress&& other) = default;
+    StateAgeFunctionWrapper(StateAgeFunctionWrapper&& other) = default;
 
-    ProbabilityProgress& operator=(ProbabilityProgress const& other)
+    StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper const& other)
     {
         m_function = other.m_function->clone();
         return *this;
     }
 
-    ProbabilityProgress& operator=(ProbabilityProgress&& other) = default;
+    StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper&& other) = default;
 
-    ~ProbabilityProgress() = default;
+    ~StateAgeFunctionWrapper() = default;
 
     void setStateAgeFunction(StateAgeFunction& new_function)
     {
@@ -348,10 +326,10 @@ private:
 * @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    using Type = ProbabilityProgress;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return ProbabilityProgress();
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
@@ -363,10 +341,10 @@ struct TransmissionProbabilityOnContact {
 * @brief The relative InfectedNoSymptoms infectability.
 */
 struct RelativeTransmissionNoSymptoms {
-    using Type = ProbabilityProgress;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return ProbabilityProgress();
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
@@ -378,10 +356,10 @@ struct RelativeTransmissionNoSymptoms {
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = ProbabilityProgress;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return ProbabilityProgress();
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
