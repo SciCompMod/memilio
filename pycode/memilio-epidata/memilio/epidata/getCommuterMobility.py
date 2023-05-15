@@ -169,6 +169,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
+    mobility_dir = os.path.join(directory, 'mobility/')
+    gd.check_dir(mobility_dir)
 
     # states 01 - 16
     states = [str(i+1).zfill(2) for i in range(16)]
@@ -185,8 +187,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         else:
             url = setup_dict['path'] + 'krpend-' + states[i] + '-0-' + \
                 str(ref_year) + '12-xlsx.xlsx?__blob=publicationFile&v=2'
+        filename = 'mobility_raw_' + states[i] +'_' + str(ref_year)
+        filepath = os.path.join(mobility_dir) + filename +'.json'
         commuter_migration_files[i] = gd.get_file(
-            '', url, False, param_dict, interactive=True)
+            filepath, url, read_data, param_dict, interactive=True)
+        if not no_raw:
+            gd.write_dataframe(commuter_migration_files[i], mobility_dir, filename, 'json')
 
     countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
     govkey_list = geoger.get_governing_regions()
