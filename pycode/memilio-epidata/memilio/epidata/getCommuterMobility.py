@@ -23,7 +23,6 @@
 @brief gets data related to county mobility from "Bundesagentur fuer Arbeit"
 """
 import collections
-import time
 import os
 import numpy as np
 import pandas as pd
@@ -512,6 +511,10 @@ def get_neighbors_mobility(
     @param tol_comb Defines whether absolute and relative thresholds are
         combined such that only one criterion has to be satisfied ('or') or
         both ('and').
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
+        as one entity 'Wartburgkreis'.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
     @return Neighbors of the county with respect to mobility and the number of 
         commuters from and to the neighbors.
     '''
@@ -520,11 +523,11 @@ def get_neighbors_mobility(
     gd.check_dir(directory)
     try:
         if merge_eisenach:
-            commuter = pd.read_json(os.path.join(
-                directory, "migration_bfa_2020_dim400.json"))
+            commuter = gd.get_file(os.path.join(
+                directory, "migration_bfa_2020_dim400.json"), None, True)
         else:
-            commuter = pd.read_json(os.path.join(
-                directory, "migration_bfa_2020_dim401.json"))
+            commuter = gd.get_file(os.path.join(
+                directory, "migration_bfa_2020_dim401.json"), None, True)
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
@@ -611,7 +614,4 @@ def main():
 
 
 if __name__ == "__main__":
-    start_time = time.perf_counter()
     main()
-    end_time = time.perf_counter()
-    print(str(end_time-start_time))
