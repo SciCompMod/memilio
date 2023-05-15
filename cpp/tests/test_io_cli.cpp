@@ -219,6 +219,9 @@ TEST(TestCLI, test_print_options)
     Params p;
     EXPECT_EXIT((void)mio::command_line_interface("TestSuite", argc, argv, p, std::cerr), testing::ExitedWithCode(0),
                 testing::StrEq("Option a:\n0.0\nOption D:\n[]\n"));
+    for (int i = 0; i < argc; i++) {
+        delete[] argv[i];
+    }
 }
 
 TEST(TestCLI, test_command_line_interface)
