@@ -26,7 +26,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include "memilio/utils/history.h"
+#include "memilio/io/history.h"
 
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {

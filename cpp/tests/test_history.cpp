@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "memilio/utils/history.h"
+#include "memilio/io/history.h"
 
 class example
 {
@@ -29,7 +29,7 @@ struct Dummy {
     template <class T>
     size_t type_index()
     {
-        return mio::index_templ_pack<T, Loggers...>();
+        return mio::details::index_templ_pack<T, Loggers...>();
     }
 };
 

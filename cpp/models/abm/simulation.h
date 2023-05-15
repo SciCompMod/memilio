@@ -23,7 +23,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/utils/history.h"
+#include "memilio/io/history.h"
 
 namespace mio
 {
