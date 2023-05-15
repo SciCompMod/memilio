@@ -171,6 +171,7 @@ void Person::set_infection_state(InfectionState inf_state)
     if (is_infected()) {
         m_time_since_transmission = mio::abm::TimeSpan(0);
     }
+    //TODO
     if (m_infection_state == InfectionState::Exposed) {
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(0, int(4.0 * 24)));
     }

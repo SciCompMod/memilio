@@ -553,16 +553,17 @@ def set_sim_result_at_start(sim):
 
 
 def run_abm_simulation():
-
-    input_path = 'H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt/'
-    output_path = 'H:/Documents/INSIDeDemonstrator/'
+    
+    input_path = 'input/AreaList.txt'
+    output_path = 'output/'
+    #set seed for fixed model initialization (locations and initial infection states)
+    np.random.seed(0)
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point: simulation will run 14 days
     tmax = t0 + abm.days(14)
     # distribution used to distribute the residential areas to one-, two-, three-, four- and five-person households
     household_distribution = [0.4084, 0.3375, 0.1199, 0.0965, 0.0377]
-
     # read txt file with inputs
     areas = read_txt(input_path)
     #create simulation
