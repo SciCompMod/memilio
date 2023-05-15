@@ -21,6 +21,8 @@
 #define IO_CLI_H_
 
 #include "memilio/config.h"
+#include "json/reader.h"
+#include <memory>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -267,8 +269,9 @@ mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, co
         // read json value from args
         Json::Value js;
         std::string errors;
-        auto parser = Json::CharReaderBuilder{}.newCharReader();
-        parser->parse(&*args.begin(), &*args.end(), &js, &errors);
+        Json::CharReaderBuilder builder;
+        const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
+        parser->parse(args.c_str(), args.c_str() + args.size(), &js, &errors);
         // deserialize the json value to the parameter's type, then assign it
         auto result = mio::deserialize_json(js, mio::Tag<typename T::Type>());
         if (result) {
