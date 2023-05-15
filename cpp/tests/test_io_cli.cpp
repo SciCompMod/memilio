@@ -197,10 +197,8 @@ TEST(TestCLI, test_write_help)
     mio::details::cli::write_help("TestSuite", Params(), ss);
     EXPECT_EQ(ss.str(), help);
     // call cli with -h option
-    char c[2], *argv[2];
-    c[0]    = '-';
-    c[1]    = 'h';
-    argv[1] = c;
+    char c[] = "-h", *argv[2];
+    argv[1]  = c;
     Params p;
     EXPECT_EXIT((void)mio::command_line_interface("TestSuite", 2, argv, p, std::cerr), testing::ExitedWithCode(0),
                 testing::StrEq(help));
