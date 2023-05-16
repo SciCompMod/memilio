@@ -175,7 +175,7 @@ struct StateAgeFunction {
     * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
     */
     StateAgeFunction()
-        : m_funcparam{1.0}
+        : m_funcparam{}
     {
     }
 
@@ -236,8 +236,11 @@ struct StateAgeFunction {
     }
 
 protected:
-    // pure virtual function that implements cloning in derived classes
-    virtual StateAgeFunction* clone_impl() const = 0;
+    // virtual function that implements cloning
+    virtual StateAgeFunction* clone_impl() const
+    {
+        return new StateAgeFunction(*this);
+    }
 
     // specifies Function
     ScalarType m_funcparam{};
@@ -403,7 +406,7 @@ struct StateAgeFunctionWrapper {
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType Function(ScalarType state_age)
+    ScalarType Function(ScalarType state_age) const
     {
         return m_function->Function(state_age);
     }
@@ -497,6 +500,37 @@ public:
      */
     int check_constraints() const
     {
+        for (int i = 0; i < 20; i++) {
+            std::cout << this->get<TransmissionProbabilityOnContact>().Function(i) << "\n";
+            if (this->get<TransmissionProbabilityOnContact>().Function(i) < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
+        for (int i = 0; i < 20; i++) {
+            if (this->get<RelativeTransmissionNoSymptoms>().Function(i) < 0.0 ||
+                this->get<RelativeTransmissionNoSymptoms>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
+        for (int i = 0; i < 20; i++) {
+            if (this->get<RiskOfInfectionFromSymptomatic>().Function(i) < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
         for (int i = 0; i < (int)InfectionTransition::Count; i++) {
             if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
                 log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
