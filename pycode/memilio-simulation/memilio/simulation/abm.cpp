@@ -164,7 +164,12 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
-        .def_property_readonly("index", &mio::abm::Location::get_index);
+        .def_property_readonly("index", &mio::abm::Location::get_index)
+        .def_property("infection_parameters",
+                      py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
+                      [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
+                          self.get_infection_parameters() = params;
+                      });
 
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");

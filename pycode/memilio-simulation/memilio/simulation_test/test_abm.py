@@ -48,6 +48,10 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(home.type, abm.LocationType.Home)
 
         testing_ages = [abm.AgeGroup.Age0to4]
+
+        home.infection_parameters.MaximumContacts = 10
+        self.assertEqual(home.infection_parameters.MaximumContacts, 10)
+
         testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
         testing_crit = [abm.TestingCriteria(
