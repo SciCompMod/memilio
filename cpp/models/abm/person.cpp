@@ -110,6 +110,10 @@ const Location& Person::get_location() const
 
 void Person::set_assigned_location(Location& location)
 {
+    /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
+    * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    *                                 person.set_assigned_location(home);
+    */
     m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
 }
 

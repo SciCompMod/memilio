@@ -100,14 +100,19 @@ public:
      * @param index The index of the location.
      * @param num_cells [Default: 1] The number of cells in which the Location is divided.
      */
-    Location(LocationType type, uint32_t index, uint32_t num_cells = 1);
+    Location(LocationId loc_id, uint32_t num_cells = 1);
+
+    Location(LocationType loc_type, uint32_t loc_index, uint32_t num_cells = 1)
+        : Location(LocationId{loc_index, loc_type}, num_cells)
+    {
+    }
 
     /**
     * @brief Compare two Location%s.
     */
     bool operator==(const Location& other) const
     {
-        return (m_type == other.m_type && m_index == other.m_index);
+        return (m_id == other.m_id);
     }
 
     bool operator!=(const Location& other) const
@@ -120,7 +125,7 @@ public:
      */
     LocationType get_type() const
     {
-        return m_type;
+        return m_id.type;
     }
 
     /**
@@ -128,7 +133,7 @@ public:
      */
     unsigned get_index() const
     {
-        return m_index;
+        return m_id.index;
     }
 
     /**
@@ -314,15 +319,14 @@ public:
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
 private:
-    LocationType m_type; ///< Type of the Location.
-    uint32_t m_index; ///< Index of the Location.
+    LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
         InfectionState::Count)}; ///< A TimeSeries of the InfectionState%s for each TimePoint at the Location.
-    std::vector<Cell> m_cells; ///< A vector of all Cell%s that the Location is divided in.
+    std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };
