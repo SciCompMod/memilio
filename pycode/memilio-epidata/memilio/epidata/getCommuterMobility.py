@@ -491,7 +491,7 @@ def commuter_sanity_checks(df):
 
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        merge_eisenach=True, out_folder=dd.defaultDict['out_folder'], ref_year=2022):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -515,6 +515,7 @@ def get_neighbors_mobility(
         'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param ref_year int 2013-2022 year to take data from. Default 2022
     @return Neighbors of the county with respect to mobility and the number of 
         commuters from and to the neighbors.
     '''
@@ -524,13 +525,13 @@ def get_neighbors_mobility(
     try:
         if merge_eisenach:
             commuter = gd.get_file(os.path.join(
-                directory, "migration_bfa_2020_dim400.json"), None, True)
+                directory, "migration_bfa_"+str(ref_year)+"_dim400.json"), None, True)
         else:
             commuter = gd.get_file(os.path.join(
-                directory, "migration_bfa_2020_dim401.json"), None, True)
+                directory, "migration_bfa_"+str(ref_year)+"_dim401.json"), None, True)
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
-        commuter = get_commuter_data(out_folder=out_folder)
+        commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
 
     countykey_list = commuter.columns
     commuter.index = countykey_list
@@ -554,7 +555,7 @@ def get_neighbors_mobility(
 
 def get_neighbors_mobility_all(
         direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        merge_eisenach=True, out_folder=dd.defaultDict['out_folder'], ref_year=2022):
     '''! Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -572,19 +573,21 @@ def get_neighbors_mobility_all(
     @param tol_comb Defines whether absolute and relative thresholds are
         combined such that only one criterion has to be satisfied ('or') or
         both ('and')
+    @param ref_year int 2013-2022 year to take data from. Default 2022
     @return Neighbors of all counties with respect to mobility.
     '''
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     countyids = geoger.get_county_ids(merge_eisenach=merge_eisenach)
     neighbors_table = []
+    # TODO:
     for id in countyids:
         neighbors_table.append(
             get_neighbors_mobility(
                 id, direction=direction, abs_tol=abs_tol,
                 rel_tol=rel_tol, tol_comb=tol_comb,
                 merge_eisenach=merge_eisenach,
-                out_folder=out_folder))
+                out_folder=out_folder, ref_year=ref_year))
 
     return dict(zip(countyids, neighbors_table))
 

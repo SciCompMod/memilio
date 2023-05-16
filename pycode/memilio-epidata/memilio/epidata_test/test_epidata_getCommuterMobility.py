@@ -19,18 +19,13 @@
 #############################################################################
 
 import collections
-import os
 import unittest
 from unittest.mock import patch
 
-import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
-from memilio.epidata import getDataIntoPandasDataFrame as gD
-from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import progress_indicator
 
 progress_indicator.ProgressIndicator.disable_indicators(True)
@@ -175,7 +170,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='out', abs_tol=0, rel_tol=0,
             tol_comb='or', merge_eisenach=True, out_folder=self.path)
-        self.assertEqual(len(countykey_list), 375)
+        self.assertEqual(len(countykey_list), 378)
         self.assertEqual(201, commuter_all[0])
         self.assertEqual(1342, commuter_all[9])
         self.assertEqual(254, commuter_all[11])
