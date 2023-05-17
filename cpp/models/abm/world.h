@@ -55,8 +55,7 @@ public:
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
     World(const GlobalInfectionParameters& params = {})
-        : m_locations((uint32_t)LocationType::Count)
-        , m_infection_parameters(params)
+        : m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
     {
@@ -110,9 +109,7 @@ public:
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
-                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
-    get_locations() const;
+    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
 
     /**
      * @brief Get a range of all Person%s in the World.
@@ -128,15 +125,6 @@ public:
     const Location& get_individualized_location(LocationId id) const;
 
     Location& get_individualized_location(LocationId id);
-
-    /**
-     * @brief Get the current Location of a Person.
-     * @param[in] person The Person.
-     * @return Reference to the current Location of the Person.
-     */
-    const Location& get_location(const Person& person) const;
-
-    Location& get_location(const Person& person);
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -209,7 +197,7 @@ private:
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
+    std::vector<std::unique_ptr<Location>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;

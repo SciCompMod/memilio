@@ -30,9 +30,8 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
-    : m_type(type)
-    , m_index(index)
+Location::Location(LocationId loc_id, uint32_t num_cells)
+    : m_id(loc_id)
     , m_capacity_adapted_transmission_risk(false)
     , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
