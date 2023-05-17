@@ -3,6 +3,7 @@
 set(MEMILIO_SPDLOG_VERSION "1.11.0")
 set(MEMILIO_EIGEN_VERSION "3.3.9")
 set(MEMILIO_JSONCPP_VERSION "1.9.5")
+set(MEMILIO_BOOST_VERSION "1.75.0")
 include(FetchContent)
 
 # ## SPDLOG
@@ -13,7 +14,7 @@ FetchContent_Declare(
     GIT_TAG v${MEMILIO_SPDLOG_VERSION}
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    FIND_PACKAGE_ARGS ${MEMILIO_SPDLOG_VERSION} NAMES spdlog
+    FIND_PACKAGE_ARGS ${MEMILIO_SPDLOG_VERSION}
 )
 
 set(SPDLOG_INSTALL ON)
@@ -27,19 +28,29 @@ FetchContent_Declare(eigen
     GIT_TAG ${MEMILIO_EIGEN_VERSION}
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    FIND_PACKAGE_ARGS ${MEMILIO_EIGEN_VERSION} NAMES eigen NO_MODULE
+    # FIND_PACKAGE_ARGS ${MEMILIO_EIGEN_VERSION} NAMES eigen NO_MODULE
 )
+
 FetchContent_MakeAvailable(eigen)
 
 add_library(Eigen3::Eigen ALIAS eigen)
 
+MESSAGE(STATUS "HI")
 
 # ## BOOST
-if(MEMILIO_USE_BUNDLED_BOOST)
-    include(BuildBoost)
-else()
-    find_package(Boost REQUIRED COMPONENTS outcome optional filesystem)
-endif(MEMILIO_USE_BUNDLED_BOOST)
+FetchContent_Declare(
+  Boost
+  GIT_REPOSITORY https://github.com/boostorg/boost.git
+  GIT_TAG boost-1.75.0
+  GIT_PROGRESS TRUE
+  GIT_SHALLOW TRUE
+)
+MESSAGE(STATUS "HI")
+set(BOOST_INCLUDE_LIBRARIES filesystem outcome optional)
+set(BOOST_ENABLE_CMAKE ON)
+FetchContent_MakeAvailable(Boost)
+
+MESSAGE(STATUS "HI")
 
 # ## HDF5
 find_package(HDF5 COMPONENTS C)
