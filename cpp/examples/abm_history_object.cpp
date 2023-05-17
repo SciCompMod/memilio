@@ -177,10 +177,8 @@ int main()
         static Type log(const mio::abm::Simulation& sim)
         {
             Type location_ids{};
-            for (auto&& locations : sim.get_world().get_locations()) {
-                for (auto& location : locations) {
-                    location_ids.push_back(std::make_tuple(location->get_type(), location->get_index()));
-                }
+            for (auto& location : sim.get_world().get_locations()) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
             }
             return location_ids;
         }
