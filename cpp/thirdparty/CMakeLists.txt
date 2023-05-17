@@ -7,7 +7,7 @@ set(MEMILIO_BOOST_VERSION "1.75.0")
 include(FetchContent)
 
 # ## SPDLOG
-
+MESSAGE(STATUS "Searching for SPDLOG and downloading if not found")
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -23,6 +23,7 @@ FetchContent_MakeAvailable(spdlog)
 
 
 # ## EIGEN
+MESSAGE(STATUS "Searching for Eigen and downloading if not found")
 FetchContent_Declare(eigen
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
     GIT_TAG ${MEMILIO_EIGEN_VERSION}
@@ -35,9 +36,10 @@ FetchContent_MakeAvailable(eigen)
 
 add_library(Eigen3::Eigen ALIAS eigen)
 
-MESSAGE(STATUS "HI")
+
 
 # ## BOOST
+MESSAGE(STATUS "Searching for Boost and downloading if not found")
 FetchContent_Declare(
   Boost
   GIT_REPOSITORY https://github.com/boostorg/boost.git
@@ -45,14 +47,14 @@ FetchContent_Declare(
   GIT_PROGRESS TRUE
   GIT_SHALLOW TRUE
 )
-MESSAGE(STATUS "HI")
 set(BOOST_INCLUDE_LIBRARIES filesystem outcome optional)
 set(BOOST_ENABLE_CMAKE ON)
 FetchContent_MakeAvailable(Boost)
 
-MESSAGE(STATUS "HI")
+
 
 # ## HDF5
+MESSAGE(STATUS "Looking for HDF5")
 find_package(HDF5 COMPONENTS C)
 
 if(HDF5_FOUND)
@@ -62,6 +64,7 @@ else()
 endif()
 
 # ## JSONCPP
+MESSAGE(STATUS "Searching for Jsoncpp and downloading if not found")
 if(MEMILIO_USE_BUNDLED_JSONCPP)
     message(STATUS "Downloading jsoncpp library")
 
