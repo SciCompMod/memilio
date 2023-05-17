@@ -47,7 +47,7 @@ class TestAbm(unittest.TestCase):
         home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
 
-        testing_ages = [abm.AgeGroup.Age0to4]
+        testing_ages = [mio.AgeGroup(0)]
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
@@ -102,9 +102,9 @@ class TestAbm(unittest.TestCase):
 
         social_event = world.locations[social_event_id.index]
 
-        world.infection_parameters.InfectedToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
+        world.parameters.InfectedToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
                                                     abm.VaccinationState.Unvaccinated] = 0.0
-        world.infection_parameters.InfectedToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
+        world.parameters.InfectedToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
                                                        abm.VaccinationState.Unvaccinated] = 0.0
 
         # trips
