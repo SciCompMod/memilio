@@ -30,7 +30,7 @@ Simulation::Simulation(TimePoint t, World&& world)
     , m_t(t)
     , m_dt(hours(1))
 {
-    initialize_locations(t);
+    initialize_locations(m_t);
 }
 
 void Simulation::initialize_locations(TimePoint t)
@@ -43,6 +43,7 @@ void Simulation::initialize_locations(TimePoint t)
 void Simulation::advance(TimePoint tmax)
 {
     //log initial system state
+    initialize_locations(m_t);
     store_result_at(m_t);
     while (m_t < tmax) {
         evolve_world(tmax);

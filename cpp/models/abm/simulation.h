@@ -71,6 +71,7 @@ public:
     void advance(TimePoint tmax, History& history)
     {
         //log initial system state
+        initialize_locations(m_t);
         store_result_at(m_t);
         history.log(*this);
         while (m_t < tmax) {
