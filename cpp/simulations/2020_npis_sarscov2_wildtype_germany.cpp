@@ -23,7 +23,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include "ode_secir/parameters_io.h"

@@ -26,6 +26,9 @@ target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 add_executable(graph_example graph.cpp)
 target_link_libraries(graph_example PRIVATE memilio ode_seir)
 
+add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
+target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
+
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 
