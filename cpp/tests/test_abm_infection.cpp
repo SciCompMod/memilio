@@ -59,3 +59,13 @@ TEST(TestInfection, init)
               mio::abm::InfectionState::Carrier);
     EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
 }
+
+TEST(TestInfection, getInfectionState)
+{
+    auto params    = mio::abm::Parameters(6);
+    auto t         = mio::abm::TimePoint(0);
+    auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34, params, t,
+                                         mio::abm::InfectionState::Exposed, true);
+    EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
+    EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
+}

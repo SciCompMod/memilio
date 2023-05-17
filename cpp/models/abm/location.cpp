@@ -31,9 +31,8 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, size_t num_agegroups, uint32_t num_cells)
-    : m_type(type)
-    , m_index(index)
+Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
+    : m_id(loc_id)
     , m_agegroups(num_agegroups)
     , m_capacity_adapted_transmission_risk(false)
     , m_parameters(num_agegroups)

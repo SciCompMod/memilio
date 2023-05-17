@@ -807,14 +807,12 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
     std::vector<int> loc_ids;
     // Loop over a number of runs
     while (run_idx <= num_runs) {
-
+        loc_ids = {};
         // Create the sampled simulation with start time t0
         auto sim = create_sampled_simulation(t0);
         // Collect the id of location in world.
-        for (auto&& locations : sim.get_world().get_locations()) {
-            for (auto&& location : locations) {
-                loc_ids.push_back(location->get_index());
-            }
+        for (auto& location : sim.get_world().get_locations()) {
+            loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
         sim.advance(tmax);

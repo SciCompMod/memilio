@@ -76,16 +76,19 @@ ScalarType Infection::get_infectivity(TimePoint t) const
     return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
-const VirusVariant& Infection::get_virus_variant() const
+VirusVariant Infection::get_virus_variant() const
 {
     return m_virus_variant;
 }
 
-const InfectionState& Infection::get_infection_state(TimePoint t) const
+InfectionState Infection::get_infection_state(TimePoint t) const
 {
-    return (*std::prev(std::lower_bound(m_infection_course.begin(), m_infection_course.end(), t,
-                                        [](std::pair<TimePoint, InfectionState> state, const TimePoint& s) {
-                                            return state.first <= s;
+    if (t < m_infection_course[0].first)
+        return InfectionState::Susceptible;
+
+    return (*std::prev(std::upper_bound(m_infection_course.begin(), m_infection_course.end(), t,
+                                        [](const TimePoint& s, std::pair<TimePoint, InfectionState> state) {
+                                            return state.first > s;
                                         })))
         .second;
 }

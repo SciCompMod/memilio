@@ -140,9 +140,9 @@ TEST(TestLocation, reachCapacity)
 
     //setup so p1 doesn't transition
     world.parameters.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34,
-                                                         mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.seconds();
+                                                         mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.days();
     world.parameters.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34,
-                                                          mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.seconds();
+                                                          mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
 
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);

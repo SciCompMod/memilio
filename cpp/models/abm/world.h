@@ -59,7 +59,6 @@ public:
      */
     World(size_t num_agegroups)
         : parameters(num_agegroups)
-        , m_locations((uint32_t)LocationType::Count)
         , m_trip_list()
     {
         use_migration_rules(true);
@@ -71,7 +70,7 @@ public:
      */
     World(const World& other)
         : parameters(other.parameters)
-        , m_locations((uint32_t)LocationType::Count)
+        , m_locations()
         , m_trip_list(other.m_trip_list)
     {
         // Create copies of persons in the world
@@ -81,11 +80,8 @@ public:
         }
 
         // Create copies of locations in the world
-        for (auto&& other_locations : other.get_locations()) {
-            for (auto&& other_location : other_locations) {
-                auto& locations = m_locations[(uint32_t)other_location->get_type()];
-                locations.emplace_back(std::make_unique<Location>(*other_location));
-            }
+        for (auto& location : other.get_locations()) {
+            m_locations.push_back(std::make_unique<Location>(location));
         }
 
         use_migration_rules(other.m_use_migration_rules);
@@ -179,9 +175,7 @@ public:
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator,
-                    std::vector<std::vector<std::unique_ptr<Location>>>::const_iterator>>
-    get_locations() const;
+    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
 
     /**
      * @brief Get a range of all Person%s in the World.
@@ -197,15 +191,6 @@ public:
     const Location& get_individualized_location(LocationId id) const;
 
     Location& get_individualized_location(LocationId id);
-
-    /**
-     * @brief Get the current Location of a Person.
-     * @param[in] person The Person.
-     * @return Reference to the current Location of the Person.
-     */
-    const Location& get_location(const Person& person) const;
-
-    Location& get_location(const Person& person);
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -268,7 +253,7 @@ private:
     void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::vector<std::unique_ptr<Location>>> m_locations;
+    std::vector<std::unique_ptr<Location>> m_locations;
     TestingStrategy m_testing_strategy;
     TripList m_trip_list;
     bool m_use_migration_rules;
