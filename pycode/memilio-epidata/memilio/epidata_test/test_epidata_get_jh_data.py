@@ -85,7 +85,8 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_FullData_JohnHopkins)
 
-    def test_get_JH_Data(self):
+    @patch('builtins.input', return_value='n')
+    def test_get_JH_Data(self, mockin):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \
             = [True, "json", self.path, False]
@@ -100,7 +101,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
             gJHD.get_jh_data(read_data=read_data, file_format=file_format,
                              out_folder=out_folder, no_raw=no_raw)
         self.assertEqual(str(error.exception),
-                         "Error: The file: " + file_with_path +
+                         "Error: The file from " + file_with_path +
                          " does not exist. Call program without -r "
                          "flag to get it.")
 
@@ -141,7 +142,8 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         data_list = df.columns.values.tolist()
 
         self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
+            data_list,
+            ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
         self.assertEqual(df[(df["Date"] == "2021-01-04")]
                          ["Recovered"].item(), 1445442.0)
 
@@ -151,10 +153,12 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         data_list = df.columns.values.tolist()
         self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
+            data_list,
+            ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
         # check if data is added up correctly
-        self.assertEqual(df[(df["Date"] == "2020-09-26")]
-                         ["Recovered"].item(), 2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
+        self.assertEqual(
+            df[(df["Date"] == "2020-09-26")]["Recovered"].item(),
+            2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
         self.assertEqual(df[(df["Date"] == "2020-02-05")]
                          ["Recovered"].item(), 30)
 
@@ -165,24 +169,35 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         data_list = df.columns.values.tolist()
 
         self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
+            data_list,
+            ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
         self.assertEqual('Germany' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'Germany') & (df["Date"] == "2021-01-04")]["Recovered"].item(),
-                         1445442.0)
+        self.assertEqual(df[(df["CountryRegion"] == 'Germany') & (
+            df["Date"] == "2021-01-04")]["Recovered"].item(), 1445442.0)
         # check if Korea, South is renamed
         self.assertEqual('SouthKorea' in df["CountryRegion"].values, True)
         self.assertEqual('Afghanistan' in df["CountryRegion"].values, True)
         self.assertEqual('France' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["Date"] == "2020-02-05") &
-                         (df["CountryRegion"] == 'France')]["Recovered"].item(), 30)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Confirmed"].item(),
-                         4487 + 1579 + 9863 + 1290 + 3541)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Deaths"].item(),
-                         42 + 6 + 65 + 20 + 40)
+        self.assertEqual(
+            df[(df["CountryRegion"] == 'France') &
+               (df["Date"] == "2020-09-26")]["Recovered"].item(),
+            2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
+        self.assertEqual(
+            df[(df["Date"] == "2020-02-05") &
+               (df["CountryRegion"] == 'France')]["Recovered"].item(),
+            30)
+        self.assertEqual(
+            df[(df["CountryRegion"] == 'France') &
+               (df["Date"] == "2020-09-26")]["Recovered"].item(),
+            2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
+        self.assertEqual(
+            df[(df["CountryRegion"] == 'France') &
+               (df["Date"] == "2020-09-26")]["Confirmed"].item(),
+            4487 + 1579 + 9863 + 1290 + 3541)
+        self.assertEqual(
+            df[(df["CountryRegion"] == 'France') &
+               (df["Date"] == "2020-09-26")]["Deaths"].item(),
+            42 + 6 + 65 + 20 + 40)
 
         # test all_provincestate_jh file
         f_read = os.path.join(self.path, "all_provincestate_jh.json")
@@ -190,8 +205,10 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list, [
-                         "CountryRegion", "ProvinceState", "Date", "Confirmed", "Recovered", "Deaths"])
+        self.assertEqual(
+            data_list,
+            ["CountryRegion", "ProvinceState", "Date", "Confirmed",
+             "Recovered", "Deaths"])
         self.assertEqual('Germany' in df["CountryRegion"].values, False)
         self.assertEqual('China' in df["CountryRegion"].values, True)
         self.assertEqual(df[(df["CountryRegion"] == 'China') & (
@@ -199,220 +216,11 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual('France' in df["CountryRegion"].values, True)
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (
             df["Date"] == "2020-09-26")].shape[0], 5)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
-            df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
-
-    @patch('memilio.epidata.getJHData.gd.loadCsv')
-    def test_get_JH_Data_Download(self, mock_loadcsv):
-        # Test without downloading data
-        [read_data, file_format, out_folder, no_raw] \
-            = [False, "json", self.path, False]
-
-        gD.check_dir(out_folder)
-
-        mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
-
-        gJHD.get_jh_data(read_data=read_data, file_format=file_format,
-                         out_folder=out_folder, no_raw=no_raw)
-
-        mock_loadcsv.assert_called_once()
-
-        # have to create same data as read_data=True
-
-        # check if expected files are written
-        # 7 country-folders+3 all countries-files
-        self.assertEqual(len(os.listdir(self.path)), 3 + 7)
-        self.assertTrue("FullData_JohnHopkins.json" in os.listdir(self.path))
-        # check if files are written in folders
-        directory_ger = os.path.join(out_folder, 'Germany/')
-        directory_es = os.path.join(out_folder, 'Spain/')
-        directory_fr = os.path.join(out_folder, 'France/')
-        directory_it = os.path.join(out_folder, 'Italy/')
-        directory_us = os.path.join(out_folder, 'US/')
-        directory_rok = os.path.join(out_folder, 'SouthKorea/')
-        directory_prc = os.path.join(out_folder, 'China/')
-        self.assertEqual(len(os.listdir(directory_ger)), 1)
-        self.assertEqual(len(os.listdir(directory_es)), 1)
-        self.assertEqual(len(os.listdir(directory_fr)), 1)
-        self.assertEqual(len(os.listdir(directory_it)), 1)
-        self.assertEqual(len(os.listdir(directory_us)), 1)
-        self.assertEqual(len(os.listdir(directory_rok)), 1)
-        self.assertEqual(len(os.listdir(directory_prc)), 1)
-
-        # test whole Germany file
-        f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
         self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual(df[(df["Date"] == "2021-01-04")]
-                         ["Recovered"].item(), 1445442.0)
-
-        # test whole France file (country with Provinces)
-        f_read = os.path.join(directory_fr, "whole_country_France_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-        self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        # check if data is added up correctly
-        self.assertEqual(df[(df["Date"] == "2020-09-26")]
-                         ["Recovered"].item(), 2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["Date"] == "2020-02-05")]
-                         ["Recovered"].item(), 30)
-
-        # test all_countries_jh file
-        f_read = os.path.join(self.path, "all_countries_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
-        self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual('Germany' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'Germany') & (df["Date"] == "2021-01-04")]["Recovered"].item(),
-                         1445442.0)
-        # check if Korea, South is renamed
-        self.assertEqual('SouthKorea' in df["CountryRegion"].values, True)
-        self.assertEqual('Afghanistan' in df["CountryRegion"].values, True)
-        self.assertEqual('France' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["Date"] == "2020-02-05") &
-                         (df["CountryRegion"] == 'France')]["Recovered"].item(), 30)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Confirmed"].item(),
-                         4487 + 1579 + 9863 + 1290 + 3541)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Deaths"].item(),
-                         42 + 6 + 65 + 20 + 40)
-
-        # test all_provincestate_jh file
-        f_read = os.path.join(self.path, "all_provincestate_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
-        self.assertEqual(data_list, [
-                         "CountryRegion", "ProvinceState", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual('Germany' in df["CountryRegion"].values, False)
-        self.assertEqual('China' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'China') & (
-            df["Date"] == "2020-01-22")].shape[0], 1)
-        self.assertEqual('France' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (
-            df["Date"] == "2020-09-26")].shape[0], 5)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
-            df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
-
-    @patch('memilio.epidata.getJHData.gd.loadCsv')
-    def test_get_JH_Data_Download_omit_raw(self, mock_loadcsv):
-        # Test without downloading data
-        [read_data, file_format, out_folder, no_raw] \
-            = [False, "json", self.path, True]
-
-        gD.check_dir(out_folder)
-
-        mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
-
-        gJHD.get_jh_data(read_data=read_data, file_format=file_format,
-                         out_folder=out_folder, no_raw=no_raw)
-
-        mock_loadcsv.assert_called_once()
-
-        # have to create same data as read_data=True
-
-        # check if expected files are written
-        # 7 country-folders+3 all countries-files
-        self.assertEqual(len(os.listdir(self.path)), 2 + 7)
-        self.assertTrue(
-            "FullData_JohnHopkins.json" not in os.listdir(self.path))
-
-        # check if files are written in folders
-        directory_ger = os.path.join(out_folder, 'Germany/')
-        directory_es = os.path.join(out_folder, 'Spain/')
-        directory_fr = os.path.join(out_folder, 'France/')
-        directory_it = os.path.join(out_folder, 'Italy/')
-        directory_us = os.path.join(out_folder, 'US/')
-        directory_rok = os.path.join(out_folder, 'SouthKorea/')
-        directory_prc = os.path.join(out_folder, 'China/')
-        self.assertEqual(len(os.listdir(directory_ger)), 1)
-        self.assertEqual(len(os.listdir(directory_es)), 1)
-        self.assertEqual(len(os.listdir(directory_fr)), 1)
-        self.assertEqual(len(os.listdir(directory_it)), 1)
-        self.assertEqual(len(os.listdir(directory_us)), 1)
-        self.assertEqual(len(os.listdir(directory_rok)), 1)
-        self.assertEqual(len(os.listdir(directory_prc)), 1)
-
-        # test whole Germany file
-        f_read = os.path.join(directory_ger, "whole_country_Germany_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
-        self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual(df[(df["Date"] == "2021-01-04")]
-                         ["Recovered"].item(), 1445442.0)
-
-        # test whole France file (country with Provinces)
-        f_read = os.path.join(directory_fr, "whole_country_France_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-        self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        # check if data is added up correctly
-        self.assertEqual(df[(df["Date"] == "2020-09-26")]
-                         ["Recovered"].item(), 2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["Date"] == "2020-02-05")]
-                         ["Recovered"].item(), 30)
-
-        # test all_countries_jh file
-        f_read = os.path.join(self.path, "all_countries_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
-        self.assertEqual(
-            data_list, ["CountryRegion", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual('Germany' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'Germany') & (df["Date"] == "2021-01-04")]["Recovered"].item(),
-                         1445442.0)
-        # check if Korea, South is renamed
-        self.assertEqual('SouthKorea' in df["CountryRegion"].values, True)
-        self.assertEqual('Afghanistan' in df["CountryRegion"].values, True)
-        self.assertEqual('France' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["Date"] == "2020-02-05") &
-                         (df["CountryRegion"] == 'France')]["Recovered"].item(), 30)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Recovered"].item(),
-                         2199.0 + 1335.0 + 9500.0 + 98.0 + 2964.0)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Confirmed"].item(),
-                         4487 + 1579 + 9863 + 1290 + 3541)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")]["Deaths"].item(),
-                         42 + 6 + 65 + 20 + 40)
-
-        # test all_provincestate_jh file
-        f_read = os.path.join(self.path, "all_provincestate_jh.json")
-        df = pd.read_json(f_read)
-
-        data_list = df.columns.values.tolist()
-
-        self.assertEqual(data_list, [
-                         "CountryRegion", "ProvinceState", "Date", "Confirmed", "Recovered", "Deaths"])
-        self.assertEqual('Germany' in df["CountryRegion"].values, False)
-        self.assertEqual('China' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'China') & (
-            df["Date"] == "2020-01-22")].shape[0], 1)
-        self.assertEqual('France' in df["CountryRegion"].values, True)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (
-            df["Date"] == "2020-09-26")].shape[0], 5)
-        self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
-            df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
+            df
+            [(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") &
+             (df['ProvinceState'] == 'Martinique')]["Deaths"].item(),
+            20)
 
     def test_get_JH_Data_extract_subframe_between_timeframe(self):
 
@@ -429,8 +237,10 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         test_end_date = date(2021, 4, 22)
 
         # read in JH data with start and end date
-        gJHD.get_jh_data(read_data=read_data, file_format=file_format, out_folder=out_folder, no_raw=no_raw,
-                         start_date=test_start_date, end_date=test_end_date)
+        gJHD.get_jh_data(
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, start_date=test_start_date,
+            end_date=test_end_date)
 
         # read in german data
         directory_ger = os.path.join(out_folder, 'Germany/')
@@ -453,12 +263,18 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         # compare if they are the same
         self.assertEqual(len(df_test), len(df_test_start_end_date),
                          "Dataframes don't have the same length.")
-        self.assertEqual(list(df_test['Confirmed']), list(
-            df_test_start_end_date['Confirmed']), "Dataframes don't have the same confirmed cases.")
-        self.assertEqual(list(df_test['Recovered']), list(
-            df_test_start_end_date['Recovered']), "Dataframes don't have the same recovered cases.")
-        self.assertEqual(list(df_test['Deaths']), list(
-            df_test_start_end_date['Deaths']), "Dataframes don't have the same death cases.")
+        self.assertEqual(
+            list(df_test['Confirmed']),
+            list(df_test_start_end_date['Confirmed']),
+            "Dataframes don't have the same confirmed cases.")
+        self.assertEqual(
+            list(df_test['Recovered']),
+            list(df_test_start_end_date['Recovered']),
+            "Dataframes don't have the same recovered cases.")
+        self.assertEqual(
+            list(df_test['Deaths']),
+            list(df_test_start_end_date['Deaths']),
+            "Dataframes don't have the same death cases.")
 
 
 if __name__ == '__main__':
