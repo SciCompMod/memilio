@@ -196,8 +196,11 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
+private:
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::unique_ptr<Location>> m_locations;
+
+protected:
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
