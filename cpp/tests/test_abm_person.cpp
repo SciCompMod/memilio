@@ -92,8 +92,8 @@ TEST(TestPerson, quarantine)
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
-    infection_parameters.get<mio::abm::InfectedToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
+    infection_parameters
+        .get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
         0.5 * dt.days();
 
     auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Infected, t_morning,
@@ -224,58 +224,6 @@ TEST(TestPerson, setWearMask)
 }
 
 TEST(TestPerson, getProtectiveFactor)
-{
-    auto location         = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person_community = make_test_person(location);
-    person_community.get_mask().change_mask(mio::abm::MaskType::Community);
-    person_community.set_wear_mask(true);
-    auto person_surgical = make_test_person(location);
-    person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
-    person_surgical.set_wear_mask(true);
-    auto person_ffp2 = make_test_person(location);
-    person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
-    person_ffp2.set_wear_mask(true);
-    auto person_without = make_test_person(location);
-    person_without.set_wear_mask(false);
-
-    mio::abm::GlobalInfectionParameters params;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
-
-    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
-    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
-    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
-    ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
-}
-
-TEST(TestPerson, getProtectionFactor)
-{
-    auto location         = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person_community = make_test_person(location);
-    person_community.get_mask().change_mask(mio::abm::MaskType::Community);
-    person_community.set_wear_mask(true);
-    auto person_surgical = make_test_person(location);
-    person_surgical.get_mask().change_mask(mio::abm::MaskType::Surgical);
-    person_surgical.set_wear_mask(true);
-    auto person_ffp2 = make_test_person(location);
-    person_ffp2.get_mask().change_mask(mio::abm::MaskType::FFP2);
-    person_ffp2.set_wear_mask(true);
-    auto person_without = make_test_person(location);
-    person_without.set_wear_mask(false);
-
-    mio::abm::GlobalInfectionParameters params;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Community}] = 0.5;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::Surgical}]  = 0.8;
-    params.get<mio::abm::MaskProtection>()[{mio::abm::MaskType::FFP2}]      = 0.9;
-
-    ASSERT_EQ(person_community.get_mask_protective_factor(params), 0.5);
-    ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
-    ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
-    ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
-}
-
-TEST(TestPerson, getSeverityFactor)
 {
     auto location         = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto person_community = make_test_person(location);

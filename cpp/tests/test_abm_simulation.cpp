@@ -33,11 +33,6 @@ TEST(TestSimulation, advance_random)
     p3.set_assigned_location(location2);
     p4.set_assigned_location(location2);
 
-    world.get_individualized_location(location1).add_person(p1);
-    world.get_individualized_location(location1).add_person(p2);
-    world.get_individualized_location(location2).add_person(p3);
-    world.get_individualized_location(location2).add_person(p4);
-
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
 
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));

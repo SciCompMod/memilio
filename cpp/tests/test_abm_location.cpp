@@ -19,7 +19,6 @@
 */
 #include "abm/infection.h"
 #include "abm_helpers.h"
-#include "abm_helpers.cpp"
 #include <memory>
 
 TEST(TestLocation, init)
@@ -141,9 +140,9 @@ TEST(TestLocation, reachCapacity)
     auto params = mio::abm::GlobalInfectionParameters{};
     //setup so p1 doesn't transition
     params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        2 * dt.seconds();
+        2 * dt.days();
     params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
-        2 * dt.seconds();
+        2 * dt.days();
 
     auto world     = mio::abm::World(params);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -272,10 +271,8 @@ TEST(TestLocation, storeSubpopulations)
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
     //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to Carrier to RecoveredCarrier
-    params.get<mio::abm::InfectedToRecovered>()[{
-        mio::abm::VirusVariant::Wildtype,
-        mio::abm::AgeGroup::Age5to14,
-    }] = 1.5 * dt.days();
+    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14}] =
+        1.5 * dt.days();
 
     params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
         5 * dt.days();

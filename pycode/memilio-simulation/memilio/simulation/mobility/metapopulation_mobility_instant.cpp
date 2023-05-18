@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "mobility/meta_mobility_instant.h"
+#include "mobility/metapopulation_mobility_instant.h"
 
 #include "pybind11/eigen.h"
 
@@ -51,7 +51,10 @@ void bind_migration_parameter_edge(py::module& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
+            "property",
+            [](const mio::Edge<mio::MigrationEdge>& self) -> auto& {
+                return self.property;
+            },
             py::return_value_policy::reference_internal);
 }
 
@@ -61,7 +64,10 @@ void bind_migration(py::module& m, std::string const& name)
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MigrationParameters&>(), py::arg("params"))
         .def_property_readonly(
-            "parameters", [](const mio::MigrationEdge& self) -> auto& { return self.get_parameters(); },
+            "parameters",
+            [](const mio::MigrationEdge& self) -> auto& {
+                return self.get_parameters();
+            },
             py::return_value_policy::reference_internal);
 }
 
@@ -77,7 +83,10 @@ void bind_migration_edge(py::module& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
+            "property",
+            [](const mio::Edge<mio::MigrationEdge>& self) -> auto& {
+                return self.property;
+            },
             py::return_value_policy::reference_internal);
 }
 

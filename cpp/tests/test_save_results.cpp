@@ -18,16 +18,17 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
+#include "matchers.h"
+#include "temp_file_register.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/time_series.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/io/result_io.h"
-#include "temp_file_register.h"
 #include <gtest/gtest.h>
 #include <string>
-#include "matchers.h"
-#include "memilio/compartments/parameter_studies.h"
 
 TEST(TestSaveResult, save_result)
 {
@@ -112,6 +113,12 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
+    //rng needs to be reseeded right before using parallel parameterstudies
+    //to keep the rest of the tests independent, we install a temporary RNG for this test
+    auto rng = mio::thread_local_rng();
+    mio::thread_local_rng() = mio::RandomNumberGenerator();
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -153,15 +160,15 @@ TEST(TestSaveResult, save_result_with_params)
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
-    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.);
 
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto num_runs = 3;
-    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs        = 3;
+    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -172,12 +179,11 @@ TEST(TestSaveResult, save_result_with_params)
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto run_idx) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -190,7 +196,7 @@ TEST(TestSaveResult, save_result_with_params)
             save_result_status = save_result_with_params(ensemble_results.back(), ensemble_params.back(), {0, 1},
                                                          tmp_results_dir, run_idx);
 
-            ++run_idx;
+            return 0; //function needs to return something
         });
     ASSERT_TRUE(save_result_status);
     auto results_from_file = mio::read_result(tmp_results_dir + "/run0/Result.h5");
@@ -199,10 +205,36 @@ TEST(TestSaveResult, save_result_with_params)
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
+
+    auto read_graph = mio::read_graph<mio::osecir::Model>(tmp_results_dir + "/run0", mio::IOF_OmitDistributions, false);
+
+    EXPECT_EQ(
+        read_graph.value()
+            .nodes()[0]
+            .property.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)],
+        params.get<mio::osecir::TransmissionProbabilityOnContact>()[mio::Index<mio::AgeGroup>(0)]);
+
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)],
+              params.get<mio::osecir::CriticalPerSevere>()[mio::Index<mio::AgeGroup>(0)]);
+
+    EXPECT_EQ(read_graph.value()
+                  .nodes()[0]
+                  .property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
+              params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
+
+    mio::thread_local_rng() = rng;
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
+    //rng needs to be reseeded right before using parallel parameterstudies
+    //to keep the rest of the tests independent, we install a temporary RNG for this test
+    auto prev_rng = mio::thread_local_rng();
+    mio::thread_local_rng() = mio::RandomNumberGenerator();
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -251,8 +283,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto num_runs = 3;
-    auto parameter_study    = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs        = 3;
+    auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
 
     TempFileRegister tmp_file_register;
     std::string tmp_results_dir = tmp_file_register.get_unique_path();
@@ -262,12 +294,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto run_idx = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto /*run_idx*/) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -276,7 +307,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                            std::back_inserter(ensemble_params.back()), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
-            ++run_idx;
+            return 0; //function needs to return something
         });
 
     auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
@@ -294,7 +325,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto results_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Results.h5");
     ASSERT_TRUE(results_from_file_p95);
 
-    auto result_from_file = results_from_file_p25.value()[0];  
+    auto result_from_file = results_from_file_p25.value()[0];
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
     EXPECT_EQ(ensemble_results.back().back().get_num_time_points(),
               result_from_file.get_groups().get_num_time_points());
@@ -312,4 +343,6 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
+
+    mio::thread_local_rng() = prev_rng;
 }

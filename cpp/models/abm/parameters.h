@@ -282,7 +282,7 @@ struct MaximumContacts {
  * contact rates
 */
 struct ContactRates {
-    using Type = CustomIndexArray<double, AgeGroup, AgeGroup>;
+    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
     static Type get_default()
     {
         return Type({AgeGroup::Count, AgeGroup::Count},
@@ -298,7 +298,7 @@ struct ContactRates {
  * aerosol transmission rates
 */
 struct AerosolTransmissionRates {
-    using Type = CustomIndexArray<double, VirusVariant>;
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
     static Type get_default()
     {
         return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day

@@ -77,14 +77,14 @@ public:
      * @brief: Get VirusVariant.
      * @return VirusVariant of the Infection.
      */
-    const VirusVariant& get_virus_variant() const;
+    VirusVariant get_virus_variant() const;
 
     /**
      * @brief Get the InfectionState of the Infection.
      * @param[in] t TimePoint of the querry.
      * @return InfectionState at the given TimePoint.
      */
-    const InfectionState& get_infection_state(TimePoint t) const;
+    InfectionState get_infection_state(TimePoint t) const;
 
     /**
      * @brief Set the Infection to detected.
@@ -95,13 +95,6 @@ public:
      * @returns Get the detected state.
     */
     bool is_detected() const;
-
-    /**
-     * @returns Get the infection start date. 
-    */
-    TimePoint get_start_date() const {
-        return m_start_date;
-    }
 
 private:
     /**
@@ -140,7 +133,6 @@ private:
     ViralLoad m_viral_load;
     ScalarType m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
     bool m_detected;
-    TimePoint m_start_date;
 };
 
 } // namespace abm

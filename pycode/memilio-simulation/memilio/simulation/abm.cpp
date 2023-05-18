@@ -52,6 +52,12 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Age60to79", mio::abm::AgeGroup::Age60to79)
         .value("Age80plus", mio::abm::AgeGroup::Age80plus);
 
+    pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
+
+    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
+        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
+        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
+
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
         .value("School", mio::abm::LocationType::School)
@@ -71,8 +77,8 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
     pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::AgeGroup, mio::abm::VaccinationState>(
-        m, "_AgeVaccinationParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup,
+                                 mio::abm::VaccinationState>(m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
@@ -100,7 +106,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("seconds", &mio::abm::seconds);
     m.def("minutes", &mio::abm::minutes);
     m.def("hours", &mio::abm::hours);
-    m.def("days", &mio::abm::days);
+    m.def("days", py::overload_cast<int>(&mio::abm::days));
 
     py::class_<mio::abm::TimePoint>(m, "TimePoint")
         .def(py::init<int>(), py::arg("seconds") = 0)
@@ -131,17 +137,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self == py::self)
         .def(py::self != py::self);
 
-    py::class_<mio::abm::InfectionProperties>(m, "InfectionProperties")
-        .def_readwrite("state", &mio::abm::InfectionProperties::state)
-        .def_readwrite("detected", &mio::abm::InfectionProperties::detected)
-        .def(py::self == py::self)
-        .def(py::self != py::self);
-
     py::class_<mio::abm::Person>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
-        .def_property("infection_state", &mio::abm::Person::get_infection_state, &mio::abm::Person::set_infection_state)
-        .def_property_readonly("vaccination_state", &mio::abm::Person::get_vaccination_state)
-        .def_property_readonly("location_id", &mio::abm::Person::get_location_id)
+        .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
@@ -196,9 +194,9 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::World>(m, "World")
         .def(py::init<mio::abm::GlobalInfectionParameters>(),
              py::arg("infection_parameters") = mio::abm::GlobalInfectionParameters{})
-        .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 0,
+        .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
+        .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
              py::return_value_policy::reference_internal)
-        .def("add_person", &mio::abm::World::add_person, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
@@ -231,7 +229,7 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
-        .def("advance", &mio::abm::Simulation::advance)
+        .def("advance", py::overload_cast<mio::abm::TimePoint>(&mio::abm::Simulation::advance))
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }

@@ -30,15 +30,12 @@ TEST(TestInfection, init)
         .Times(testing::AtLeast(7))
         .WillOnce(testing::Return(0.4)) // Transition to Infected
         .WillOnce(testing::Return(0.6)) // Transition to Recovered_Infected
-        .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(
-            params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                .viral_load_decline.params.a()))
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_peak.params.a())) // Viral load draws
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_incline.params.a()))
+        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
+                                      .viral_load_decline.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
                                       .infectivity_alpha.params.a())) // Infectivity draws
         .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
@@ -56,4 +53,14 @@ TEST(TestInfection, init)
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
               mio::abm::InfectionState::Carrier);
     EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
+}
+
+TEST(TestInfection, getInfectionState)
+{
+    auto t = mio::abm::TimePoint(0);
+    auto infection =
+        mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                            mio::abm::GlobalInfectionParameters{}, t, mio::abm::InfectionState::Exposed, true);
+    EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
+    EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 }

@@ -110,6 +110,10 @@ const Location& Person::get_location() const
 
 void Person::set_assigned_location(Location& location)
 {
+    /* TODO: This is not safe if the location is not the same as added in the world, e.g. the index is wrong. We need to check this.
+    * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
+    *                                 person.set_assigned_location(home);
+    */
     m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
 }
 
@@ -252,21 +256,8 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
-ScalarType Person::get_protection_factor(VirusVariant /*v*/, TimePoint t) const
+ScalarType Person::get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
 {
-    TimeSpan time_since_vaccination = t - m_vaccinations.back().time;
-    ScalarType init_efficacy;
-    switch (m_vaccinations.back().vaccine) {
-        case Vaccine::Moderna:
-            init_efficacy = 99;
-            break;
-        default:
-            init_efficacy = 50;
-    }
-    //TimeSpan time_since_infection = t - m_infections.back().get_start_date();
-    if (time_since_vaccination.days() > 0) {
-        return init_efficacy / time_since_vaccination.days();
-    }
     return 1;
 }
 

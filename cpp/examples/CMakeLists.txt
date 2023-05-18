@@ -26,6 +26,9 @@ target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 add_executable(graph_example graph.cpp)
 target_link_libraries(graph_example PRIVATE memilio ode_seir)
 
+add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
+target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
+
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 
@@ -34,6 +37,9 @@ target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
+
+add_executable(ide_secir_example ide_secir.cpp)
+target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
