@@ -21,7 +21,6 @@
 #define EPI_ABM_VACCINE_H
 
 #include "abm/time.h"
-#include "memilio/config.h"
 
 #include <cstdint>
 

@@ -54,10 +54,6 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
 
-    pymio::iterable_enum<mio::abm::VaccinationState>(m, "VaccinationState")
-        .value("Unvaccinated", mio::abm::VaccinationState::Unvaccinated)
-        .value("Vaccinated", mio::abm::VaccinationState::Vaccinated);
-
     pymio::iterable_enum<mio::abm::LocationType>(m, "LocationType")
         .value("Home", mio::abm::LocationType::Home)
         .value("School", mio::abm::LocationType::School)
@@ -76,9 +72,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
 
     pymio::bind_Index<mio::abm::AgeGroup>(m, "AgeIndex");
-    pymio::bind_Index<mio::abm::VaccinationState>(m, "VaccinationIndex");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup,
-                                 mio::abm::VaccinationState>(m, "_AgeVaccinationParameterArray");
+    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::abm::VirusVariant, mio::abm::AgeGroup>(
+        m, "_AgeVaccinationParameterArray");
     pymio::bind_ParameterSet<mio::abm::GlobalInfectionParameters>(m, "GlobalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());

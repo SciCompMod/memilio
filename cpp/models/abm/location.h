@@ -121,7 +121,7 @@ public:
     }
 
     /**
-     * get the type of this location.
+     * @brief Get the LocationType of this Location.
      */
     LocationType get_type() const
     {
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     *get the index of this location.
+     * @brief Get the index of this Location.
      */
     unsigned get_index() const
     {
@@ -204,14 +204,17 @@ public:
     }
 
     /**
-     * get the type of mask that is demanded when entering the location
-     * @return type of the mask 
+     * @brief Get the type of Mask that is demanded when entering this Location.
      */
     MaskType get_required_mask() const
     {
         return m_required_mask;
     }
 
+    /**
+     * @brief Set the required MaskType for entering this Location.
+     * @param[in] type The type of the Mask.
+     */
     void set_required_mask(MaskType type)
     {
         m_required_mask = type;
@@ -275,6 +278,10 @@ public:
         return m_npi_active;
     }
 
+    /**
+     * @brief Activate or deactivate NPIs at this Location.
+     * @param[in] new_status Status of NPIs.
+     */
     void set_npi_active(bool new_status)
     {
         m_npi_active = new_status;
