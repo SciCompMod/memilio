@@ -129,21 +129,20 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t location_id = row[index["loc_id_end"]];
         uint32_t activity    = row[index["activity_end"]];
 
-        auto check_location           = locations.find(location_id);
-        // mio::abm::LocationId location = check_location->second;
-        if (check_location == locations.end()) {
-            auto location = world.add_location(get_location_type(activity), 0); // TODO: adjust LocationType
+        auto it_location              = locations.find(location_id);
+        mio::abm::LocationId location = it_location->second;
+        if (it_location == locations.end()) {
+            location = world.add_location(get_location_type(activity), 0); // TODO: adjust LocationType
             locations.insert({location_id, location});
-            check_location = locations.find(location_id);
         }
-        auto it_person           = persons.find(person_id);
+        auto it_person = persons.find(person_id);
         if (it_person == persons.end()) {
-            auto person =
-                world.add_person(check_location->second, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
+            auto& person =
+                world.add_person(location, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
             persons.insert({person_id, person});
             it_person = persons.find(person_id);
         }
-        it_person->second.set_assigned_location(check_location->second);
+        it_person->second.set_assigned_location(location);
     }
 }
 
