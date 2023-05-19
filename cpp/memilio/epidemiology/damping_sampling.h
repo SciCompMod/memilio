@@ -261,6 +261,7 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
             damping_expression[i].add_damping(m, d.get_level(), d.get_type(), d.get_time());
         }
     }
+    damping_expression.finalize();
 }
 
 /**
