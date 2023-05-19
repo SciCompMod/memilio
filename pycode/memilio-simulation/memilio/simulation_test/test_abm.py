@@ -33,7 +33,7 @@ class TestAbm(unittest.TestCase):
         world = sim.world
         self.assertEqual(len(world.persons), 0)
         self.assertEqual(len(world.locations), 0)
-        self.assertEqual(len(sim.result), 1)
+        self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)

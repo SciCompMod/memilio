@@ -26,30 +26,35 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include "memilio/io/history.h"
 
-void write_results_to_file(const mio::abm::Simulation& sim)
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
-    myfile << "# t S E C I I_s I_c R_C R_I D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        myfile << sim.get_result().get_time(i);
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            myfile << v[j];
-            if (j < v.size() - 1) {
-                myfile << " ";
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            myfile << "\n";
-        }
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+template <typename T>
+void write_log_to_file(const T& history)
+{
+    auto logg = history.get_log();
+    // Write the results to a file.
+    auto loc_id      = std::get<1>(logg);
+    auto time_points = std::get<0>(logg);
+    std::string input;
+    std::ofstream myfile("test_output.txt");
+    myfile << "Locations as numbers:\n";
+    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
+        myfile << convert_loc_id_to_string(loc_id[0][loc_id_index]) << "\n";
     }
+    myfile << "Timepoints:\n";
+
+    for (int t = 0; t < time_points.size(); ++t) {
+        input += std::to_string(time_points[t]) + " ";
+    }
+    myfile << input << "\n";
+
     myfile.close();
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
 int main()
@@ -160,7 +165,28 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    sim.advance(tmax);
+    struct LogTimePoint : mio::LogAlways {
+        using Type = double;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            return sim.get_time().hours();
+        }
+    };
+    struct LogLocationIds : mio::LogOnce {
+        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            Type location_ids{};
+            for (auto& location : sim.get_world().get_locations()) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            }
+            return location_ids;
+        }
+    };
 
-    write_results_to_file(sim);
+    mio::History<mio::DataWriterToBuffer, LogTimePoint, LogLocationIds> history;
+
+    sim.advance(tmax, history);
+
+    write_log_to_file(history);
 }
