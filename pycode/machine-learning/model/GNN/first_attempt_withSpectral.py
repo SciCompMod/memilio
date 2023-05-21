@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pickle
 import spektral
+import keras
+import time
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,8 +19,9 @@ from keras.models import Model
 from keras.optimizers import Adam
 
 from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
-from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv, APPNPConv, CrystalConv, GATConv, GINConv, XENetConv
+from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv, APPNPConv, CrystalConv, GCNConv, GATConv, GINConv, XENetConv, ChebConv, ECCConv, GlobalSumPool
 from spektral.transforms.normalize_adj import NormalizeAdj
+from spektral.utils.convolution import normalized_laplacian, gcn_filter, chebyshev_filter, rescale_laplacian
 
 
 from memilio.simulation.secir import InfectionState
@@ -30,7 +33,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data/data_GNN_nodamp_401pop_1k')
+    'data/data_GNN_nodamp_20pop_1k')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 data_secir = pickle.load(file)
@@ -61,6 +64,8 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 adjacency_matrix = np.asarray(sub_matrix)
 
+adjacency_matrix[adjacency_matrix > 0] = 1
+
 node_features = new_inputs
 
 node_labels = new_labels
@@ -68,23 +73,24 @@ node_labels = new_labels
 
 class MyDataset(spektral.data.dataset.Dataset):
     def read(self):
-        # self.a = sp.csr_matrix(adjacency_matrix)
-        self.a = adjacency_matrix
+        self.a = gcn_filter(adjacency_matrix)
+        # self.a = adjacency_matrix
 
         return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
 
         super().__init__(**kwargs)
 
 
-# data = MyDataset()
-data = MyDataset(transforms=NormalizeAdj())
+# data = MyDataset(transforms=NormalizeAdj())
+data = MyDataset()
 batch_size = 32
 epochs = 200
-es_patience = 20  # Patience for early stopping
+es_patience = 500  # Patience for early stopping
 
 # Train/valid/test split
 idxs = np.random.permutation(len(data))
-split_va, split_te = int(0.8 * len(data)), int(0.9 * len(data))
+# split_va, split_te = int(0.8 * len(data)), int(0.9 * len(data))
+split_va, split_te = int(0.7 * len(data)), int(0.85 * len(data))
 idx_tr, idx_va, idx_te = np.split(idxs, [split_va, split_te])
 data_tr = data[idx_tr]
 data_va = data[idx_va]
@@ -119,21 +125,26 @@ class Net(Model):
     def __init__(self):
         super().__init__()
 
-        ##### for mixed mode ####
-        self.conv1 = GATConv(32,     activation="relu")
-        self.conv2 = GATConv(32,   activation="relu")
-        self.conv3 = GATConv(32,   activation="relu")
+        # self.conv1 = ARMAConv(32,     activation="relu")
 
+        ##### for mixed mode ####
+        self.conv1 = GCNConv(32,     activation="relu")
+        # self.conv2 = GATConv(32,   activation="relu",attn_heads = 1, dropout_rate = 0.5)
+        # self.conv3 = GATConv(32,   activation="relu",attn_heads = 1, dropout_rate = 0.5)
+        #self.global_pool = GlobalSumPool()
         self.dense = Dense(data.n_labels, activation="linear")
 
     def call(self, inputs):
         x, a = inputs
-        a = np.asarray(a)
+        #a= rescale_laplacian(normalized_laplacian(np.asarray(a)))
+        #a = np.asarray(a)
+        
 
         x = self.conv1([x, a])
-        x = self.conv2([x, a])
-        x = self.conv3([x, a])
 
+        # x = self.conv2([x, a])
+        # x = self.conv3([x, a])
+        #output = self.global_pool(x)
         output = self.dense(x)
 
         return output
@@ -221,6 +232,12 @@ patience = es_patience
 results = []
 losses_history = []
 val_losses_history = []
+
+start = time.perf_counter()
+
+
+
+
 for batch in loader_tr:
     step += 1
     loss, acc = train_step(*batch)
@@ -231,6 +248,7 @@ for batch in loader_tr:
 
         # Compute validation loss and accuracy
         val_loss, val_acc = evaluate(loader_va)
+
         print(
             "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
                 epoch, *np.mean(results, 0), val_loss, val_acc
@@ -247,11 +265,13 @@ for batch in loader_tr:
             patience -= 1
             if patience == 0:
                 print("Early stopping (best val_loss: {})".format(best_val_loss))
+
                 break
         results = []
         losses_history.append(loss)
         val_losses_history.append(val_loss)
 
+elapsed = time.perf_counter() - start
 ################################################################################
 # Evaluate model
 ################################################################################
@@ -261,3 +281,5 @@ test_MAPE = test_evaluation(loader_te)
 print(test_MAPE)
 
 print("Done. Test loss: {:.4f}. Test acc: {:.2f}".format(test_loss, test_acc))
+print("Time for training: {:.4f} seconds".format(elapsed))
+print("Time for training: {:.4f} minutes".format(elapsed/60))
