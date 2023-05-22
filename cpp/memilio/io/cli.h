@@ -74,7 +74,8 @@ struct PrintOption {
     static const std::string description()
     {
         return "Use with other option name(s) without \"--\" as value(s). "
-               "Prints the current values of specified options, then exits.";
+               "Prints the current values of specified options in their correct json format, "
+               "then exits. Note that quotation marks may have to be escaped (\\\")";
     }
 };
 

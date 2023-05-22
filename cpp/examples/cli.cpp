@@ -58,10 +58,14 @@ struct Greeting {
 
 int main(int argc, char** argv)
 {
+    if (argc == 1) { // Print this if no arguments were given
+        std::cout << "This is a small example on how to use the command line interface. "
+                     "Use \"-h\" to show the help dialogue.\n";
+    }
     // create parameter set
     auto parameters = mio::ParameterSet<Name, Age, Greeting>{};
     // get command line options
-    auto result = mio::command_line_interface("cli", argc, argv, parameters);
+    auto result = mio::command_line_interface("cli_example", argc, argv, parameters);
     // catch errors
     if (!result) {
         std::cout << result.error().formatted_message();
