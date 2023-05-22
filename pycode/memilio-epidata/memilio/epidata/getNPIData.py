@@ -959,7 +959,8 @@ def get_npi_data(fine_resolution=2,
         df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                                  == countyID])
 
-        inc_codes = len(np.where(df_npis.columns.str.contains('M01a_010'))[0])
+        inc_codes = len(np.where(df_npis.columns.str.contains(
+            npis[dd.EngEng['npiCode']][0]))[0])
 
         # Consistency of incidence dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
@@ -1377,8 +1378,6 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
-    plot_counter('joint_codes', directory)
     df = get_npi_data(fine_resolution=2, file_format='csv')
 
 

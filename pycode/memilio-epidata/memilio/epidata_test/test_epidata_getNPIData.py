@@ -278,7 +278,8 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
                          df_npis_desc['Variablenname'],
                          df_npis_old_renamed])
     @patch('memilio.epidata.getNPIData.plot_counter')
-    def test_get_npi_data(self, mock_plot, mock_codes, mock_read, mock_data):
+    @patch('memilio.epidata.getNPIData.plot_multiple_prescriptions')
+    def test_get_npi_data(self, mock_plot_mult, mock_plot, mock_codes, mock_read, mock_data):
         # print 'Additional errors in consistent naming' is expected.
         # print 'WARNING: DataFrame starts with reported cases > 0 for more than 5 percent...' is expected.
         npis_test = gnd.get_npi_data(
@@ -331,6 +332,8 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
             npis_test.M1_1_1.to_list(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
+        self.assertEqual(mock_plot.call_count, 4)
+        self.assertEqual(mock_plot_mult.call_count, 1)
 
 if __name__ == '__main__':
     unittest.main()
