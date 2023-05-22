@@ -1,21 +1,25 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
-project(memilio VERSION 0.7.0)
+project(memilio 
+    VERSION 0.7.0 
+    DESCRIPTION "A library for simulations of pandemics."
+    HOMEPAGE_URL "https://github.com/DLR-SC/memilio" 
+    LANGUAGES CXX)
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD 17)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
-option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with mio (only for mio-io)" ON)
-option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with mio (only for mio-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
-option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
-option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." OFF)
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." OFF)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+mark_as_advanced(MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -24,28 +28,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Please choose Release or Debug. Default is Release." FORCE)
 endif()
 
-if(MEMILIO_BUILD_SHARED_LIBS AND MEMILIO_BUILD_STATIC_LIBS)
-    message(WARNING "Can only build shared or static library, not both. Building shared libraries.")
-    set(BUILD_SHARED_LIBS ON)
-    set(BUILD_STATIC_LIBS OFF)
-elseif(MEMILIO_BUILD_SHARED_LIBS AND NOT MEMILIO_BUILD_STATIC_LIBS)
-    set(BUILD_SHARED_LIBS ON)
+IF(MEMILIO_BUILD_SHARED_LIBS)
     set(BUILD_STATIC_LIBS OFF)
     if(MSVC)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     endif()
-elseif(NOT MEMILIO_BUILD_SHARED_LIBS AND MEMILIO_BUILD_STATIC_LIBS)
+else()
     set(BUILD_STATIC_LIBS ON)
-    set(BUILD_SHARED_LIBS OFF)
-elseif(NOT MEMILIO_BUILD_SHARED_LIBS AND NOT MEMILIO_BUILD_STATIC_LIBS)
-    message(WARNING "Can only build shared or static library, not none. Building static libraries.")
-    set(BUILD_STATIC_LIBS ON)
-    set(BUILD_SHARED_LIBS OFF)
-endif()
-
-# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 and above
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
-    cmake_policy(SET CMP0135 NEW)
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
@@ -134,7 +123,7 @@ if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
+
 
 install(TARGETS memilio
     EXPORT memilio-targets
