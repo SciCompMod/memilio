@@ -54,38 +54,40 @@ void HouseholdGroup::add_households(Household household, int number_of_household
     m_number_of_households += number_of_households;
 }
 
-void add_household_to_world(World& world, const Household& household)
+template <class worldType>
+void add_household_to_world(worldType& world, const Household& household)
 {
-    auto home    = world.add_location(LocationType::Home);
-    auto members = household.get_members();
-    world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
-                                                         household.get_total_number_of_members() *
-                                                             household.get_space_per_member());
+    // auto home    = world.add_location(LocationType::Home);
+    // auto members = household.get_members();
+    // world.get_individualized_location(home).set_capacity(household.get_total_number_of_members(),
+    //                                                      household.get_total_number_of_members() *
+    //                                                          household.get_space_per_member());
 
-    for (auto& memberTouple : members) {
-        int count;
-        HouseholdMember member;
-        std::tie(member, count) = memberTouple;
-        for (int j = 0; j < count; j++) {
-            auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
-            auto& person   = world.add_person(home, age_group);
-            person.set_assigned_location(home);
-        }
-    }
+    // for (auto& memberTouple : members) {
+    //     int count;
+    //     HouseholdMember member;
+    //     std::tie(member, count) = memberTouple;
+    //     for (int j = 0; j < count; j++) {
+    //         auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
+    //         auto& person   = world.add_person(home, age_group);
+    //         person.set_assigned_location(home);
+    //     }
+    // }
 }
 
-void add_household_group_to_world(World& world, const HouseholdGroup& household_group)
+template <class worldType>
+void add_household_group_to_world(worldType& world, const HouseholdGroup& household_group)
 {
-    auto households = household_group.get_households();
+    // auto households = household_group.get_households();
 
-    for (auto& householdTuple : households) {
-        int count;
-        Household household;
-        std::tie(household, count) = householdTuple;
-        for (int j = 0; j < count; j++) {
-            add_household_to_world(world, household);
-        }
-    }
+    // for (auto& householdTuple : households) {
+    //     int count;
+    //     Household household;
+    //     std::tie(household, count) = householdTuple;
+    //     for (int j = 0; j < count; j++) {
+    //         add_household_to_world(world, household);
+    //     }
+    // }
 }
 
 } // namespace abm

@@ -72,6 +72,9 @@ int main()
     add_household_group_to_world(world2, two_person_household_group2);
     add_household_group_to_world(world2, three_person_household_group2);
 
+    //add internal locations for both worlds
+    //auto event =
+
     auto t0 = mio::abm::TimePoint(0);
 
     mio::Graph<mio::SimulationNode<mio::abm::Simulation>, mio::MigrationEdge> g;
