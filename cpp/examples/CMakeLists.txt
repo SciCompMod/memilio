@@ -53,6 +53,11 @@ if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
+  add_executable(cli_example cli.cpp)
+  target_link_libraries(cli_example PRIVATE memilio)
+endif()
+
+if(MEMILIO_HAS_JSONCPP)
   add_executable(serialize_example serialize.cpp)
   target_link_libraries(serialize_example PRIVATE memilio)
 endif()
