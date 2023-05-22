@@ -36,7 +36,7 @@ struct Dummy {
 TEST(HistoryObject, log)
 {
     example ex;
-    mio::History<mio::DataWriterToBuffer, LogPair, LogAOnce> history;
+    mio::HistoryWithMemoryWriter<LogPair, LogAOnce> history;
     int n_runs = 2;
     for (int i = 0; i < n_runs; i++) {
         history.log(ex);

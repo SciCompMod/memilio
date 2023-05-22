@@ -128,11 +128,12 @@ TEST(TestSimulation, advanceWithHistory)
 
     auto world = mio::abm::World();
     auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-    mio::History<mio::DataWriterToBuffer, LogTimePoint> history;
+    mio::HistoryWithMemoryWriter<LogTimePoint> history;
 
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), history);
     ASSERT_EQ(std::get<0>(history.get_log()).size(), 3);
-    ASSERT_NEAR(std::get<0>(history.get_log())[0], 0.0, 0.0000001);
-    ASSERT_NEAR(std::get<0>(history.get_log())[1], 1.0, 0.0000001);
-    ASSERT_NEAR(std::get<0>(history.get_log())[2], 2.0, 0.0000001);
+    ASSERT_NEAR(std::get<0>(history.get_log())[0], 0.0, 1e-14);
+    ASSERT_NEAR(std::get<0>(history.get_log())[1], 1.0, 1e-14);
+    auto test_get_templ_log = history.get_log<LogTimePoint>();
+    ASSERT_NEAR(test_get_templ_log[2], 2.0, 1e-14);
 }

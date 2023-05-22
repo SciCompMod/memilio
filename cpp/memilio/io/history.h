@@ -54,7 +54,7 @@ struct LogAlways {
 * @tparam Loggers The loggers that are used to log data.
 */
 template <class... Loggers>
-struct DataWriterToBuffer {
+struct DataWriterToMemory {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
     static void write_this(const typename Logger::Type& t, Data& data)
@@ -98,6 +98,12 @@ public:
         return m_data;
     }
 
+    template <class Logger>
+    const std::vector<typename Logger::Type>& get_log()
+    {
+        return std::get<details::index_templ_pack<Logger, Loggers...>()>(m_data);
+    }
+
 private:
     typename WriteWrapper::Data m_data;
 
@@ -124,6 +130,9 @@ private:
     {
     }
 };
+
+template <class... Loggers>
+using HistoryWithMemoryWriter = History<DataWriterToMemory, Loggers...>;
 
 } // namespace mio
 #endif //HISTORY_OBJ_H
