@@ -24,13 +24,13 @@
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include "memilio/utils/flow_chart.h"
+#include "memilio/utils/type_chart.h"
 #include "memilio/compartments/simulation.h"
 #include "gtest/gtest.h"
 #include "matchers.h"
 
 using I     = mio::oseir::InfectionState;
-using Flows = mio::FlowChart<mio::Flow<I, I::Susceptible, I::Exposed>, mio::Flow<I, I::Exposed, I::Infected>,
+using Flows = mio::TypeChart<mio::Flow<I, I::Susceptible, I::Exposed>, mio::Flow<I, I::Exposed, I::Infected>,
                              mio::Flow<I, I::Infected, I::Recovered>>;
 
 struct CatA : public mio::Index<CatA> {
@@ -160,9 +160,9 @@ TEST(TestFlows, CompareSimulations)
 
     model.check_constraints();
     auto seir_sim_flows = simulate_flows(t0, tmax, dt, model);
-    auto seir_sim = simulate(t0, tmax, dt, model);
-    auto results_flows = seir_sim_flows[0].get_last_value();
-    auto results = seir_sim.get_last_value(); 
+    auto seir_sim       = simulate(t0, tmax, dt, model);
+    auto results_flows  = seir_sim_flows[0].get_last_value();
+    auto results        = seir_sim.get_last_value();
 
     EXPECT_NEAR(results[0], results_flows[0], 1e-14);
     EXPECT_NEAR(results[1], results_flows[1], 1e-14);

@@ -70,40 +70,40 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
 
 Eigen::Ref<Eigen::VectorXd> SplitOdeIntegrator::advance(double tmax)
 {
-    assert(m_result.get_num_time_points() == m_flows.get_num_time_points());
-    const double t0 = m_result.get_time(m_result.get_num_time_points() - 1);
+    assert(m_result_head.get_num_time_points() == m_result_tail.get_num_time_points());
+    const double t0 = m_result_head.get_time(m_result_head.get_num_time_points() - 1);
     assert(tmax > t0);
 
     const size_t nb_steps = (int)(ceil((tmax - t0) / m_dt)); // estimated number of time steps (if equidistant)
 
-    m_result.reserve(m_result.get_num_time_points() + nb_steps);
-    m_flows.reserve(m_flows.get_num_time_points() + nb_steps);
+    m_result_head.reserve(m_result_head.get_num_time_points() + nb_steps);
+    m_result_tail.reserve(m_result_tail.get_num_time_points() + nb_steps);
 
     bool step_okay = true;
 
     double t = t0;
-    size_t i = m_result.get_num_time_points() - 1;
+    size_t i = m_result_head.get_num_time_points() - 1;
     while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
         //we don't make timesteps too small as the error estimator of an adaptive integrator
         //may not be able to handle it. this is very conservative and maybe unnecessary,
         //but also unlikely to happen. may need to be reevaluated
 
         auto dt_eff = std::min(m_dt, tmax - t);
-        m_result.add_time_point();
-        m_flows.add_time_point();
+        m_result_head.add_time_point();
+        m_result_tail.add_time_point();
 
-        // concat m_results and m_flows for time integration
-        m_yt << m_result[i], m_flows[i];
+        // concat m_result_heads and m_result_tail for time integration
+        m_yt << m_result_head[i], m_result_tail[i];
 
         // integrate both systems in one call
         step_okay &= m_core->step(m_f, m_yt, t, dt_eff, m_ytp1);
 
-        // split m_ytp1 back in m_results and m_flows
-        m_result[i + 1] = m_ytp1.head(m_result.get_num_elements());
-        m_flows[i + 1]  = m_ytp1.tail(m_flows.get_num_elements());
+        // split m_ytp1 back in m_result_heads and m_result_tail
+        m_result_head[i + 1] = m_ytp1.head(m_result_head.get_num_elements());
+        m_result_tail[i + 1] = m_ytp1.tail(m_result_tail.get_num_elements());
 
-        m_result.get_last_time() = t;
-        m_flows.get_last_time()  = t;
+        m_result_head.get_last_time() = t;
+        m_result_tail.get_last_time() = t;
 
         ++i;
 
@@ -124,7 +124,7 @@ Eigen::Ref<Eigen::VectorXd> SplitOdeIntegrator::advance(double tmax)
         log_info("Adaptive step sizing successful to tolerances.");
     }
 
-    return m_result.get_last_value();
+    return m_result_head.get_last_value();
 }
 
 } // namespace mio

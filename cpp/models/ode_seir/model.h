@@ -23,7 +23,7 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/utils/flow_chart.h"
+#include "memilio/utils/type_chart.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
@@ -37,7 +37,7 @@ namespace oseir
     ********************/
 
 template <class I = InfectionState>
-using Flows = FlowChart<Flow<I, I::Susceptible, I::Exposed>, Flow<I, I::Exposed, I::Infected>,
+using Flows = TypeChart<Flow<I, I::Susceptible, I::Exposed>, Flow<I, I::Exposed, I::Infected>,
                         Flow<I, I::Infected, I::Recovered>>;
 
 class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows<>>
@@ -50,21 +50,6 @@ public:
     {
     }
 
-    /* void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
-    {
-        auto& params     = this->parameters;
-        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
-
-        double SToE = coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        double EToI = (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
-        double IToR = (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
-        dydt[(size_t)InfectionState::Susceptible] = -SToE;
-        dydt[(size_t)InfectionState::Exposed]     = SToE - EToI;
-        dydt[(size_t)InfectionState::Infected]    = EToI - IToR;
-        dydt[(size_t)InfectionState::Recovered]   = IToR;
-    } */
     void get_flows(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                    Eigen::Ref<Eigen::VectorXd> flows) const override
     {

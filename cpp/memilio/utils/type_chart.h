@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef FLOW_CHART_H_
-#define FLOW_CHART_H_
+#ifndef TYPE_CHART_H_
+#define TYPE_CHART_H_
 
 #include "memilio/utils/index.h"
 
@@ -57,73 +57,65 @@ using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()))
 
 // remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
 template <class Omittand, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(
+    as_index<IndexTemplate>(std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } // namespace details
 
-/// @brief A Flow defines a transition between two Compartments in a CompartmentalModel. Use with FlowChart
-template <class Status, Status Source, Status Target>
-struct Flow {
-    using Type                 = Status;
-    const static Status source = Source;
-    const static Status target = Target;
-};
-
-/// @brief Collection of Flows defining the transitions between compartments in a CompartmentalModel
-template <class... Flows>
-class FlowChart
+/// @brief Collection of types. Each type is mapped to an index of type size_t.
+template <class... Types>
+class TypeChart
 {
 public:
     /**
-     * @brief get a Flow by index
-     * @tparam index position of a flow
-     * @return Flow at position index of FlowChart
+     * @brief get a type by index
+     * @tparam index position of a type
+     * @return the type at position index of TypeChart
      */
     template <size_t index>
     constexpr auto get() const
     {
-        return std::get<index>(m_flows);
+        return std::get<index>(m_types);
     }
 
     /**
-     * @brief get index of a given Flow
-     * @tparam Flow a flow in FlowChart
-     * @return position of Flow within FlowChart
+     * @brief get index of a given type
+     * @tparam Type a type in TypeChart
+     * @return position of Type within TypeChart
      */
-    template <class Flow>
+    template <class Type>
     constexpr size_t get() const
     {
-        return get_impl<0>(Flow());
+        return get_impl<0>(Type());
     }
 
-    /// @brief returns the number of Flows in FlowChart
+    /// @brief returns the number of Types in TypeChart
     constexpr size_t size() const
     {
-        return sizeof...(Flows);
+        return sizeof...(Types);
     }
 
 private:
-    template <size_t index, class Flow>
+    template <size_t index, class Type>
     inline constexpr std::enable_if_t<
-        !std::is_same<Flow, typename std::tuple_element<index, std::tuple<Flows...>>::type>::value, size_t>
-    get_impl(Flow f) const
+        !std::is_same<Type, typename std::tuple_element<index, std::tuple<Types...>>::type>::value, size_t>
+    get_impl(Type f) const
     {
-        static_assert(index < sizeof...(Flows), "Flow is not contained in FlowChart");
+        static_assert(index < sizeof...(Types), "Type is not contained in TypeChart");
         return get_impl<index + 1>(f);
     }
 
-    template <size_t index, class Flow>
+    template <size_t index, class Type>
     inline constexpr std::enable_if_t<
-        std::is_same<Flow, typename std::tuple_element<index, std::tuple<Flows...>>::type>::value, size_t>
-    get_impl(Flow) const
+        std::is_same<Type, typename std::tuple_element<index, std::tuple<Types...>>::type>::value, size_t>
+        get_impl(Type) const
     {
         return index;
     }
 
-    std::tuple<Flows...> m_flows;
+    std::tuple<Types...> m_types;
 };
 
 } // namespace mio
 
-#endif
+#endif // TYPE_CHART_H_

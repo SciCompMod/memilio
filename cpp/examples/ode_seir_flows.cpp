@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Martin J. Kuehn
+* Authors: Daniel Abele, Martin J. Kuehn, Rene Schmieding, Henrik Zunker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *

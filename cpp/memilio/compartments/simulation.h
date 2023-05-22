@@ -208,39 +208,65 @@ public:
     }
 
     /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief get_result returns the values for all compartments within the
+     * simulated model for each time step.
+     * @return a TimeSeries to represent a numerical solution for the model. 
+     * For each simulated time step, the TimeSeries containts the population  
+     * size for each compartment. 
      */
     TimeSeries<ScalarType>& get_result()
     {
-        return m_integrator.get_result();
+        return m_integrator.get_result_head();
     }
 
     /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief get_result returns the values for all compartments within the
+     * simulated model for each time step.
+     * @return a TimeSeries to represent a numerical solution for the model. 
+     * For each simulated time step, the TimeSeries containts the population  
+     * size for each compartment. 
      */
     const TimeSeries<ScalarType>& get_result() const
     {
-        return m_integrator.get_result();
+        return m_integrator.get_result_head();
     }
 
     /**
-     * @brief get_flows returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief get_flows returns the values describing the transition between 
+     * compartments for each time step.
+     *
+     * Which flows are used by the model is defined by the Flows template 
+     * argument for the CompartmentalModel using an explicit FlowChart.
+     * To get the correct index for the flow between two compartments use 
+     * CompartmentalModel::get_flow_index.
+     *
+     * @return a TimeSeries to represent a numerical solution for the 
+     * flows in the model. 
+     * For each simulated time step, the TimeSeries containts the value for 
+     * each flow. 
      */
     TimeSeries<ScalarType>& get_flows()
     {
-        return m_integrator.get_flows();
+        return m_integrator.get_result_tail();
     }
 
     /**
-     * @brief get_flows returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
+     * @brief get_flows returns the values describing the transition between 
+     * compartments for each time step.
+     *
+     * Which flows are used by the model is defined by the Flows template 
+     * argument for the CompartmentalModel using an explicit FlowChart.
+     * To get the correct index for the flow between two compartments use 
+     * CompartmentalModel::get_flow_index.
+     *
+     * @return a TimeSeries to represent a numerical solution for the 
+     * flows in the model. 
+     * For each simulated time step, the TimeSeries containts the value for 
+     * each flow. 
      */
     const TimeSeries<ScalarType>& get_flows() const
     {
-        return m_integrator.get_flows();
+        return m_integrator.get_result_tail();
     }
 
     /**

@@ -110,23 +110,27 @@ class SplitOdeIntegrator
 {
 public:
     /**
-     @brief create an integrator for a specific IVP. In contrast to OdeIntegrator,
-        we consider the flows and concat them with the results for the time integration and split them afterwards.
+     * @brief create an integrator for two specific IVPs. 
+     *
+     * The two IVPs are conjoined and use the same integration scheme.
+     * For example, we consider the compartments and flows as head an tail.
+     *
      * @param f rhs of the ODE
      * @param t0 initial point of independent variable t
-     * @param y0 value of y at t0
+     * @param y0_head value of y at t0
+     * @param y0_tail value of flows at t0
      * @param dt_init initial integration step size
      * @param core implements the solution method
      */
     template <class F, class Vector>
-    SplitOdeIntegrator(F&& f, double t0, Vector&& y0, Vector&& flow0, double dt_init,
+    SplitOdeIntegrator(F&& f, double t0, Vector&& y0_head, Vector&& y0_tail, double dt_init,
                        std::shared_ptr<IntegratorCore> core)
         : m_f(std::forward<F>(f))
-        , m_result(t0, y0)
-        , m_flows(t0, flow0)
+        , m_result_head(t0, y0_head)
+        , m_result_tail(t0, y0_tail)
         , m_dt(dt_init)
         , m_core(core)
-        , m_yt(m_result.get_num_elements() + m_flows.get_num_elements())
+        , m_yt(m_result_head.get_num_elements() + m_result_tail.get_num_elements())
         , m_ytp1(m_yt.size())
     {
     }
@@ -137,24 +141,24 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax);
 
-    TimeSeries<double>& get_result()
+    TimeSeries<double>& get_result_head()
     {
-        return m_result;
+        return m_result_head;
     }
 
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<double>& get_result_head() const
     {
-        return m_result;
+        return m_result_head;
     }
 
-    TimeSeries<double>& get_flows()
+    TimeSeries<double>& get_result_tail()
     {
-        return m_flows;
+        return m_result_tail;
     }
 
-    const TimeSeries<double>& get_flows() const
+    const TimeSeries<double>& get_result_tail() const
     {
-        return m_flows;
+        return m_result_tail;
     }
 
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
@@ -164,8 +168,8 @@ public:
 
 private:
     DerivFunction m_f;
-    TimeSeries<double> m_result;
-    TimeSeries<double> m_flows;
+    TimeSeries<double> m_result_head;
+    TimeSeries<double> m_result_tail;
     double m_dt;
     std::shared_ptr<IntegratorCore> m_core;
     Eigen::VectorXd m_yt, m_ytp1;

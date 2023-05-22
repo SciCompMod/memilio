@@ -59,7 +59,7 @@ add_library(memilio
     utils/uncertain_value.h
     utils/uncertain_value.cpp
     utils/index.h
-    utils/flow_chart.h
+    utils/type_chart.h
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
