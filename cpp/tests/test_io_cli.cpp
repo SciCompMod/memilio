@@ -189,10 +189,11 @@ TEST(TestCLI, test_write_help)
         "Usage: TestSuite <option> <value> ...\nValues must be entered as json values, i.e. the expression to the "
         "right of \"Name : \".\nOptions:\n  --help              -h     Show this dialogue and exit.\n  --print_option  "
         "           Use with other option name(s) without \"--\" as value(s). Prints the current values of specified "
-        "options, then exits.\n  --A                 -a     This is A.\n  --B                        This is B. It has "
-        "a needlessly long description that will most probably not fit into a single line on your terminal window, "
-        "unless maybe on an ultrawide display.\n  --C has a name that is too long\n                      -c     \n  "
-        "--D                        \n";
+        "options in their correct json format, then exits. Note that quotation marks may have to be escaped (\\\")\n  "
+        "--A                 -a     This is A.\n  --B                        This is B. It has a needlessly long "
+        "description that will most probably not fit into a single line on your terminal window, unless maybe on an "
+        "ultrawide display.\n  --C has a name that is too long\n                      -c     \n  --D                   "
+        "     \n";
     // call write help directly
     mio::details::cli::write_help("TestSuite", Params(), ss);
     EXPECT_EQ(ss.str(), help);
