@@ -74,23 +74,23 @@ public:
 
         ScalarType max_support = std::max(
             {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_max_support(),
+                 .get_max_support(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_max_support()});
+                 .get_max_support(dt)});
 
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(max_support / dt)) {
             log_error(

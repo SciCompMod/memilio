@@ -85,19 +85,13 @@ struct StateAgeFunction {
      */
     StateAgeFunction& operator=(StateAgeFunction&& other) = default;
 
+    //TODO: adapt docu
     /**
-     * @brief Defines function depending on state_age. The default is an exponential function.
-     *
-     * The function also depends on the function parameter m_funcparam which allows to further specify the function.
-     * (depending on the used function).
+     * @brief Pure virtual function depending on state_age. 
      * 
      * @param state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the function at state_age. 
      */
-    virtual ScalarType Function(ScalarType state_age)
-    {
-        return std::exp(-m_funcparam * state_age);
-    }
+    virtual ScalarType Function(ScalarType state_age) = 0;
 
     /**
      * @brief Get the m_funcparam object
@@ -121,9 +115,27 @@ struct StateAgeFunction {
         m_funcparam = new_funcparam;
     }
 
-    virtual ScalarType get_max_support()
+    /**
+     * @brief Computes max_support of Function depending on time step size dt and some tolerance tol. 
+     * 
+     * This is a basic version to determine the max_support which evaluates Function at every time step 
+     * until it reaches max_support.
+     * For some specific StateAgeFunction%s there is a more efficient way to determine the max_support
+     * which is why this member function is virtual and can be overridden (e.g. SmootherCosine).
+     *
+     * @param dt Time step size. 
+     * @param tol Tolerance defining when 
+     * @return ScalarType max_support
+     */
+    virtual ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10)
     {
-        return 2;
+        ScalarType max_support = 0;
+
+        while (Function(max_support) >= tol) {
+            max_support += dt;
+        }
+
+        return max_support;
     }
 
     /**
@@ -137,11 +149,8 @@ struct StateAgeFunction {
     }
 
 protected:
-    // virtual function that implements cloning
-    virtual StateAgeFunction* clone_impl() const
-    {
-        return new StateAgeFunction(*this);
-    }
+    // pure virtual function that implements cloning
+    virtual StateAgeFunction* clone_impl() const = 0;
 
     // specifies Function
     ScalarType m_funcparam{};
@@ -156,7 +165,7 @@ struct ExponentialDecay : public StateAgeFunction {
     * @brief Default constructor of the class.
     */
     ExponentialDecay()
-        : StateAgeFunction{}
+        : StateAgeFunction()
     {
     }
 
@@ -166,7 +175,7 @@ struct ExponentialDecay : public StateAgeFunction {
      * @param init_funcparam specifies the initial function parameter of the function.
      */
     ExponentialDecay(ScalarType init_funcparam)
-        : StateAgeFunction{init_funcparam}
+        : StateAgeFunction(init_funcparam)
     {
     }
 
@@ -204,7 +213,7 @@ struct SmootherCosine : public StateAgeFunction {
     * @brief Default constructor of the class.
     */
     SmootherCosine()
-        : StateAgeFunction{}
+        : StateAgeFunction()
     {
     }
 
@@ -214,7 +223,7 @@ struct SmootherCosine : public StateAgeFunction {
      * @param init_funcparam specifies the initial function parameter of the function.
      */
     SmootherCosine(ScalarType init_funcparam)
-        : StateAgeFunction{init_funcparam}
+        : StateAgeFunction(init_funcparam)
     {
     }
 
@@ -231,8 +240,11 @@ struct SmootherCosine : public StateAgeFunction {
         return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
 
-    ScalarType get_max_support() override
+    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
     {
+        unused(dt);
+        unused(tol);
+
         return m_funcparam;
     }
 
@@ -335,9 +347,9 @@ struct StateAgeFunctionWrapper {
         m_function->set_funcparam(new_funcparam);
     }
 
-    ScalarType get_max_support() const
+    ScalarType get_max_support(ScalarType dt) const
     {
-        return m_function->get_max_support();
+        return m_function->get_max_support(dt);
     }
 
 private:
@@ -347,7 +359,7 @@ private:
 /**
  * @brief Transition distribution for each transition in InfectionTransition.
  *
- * As a default we use SmootherCosine functions for all transitions where we set funcparam=2.
+ * As a default we use SmootherCosine functions for all transitions with funcparam=2.
  */
 struct TransitionDistributions {
 
@@ -474,7 +486,6 @@ public:
     int check_constraints() const
     {
         for (int i = 0; i < 20; i++) {
-            std::cout << this->get<TransmissionProbabilityOnContact>().Function(i) << "\n";
             if (this->get<TransmissionProbabilityOnContact>().Function(i) < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>().Function(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
