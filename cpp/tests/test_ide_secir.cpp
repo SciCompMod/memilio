@@ -67,8 +67,10 @@ protected:
         model = new mio::isecir::Model(std::move(init), N, Dead_before);
 
         // Set working parameters.
-        model->parameters.set<mio::isecir::TransitionDistributions>(
-            std::vector<mio::isecir::DelayDistribution>(num_transitions, mio::isecir::DelayDistribution()));
+        mio::isecir::SmootherCosine smoothcos(2.0);
+        mio::isecir::StateAgeFunctionWrapper delaydistribution;
+        delaydistribution.set_state_age_function(smoothcos);
+        std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
 
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
@@ -192,11 +194,12 @@ TEST(IdeSecir, checksimulationFunctions)
 
     // Set working parameters.
     // In our example we use m_max_support = 2 for all DelayDistribution%s
-    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
-    }
+    // For all TransitionDistribution%s we use a SmootherCosine Function with funcparam=2.
+    // In this case, funcparam is equal to the max_support.
+    mio::isecir::SmootherCosine smoothcos(2.0);
+    mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    delaydistribution.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
@@ -209,8 +212,8 @@ TEST(IdeSecir, checksimulationFunctions)
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::isecir::StateAgeFunctionWrapper prob;
-    mio::isecir::SmootherCosine smoothcos(2);
-    prob.set_state_age_function(smoothcos);
+    mio::isecir::SmootherCosine smoothcos_prob(2.0);
+    prob.set_state_age_function(smoothcos_prob);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -280,12 +283,13 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // Set working parameters.
-    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 3;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
-    }
+    // All TransitionDistribution%s are SmootherCosine functions.
+    // For all transitions we have muncparam=2 except for InfectedCriticalToRecovered where we set funcparam=3.
+    mio::isecir::SmootherCosine smoothcos(2.0);
+    mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    delaydistribution.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // Set probabilties so that all indiviudal go from Susceptible to InfectedCritical with probability 1, from there they move
@@ -371,23 +375,24 @@ TEST(IdeSecir, compareEquilibria)
     mio::isecir::Model model2(std::move(init2), N, Dead_before);
 
     // Set working parameters.
-    // Here we set the max_support for the DelayDistribution differently for both models
+    // Here we set the max_support for the TransitionDistribution%s differently for both models.
+    // In both models, all TransitionDistribution%s are SmootherCosineFunctions
+
     // For model
-    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 2;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
-    }
+    // All TransitionDistribution%s have funcparam=2
+    mio::isecir::SmootherCosine smoothcos(2.0);
+    mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    delaydistribution.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // For model2
-    std::vector<ScalarType> vec_max_support2((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support2[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered] = 7;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib2(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib2[i].set_max_support(vec_max_support2[i]);
-    }
+    // All TransitionDistribution%s have funcparam=2 except fpr InfectedCriticalToRecovered wehre we set funcparam=7
+    mio::isecir::SmootherCosine smoothcos2(2.0);
+    mio::isecir::StateAgeFunctionWrapper delaydistribution2;
+    delaydistribution2.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
+    vec_delaydistrib2[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(7.0);
     model2.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib2);
 
     // All remaining parameters are equal for both models.
@@ -427,10 +432,8 @@ TEST(IdeSecir, compareEquilibria)
     sim2.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated2 = sim2.get_result();
 
-    // Check whether both models have the same result at time tmax
-    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
-        EXPECT_NEAR(secihurd_simulated.get_last_value()[i], secihurd_simulated2.get_last_value()[i], 1e-8);
-    }
+    // Check whether equilibrium has been reached, only then can compare the times when it was reached.
+    EXPECT_TRUE(secihurd_simulated[Eigen::Index(tmax / dt - 1)] == secihurd_simulated[Eigen::Index(tmax / dt - 2)]);
 
     // Compute at what time the equilibrium was reached and check whether that time point is smaller for model than for model2
     // (as we have a smaller max_support in model than in model2)

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "ide_secir/model.h"
+#include "ide_secir/parameters.h"
 #include "infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/logging.h"
@@ -135,8 +136,8 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         // backward difference scheme to approximate first derivative
-        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(state_age) -
-                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Distribution(state_age - dt)) /
+        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age) -
+                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age - dt)) /
                dt * m_transitions[i + 1][idx_IncomingFlow];
     }
 
@@ -236,18 +237,18 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                       .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
                   parameters
                       .get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                      .Distribution(state_age) +
+                      .Function(state_age) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                      .Distribution(state_age)) *
+                      .Function(state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
                  parameters.get<RelativeTransmissionNoSymptoms>().Function(state_age) +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                      .Distribution(state_age) +
+                      .Function(state_age) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                      .Distribution(state_age)) *
+                      .Function(state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>().Function(state_age));
     }
@@ -273,9 +274,9 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         sum += (parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1] *
-                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Distribution(state_age) +
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Function(state_age) +
                 (1 - parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1]) *
-                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Distribution(state_age)) *
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Function(state_age)) *
                m_transitions[i + 1][idx_IncomingFlow];
     }
 

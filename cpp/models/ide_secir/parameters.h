@@ -38,137 +38,6 @@ namespace isecir
 /**********************************************
 * Define Parameters of the IDE-SECIHURD model *
 **********************************************/
-
-/**
-* @brief Function describing the time spent in a compartment before transiting to next compartment.
-
-* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain state_age 
-* (i.e. time after entering the compartment) and has not yet progressed to the next.
-* See also function \gamma in Overleaf.
-* Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
-* TransitionDistribution implements a vector with DelayDistribution%s for each compartment.
-*/
-struct DelayDistribution {
-    /**
-    * @brief Default constructor of the class. Default for m_max_support is 2.0 (relatively random.)
-    */
-    DelayDistribution()
-        : m_max_support{2.0}
-    {
-    }
-
-    /**
-     * @brief Construct a new DelayDistribution object
-     * 
-     * @param init_max_support specifies the right bound and therefore the support of the function.
-     */
-    DelayDistribution(ScalarType init_max_support)
-        : m_max_support{init_max_support}
-    {
-    }
-    /**
-     * @brief DelayDistribution is currently defined as a smoothed cosine function.
-     * 
-     * Used function goes through points (0,1) and (m_max_support,0) and is interpolated in between using a smoothed cosine function.
-     * 
-     * @param state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the smoother cosine function
-     */
-    ScalarType Distribution(ScalarType state_age)
-    {
-        return smoother_cosine(state_age, 0.0, m_max_support, 1.0, 0.0);
-    }
-
-    /**
-     * @brief Get the m_max_support object
-     * 
-     * Can be used to access the m_max_support object, which specifies the right bound of the support of the function.
-     * 
-     * @return ScalarType 
-     */
-    ScalarType get_max_support() const
-    {
-        return m_max_support;
-    }
-
-    /**
-     * @brief Set the m_max_support object
-     * 
-     * Can be used to set the m_max_support object, which specifies the right bound of the support of the function.
-     * 
-     * @return ScalarType 
-     */
-    void set_max_support(ScalarType new_max_support)
-    {
-        m_max_support = new_max_support;
-    }
-
-private:
-    ScalarType m_max_support; ///< specifies the right bound of the support of the DelayDistribution.
-};
-
-/**
- * @brief Transition distribution for each transition in InfectionTransition.
- * 
- * Note that Distribution from S->E is just a dummy.
- * This transition is calculated in a different way.
- * 
- */
-struct TransitionDistributions {
-    /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
-    This transition is calculated in a different way. */
-    using Type = std::vector<DelayDistribution>;
-    static Type get_default()
-    {
-        return std::vector<DelayDistribution>((int)InfectionTransition::Count, DelayDistribution());
-    }
-
-    static std::string name()
-    {
-        return "TransitionDistributions";
-    }
-};
-
-/**
- * @brief Defines the probability for each possible transition to take this flow/transition.
- */
-struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
-    Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
-    using Type = std::vector<ScalarType>;
-    static Type get_default()
-    {
-        std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
-        // Set the following probablities to 1 as there is no other option to go anywhere else.
-        probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
-        probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-        return probs;
-    }
-
-    static std::string name()
-    {
-        return "TransitionProbabilities";
-    }
-};
-
-/**
- * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
- */
-struct ContactPatterns {
-    using Type = UncertainContactMatrix;
-
-    static Type get_default()
-    {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
-        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        return Type(contact_matrix);
-    }
-    static std::string name()
-    {
-        return "ContactPatterns";
-    }
-};
-
 /**
  * @brief Function depending on the state age, i.e. the time time already spent in some InfectionState.
  */
@@ -177,7 +46,7 @@ struct StateAgeFunction {
     * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
     */
     StateAgeFunction()
-        : m_funcparam{}
+        : m_funcparam{1.0}
     {
     }
 
@@ -250,6 +119,11 @@ struct StateAgeFunction {
     void set_funcparam(ScalarType new_funcparam)
     {
         m_funcparam = new_funcparam;
+    }
+
+    virtual ScalarType get_max_support()
+    {
+        return 2;
     }
 
     /**
@@ -357,6 +231,11 @@ struct SmootherCosine : public StateAgeFunction {
         return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
 
+    ScalarType get_max_support() override
+    {
+        return m_funcparam;
+    }
+
 protected:
     /**
      * @brief Clones unique pointer to a StateAgeFunction.
@@ -456,8 +335,75 @@ struct StateAgeFunctionWrapper {
         m_function->set_funcparam(new_funcparam);
     }
 
+    ScalarType get_max_support() const
+    {
+        return m_function->get_max_support();
+    }
+
 private:
     std::unique_ptr<StateAgeFunction> m_function;
+};
+
+/**
+ * @brief Transition distribution for each transition in InfectionTransition.
+ *
+ * As a default we use SmootherCosine functions for all transitions where we set funcparam=2.
+ */
+struct TransitionDistributions {
+
+    using Type = std::vector<StateAgeFunctionWrapper>;
+    static Type get_default()
+    {
+        SmootherCosine smoothcos(2.0);
+        StateAgeFunctionWrapper delaydistribution;
+        delaydistribution.set_state_age_function(smoothcos);
+        return std::vector<StateAgeFunctionWrapper>((int)InfectionTransition::Count, delaydistribution);
+    }
+
+    static std::string name()
+    {
+        return "TransitionDistributions";
+    }
+};
+
+/**
+ * @brief Defines the probability for each possible transition to take this flow/transition.
+ */
+struct TransitionProbabilities {
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
+    Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
+    using Type = std::vector<ScalarType>;
+    static Type get_default()
+    {
+        std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
+        // Set the following probablities to 1 as there is no other option to go anywhere else.
+        probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
+        probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+        return probs;
+    }
+
+    static std::string name()
+    {
+        return "TransitionProbabilities";
+    }
+};
+
+/**
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
+ */
+struct ContactPatterns {
+    using Type = UncertainContactMatrix;
+
+    static Type get_default()
+    {
+        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
+        contact_matrix[0]                 = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+        return Type(contact_matrix);
+    }
+    static std::string name()
+    {
+        return "ContactPatterns";
+    }
 };
 
 /**

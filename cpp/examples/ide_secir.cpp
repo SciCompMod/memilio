@@ -70,12 +70,16 @@ int main()
 
     // Set working parameters
     // Set max_support for all Delay Distributions
+    mio::isecir::SmootherCosine smoothcos;
+    mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    delaydistribution.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
     vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]                 = 3;
     vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 4;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
+
     for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
+        vec_delaydistrib[i].set_funcparam(vec_max_support[i]);
     }
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
