@@ -190,15 +190,15 @@ using is_compartment_model_simulation =
  * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  * @tparam Model a compartment model type
- * @tparam Sim a simulation type that can simulate the model.
  * @tparam FP floating point type, e.g., double
+ * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, class Sim = Simulation<Model>, typename FP=double>
+template <class Model, typename FP=double, class Sim = Simulation<Model,FP>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
                                 std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     model.check_constraints();
-    Simulation<Model,FP> sim(model, t0, dt);
+    Sim sim(model, t0, dt);
     if (integrator) {
         sim.set_integrator(integrator);
     }
