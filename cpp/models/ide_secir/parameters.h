@@ -190,6 +190,31 @@ struct StateAgeFunction {
     }
 
     /**
+     * @brief Virtual destructor.
+     */
+    virtual ~StateAgeFunction() = default;
+
+    /**
+     * @brief Copy constructor.
+     */
+    StateAgeFunction(const StateAgeFunction& other) = default;
+
+    /**
+     * @brief Move constructor.
+     */
+    StateAgeFunction(StateAgeFunction&& other) = default;
+
+    /**
+     * @brief Copy assignment operator.
+     */
+    StateAgeFunction& operator=(const StateAgeFunction& other) = default;
+
+    /**
+     * @brief Move assignment operator.
+     */
+    StateAgeFunction& operator=(StateAgeFunction&& other) = default;
+
+    /**
      * @brief Defines function depending on state_age. The default is an exponential function.
      *
      * The function also depends on the function parameter m_funcparam which allows to further specify the function.
