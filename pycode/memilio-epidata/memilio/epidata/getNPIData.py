@@ -1322,6 +1322,9 @@ def plot_counter(filename, directory):
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
             sheet_name=code, engine='openpyxl')
+        # set diag = 0
+        for i in range(df.shape[0]):
+            df.iloc[i,i+1]=0
         array_exclusion = df.iloc[:, 1:].to_numpy()
         fig = plt.figure(figsize=(10,12))
         positions = [i for i in range(len(df.columns)-1)]
@@ -1374,6 +1377,8 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
+    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
+    plot_counter('joint_codes', directory)
     df = get_npi_data(fine_resolution=2, file_format='csv')
 
 
