@@ -81,7 +81,8 @@ setup(
         'xlrd',
         'requests',
         'pyxlsb',
-        'wget'
+        'wget',
+        'python-magic'
     ],
     extras_require={
         'dev': [

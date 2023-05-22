@@ -15,7 +15,11 @@ option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
+<<<<<<< HEAD
 option(MEMILIO_USE_BUNDLED_IPOPT "Use bundled Ipopt, requires a fortran compiler" ON)
+=======
+option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
+>>>>>>> upstream/main
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 

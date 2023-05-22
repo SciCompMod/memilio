@@ -213,10 +213,20 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
 
-    df_test[0][dd.EngEng['date']] = pd.to_datetime(
-        df_test[0][dd.EngEng['date']])
-    df_test[1][dd.EngEng['date']] = pd.to_datetime(
-        df_test[1][dd.EngEng['date']])
+    try:
+        df_test[0][dd.EngEng['date']] = pd.to_datetime(
+            df_test[0][dd.EngEng['date']], format="ISO8601")
+        df_test[1][dd.EngEng['date']] = pd.to_datetime(
+            df_test[1][dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df_test[0][dd.EngEng['date']] = pd.to_datetime(
+                df_test[0][dd.EngEng['date']])
+            df_test[1][dd.EngEng['date']] = pd.to_datetime(
+                df_test[1][dd.EngEng['date']])
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # drop columns
     df_test[0] = df_test[0].drop(

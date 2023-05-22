@@ -327,12 +327,14 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
  * @param[in] migrating_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
  * @param[in] read_func Function that reads commuting matrices.
+ * @param[in] commuting_weights Vector with a commuting weight for every AgeGroup.
  */
 template <class ContactLocation, class Model, class MigrationParams, class MigrationCoefficientGroup,
           class InfectionState, class ReadFunction>
 IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>& params_graph,
                          std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-                         ReadFunction&& read_func)
+                         ReadFunction&& read_func,
+                         std::vector<ScalarType> commuting_weights = std::vector<ScalarType>{})
 {
     // mobility between nodes
     BOOST_OUTCOME_TRY(mobility_data_commuter,
@@ -353,21 +355,21 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MigrationParams>
             // mobility coefficients have the same number of components as the contact matrices.
             // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
             auto mobility_coeffs = MigrationCoefficientGroup(contact_locations_size, populations.numel());
-
+            auto num_age_groups  = (size_t)params_graph.nodes()[county_idx_i].property.parameters.get_num_groups();
+            commuting_weights =
+                (commuting_weights.size() == 0 ? std::vector<ScalarType>(num_age_groups, 1.0) : commuting_weights);
             //commuters
             auto working_population = 0.0;
-            auto min_commuter_age   = AgeGroup(2);
-            auto max_commuter_age   = AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
+            for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
+                working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
             }
             auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
+            for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
+                        commuter_coeff_ij * commuting_weights[size_t(age)];
                 }
             }
             //others

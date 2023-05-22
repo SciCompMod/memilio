@@ -18,15 +18,18 @@
 * limitations under the License.
 */
 #include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv)
 {
+    mio::mpi::init();
     mio::set_log_level(mio::LogLevel::warn);
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
     ::testing::InitGoogleTest(&argc, argv);
     int retval = RUN_ALL_TESTS();
+    mio::mpi::finalize();
     return retval;
 }
