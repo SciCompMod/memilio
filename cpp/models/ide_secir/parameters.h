@@ -20,12 +20,14 @@
 #ifndef IDE_SECIR_PARAMS_H
 #define IDE_SECIR_PARAMS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/smoother.h"
 
+#include <memory>
 #include <vector>
 
 namespace mio
@@ -38,62 +40,87 @@ namespace isecir
 **********************************************/
 
 /**
-* @brief Distribution of the time spent in a compartment before transiting to next compartment.
+* @brief Function describing the time spent in a compartment before transiting to next compartment.
+
+* This class defines a function that specifies which proportion of individuals is still in the compartment after a certain state_age 
+* (i.e. time after entering the compartment) and has not yet progressed to the next.
+* See also function \gamma in Overleaf.
+* Currently, you can only use a smoother_cosine() function with different parameters for this purpose.
+* TransitionDistribution implements a vector with DelayDistribution%s for each compartment.
 */
-struct SmootherCosine {
-    SmootherCosine()
-        : xright{6.0}
-    {
-    }
-    SmootherCosine(ScalarType init_x_right)
-        : xright{init_x_right}
-    {
-    }
-
-    ScalarType Function(ScalarType infection_age)
-    {
-        return smoother_cosine(infection_age, 0.0, xright, 1.0, 0.0);
-    }
-
-    ScalarType xright{};
-};
-
-// TODO: write function that calculates correct xright to cut off function, rework template structure
-template <class DummyDistribution>
 struct DelayDistribution {
+    /**
+    * @brief Default constructor of the class. Default for m_max_support is 2.0 (relatively random.)
+    */
     DelayDistribution()
-    {
-    }
-    // DelayDistribution(ScalarType init_x_right)
-    //     : xright{init_x_right}
-    // {
-    // }
-
-    ScalarType Distribution(ScalarType infection_age)
-    {
-        return DummyDistribution.Function(infection_age);
-    }
-
-    void calculate_xright(ScalarType tol = 10e-6, ScalarType dt)
+        : m_max_support{2.0}
     {
     }
 
-    ScalarType get_xright()
+    /**
+     * @brief Construct a new DelayDistribution object
+     * 
+     * @param init_max_support specifies the right bound and therefore the support of the function.
+     */
+    DelayDistribution(ScalarType init_max_support)
+        : m_max_support{init_max_support}
     {
-        return xright;
+    }
+    /**
+     * @brief DelayDistribution is currently defined as a smoothed cosine function.
+     * 
+     * Used function goes through points (0,1) and (m_max_support,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the smoother cosine function
+     */
+    ScalarType Distribution(ScalarType state_age)
+    {
+        return smoother_cosine(state_age, 0.0, m_max_support, 1.0, 0.0);
+    }
+
+    /**
+     * @brief Get the m_max_support object
+     * 
+     * Can be used to access the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_max_support() const
+    {
+        return m_max_support;
+    }
+
+    /**
+     * @brief Set the m_max_support object
+     * 
+     * Can be used to set the m_max_support object, which specifies the right bound of the support of the function.
+     * 
+     * @return ScalarType 
+     */
+    void set_max_support(ScalarType new_max_support)
+    {
+        m_max_support = new_max_support;
     }
 
 private:
-    ScalarType xright{};
+    ScalarType m_max_support; ///< specifies the right bound of the support of the DelayDistribution.
 };
 
+/**
+ * @brief Transition distribution for each transition in InfectionTransition.
+ * 
+ * Note that Distribution from S->E is just a dummy.
+ * This transition is calculated in a different way.
+ * 
+ */
 struct TransitionDistributions {
     /*Transition distribution for InfectionTransitions. Note that Distribution from S->E is just a dummy.
     This transition is calculated in a different way. */
     using Type = std::vector<DelayDistribution>;
     static Type get_default()
     {
-        return std::vector<DelayDistribution>((int)InfectionTransitions::Count, DelayDistribution());
+        return std::vector<DelayDistribution>((int)InfectionTransition::Count, DelayDistribution());
     }
 
     static std::string name()
@@ -103,38 +130,18 @@ struct TransitionDistributions {
 };
 
 /**
- * @brief Parameters needed for Transitionsdistribution.
- * 
- * Parameters stored in a vector for initialisation of the transitionsdistributions.
- * Currently, for each transitiondistribution is only one paramter used (eg. xright).
- * For each possible Transition defined in InfectionTransitions, there is exactly one parameter.
- * E.g. for transition S -> E, thi is just a dummy.
- */
-struct TransitionParameters {
-    using Type = std::vector<ScalarType>;
-    static Type get_default()
-    {
-        return std::vector<ScalarType>((int)InfectionTransitions::Count, 1.0);
-    }
-
-    static std::string name()
-    {
-        return "TransitionParameters";
-    }
-};
-
-/**
- * @brief defines the probability for each possible Transition to take this flow/transition
+ * @brief Defines the probability for each possible transition to take this flow/transition.
  */
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransitions. 
+    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
     {
-        std::vector<ScalarType> probs((int)InfectionTransitions::Count, 0.5);
-        probs[Eigen::Index(InfectionTransitions::SusceptibleToExposed)]        = 1;
-        probs[Eigen::Index(InfectionTransitions::ExposedToInfectedNoSymptoms)] = 1;
+        std::vector<ScalarType> probs((int)InfectionTransition::Count, 0.5);
+        // Set the following probablities to 1 as there is no other option to go anywhere else.
+        probs[Eigen::Index(InfectionTransition::SusceptibleToExposed)]        = 1;
+        probs[Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
         return probs;
     }
 
@@ -145,7 +152,7 @@ struct TransitionProbabilities {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
     using Type = UncertainContactMatrix;
@@ -163,14 +170,304 @@ struct ContactPatterns {
 };
 
 /**
-* @brief probability of getting infected from a contact
+ * @brief Function depending on the state age, i.e. the time time already spent in some InfectionState.
+ */
+struct StateAgeFunction {
+    /**
+    * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
+    */
+    StateAgeFunction()
+        : m_funcparam{}
+    {
+    }
+
+    /**
+     * @brief Constructs a new StateAgeFunction object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
+    StateAgeFunction(ScalarType init_funcparam)
+        : m_funcparam{init_funcparam}
+    {
+    }
+
+    /**
+     * @brief Virtual destructor.
+     */
+    virtual ~StateAgeFunction() = default;
+
+    /**
+     * @brief Copy constructor.
+     */
+    StateAgeFunction(const StateAgeFunction& other) = default;
+
+    /**
+     * @brief Move constructor.
+     */
+    StateAgeFunction(StateAgeFunction&& other) = default;
+
+    /**
+     * @brief Copy assignment operator.
+     */
+    StateAgeFunction& operator=(const StateAgeFunction& other) = default;
+
+    /**
+     * @brief Move assignment operator.
+     */
+    StateAgeFunction& operator=(StateAgeFunction&& other) = default;
+
+    /**
+     * @brief Defines function depending on state_age. The default is an exponential function.
+     *
+     * The function also depends on the function parameter m_funcparam which allows to further specify the function.
+     * (depending on the used function).
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
+    virtual ScalarType Function(ScalarType state_age)
+    {
+        return std::exp(-m_funcparam * state_age);
+    }
+
+    /**
+     * @brief Get the m_funcparam object
+     * 
+     * Can be used to access the m_funcparam object, which specifies the used function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_funcparam()
+    {
+        return m_funcparam;
+    }
+
+    /**
+     * @brief Set the m_funcparam object.
+     * 
+     * Can be used to set the m_funcparam object, which specifies the used function.
+     */
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        m_funcparam = new_funcparam;
+    }
+
+    /**
+     * @brief Clones unique pointer to a StateAgeFunction.
+     * 
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     */
+    std::unique_ptr<StateAgeFunction> clone() const
+    {
+        return std::unique_ptr<StateAgeFunction>(clone_impl());
+    }
+
+protected:
+    // virtual function that implements cloning
+    virtual StateAgeFunction* clone_impl() const
+    {
+        return new StateAgeFunction(*this);
+    }
+
+    // specifies Function
+    ScalarType m_funcparam{};
+};
+
+/**
+ * @brief Class that defines an exponential decay function depending on the state age.
+ */
+struct ExponentialDecay : public StateAgeFunction {
+
+    /**
+    * @brief Default constructor of the class.
+    */
+    ExponentialDecay()
+        : StateAgeFunction{}
+    {
+    }
+
+    /**
+     * @brief Constructs a new ExponentialDecay object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
+    ExponentialDecay(ScalarType init_funcparam)
+        : StateAgeFunction{init_funcparam}
+    {
+    }
+
+    /**
+     * @brief Defines exponential decay function depending on state_age.
+     *
+     * The parameter m_funcparam defines how fast the exponential function decays.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
+    ScalarType Function(ScalarType state_age) override
+    {
+        return std::exp(-m_funcparam * state_age);
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ExponentialDecay.
+     * 
+     * @return StateAgeFunction* 
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ExponentialDecay(*this);
+    }
+};
+
+/**
+ * @brief Class that defines an smoother cosine function depending on the state age.
+ */
+struct SmootherCosine : public StateAgeFunction {
+
+    /**
+    * @brief Default constructor of the class.
+    */
+    SmootherCosine()
+        : StateAgeFunction{}
+    {
+    }
+
+    /**
+     * @brief Constructs a new SmootherCosine object
+     * 
+     * @param init_funcparam specifies the initial function parameter of the function.
+     */
+    SmootherCosine(ScalarType init_funcparam)
+        : StateAgeFunction{init_funcparam}
+    {
+    }
+
+    /**
+     * @brief Defines smoother cosine function depending on state_age.
+     *
+     * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
+    ScalarType Function(ScalarType state_age) override
+    {
+        return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
+    }
+
+protected:
+    /**
+     * @brief Clones unique pointer to a StateAgeFunction.
+     * 
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new SmootherCosine(*this);
+    }
+};
+
+/**
+ * @brief Wrapper for StateAgeFunction that allows to set a StateAgeFunction from outside. 
+ */
+struct StateAgeFunctionWrapper {
+
+    /**
+    * @brief Default constructor of the class. Sets m_function to constant function 1 as default.
+    */
+    StateAgeFunctionWrapper()
+        : m_function{}
+    {
+        // Set m_function to a default function, choose constant function 1
+        ExponentialDecay expdecay(0);
+        m_function = expdecay.clone();
+    }
+
+    /**
+     * @brief Copy constructor for StateAgeFunctionWrapper. 
+     */
+    StateAgeFunctionWrapper(StateAgeFunctionWrapper const& other)
+        : m_function(other.m_function->clone())
+    {
+    }
+
+    /**
+     * @brief Move constructor for StateAgeFunctionWrapper. 
+     */
+    StateAgeFunctionWrapper(StateAgeFunctionWrapper&& other) = default;
+
+    /**
+     * @brief Copy assignment for StateAgeFunctionWrapper. 
+     */
+    StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper const& other)
+    {
+        m_function = other.m_function->clone();
+        return *this;
+    }
+
+    /**
+     * @brief Move assignment for StateAgeFunctionWrapper. 
+     */
+    StateAgeFunctionWrapper& operator=(StateAgeFunctionWrapper&& other) = default;
+
+    /**
+     * @brief Destructor for StateAgeFunctionWrapper. 
+     */
+    ~StateAgeFunctionWrapper() = default;
+
+    /**
+     * @brief Set the StateAgeFunction object
+     *
+     * @return std::unique_ptr<StateAgeFunction>
+     */
+    void set_state_age_function(StateAgeFunction& new_function)
+    {
+        m_function = new_function.clone();
+    }
+
+    /**
+     * @brief Accesses Function of m_function.
+     *
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
+    ScalarType Function(ScalarType state_age) const
+    {
+        return m_function->Function(state_age);
+    }
+
+    /**
+     * @brief Get the m_funcparam object of m_function.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_funcparam()
+    {
+        return m_function->get_funcparam();
+    }
+
+    /**
+     * @brief Set the m_funcparam object of m_function. 
+     */
+    void set_funcparam(ScalarType new_funcparam)
+    {
+        m_function->set_funcparam(new_funcparam);
+    }
+
+private:
+    std::unique_ptr<StateAgeFunction> m_function;
+};
+
+/**
+* @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    // TODO: Abhaengigkeit von tau (und t), entspricht rho
-    using Type = ScalarType;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return 0.5;
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
@@ -179,14 +476,13 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
-* @brief the relative InfectedNoSymptoms infectability
+* @brief The relative InfectedNoSymptoms infectability.
 */
 struct RelativeTransmissionNoSymptoms {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_C
-    using Type = ScalarType;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return 0.5;
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
@@ -195,14 +491,13 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief the risk of infection from symptomatic cases in the SECIR model
+* @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    // TODO: Abhaengigkeit von tau (und t), entspricht xi_I
-    using Type = ScalarType;
+    using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return 0.5;
+        return StateAgeFunctionWrapper();
     }
     static std::string name()
     {
@@ -210,28 +505,124 @@ struct RiskOfInfectionFromSymptomatic {
     }
 };
 
-/* @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-*/
-/*Martin sagt das sollen wir aktuell mal weglassen
-struct MaxRiskOfInfectionFromSymptomatic {
-    // Dies könnte man irgendwie benutzen für abhaengigkeit von RiskOfInfectionFromSymptomatic
-    //von t in Abhaengigkeit der Inzidenz wie im ODE-Modell, akteull nutzlos
-    // evtl benoetigen wir noch die Parameter : TestAndTraceCapacity ,DynamicNPIsInfectedSymptoms
-    using Type = ScalarType;
-    static Type get_default()
-    {
-        return 0.0;
-    }
-    static std::string name()
-    {
-        return "MaxRiskOfInfectionFromSymptomatic";
-    }
-};*/
-
-// Define Parameterset for IDE SEIR model.
+// Define Parameterset for IDE SECIR model.
 using ParametersBase =
-    ParameterSet<TransitionDistributions, TransitionParameters, TransitionProbabilities, ContactPatterns,
-                 TransmissionProbabilityOnContact, RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+    ParameterSet<TransitionDistributions, TransitionProbabilities, ContactPatterns, TransmissionProbabilityOnContact,
+                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic>;
+
+/**
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0.
+     */
+    int check_constraints() const
+    {
+        for (int i = 0; i < 20; i++) {
+            std::cout << this->get<TransmissionProbabilityOnContact>().Function(i) << "\n";
+            if (this->get<TransmissionProbabilityOnContact>().Function(i) < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
+        for (int i = 0; i < 20; i++) {
+            if (this->get<RelativeTransmissionNoSymptoms>().Function(i) < 0.0 ||
+                this->get<RelativeTransmissionNoSymptoms>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
+        for (int i = 0; i < 20; i++) {
+            if (this->get<RiskOfInfectionFromSymptomatic>().Function(i) < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>().Function(i) > 1.0) {
+                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                          "time point i = 0,...20",
+                          0, 1);
+                return 1;
+            }
+        }
+
+        for (int i = 0; i < (int)InfectionTransition::Count; i++) {
+            if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
+                log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
+                return 1;
+            }
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed] != 1.0) {
+            log_error("Constraint check: Parameter transitiion probability for SusceptibleToExposed unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms] != 1.0) {
+            log_error(
+                "Constraint check: Parameter transitiion probability for ExposedToInfectedNoSymptoms unequal to {:d}",
+                1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedNoSymptomsToInfectedSymptoms and "
+                      "InfectedNoSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSymptomsToInfectedSevere and "
+                      "InfectedSymptomsToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedSevereToInfectedCritical and "
+                      "InfectedSevereToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered] !=
+            1.0) {
+            log_error("Constraint check: Sum of transitiion probability for InfectedCriticalToDead and "
+                      "InfectedCriticalToRecovered unequal to {:d}",
+                      1);
+            return 1;
+        }
+
+        return 0;
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+};
 
 } // namespace isecir
 } // namespace mio

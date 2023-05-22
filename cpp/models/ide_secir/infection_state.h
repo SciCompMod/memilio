@@ -46,10 +46,10 @@ enum class InfectionState
 };
 
 /**
- * @brief The InfectionTransitions enum describes the possible
+ * @brief The InfectionTransition enum describes the possible
  * transitions of the infectious state of persons.
  */
-enum class InfectionTransitions
+enum class InfectionTransition
 {
     SusceptibleToExposed                 = 0,
     ExposedToInfectedNoSymptoms          = 1,
@@ -64,6 +64,7 @@ enum class InfectionTransitions
     Count                                = 10
 };
 
+// This is an alternative implementation for the infection transitions; currently not used.
 static constexpr size_t InfectionTransitionsCount = 10;
 
 static const std::array<std::pair<InfectionState, InfectionState>, InfectionTransitionsCount> InfectionTransitionsMap =
@@ -76,7 +77,7 @@ static const std::array<std::pair<InfectionState, InfectionState>, InfectionTran
      std::make_pair(InfectionState::InfectedSevere, InfectionState::InfectedCritical),
      std::make_pair(InfectionState::InfectedSevere, InfectionState::Recovered),
      std::make_pair(InfectionState::InfectedCritical, InfectionState::Dead),
-     std::make_pair(InfectionState::InfectedCritical, InfectionState::Recovered)}; // namespace isecir
+     std::make_pair(InfectionState::InfectedCritical, InfectionState::Recovered)};
 
 } // namespace isecir
 } // namespace mio

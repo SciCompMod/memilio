@@ -25,6 +25,18 @@
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
+TEST(TestSeir, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
+
+    mio::oseir::Model model;
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
 TEST(TestSeir, CompareSeirWithJS)
 {
     // initialization

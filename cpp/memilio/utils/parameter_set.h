@@ -204,8 +204,12 @@ class ParameterSet
 {
 public:
     /**
-     * @brief non-initializing default constructor.
-     * exists if all parameters are default constructible.
+     * @brief Non-initializing default constructor.
+     * This constructor exists if all parameters are default constructible
+     * and it can be used by calling the constructor with an empty object NoDefaultInit.
+     * It serves in cases where the get_default() functions of the parameters are very
+     * costly and should not be called as parameters will set not non-default values
+     * anyway.
      */
     template <
         class Dummy = void,
@@ -232,11 +236,16 @@ public:
      * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
      * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
      * Arguments get forwarded to get_default of parameters.
+     @tparam T1 First argument of get_default(...) function called on the parameters, e.g., T1=AgeGroup&.
+     @tparam TN Further arguments passed to get_default(...) functions. 
      */
     template <class T1, class... TN,
               class = std::enable_if_t<
-                  details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
-                                 ParameterTagTraits<Tags>...>::value>>
+              // Avoid erroneous template deduction for T1=ParameterSet as this constructor could falsely be considered
+              // as a copy constructor for non-const lvalue references.
+                  conjunction_v<negation<std::is_same<std::decay_t<T1>, ParameterSet>>, 
+                        details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                 ParameterTagTraits<Tags>...>>>>
     explicit ParameterSet(T1&& arg1, TN&&... argn)
         : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
