@@ -63,9 +63,9 @@ TEST(TestGraphSimulation, simulate)
     MockEdgeFunc edge_func;
     MockNodeFunc node_func;
 
-    const auto t0   = 1;
-    const auto tmax = 3.0;
-    const auto dt   = 1.0;
+    const double t0   = 1;
+    const double tmax = 3.0;
+    const double dt   = 1.0;
 
     testing::ExpectationSet node_func_calls;
 
@@ -169,8 +169,8 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
         ++n2;
     };
 
-    auto t0       = 0;
-    auto dt       = 1;
+    double t0     = 0.;
+    double dt     = 1.;
     auto sim      = mio::make_graph_sim(t0, dt, g, node_func, edge_func);
     int num_steps = 2;
     sim.advance(t0 + num_steps * dt);
@@ -230,7 +230,7 @@ struct MoveOnly {
     MoveOnly& operator=(MoveOnly&&)      = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
-using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
+using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph, double, double>;
 
 } // namespace
 

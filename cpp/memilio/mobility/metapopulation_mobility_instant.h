@@ -519,16 +519,16 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, Simulati
  * @param graph set up for migration simulation
  * @{
  */
-template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
+template <class Sim, class Timepoint, class Timespan>
+GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
+make_migration_sim(Timepoint t0, Timespan dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
-template <class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
-make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+template <class Sim, class Timepoint, class Timespan>
+GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
+make_migration_sim(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
     return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
 }

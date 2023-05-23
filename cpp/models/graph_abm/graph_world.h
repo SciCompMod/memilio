@@ -23,6 +23,7 @@
 
 #include "abm/world.h"
 #include "abm/location_type.h"
+#include <map>
 
 #include <vector>
 #include <memory>
@@ -39,9 +40,12 @@ class GraphWorld : public mio::abm::World
     using Base = mio::abm::World;
 
 public:
-    mio::abm::LocationId add_external_location(mio::abm::LocationType type, uint32_t num_cells)
+    using ConstPersonIterator =
+        PointerDereferencingIterator<std::vector<std::shared_ptr<mio::abm::Person>>::const_iterator>;
+
+    mio::abm::LocationId add_external_location(mio::abm::LocationType type, uint32_t num_cells = 1)
     {
-        mio::abm::LocationId id = {static_cast<uint32_t>(m_locations_external.size()), type};
+        mio::abm::LocationId id = {static_cast<uint32_t>(m_locations_external.size() + Base::m_locations.size()), type};
         m_locations_external.emplace_back(std::make_unique<mio::abm::Location>(id, num_cells));
         return id;
     }
@@ -54,13 +58,32 @@ public:
         get_individualized_location(id).add_person(person);
         return person;
     }
+    void insert_external_location_to_map(int node_to, mio::abm::LocationId id_this_world,
+                                         mio::abm::LocationId id_other_world)
+    {
+        if (m_external_location_mapping.find(node_to) != m_external_location_mapping.end()) {
+            auto& mapping = m_external_location_mapping[node_to];
+            mapping.push_back(std::make_pair(id_this_world, id_other_world));
+        }
+        else {
+            std::vector<std::pair<mio::abm::LocationId, mio::abm::LocationId>> v = {
+                std::make_pair(id_this_world, id_other_world)};
+            m_external_location_mapping.insert(
+                std::pair<int, std::vector<std::pair<mio::abm::LocationId, mio::abm::LocationId>>>(node_to, v));
+        }
+    }
+    auto get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
+    {
+        return std::make_pair(ConstPersonIterator(m_persons_internal.begin()),
+                              ConstPersonIterator(m_persons_internal.end()));
+    }
 
 private:
     std::vector<std::shared_ptr<mio::abm::Person>> m_persons_internal;
     std::vector<std::shared_ptr<mio::abm::Person>> m_persons_external;
     //std::vector<std::unique_ptr<mio::abm::Location>> m_locations_internal;
     std::vector<std::unique_ptr<mio::abm::Location>> m_locations_external;
-    std::vector<std::pair<mio::abm::LocationId, mio::abm::LocationId>> m_external_location_mapping;
+    std::map<int, std::vector<std::pair<mio::abm::LocationId, mio::abm::LocationId>>> m_external_location_mapping;
 };
 
 } // namespace graph_abm

@@ -21,7 +21,7 @@
 #include "graph_abm/graph_world.h"
 #include "abm/household.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include <cstdio>
 
 int main()
@@ -73,13 +73,152 @@ int main()
     add_household_group_to_world(world2, three_person_household_group2);
 
     //add internal locations for both worlds
-    //auto event =
+    //world1
+    std::vector<mio::abm::LocationId> events_w1;
+    std::vector<mio::abm::LocationId> works_w1;
+    //add two social events
+    auto event1_w1 = world1.add_location(mio::abm::LocationType::SocialEvent);
+    world1.get_individualized_location(event1_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto event2_w1 = world1.add_location(mio::abm::LocationType::SocialEvent);
+    world1.get_individualized_location(event2_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    events_w1.push_back(event1_w1);
+    events_w1.push_back(event2_w1);
+    // Add hospital and ICU with 5 maximum contacs.
+    auto hospital = world1.add_location(mio::abm::LocationType::Hospital);
+    world1.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    auto icu = world1.add_location(mio::abm::LocationType::ICU);
+    world1.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    // Add one supermarket, maximum constacts are assumed to be 20.
+    auto shop_w1 = world1.add_location(mio::abm::LocationType::BasicsShop);
+    world1.get_individualized_location(shop_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    // At every school, the maximum contacts are 20.
+    auto school = world1.add_location(mio::abm::LocationType::School);
+    world1.get_individualized_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    // At every workplace, maximum contacts are 10.
+    auto work1_w1 = world1.add_location(mio::abm::LocationType::Work);
+    world1.get_individualized_location(work1_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    auto work2_w1 = world1.add_location(mio::abm::LocationType::Work);
+    world1.get_individualized_location(work2_w1).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    works_w1.push_back(work1_w1);
+    works_w1.push_back(work2_w1);
 
-    auto t0 = mio::abm::TimePoint(0);
+    //world2
+    std::vector<mio::abm::LocationId> events_w2;
+    std::vector<mio::abm::LocationId> works_w2;
+    //add one social event
+    auto event_w2 = world2.add_location(mio::abm::LocationType::SocialEvent);
+    world2.get_individualized_location(event_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    events_w2.push_back(event_w2);
+    // Add one supermarket, maximum constacts are assumed to be 20.
+    auto shop_w2 = world2.add_location(mio::abm::LocationType::BasicsShop);
+    world2.get_individualized_location(shop_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+    // At every workplace, maximum contacts are 10.
+    auto work_w2 = world2.add_location(mio::abm::LocationType::Work);
+    world2.get_individualized_location(work_w2).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    works_w2.push_back(work_w2);
+
+    //add external locations
+    //world 1
+    auto external_work_w1 = world1.add_external_location(mio::abm::LocationType::Work);
+    world1.insert_external_location_to_map(1, external_work_w1, work_w2);
+    works_w1.push_back(external_work_w1);
+
+    //world 2
+    //TODO: MaximumContacts for external locations setzen
+    auto external_event_w2 = world2.add_external_location(mio::abm::LocationType::SocialEvent);
+    world2.insert_external_location_to_map(0, external_event_w2, event2_w1);
+    events_w2.push_back(external_event_w2);
+    auto external_hospital_w2 = world2.add_external_location(mio::abm::LocationType::Hospital);
+    world2.insert_external_location_to_map(0, external_hospital_w2, hospital);
+    auto external_icu_w2 = world2.add_external_location(mio::abm::LocationType::ICU);
+    world2.insert_external_location_to_map(0, external_icu_w2, icu);
+    auto external_school_w2 = world2.add_external_location(mio::abm::LocationType::School);
+    world2.insert_external_location_to_map(0, external_school_w2, school);
+    auto external_work_w2 = world2.add_external_location(mio::abm::LocationType::Work);
+    world2.insert_external_location_to_map(0, external_work_w2, work2_w1);
+    works_w2.push_back(external_work_w2);
+
+    auto start_date = mio::abm::TimePoint(0);
+
+    //assign infection states
+    //world 1
+    auto persons_w1 = world1.get_persons();
+    for (auto& person : persons_w1) {
+        mio::abm::InfectionState infection_state =
+            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world1.get_global_infection_parameters(), start_date,
+                                                         infection_state));
+    }
+    //world 2
+    auto persons_w2 = world2.get_persons();
+    for (auto& person : persons_w2) {
+        mio::abm::InfectionState infection_state =
+            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world2.get_global_infection_parameters(), start_date,
+                                                         infection_state));
+    }
+
+    //assign locations
+    //word 1
+    for (auto& person : persons_w1) {
+        //choose one of the events with same probability and assign to person
+        auto event =
+            events_w1[mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>(events_w1.size(), 1.0))];
+        person.set_assigned_location(event);
+        //assign shop
+        person.set_assigned_location(shop_w1);
+        //assign hospital and ICU
+        person.set_assigned_location(hospital);
+        person.set_assigned_location(icu);
+        //assign work and school dependent on person's age
+        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+            person.set_assigned_location(school);
+        }
+        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+            auto work =
+                works_w1[mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>(works_w1.size(), 1.0))];
+            person.set_assigned_location(work);
+        }
+    }
+    //world 2
+    for (auto& person : persons_w2) {
+        //choose one of the events with same probability and assign to person
+        auto event =
+            events_w2[mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>(events_w2.size(), 1.0))];
+        person.set_assigned_location(event);
+        //assign shop
+        person.set_assigned_location(shop_w2);
+        //assign hospital and ICU
+        person.set_assigned_location(hospital);
+        person.set_assigned_location(icu);
+        //assign work and school dependent on person's age
+        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+            person.set_assigned_location(school);
+        }
+        if (person.get_age() == mio::abm::AgeGroup::Age15to34 || person.get_age() == mio::abm::AgeGroup::Age35to59) {
+            auto work =
+                works_w2[mio::DiscreteDistribution<size_t>::get_instance()(std::vector<double>(works_w2.size(), 1.0))];
+            person.set_assigned_location(work);
+        }
+    }
+
+    auto t0   = mio::abm::TimePoint(0);
+    auto dt   = mio::abm::hours(12);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
 
     mio::Graph<mio::SimulationNode<mio::abm::Simulation>, mio::MigrationEdge> g;
-    g.add_node(1, t0, std::move(world1));
-    g.add_node(2, t0, std::move(world2));
+    g.add_node(0, t0, std::move(world1));
+    g.add_node(1, t0, std::move(world2));
+    g.add_edge(0, 1, 1);
+    g.add_edge(1, 0, 1);
+
+    //auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+
+    //sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:

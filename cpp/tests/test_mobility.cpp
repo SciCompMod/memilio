@@ -34,9 +34,9 @@
 
 TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 {
-    auto t0   = 0;
-    auto tmax = 5;
-    auto dt   = 0.5;
+    double t0   = 0.;
+    double tmax = 5.;
+    double dt   = 0.5;
 
     mio::oseir::Model model1;
     model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;

@@ -198,9 +198,9 @@ private:
 
 private:
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::unique_ptr<Location>> m_locations;
 
 protected:
+    std::vector<std::unique_ptr<Location>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;

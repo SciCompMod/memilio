@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
+#include "models/abm/time.h"
 
 namespace mio
 {
@@ -29,16 +30,21 @@ namespace mio
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
-template <class Graph, class edge_f = std::function<void(double, double, typename Graph::EdgeProperty&,
-                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>
+template <
+    class Graph, class Timepoint, class Timespan,
+    class edge_f = std::function<void(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                                      typename Graph::NodeProperty&)>,
+    std::enable_if_t<((std::is_same<Timepoint, double>::value || std::is_same<Timepoint, mio::abm::TimePoint>::value) &&
+                      (std::is_same<Timespan, double>::value || std::is_same<Timespan, mio::abm::TimeSpan>::value)),
+                     bool> = true>
 class GraphSimulationBase
 {
 public:
-    using node_function = std::function<void(double, double, typename Graph::NodeProperty&)>;
+    using node_function = std::function<void(Timepoint, Timespan, typename Graph::NodeProperty&)>;
 
     using edge_function = edge_f;
 
-    GraphSimulationBase(double t0, double dt, const Graph& g, const node_function& node_func,
+    GraphSimulationBase(Timepoint t0, Timespan dt, const Graph& g, const node_function& node_func,
                         const edge_function&& edge_func)
         : m_t(t0)
         , m_dt(dt)
@@ -48,7 +54,7 @@ public:
     {
     }
 
-    GraphSimulationBase(double t0, double dt, Graph&& g, const node_function& node_func,
+    GraphSimulationBase(Timepoint t0, Timespan dt, Graph&& g, const node_function& node_func,
                         const edge_function&& edge_func)
         : m_t(t0)
         , m_dt(dt)
@@ -58,7 +64,7 @@ public:
     {
     }
 
-    void advance(double t_max = 1.0)
+    void advance(Timepoint t_max = 1.0)
     {
         auto dt = m_dt;
         while (m_t < t_max) {
@@ -79,7 +85,7 @@ public:
         }
     }
 
-    double get_t() const
+    Timepoint get_t() const
     {
         return m_t;
     }
@@ -100,28 +106,32 @@ public:
     }
 
 protected:
-    double m_t;
-    double m_dt;
+    Timepoint m_t;
+    Timespan m_dt;
     Graph m_graph;
     node_function m_node_func;
     edge_function m_edge_func;
 };
 
-template <class Graph>
-class GraphSimulation : public GraphSimulationBase<Graph>
+template <
+    class Graph, class Timepoint, class Timespan,
+    std::enable_if_t<((std::is_same<Timepoint, double>::value || std::is_same<Timepoint, mio::abm::TimePoint>::value) &&
+                      (std::is_same<Timespan, double>::value || std::is_same<Timespan, mio::abm::TimeSpan>::value)),
+                     bool> = true>
+class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan>
 {
-    using GraphSimulationBase<Graph>::GraphSimulationBase;
+    using GraphSimulationBase<Graph, Timepoint, Timespan>::GraphSimulationBase;
 };
 
 template <class Graph>
 class GraphSimulationStochastic
-    : public GraphSimulationBase<Graph,
+    : public GraphSimulationBase<Graph, double, double,
                                  std::function<void(typename Graph::EdgeProperty&, size_t,
                                                     typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>
 {
-    using Base =
-        GraphSimulationBase<Graph, std::function<void(typename Graph::EdgeProperty&, size_t,
-                                                      typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>;
+    using Base          = GraphSimulationBase<Graph, double, double,
+                                     std::function<void(typename Graph::EdgeProperty&, size_t,
+                                                        typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>;
     using node_function = typename Base::node_function;
     using edge_function = typename Base::edge_function;
 
@@ -181,8 +191,8 @@ public:
 
                     //perform transition
                     Base::m_edge_func(event_edge.property, flat_index,
-                                Base::m_graph.nodes()[event_edge.start_node_idx].property,
-                                Base::m_graph.nodes()[event_edge.end_node_idx].property);
+                                      Base::m_graph.nodes()[event_edge.start_node_idx].property,
+                                      Base::m_graph.nodes()[event_edge.end_node_idx].property);
 
                     //calculate new cumulative rate
                     cumulative_rate = get_cumulative_transition_rate();
@@ -241,15 +251,19 @@ private:
     std::vector<ScalarType> m_rates;
 };
 
-template <class Graph, class NodeF, class EdgeF>
-auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+template <
+    class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan,
+    std::enable_if_t<((std::is_same<Timepoint, double>::value || std::is_same<Timepoint, mio::abm::TimePoint>::value) &&
+                      (std::is_same<Timespan, double>::value || std::is_same<Timespan, mio::abm::TimeSpan>::value)),
+                     bool> = true>
+auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulation<std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
-                                                std::forward<EdgeF>(edge_func));
+    return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan>(
+        t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
-template <class Graph, class NodeF, class EdgeF>
-auto make_graph_sim_stochastic(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+template <class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan>
+auto make_graph_sim_stochastic(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
     return GraphSimulationStochastic<std::decay_t<Graph>>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
