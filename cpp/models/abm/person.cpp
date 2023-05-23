@@ -263,11 +263,10 @@ ScalarType Person::get_protection_factor(TimePoint t, const GlobalInfectionParam
         return 0.5;
     }
     // Find the lastest infection / vaccination type and time.
-    Vaccine last_protection_type;
-    ScalarType days_interval = std::numeric_limits<double>::max();
+    Vaccine last_protection_type = Vaccine::NaturalInfection;
+    ScalarType days_interval     = std::numeric_limits<double>::max();
     if (!m_infections.empty()) {
-        last_protection_type = Vaccine::NaturalInfection;
-        days_interval        = t.days() - m_infections.back().get_init_date().days();
+        days_interval = t.days() - m_infections.back().get_init_date().days();
     }
     if (!m_vaccinations.empty()) {
         if (days_interval > t.days() - m_vaccinations.back().time.days()) {
