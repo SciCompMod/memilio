@@ -36,6 +36,7 @@ add_library(memilio
     io/result_io.cpp
     io/epi_data.h
     io/epi_data.cpp
+    io/cli.h
     math/euler.cpp
     math/euler.h
     math/smoother.h
@@ -51,8 +52,10 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
-    mobility/meta_mobility_instant.h
-    mobility/meta_mobility_instant.cpp
+    mobility/metapopulation_mobility_instant.h
+    mobility/metapopulation_mobility_instant.cpp
+    mobility/metapopulation_mobility_stochastic.h
+    mobility/metapopulation_mobility_stochastic.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
