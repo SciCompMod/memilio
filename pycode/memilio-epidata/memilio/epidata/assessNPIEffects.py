@@ -192,7 +192,10 @@ def analyze_npi_data(
         #                )
 
     else:  # read formatted file
-
+        npis = pd.read_excel(
+            os.path.join(
+                directory, 'datensatzbeschreibung_massnahmen.xlsx'),
+            sheet_name=3, engine='openpyxl')
         if fine_resolution > 0:
             if fine_resolution == 1:
                 filename = 'germany_counties_npi_subcat_incgrouped'
@@ -200,21 +203,32 @@ def analyze_npi_data(
                 filename = 'germany_counties_npi_subcat'
         else:
             filename = 'germany_counties_npi_maincat'
-        df_npis = pd.read_json(directory + filename + ".json")
+        df_npis = pd.read_csv(directory + filename + ".csv")
+    try:
+        df_npis = df_npis.drop('Unnamed: 0', axis=1)
+    except KeyError:
+        pass
+    npis = pd.read_json(os.path.join(directory, 'npis.json'))
+    all_codes = []
+    # merge subcodes of considered npis (Do we want this? To discuss...)
+    df_merged = df_npis.iloc[:, :2].copy()
+    for subcode in npi_codes_considered:
+        df_merged[subcode] = df_npis.filter(regex=subcode).sum(axis=1)
+        all_codes.append(df_npis.filter(regex=subcode).columns)
         # get code levels (main/subcodes) and position of main codes
         # code_level = [i.count('_') for i in npi_codes]
         # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
 
-        # check if any other integer than 0: not implemented or 1: implemented is
-        # used (maybe to specify the kind of implementation)
-    if len(np.where(df_npis[npi_codes_considered] > 1)[0]) > 0:
+    # check if any other integer than 0: not implemented or 1: implemented is
+    # used (maybe to specify the kind of implementation)
+    if len(np.where(df_merged[npi_codes_considered] > 1)[0]) > 0:
 
         print("Info: Please ensure that NPI information is only boolean.")
 
     else:
         # sum over different NPIs and plot share of countires implementing
         # these NPIs versus counties without corresponding actions
-        df_npis_aggregated = df_npis.groupby(
+        df_npis_aggregated = df_merged.groupby(
             dd.EngEng['date']).agg(
             {i: sum for i in npi_codes_considered}).copy()
         npis_total_sum = df_npis_aggregated.sum()
@@ -230,14 +244,14 @@ def analyze_npi_data(
             if npi_codes_considered[i] in npi_codes_empty:
                 npi_unused_indices.append(i)
                 npi_unused_indices_all.append(
-                    npis[dd.EngEng['npiCode']].index(npi_codes_considered[i]))
+                    np.where(npis[dd.EngEng['npiCode']] == 'M01a_010')[0][0])
             else:
                 npi_used_indices.append(i)
                 npi_used_indices_all.append(
-                    npis[dd.EngEng['npiCode']].index(npi_codes_considered[i]))
+                    np.where(npis[dd.EngEng['npiCode']] == 'M01a_010')[0][0])
 
-        npis_unused = np.array(npis[dd.EngEng['desc']])[npi_unused_indices_all]
-        npis_used = np.array(npis[dd.EngEng['desc']])[npi_used_indices_all]
+        npis_unused = np.array(npis['Description'])[npi_unused_indices_all]
+        npis_used = np.array(npis['Description'])[npi_used_indices_all]
         npi_codes_used = list(np.array(npi_codes_considered)[npi_used_indices])
         npi_codes_unused = list(
             np.array(npi_codes_considered)[npi_unused_indices])
@@ -469,8 +483,8 @@ def main():
     # arg_dict = gd.cli("testing")
     fine_resolution = 2
     npis_final = []
-    directory = []
-    file_format = []
+    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
+    file_format = 'json'
     npi_codes_considered = []
     analyze_npi_data(True, True, fine_resolution, npis_final,
                      directory, file_format, npi_codes_considered)
