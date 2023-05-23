@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,7 +28,8 @@ namespace abm
 
 Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
                      InfectionState init_state, bool detected)
-    : m_virus_variant(virus)
+    : m_init_date(init_date)
+    , m_virus_variant(virus)
     , m_detected(detected)
 {
     m_viral_load.start_date = draw_infection_course(age, params, init_date, init_state);
@@ -100,6 +101,11 @@ void Infection::set_detected()
 bool Infection::is_detected() const
 {
     return m_detected;
+}
+
+TimePoint Infection::get_init_date() const
+{
+    return m_init_date;
 }
 
 TimePoint Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,

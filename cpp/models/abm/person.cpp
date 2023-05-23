@@ -256,12 +256,43 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
-ScalarType Person::get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
+ScalarType Person::get_protection_factor(TimePoint t, const GlobalInfectionParameters& global_params) const
 {
-    return 1;
+    // If the person had not infected nor vaccinated before, the function would return 0.
+    if (m_infections.empty() && m_vaccinations.empty()) {
+        return 0.5;
+    }
+    // Find the lastest infection / vaccination type and time.
+    Vaccine last_protection_type;
+    ScalarType days_interval = std::numeric_limits<double>::max();
+    if (!m_infections.empty()) {
+        last_protection_type = Vaccine::NaturalInfection;
+        days_interval        = t.days() - m_infections.back().get_init_date().days();
+    }
+    if (!m_vaccinations.empty()) {
+        if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+            last_protection_type = m_vaccinations.back().vaccine;
+            days_interval        = t.days() - m_vaccinations.back().time.days();
+        }
+    }
+
+    // Find the point in the linear line created by two protection levels.
+    auto protection_v = global_params.get<PersonalProtectionFactor>()[last_protection_type];
+    size_t counter    = 0;
+    while (protection_v[counter].first < days_interval && counter < protection_v.size()) {
+        counter++;
+    }
+    if (counter < protection_v.size()) {
+        return protection_v[counter - 1].second + (protection_v[counter - 1].second - protection_v[counter].second) /
+                                                      (protection_v[counter - 1].first - protection_v[counter].first) *
+                                                      (days_interval - protection_v[counter - 1].first);
+    }
+    else {
+        return 0.5;
+    }
 }
 
-ScalarType Person::get_severity_factor(VirusVariant /*v*/, TimePoint t) const
+ScalarType Person::get_severity_factor(TimePoint t, const GlobalInfectionParameters& /*global_params*/) const
 {
     TimeSpan time_since_vaccination = t - m_vaccinations.back().time;
     if (time_since_vaccination.days() > 0) {

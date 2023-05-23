@@ -35,13 +35,12 @@ namespace abm
  */
 enum class Vaccine : std::uint32_t
 {
-    Moderna           = 0,
-    Pfizer            = 1,
-    Astrazeneca       = 2,
-    JohnsonAndJohnson = 3,
-    Novavax           = 4,
-    Sinovac           = 5,
-    Sputnik           = 6,
+    NaturalInfection  = 0,
+    Moderna           = 1,
+    Pfizer            = 2,
+    Astrazeneca       = 3,
+    JohnsonAndJohnson = 4,
+    Novavax           = 5,
     Count //last!!
 };
 

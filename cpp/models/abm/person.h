@@ -330,21 +330,19 @@ public:
 
     /**
      * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
      * @param[in] t TimePoint of check.
+     * @param[in] global_params GlobalInfectionParameters in the model.
      * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
-     * Implemented according to https://doi.org/10.1038/s41591-021-01377-8
      */
-    ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
+    ScalarType get_protection_factor(TimePoint t, const GlobalInfectionParameters& global_params) const;
 
     /**
      * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
-     * @param[in] v VirusVariant to take into consideration.
      * @param[in] t TimePoint of check.
+     * @param[in] global_params GlobalInfectionParameters in the model.
      * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
-     * Implemented according to https://doi.org/10.1038/s41591-021-01377-8
     */
-    ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const;
+    ScalarType get_severity_factor(TimePoint t, const GlobalInfectionParameters& global_params) const;
 
     /**
      * @brief Add a new vaccination

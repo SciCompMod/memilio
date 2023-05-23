@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -96,6 +96,11 @@ public:
     */
     bool is_detected() const;
 
+     /**
+     * @returns Get the start date of the infection.
+    */
+    TimePoint get_init_date() const;
+
 private:
     /**
      * @brief Determine ViralLoad course and Infection course based on init_state. Calls draw_infection_course_backward for all InfectionState%s prior and draw_infection_course_forward for all subsequent InfectionState%s.
@@ -129,6 +134,7 @@ private:
                                              InfectionState init_state);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; // start date of each infection state
+    TimePoint m_init_date;
     VirusVariant m_virus_variant;
     ViralLoad m_viral_load;
     ScalarType m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity

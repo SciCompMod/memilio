@@ -223,7 +223,7 @@ TEST(TestPerson, setWearMask)
     ASSERT_TRUE(person.get_wear_mask());
 }
 
-TEST(TestPerson, getProtectiveFactor)
+TEST(TestPerson, getMaskProtectiveFactor)
 {
     auto location         = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto person_community = make_test_person(location);
@@ -247,4 +247,17 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
     ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+}
+
+TEST(TestPerson, getPersonalProtectiveFactor)
+{
+    auto t        = mio::abm::TimePoint(15*24*60*60);
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto person   = make_test_person(location);
+    person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
+
+    mio::abm::GlobalInfectionParameters params;
+    params.get<mio::abm::PersonalProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {{0, 0.91}, {30, 0.81}};
+
+    ASSERT_EQ(person.get_protection_factor(t, params), 0.86);
 }
