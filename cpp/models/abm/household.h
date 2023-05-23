@@ -33,21 +33,6 @@ namespace mio
 namespace abm
 {
 
-namespace
-{
-/**
- * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
- * @param[in] age_groups A CustomIndexArray with the weights.
- * @return The picked AgeGroup.
- */
-AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
-{
-    auto age_group_weights = age_groups.array().cast<double>().eval();
-    size_t age_group       = DiscreteDistribution<size_t>::get_instance()(age_group_weights);
-    return (AgeGroup)age_group;
-}
-} // namespace
-
 /**
  * @file
  * A HouseholdMember has a vector with weighted age distribution from which the age can be calculated.
@@ -207,6 +192,18 @@ private:
     std::vector<std::tuple<Household, int>> m_household_list; /**< A list of types of Household%s and the amount of 
     times it is in the group.*/
 };
+
+/**
+ * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
+ * @param[in] age_groups A CustomIndexArray with the weights.
+ * @return The picked AgeGroup.
+ */
+inline AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
+{
+    auto age_group_weights = age_groups.array().cast<double>().eval();
+    size_t age_group       = DiscreteDistribution<size_t>::get_instance()(age_group_weights);
+    return (AgeGroup)age_group;
+}
 
 /**
  * @brief Adds a specific Household to the World.
