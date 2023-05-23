@@ -102,8 +102,10 @@ class TestAbm(unittest.TestCase):
 
         social_event = world.locations[social_event_id.index]
 
-        world.infection_parameters.InfectedToSevere[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4] = 0.0
-        world.infection_parameters.InfectedToRecovered[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4] = 0.0
+        world.infection_parameters.InfectedToSevere[abm.VirusVariant.Wildtype,
+                                                    abm.AgeGroup.Age0to4] = 0.0
+        world.infection_parameters.InfectedToRecovered[abm.VirusVariant.Wildtype,
+                                                       abm.AgeGroup.Age0to4] = 0.0
 
         # trips
         trip_list = abm.TripList()
