@@ -26,9 +26,12 @@ namespace mio
 namespace graph_abm
 {
 
-void World::interaction(TimePoint t, TimeSpan dt)
+void GraphWorld::interaction(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
 {
-    for (auto&& person : m_persons) {
+    for (auto&& person : m_persons_internal) {
+        person->interact(t, dt, m_infection_parameters);
+    }
+    for (auto&& person : m_persons_external) {
         person->interact(t, dt, m_infection_parameters);
     }
 }
