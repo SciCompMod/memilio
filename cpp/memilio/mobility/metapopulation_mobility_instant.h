@@ -31,6 +31,7 @@
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
+#include "models/abm/time.h"
 
 #include "boost/filesystem.hpp"
 
@@ -531,6 +532,17 @@ GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
 make_migration_sim(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
     return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+}
+
+template <class Sim, class Timepoint, class Timespan>
+//GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
+int make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+{
+    mio::unused(t0);
+    mio::unused(dt);
+    mio::unused(graph);
+    return 0;
+    //return make_graph_sim_test(0.0, 0.0, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
 /** @} */

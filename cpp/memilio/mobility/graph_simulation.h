@@ -54,6 +54,13 @@ public:
     {
     }
 
+    GraphSimulationBase(Timepoint t0, Timespan dt, const Graph& g)
+        : m_t(t0)
+        , m_dt(dt)
+        , m_graph(g)
+    {
+    }
+
     GraphSimulationBase(Timepoint t0, Timespan dt, Graph&& g, const node_function& node_func,
                         const edge_function&& edge_func)
         : m_t(t0)
@@ -260,6 +267,21 @@ auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, Edg
 {
     return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
+}
+
+template <
+    class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan,
+    std::enable_if_t<((std::is_same<Timepoint, double>::value || std::is_same<Timepoint, mio::abm::TimePoint>::value) &&
+                      (std::is_same<Timespan, double>::value || std::is_same<Timespan, mio::abm::TimeSpan>::value)),
+                     bool> = true>
+auto make_graph_sim_test(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+{
+    mio::unused(t0);
+    mio::unused(dt);
+    mio::unused(node_func);
+    mio::unused(edge_func);
+    return 0;
+    //return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan>(t0, dt, std::forward<Graph>(g));
 }
 
 template <class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan>
