@@ -93,7 +93,8 @@ public:
         return m_t0;
     }
 
-    void evolve(double t, double dt)
+    template<class Timepoint, class Timespan>
+    void evolve(Timepoint t, Timespan dt)
     {
         m_simulation.advance(t + dt);
         m_last_state = m_simulation.get_result().get_last_value();
@@ -493,8 +494,8 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
  * edge functor for migration simulation.
  * @see SimulationNode::evolve
  */
-template <class Sim>
-void evolve_model(double t, double dt, SimulationNode<Sim>& node)
+template <class Sim, class Timepoint, class Timespan>
+void evolve_model(Timepoint t, Timespan dt, SimulationNode<Sim>& node)
 {
     node.evolve(t, dt);
 }
@@ -524,25 +525,21 @@ template <class Sim, class Timepoint, class Timespan>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
 make_migration_sim(Timepoint t0, Timespan dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim, Timepoint, Timespan>, &apply_migration<Sim>);
 }
 
 template <class Sim, class Timepoint, class Timespan>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
 make_migration_sim(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>, &apply_migration<Sim>);
 }
 
 template <class Sim, class Timepoint, class Timespan>
-//GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
-int make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
+make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
-    mio::unused(t0);
-    mio::unused(dt);
-    mio::unused(graph);
-    return 0;
-    //return make_graph_sim_test(0.0, 0.0, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+    return make_graph_sim_test(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>); // &apply_migration<Sim>)
 }
 
 /** @} */

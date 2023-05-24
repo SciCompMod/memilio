@@ -33,8 +33,8 @@ int main()
     infection_params.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Create the worlds with infection parameters.
-    auto world1 = mio::graph_abm::GraphWorld(infection_params);
-    auto world2 = mio::graph_abm::GraphWorld(infection_params);
+    auto world1 = mio::graph_abm::GraphWorld(0, infection_params);
+    auto world2 = mio::graph_abm::GraphWorld(1, infection_params);
 
     //add households for world 1
     auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.

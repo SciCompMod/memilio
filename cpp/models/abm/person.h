@@ -53,15 +53,16 @@ public:
      * @param location Initial location of the person.
      * @param age The age group of the person.
      * @param person_id Index of the person.
+     * @param world_id Home world id of the person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID, uint32_t world_id = 0);
 
     /**
     * compare two persons
     */
     bool operator==(const Person& other) const
     {
-        return (m_person_id == other.m_person_id);
+        return (m_person_id == other.m_person_id && m_world_id == other.m_world_id);
     }
 
     /** 
@@ -257,6 +258,11 @@ public:
     uint32_t get_person_id();
 
     /**
+     * @brief Get the world id of the person.
+     */
+    uint32_t get_world_id();
+
+    /**
      * @brief Get index of cells of the person.
      */
     std::vector<uint32_t>& get_cells();
@@ -329,6 +335,23 @@ public:
     }
 
     /**
+     * @brief Set whether a person is currently active in its home world.
+     * @param[in] active_in_world If true, the person is considered in migration and interaction in its home world.
+     */
+    void set_is_active_in_world(bool active_in_world)
+    {
+        m_is_active_in_world = active_in_world;
+    }
+
+    /**
+     * @return True if the person is currently active in its home world.
+     */
+    bool get_is_active_in_world() const
+    {
+        return m_is_active_in_world;
+    }
+
+    /**
          * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
@@ -367,6 +390,8 @@ private:
     bool m_wears_mask = false;
     std::vector<ScalarType> m_mask_compliance;
     uint32_t m_person_id;
+    uint32_t m_world_id;
+    bool m_is_active_in_world;
     std::vector<uint32_t> m_cells;
 };
 

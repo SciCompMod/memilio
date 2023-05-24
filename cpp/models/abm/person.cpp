@@ -31,7 +31,7 @@ namespace mio
 namespace abm
 {
 
-Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+Person::Person(Location& location, AgeGroup age, uint32_t person_id, uint32_t world_id)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
@@ -42,6 +42,8 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
+    , m_world_id(world_id)
+    , m_is_active_in_world(true)
     , m_cells{0}
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
@@ -202,6 +204,11 @@ bool Person::get_tested(TimePoint t, const TestParameters& params)
 uint32_t Person::get_person_id()
 {
     return m_person_id;
+}
+
+uint32_t Person::get_world_id()
+{
+    return m_world_id;
 }
 
 std::vector<uint32_t>& Person::get_cells()

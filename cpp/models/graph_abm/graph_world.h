@@ -35,13 +35,17 @@ namespace graph_abm
 
 class GraphWorld : public mio::abm::World
 {
-    //use abm::World constructors
-    using mio::abm::World::World;
     using Base = mio::abm::World;
 
 public:
     using ConstPersonIterator =
         PointerDereferencingIterator<std::vector<std::shared_ptr<mio::abm::Person>>::const_iterator>;
+
+    GraphWorld(uint32_t world_id, const mio::abm::GlobalInfectionParameters& params = {})
+        : Base(params)
+        , m_world_id(world_id)
+    {
+    }
 
     mio::abm::LocationId add_external_location(mio::abm::LocationType type, uint32_t num_cells = 1)
     {
@@ -49,15 +53,26 @@ public:
         m_locations_external.emplace_back(std::make_unique<mio::abm::Location>(id, num_cells));
         return id;
     }
+    // mio::abm::Person& add_person(const mio::abm::LocationId id, mio::abm::AgeGroup age)
+    // {
+    //     uint32_t person_id = static_cast<uint32_t>(m_persons_internal.size());
+    //     m_persons_internal.push_back(
+    //          std::make_pair(std::make_shared<mio::abm::Person>(get_individualized_location(id), age, person_id), true));
+    //     auto& person = *((m_persons_internal.back()).first);
+    //     get_individualized_location(id).add_person(person);
+    //     return person;
+    // }
+
     mio::abm::Person& add_person(const mio::abm::LocationId id, mio::abm::AgeGroup age)
     {
         uint32_t person_id = static_cast<uint32_t>(m_persons_internal.size());
         m_persons_internal.push_back(
-            std::make_shared<mio::abm::Person>(get_individualized_location(id), age, person_id));
+            std::make_shared<mio::abm::Person>(get_individualized_location(id), age, person_id, m_world_id));
         auto& person = *m_persons_internal.back();
         get_individualized_location(id).add_person(person);
         return person;
     }
+
     void insert_external_location_to_map(int node_to, mio::abm::LocationId id_this_world,
                                          mio::abm::LocationId id_other_world)
     {
@@ -79,10 +94,18 @@ public:
     }
 
 private:
+    /**
+     * @brief Person%s interact at their Location and may become infected.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
+    void interaction(mio::abm::TimePoint t, mio::abm::TimeSpan dt);
+
+    uint32_t m_world_id;
     std::vector<std::shared_ptr<mio::abm::Person>> m_persons_internal;
     std::vector<std::shared_ptr<mio::abm::Person>> m_persons_external;
-    //std::vector<std::unique_ptr<mio::abm::Location>> m_locations_internal;
     std::vector<std::unique_ptr<mio::abm::Location>> m_locations_external;
+    //map has for every graph node id specified by the integer a mapping mapping the id from m_locations_external to the corresponding id in the other node
     std::map<int, std::vector<std::pair<mio::abm::LocationId, mio::abm::LocationId>>> m_external_location_mapping;
 };
 
