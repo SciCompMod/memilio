@@ -80,10 +80,10 @@ struct Cell {
     ScalarType compute_space_per_person_relative();
 
     /**
-    * @brief Get subpopulation of a particular InfectionState in the Cell.
+    * @brief Get subpopulation of a particular #InfectionState in the Cell.
     * @param[in] t TimePoint of querry.
-    * @param[in] state InfectionState of interest.
-    * @return Amount of Person%s of the InfectionState in the Cell.
+    * @param[in] state #InfectionState of interest.
+    * @return Amount of Person%s of the #InfectionState in the Cell.
     */
     size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
@@ -97,7 +97,7 @@ class Location
 public:
     /**
      * @brief Construct a Location of a certain type.
-     * @param type The type of the Location.
+     * @param type The #LocationType.
      * @param index The index of the Location.
      * @param num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
@@ -122,7 +122,8 @@ public:
     }
 
     /**
-     * @brief Get the LocationType of this Location.
+     * @brief Get the type of this Location.
+     * @return The #LocationType of the Location.
      */
     LocationType get_type() const
     {
@@ -131,6 +132,7 @@ public:
 
     /**
      * @brief Get the index of this Location.
+     * @return The index of the Location.
      */
     unsigned get_index() const
     {
@@ -143,7 +145,7 @@ public:
      * @param[in] virus VirusVariant of interest.
      * @param[in] age_receiver AgeGroup of the receiving Person.
      * @param[in] age_transmitter AgeGroup of the transmitting Person.
-     * @returns Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
+     * @return Amount of average Infection%s with the virus from the AgeGroup of the transmitter per day.
     */
     ScalarType transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const;
 
@@ -151,7 +153,7 @@ public:
      * @brief Compute the transmission factor for a aerosol transmission of the virus in a Cell.
      * @param[in] cell_index Cell index of the Cell.
      * @param[in] virus VirusVariant of interest.
-     * @returns Amount of average Infection%s with the virus per day.
+     * @return Amount of average Infection%s with the virus per day.
     */
     ScalarType transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const;
 
@@ -216,8 +218,8 @@ public:
     }
 
     /**
-     * @brief Set the required MaskType for entering this Location.
-     * @param[in] type The type of the Mask.
+     * @brief Set the required type of mask for entering this Location.
+     * @param[in] type The Least secure MaskType that is demanded when entering this Location.
      */
     void set_required_mask(MaskType type)
     {
@@ -245,7 +247,7 @@ public:
     }
 
     /**
-     * @brief Set the capacity of a Cell in the Location in persons and volume.
+     * @brief Set the CellCapacity of a Cell in the Location in persons and volume.
      * @param[in] persons Maximum number of Person%s that can visit the Cell at the same time.
      * @param[in] volume Volume of the Cell in m^3.
      * @param[in] cell_idx Index of the Cell.
@@ -302,10 +304,10 @@ public:
     size_t get_number_persons();
 
     /**
-     * @brief Get the number of Person%s of a particular InfectionState for all Cell%s.
+     * @brief Get the number of Person%s of a particular #InfectionState for all Cell%s.
      * @param[in] t TimePoint of querry.
-     * @param[in] state InfectionState of interest.
-     * @return Amount of Person%s of the InfectionState in all Cell%s.
+     * @param[in] state #InfectionState of interest.
+     * @return Amount of Person%s of the #InfectionState in all Cell%s.
      */
     size_t get_subpopulation(TimePoint t, InfectionState state) const;
 
@@ -323,7 +325,7 @@ public:
 
     /**
      * @brief Get the complete history of subpopulations.
-     * @return The TimeSeries of the InfectionState%s for each TimePoint at the Location.
+     * @return The TimeSeries of the #InfectionState%s for each TimePoint at the Location.
      */
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
@@ -334,7 +336,7 @@ private:
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
     TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
-        InfectionState::Count)}; ///< A TimeSeries of the InfectionState%s for each TimePoint at the Location.
+        InfectionState::Count)}; ///< A TimeSeries of the #InfectionState%s for each TimePoint at the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.

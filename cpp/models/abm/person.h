@@ -69,20 +69,20 @@ public:
      * The Person might become infected.
      * @param[in] t Current time.
      * @param[in] dt Length of the current Simulation TimeStep.
-     * @param[in,out] global_infection_parameters Infection parameters that are the same in all Location%s.
+     * @param[in, out] global_infection_parameters Infection parameters that are the same in all Location%s.
      */
     void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
 
     /** 
      * @brief Migrate to a different Location.
      * @param[in, out] loc_new The new Location of the Person.
-     * @param[in] cells_new The new Cell%s of the Person.
+     * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.
-     * @returns The latest Infection of the Person.
+     * @return The latest Infection of the Person.
      */
     Infection& get_infection()
     {
@@ -95,8 +95,8 @@ public:
     }
 
     /** 
-     * @brief Get all vaccinations of the Person.
-     * @returns A vector with all vaccinations.
+     * @brief Get all Vaccination%s of the Person.
+     * @return A vector with all Vaccination%s.
      */
     std::vector<Vaccination>& get_vaccinations()
     {
@@ -111,14 +111,14 @@ public:
     /**
      * @brief Returns if the Person is infected at the TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
-     * @returns True if the Person is infected at the TimePoint.
+     * @return True if the Person is infected at the TimePoint.
      */
     bool is_infected(TimePoint t) const;
 
     /**
      * @brief Get the InfectionState of the Person at a specific TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
-     * @returns The InfectionState of the latest Infection at time t.
+     * @return The InfectionState of the latest Infection at time t.
      */
     InfectionState get_infection_state(TimePoint t) const;
 
@@ -139,7 +139,7 @@ public:
 
     /**
      * @brief Get the current Location of the Person.
-     * @returns Current Location of the Person.
+     * @return Current Location of the Person.
      */
     Location& get_location();
 
@@ -164,31 +164,31 @@ public:
     }
     /**
      * @brief Set an assigned Location of the Person. 
-     * The assigned Location is saved by its index. Assume that a Person has at most one assigned Location per
-     * LocationType.
+     * The assigned Location is saved by its index of its LocationId. Assume that a Person has at most one assigned
+     * Location per #LocationType.
      * @param[in] location The new assigned Location.
      */
     void set_assigned_location(Location& location);
 
     /**
      * @brief Set an assigned Location of the Person. 
-     * The assigned location is saved by an index. Assume that a Person has at most one assigned Location of a certain
-     * LocationType.
-     * @param[in] location_type LocationType of the new assigned Location.
-     * @param[in] index Index of the new assigned Location.
+     * The assigned Location is saved by the index of its LocationId. Assume that a Person has at most one assigned
+     * Location of a certain #LocationType.
+     * @param[in] id The LocationId of the Location.
      */
     void set_assigned_location(LocationId id);
 
     /**
      * @brief Returns the index of an assigned Location of the Person.
-     * Assume that a Person has at most one assigned Location of a certain LocationType.
-     * @param[in] type LocationType of the assigned Location.
+     * Assume that a Person has at most one assigned Location of a certain #LocationType.
+     * @param[in] type #LocationType of the assigned Location.
+     * @return The index in the LocationId of the assigned Location.
      */
     uint32_t get_assigned_location_index(LocationType type) const;
 
     /**
-     * @brief Get the assigned Locations of the Person.
-     * @return A vector with the assigned Locations of the Person.
+     * @brief Get the assigned Location%s of the Person.
+     * @return A vector with the indices of the assigned Location%s of the Person.
      */
     const std::vector<uint32_t>& get_assigned_locations() const
     {
@@ -196,9 +196,11 @@ public:
     }
 
     /**
-     * @brief Draw if the Person goes to work or is in home office during lockdown.
+     * @brief Draw if the Person goes to work or is in home office during lockdown at a specific TimePoint.
      * Every Person has a random number. Depending on this number and the time, the Person works from home in case of a
      * lockdown.
+     * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
+     * @param[in] params Parameters that describe the migration between Location%s.
      * @return True the Person works from home.
      */
     bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
@@ -207,6 +209,7 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to work.
      * Depending on this number Person decides what time has to go to work.
+     * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to work.
      */
     TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
@@ -214,6 +217,8 @@ public:
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
      * Every Person has a random number that determines if they go to school in case of a lockdown.
+     * @param[in] t The TimePoint of interest. Usually the current time of the Simulation.
+     * @param[in] params Parameters that describe the migration between Location%s.
      * @return True if the Person goes to school.
      */
     bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
@@ -222,13 +227,15 @@ public:
      * @brief Draw at what time the Person goes to work.
      * Every Person has a random number to determine what time to go to school.
      * Depending on this number Person decides what time has to go to school.
+     * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
     TimeSpan get_go_to_school_time(const MigrationParameters& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
-     * @return True if the person is in quarantine.
+     * If a Person is in quarantine this Person cannot migrate to Location%s other than Home or the Hospital.
+     * @return True if the Person is in quarantine.
      */
     bool is_in_quarantine() const
     {
@@ -257,7 +264,7 @@ public:
     bool get_tested(TimePoint t, const TestParameters& params);
 
     /**
-     * @brief Get the Person id of the Person.
+     * @brief Get the PersonID of the Person.
      * The PersonID should correspond to the index in m_persons in world.
      * @return The PersonID.
      */
@@ -265,7 +272,7 @@ public:
 
     /**
      * @brief Get index of Cell%s of the Person.
-     * @return A vector of all Cell indices the Person uses at the current Location.
+     * @return A vector of all Cell indices the Person visits at the current Location.
      */
     std::vector<uint32_t>& get_cells();
 
@@ -273,6 +280,7 @@ public:
 
     /**
      * @brief Get the current Mask of the Person.
+     * @return Reference to the Mask object of the Person.
      */
     Mask& get_mask()
     {
@@ -286,15 +294,18 @@ public:
 
     /**
      * @brief Get the protection of the Mask.
-     * A value of 1 represents full protection and a value of 0 means no protection.
+     * A value of 1 represents full protection and a value of 0 means no protection. This depends on the MaskType of the
+     * Mask the Person is wearing.
+     * @param[in] params The parameters of the Infection that are the same everywhere within the World.
+     * @return The reduction factor of getting an Infection when wearing the Mask.
      */
     ScalarType get_mask_protective_factor(const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief For every LocationType a Person has a compliance value between -1 and 1.
-     * -1 means that the Person never complies to any mask duty at the given LocationType.
-     * 1 means that the Person always wears a Mask a the LocationType even if it is not required.
-     * @param[in] preferences The vector of mask compliance values for all LocationTypes.
+     * @brief For every #LocationType a Person has a compliance value between -1 and 1.
+     * -1 means that the Person never complies to any Mask duty at the given #LocationType.
+     * 1 means that the Person always wears a Mask a the #LocationType even if it is not required.
+     * @param[in] preferences The vector of Mask compliance values for all #LocationType%s.
      */
     void set_mask_preferences(std::vector<ScalarType> preferences)
     {
@@ -302,10 +313,9 @@ public:
     }
 
     /**
-     * @brief Get the mask compliance of the Person for the current location.
-     * @param[in] location The current location of the person.
-     * @return The probability that the person does not comply to any mask duty/wears a
-     * mask even if it is not required.
+     * @brief Get the Mask compliance of the Person for the current Location.
+     * @param[in] location The current Location of the Person.
+     * @return The probability that the Person does not comply to any Mask duty/wears a Mask even if it is not required.
      */
     ScalarType get_mask_compliance(LocationType location) const
     {
@@ -320,9 +330,8 @@ public:
     bool apply_mask_intervention(const Location& target);
 
     /**
-     * @brief Decide if a person is currently wearing a mask.
-     * @param[in] wear_mask If true, the protection of the mask is considered when
-     * computing the exposure rate.
+     * @brief Decide if a Person is currently wearing a Mask.
+     * @param[in] wear_mask If true, the protection of the Mask is considered when computing the exposure rate.
      */
     void set_wear_mask(bool wear_mask)
     {
@@ -330,7 +339,8 @@ public:
     }
 
     /**
-     * @return True if the person is currently wearing a mask.
+     * @brief Get the information if the Person is currently wearing a Mask.
+     * @return True if the Person is currently wearing a Mask.
      */
     bool get_wear_mask() const
     {
@@ -338,45 +348,46 @@ public:
     }
 
     /**
-         * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
-         * @param[in] v VirusVariant to take into consideration.
-         * @param[in] t TimePoint of check.
-         * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
-        */
+     * @brief Get the multiplicative factor on how likely an Infection is due to the immune system.
+     * @param[in] v VirusVariant to take into consideration.
+     * @param[in] t TimePoint of check.
+     * @return Protection factor of the immune system to the given VirusVariant at the given TimePoint.
+     */
     ScalarType get_protection_factor(VirusVariant /*v*/, TimePoint /*t*/) const
     {
         return 1.; // put implementation in .cpp
     }
 
     /**
-         * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
-         * @param[in] v VirusVariant to take into consideration.
-         * @param[in] t TimePoint of check.
-         * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
-        */
+     * @brief Get the multiplicative factor on how severe a new Infection is due to the immune system.
+     * @param[in] v VirusVariant to take into consideration.
+     * @param[in] t TimePoint of check.
+     * @return Severity factor of a new Infection with the given VirusVariant at the given TimePoint.
+     */
     ScalarType get_severity_factor(VirusVariant /*v*/, TimePoint /*t*/) const
     {
         return 1.; // put implementation in .cpp
     }
 
 private:
-    observer_ptr<Location> m_location;
-    std::vector<uint32_t> m_assigned_locations;
-    std::vector<Vaccination> m_vaccinations;
-    std::vector<Infection> m_infections;
-    bool m_quarantine = false;
-    AgeGroup m_age;
-    TimeSpan m_time_at_location;
-    double m_random_workgroup;
-    double m_random_schoolgroup;
-    double m_random_goto_work_hour;
-    double m_random_goto_school_hour;
-    TimeSpan m_time_since_negative_test;
-    Mask m_mask;
-    bool m_wears_mask = false;
-    std::vector<ScalarType> m_mask_compliance;
-    uint32_t m_person_id;
-    std::vector<uint32_t> m_cells;
+    observer_ptr<Location> m_location; ///< Current Location of the Person.
+    std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
+    Person always visits the same Home or School etc. */
+    std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
+    std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
+    bool m_quarantine = false; ///< Whether the Person is currently in quarantine.
+    AgeGroup m_age; ///< AgeGroup the Person belongs to.
+    TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.
+    double m_random_workgroup; ///< Value to determine if the Person goes to work or works from home during lockdown.
+    double m_random_schoolgroup; ///< Value to determine if the Person goes to school or stays at home during lockdown.
+    double m_random_goto_work_hour; ///< Value to determine at what time the Person goes to work.
+    double m_random_goto_school_hour; ///< Value to determine at what time the Person goes to school.
+    TimeSpan m_time_since_negative_test; ///< Time since the last negative test.
+    Mask m_mask; ///< The Mask of the Person.
+    bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
+    std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
+    uint32_t m_person_id; ///< Id of the Person.
+    std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
 };
 
 } // namespace abm
