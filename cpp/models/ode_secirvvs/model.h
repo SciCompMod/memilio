@@ -518,7 +518,7 @@ public:
             }
             Base::advance(t + dt_eff);
             if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
-                this->apply_vaccination(t + 0.5 + dt_eff);
+                // this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_b161(t);
             }
 

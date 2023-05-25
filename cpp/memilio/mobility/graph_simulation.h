@@ -21,6 +21,7 @@
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 
 namespace mio
@@ -30,6 +31,7 @@ namespace mio
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
 template <class Graph, class edge_f = std::function<void(double, double, typename Graph::EdgeProperty&,
+                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&,
                                                          typename Graph::NodeProperty&, typename Graph::NodeProperty&)>>
 class GraphSimulationBase
 {
@@ -60,23 +62,91 @@ public:
 
     void advance(double t_max = 1.0)
     {
-        auto dt = m_dt;
-        while (m_t < t_max) {
-            if (m_t + dt > t_max) {
-                dt = t_max - m_t;
-            }
+        mio::unused(t_max);
+        // // pseudocode
+        // // 1. kleinstes dt berechnen
+        // // 2. eigen matrix mit zeitpunkten?
+        // // 3. Woher weiß ich wie vielte Reise? Evtl aus t ziehen
+        // auto dt = m_dt;
 
-            for (auto& n : m_graph.nodes()) {
-                m_node_func(m_t, dt, n.property);
-            }
+        // // Idee: 2 Modelle erstellen. 1x PT 1x MIT. Dann Landkreisweise durch iterieren und immer vorher alle Personen die drin sind berechnen.
+        // // Das wäre dann node_curr.
+        // // Problem ist, dass ich den aktuellen Stand der m_migrated nirgendswo abspeichern kann. Müsste entweder deren Position berechnen oder iwo sammeln
+        // // Idee 2: Modelle dann in Matrix packen und vervielfältigen. Bei ersten Aufruf initialisieren. Mehr Speicher, aber deutlich schnellerer Aufruf,
+        // // da ich direkt weiß, wer im LK ist.
 
-            m_t += dt;
+        // // create node for PT and MIT
+        // // auto& node    = m_graph.nodes()[0];
+        // // auto node_pt  = node.property.get_simulation().get_model();
+        // // auto node_mit = node.property.get_simulation().get_model();
 
-            for (auto& e : m_graph.edges()) {
-                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
-                            m_graph.nodes()[e.end_node_idx].property);
-            }
-        }
+        // // node_pt.populations.set_total(0);
+        // // node_mit.populations.set_total(0);
+
+        // auto nodes_mit = m_graph.nodes();
+
+        // for (auto& n : nodes_mit) {
+        //     n.property.get_simulation().get_model().populations.set_total(0);
+        // }
+        // auto nodes_pt = nodes_mit;
+
+        // // start mobility activity with edge-wise different travel times and a own duration time for each county.
+        // while (m_t < t_max) {
+        //     double t_begin = m_t;
+        //     if (m_t + dt > t_max) {
+        //         dt = t_max - m_t;
+        //         for (auto& n : m_graph.nodes()) {
+        //             m_node_func(m_t, dt, n.property);
+        //         }
+        //         break;
+        //     }
+
+        //     // length of stay until first people start their mobility
+        //     for (auto& n : m_graph.nodes()) {
+        //         m_node_func(m_t, dt, n.property);
+        //     }
+        //     m_t += dt;
+
+        //     // start mobility activity with edge-wise different travel times and a own duration time for each county.
+        //     double dt_traveltimes = 0.01;
+        //     while (std::abs(t_begin + 1 - m_t) > 1e-10) {
+
+        //         for (auto& e : m_graph.edges()) {
+        //             // start trip
+        //             if (std::abs(t_begin + 1 - 2 * e.traveltime - m_graph.nodes()[e.end_node_idx].stay_duration - m_t) <
+        //                 1e-10) {
+        //                 m_edge_func(m_t, e.traveltime, e.property, m_graph.nodes()[e.start_node_idx].property,
+        //                             m_graph.nodes()[e.end_node_idx].property);
+        //             }
+
+        //             // arrival travelers
+        //             if (std::abs(t_begin + 1 - e.traveltime - m_graph.nodes()[e.end_node_idx].stay_duration - m_t) <
+        //                 1e-10) {
+        //                 m_edge_func(m_t, e.traveltime, e.property, m_graph.nodes()[e.start_node_idx].property,
+        //                             m_graph.nodes()[e.end_node_idx].property);
+        //             }
+
+        //             // start return trip
+        //             if (std::abs(t_begin + 1 - e.traveltime - m_t) < 1e-10) {
+        //                 m_edge_func(m_t, e.traveltime, e.property, m_graph.nodes()[e.start_node_idx].property,
+        //                             m_graph.nodes()[e.end_node_idx].property);
+        //             }
+        //         }
+
+        //         // integrate nodes after mobility updates
+        //         for (auto& n : m_graph.nodes()) {
+        //             m_node_func(m_t, dt_traveltimes, n.property);
+        //         }
+
+        //         m_t += dt_traveltimes;
+        //     }
+
+        //     // at the end of the day, we want all travelers to return to their home region
+        //     for (auto& e : m_graph.edges()) {
+        //         m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
+        //                     m_graph.nodes()[e.end_node_idx].property);
+        //     }
+        // }
     }
 
     double get_t() const
@@ -181,8 +251,8 @@ public:
 
                     //perform transition
                     Base::m_edge_func(event_edge.property, flat_index,
-                                Base::m_graph.nodes()[event_edge.start_node_idx].property,
-                                Base::m_graph.nodes()[event_edge.end_node_idx].property);
+                                      Base::m_graph.nodes()[event_edge.start_node_idx].property,
+                                      Base::m_graph.nodes()[event_edge.end_node_idx].property);
 
                     //calculate new cumulative rate
                     cumulative_rate = get_cumulative_transition_rate();

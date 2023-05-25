@@ -194,7 +194,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
             return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
         });
         edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
-        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge_params);
     }
 
     return sampled_graph;

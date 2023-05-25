@@ -63,6 +63,13 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
  */
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
 
+/**
+ * @brief Reads txt file containing the duration of stay in each county.
+          Writes it into a Eigen vector of size N, where N is the number of regions
+ * @param filename name of file to be read
+ */
+IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename);
+
 #ifdef MEMILIO_HAS_JSONCPP
 
 /**
@@ -133,7 +140,8 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
  * @param read_edges boolean value that decides whether the edges of the graph should also be read in.
  */
 template <class Model>
-IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& directory, int ioflags = IOF_None, bool read_edges = true)
+IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& directory, int ioflags = IOF_None,
+                                                       bool read_edges = true)
 {
     std::string abs_path;
     if (!file_exists(directory, abs_path)) {
@@ -160,7 +168,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
     }
 
     //read edges; nodes must already be available for that)
-    if(read_edges){
+    if (read_edges) {
         for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
             //list of edges
             auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
@@ -177,7 +185,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
                 if (end_node_idx >= graph.nodes().size()) {
                     log_error("EndNodeIndex not in range of number of graph nodes.");
                     return failure(StatusCode::OutOfRange,
-                                edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
+                                   edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
                 }
                 BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
                 graph.add_edge(start_node_idx, end_node_idx, parameters);

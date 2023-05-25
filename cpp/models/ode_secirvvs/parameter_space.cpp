@@ -186,7 +186,7 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         auto edge_params = edge.property;
         //no dynamic NPIs
         //TODO: add switch to optionally enable dynamic NPIs to edges
-        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge_params);
     }
 
     return sampled_graph;

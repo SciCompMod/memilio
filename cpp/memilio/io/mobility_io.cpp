@@ -135,4 +135,37 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
     return success(migration);
 }
 
+IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename)
+{
+    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+
+    if (num_lines == 0) {
+        return success(Eigen::MatrixXd(0, 0));
+    }
+
+    std::fstream file;
+    file.open(filename, std::ios::in);
+    if (!file.is_open()) {
+        return failure(StatusCode::FileNotFound, filename);
+    }
+
+    Eigen::VectorXd duration(num_lines);
+
+    try {
+        std::string tp;
+        int linenumber = 0;
+        while (getline(file, tp)) {
+            auto line      = split(tp, ' ');
+            Eigen::Index i = static_cast<Eigen::Index>(linenumber);
+            duration(i)    = std::stod(line[0]);
+            linenumber++;
+        }
+    }
+    catch (std::runtime_error& ex) {
+        return failure(StatusCode::InvalidFileFormat, filename + ": " + ex.what());
+    }
+
+    return success(duration);
+}
+
 } // namespace mio

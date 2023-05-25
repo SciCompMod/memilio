@@ -20,6 +20,9 @@ target_link_libraries(ode_secir_example PRIVATE memilio ode_secir)
 add_executable(secirvvs_example secirvvs.cpp)
 target_link_libraries(secirvvs_example PRIVATE memilio ode_secirvvs)
 
+add_executable(ode_secirvvs_mobility ode_secirvvs_mobility.cpp)
+target_link_libraries(ode_secirvvs_mobility PRIVATE memilio ode_secirvvs)
+
 add_executable(ode_secir_ageres_example ode_secir_ageres.cpp)
 target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 

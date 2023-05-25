@@ -69,10 +69,20 @@ struct Node {
     template <class... Args>
     Node(int node_id, Args&&... args)
         : id{node_id}
+        , stay_duration(0.3)
+        , property(std::forward<Args>(args)...)
+    {
+    }
+
+    template <class... Args>
+    Node(int node_id, double duration, Args&&... args)
+        : id{node_id}
+        , stay_duration(duration)
         , property(std::forward<Args>(args)...)
     {
     }
     int id;
+    double stay_duration;
     NodePropertyT property;
 };
 
@@ -81,13 +91,24 @@ struct Node {
  */
 template <class EdgePropertyT>
 struct Edge : public EdgeBase {
+
     template <class... Args>
     Edge(size_t start, size_t end, Args&&... args)
         : EdgeBase{start, end}
+        , traveltime(0.)
         , property(std::forward<Args>(args)...)
     {
     }
 
+    template <class... Args>
+    Edge(size_t start, size_t end, double t_travel, Args&&... args)
+        : EdgeBase{start, end}
+        , traveltime(t_travel)
+        , property(std::forward<Args>(args)...)
+    {
+    }
+
+    double traveltime;
     EdgePropertyT property;
 };
 
@@ -162,6 +183,13 @@ public:
         return m_nodes.back();
     }
 
+    template <class... Args>
+    Node<NodePropertyT>& add_node(int id, double duration_stay, Args&&... args)
+    {
+        m_nodes.emplace_back(id, duration_stay, std::forward<Args>(args)...);
+        return m_nodes.back();
+    }
+
     /**
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
@@ -176,6 +204,21 @@ public:
                                                      ? e1.end_node_idx < e2.end_node_idx
                                                      : e1.start_node_idx < e2.start_node_idx;
                                       });
+    }
+
+    /**
+     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     */
+    template <class... Args>
+    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, double traveltime, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        return *insert_sorted_replace(
+            m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, traveltime, std::forward<Args>(args)...),
+            [](auto&& e1, auto&& e2) {
+                return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                              : e1.start_node_idx < e2.start_node_idx;
+            });
     }
 
     /**
