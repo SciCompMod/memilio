@@ -43,6 +43,34 @@ using check_constraints_expr_t = decltype(std::declval<T>().check_constraints())
 //helpers for apply_constraints
 template <class T>
 using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
+
+// empty struct used to pass parameter packs via function arguments
+template <class... Ts>
+struct typelist {
+};
+
+// function declaration used to remove Omittand from the type list of a tuple
+template <class Omittand, class... Tags>
+decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<Omittand, Tags>::value, std::tuple<>,
+                                                               std::tuple<Tags>>::type>()...))
+    filter_tuple(std::tuple<Tags...>);
+
+// function declaration used to replace type T by std::tuple
+template <template <class...> class T, class... Args>
+std::tuple<Args...> as_tuple(T<Args...>);
+
+// function declaration used to replace std::tuple by type T
+template <template <class...> class T, class... Args>
+T<Args...> as_index(std::tuple<Args...>);
+
+// remove all occurances of Omittand from the types in a std::tuple<types...>
+template <class Omittand, class Tuple>
+using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()));
+
+// remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
+template <class Omittand, template <class...> class IndexTemplate, class Index>
+using filtered_index_t = decltype(as_index<IndexTemplate>(
+    std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
 } //namespace details
 
 /**
@@ -89,11 +117,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&) = default;
-    CompartmentalModel(CompartmentalModel&&)      = default;
+    CompartmentalModel(const CompartmentalModel&)            = default;
+    CompartmentalModel(CompartmentalModel&&)                 = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&) = default;
-    virtual ~CompartmentalModel()                       = default;
+    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
+    virtual ~CompartmentalModel()                            = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,

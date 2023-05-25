@@ -29,39 +29,6 @@
 namespace mio
 {
 
-namespace details
-{
-
-// empty struct to pass parameter packs
-template <class... Ts>
-struct typelist {
-};
-
-// function declaration used to remove Omittand from the type list of a tuple
-template <class Omittand, class... Tags>
-decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<Omittand, Tags>::value, std::tuple<>,
-                                                               std::tuple<Tags>>::type>()...))
-    filter_tuple(std::tuple<Tags...>);
-
-// function declaration used to replace type T by std::tuple
-template <template <class...> class T, class... Args>
-std::tuple<Args...> as_tuple(T<Args...>);
-
-// function declaration used to replace std::tuple by type T
-template <template <class...> class T, class... Args>
-T<Args...> as_index(std::tuple<Args...>);
-
-// remove all occurances of Omittand from the types in a std::tuple<types...>
-template <class Omittand, class Tuple>
-using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()));
-
-// remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
-template <class Omittand, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(
-    as_index<IndexTemplate>(std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
-
-} // namespace details
-
 /// @brief Collection of types. Each type is mapped to an index of type size_t.
 template <class... Types>
 class TypeChart
@@ -108,7 +75,7 @@ private:
     template <size_t index, class Type>
     inline constexpr std::enable_if_t<
         std::is_same<Type, typename std::tuple_element<index, std::tuple<Types...>>::type>::value, size_t>
-        get_impl(Type) const
+    get_impl(Type) const
     {
         return index;
     }
