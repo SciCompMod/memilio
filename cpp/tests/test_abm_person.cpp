@@ -251,13 +251,17 @@ TEST(TestPerson, getMaskProtectiveFactor)
 
 TEST(TestPerson, getPersonalProtectiveFactor)
 {
-    auto t        = mio::abm::TimePoint(15*24*60*60);
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto person   = make_test_person(location);
     person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
 
     mio::abm::GlobalInfectionParameters params;
-    params.get<mio::abm::PersonalProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {{0, 0.91}, {30, 0.81}};
+    params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {{7, 0.91}, {30, 0.81}};
 
-    ASSERT_EQ(person.get_protection_factor(t, params), 0.86);
+    auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.97, 0.01);
+    t = mio::abm::TimePoint(15 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.87, 0.01);
+    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.5, 0.01);
 }

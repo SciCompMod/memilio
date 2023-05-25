@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -334,15 +334,7 @@ public:
      * @param[in] global_params GlobalInfectionParameters in the model.
      * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(TimePoint t, const GlobalInfectionParameters& global_params) const;
-
-    /**
-     * @brief Get the multiplicative factor on how severe a new infection is due to the immune system.
-     * @param[in] t TimePoint of check.
-     * @param[in] global_params GlobalInfectionParameters in the model.
-     * @returns Severity factor of a new infection with the given VirusVariant at the given TimePoint.
-    */
-    ScalarType get_severity_factor(TimePoint t, const GlobalInfectionParameters& global_params) const;
+    ScalarType get_protection_factor(TimePoint t, const CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine> protection_v) const;
 
     /**
      * @brief Add a new vaccination

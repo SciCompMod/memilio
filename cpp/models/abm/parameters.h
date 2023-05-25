@@ -257,7 +257,7 @@ struct MaskProtection {
 /**
  * @brief Personal protection factor after infection and vaccination.
  */
-struct PersonalProtectionFactor {
+struct ReinfectionProtectionFactor {
     using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine>;
     static auto get_default()
     {
@@ -265,7 +265,22 @@ struct PersonalProtectionFactor {
     }
     static std::string name()
     {
-        return "VaccineProtectionFactor";
+        return "ReinfectionProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against severe symptoms after infection and vaccination.
+ */
+struct SeverityProtectionFactor {
+    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine>;
+    static auto get_default()
+    {
+        return Type({Vaccine::Count}, std::vector<std::pair<int, ScalarType>>{{0, 1}});
+    }
+    static std::string name()
+    {
+        return "SeverityProtectionFactor";
     }
 };
 
@@ -276,7 +291,8 @@ using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection, PersonalProtectionFactor>;
+                 InfectivityDistributions, DetectInfection, MaskProtection, ReinfectionProtectionFactor,
+                 SeverityProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
