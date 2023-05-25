@@ -125,6 +125,15 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         });
 }
 
+enum class ContactLocation
+{
+    Home = 0,
+    School,
+    Work,
+    Other,
+    Count,
+};
+
 using Simulation     = mio::osecir::Simulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
@@ -247,14 +256,20 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::return_value_policy::move);
 
+    pymio::iterable_enum<ContactLocation>(m, "ContactLocation")
+        .value("Home", ContactLocation::Home)
+        .value("School", ContactLocation::School)
+        .value("Work", ContactLocation::Work)
+        .value("Other", ContactLocation::Other);
+
     m.def(
         "set_edges",
-        [](const fs::path& data_dir, io::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
-           std::initializer_list<InfectionState>& migrating_compartments, size_t contact_locations_size,
-           ReadFunction&& read_func) {
+        [](const fs::path& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           std::initializer_list<mio::osecir::InfectionState>& migrating_compartments, size_t contact_locations_size,
+           decltype(mio::read_mobility_plain)&& read_func) {
             auto result = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
-                                         mio::osecir::InfectionState, mio::osecir::Parameters,
-                                         decltype(mio::osecir::read_input_data_county<mio::osecir::Model>)>(
+                                         mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
+                                         decltype(mio::read_mobility_plain)>(
                 data_dir, params_graph, migrating_compartments, contact_locations_size, read_func);
             return pymio::check_and_throw(result);
         },
@@ -262,11 +277,21 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     m.def(
         "read_input_data_county",
-        [](mio::osecir::Model, mio::Date date, const std::vector<int>& county,
-           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days = 0,
-           bool export_time_series = false) {
-            auto result = mio::read_input_data_county<mio::osecir::Model>(
+        [](std::vector<mio::osecir::Model>& model, mio::Date date, const std::vector<int>& county,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::osecir::read_input_data_county<mio::osecir::Model>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+
+    // IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
+
+    m.def(
+        "read_mobility_plain",
+        [](const std::string& filename) {
+            auto result = mio::read_mobility_plain(filename);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);

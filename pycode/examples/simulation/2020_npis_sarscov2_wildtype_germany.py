@@ -31,7 +31,8 @@ class Intervention(Enum):
 
 class Simulation:
 
-    def array_assign_uniform_distribution()
+    def array_assign_uniform_distribution():
+        return 0
 
     def __init__(self, data_dir):
         t0 = 0.0
@@ -43,6 +44,10 @@ class Simulation:
             self._start_date - datetime.date(year=2020, month=1, day=1)).days
 
         num_groups = 6
+
+        node_id_function = mio.secir.get_node_ids(
+            "/localdata1/test/memilio/data/pydata/Germany/county_current_population.json",
+            True)
 
         model = Model(num_groups)
 
@@ -167,26 +172,26 @@ class Simulation:
         contact_matrices = mio.ContactMatrixGroup(
             num_groups, len(list(Location)))
         contact_matrices[0] = mio.ContactMatrix(
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "baseline_home.txt")),
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "minimum_home.txt")))
         contact_matrices[1] = mio.ContactMatrix(
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(
                     data_dir, "contacts", "baseline_school_pf_eig.txt")),
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(
                     data_dir, "contacts", "minimum_school_pf_eig.txt")))
         contact_matrices[2] = mio.ContactMatrix(
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "baseline_work.txt")),
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "minimum_work.txt")))
         contact_matrices[3] = mio.ContactMatrix(
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "baseline_other.txt")),
-            np.loadtxt(
+            mio.read_mobility_plain(
                 path.join(data_dir, "contacts", "minimum_other.txt")))
 
         params = model.parameters
@@ -198,9 +203,9 @@ class Simulation:
         county_ids = mio.get_county_ids(
             path.join(data_dir, "pydata", "Germany"))
 
-        commuter = np.loadtxt(
+        commuter = mio.read_mobility_plain(
             path.join(data_dir, "migration", "commuter_migration_scaled.txt"))
-        twitter = np.loadtxt(
+        twitter = mio.read_mobility_plain(
             path.join(data_dir, "migration", "twitter_scaled_1252.txt"))
 
         num_nodes = commuter.shape[0]
@@ -218,7 +223,7 @@ class Simulation:
 
         # TODO: Call with templates
         read_function_nodes = mio.read_input_data_county()
-        read_function_edges = np.loadtxt()
+        read_function_edges = mio.read_mobility_plain()
         node_id_function = mio.get_node_ids()
 
         # TODO: How to call io functions
