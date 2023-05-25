@@ -94,6 +94,11 @@ void flow_sim(::benchmark::State& state)
 }
 
 // register functions as a benchmarks and set a name
+// mitigate influence of cpu scaling
+BENCHMARK(flowless_sim)->Name("Dummy 1/3");
+BENCHMARK(flowless_sim)->Name("Dummy 2/3");
+BENCHMARK(flowless_sim)->Name("Dummy 3/3");
+// actual benchmarks
 BENCHMARK(flowless_sim)->Name("Simulate compartments (without flows)");
 BENCHMARK(flow_sim_comp_only)->Name("Simulate compartments (with flows)");
 BENCHMARK(flow_sim)->Name("Simulate both compartments and flows");
