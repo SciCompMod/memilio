@@ -61,7 +61,7 @@ void split_line(std::string string, std::vector<int32_t>* row)
     boost::replace_all(string, ";;", ";-1;");
     boost::split(strings, string, boost::is_any_of(";"));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        return stoi(s);
+        return std::stoi(s);
     });
 }
 
@@ -87,7 +87,7 @@ mio::abm::LocationType get_location_type(uint32_t acitivity_end)
     case 6:
         type = mio::abm::LocationType::SocialEvent; // Sonstiges
         break;
-    case 7:
+    default:
         type = mio::abm::LocationType::Home;
         break;
     }
@@ -105,7 +105,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::vector<std::string> row_string;
     std::string line;
 
-    getline(fin, line);
+    std::getline(fin, line);
     std::vector<std::string> titles;
     boost::split(titles, line, boost::is_any_of(";"));
     uint32_t count                        = 0;
@@ -118,7 +118,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
 
-    while (getline(fin, line)) {
+    while (std::getline(fin, line)) {
         row.clear();
 
         // read columns in this row
@@ -161,7 +161,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../../Documents/HZI/memilio/data/mobility/bs.csv");
+    create_world_from_data(world, "../data/mobility/bs.csv");
 
     // Assign an infection state to each person.
     // assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
