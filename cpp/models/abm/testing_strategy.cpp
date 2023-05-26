@@ -215,7 +215,7 @@ bool TestingStrategy::run_strategy(Person::RandomNumberGenerator& rng, Person& p
         return true;
     }
     return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(),
-                       [&person, &location, &rng, t](TestingScheme ts) {
+                       [&person, &location, &rng, t](const TestingScheme& ts) {
                            if (ts.is_active()) {
                                return ts.run_scheme(rng, person, location, t);
                            }
