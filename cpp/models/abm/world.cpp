@@ -24,6 +24,7 @@
 #include "abm/migration_rules.h"
 #include "abm/infection.h"
 #include "abm/vaccine.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
@@ -53,8 +54,9 @@ Person& World::add_person(const LocationId id, AgeGroup age)
 void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
+    log_info("ABM World interaction.");
     interaction(t, dt);
-    m_testing_strategy.update_activity_status(t);
+    log_info("ABM World migration.");
     migration(t, dt);
     end_step(t, dt);
 }
@@ -133,6 +135,7 @@ void World::migration(TimePoint t, TimeSpan dt)
 
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
+    m_testing_strategy.update_activity_status(t);
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
