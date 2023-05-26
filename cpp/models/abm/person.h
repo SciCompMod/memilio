@@ -254,7 +254,7 @@ public:
     void remove_quarantine();
 
     /**
-     * @brief Simulates a Corona test and returns the test result of the Person.
+     * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
      * @param[in] t TimePoint of the test.

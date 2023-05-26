@@ -36,11 +36,11 @@ namespace abm
  * @brief Models the ViralLoad for an Infection, modelled on a log_10 scale.
  */
 struct ViralLoad {
-    TimePoint start_date;
-    TimePoint end_date;
-    ScalarType peak;
-    ScalarType incline;
-    ScalarType decline; // always negative
+    TimePoint start_date; ///< Start date of the ViralLoad concentration in the Person.
+    TimePoint end_date; ///< End date of the ViralLoad concentration in the Person.
+    ScalarType peak; ///< Peak amplitude of the ViralLoad.
+    ScalarType incline; ///< Incline of the ViralLoad during incline phase in log_10 scale per day (always positive).
+    ScalarType decline; ///< Decline of the ViralLoad during decline phase in log_10 scale per day (always negative).
 };
 
 class Infection
@@ -134,7 +134,8 @@ private:
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.
     ViralLoad m_viral_load; ///< ViralLoad of the Infection.
-    ScalarType m_log_norm_alpha, m_log_norm_beta; // have to ask for distribution/parametrization of the infectivity
+    ScalarType m_log_norm_alpha,
+        m_log_norm_beta; ///< Parameters for the infectivity mapping, which is modelled through an invlogit function.
     bool m_detected; ///< Whether an Infection is detected or not.
 };
 
