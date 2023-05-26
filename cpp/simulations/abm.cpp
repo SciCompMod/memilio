@@ -629,6 +629,44 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
         0.001;
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4}] = 0.0;
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age0to4,
+                                                                 mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
+    // Information is based on from DOI: 10.1056/NEJMoa2035389
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
+    // Information is based on from DOI: 10.15585/mmwr.mm7038e1
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age0to4,
+                                                                mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age0to4,
+                                                                mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age0to4,
+                                                                mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 
     //5-14
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::VirusVariant::Wildtype,
@@ -654,6 +692,44 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14}] =
         0.0;
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
+    // Information is based on from DOI: 10.1056/NEJMoa2035389
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
+    // Information is based on from DOI: 10.15585/mmwr.mm7038e1
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age5to14,
+                                                                mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 
     //15-34
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::VirusVariant::Wildtype,
@@ -681,6 +757,44 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
         0.0;
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
+    // Information is based on from DOI: 10.1056/NEJMoa2035389
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
+    // Information is based on from DOI: 10.15585/mmwr.mm7038e1
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 
     //35-59
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::VirusVariant::Wildtype,
@@ -707,6 +821,44 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
         0.0;
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
+    // Information is based on from DOI: 10.1056/NEJMoa2035389
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
+    // Information is based on from DOI: 10.15585/mmwr.mm7038e1
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 
     //60-79
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::VirusVariant::Wildtype,
@@ -734,6 +886,44 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}] =
         0.0;
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
+    // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
+    // Information is based on from DOI: 10.1056/NEJMoa2035389
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
+    // Information is based on from DOI: 10.15585/mmwr.mm7038e1
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
+    // Set up personal infection and vaccine protection levels.
+    // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] = {
+        {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 
     //80+
     infection_params.get<mio::abm::SusceptibleToExposedByCarrier>()[{mio::abm::VirusVariant::Wildtype,
@@ -761,35 +951,43 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] =
         0.0;
-
     // Set up personal infection and vaccine protection levels.
     // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
-    infection_params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::NaturalInfection}] = {
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.93}, {70, 0.8}, {240, 50}};
     // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    infection_params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 0.5}, {30, 0.87}, {60, 0.89}, {90, 0.92}, {120, 0.93}, {150, 0.91}, {180, 0.88}};
     // Information is based on from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Astrazeneca}] = {
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 0.52}, {30, 0.673}, {60, 0.633}, {90, 0.553}, {120, 0.487}};
     // Information is based on from DOI: 10.1056/NEJMoa2035389
-    infection_params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Moderna}] = {
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 0.5}, {14, 0.93}, {60, 0.91}, {90, 0.89}, {120, 0.86}};
     // Information is based on from DOI: 10.15585/mmwr.mm7038e1
-    infection_params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Janssen}] = {
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 0.5}, {30, 0.82}, {60, 0.75}, {90, 0.66}, {120, 0.54}};
-
     // Set up personal infection and vaccine protection levels.
     // Information is based on from: https://doi.org/10.1016/S1473-3099(22)00801-5
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::NaturalInfection}] = {
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.93}, {180, 0.84}, {540, 0.5}};
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Astrazeneca}] = {
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.94}, {30, 0.927}, {60, 0.914}, {90, 0.90}, {120, 0.888}, {150, 0.875}, {180, 0.862}, {540, 0.5}};
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Moderna}] = {
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.97}, {30, 0.957}, {60, 0.944}, {90, 0.937}, {120, 0.918}, {150, 0.90}, {180, 0.892}, {540, 0.5}};
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Janssen}] = {
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] = {
         {0, 1}, {14, 0.86}, {30, 0.847}, {60, 0.834}, {90, 821}, {120, 0.81}, {150, 0.795}, {180, 0.782}, {540, 0.5}};
 }
 

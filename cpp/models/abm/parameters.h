@@ -256,31 +256,39 @@ struct MaskProtection {
 
 /**
  * @brief Personal protection factor after infection and vaccination.
+ * The current Type holds different points in linear stepwise 
+ * function (day, protection_level[0,1]) and several relevant parameters 
+ * (i.e. type of protection, age group and virus variants)
  */
-struct ReinfectionProtectionFactor {
-    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine>;
+struct InfectionProtectionFactor {
+    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count}, std::vector<std::pair<int, ScalarType>>{{0, 1}});
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
+                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
     }
     static std::string name()
     {
-        return "ReinfectionProtectionFactor";
+        return "InfectionProtectionFactor";
     }
 };
 
 /**
  * @brief Personal protective factor against severe symptoms after infection and vaccination.
+ * The current Type holds different points in linear stepwise 
+ * function (day, protection_level[0,1]) and several relevant parameters 
+ * (i.e. type of protection, age group and virus variants)
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine>;
+    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count}, std::vector<std::pair<int, ScalarType>>{{0, 1}});
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
+                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
     }
     static std::string name()
     {
-        return "SeverityProtectionFactor";
+        return "ReinfectionProtectionFactor";
     }
 };
 
@@ -291,7 +299,7 @@ using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection, ReinfectionProtectionFactor,
+                 InfectivityDistributions, DetectInfection, MaskProtection, InfectionProtectionFactor,
                  SeverityProtectionFactor>;
 
 /**

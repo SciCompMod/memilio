@@ -331,10 +331,46 @@ public:
     /**
      * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
      * @param[in] t TimePoint of check.
-     * @param[in] global_params GlobalInfectionParameters in the model.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params GlobalInfectionParameters in the model.
      * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_protection_factor(TimePoint t, const CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine> protection_v) const;
+    template <class T>
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters params) const
+    {
+        // If the person had not infected nor vaccinated before, the function would return 0.
+        if (m_infections.empty() && m_vaccinations.empty()) {
+            return 0.5;
+        }
+        // Find the lastest infection / vaccination type and time.
+        Vaccine last_protection_type = Vaccine::NaturalInfection;
+        ScalarType days_interval     = std::numeric_limits<double>::max();
+        if (!m_infections.empty()) {
+            days_interval = t.days() - m_infections.back().get_init_date().days();
+        }
+        if (!m_vaccinations.empty()) {
+            if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+                last_protection_type = m_vaccinations.back().vaccine;
+                days_interval        = t.days() - m_vaccinations.back().time.days();
+            }
+        }
+
+        // Find the point in the linear line created by two protection levels.
+        auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
+        size_t counter            = 0;
+        while (lastest_protection_v[counter].first < days_interval && counter < lastest_protection_v.size()) {
+            counter++;
+        }
+        if (counter < lastest_protection_v.size()) {
+            return lastest_protection_v[counter - 1].second +
+                   (lastest_protection_v[counter - 1].second - lastest_protection_v[counter].second) /
+                       (lastest_protection_v[counter - 1].first - lastest_protection_v[counter].first) *
+                       (days_interval - lastest_protection_v[counter - 1].first);
+        }
+        else {
+            return 0.5;
+        }
+    }
 
     /**
      * @brief Add a new vaccination
