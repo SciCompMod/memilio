@@ -34,9 +34,9 @@ TEST(TestPerson, migrate)
 {
     auto t      = mio::abm::TimePoint(0);
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 1);
+    auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 1);
     auto loc2   = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 2);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age0to4, mio::abm::InfectionState::Recovered_Carrier);
     person.migrate_to(loc1, {0});
 
@@ -68,7 +68,7 @@ TEST(TestPerson, setGetAssignedLocation)
     person.set_assigned_location(location);
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
 
-    person.set_assigned_location({4, mio::abm::LocationType::Work});
+    person.set_assigned_location({4, mio::abm::LocationType::Work, 0});
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
 }
 
@@ -157,8 +157,8 @@ TEST(TestPerson, get_tested)
 
 TEST(TestPerson, getCells)
 {
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0, 1);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 2);
     auto person   = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Carrier);
     home.add_person(person);
     person.migrate_to(location, {0, 1});

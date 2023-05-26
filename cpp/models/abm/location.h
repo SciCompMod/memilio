@@ -102,8 +102,8 @@ public:
      */
     Location(LocationId loc_id, uint32_t num_cells = 1);
 
-    Location(LocationType loc_type, uint32_t loc_index, uint32_t num_cells = 1)
-        : Location(LocationId{loc_index, loc_type}, num_cells)
+    Location(LocationType loc_type, uint32_t loc_index, uint32_t loc_world_id = 0, uint32_t num_cells = 1)
+        : Location(LocationId{loc_index, loc_type, loc_world_id}, num_cells)
     {
     }
 
@@ -134,6 +134,14 @@ public:
     unsigned get_index() const
     {
         return m_id.index;
+    }
+
+    /**
+     * @brief Get the world id of this Location.
+     */
+    unsigned get_world_id() const
+    {
+        return m_id.world_id;
     }
 
     /**

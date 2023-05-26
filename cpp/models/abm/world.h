@@ -54,8 +54,9 @@ public:
      * @brief Create a World.
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
-    World(const GlobalInfectionParameters& params = {})
-        : m_infection_parameters(params)
+    World(const GlobalInfectionParameters& params = {}, uint32_t world_id = 0)
+        : m_world_id(world_id)
+        , m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
     {
@@ -184,22 +185,22 @@ public:
 
 private:
     /**
-     * @brief Person%s interact at their Location and may become infected.
-     * @param[in] t The current TimePoint.
-     * @param[in] dt The length of the time step of the Simulation.
-     */
-    void interaction(TimePoint t, TimeSpan dt);
-    /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
     void migration(TimePoint t, TimeSpan dt);
 
-private:
-    std::vector<std::unique_ptr<Person>> m_persons;
-
 protected:
+    /**
+     * @brief Person%s interact at their Location and may become infected.
+     * @param[in] t The current TimePoint.
+     * @param[in] dt The length of the time step of the Simulation.
+     */
+    void interaction(TimePoint t, TimeSpan dt);
+
+    std::vector<std::unique_ptr<Person>> m_persons;
+    uint32_t m_world_id;
     std::vector<std::unique_ptr<Location>> m_locations;
     TestingStrategy m_testing_strategy;
     GlobalInfectionParameters m_infection_parameters;

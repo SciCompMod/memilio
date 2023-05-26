@@ -35,7 +35,7 @@ namespace abm
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
-    LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+    LocationId id = {static_cast<uint32_t>(m_locations.size()), type, m_world_id};
     m_locations.emplace_back(std::make_unique<Location>(id, num_cells));
     return id;
 }
@@ -43,7 +43,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
+    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id, m_world_id));
     auto& person = *m_persons.back();
     get_individualized_location(id).add_person(person);
     return person;
@@ -158,9 +158,10 @@ Location& World::get_individualized_location(LocationId id)
 
 Location& World::find_location(LocationType type, const Person& person)
 {
-    auto index = person.get_assigned_location_index(type);
+    auto index    = person.get_assigned_location_index(type);
+    auto world_id = person.get_assigned_location_world_id(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
+    return get_individualized_location({index, type, world_id});
 }
 
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const

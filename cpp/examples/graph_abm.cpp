@@ -33,8 +33,8 @@ int main()
     infection_params.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Create the worlds with infection parameters.
-    auto world1 = mio::graph_abm::GraphWorld(0, infection_params);
-    auto world2 = mio::graph_abm::GraphWorld(1, infection_params);
+    auto world1 = mio::graph_abm::GraphWorld(infection_params, 0);
+    auto world2 = mio::graph_abm::GraphWorld(infection_params, 1);
 
     //add households for world 1
     auto child = mio::abm::HouseholdMember(); // A child is 50/50% 0-4 or 5-14.
@@ -119,24 +119,12 @@ int main()
 
     //add external locations
     //world 1
-    auto external_work_w1 = world1.add_external_location(mio::abm::LocationType::Work);
-    world1.insert_external_location_to_map(1, external_work_w1, work_w2);
-    works_w1.push_back(external_work_w1);
+    works_w1.push_back(work_w2);
 
     //world 2
     //TODO: MaximumContacts for external locations setzen
-    auto external_event_w2 = world2.add_external_location(mio::abm::LocationType::SocialEvent);
-    world2.insert_external_location_to_map(0, external_event_w2, event2_w1);
-    events_w2.push_back(external_event_w2);
-    auto external_hospital_w2 = world2.add_external_location(mio::abm::LocationType::Hospital);
-    world2.insert_external_location_to_map(0, external_hospital_w2, hospital);
-    auto external_icu_w2 = world2.add_external_location(mio::abm::LocationType::ICU);
-    world2.insert_external_location_to_map(0, external_icu_w2, icu);
-    auto external_school_w2 = world2.add_external_location(mio::abm::LocationType::School);
-    world2.insert_external_location_to_map(0, external_school_w2, school);
-    auto external_work_w2 = world2.add_external_location(mio::abm::LocationType::Work);
-    world2.insert_external_location_to_map(0, external_work_w2, work2_w1);
-    works_w2.push_back(external_work_w2);
+    events_w2.push_back(event2_w1);
+    works_w2.push_back(work2_w1);
 
     auto start_date = mio::abm::TimePoint(0);
 

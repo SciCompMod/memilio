@@ -79,7 +79,7 @@ public:
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0}, bool add_to_new_location = true);
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -177,16 +177,23 @@ public:
     void set_assigned_location(LocationId id);
 
     /**
-     * @brief Returns the index of a assigned location of the person.
-     * Assume that a person has at most one assigned location of a certrain location type.
+     * @brief Returns the index of an assigned location of the person.
+     * Assume that a person has at most one assigned location of a certain location type.
      * @param[in] type Location type of the assigned location.
      */
     uint32_t get_assigned_location_index(LocationType type) const;
 
     /**
+     * @brief Returns the world id of an assigned location of the person.
+     * Assume that a person has at most one assigned location of a certain location type.
+     * @param[in] type Location type of the assigned location.
+     */
+    uint32_t get_assigned_location_world_id(LocationType type) const;
+
+    /**
      * @brief Returns the assigned locations of the person.
      */
-    const std::vector<uint32_t>& get_assigned_locations() const
+    const std::vector<std::pair<uint32_t, uint32_t>>& get_assigned_locations() const
     {
         return m_assigned_locations;
     }
@@ -335,23 +342,6 @@ public:
     }
 
     /**
-     * @brief Set whether a person is currently active in its home world.
-     * @param[in] active_in_world If true, the person is considered in migration and interaction in its home world.
-     */
-    void set_is_active_in_world(bool active_in_world)
-    {
-        m_is_active_in_world = active_in_world;
-    }
-
-    /**
-     * @return True if the person is currently active in its home world.
-     */
-    bool get_is_active_in_world() const
-    {
-        return m_is_active_in_world;
-    }
-
-    /**
          * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
          * @param[in] v VirusVariant to take into consideration.
          * @param[in] t TimePoint of check.
@@ -375,7 +365,8 @@ public:
 
 private:
     observer_ptr<Location> m_location;
-    std::vector<uint32_t> m_assigned_locations;
+    //the first integer specifies the location index and the second the locations world id (does not need to match the person's world id)
+    std::vector<std::pair<uint32_t, uint32_t>> m_assigned_locations;
     std::vector<Vaccination> m_vaccinations;
     std::vector<Infection> m_infections;
     bool m_quarantine = false;
@@ -391,7 +382,7 @@ private:
     std::vector<ScalarType> m_mask_compliance;
     uint32_t m_person_id;
     uint32_t m_world_id;
-    bool m_is_active_in_world;
+    //bool m_is_active_in_world;
     std::vector<uint32_t> m_cells;
 };
 
