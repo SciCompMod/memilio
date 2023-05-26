@@ -256,12 +256,14 @@ TEST(TestPerson, getPersonalProtectiveFactor)
     person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
 
     mio::abm::GlobalInfectionParameters params;
-    params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {{7, 0.91}, {30, 0.81}};
+    params.get<mio::abm::ReinfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer}] = {{2, 0.91}, {30, 0.81}};
 
     auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.97, 0.01);
+    auto result = person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>());
+    ASSERT_NEAR(result, 0.91, 0.0001);
     t = mio::abm::TimePoint(15 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.87, 0.01);
+    result = person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>());
+    ASSERT_NEAR(result, 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
-    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.5, 0.01);
+    ASSERT_NEAR(person.get_protection_factor(t, params.get<mio::abm::ReinfectionProtectionFactor>()), 0.5, 0.0001);
 }
