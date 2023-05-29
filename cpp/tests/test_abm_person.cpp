@@ -252,9 +252,9 @@ TEST(TestPerson, getMaskProtectiveFactor)
 TEST(TestPerson, getPersonalProtectiveFactor)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person   = make_test_person(location);
+    auto person = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
 
-    mio::abm::GlobalInfectionParameters params;
+    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] = {{2, 0.91}, {30, 0.81}};
     person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));

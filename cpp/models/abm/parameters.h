@@ -265,7 +265,7 @@ struct InfectionProtectionFactor {
     static auto get_default()
     {
         return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
-                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
+                    std::vector<std::pair<int, ScalarType>>{{0., 1.}});
     }
     static std::string name()
     {
