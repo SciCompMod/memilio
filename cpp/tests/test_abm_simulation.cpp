@@ -18,6 +18,15 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "memilio/io/history.h"
+
+struct LogTimePoint : mio::LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
 
 TEST(TestSimulation, advance_random)
 {
@@ -98,4 +107,33 @@ TEST(TestSimulation, initializeSubpopulation)
     auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
     ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
+}
+
+TEST(TestSimulation, getWorldAndTimeConst)
+{
+
+    auto t     = mio::abm::TimePoint(0);
+    auto world = mio::abm::World();
+    auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+
+    auto t_test = mio::abm::days(7);
+    ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
+
+    const mio::abm::World world_test{std::move(sim.get_world())};
+    EXPECT_EQ(world_test.get_locations().size(), 0);
+}
+
+TEST(TestSimulation, advanceWithHistory)
+{
+
+    auto world = mio::abm::World();
+    auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    mio::HistoryWithMemoryWriter<LogTimePoint> history;
+
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), history);
+    ASSERT_EQ(std::get<0>(history.get_log()).size(), 3);
+    ASSERT_NEAR(std::get<0>(history.get_log())[0], 0.0, 1e-14);
+    ASSERT_NEAR(std::get<0>(history.get_log())[1], 1.0, 1e-14);
+    auto test_get_templ_log = history.get_log<LogTimePoint>();
+    ASSERT_NEAR(test_get_templ_log[2], 2.0, 1e-14);
 }
