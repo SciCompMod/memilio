@@ -175,7 +175,7 @@ struct StateAgeFunction {
     * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
     */
     StateAgeFunction()
-        : m_funcparam{}
+        : m_funcparam{1.0}
     {
     }
 
@@ -215,18 +215,11 @@ struct StateAgeFunction {
     StateAgeFunction& operator=(StateAgeFunction&& other) = default;
 
     /**
-     * @brief Defines function depending on state_age. The default is an exponential function.
-     *
-     * The function also depends on the function parameter m_funcparam which allows to further specify the function.
-     * (depending on the used function).
+     * @brief Pure virtual function depending on state_age. 
      * 
      * @param state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the function at state_age. 
      */
-    virtual ScalarType Function(ScalarType state_age)
-    {
-        return std::exp(-m_funcparam * state_age);
-    }
+    virtual ScalarType Function(ScalarType state_age) = 0;
 
     /**
      * @brief Get the m_funcparam object
@@ -261,11 +254,8 @@ struct StateAgeFunction {
     }
 
 protected:
-    // virtual function that implements cloning
-    virtual StateAgeFunction* clone_impl() const
-    {
-        return new StateAgeFunction(*this);
-    }
+    // pure virtual function that implements cloning
+    virtual StateAgeFunction* clone_impl() const = 0;
 
     // specifies Function
     ScalarType m_funcparam{};
