@@ -352,44 +352,18 @@ public:
      * @param[in] t TimePoint of check.
      * @param[in] virus VirusVariant to check
      * @param[in] params GlobalInfectionParameters in the model.
-     * @returns Protection factor of the immune system to the given VirusVariant at the given TimePoint.
+     * @returns Protection factor for general infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    template <class T>
-    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters params) const
-    {
-        // If the person had not infected nor vaccinated before, the function would return 0.
-        if (m_infections.empty() && m_vaccinations.empty()) {
-            return 0.5;
-        }
-        // Find the lastest infection / vaccination type and time.
-        Vaccine last_protection_type = Vaccine::NaturalInfection;
-        ScalarType days_interval     = std::numeric_limits<double>::max();
-        if (!m_infections.empty()) {
-            days_interval = t.days() - m_infections.back().get_init_date().days();
-        }
-        if (!m_vaccinations.empty()) {
-            if (days_interval > t.days() - m_vaccinations.back().time.days()) {
-                last_protection_type = m_vaccinations.back().vaccine;
-                days_interval        = t.days() - m_vaccinations.back().time.days();
-            }
-        }
+    ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
-        // Find the point in the linear line created by two protection levels.
-        auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
-        size_t counter            = 0;
-        while (lastest_protection_v[counter].first < days_interval && counter < lastest_protection_v.size()) {
-            counter++;
-        }
-        if (counter < lastest_protection_v.size()) {
-            return lastest_protection_v[counter - 1].second +
-                   (lastest_protection_v[counter - 1].second - lastest_protection_v[counter].second) /
-                       (lastest_protection_v[counter - 1].first - lastest_protection_v[counter].first) *
-                       (days_interval - lastest_protection_v[counter - 1].first);
-        }
-        else {
-            return 0.5;
-        }
-    }
+    /**
+     * @brief Get the multiplicative factor on how likely an infection is severe due to the immune system.
+     * @param[in] t TimePoint of check.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params GlobalInfectionParameters in the model.
+     * @returns Protection factor for severe infection of the immune system to the given VirusVariant at the given TimePoint.
+     */
+    ScalarType get_severity_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
     /**
      * @brief Add a new vaccination
@@ -420,6 +394,43 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
+
+    /**
+     * @brief Get the protection level derived from a given linear piecewise function. 
+     * @param T InfectionProtectionFactor or SevereProtectionFactor. 
+     * @param[in] days_interval The number of days since last vaccination / infection. 
+     * @param[in] last_protection_type Vaccine type to check.
+     * @param[in] virus VirusVariant to check
+     * @param[in] params GlobalInfectionParameters in the model. This param set provide all the points in the linear piecewise function.
+     * @returns Protection factor for general /severe infectionof the immune system to the given VirusVariant at the given TimePoint.
+     */
+    template <typename T>
+    ScalarType get_protection_from_linear_piecewise_function(ScalarType days_interval, Vaccine last_protection_type,
+                                                             VirusVariant virus,
+                                                             const GlobalInfectionParameters& params) const
+    {
+        // Get the vector of all the points in the linear piecewise function. Each point is a pair of number of day interval
+        // since last infection/vaccination (int, first element of the pair) and protection level (ScalarType, [0-1], second element of the pair).
+        auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
+        if (lastest_protection_v.empty() || lastest_protection_v.empty() == 1) {
+            return 0.5;
+        }
+        size_t counter = 0;
+        // Find the corresponding section of the current days interval.
+        while (lastest_protection_v[counter].first < days_interval && counter < lastest_protection_v.size()) {
+            counter++;
+        }
+        // If the the current days interval are between two identifiable points in the function
+        if (counter < lastest_protection_v.size()) {
+            return lastest_protection_v[counter - 1].second +
+                   (lastest_protection_v[counter - 1].second - lastest_protection_v[counter].second) /
+                       (lastest_protection_v[counter - 1].first - lastest_protection_v[counter].first) *
+                       (days_interval - lastest_protection_v[counter - 1].first);
+        }
+        else {
+            return 0;
+        }
+    }
 };
 
 } // namespace abm

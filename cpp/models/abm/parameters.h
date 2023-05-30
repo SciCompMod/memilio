@@ -256,9 +256,8 @@ struct MaskProtection {
 
 /**
  * @brief Personal protection factor after infection and vaccination.
- * The current Type holds different points in linear stepwise 
- * function (day, protection_level[0,1]) and several relevant parameters 
- * (i.e. type of protection, age group and virus variants)
+ * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
+ * and several relevant parameters (i.e. type of protection, age group and virus variants)
  */
 struct InfectionProtectionFactor {
     using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
@@ -275,9 +274,8 @@ struct InfectionProtectionFactor {
 
 /**
  * @brief Personal protective factor against severe symptoms after infection and vaccination.
- * The current Type holds different points in linear stepwise 
- * function (day, protection_level[0,1]) and several relevant parameters 
- * (i.e. type of protection, age group and virus variants)
+ * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
+ * and several relevant parameters (i.e. type of protection, age group and virus variants)
  */
 struct SeverityProtectionFactor {
     using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;

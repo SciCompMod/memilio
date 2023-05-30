@@ -72,7 +72,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
                           transmission_contacts_per_day(cell_index, virus, age_receiver)) +
                  transmission_air_per_day(cell_index, virus)) *
                 (1 - mask_protection) * dt.days() / days(1).days() *
-                person.get_protection_factor<InfectionProtectionFactor>(t, virus, global_params);
+                (1 - person.get_protection_factor(t, virus, global_params));
 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }

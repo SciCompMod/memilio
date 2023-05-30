@@ -252,7 +252,7 @@ TEST(TestPerson, getMaskProtectiveFactor)
 TEST(TestPerson, getPersonalProtectiveFactor)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto person = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
+    auto person   = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
 
     mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer, person.get_age(),
@@ -260,15 +260,27 @@ TEST(TestPerson, getPersonalProtectiveFactor)
     person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
 
     auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
-    ASSERT_NEAR(
-        person.get_protection_factor<mio::abm::InfectionProtectionFactor>(t, mio::abm::VirusVariant::Wildtype, params),
-        0.91, 0.0001);
+    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, 0.0001);
     t = mio::abm::TimePoint(15 * 24 * 60 * 60);
-    ASSERT_NEAR(
-        person.get_protection_factor<mio::abm::InfectionProtectionFactor>(t, mio::abm::VirusVariant::Wildtype, params),
-        0.8635, 0.0001);
+    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
-    ASSERT_NEAR(
-        person.get_protection_factor<mio::abm::InfectionProtectionFactor>(t, mio::abm::VirusVariant::Wildtype, params),
-        0.5, 0.0001);
+    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
+}
+
+TEST(TestPerson, getPersonalSeverityFactor)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto person   = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
+
+    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, person.get_age(),
+                                                       mio::abm::VirusVariant::Wildtype}] = {{2, 0.91}, {30, 0.81}};
+    person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
+
+    auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_severity_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.91, 0.0001);
+    t = mio::abm::TimePoint(15 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_severity_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
+    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_severity_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
 }

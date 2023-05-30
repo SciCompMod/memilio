@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -254,6 +254,50 @@ bool Person::apply_mask_intervention(const Location& target)
         }
     }
     return true;
+}
+
+ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const
+{
+    // If the person had not infected nor vaccinated before, the function would return 0.5.
+    if (m_infections.empty() && m_vaccinations.empty()) {
+        return 0.5;
+    }
+    // Find the lastest infection / vaccination type and time.
+    Vaccine last_protection_type = Vaccine::NaturalInfection;
+    ScalarType days_interval     = std::numeric_limits<double>::max();
+    if (!m_infections.empty()) {
+        days_interval = t.days() - m_infections.back().get_init_date().days();
+    }
+    if (!m_vaccinations.empty()) {
+        if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+            last_protection_type = m_vaccinations.back().vaccine;
+            days_interval        = t.days() - m_vaccinations.back().time.days();
+        }
+    }
+    return get_protection_from_linear_piecewise_function<InfectionProtectionFactor>(days_interval, last_protection_type,
+                                                                                    virus, params);
+}
+
+ScalarType Person::get_severity_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const
+{
+    // If the person had not infected nor vaccinated before, the function would return 0.5.
+    if (m_infections.empty() && m_vaccinations.empty()) {
+        return 0.5;
+    }
+    // Find the lastest infection / vaccination type and time.
+    Vaccine last_protection_type = Vaccine::NaturalInfection;
+    ScalarType days_interval     = std::numeric_limits<double>::max();
+    if (!m_infections.empty()) {
+        days_interval = t.days() - m_infections.back().get_init_date().days();
+    }
+    if (!m_vaccinations.empty()) {
+        if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+            last_protection_type = m_vaccinations.back().vaccine;
+            days_interval        = t.days() - m_vaccinations.back().time.days();
+        }
+    }
+    return get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(days_interval, last_protection_type,
+                                                                                   virus, params);
 }
 
 } // namespace abm
