@@ -18,6 +18,8 @@ from keras.metrics import mean_absolute_percentage_error
 from keras.models import Model
 from keras.optimizers import Adam
 
+from sklearn.model_selection import KFold
+
 from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
 from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv, APPNPConv, CrystalConv, GCNConv, GATConv, GINConv, XENetConv, ChebConv, ECCConv, GlobalSumPool
 from spektral.transforms.normalize_adj import NormalizeAdj
@@ -84,37 +86,9 @@ class MyDataset(spektral.data.dataset.Dataset):
 # data = MyDataset(transforms=NormalizeAdj())
 data = MyDataset()
 batch_size = 32
-epochs = 200
+epochs = 100
 es_patience = 500  # Patience for early stopping
 
-# Train/valid/test split
-idxs = np.random.permutation(len(data))
-# split_va, split_te = int(0.8 * len(data)), int(0.9 * len(data))
-split_va, split_te = int(0.7 * len(data)), int(0.85 * len(data))
-idx_tr, idx_va, idx_te = np.split(idxs, [split_va, split_te])
-data_tr = data[idx_tr]
-data_va = data[idx_va]
-data_te = data[idx_te]
-
-# # Data loaders
-# loader_tr = DisjointLoader(data_tr, batch_size=batch_size, epochs=epochs)
-# loader_va = DisjointLoader(data_va, batch_size=batch_size)
-# loader_te = DisjointLoader(data_te, batch_size=batch_size)
-
-# Data loaders
-loader_tr = MixedLoader(
-    data_tr, batch_size=batch_size, epochs=epochs)
-loader_va = MixedLoader(data_va,  batch_size=batch_size)
-loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
-
-# self.conv1 = GCSConv(32, activation="relu")
-# self.conv2 = GCSConv(32, activation="relu")
-# self.conv3 = GCSConv(32, activation="relu")
-# #self.global_pool = GlobalAttentionPool(3)
-# self.dense = Dense(data.n_labels, activation="linear")
-
-# self.global_pool = GlobalAvgPool()
-# x = self.global_pool([x])
 
 ################################################################################
 # Build model
@@ -225,61 +199,99 @@ def test_evaluation(loader):
     return mean_percentage
 
 
-epoch = step = 0
-best_val_loss = np.inf
-best_weights = None
-patience = es_patience
-results = []
-losses_history = []
-val_losses_history = []
+kf = KFold(n_splits = 5)
+train_idxs = []
+test_idxs = []
+for i, (train_index, test_index) in enumerate(kf.split(data)):
+     
+     train_idxs.append(train_index)
+     test_idxs.append(test_index)
+
+test_scores = []
+train_losses = []
+val_losses = []
 
 start = time.perf_counter()
 
+for train_idx, test_idx in zip(train_idxs, test_idxs):
+    
+    data_tr = data[train_idx[:(int(0.8*len(train_idx)))]]
+    data_va = data[train_idx[(int(0.8*len(train_idx))):]]
+    data_te = data[test_idx]
 
 
+    # Data loaders
+    loader_tr = MixedLoader(
+        data_tr, batch_size=batch_size, epochs=epochs)
+    loader_va = MixedLoader(data_va,  batch_size=batch_size)
+    loader_te = MixedLoader(data_te, batch_size=data_te.n_graphs)
 
-for batch in loader_tr:
-    step += 1
-    loss, acc = train_step(*batch)
-    results.append((loss, acc))
-    if step == loader_tr.steps_per_epoch:
-        step = 0
-        epoch += 1
 
-        # Compute validation loss and accuracy
-        val_loss, val_acc = evaluate(loader_va)
+    epoch = step = 0
+    best_val_loss = np.inf
+    best_weights = None
+    patience = es_patience
+    results = []
+    losses_history = []
+    val_losses_history = []
 
-        print(
-            "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
-                epoch, *np.mean(results, 0), val_loss, val_acc
+
+    for batch in loader_tr:
+        step += 1
+        loss, acc = train_step(*batch)
+        results.append((loss, acc))
+        if step == loader_tr.steps_per_epoch:
+            step = 0
+            epoch += 1
+
+            # Compute validation loss and accuracy
+            val_loss, val_acc = evaluate(loader_va)
+
+            print(
+                "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
+                    epoch, *np.mean(results, 0), val_loss, val_acc
+                )
             )
-        )
 
-        # Check if loss improved for early stopping
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience = es_patience
-            print("New best val_loss {:.3f}".format(val_loss))
-            best_weights = model.get_weights()
-        else:
-            patience -= 1
-            if patience == 0:
-                print("Early stopping (best val_loss: {})".format(best_val_loss))
+            # Check if loss improved for early stopping
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience = es_patience
+                print("New best val_loss {:.3f}".format(val_loss))
+                best_weights = model.get_weights()
+            else:
+                patience -= 1
+                if patience == 0:
+                    print("Early stopping (best val_loss: {})".format(best_val_loss))
 
-                break
-        results = []
-        losses_history.append(loss)
-        val_losses_history.append(val_loss)
+                    break
+            results = []
+            losses_history.append(loss)
+            val_losses_history.append(val_loss)
+
+    #elapsed = time.perf_counter() - start
+    ################################################################################
+    # Evaluate model
+    ################################################################################
+    model.set_weights(best_weights)  # Load best model
+    test_loss, test_acc = evaluate(loader_te)
+    test_MAPE = test_evaluation(loader_te)
+    print(test_MAPE)
+
+    print("Done. Test loss: {:.4f}. Test acc: {:.2f}".format(test_loss, test_acc))
+    test_scores.append(test_loss)
+    train_losses.append(np.asarray(losses_history).min())
+    val_losses.append(np.asarray(val_losses_history).min())
 
 elapsed = time.perf_counter() - start
-################################################################################
-# Evaluate model
-################################################################################
-model.set_weights(best_weights)  # Load best model
-test_loss, test_acc = evaluate(loader_te)
-test_MAPE = test_evaluation(loader_te)
-print(test_MAPE)
 
-print("Done. Test loss: {:.4f}. Test acc: {:.2f}".format(test_loss, test_acc))
+print("Best train losses: {} ".format(train_losses))
+print("Best validation losses: {}".format(val_losses))
+print("Test values: {}".format(test_scores ))
+print("--------------------------------------------")
+print("K-Fold Train Score:{}".format(np.mean(train_losses)))
+print("K-Fold Validation Score:{}".format(np.mean(val_losses)))
+print("K-Fold Test Score: {}".format(np.mean(test_scores)))
+
 print("Time for training: {:.4f} seconds".format(elapsed))
 print("Time for training: {:.4f} minutes".format(elapsed/60))
