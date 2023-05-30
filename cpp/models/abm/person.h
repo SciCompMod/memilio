@@ -412,12 +412,12 @@ private:
         // Get the vector of all the points in the linear piecewise function. Each point is a pair of number of day interval
         // since last infection/vaccination (int, first element of the pair) and protection level (ScalarType, [0-1], second element of the pair).
         auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
-        if (lastest_protection_v.empty() || lastest_protection_v.empty() == 1) {
+        if (lastest_protection_v.empty() || lastest_protection_v.size() == 1) {
             return 0.5;
         }
         size_t counter = 0;
         // Find the corresponding section of the current days interval.
-        while (lastest_protection_v[counter].first < days_interval && counter < lastest_protection_v.size()) {
+        while ((counter < lastest_protection_v.size()) && (lastest_protection_v[counter].first < days_interval)) {
             counter++;
         }
         // If the the current days interval are between two identifiable points in the function

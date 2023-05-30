@@ -274,7 +274,7 @@ TEST(TestPerson, getPersonalSeverityFactor)
 
     mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
     params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, person.get_age(),
-                                                       mio::abm::VirusVariant::Wildtype}] = {{2, 0.91}, {30, 0.81}};
+                                                      mio::abm::VirusVariant::Wildtype}] = {{2, 0.91}, {30, 0.81}};
     person.add_new_vaccination(mio::abm::Vaccine::Pfizer, mio::abm::TimePoint(0));
 
     auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
