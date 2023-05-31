@@ -20,14 +20,14 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
-#include "abm/age.h"
-#include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/time.h"
-#include "abm/infection.h"
-#include "abm/vaccine.h"
-#include "abm/mask_type.h"
-#include "abm/mask.h"
+#include "models/abm/age.h"
+#include "models/abm/location_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/time.h"
+#include "models/abm/infection.h"
+#include "models/abm/vaccine.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/mask.h"
 
 #include "memilio/utils/memory.h"
 #include <functional>

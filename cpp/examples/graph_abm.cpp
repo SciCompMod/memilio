@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
+#include "models/abm/abm.h"
 #include "graph_abm/graph_world.h"
-#include "abm/household.h"
+#include "models/abm/household.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include <cstdio>
@@ -198,11 +198,11 @@ int main()
     auto dt   = mio::abm::hours(12);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
 
-    mio::Graph<mio::SimulationNode<mio::abm::Simulation>, mio::MigrationEdge> g;
+    mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MigrationEdgeABM> g;
     g.add_node(0, t0, std::move(world1));
     g.add_node(1, t0, std::move(world2));
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)1, 1.));
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)1, 1.));
+    g.add_edge(0, 1); //, Eigen::VectorXd::Constant((size_t)1, 1.)
+    g.add_edge(1, 0); //, Eigen::VectorXd::Constant((size_t)1, 1.)
 
     auto sim = mio::make_migration_sim_test(t0, dt, std::move(g));
 

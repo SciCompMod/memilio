@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
-#include "abm/household.h"
+#include "models/abm/abm.h"
+#include "models/abm/household.h"
 #include <cstdio>
 
 int main()

@@ -18,15 +18,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/world.h"
-#include "abm/mask_type.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/migration_rules.h"
+#include "models/abm/world.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/person.h"
+#include "models/abm/location.h"
+#include "models/abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
-#include "abm/infection.h"
-#include "abm/vaccine.h"
+#include "models/abm/infection.h"
+#include "models/abm/vaccine.h"
 
 namespace mio
 {
@@ -181,6 +181,11 @@ MigrationParameters& World::get_migration_parameters()
 const MigrationParameters& World::get_migration_parameters() const
 {
     return m_migration_parameters;
+}
+
+uint32_t World::get_world_id()
+{
+    return m_world_id;
 }
 
 GlobalInfectionParameters& World::get_global_infection_parameters()

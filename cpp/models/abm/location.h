@@ -20,12 +20,12 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
-#include "abm/person.h"
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/location_type.h"
-#include "abm/infection_state.h"
-#include "abm/vaccine.h"
+#include "models/abm/person.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/location_type.h"
+#include "models/abm/infection_state.h"
+#include "models/abm/vaccine.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"

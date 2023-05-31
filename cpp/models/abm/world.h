@@ -21,12 +21,12 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/person.h"
-#include "abm/lockdown_rules.h"
-#include "abm/trip_list.h"
-#include "abm/testing_strategy.h"
+#include "models/abm/parameters.h"
+#include "models/abm/location.h"
+#include "models/abm/person.h"
+#include "models/abm/lockdown_rules.h"
+#include "models/abm/trip_list.h"
+#include "models/abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -149,6 +149,12 @@ public:
     MigrationParameters& get_migration_parameters();
 
     const MigrationParameters& get_migration_parameters() const;
+
+    /** 
+     * @brief Get the world_id.
+     * @return m_world_id.
+     */
+    uint32_t get_world_id();
 
     /** 
      * @brief Get the GlobalInfectionParameters.

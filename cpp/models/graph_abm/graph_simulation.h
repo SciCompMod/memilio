@@ -21,7 +21,7 @@
 #define EPI_ABM_GRAPH_SIMULATOR_H
 
 #include "models/graph_abm/graph_world.h"
-#include "abm/simulation.h"
+#include "models/abm/simulation.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio

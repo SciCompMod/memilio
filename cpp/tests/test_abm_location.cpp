@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/infection.h"
+#include "models/abm/infection.h"
 #include "abm_helpers.h"
 #include <memory>
 

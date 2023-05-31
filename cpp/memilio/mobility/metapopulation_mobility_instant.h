@@ -33,7 +33,7 @@
 #include "memilio/utils/date.h"
 #include "models/abm/time.h"
 //#include "models/abm/simulation.h"
-//#include "models/graph_abm/graph_simulation.h"
+#include "models/graph_abm/graph_simulation.h"
 
 #include "boost/filesystem.hpp"
 
@@ -312,17 +312,26 @@ public:
     {
     }
 
-    // template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool> = true>
-    // void apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
-    //                      SimulationNode<Sim>& node_to);
+    template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool> = true>
+    void apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
+                         SimulationNode<Sim>& node_to);
 };
 
-// template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool>>
-// void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
-//                                        SimulationNode<Sim>& node_to)
-// {
-//     //for (auto& a : node_from.get_simulation().get_world())
-// }
+template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool>>
+void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
+                                       SimulationNode<Sim>& node_to)
+{
+    mio::unused(t);
+    mio::unused(dt);
+    mio::unused(node_from);
+    mio::unused(node_to);
+    for (auto person_iter = node_from.get_simulation().get_graph_world().get_persons_to_migrate().begin();
+         person_iter != node_from.get_simulation().get_graph_world().get_persons_to_migrate().end(); ++person_iter) {
+        if (((*person_iter)->get_location()).get_world_id() ==
+            node_to.get_simulation().get_graph_world().get_world_id()) {
+        }
+    }
+}
 
 /**
  * adjust number of migrated people when they return according to the model.
@@ -525,8 +534,11 @@ void evolve_model(Timepoint t, Timespan dt, SimulationNode<Sim>& node)
  * edge functor for migration simulation.
  * @see MigrationEdge::apply_migration
  */
-template <class Sim>
-void apply_migration(double t, double dt, MigrationEdge& migrationEdge, SimulationNode<Sim>& node_from,
+template <
+    class Sim, class Timepoint, class Timespan, class Edge,
+    std::enable_if_t<((std::is_same<Edge, MigrationEdge>::value) || (std::is_same<Edge, MigrationEdgeABM>::value)),
+                     bool> = true>
+void apply_migration(Timepoint t, Timespan dt, Edge& migrationEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
     migrationEdge.apply_migration(t, dt, node_from, node_to);
@@ -553,15 +565,16 @@ template <class Sim, class Timepoint, class Timespan>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
 make_migration_sim(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>, &apply_migration<Sim>);
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>,
+                          &apply_migration<Sim, Timepoint, Timespan, MigrationEdge>);
 }
 
-template <class Sim, class Timepoint, class Timespan>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
-make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+template <class Sim, class Timepoint, class Timespan, class Edge>
+GraphSimulation<Graph<SimulationNode<Sim>, Edge>, Timepoint, Timespan>
+make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, Edge>&& graph)
 {
-    return make_graph_sim_test(t0, dt, std::move(graph),
-                               &evolve_model<Sim, Timepoint, Timespan>); // &apply_migration<Sim>)
+    return make_graph_sim_test(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>,
+                               &apply_migration<Sim, Timepoint, Timespan, Edge>);
 }
 
 /** @} */

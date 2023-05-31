@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/person.h"
-#include "abm/location_type.h"
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/world.h"
-#include "abm/location.h"
+#include "models/abm/person.h"
+#include "models/abm/location_type.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/world.h"
+#include "models/abm/location.h"
 #include "memilio/utils/random_number_generator.h"
 #include <vector>
 

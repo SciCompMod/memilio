@@ -18,13 +18,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/migration_rules.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/random_events.h"
-#include "abm/location.h"
+#include "models/abm/migration_rules.h"
+#include "models/abm/person.h"
+#include "models/abm/location.h"
+#include "models/abm/random_events.h"
+#include "models/abm/location.h"
 #include "memilio/utils/random_number_generator.h"
-#include "abm/location_type.h"
+#include "models/abm/location_type.h"
 
 #include <random>
 

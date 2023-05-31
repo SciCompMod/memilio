@@ -20,8 +20,8 @@
 #ifndef EPI_ABM_SIMULATOR_H
 #define EPI_ABM_SIMULATOR_H
 
-#include "abm/world.h"
-#include "abm/time.h"
+#include "models/abm/world.h"
+#include "models/abm/time.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio

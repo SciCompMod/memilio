@@ -18,7 +18,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/world.h"
+#include "models/abm/world.h"
 #include "graph_abm/graph_world.h"
 
 namespace mio
@@ -120,6 +120,10 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
     //         m_trip_list.increase_index();
     //     }
     // }
+}
+
+std::vector<std::unique_ptr<mio::abm::Person>>& GraphWorld::get_persons_to_migrate(){
+    return m_persons_to_migrate;
 }
 
 void GraphWorld::evolve(mio::abm::TimePoint t, mio::abm::TimeSpan dt)

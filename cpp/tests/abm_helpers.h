@@ -20,7 +20,7 @@
 #ifndef ABM_HELPERS_H
 #define ABM_HELPERS_H
 
-#include "abm/abm.h"
+#include "models/abm/abm.h"
 #include "memilio/math/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"

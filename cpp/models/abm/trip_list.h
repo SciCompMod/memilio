@@ -20,10 +20,10 @@
 #ifndef EPI_ABM_TRIP_LIST_H
 #define EPI_ABM_TRIP_LIST_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/infection.h"
-#include "abm/location_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/location.h"
+#include "models/abm/infection.h"
+#include "models/abm/location_type.h"
 
 #include "memilio/math/eigen.h"
 #include <array>

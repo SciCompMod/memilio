@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "abm/household.h"
+#include "models/abm/household.h"
 #include "memilio/math/eigen.h"
 #include "graph_abm/graph_world.h"
 #include <string>
