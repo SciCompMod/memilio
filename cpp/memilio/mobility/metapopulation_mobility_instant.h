@@ -32,6 +32,8 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
 #include "models/abm/time.h"
+//#include "models/abm/simulation.h"
+//#include "models/graph_abm/graph_simulation.h"
 
 #include "boost/filesystem.hpp"
 
@@ -93,7 +95,7 @@ public:
         return m_t0;
     }
 
-    template<class Timepoint, class Timespan>
+    template <class Timepoint, class Timespan>
     void evolve(Timepoint t, Timespan dt)
     {
         m_simulation.advance(t + dt);
@@ -302,6 +304,25 @@ private:
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
+
+class MigrationEdgeABM
+{
+public:
+    MigrationEdgeABM()
+    {
+    }
+
+    // template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool> = true>
+    // void apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
+    //                      SimulationNode<Sim>& node_to);
+};
+
+// template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool>>
+// void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
+//                                        SimulationNode<Sim>& node_to)
+// {
+//     //for (auto& a : node_from.get_simulation().get_world())
+// }
 
 /**
  * adjust number of migrated people when they return according to the model.
@@ -539,7 +560,8 @@ template <class Sim, class Timepoint, class Timespan>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
 make_migration_sim_test(Timepoint t0, Timespan dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
 {
-    return make_graph_sim_test(t0, dt, std::move(graph), &evolve_model<Sim, Timepoint, Timespan>); // &apply_migration<Sim>)
+    return make_graph_sim_test(t0, dt, std::move(graph),
+                               &evolve_model<Sim, Timepoint, Timespan>); // &apply_migration<Sim>)
 }
 
 /** @} */

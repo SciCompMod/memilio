@@ -1,6 +1,8 @@
 add_library(graph_abm
     graph_world.cpp
     graph_world.h
+    graph_simulation.cpp
+    graph_simulation.h
 )
 target_link_libraries(graph_abm PUBLIC memilio)
 target_include_directories(graph_abm PUBLIC

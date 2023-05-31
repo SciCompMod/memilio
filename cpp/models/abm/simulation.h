@@ -83,10 +83,11 @@ public:
     }
 
 private:
+    World m_world; ///< The World to simulate.
+protected:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
 
-    World m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.

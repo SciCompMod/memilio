@@ -97,7 +97,7 @@ public:
      */
     void evolve(mio::abm::TimePoint t, mio::abm::TimeSpan dt);
 
-        /**
+    /**
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
      * @param[in] person The Person.
