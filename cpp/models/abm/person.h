@@ -79,7 +79,15 @@ public:
      * @param[in] loc_new The new location of the person.
      * @param[in] cells_new The new cells of the person.
      * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0}, bool add_to_new_location = true);
+    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+
+    /**
+     * @brief migrate to a different location in another world.
+     * @param[in] loc_new The new location of the person.
+     * @param[in] cells_new The new cells of the person.
+    */
+    void migrate_to_other_world(Location& loc_new, bool set_time_at_location,
+                                const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.

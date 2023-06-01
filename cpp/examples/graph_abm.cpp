@@ -196,7 +196,7 @@ int main()
 
     auto t0   = mio::abm::TimePoint(0);
     auto dt   = mio::abm::hours(12);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(7);
 
     mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MigrationEdgeABM> g;
     g.add_node(0, t0, std::move(world1));
@@ -204,9 +204,9 @@ int main()
     g.add_edge(0, 1); //, Eigen::VectorXd::Constant((size_t)1, 1.)
     g.add_edge(1, 0); //, Eigen::VectorXd::Constant((size_t)1, 1.)
 
-    auto sim = mio::make_migration_sim_test(t0, dt, std::move(g));
+    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
-    //sim.advance(tmax);
+    sim.advance(tmax);
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:

@@ -26,29 +26,6 @@ namespace mio
 namespace graph_abm
 {
 
-// void GraphWorld::interaction(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
-// {
-//     for (auto&& person : m_persons_internal) {
-//         //only persons that are active in the world should interact
-//         if (person->get_is_active_in_world()) {
-//             person->interact(t, dt, m_infection_parameters);
-//         }
-//     }
-//     for (auto&& person : m_persons_external) {
-//         person->interact(t, dt, m_infection_parameters);
-//     }
-// }
-
-// void GraphWorld::begin_step(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
-// {
-//     for (auto& location : Base::m_locations) {
-//         location->cache_exposure_rates(t, dt);
-//     }
-//     for (auto& location : m_locations_external) {
-//         location->cache_exposure_rates(t, dt);
-//     }
-// }
-
 mio::abm::Location& GraphWorld::find_location(mio::abm::LocationType type, const mio::abm::Person& person)
 {
     auto index    = person.get_assigned_location_index(type);
@@ -74,6 +51,11 @@ mio::abm::Location& GraphWorld::find_location(mio::abm::LocationType type, const
     }
 }
 
+void GraphWorld::add_existing_person(std::unique_ptr<mio::abm::Person>&& person)
+{
+    Base::m_persons.push_back(std::move(person));
+}
+
 void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
 {
 
@@ -93,9 +75,11 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
                             //person changes world
                             m_persons_to_migrate.push_back(std::move(*person_iter));
                             Base::m_persons.erase(person_iter);
-                            (*person_iter)->migrate_to(target_location, {0}, false);
+                            (*person_iter)->migrate_to_other_world(target_location, false);
                         }
-                        (*person_iter)->migrate_to(target_location);
+                        else {
+                            (*person_iter)->migrate_to(target_location);
+                        }
                     }
                     break;
                 }
@@ -122,7 +106,8 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
     // }
 }
 
-std::vector<std::unique_ptr<mio::abm::Person>>& GraphWorld::get_persons_to_migrate(){
+std::vector<std::unique_ptr<mio::abm::Person>>& GraphWorld::get_persons_to_migrate()
+{
     return m_persons_to_migrate;
 }
 

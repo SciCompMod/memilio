@@ -60,16 +60,25 @@ void Person::interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters&
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells, bool add_to_new_location)
+void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
 {
     if (*m_location != loc_new) {
         m_location->remove_person(*this);
         m_location = &loc_new;
         m_cells    = cells;
-        if (add_to_new_location) {
-            loc_new.add_person(*this, cells);
-            m_time_at_location = TimeSpan(0);
-        }
+        loc_new.add_person(*this, cells);
+        m_time_at_location = TimeSpan(0);
+    }
+}
+
+void Person::migrate_to_other_world(Location& loc_new, bool set_time_at_location, const std::vector<uint32_t>& cells)
+{
+    m_location->remove_person(*this);
+    m_location = &loc_new;
+    m_cells    = cells;
+    loc_new.add_person(*this, cells);
+    if (set_time_at_location) {
+        m_time_at_location = TimeSpan(0);
     }
 }
 

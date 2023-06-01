@@ -270,16 +270,6 @@ auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, Edg
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
-template <
-    class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan,
-    std::enable_if_t<((std::is_same<Timepoint, double>::value || std::is_same<Timepoint, mio::abm::TimePoint>::value) &&
-                      (std::is_same<Timespan, double>::value || std::is_same<Timespan, mio::abm::TimeSpan>::value)),
-                     bool> = true> //, class EdgeF
-auto make_graph_sim_test(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
-{
-    return GraphSimulation<std::decay_t<Graph>, Timepoint, Timespan>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
-}
-
 template <class Graph, class NodeF, class EdgeF, class Timepoint, class Timespan>
 auto make_graph_sim_stochastic(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {

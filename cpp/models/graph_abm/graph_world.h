@@ -40,12 +40,11 @@ class GraphWorld : public mio::abm::World
     using Base = mio::abm::World;
 
 public:
-
     /**
      * @brief Get reference to all Person%s that will migrate to another world.
      * @return A reference to the vector of all Person%s that will migrate.
      */
-    std::vector<std::unique_ptr<mio::abm::Person>>& get_persons_to_migrate();   
+    std::vector<std::unique_ptr<mio::abm::Person>>& get_persons_to_migrate();
 
     /** @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
@@ -67,6 +66,12 @@ public:
      * @return Pointer to the assigned Location. If the location is in another world, the function will return the location in m_locations_external.
      */
     mio::abm::Location& find_location(mio::abm::LocationType type, const mio::abm::Person& person);
+
+    /**
+     * @brief Add an existing Person to a world.
+     * @param[in] person Unique pointer to the person that should beadded to world.
+    */
+    void add_existing_person(std::unique_ptr<mio::abm::Person>&& person);
 
 private:
     // /**
