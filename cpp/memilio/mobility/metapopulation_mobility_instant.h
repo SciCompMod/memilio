@@ -323,19 +323,23 @@ void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan
 {
     mio::unused(t);
     mio::unused(dt);
-    for (auto person_iter = node_from.get_simulation().get_graph_world().get_persons_to_migrate().begin();
-         person_iter != node_from.get_simulation().get_graph_world().get_persons_to_migrate().end(); ++person_iter) {
-        if (((*person_iter)->get_location()).get_world_id() ==
+    size_t person_iter       = 0;
+    auto& persons_to_migrate = node_from.get_simulation().get_graph_world().get_persons_to_migrate();
+    while (person_iter < persons_to_migrate.size()) {
+        if (((persons_to_migrate[person_iter])->get_location()).get_world_id() ==
             node_to.get_simulation().get_graph_world().get_world_id()) {
             auto& target_location = node_to.get_simulation().get_graph_world().find_location(
-                ((*person_iter)->get_location()).get_type(), *(*person_iter));
+                (persons_to_migrate[person_iter]->get_location()).get_type(), *persons_to_migrate[person_iter]);
             //let person migrate to location in target world
-            (*person_iter)->migrate_to_other_world(target_location, true);
+            persons_to_migrate[person_iter]->migrate_to_other_world(target_location, true);
             //add person to target world
-            node_to.get_simulation().get_graph_world().add_existing_person(std::move(*person_iter));
+            node_to.get_simulation().get_graph_world().add_existing_person(std::move(persons_to_migrate[person_iter]));
             //remove person from origin world
-            node_from.get_simulation().get_graph_world().get_persons_to_migrate().erase(person_iter);
+            node_from.get_simulation().get_graph_world().get_persons_to_migrate().erase(
+                node_from.get_simulation().get_graph_world().get_persons_to_migrate().begin() + person_iter);
+            continue;
         }
+        ++person_iter;
     }
 }
 

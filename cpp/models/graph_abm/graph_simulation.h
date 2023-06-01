@@ -56,7 +56,15 @@ public:
         return m_graph_world;
     }
 
+    /** 
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
+     */
+    void advance(mio::abm::TimePoint tmax);
+
 private:
+    void initialize_locations(mio::abm::TimePoint t);
+    void store_result_at(mio::abm::TimePoint t);
     GraphWorld m_graph_world;
 };
 

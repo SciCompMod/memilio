@@ -29,8 +29,35 @@ GraphSimulation::GraphSimulation(mio::abm::TimePoint t, GraphWorld&& graph_world
 {
     Base::m_dt     = mio::abm::hours(1);
     Base::m_result = mio::TimeSeries<ScalarType>(Eigen::Index(mio::abm::InfectionState::Count));
-    Base::initialize_locations(t);
-    Base::store_result_at(t);
+    initialize_locations(t);
+    store_result_at(t);
+}
+
+void GraphSimulation::initialize_locations(mio::abm::TimePoint t)
+{
+    for (auto& location : m_graph_world.get_locations()) {
+        location.initialize_subpopulations(t);
+    }
+}
+
+void GraphSimulation::store_result_at(mio::abm::TimePoint t)
+{
+    Base::m_result.add_time_point(t.days());
+    Base::m_result.get_last_value().setZero();
+    for (auto& location : m_graph_world.get_locations()) {
+        Base::m_result.get_last_value() += location.get_subpopulations().get_last_value().cast<ScalarType>();
+    }
+}
+
+void GraphSimulation::advance(mio::abm::TimePoint tmax)
+{
+    auto t = Base::m_t;
+    while (t < tmax) {
+        auto dt = std::min(Base::m_dt, tmax - t);
+        m_graph_world.evolve(t, dt);
+        t += Base::m_dt;
+        store_result_at(t);
+    }
 }
 
 } // namespace graph_abm

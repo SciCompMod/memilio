@@ -58,33 +58,35 @@ void GraphWorld::add_existing_person(std::unique_ptr<mio::abm::Person>&& person)
 
 void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
 {
-
-    for (auto person_iter = Base::m_persons.begin(); person_iter != Base::m_persons.end();
-         ++person_iter) { //auto& person : Base::m_persons
+    size_t person_iter = 0;
+    while (person_iter < Base::m_persons.size()) {
         for (auto rule : Base::m_migration_rules) {
             //check if transition rule can be applied
-            auto target_type      = rule.first(*(*person_iter), t, dt, m_migration_parameters);
-            auto& target_location = find_location(target_type, *(*person_iter));
-            auto current_location = (*person_iter)->get_location();
-            if (m_testing_strategy.run_strategy(*(*person_iter), target_location, t)) {
+            auto target_type      = rule.first(*Base::m_persons[person_iter], t, dt, m_migration_parameters);
+            auto& target_location = find_location(target_type, *Base::m_persons[person_iter]);
+            auto current_location = Base::m_persons[person_iter]->get_location();
+            if (m_testing_strategy.run_strategy(*Base::m_persons[person_iter], target_location, t)) {
                 if (target_location != current_location &&
                     target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = (*person_iter)->apply_mask_intervention(target_location);
+                    bool wears_mask = Base::m_persons[person_iter]->apply_mask_intervention(target_location);
                     if (wears_mask) {
                         if (target_location.get_world_id() != Base::m_world_id) {
                             //person changes world
-                            m_persons_to_migrate.push_back(std::move(*person_iter));
-                            Base::m_persons.erase(person_iter);
-                            (*person_iter)->migrate_to_other_world(target_location, false);
+                            Base::m_persons[person_iter]->migrate_to_other_world(target_location, false);
+                            m_persons_to_migrate.push_back(std::move(Base::m_persons[person_iter]));
+                            Base::m_persons.erase(Base::m_persons.begin() + person_iter);
+                            goto CONTINUE_PERSON;
                         }
                         else {
-                            (*person_iter)->migrate_to(target_location);
+                            Base::m_persons[person_iter]->migrate_to(target_location);
                         }
                     }
-                    break;
                 }
             }
         }
+        ++person_iter;
+    CONTINUE_PERSON:
+        continue;
     }
     // check if a person makes a trip
     //TODO
