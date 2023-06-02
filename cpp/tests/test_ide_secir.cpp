@@ -157,7 +157,7 @@ TEST_F(ModelTestIdeSecir, compareWithPreviousRunTransitions)
 
 // check results of our simulation with an example calculated by hand
 // for example see Overleaf document
-TEST(IdeSecir, checksimulationFunctions)
+TEST(IdeSecir, checkSimulationFunctions)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -251,7 +251,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax        = 20;
+    ScalarType tmax        = 30;
     ScalarType N           = 10000;
     ScalarType Dead_before = 10;
     ScalarType dt          = 1;
@@ -283,11 +283,11 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // Set working parameters.
-    // All TransitionDistribution%s are SmootherCosine functions.
-    // For all transitions we have muncparam=2 except for InfectedCriticalToRecovered where we set funcparam=3.
-    mio::isecir::SmootherCosine smoothcos(2.0);
+    // All TransitionDistribution%s are ExponentialDecay functions.
+    // For all transitions we have funcparam=2 except for InfectedCriticalToRecovered where we set funcparam=3.
+    mio::isecir::ExponentialDecay expdecay(4.0);
     mio::isecir::StateAgeFunctionWrapper delaydistribution;
-    delaydistribution.set_state_age_function(smoothcos);
+    delaydistribution.set_state_age_function(expdecay);
     std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
@@ -307,8 +307,8 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::isecir::StateAgeFunctionWrapper prob;
-    mio::isecir::ExponentialDecay expdecay(0.5);
-    prob.set_state_age_function(expdecay);
+    mio::isecir::ExponentialDecay expdecay2(0.5);
+    prob.set_state_age_function(expdecay2);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -334,7 +334,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 
 // The idea of this test is to confirm that the equilibrium of the compartments
 // (after simulation for a long enough time) does not change if we have a different m_max_support
-// for the DelayDistribution describing the transition from InfectedCritical To Recovered.
+// for the TransitionDistribution describing the transition from InfectedCritical To Recovered.
 // We also check whether the equilibirum is reached earlier if m_max_support is chosen smaller.
 TEST(IdeSecir, compareEquilibria)
 {
@@ -432,8 +432,14 @@ TEST(IdeSecir, compareEquilibria)
     sim2.advance(tmax);
     mio::TimeSeries<ScalarType> secihurd_simulated2 = sim2.get_result();
 
-    // Check whether equilibrium has been reached, only then can compare the times when it was reached.
+    // Check whether equilibrium has been reached, only then it makes sense to compare results and times when equilibrium was reached.
     EXPECT_TRUE(secihurd_simulated[Eigen::Index(tmax / dt - 1)] == secihurd_simulated[Eigen::Index(tmax / dt - 2)]);
+    EXPECT_TRUE(secihurd_simulated2[Eigen::Index(tmax / dt - 1)] == secihurd_simulated2[Eigen::Index(tmax / dt - 2)]);
+
+    // Check whether both models have the same result at time tmax
+    for (Eigen::Index i = 0; i < (Eigen::Index)mio::isecir::InfectionState::Count; i++) {
+        EXPECT_NEAR(secihurd_simulated.get_last_value()[i], secihurd_simulated2.get_last_value()[i], 1e-8);
+    }
 
     // Compute at what time the equilibrium was reached and check whether that time point is smaller for model than for model2
     // (as we have a smaller max_support in model than in model2)

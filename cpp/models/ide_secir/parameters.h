@@ -85,7 +85,6 @@ struct StateAgeFunction {
      */
     StateAgeFunction& operator=(StateAgeFunction&& other) = default;
 
-    //TODO: adapt docu
     /**
      * @brief Pure virtual function depending on state_age. 
      * 
@@ -122,6 +121,7 @@ struct StateAgeFunction {
      * until it reaches max_support.
      * For some specific StateAgeFunction%s there is a more efficient way to determine the max_support
      * which is why this member function is virtual and can be overridden (e.g. SmootherCosine).
+     * Max_support is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
      *
      * @param dt Time step size. 
      * @param tol Tolerance defining when 
@@ -261,6 +261,71 @@ protected:
 };
 
 /**
+ * @brief Class that defines a constant function.
+ */
+struct ConstantFunction : public StateAgeFunction {
+
+    /**
+    * @brief Default constructor of the class.
+    */
+    ConstantFunction()
+        : StateAgeFunction()
+    {
+    }
+
+    /**
+     * @brief Constructs a new ConstantFunction object
+     * 
+     * @param init_funcparam specifies value of the constant function.
+     */
+    ConstantFunction(ScalarType init_funcparam)
+        : StateAgeFunction(init_funcparam)
+    {
+    }
+
+    /**
+     * @brief Defines smoother cosine function depending on state_age.
+     *
+     * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
+     * 
+     * @param state_age time at which the function should be evaluated
+     * @return ScalarType evaluation of the function at state_age. 
+     */
+    ScalarType Function(ScalarType state_age) override
+    {
+        unused(state_age);
+
+        return m_funcparam;
+    }
+
+    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
+    {
+        unused(dt);
+        unused(tol);
+
+        // In case of a ConstantFunction we would have max_support = infinity
+        // This type of function is not suited to be a TransitionDistribution
+        // Raise error and return -1
+
+        log_error("This function is not suited to be a TransitionDistribution and getting the max_support doesn't make "
+                  "sense.");
+
+        return -1;
+    }
+
+protected:
+    /**
+     * @brief Clones unique pointer to a StateAgeFunction.
+     * 
+     * @return std::unique_ptr<StateAgeFunction> unique pointer to a StateAgeFunction
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ConstantFunction(*this);
+    }
+};
+
+/**
  * @brief Wrapper for StateAgeFunction that allows to set a StateAgeFunction from outside. 
  */
 struct StateAgeFunctionWrapper {
@@ -311,7 +376,7 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Set the StateAgeFunction object
      *
-     * @return std::unique_ptr<StateAgeFunction>
+     * @param[in] new_function function that we want to set member m_function to.
      */
     void set_state_age_function(StateAgeFunction& new_function)
     {
@@ -321,7 +386,7 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Accesses Function of m_function.
      *
-     * @param state_age time at which the function should be evaluated
+     * @param[in] state_age time at which the function should be evaluated.
      * @return ScalarType evaluation of the function at state_age. 
      */
     ScalarType Function(ScalarType state_age) const
@@ -341,6 +406,7 @@ struct StateAgeFunctionWrapper {
 
     /**
      * @brief Set the m_funcparam object of m_function. 
+     * @param[in] new_funcparam that determines new function parameter
      */
     void set_funcparam(ScalarType new_funcparam)
     {
