@@ -245,6 +245,72 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
+TEST(IdeSecir, checkStateAgeFunctionWrapper)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType N           = 10000;
+    ScalarType Dead_before = 10;
+    ScalarType dt          = 1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    mio::TimeSeries<ScalarType> init(num_transitions);
+
+    // add time points for initialization for transitions
+    Vec vec_init(num_transitions);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    // add initial time point to time series
+    init.add_time_point(-12, vec_init);
+    // add further time points
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize model.
+    mio::isecir::Model model(std::move(init), N, Dead_before);
+
+    // Check that StateAgeFunctions are only considered equal if they are of the same derived
+    // class and have the same funcparam
+    mio::isecir::ExponentialDecay expdecay(0.5);
+    mio::isecir::ExponentialDecay expdecay2(0.5);
+    mio::isecir::ExponentialDecay expdecay3(1.0);
+    mio::isecir::SmootherCosine smoothcos(0.5);
+
+    EXPECT_TRUE(expdecay == expdecay2);
+    EXPECT_FALSE(expdecay == expdecay3);
+    EXPECT_FALSE(expdecay == smoothcos);
+
+    // Check that it also holds when a StateAgeFunctionWrapper is set with the respective functions
+    mio::isecir::StateAgeFunctionWrapper prob(expdecay);
+    mio::isecir::StateAgeFunctionWrapper prob2(expdecay2);
+    mio::isecir::StateAgeFunctionWrapper prob3(expdecay3);
+    mio::isecir::StateAgeFunctionWrapper prob4(smoothcos);
+
+    EXPECT_TRUE(prob == prob2);
+    EXPECT_FALSE(prob == prob3);
+    EXPECT_FALSE(prob == prob4);
+
+    // Check that it also holds when a parameter is set with the respective StateAgeFunctionWrapper
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob2);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob3);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob4);
+
+    EXPECT_TRUE(prob == model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>());
+    EXPECT_FALSE(prob == model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>());
+    EXPECT_FALSE(prob == model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>());
+}
+
 // The idea of this test is to check whether the proportion between Recovered and Dead is as expected
 // (after simulation for a long enough time, i.e. when the equlibrium is reached).
 TEST(IdeSecir, checkProportionRecoveredDeath)
