@@ -215,6 +215,14 @@ struct StateAgeFunction {
     StateAgeFunction& operator=(StateAgeFunction&& other) = default;
 
     /**
+     * @brief Comparison operator.
+     */
+    bool operator==(const StateAgeFunction& other) const
+    {
+        return (typeid(*this).name() == typeid(other).name() && m_funcparam == other.get_funcparam());
+    }
+
+    /**
      * @brief Pure virtual function depending on state_age. 
      * 
      * @param state_age time at which the function should be evaluated
@@ -228,7 +236,7 @@ struct StateAgeFunction {
      * 
      * @return ScalarType 
      */
-    ScalarType get_funcparam()
+    ScalarType get_funcparam() const
     {
         return m_funcparam;
     }
@@ -241,6 +249,16 @@ struct StateAgeFunction {
     void set_funcparam(ScalarType new_funcparam)
     {
         m_funcparam = new_funcparam;
+    }
+
+    /**
+     * @brief Get type of StateAgeFunction, i.e. which derived class is used.
+     *
+     * @param[out] string 
+     */
+    std::string get_state_age_function_type() const
+    {
+        return typeid(*this).name();
     }
 
     /**
@@ -325,7 +343,7 @@ struct SmootherCosine : public StateAgeFunction {
     /**
      * @brief Constructs a new SmootherCosine object
      * 
-     * @param init_funcparam specifies the initial function parameter of the function.
+     * @param[in] init_funcparam specifies the initial function parameter of the function.
      */
     SmootherCosine(ScalarType init_funcparam)
         : StateAgeFunction{init_funcparam}
@@ -374,6 +392,16 @@ struct StateAgeFunctionWrapper {
     }
 
     /**
+     * @brief Constructs a new StateAgeFunctionWrapper object
+     * 
+     * @param[in] init_function specifies the initial function.
+     */
+    StateAgeFunctionWrapper(StateAgeFunction& init_function)
+        : m_function(init_function.clone())
+    {
+    }
+
+    /**
      * @brief Copy constructor for StateAgeFunctionWrapper. 
      */
     StateAgeFunctionWrapper(StateAgeFunctionWrapper const& other)
@@ -406,13 +434,30 @@ struct StateAgeFunctionWrapper {
     ~StateAgeFunctionWrapper() = default;
 
     /**
+     * @brief Comparison operator. 
+     */
+    bool operator==(const StateAgeFunctionWrapper& other) const
+    {
+        return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
+                m_function->get_funcparam() == other.get_funcparam());
+    }
+
+    /**
      * @brief Set the StateAgeFunction object
-     *
-     * @return std::unique_ptr<StateAgeFunction>
      */
     void set_state_age_function(StateAgeFunction& new_function)
     {
         m_function = new_function.clone();
+    }
+
+    /**
+     * @brief Get type of StateAgeFunction, i.e. which derived class is used.
+     *
+     * @param[out] string 
+     */
+    std::string get_state_age_function_type() const
+    {
+        return m_function->get_state_age_function_type();
     }
 
     /**
@@ -431,7 +476,7 @@ struct StateAgeFunctionWrapper {
      * 
      * @return ScalarType 
      */
-    ScalarType get_funcparam()
+    ScalarType get_funcparam() const
     {
         return m_function->get_funcparam();
     }
