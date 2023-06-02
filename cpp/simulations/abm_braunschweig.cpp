@@ -24,41 +24,41 @@ namespace fs = boost::filesystem;
 //     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 // }
 
-// /**
-//  * Determine the infection state of a person at the beginning of the simulation.
-//  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
-//  * @return random infection state
-//  */
-// mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected, ScalarType carrier,
-//                                                    ScalarType recovered)
-// {
-//     ScalarType susceptible          = 1 - exposed - infected - carrier - recovered;
-//     std::vector<ScalarType> weights = {susceptible,  exposed,      carrier,       infected / 3,
-//                                        infected / 3, infected / 3, recovered / 2, recovered / 2};
-//     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
-//         mio::log_error("Initialization in ABM wrong, please correct vector length.");
-//     }
-//     auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
-//     return (mio::abm::InfectionState)state;
-// }
+/**
+ * Determine the infection state of a person at the beginning of the simulation.
+ * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
+ * @return random infection state
+ */
+mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarType infected, ScalarType carrier,
+                                                   ScalarType recovered)
+{
+    ScalarType susceptible          = 1 - exposed - infected - carrier - recovered;
+    std::vector<ScalarType> weights = {susceptible,  exposed,      carrier,       infected / 3,
+                                       infected / 3, infected / 3, recovered / 2, recovered / 2};
+    if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
+        mio::log_error("Initialization in ABM wrong, please correct vector length.");
+    }
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(weights);
+    return (mio::abm::InfectionState)state;
+}
 
-// /**
-//  * Assign an infection state to each person.
-//  */
-// void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
-//                             ScalarType carrier_pct, ScalarType recovered_pct)
-// {
-//     auto persons = world.get_persons();
-//     for (auto& person : persons) {
-//         world.set_infection_state(person,
-//                                   determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
-//     }
-// }
+/**
+ * Assign an infection state to each person.
+ */
+void assign_infection_state(mio::abm::World& world, ScalarType exposed_pct, ScalarType infected_pct,
+                            ScalarType carrier_pct, ScalarType recovered_pct)
+{
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        world.set_infection_state(person,
+                                  determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
+    }
+}
 
 void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
-    boost::replace_all(string, ";;", ";-1;");
+    boost::replace_all(string, ";;", ";-1;"); // Temporary fix to handle empty cells.
     boost::split(strings, string, boost::is_any_of(";"));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
         return std::stoi(s);
@@ -127,22 +127,32 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t person_id   = row[index["puid"]];
         uint32_t age         = row[index["age"]]; // TODO
         uint32_t location_id = row[index["loc_id_end"]];
+        uint32_t home_id     = row[index["huid"]];
         uint32_t activity    = row[index["activity_end"]];
 
-        auto it_location              = locations.find(location_id);
-        mio::abm::LocationId location = it_location->second;
-        if (it_location == locations.end()) {
-            location = world.add_location(get_location_type(activity), 0); // TODO: adjust LocationType
-            locations.insert({location_id, location});
+        auto it_home              = locations.find(home_id);
+        mio::abm::LocationId home = it_home->second;
+        if (it_home == locations.end()) {
+            home = world.add_location(mio::abm::LocationType::Home, 0);
+            locations.insert({home_id, home});
         }
         auto it_person = persons.find(person_id);
         if (it_person == persons.end()) {
             auto& person =
-                world.add_person(location, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
+                world.add_person(home, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age));
+            person.set_assigned_location(home);
             persons.insert({person_id, person});
             it_person = persons.find(person_id);
         }
-        it_person->second.set_assigned_location(location);
+        auto it_location              = locations.find(location_id);
+        mio::abm::LocationId location = it_location->second;
+        if (get_location_type(activity) != mio::abm::LocationType::Home) {
+            if (it_location == locations.end()) {
+                location = world.add_location(get_location_type(activity), 0);
+                locations.insert({location_id, location});
+            }
+            it_person->second.set_assigned_location(location);
+        }
     }
 }
 
@@ -154,7 +164,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
 
     // Assumed percentage of infection state at the beginning of the simulation.
-    // ScalarType exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
+    ScalarType exposed_pct = 0.005, infected_pct = 0.001, carrier_pct = 0.001, recovered_pct = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
@@ -164,18 +174,15 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     create_world_from_data(world, "../data/mobility/bs.csv");
 
     // Assign an infection state to each person.
-    // assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
 
-    // // Add locations and assign locations to the people.
-    // // create_assign_locations(world);
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
 
-    // auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-
-    // // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
-    // // Social events are very rare.
-    // mio::abm::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
-    // mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
-    // mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+    // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
+    // Social events are very rare.
+    mio::abm::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
+    mio::abm::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
+    mio::abm::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
@@ -185,7 +192,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(60); // End time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::days(1); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index
