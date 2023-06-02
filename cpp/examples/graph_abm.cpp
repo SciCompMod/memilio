@@ -201,31 +201,31 @@ int main()
     mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MigrationEdgeABM> g;
     g.add_node(0, t0, std::move(world1));
     g.add_node(1, t0, std::move(world2));
-    g.add_edge(0, 1); //, Eigen::VectorXd::Constant((size_t)1, 1.)
-    g.add_edge(1, 0); //, Eigen::VectorXd::Constant((size_t)1, 1.)
+    g.add_edge(0, 1);
+    g.add_edge(1, 0);
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    // auto f_abm = fopen("abm_minimal.txt", "w");
-    // fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    // for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-    //     fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-    //     auto v = sim.get_result().get_value(i);
-    //     for (auto j = 0; j < v.size(); ++j) {
-    //         fprintf(f_abm, "%f", v[j]);
-    //         if (j < v.size() - 1) {
-    //             fprintf(f_abm, " ");
-    //         }
-    //     }
-    //     if (i < sim.get_result().get_num_time_points() - 1) {
-    //         fprintf(f_abm, "\n");
-    //     }
-    // }
-    // fclose(f_abm);
+    for (auto& n : sim.get_graph().nodes()) {
+        std::cout << "node " << n.id << "\n";
+        std::cout << "\n";
+
+        std::cout << "# t S E C I I_s I_c R_C R_I D\n";
+        for (auto i = 0; i < n.property.get_result().get_num_time_points(); ++i) {
+            std::cout << n.property.get_result().get_time(i) << " ";
+            auto v = n.property.get_result().get_value(i);
+            for (auto j = 0; j < v.size(); ++j) {
+                std::cout << v[j] << " ";
+                if (j < v.size() - 1) {
+                    std::cout << " ";
+                }
+            }
+            if (i < n.property.get_result().get_num_time_points() - 1) {
+                std::cout << "\n";
+            }
+        }
+        std::cout << "\n";
+    }
 }

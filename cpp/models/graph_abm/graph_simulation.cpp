@@ -58,6 +58,7 @@ void GraphSimulation::advance(mio::abm::TimePoint tmax)
         t += Base::m_dt;
         store_result_at(t);
     }
+    Base::m_t = tmax;
 }
 
 } // namespace graph_abm
