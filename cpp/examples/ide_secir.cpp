@@ -20,6 +20,7 @@
 
 #include "ide_secir/model.h"
 #include "ide_secir/infection_state.h"
+#include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
@@ -68,14 +69,12 @@ int main()
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Set working parameters
-    // Set max_support for all Delay Distributions
-    std::vector<ScalarType> vec_max_support((int)mio::isecir::InfectionTransition::Count, 2);
-    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]                 = 3;
-    vec_max_support[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 4;
-    std::vector<mio::isecir::DelayDistribution> vec_delaydistrib(num_transitions, mio::isecir::DelayDistribution());
-    for (int i = 0; i < (int)mio::isecir::InfectionTransition::Count; i++) {
-        vec_delaydistrib[i].set_max_support(vec_max_support[i]);
-    }
+    mio::isecir::SmootherCosine smoothcos(2.0);
+    mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    delaydistribution.set_state_age_function(smoothcos);
+    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_funcparam(3.0);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_funcparam(4.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
@@ -87,9 +86,12 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(0.5);
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(0.5);
-    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(0.5);
+    mio::isecir::StateAgeFunctionWrapper prob;
+    mio::isecir::ExponentialDecay expdecay(0.5);
+    prob.set_state_age_function(expdecay);
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
     model.check_constraints(dt);
 
