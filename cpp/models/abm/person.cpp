@@ -264,18 +264,18 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
     }
     // Find the lastest infection / vaccination type and time.
     Vaccine last_protection_type = Vaccine::NaturalInfection;
-    ScalarType days_interval     = std::numeric_limits<double>::max();
+    ScalarType days_since_vacc   = std::numeric_limits<double>::max();
     if (!m_infections.empty()) {
-        days_interval = t.days() - m_infections.back().get_init_date().days();
+        days_since_vacc = t.days() - m_infections.back().get_init_date().days();
     }
     if (!m_vaccinations.empty()) {
-        if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+        if (days_since_vacc > t.days() - m_vaccinations.back().time.days()) {
             last_protection_type = m_vaccinations.back().vaccine;
-            days_interval        = t.days() - m_vaccinations.back().time.days();
+            days_since_vacc      = t.days() - m_vaccinations.back().time.days();
         }
     }
-    return get_protection_from_linear_piecewise_function<InfectionProtectionFactor>(days_interval, last_protection_type,
-                                                                                    virus, params);
+    return get_protection_from_linear_piecewise_function<InfectionProtectionFactor>(
+        days_since_vacc, last_protection_type, virus, params);
 }
 
 ScalarType Person::get_severity_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const
@@ -286,18 +286,18 @@ ScalarType Person::get_severity_factor(TimePoint t, VirusVariant virus, const Gl
     }
     // Find the lastest infection / vaccination type and time.
     Vaccine last_protection_type = Vaccine::NaturalInfection;
-    ScalarType days_interval     = std::numeric_limits<double>::max();
+    ScalarType days_since_vacc   = std::numeric_limits<double>::max();
     if (!m_infections.empty()) {
-        days_interval = t.days() - m_infections.back().get_init_date().days();
+        days_since_vacc = t.days() - m_infections.back().get_init_date().days();
     }
     if (!m_vaccinations.empty()) {
-        if (days_interval > t.days() - m_vaccinations.back().time.days()) {
+        if (days_since_vacc > t.days() - m_vaccinations.back().time.days()) {
             last_protection_type = m_vaccinations.back().vaccine;
-            days_interval        = t.days() - m_vaccinations.back().time.days();
+            days_since_vacc      = t.days() - m_vaccinations.back().time.days();
         }
     }
-    return get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(days_interval, last_protection_type,
-                                                                                   virus, params);
+    return get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(days_since_vacc,
+                                                                                   last_protection_type, virus, params);
 }
 
 } // namespace abm
