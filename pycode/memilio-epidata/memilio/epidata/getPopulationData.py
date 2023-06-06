@@ -250,13 +250,13 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
-    new_data_file = os.path.join(directory, filename)
-    new_data_avail = os.path.isfile(new_data_file + '.xlsx')
+    new_data_file = os.path.join(directory, filename, '.xlsx')
+    new_data_avail = os.path.isfile(new_data_file)
 
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.get_file(
-            new_data_file, apiUrl='', extension='.xlsx',
+            new_data_file, url='', read_data=read_data,
             param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4}, interactive=True)
         column_names = list(df_pop_raw.columns)
         # rename columns
