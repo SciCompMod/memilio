@@ -141,7 +141,8 @@ public:
 #endif
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
         std::vector<std::result_of_t<HandleSimulationResultFunction(SimulationGraph, size_t)>> ensemble_result;
@@ -154,7 +155,7 @@ public:
             //- the RNG has been freshly seeded/initialized before this call
             //- the seeds are identical on all MPI processes
             //- the block size of the RNG is sufficiently big to cover one run
-            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length 
+            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length
             //   of the mt19937 RNG is huge)
             mio::thread_local_rng().forward_to_block(run_idx);
 
@@ -302,10 +303,10 @@ private:
 
         auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
+            sim_graph.add_node(node.id, node.stay_duration, node.property, m_t0, m_dt_integration);
         }
         for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge.property);
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
@@ -316,7 +317,7 @@ private:
         //evenly distribute runs
         //lower processes do one more run if runs are not evenly distributable
         auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder = num_runs % num_procs;
+        auto remainder      = num_runs % num_procs;
 
         std::vector<size_t> run_distribution(num_procs);
         std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);

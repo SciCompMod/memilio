@@ -253,8 +253,8 @@ double get_infections_relative(const DummySim&, double, const Eigen::Ref<const E
 
 //overload required for because the mock is not a compartment model simulation
 template <class DummySim>
-void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, const DummySim&,
-                                 Eigen::Ref<const mio::TimeSeries<double>::Vector>, double, double)
+void update_status_mobility(Eigen::Ref<mio::TimeSeries<double>::Vector>, const DummySim&,
+                            Eigen::Ref<const mio::TimeSeries<double>::Vector>, double, double)
 {
 }
 

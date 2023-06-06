@@ -33,12 +33,12 @@
 #include "ode_secirvvs/parameter_space.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
+#include "memilio/math/eigen.h"
 #include <cstdio>
 #include <iomanip>
 
 #include <iostream>
 #include <string>
-#include <vector>
 
 /**
  * Set a value and distribution of an UncertainValue.
@@ -251,79 +251,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     return mio::success();
 }
 
-/**
- * Set epidemiological parameters of Covid19.
- * @param params Object that the parameters will be added to.
- * @returns Currently generates no errors.
- */
-void set_population(mio::osecirvvs::Model& model, bool infected)
-{
-    if (infected) {
-        for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                                = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                         = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]                       = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 200;
-            model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = 1000;
-            model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 1000;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadNaive}]                    = 0;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadPartialImmunity}]          = 0;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadImprovedImmunity}]         = 0;
-            model.populations.set_difference_from_group_total<mio::AgeGroup>(
-                {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, 10000);
-        }
-    }
-    else {
-        for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                                = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                         = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]                       = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 0;
-            model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = 3300;
-            model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 3300;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadNaive}]                    = 0;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadPartialImmunity}]          = 0;
-            model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadImprovedImmunity}]         = 0;
-            model.populations.set_difference_from_group_total<mio::AgeGroup>(
-                {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, 10000);
-        }
-    }
-}
-
 enum class ContactLocation
 {
     Home = 0,
@@ -370,9 +297,9 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph_2_nodes(const int num_days)
+mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int num_days)
 {
-    std::string data_dir         = "/localdata1/test/memilio/data";
+    std::string data_dir         = "/data";
     std::string traveltimes_path = "/localdata1/code/memilio/travel_times_sum_rounded.txt";
     std::string durations_path   = "/localdata1/code/memilio/activity_duration_work.txt";
     auto start_date              = mio::Date(2021, 6, 1);
@@ -382,7 +309,6 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph_2_nodes(co
     const int num_age_groups = 6;
 
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
-    // mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::osecirvvs::Model>>, mio::MigrationParameters> params_graph;
 
     // Nodes
     mio::osecirvvs::Parameters params(num_age_groups);
@@ -392,36 +318,69 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph_2_nodes(co
     auto contacts_status                   = set_contact_matrices(data_dir, params);
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
 
-    // read average activity duration for each county
+    // Set nodes
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 1.43 / 100000.;
+
     auto read_duration = mio::read_duration_stay(durations_path);
     if (!read_duration) {
         std::cout << read_duration.error().formatted_message() << '\n';
     }
     auto duration_stay = read_duration.value();
 
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
-    auto scaling_factor_icu      = 1.0;
+    std::string path = "/localdata1/test/memilio/data/pydata/Germany/county_population.json";
+    auto read_ids    = mio::get_node_ids(path, true);
+    auto node_ids    = read_ids.value();
 
-    std::vector<int> node_ids = {0, 1, 2};
     std::vector<mio::osecirvvs::Model> nodes(node_ids.size(),
                                              mio::osecirvvs::Model(int(size_t(params.get_num_groups()))));
     std::vector<double> scaling_factor_inf(6, 1.0);
 
-    // auto read_node =
-    //     read_input_data_county(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir, num_days);
-
-    // set population
-    set_population(nodes[0], true);
-    set_population(nodes[1], false);
-    set_population(nodes[2], false);
-
     for (auto& node : nodes) {
         node.parameters = params;
     }
+    auto read_node = read_input_data_county(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu,
+                                            "/localdata1/test/memilio/data", num_days);
 
-    params_graph.add_node(0, 12. / 24, nodes[0]);
-    params_graph.add_node(1, 12. / 24, nodes[1]);
-    params_graph.add_node(2, 12. / 24, nodes[2]);
+    // for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+    for (size_t node_idx = 0; node_idx < 5; ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<mio::osecirvvs::TestAndTraceCapacity>();
+        tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        auto id = int(mio::regions::CountyId(node_ids[node_idx]));
+
+        //holiday periods
+        auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<mio::osecirvvs::ContactPatterns>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = mio::Index<typename mio::osecirvvs::Model::Compartments>(0);
+                 j < mio::osecirvvs::Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    mio::UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], duration_stay((Eigen::Index)node_idx), nodes[node_idx]);
+        // params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
+    }
 
     // Edges
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
@@ -475,24 +434,8 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph_2_nodes(co
             //only add edges with mobility above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
             if (commuter_coeff_ij > 4e-5) {
-                std::vector<int> path;
-                if (county_idx_i == 0 && county_idx_j == 1)
-                    path = {0, 2, 1};
-                else if (county_idx_i == 0 && county_idx_j == 2)
-                    path = {0, 1, 2};
-                else if (county_idx_i == 1 && county_idx_j == 2)
-                    path = {1, 0, 2};
-                else if (county_idx_i == 1 && county_idx_j == 0)
-                    path = {1, 2, 0};
-                else if (county_idx_i == 2 && county_idx_j == 0)
-                    path = {2, 1, 0};
-                else if (county_idx_i == 2 && county_idx_j == 1)
-                    path = {2, 0, 1};
-                else
-                    std::cout << "EIngabe fehlerhaft!!"
-                              << "\n";
-
-                params_graph.add_edge(county_idx_i, county_idx_j, 1. / 48, path, std::move(mobility_coeffs));
+                params_graph.add_edge(county_idx_i, county_idx_j, 1. / 24, path_mobility[county_idx_i][county_idx_j],
+                                      std::move(mobility_coeffs));
             }
         }
     }
@@ -506,11 +449,11 @@ int main(int argc, char** argv)
     const auto t0       = 0.;
     const auto num_days = 90.0;
     const auto dt       = 0.5;
-    const int num_runs  = 1;
+    const int num_runs  = 10;
 
-    auto params_graph = get_graph_2_nodes(num_days);
+    auto params_graph = get_graph(num_days);
 
-    auto write_graph_status = write_graph(params_graph, "/localdata1/code/memilio/save_graph");
+    // auto write_graph_status = write_graph(params_graph, "/localdata1/code/memilio/save_graph");
 
     // parameter study
 
@@ -530,8 +473,8 @@ int main(int argc, char** argv)
                                return node.property.get_simulation().get_model();
                            });
 
-            save_single_run_result = save_result_with_params(interpolated_result, params, {0, 1, 2},
-                                                             "/localdata1/test/memilio/test", run_idx);
+            save_single_run_result =
+                save_result_with_params(interpolated_result, params, {0, 1}, "/localdata1/code/memilio/test", run_idx);
 
             std::cout << "run " << run_idx << " complete." << std::endl;
             return std::make_pair(interpolated_result, params);
@@ -545,15 +488,15 @@ int main(int argc, char** argv)
         ensemble_params.emplace_back(std::move(run.second));
     }
     auto save_results_status =
-        save_results(ensemble_results, ensemble_params, {0, 1, 2}, "/localdata1/test/memilio/test2", false);
+        save_results(ensemble_results, ensemble_params, {0, 1}, "/localdata1/code/memilio/test2", false);
 
     // std::cout << "Landkreis 0" << std::endl;
-    // std::cout << params_graph.nodes()[0].property.get_result().get_last_value() << std::endl;
+    // std::cout << gr.nodes()[0].property.get_result().get_last_value() << std::endl;
     // std::cout << "Landkreis 1" << std::endl;
-    // std::cout << params_graph.nodes()[1].property.get_result().get_last_value() << std::endl;
+    // std::cout << gr.nodes()[1].property.get_result().get_last_value() << std::endl;
 
-    // auto region0_result = params_graph.nodes()[0].property.get_result();
-    // auto region1_result = params_graph.nodes()[1].property.get_result();
+    // auto region0_result = gr.nodes()[0].property.get_result();
+    // auto region1_result = gr.nodes()[1].property.get_result();
 
     // auto num_points = static_cast<size_t>(region0_result.get_num_time_points());
     // for (size_t i = 0; i < num_points; i++) {

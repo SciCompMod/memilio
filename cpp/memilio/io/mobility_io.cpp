@@ -2,6 +2,8 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 
+#include <cmath>
+#include <cstddef>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -168,4 +170,57 @@ IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename)
     return success(duration);
 }
 
+IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const std::string& filename)
+{
+    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+
+    if (num_lines == 0) {
+        std::vector<std::vector<std::vector<int>>> arr(0, std::vector<std::vector<int>>(0));
+        return success(arr);
+    }
+
+    std::fstream file;
+    file.open(filename, std::ios::in);
+    if (!file.is_open()) {
+        return failure(StatusCode::FileNotFound, filename);
+    }
+
+    // std::vector<std::vector<int>> arr(std::sqrt(num_lines), std::vector<int>(std::sqrt(num_lines)));
+    std::vector<std::vector<std::vector<int>>> arr(std::sqrt(num_lines),
+                                                   std::vector<std::vector<int>>(std::sqrt(num_lines)));
+
+    try {
+        std::string tp;
+        while (getline(file, tp)) {
+            auto line   = split(tp, ' ');
+            auto indx_x = std::stoi(line[0]);
+            auto indx_y = std::stoi(line[1]);
+            if (indx_x != indx_y) {
+                auto path = std::accumulate(line.begin() + 2, line.end(), std::string(""));
+
+                // string -> vector of integers
+                std::vector<int> path_vec;
+
+                // Remove the square brackets and \r
+                path = path.substr(1, path.size() - 3);
+                std::stringstream ss(path);
+                std::string token;
+
+                // get numbers and save them in path_vec
+                while (std::getline(ss, token, ',')) {
+                    path_vec.push_back(std::stoi(token));
+                }
+
+                for (int number : path_vec) {
+                    arr[indx_x][indx_y].push_back(number);
+                }
+            }
+        }
+    }
+    catch (std::runtime_error& ex) {
+        return failure(StatusCode::InvalidFileFormat, filename + ": " + ex.what());
+    }
+
+    return success(arr);
+}
 } // namespace mio

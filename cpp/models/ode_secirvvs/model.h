@@ -186,6 +186,7 @@ public:
                 double season_val =
                     (1 + params.get<Seasonality>() *
                              sin(3.141592653589793 * (std::fmod((params.get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
@@ -194,8 +195,11 @@ public:
                             pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] +
                             pop[ICrPIj] + pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] +
                             pop[ISyIIj] + pop[ISevIIj] + pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
-
-                double divNj = 1.0 / Nj; // precompute 1.0/Nj
+                double divNj = 0;
+                // only needed in case of mobility nodes since some age groups are fordbidden to change regions.
+                if (Nj > 0) {
+                    divNj = 1.0 / Nj; // precompute 1.0/Nj
+                }
 
                 double ext_inf_force_dummy = cont_freq_eff * divNj *
                                              params.template get<TransmissionProbabilityOnContact>()[(AgeGroup)i] *

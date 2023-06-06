@@ -70,6 +70,8 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  */
 IOResult<Eigen::MatrixXd> read_duration_stay(const std::string& filename);
 
+IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const std::string& filename);
+
 #ifdef MEMILIO_HAS_JSONCPP
 
 /**

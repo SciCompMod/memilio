@@ -179,14 +179,14 @@ Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>&
         node_model.parameters.template get<ContactPatterns>().make_matrix();
         node_model.apply_constraints();
 
-        sampled_graph.add_node(params_node.id, node_model);
+        sampled_graph.add_node(params_node.id, params_node.stay_duration, node_model);
     }
 
     for (auto& edge : graph.edges()) {
         auto edge_params = edge.property;
         //no dynamic NPIs
         //TODO: add switch to optionally enable dynamic NPIs to edges
-        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge_params);
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.traveltime, edge.path, edge_params);
     }
 
     return sampled_graph;
