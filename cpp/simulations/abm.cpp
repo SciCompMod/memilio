@@ -47,8 +47,8 @@ mio::abm::InfectionState determine_infection_state(ScalarType exposed, ScalarTyp
 {
     ScalarType susceptible          = 1 - exposed - infected_symptoms - infected_no_symptoms - recovered;
     std::vector<ScalarType> weights = {
-        susceptible,           exposed,       infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3,
-        infected_symptoms / 3, recovered / 2, recovered / 2};
+        susceptible,           exposed,  infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3,
+        infected_symptoms / 3, recovered};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
@@ -434,13 +434,13 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_pct, double infected_pct,
-                            double infected_no_symptoms_pct, double recovered_pct)
+void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob, double infected_prob,
+                            double infected_no_symptoms_prob, double recovered_prob)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
         auto infection_state =
-            determine_infection_state(exposed_pct, infected_pct, infected_no_symptoms_pct, recovered_pct);
+            determine_infection_state(exposed_prob, infected_prob, infected_no_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state));
@@ -832,8 +832,8 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
-    ScalarType exposed_pct = 0.005, infected_symptoms_pct = 0.001, infected_no_symptoms_pct = 0.001,
-               recovered_pct = 0.0;
+    ScalarType exposed_prob = 0.005, infected_symptoms_prob = 0.001, infected_no_symptoms_prob = 0.001,
+               recovered_prob = 0.0;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
@@ -844,7 +844,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     create_world_from_statistical_data(world);
 
     // Assign an infection state to each person.
-    assign_infection_state(world, t0, exposed_pct, infected_symptoms_pct, infected_no_symptoms_pct, recovered_pct);
+    assign_infection_state(world, t0, exposed_prob, infected_symptoms_prob, infected_no_symptoms_prob, recovered_prob);
 
     // Add locations and assign locations to the people.
     create_assign_locations(world);
