@@ -61,5 +61,16 @@ void GraphSimulation::advance(mio::abm::TimePoint tmax)
     Base::m_t = tmax;
 }
 
+void GraphSimulation::end_simulation(mio::abm::TimePoint tmax)
+{
+    for (auto& location : m_graph_world.get_locations()) {
+        location.store_subpopulations(tmax);
+    }
+    Base::m_result.get_last_value().setZero();
+    for (auto& location : m_graph_world.get_locations()) {
+        Base::m_result.get_last_value() += location.get_subpopulations().get_last_value().cast<ScalarType>();
+    }
+}
+
 } // namespace graph_abm
 } // namespace mio

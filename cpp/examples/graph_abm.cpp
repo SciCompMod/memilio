@@ -196,7 +196,7 @@ int main()
 
     auto t0   = mio::abm::TimePoint(0);
     auto dt   = mio::abm::hours(12);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(7);
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(10);
 
     mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MigrationEdgeABM> g;
     g.add_node(0, t0, std::move(world1));
@@ -206,8 +206,7 @@ int main()
 
     auto sim = mio::make_migration_sim(t0, dt, std::move(g));
 
-    sim.advance(tmax);
-
+    sim.advance(tmax, true);
     for (auto& n : sim.get_graph().nodes()) {
         std::cout << "node " << n.id << "\n";
         std::cout << "\n";

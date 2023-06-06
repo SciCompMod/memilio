@@ -62,6 +62,12 @@ public:
      */
     void advance(mio::abm::TimePoint tmax);
 
+    /**
+     * @brief Saves the final timestep in m_results at the end of the simulation.
+     * @param[in] tmax Last timepoint.
+    */
+    void end_simulation(mio::abm::TimePoint tmax);
+
 private:
     void initialize_locations(mio::abm::TimePoint t);
     void store_result_at(mio::abm::TimePoint t);

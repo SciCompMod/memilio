@@ -72,6 +72,16 @@ public:
     {
     }
 
+    void advance(Timepoint t_max, bool store_results_at_end)
+    {
+        advance(t_max);
+        if (store_results_at_end) {
+            for (auto& n : m_graph.nodes()) {
+                n.property.end_simulation(t_max);
+            }
+        }
+    }
+
     void advance(Timepoint t_max = 1.0)
     {
         auto dt = m_dt;
