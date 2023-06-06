@@ -28,6 +28,9 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getHospitalizationData as ghd
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
@@ -112,9 +115,10 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
         error_message = "Error: Data categories have changed."
         self.assertEqual(str(error.exception), error_message)
 
+    @patch('builtins.input', return_value='Y')
     @patch('memilio.epidata.getHospitalizationData.pd.read_csv',
            return_value=df_test)
-    def test_get_hospitalization_data(self, mock_csv):
+    def test_get_hospitalization_data(self, mock_file, mock_in):
         # this should not raise any errors
         ghd.get_hospitalization_data(out_folder=self.path)
 
@@ -146,10 +150,8 @@ class TestGetHospitalizationData(fake_filesystem_unittest.TestCase):
                 except:
                     pass
         # should be equal to the input array
-        self.assertAlmostEqual(
-            list(inputarray_r[6:]),
-            list(control_sum[6:]),
-            10)
+        np.testing.assert_array_almost_equal(
+            inputarray_r[6:], control_sum[6:], 10)
 
 
 if __name__ == '__main__':

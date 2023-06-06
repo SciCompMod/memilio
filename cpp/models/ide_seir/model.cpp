@@ -32,7 +32,7 @@ namespace iseir
 using Pa  = ParametersBase;
 using Vec = TimeSeries<double>::Vector;
 
-IdeSeirModel::IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
+Model::Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init)
     : parameters{Parameterset_init}
     , m_result{std::move(init)}
     , m_result_SEIR{TimeSeries<double>(4)}
@@ -41,7 +41,7 @@ IdeSeirModel::IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init
 {
 }
 
-double IdeSeirModel::generalized_beta_distribution(double tau, double p, double q) const
+double Model::generalized_beta_distribution(double tau, double p, double q) const
 {
     if ((parameters.get<LatencyTime>() < tau) &&
         (parameters.get<InfectiousTime>() + parameters.get<LatencyTime>() > tau)) {
@@ -52,13 +52,13 @@ double IdeSeirModel::generalized_beta_distribution(double tau, double p, double 
     return 0.0;
 }
 
-double IdeSeirModel::central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
-                                                 Eigen::Index idx) const
+double Model::central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
+                                          Eigen::Index idx) const
 {
     return (ts_ide[idx + 1][Eigen::Index(compartment)] - ts_ide[idx - 1][Eigen::Index(compartment)]) / (2 * m_dt);
 }
 
-double IdeSeirModel::num_integration_inner_integral(Eigen::Index idx) const
+double Model::num_integration_inner_integral(Eigen::Index idx) const
 {
     double res     = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
                             central_difference_quotient(m_result, InfectionState::S, m_k) +
@@ -73,7 +73,7 @@ double IdeSeirModel::num_integration_inner_integral(Eigen::Index idx) const
     return res;
 }
 
-TimeSeries<double> const& IdeSeirModel::simulate(int t_max)
+TimeSeries<double> const& Model::simulate(int t_max)
 {
 
     m_l = (int)std::floor(parameters.get<LatencyTime>() / m_dt);
@@ -104,7 +104,7 @@ TimeSeries<double> const& IdeSeirModel::simulate(int t_max)
     return m_result;
 }
 
-TimeSeries<double> const& IdeSeirModel::calculate_EIR()
+TimeSeries<double> const& Model::calculate_EIR()
 {
     Eigen::Index num_points = m_result.get_num_time_points();
     double S, E, I, R;
@@ -118,7 +118,7 @@ TimeSeries<double> const& IdeSeirModel::calculate_EIR()
     return m_result_SEIR;
 }
 
-void IdeSeirModel::print_result(bool calculated_SEIR) const
+void Model::print_result(bool calculated_SEIR) const
 {
     if (calculated_SEIR) {
         std::cout << "# time  |  S  |  E  |  I  |  R" << std::endl;

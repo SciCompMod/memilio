@@ -11,7 +11,6 @@ add_library(abm
     testing_strategy.h
     world.cpp
     world.h
-    infection_state.h
     location_type.h
     parameters.h
     parameters.cpp
@@ -21,6 +20,11 @@ add_library(abm
     trip_list.h
     lockdown_rules.cpp
     lockdown_rules.h
+    infection.cpp
+    infection.h
+    infection_state.h
+    virus_variant.h
+    vaccine.h
     mask.h
     mask.cpp
 )

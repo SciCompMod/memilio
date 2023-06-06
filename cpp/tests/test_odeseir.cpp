@@ -25,6 +25,18 @@
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
+TEST(TestSeir, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
+
+    mio::oseir::Model model;
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
 TEST(TestSeir, CompareSeirWithJS)
 {
     // initialization
@@ -138,4 +150,6 @@ TEST(TestSeir, check_constraints_parameters)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+    
+    mio::set_log_level(mio::LogLevel::warn);
 }

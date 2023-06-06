@@ -21,7 +21,7 @@
 #define SECIR_AGERES_SETUPS_H_
 
 #include "memilio/compartments/simulation.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "models/ode_secir/model.h"
 #include "models/ode_secir/parameter_space.h"

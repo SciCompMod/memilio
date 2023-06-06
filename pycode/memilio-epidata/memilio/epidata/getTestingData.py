@@ -213,10 +213,20 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0].rename(dd.GerEng, axis=1, inplace=True)
     df_test[1].rename(dd.GerEng, axis=1, inplace=True)
 
-    df_test[0][dd.EngEng['date']] = pd.to_datetime(
-        df_test[0][dd.EngEng['date']])
-    df_test[1][dd.EngEng['date']] = pd.to_datetime(
-        df_test[1][dd.EngEng['date']])
+    try:
+        df_test[0][dd.EngEng['date']] = pd.to_datetime(
+            df_test[0][dd.EngEng['date']], format="ISO8601")
+        df_test[1][dd.EngEng['date']] = pd.to_datetime(
+            df_test[1][dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df_test[0][dd.EngEng['date']] = pd.to_datetime(
+                df_test[0][dd.EngEng['date']])
+            df_test[1][dd.EngEng['date']] = pd.to_datetime(
+                df_test[1][dd.EngEng['date']])
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # drop columns
     df_test[0] = df_test[0].drop(
@@ -256,12 +266,12 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # plot country-wide positive rates
     if make_plot:
         # make plot
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
             [df_test[0][dd.EngEng['positiveRate']]],
             ["Germany"],
-            'Positive rate for Sars-CoV-2 testing', 'Date', 'Positive rate',
-            "Germany_Testing_positive_rate")
+            title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
+            fig_name="Germany_Testing_positive_rate")
 
     # set last values for missing dates via forward imputation
     df_test[1] = mdfs.impute_and_reduce_df(
@@ -278,14 +288,14 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # plot positive rates of federal states
     if make_plot:
         # make plot
-        customPlot.plotList(
+        customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
             [df_test[1].loc
              [df_test[1][dd.EngEng['idState']] == stateID,
               [dd.EngEng['positiveRate']]] for stateID in geoger.get_state_ids()],
             [stateName for stateName in geoger.get_state_names()],
-            'Positive rate for Sars-CoV-2 testing', 'Date', 'Positive rate',
-            "FederalStates_Testing_positive_rate")
+            title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
+            fig_name='FederalStates_Testing_positive_rate')
 
     # store positive rates of federal states on county level
     # get county ids
