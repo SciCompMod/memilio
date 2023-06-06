@@ -80,7 +80,7 @@ TEST(TestPerson, quarantine)
     auto home                 = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto work                 = mio::abm::Location(mio::abm::LocationType::Work, 0);
 
-    //setup rng mock so the person has a state transition to Recovered_Infected
+    //setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(4))
@@ -92,16 +92,16 @@ TEST(TestPerson, quarantine)
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
-    infection_parameters.get<mio::abm::InfectedToRecovered>()[{
+    infection_parameters.get<mio::abm::InfectedSymptomsToRecovered>()[{
         mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
         0.5 * dt.days();
 
-    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Infected, t_morning,
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
                                    infection_parameters);
 
     person.detect_infection(t_morning);
 
-    ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::Infected);
+    ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
     ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, {}), mio::abm::LocationType::Home);
     ASSERT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
     person.remove_quarantine();

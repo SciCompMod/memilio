@@ -31,8 +31,8 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 {
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C = Carrier, I = Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
+    // S = Susceptible, E = Exposed, INS = InfectedNoSymptoms, IS = InfectedSymptoms, I_s = InfectedSevere,
+    // I_c = InfectedCritical, R = Recovered, D = Dead
     std::ofstream myfile("abm_minimal.txt");
     myfile << "# t S E C I I_s I_c R_C R_I D\n";
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {

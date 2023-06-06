@@ -23,7 +23,7 @@
 #include "abm/age.h"
 #include "abm/mask_type.h"
 #include "abm/time.h"
-#include "abm/infection_virus_variant.h"
+#include "abm/virus_variant.h"
 #include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
@@ -261,8 +261,8 @@ using GlobalInfectionParameters =
     ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
                  InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
                  InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions,
-                 InfectivityDistributions, DetectInfection, MaskProtection>;
+                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
+                 MaskProtection>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

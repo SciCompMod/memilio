@@ -139,10 +139,12 @@ TEST(TestLocation, reachCapacity)
     auto dt     = mio::abm::hours(1);
     auto params = mio::abm::GlobalInfectionParameters{};
     //setup so p1 doesn't transition
-    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                               mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.days();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        2 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        2 * dt.days();
 
     auto world     = mio::abm::World(params);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
@@ -161,7 +163,8 @@ TEST(TestLocation, reachCapacity)
         .WillOnce(testing::Return(0.8)) // draw random school hour
         .WillRepeatedly(testing::Return(1.0));
 
-    auto& p1 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedNoSymptoms);
+    auto& p1 =
+        add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedNoSymptoms);
     auto& p2 = add_test_person(world, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible);
 
     auto& home   = world.get_individualized_location(home_id);
@@ -225,11 +228,11 @@ TEST(TestLocation, interact)
     params.get<mio::abm::IncubationPeriod>()[{variant, age, mio::abm::VaccinationState::Unvaccinated}] = 2.;
 
     //setup location with some chance of exposure
-    auto location = mio::abm::Location(mio::abm::LocationType::Work, 0);
-    auto infected1 =
-        make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms, t, params);
-    auto infected2 =
-        make_test_person(location, mio::abm::AgeGroup::Age80plus, mio::abm::InfectionState::InfectedSymptoms, t, params);
+    auto location  = mio::abm::Location(mio::abm::LocationType::Work, 0);
+    auto infected1 = make_test_person(location, mio::abm::AgeGroup::Age15to34,
+                                      mio::abm::InfectionState::InfectedNoSymptoms, t, params);
+    auto infected2 = make_test_person(location, mio::abm::AgeGroup::Age80plus,
+                                      mio::abm::InfectionState::InfectedSymptoms, t, params);
     auto infected3 =
         make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms, t, params);
 
@@ -271,19 +274,21 @@ TEST(TestLocation, storeSubpopulations)
 
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
-    //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to Carrier to RecoveredCarrier
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.days();
+    //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to RecoveredInfectedNoSymptoms
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
+                                                         mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.days();
 
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.days();
-    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 5 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        5 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                                      mio::abm::VaccinationState::Unvaccinated}] = 5 * dt.days();
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                              mio::abm::VaccinationState::Unvaccinated}]   = 0.4 * dt.days();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59,
-                                                mio::abm::VaccinationState::Unvaccinated}] = 1.8 * dt.days();
+                                              mio::abm::VaccinationState::Unvaccinated}] = 0.4 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
+        1.8 * dt.days();
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
 
@@ -298,12 +303,12 @@ TEST(TestLocation, storeSubpopulations)
         .WillRepeatedly(testing::Return(1.0));
 
     auto person1 =
-        make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected, t, params);
+        make_test_person(location, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms, t, params);
     location.add_person(person1, {0});
 
     // mock person 2 not needed due to high setup of transition times
-    auto person2 =
-        make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected, t, params);
+    auto person2 = make_test_person(location, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms,
+                                    t, params);
     location.add_person(person2, {0});
 
     // mock person 3
@@ -313,7 +318,7 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to RecoveredCarrier
+        .WillOnce(testing::Return(0.6)) // transition to RecoveredInfectedNoSymptoms
         .WillRepeatedly(testing::Return(1.0));
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
@@ -324,24 +329,23 @@ TEST(TestLocation, storeSubpopulations)
     location.store_subpopulations(t1);
     auto v1 = location.get_subpopulations().get_value(1);
     // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Infected)], 2);
-    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::Carrier)], 1);
+    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedSymptoms)], 2);
+    ASSERT_EQ(v1[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
 
     auto t2 = t1 + dt;
     location.store_subpopulations(t2);
     auto v2 = location.get_subpopulations().get_value(2);
     // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Infected)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Recovered_Infected)], 1);
-    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Carrier)], 1);
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::Recovered)], 1);
+    ASSERT_EQ(v2[size_t(mio::abm::InfectionState::InfectedNoSymptoms)], 1);
 
     auto t3 = t2 + mio::abm::days(10);
     location.store_subpopulations(t3);
     auto v3 = location.get_subpopulations().get_value(3);
     // Check whether the number of persons in infected state at the location is correct
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Infected)], 1);
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered_Infected)], 1);
-    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered_Carrier)], 1);
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::InfectedSymptoms)], 1);
+    ASSERT_EQ(v3[size_t(mio::abm::InfectionState::Recovered)], 2);
 
     // Check total number of subpopulation is correct.
     ASSERT_EQ(location.get_subpopulations().get_num_time_points(), 4);
