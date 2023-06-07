@@ -1,8 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -89,6 +89,11 @@ LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const Migratio
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
                                         const MigrationParameters& params);
+
+/**
+ * @brief Person%s in the icu go to cemetery when they are dead.
+ */
+LocationType go_to_cemetery(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 /**@}*/
 
 } // namespace abm

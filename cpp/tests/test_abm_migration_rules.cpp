@@ -370,3 +370,13 @@ TEST(TestMigrationRules, recover)
     ASSERT_EQ(mio::abm::return_home_when_recovered(p_rec, t, dt, {}), mio::abm::LocationType::Home);
     ASSERT_EQ(mio::abm::return_home_when_recovered(p_inf, t, dt, {}), mio::abm::LocationType::Hospital);
 }
+
+TEST(TestMigrationRules, dead)
+{
+    auto icu    = mio::abm::Location(mio::abm::LocationType::ICU, 0);
+    auto t      = mio::abm::TimePoint(12346);
+    auto dt       = mio::abm::hours(1);
+    auto p_dead = make_test_person(icu, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
+
+    ASSERT_EQ(mio::abm::go_to_cemetery(p_dead, t, dt, {}), mio::abm::LocationType::Cemetery);
+}

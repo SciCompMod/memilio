@@ -1,8 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -110,7 +109,8 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& trip            = m_trip_list.get_next_trip();
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
-            if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
+                current_location == get_individualized_location(trip.migration_origin)) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
@@ -209,6 +209,7 @@ void World::use_migration_rules(bool param)
     // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     if (m_use_migration_rules) {
         m_migration_rules = {
+            std::make_pair(&go_to_cemetery, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,
@@ -223,6 +224,7 @@ void World::use_migration_rules(bool param)
     }
     else {
         m_migration_rules = {
+            std::make_pair(&go_to_cemetery, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,
