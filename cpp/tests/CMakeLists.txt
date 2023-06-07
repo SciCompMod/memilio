@@ -20,6 +20,7 @@ set(TESTSOURCES
     test_parameter_studies.cpp
     test_graph.cpp
     test_graph_simulation.cpp
+    test_graph_abm.cpp
     test_stl_util.cpp
     test_uncertain.cpp
     test_random_number_generator.cpp
@@ -63,17 +64,17 @@ set(TESTSOURCES
 )
 
 if(MEMILIO_HAS_JSONCPP)
-set(TESTSOURCES ${TESTSOURCES}
-test_json_serializer.cpp
-test_epi_data_io.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_json_serializer.cpp
+        test_epi_data_io.cpp
+    )
 endif()
 
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
-set(TESTSOURCES ${TESTSOURCES}
-test_save_parameters.cpp
-test_save_results.cpp
-)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_save_parameters.cpp
+        test_save_results.cpp
+    )
 endif()
 
 add_executable(memilio-test ${TESTSOURCES})
