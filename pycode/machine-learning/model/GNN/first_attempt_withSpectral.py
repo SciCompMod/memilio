@@ -83,13 +83,6 @@ class MyDataset(spektral.data.dataset.Dataset):
         super().__init__(**kwargs)
 
 
-# data = MyDataset(transforms=NormalizeAdj())
-data = MyDataset()
-batch_size = 32
-epochs = 100
-es_patience = 500  # Patience for early stopping
-
-
 ################################################################################
 # Build model
 ################################################################################
@@ -124,15 +117,7 @@ class Net(Model):
         return output
 
 
-# decayed_lr = tf.keras.optimizers.schedules.ExponentialDecay(
-#         initial_learning_rate=0.01,
-#         decay_steps=200,
-#         decay_rate=0.95,
-#         staircase=True)
-learning_rate = 0.001
-model = Net()
-optimizer = Adam(learning_rate=learning_rate)
-loss_fn = MeanAbsolutePercentageError()
+
 
 
 # @tf.function(input_signature=loader_tr.tf_signature(),
@@ -199,6 +184,19 @@ def test_evaluation(loader):
     return mean_percentage
 
 
+################################################################################
+#                Training and Evaluation                                       
+#################################################################################
+
+
+# data = MyDataset(transforms=NormalizeAdj())
+data = MyDataset()
+batch_size = 32
+epochs = 100
+es_patience = 500  # Patience for early stopping
+
+
+
 kf = KFold(n_splits = 5)
 train_idxs = []
 test_idxs = []
@@ -211,9 +209,16 @@ test_scores = []
 train_losses = []
 val_losses = []
 
+learning_rate = 0.001
+optimizer = Adam(learning_rate=learning_rate)
+loss_fn = MeanAbsolutePercentageError()
+
+
 start = time.perf_counter()
 
 for train_idx, test_idx in zip(train_idxs, test_idxs):
+
+    model = Net()
     
     data_tr = data[train_idx[:(int(0.8*len(train_idx)))]]
     data_va = data[train_idx[(int(0.8*len(train_idx))):]]
