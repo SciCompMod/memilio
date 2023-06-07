@@ -40,10 +40,12 @@ namespace abm
 struct Trip {
     uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     World, where all Person%s are saved.*/
+    uint32_t person_world_id;
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**

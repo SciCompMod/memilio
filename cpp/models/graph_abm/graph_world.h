@@ -73,14 +73,21 @@ public:
     */
     void add_existing_person(std::unique_ptr<mio::abm::Person>&& person);
 
-private:
-    // /**
-    //  * @brief Person%s interact at their Location and may become infected.
-    //  * @param[in] t The current TimePoint.
-    //  * @param[in] dt The length of the time step of the Simulation.
-    //  */
-    // void interaction(mio::abm::TimePoint t, mio::abm::TimeSpan dt);
+    /**
+     * @brief Get an individualized Location.
+     * @param[in] id LocationId of the Location.
+     * @return Reference to the Location.
+     */
+    mio::abm::Location& get_individualized_location(mio::abm::LocationId id);
 
+    /**
+     * @brief Get person by id.
+     * @param[in] person_id PersonId of the Person.
+     * @return Reference to unique pointer in m_persons.
+    */
+    std::unique_ptr<mio::abm::Person>& get_person(uint32_t person_id, uint32_t person_world_id);
+
+private:
     //persons that will migrate to other worlds
     std::vector<std::unique_ptr<mio::abm::Person>> m_persons_to_migrate;
     std::vector<std::unique_ptr<mio::abm::Location>> m_locations_external;

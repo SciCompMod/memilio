@@ -51,9 +51,40 @@ mio::abm::Location& GraphWorld::find_location(mio::abm::LocationType type, const
     }
 }
 
+mio::abm::Location& GraphWorld::get_individualized_location(mio::abm::LocationId id)
+{
+    if (id.world_id == Base::m_world_id) {
+        return *m_locations[id.index];
+    }
+    else {
+        mio::abm::Location loc = mio::abm::Location(id.type, id.index, id.world_id);
+        auto iter              = std::find_if(m_locations_external.begin(), m_locations_external.end(),
+                                              [loc](const std::unique_ptr<mio::abm::Location>& loc_ext) {
+                                     return ((loc.get_type() == loc_ext->get_type()) &&
+                                             (loc.get_index() == loc_ext->get_index()) &&
+                                             (loc.get_world_id() == loc_ext->get_world_id()));
+                                 });
+        if (iter != m_locations_external.end()) {
+            return *(*iter);
+        }
+        else {
+            m_locations_external.emplace_back(std::make_unique<mio::abm::Location>(loc));
+            return *m_locations_external.back();
+        }
+    }
+}
+
 void GraphWorld::add_existing_person(std::unique_ptr<mio::abm::Person>&& person)
 {
     Base::m_persons.push_back(std::move(person));
+}
+
+std::unique_ptr<mio::abm::Person>& GraphWorld::get_person(uint32_t person_id, uint32_t person_world_id)
+{
+    return *std::find_if(Base::m_persons.begin(), Base::m_persons.end(),
+                         [person_id, person_world_id](const std::unique_ptr<mio::abm::Person>& person) {
+                             return (person_id == person->get_person_id() && person_world_id == person->get_world_id());
+                         });
 }
 
 void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
@@ -89,23 +120,30 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
         continue;
     }
     // check if a person makes a trip
-    //TODO
-    // size_t num_trips = m_trip_list.num_trips();
-    // if (num_trips != 0) {
-    //     while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-    //         auto& trip            = m_trip_list.get_next_trip();
-    //         auto& person          = m_persons[trip.person_id];
-    //         auto current_location = person->get_location();
-    //         if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
-    //             auto& target_location = get_individualized_location(trip.migration_destination);
-    //             if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-    //                 person->apply_mask_intervention(target_location);
-    //                 person->migrate_to(target_location);
-    //             }
-    //         }
-    //         m_trip_list.increase_index();
-    //     }
-    // }
+    size_t num_trips = m_trip_list.num_trips();
+    if (num_trips != 0) {
+        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
+            auto& trip            = m_trip_list.get_next_trip();
+            auto& person          = get_person(trip.person_id, trip.person_world_id);
+            auto current_location = person->get_location();
+            if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+                auto& target_location = get_individualized_location(trip.migration_destination);
+                person->apply_mask_intervention(target_location);
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location.get_world_id() != Base::m_world_id) {
+                        //person changes world
+                        person->migrate_to_other_world(target_location, false);
+                        m_persons_to_migrate.push_back(std::move(person));
+                        Base::m_persons.erase(Base::m_persons.begin() + trip.person_id);
+                    }
+                    else {
+                        person->migrate_to(target_location);
+                    }
+                }
+            }
+            m_trip_list.increase_index();
+        }
+    }
 }
 
 std::vector<std::unique_ptr<mio::abm::Person>>& GraphWorld::get_persons_to_migrate()
