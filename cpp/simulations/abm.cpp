@@ -20,6 +20,7 @@
 #include "abm/abm.h"
 #include "abm/person.h"
 #include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include "boost/filesystem.hpp"
 
@@ -766,6 +767,14 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 */
 mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
+    // mio::thread_local_rng().seed(
+    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
+    printf("Parameter Sample Seeds: ");
+    for (auto s : mio::thread_local_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
+    
     // Assumed percentage of infection state at the beginning of the simulation.
     ScalarType exposed_prob = 0.005, infected_no_symptoms_prob = 0.001, infected_symptoms_prob = 0.001,
                recovered_prob = 0.0;
@@ -776,8 +785,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // world.get_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    printf("Seeds: ");
+    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
+    printf("ABM Simulation Seeds: ");
     for (auto s : world.get_rng().get_seeds()) {
         printf("%u, ", s);
     }
