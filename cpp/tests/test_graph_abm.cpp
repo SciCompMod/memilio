@@ -22,7 +22,7 @@
 #include "models/abm/world.h"
 #include "models/abm/person.h"
 #include "abm_helpers.h"
-//#include <gtest/gtest.h>
+#include <gtest/gtest.h>
 
 TEST(TestGraphWorld, test_find_location)
 {
@@ -31,7 +31,8 @@ TEST(TestGraphWorld, test_find_location)
     auto world2 = mio::graph_abm::GraphWorld(infection_params, 1);
     auto home   = world1.add_location(mio::abm::LocationType::Home);
     auto work   = world2.add_location(mio::abm::LocationType::Work);
-    auto person = mio::abm::Person(world1.get_individualized_location({0, mio::abm::LocationType::Home, 0}), mio::abm::AgeGroup::Age35to59, 0, 0);
+    auto person = mio::abm::Person(world1.get_individualized_location({0, mio::abm::LocationType::Home, 0}),
+                                   mio::abm::AgeGroup::Age35to59, 0, 0);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
     auto& found_home = world1.find_location(mio::abm::LocationType::Home, person);
