@@ -43,83 +43,6 @@
 #include <iostream>
 #include <gtest/gtest.h>
 
-// define function that computes flows needed for initalization of IDE for a given result/compartments of the ODE model
-// we assume that the ODE simulation starts at t0=0
-void compute_initial_flows_from_compartments(mio::TimeSeries<ScalarType> secihurd_ode, mio::isecir::Model model,
-                                             ScalarType t0_ide, ScalarType dt)
-{
-    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-
-    // get (global) max_support to determine how many flows in the past we have to compute
-    ScalarType global_max_support = model.get_global_max_support(dt);
-    std::cout << "Global max_support: " << global_max_support << "\n";
-    Eigen::Index global_max_support_index = std::ceil(global_max_support / dt);
-
-    // remove time point
-    model.m_transitions.remove_last_time_point();
-
-    ScalarType t0_ide_index = std::ceil(t0_ide / dt);
-    unused(secihurd_ode);
-    // flow from S to E for -6*global_max_support, ..., 0 (directly from compartments)
-    // add time points to init_transitions here
-    for (int i = t0_ide_index - 6 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        model.m_transitions.add_time_point(i, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-        std::cout << "i: " << i << "\n";
-        model.m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
-            secihurd_ode[i - 1][Eigen::Index(mio::osecir::InfectionState::Susceptible)] -
-            secihurd_ode[i][Eigen::Index(mio::osecir::InfectionState::Susceptible)];
-    }
-
-    // then use compute_flow function to compute following flows
-
-    Eigen::Index start_shift = t0_ide_index - 6 * global_max_support_index;
-    std::cout << "first timepoint: " << start_shift << "\n";
-
-    // flow from E to C for -5*global_max_support, ..., 0
-    for (int i = t0_ide_index - 5 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        model.compute_flow(1, 0, dt, true, i - start_shift);
-    }
-
-    // flow from C to I and C to R for -4*global_max_support, ..., 0
-    for (int i = t0_ide_index - 4 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        // C to I
-        model.compute_flow(2, 1, dt, true, i - start_shift);
-        // C to R
-        model.compute_flow(3, 1, dt, true, i - start_shift);
-    }
-
-    // flow from I to H and I to R for -3*global_max_support, ..., 0
-    for (int i = t0_ide_index - 3 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        // I to H
-        model.compute_flow(4, 2, dt, true, i - start_shift);
-        // I to R
-        model.compute_flow(5, 2, dt, true, i - start_shift);
-    }
-
-    // flow from H to U and H to R for -2*global_max_support, ..., 0
-    for (int i = t0_ide_index - 2 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        // H to U
-        model.compute_flow(6, 4, dt, true, i - start_shift);
-        // H to U
-        model.compute_flow(7, 4, dt, true, i - start_shift);
-    }
-
-    // flow from U to D and U to R for -1*global_max_support, ..., 0
-    for (int i = t0_ide_index - 1 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-        // U to D
-        model.compute_flow(8, 6, dt, true, i - start_shift);
-        // U to R
-        model.compute_flow(9, 6, dt, true, i - start_shift);
-    }
-
-    std::cout << "numtimepoints: " << model.m_transitions.get_num_time_points() << "\n";
-
-    mio::isecir::Simulation sim(model, t0_ide, dt);
-    sim.print_transitions();
-
-    // return TimeSeries from -1*global_max_support, ..., 0 containing necessary flows for IDE simulation
-}
-
 TEST(IdeOdeSecir, compareIdeOde)
 {
     ScalarType t0   = 0;
@@ -229,18 +152,14 @@ TEST(IdeOdeSecir, compareIdeOde)
     // Initialize model.
     mio::isecir::Model model_ide(std::move(init_transitions), N, Dead_before);
 
-    ScalarType t0_ide = 6 * model_ide.get_global_max_support(dt) + 3;
-    std::cout << "t0_ide: " << t0_ide << "\n";
-    compute_initial_flows_from_compartments(secihurd_ode, model_ide, t0_ide, dt);
-
-    // Set working parameters.
-    // To compare woth the ODE model we use ExponentialDecay functions as TransitionDistributions
-    // We set the funcparams so that they correspond to the above ODE model
-    mio::isecir::ExponentialDecay expdecay(4);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution;
-    delaydistribution.set_state_age_function(expdecay);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
+    // // Set working parameters.
+    // // To compare woth the ODE model we use ExponentialDecay functions as TransitionDistributions
+    // // We set the funcparams so that they correspond to the above ODE model
+    // mio::isecir::ExponentialDecay expdecay(4);
+    // mio::isecir::StateAgeFunctionWrapper delaydistribution;
+    // delaydistribution.set_state_age_function(expdecay);
+    // std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    // model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // Set probabilities that determine proportion between compartments
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
@@ -259,10 +178,22 @@ TEST(IdeOdeSecir, compareIdeOde)
     model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
 
+    ScalarType t0_ide = 6 * model_ide.get_global_max_support(dt) + 3;
+    std::cout << "t0_ide: " << t0_ide << "\n";
+
+    model_ide.compute_initial_flows_from_compartments(secihurd_ode, t0_ide, dt);
+
+    std::cout << "m_transitions num_time_points: " << model_ide.m_transitions.get_num_time_points() << "\n";
+    std::cout << "global_max_supp_timesteps: " << (Eigen::Index)std::ceil(model_ide.get_global_max_support(dt) / dt)
+              << "\n";
+
     model_ide.check_constraints(dt);
 
     // Carry out simulation.
-    // mio::isecir::Simulation sim(model_ide, t0_ide - 1, dt);
-    // sim.advance(tmax);
-    // mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
+    std::cout << "Simulating now \n";
+    mio::isecir::Simulation sim(model_ide, t0_ide, dt);
+
+    sim.advance(tmax);
+    sim.print_compartments();
+    mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
 }

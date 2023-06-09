@@ -74,15 +74,87 @@ public:
 
         ScalarType global_max_support = get_global_max_support(dt);
 
-        std::cout << "m_transitions num_time_points: " << m_transitions.get_num_time_points() << "\n";
-        std::cout << "global_max_supp_timesteps: " << (Eigen::Index)std::ceil(global_max_support / dt) << "\n";
-
         if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(global_max_support / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
 
         parameters.check_constraints();
+    }
+
+    // define function that computes flows needed for initalization of IDE for a given result/compartments of the ODE model
+    // we assume that the ODE simulation starts at t0=0
+    void compute_initial_flows_from_compartments(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
+                                                 ScalarType dt)
+    {
+        int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+        // get (global) max_support to determine how many flows in the past we have to compute
+        ScalarType global_max_support = this->get_global_max_support(dt);
+        std::cout << "Global max_support: " << global_max_support << "\n";
+        Eigen::Index global_max_support_index = std::ceil(global_max_support / dt);
+
+        // remove time point
+        this->m_transitions.remove_last_time_point();
+
+        ScalarType t0_ide_index = std::ceil(t0_ide / dt);
+        unused(secihurd_ode);
+        // flow from S to E for -6*global_max_support, ..., 0 (directly from compartments)
+        // add time points to init_transitions here
+        for (int i = t0_ide_index - 6 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            this->m_transitions.add_time_point(i, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
+            std::cout << "i: " << i << "\n";
+            this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
+                secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
+                secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
+        }
+
+        // then use compute_flow function to compute following flows
+
+        Eigen::Index start_shift = t0_ide_index - 6 * global_max_support_index;
+        std::cout << "first timepoint: " << start_shift << "\n";
+
+        // flow from E to C for -5*global_max_support, ..., 0
+        for (int i = t0_ide_index - 5 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            this->compute_flow(1, 0, dt, true, i - start_shift);
+        }
+
+        // flow from C to I for -4*global_max_support, ..., 0
+        for (int i = t0_ide_index - 4 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            // C to I
+            this->compute_flow(2, 1, dt, true, i - start_shift);
+        }
+
+        // flow from I to H for -3*global_max_support, ..., 0
+        for (int i = t0_ide_index - 3 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            // I to H
+            this->compute_flow(4, 2, dt, true, i - start_shift);
+        }
+
+        // flow from H to U for -2*global_max_support, ..., 0
+        for (int i = t0_ide_index - 2 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            // H to U
+            this->compute_flow(6, 4, dt, true, i - start_shift);
+        }
+
+        // flow from U to D and C, I, H, U to R for -1*global_max_support, ..., 0
+        for (int i = t0_ide_index - 1 * global_max_support_index + 1; i <= t0_ide_index; i++) {
+            // U to D
+            this->compute_flow(8, 6, dt, true, i - start_shift);
+            // C to R
+            this->compute_flow(3, 1, dt, true, i - start_shift);
+            // I to R
+            this->compute_flow(5, 2, dt, true, i - start_shift);
+            // H to R
+            this->compute_flow(7, 4, dt, true, i - start_shift);
+            // U to R
+            this->compute_flow(9, 6, dt, true, i - start_shift);
+        }
+
+        std::cout << "m_transitions numtimepoints: " << this->m_transitions.get_num_time_points() << "\n";
+
+        // mio::isecir::Simulation sim(model, t0_ide, dt);
+        // sim.print_transitions();
     }
 
     /**
