@@ -43,7 +43,7 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_b
         m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
 }
 
-void Model::initialize(ScalarType dt)
+void Model::initialize_solver(ScalarType dt)
 {
     // compute Susceptibles at time 0  and m_forceofinfection at time -m_dt as initial values for discretization scheme
     // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
@@ -115,8 +115,10 @@ void Model::compute_susceptibles(ScalarType dt)
         m_populations[num_time_points - 2][Eigen::Index(InfectionState::Susceptible)] / (1 + dt * m_forceofinfection);
 }
 
-void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt)
+void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt, bool initial_flow,
+                         Eigen::Index current_time_index)
 {
+    std::cout << "\n";
     ScalarType sum = 0;
     /* In order to satisfy TransitionDistribution(m_dt*i) = 0 for all i >= k, k is determined by the maximum support of the distribution.
     Since we are using a backwards difference scheme to compute the derivative, we have that the
@@ -128,20 +130,33 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
         parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_max_support(dt) / dt);
 
-    Eigen::Index num_time_points = m_transitions.get_num_time_points();
+    Eigen::Index num_time_points;
+
+    if (initial_flow) {
+        num_time_points = current_time_index;
+        std::cout << "numtimepoints: " << num_time_points << "\n";
+        std::cout << "current time: " << current_time_index << "\n";
+    }
+
+    else {
+        num_time_points = m_transitions.get_num_time_points();
+    }
 
     for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
+        std::cout << "i: " << i << "\n";
         // (num_time_points - 1 - i)* m_dt is the time, the individuals has already spent in this state.
-
         ScalarType state_age = (num_time_points - 1 - i) * dt;
+        std::cout << "state age: " << state_age << "\n";
+        // std::cout << "inflow at i+1: " << i + 1 << "\n";
 
         // backward difference scheme to approximate first derivative
         sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age) -
                 parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age - dt)) /
                dt * m_transitions[i + 1][idx_IncomingFlow];
+        std::cout << "Incoming flow: " << m_transitions[i + 1][idx_IncomingFlow] << "\n";
     }
-
-    m_transitions.get_last_value()[Eigen::Index(idx_InfectionTransitions)] =
+    std::cout << "computed flow at time point : " << num_time_points - 1 << "\n";
+    m_transitions.get_value(num_time_points - 1)[Eigen::Index(idx_InfectionTransitions)] =
         (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
 }
 
@@ -322,6 +337,31 @@ void Model::compute_recovered()
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered)] +
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedSevereToRecovered)] +
         m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToRecovered)];
+}
+
+ScalarType Model::get_global_max_support(ScalarType dt) const
+{
+    ScalarType global_max_support = std::max(
+        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
+             .get_max_support(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered].get_max_support(
+             dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead].get_max_support(
+             dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
+             .get_max_support(dt)});
+
+    return global_max_support;
 }
 
 } // namespace isecir

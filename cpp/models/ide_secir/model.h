@@ -72,27 +72,12 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-        ScalarType max_support = std::max(
-            {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_max_support(dt),
-             parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_max_support(dt)});
+        ScalarType global_max_support = get_global_max_support(dt);
 
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(max_support / dt)) {
+        std::cout << "m_transitions num_time_points: " << m_transitions.get_num_time_points() << "\n";
+        std::cout << "global_max_supp_timesteps: " << (Eigen::Index)std::ceil(global_max_support / dt) << "\n";
+
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(global_max_support / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
@@ -106,7 +91,7 @@ public:
      * Initial transitions are used to calculate the initial compartment sizes.
      * @param[in] dt Time discretization step size.         
      */
-    void initialize(ScalarType dt);
+    void initialize_solver(ScalarType dt);
 
     /**
     * @brief Computes number of Susceptibles for the current last time in m_populations.
@@ -129,7 +114,8 @@ public:
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      */
-    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt);
+    void compute_flow(int idx_InfectionTransitions, Eigen::Index idx_IncomingFlow, ScalarType dt,
+                      bool initial_flow = false, Eigen::Index current_time_index = 0);
 
     /**
      * @brief Sets all required flows for the current last timestep in m_transitions.
@@ -194,6 +180,18 @@ public:
      *
      */
     void compute_recovered();
+
+    /**
+     * @brief Getter for the global max_support, i.e. the maximum of max_support over all TransitionDistributions.
+     *
+     * This determines how many inital values we need for the flows.
+     *
+     * @param[in] dt Time step size.
+     * 
+     * @return Global max_support.
+     *
+     */
+    ScalarType get_global_max_support(ScalarType dt) const;
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */

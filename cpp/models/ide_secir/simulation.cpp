@@ -33,7 +33,7 @@ namespace isecir
 void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    m_model->initialize(m_dt);
+    m_model->initialize_solver(m_dt);
 
     // for every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {

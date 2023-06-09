@@ -123,8 +123,14 @@ struct StateAgeFunction {
     }
 
     /**
-     * @brief Computes max_support of Function depending on time step size dt and some tolerance tol. 
+     * @brief Computes max_support of Function depending on time step size dt and some tolerance tol.  
      * 
+     * max_support is the first time step when the respective is zero or smaller than some tolerance.
+     * This definition is useful since max_support is used to determine how many initial values we need 
+     * for the flow. When computing the flow we compute the derivative of our Function by a backwards
+     * finite difference scheme. There we also need to evaluate our Function at the first time when it
+     * evaluates to zero, i.e. at max_support. 
+     *
      * This is a basic version to determine the max_support which evaluates Function at every time step 
      * until it reaches max_support.
      * For some specific StateAgeFunction%s there is a more efficient way to determine the max_support
