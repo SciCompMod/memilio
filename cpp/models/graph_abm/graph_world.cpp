@@ -30,31 +30,13 @@ mio::abm::Location& GraphWorld::find_location(mio::abm::LocationType type, const
 {
     auto index    = person.get_assigned_location_index(type);
     auto world_id = person.get_assigned_location_world_id(type);
-    if (world_id == Base::m_world_id) {
-        return Base::get_individualized_location({index, type, world_id});
-    }
-    else { //location is in other world
-        mio::abm::Location loc = mio::abm::Location(type, index, world_id);
-        auto iter              = std::find_if(m_locations_external.begin(), m_locations_external.end(),
-                                              [loc](const std::unique_ptr<mio::abm::Location>& loc_ext) {
-                                     return ((loc.get_type() == loc_ext->get_type()) &&
-                                             (loc.get_index() == loc_ext->get_index()) &&
-                                             (loc.get_world_id() == loc_ext->get_world_id()));
-                                 });
-        if (iter != m_locations_external.end()) {
-            return *(*iter);
-        }
-        else {
-            m_locations_external.emplace_back(std::make_unique<mio::abm::Location>(loc));
-            return *m_locations_external.back();
-        }
-    }
+    return get_individualized_location({index, type, world_id});
 }
 
 mio::abm::Location& GraphWorld::get_individualized_location(mio::abm::LocationId id)
 {
     if (id.world_id == Base::m_world_id) {
-        return *m_locations[id.index];
+        return *Base::m_locations[id.index];
     }
     else {
         mio::abm::Location loc = mio::abm::Location(id.type, id.index, id.world_id);
