@@ -318,7 +318,7 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to RecoveredInfectedNoSymptoms
+        .WillOnce(testing::Return(0.6)) // transition to Recovered
         .WillRepeatedly(testing::Return(1.0));
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
