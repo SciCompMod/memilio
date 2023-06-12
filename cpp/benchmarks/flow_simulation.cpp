@@ -43,7 +43,11 @@ void flowless_sim(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
+        //   run sim
         sim.advance(cfg.t_max);
+        //   clear results
+        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++)
+            sim.get_result().remove_last_time_point();
     }
 }
 
@@ -66,7 +70,11 @@ void flow_sim_comp_only(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
+        //   run sim
         sim.advance(cfg.t_max);
+        //   clear results
+        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++)
+            sim.get_result().remove_last_time_point();
     }
 }
 
@@ -89,7 +97,13 @@ void flow_sim(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
+        //   run sim
         sim.advance(cfg.t_max);
+        //   clear results
+        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++) {
+            sim.get_result().remove_last_time_point();
+            sim.get_flows().remove_last_time_point();
+        }
     }
 }
 
@@ -99,8 +113,8 @@ BENCHMARK(flowless_sim)->Name("Dummy 1/3");
 BENCHMARK(flowless_sim)->Name("Dummy 2/3");
 BENCHMARK(flowless_sim)->Name("Dummy 3/3");
 // actual benchmarks
-BENCHMARK(flowless_sim)->Name("Simulate compartments (without flows)");
-BENCHMARK(flow_sim_comp_only)->Name("Simulate compartments (with flows)");
-BENCHMARK(flow_sim)->Name("Simulate both compartments and flows");
+BENCHMARK(flowless_sim)->Name("mio::Simulation on osecirvvs::Model (pre 511 branch) without flows");
+BENCHMARK(flow_sim_comp_only)->Name("mio::Simulation on osecirvvs::Model with flows");
+BENCHMARK(flow_sim)->Name("mio::FlowSimulation on osecirvvs::Model with flows");
 // run all benchmarks
 BENCHMARK_MAIN();
