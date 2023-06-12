@@ -77,7 +77,7 @@ class TestAbm(unittest.TestCase):
         # check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, abm.AgeGroup.Age15to34)
-        self.assertEqual(p1.location.index, 0)
+        self.assertEqual(p1.location.index, 1)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
