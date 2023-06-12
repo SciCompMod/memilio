@@ -23,7 +23,8 @@ TEST(TestWorld, init)
 {
     auto world = mio::abm::World();
 
-    ASSERT_THAT(world.get_locations(), testing::ElementsAre());
+    EXPECT_EQ(world.get_locations().size(), 1);
+    EXPECT_EQ(world.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
@@ -35,8 +36,8 @@ TEST(TestWorld, addLocation)
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ((int)school_id1.index, 0);
-    ASSERT_EQ((int)school_id2.index, 1);
+    ASSERT_EQ((int)school_id1.index, 1);
+    ASSERT_EQ((int)school_id2.index, 2);
 
     auto& school1 = world.get_individualized_location(school_id1);
     auto& school2 = world.get_individualized_location(school_id2);
@@ -51,10 +52,10 @@ TEST(TestWorld, addLocation)
     }
     ASSERT_EQ(count_schools, 2);
 
-    ASSERT_EQ(world.get_locations()[0], school1);
-    ASSERT_EQ(world.get_locations()[1], school2);
-    ASSERT_EQ(world.get_locations()[2], work);
-    ASSERT_EQ(world.get_locations()[3], home);
+    ASSERT_EQ(world.get_locations()[1], school1);
+    ASSERT_EQ(world.get_locations()[2], school2);
+    ASSERT_EQ(world.get_locations()[3], work);
+    ASSERT_EQ(world.get_locations()[4], home);
 }
 
 TEST(TestWorld, addPerson)
@@ -297,10 +298,10 @@ TEST(TestWorld, evolveMigration)
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
-        auto cemetery_id = world.add_location(mio::abm::LocationType::Cemetery);
 
         auto& p_dead = add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
-        p_dead.set_assigned_location(icu_id);
+        p_dead.set_assigned_location(home_id);
+        p_dead.set_assigned_location(work_id);
 
         mio::abm::TripList& data = world.get_trip_list();
         mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
@@ -309,8 +310,7 @@ TEST(TestWorld, evolveMigration)
         data.add_trip(trip2);
 
         world.evolve(t, dt);
-        auto& cemetery = world.get_individualized_location(cemetery_id);
-        EXPECT_EQ(p_dead.get_location(), cemetery);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 

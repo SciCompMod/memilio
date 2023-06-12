@@ -120,7 +120,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
     ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
     const mio::abm::World world_test{std::move(sim.get_world())};
-    EXPECT_EQ(world_test.get_locations().size(), 0);
+    EXPECT_EQ(world_test.get_locations().size(), 1);
 }
 
 TEST(TestSimulation, advanceWithHistory)

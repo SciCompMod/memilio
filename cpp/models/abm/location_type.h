@@ -43,7 +43,7 @@ enum class LocationType : std::uint32_t
     Car,
     PublicTransport,
     TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
-    Cemetery, // Location for all the dead person
+    Cemetery, // Location for all the dead person. It created with the onece for the World. 
 
     Count //last!
 };
