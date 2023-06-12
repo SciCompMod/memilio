@@ -33,12 +33,15 @@ namespace oseir
 {
 
 /********************
-    * define the model *
-    ********************/
+ * define the model *
+ ********************/
 
+// clang-format off
 template <class I = InfectionState>
-using Flows = TypeChart<Flow<I, I::Susceptible, I::Exposed>, Flow<I, I::Exposed, I::Infected>,
-                        Flow<I, I::Infected, I::Recovered>>;
+using Flows = TypeChart<Flow<I, I::Susceptible, I::Exposed>,
+                        Flow<I, I::Exposed,     I::Infected>,
+                        Flow<I, I::Infected,    I::Recovered>>;
+// clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters, Flows<>>
 {

@@ -36,50 +36,50 @@ namespace osecirvvs
 template <class I = InfectionState>
 using Flows = TypeChart<
     //naive
-    Flow<I, I::SusceptibleNaive, I::ExposedNaive>, 
-    Flow<I, I::ExposedNaive, I::InfectedNoSymptomsNaive>,
-    Flow<I, I::InfectedNoSymptomsNaive, I::InfectedSymptomsNaive>,
-    Flow<I, I::InfectedNoSymptomsNaive, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsNaiveConfirmed, I::InfectedSymptomsNaiveConfirmed>,
-    Flow<I, I::InfectedNoSymptomsNaiveConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsNaive, I::InfectedSevereNaive>,
-    Flow<I, I::InfectedSymptomsNaive, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsNaiveConfirmed, I::InfectedSevereNaive>,
-    Flow<I, I::InfectedSymptomsNaiveConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSevereNaive, I::InfectedCriticalNaive>,
-    Flow<I, I::InfectedSevereNaive, I::SusceptibleImprovedImmunity>, 
-    Flow<I, I::InfectedCriticalNaive, I::DeadNaive>,
-    Flow<I, I::InfectedCriticalNaive, I::SusceptibleImprovedImmunity>,
+    Flow<I, I::SusceptibleNaive,                            I::ExposedNaive>, 
+    Flow<I, I::ExposedNaive,                                I::InfectedNoSymptomsNaive>,
+    Flow<I, I::InfectedNoSymptomsNaive,                     I::InfectedSymptomsNaive>,
+    Flow<I, I::InfectedNoSymptomsNaive,                     I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedNoSymptomsNaiveConfirmed,            I::InfectedSymptomsNaiveConfirmed>,
+    Flow<I, I::InfectedNoSymptomsNaiveConfirmed,            I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsNaive,                       I::InfectedSevereNaive>,
+    Flow<I, I::InfectedSymptomsNaive,                       I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsNaiveConfirmed,              I::InfectedSevereNaive>,
+    Flow<I, I::InfectedSymptomsNaiveConfirmed,              I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSevereNaive,                         I::InfectedCriticalNaive>,
+    Flow<I, I::InfectedSevereNaive,                         I::SusceptibleImprovedImmunity>, 
+    Flow<I, I::InfectedCriticalNaive,                       I::DeadNaive>,
+    Flow<I, I::InfectedCriticalNaive,                       I::SusceptibleImprovedImmunity>,
     //partial immunity
-    Flow<I, I::SusceptiblePartialImmunity, I::ExposedPartialImmunity>,
-    Flow<I, I::ExposedPartialImmunity, I::InfectedNoSymptomsPartialImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunity, I::InfectedSymptomsPartialImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunity, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed, I::InfectedSymptomsPartialImmunityConfirmed>,
-    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunity, I::InfectedSeverePartialImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunity, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed, I::InfectedSeverePartialImmunity>,
-    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSeverePartialImmunity, I::InfectedCriticalPartialImmunity>,
-    Flow<I, I::InfectedSeverePartialImmunity, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedCriticalPartialImmunity, I::DeadPartialImmunity>,
-    Flow<I, I::InfectedCriticalPartialImmunity, I::SusceptibleImprovedImmunity>,
+    Flow<I, I::SusceptiblePartialImmunity,                  I::ExposedPartialImmunity>,
+    Flow<I, I::ExposedPartialImmunity,                      I::InfectedNoSymptomsPartialImmunity>,
+    Flow<I, I::InfectedNoSymptomsPartialImmunity,           I::InfectedSymptomsPartialImmunity>,
+    Flow<I, I::InfectedNoSymptomsPartialImmunity,           I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed,  I::InfectedSymptomsPartialImmunityConfirmed>,
+    Flow<I, I::InfectedNoSymptomsPartialImmunityConfirmed,  I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsPartialImmunity,             I::InfectedSeverePartialImmunity>,
+    Flow<I, I::InfectedSymptomsPartialImmunity,             I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed,    I::InfectedSeverePartialImmunity>,
+    Flow<I, I::InfectedSymptomsPartialImmunityConfirmed,    I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSeverePartialImmunity,               I::InfectedCriticalPartialImmunity>,
+    Flow<I, I::InfectedSeverePartialImmunity,               I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedCriticalPartialImmunity,             I::DeadPartialImmunity>,
+    Flow<I, I::InfectedCriticalPartialImmunity,             I::SusceptibleImprovedImmunity>,
     //improved immunity
-    Flow<I, I::SusceptibleImprovedImmunity, I::ExposedImprovedImmunity>,
-    Flow<I, I::ExposedImprovedImmunity, I::InfectedNoSymptomsImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunity, I::InfectedSymptomsImprovedImmunity>,
-    Flow<I, I::InfectedNoSymptomsImprovedImmunity, I::SusceptibleImprovedImmunity>,
+    Flow<I, I::SusceptibleImprovedImmunity,                 I::ExposedImprovedImmunity>,
+    Flow<I, I::ExposedImprovedImmunity,                     I::InfectedNoSymptomsImprovedImmunity>,
+    Flow<I, I::InfectedNoSymptomsImprovedImmunity,          I::InfectedSymptomsImprovedImmunity>,
+    Flow<I, I::InfectedNoSymptomsImprovedImmunity,          I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedNoSymptomsImprovedImmunityConfirmed, I::InfectedSymptomsImprovedImmunityConfirmed>,
     Flow<I, I::InfectedNoSymptomsImprovedImmunityConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunity, I::InfectedSevereImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunity, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed, I::InfectedSevereImprovedImmunity>,
-    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedSevereImprovedImmunity, I::InfectedCriticalImprovedImmunity>,
-    Flow<I, I::InfectedSevereImprovedImmunity, I::SusceptibleImprovedImmunity>,
-    Flow<I, I::InfectedCriticalImprovedImmunity, I::DeadImprovedImmunity>,
-    Flow<I, I::InfectedCriticalImprovedImmunity, I::SusceptibleImprovedImmunity>>;
+    Flow<I, I::InfectedSymptomsImprovedImmunity,            I::InfectedSevereImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsImprovedImmunity,            I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed,   I::InfectedSevereImprovedImmunity>,
+    Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed,   I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSevereImprovedImmunity,              I::InfectedCriticalImprovedImmunity>,
+    Flow<I, I::InfectedSevereImprovedImmunity,              I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedCriticalImprovedImmunity,            I::DeadImprovedImmunity>,
+    Flow<I, I::InfectedCriticalImprovedImmunity,            I::SusceptibleImprovedImmunity>>;
 // clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows<>>
@@ -504,19 +504,19 @@ template <class Base = mio::Simulation<Model>>
 double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
 /**
-    * specialization of compartment model simulation for the SECIRVVS model.
-    * @tparam Base simulation type, default mio::Simulation. For testing purposes only!
-    */
+ * specialization of compartment model simulation for the SECIRVVS model.
+ * @tparam Base simulation type, default mio::Simulation. For testing purposes only!
+ */
 template <class Base>
 class Simulation : public Base
 {
 public:
     /**
-    * construct a simulation.
-    * @param model the model to simulate.
-    * @param t0 start time
-    * @param dt time steps
-    */
+     * construct a simulation.
+     * @param model the model to simulate.
+     * @param t0 start time
+     * @param dt time steps
+     */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
         : Base(model, t0, dt)
         , m_t_last_npi_check(t0)
@@ -591,12 +591,12 @@ public:
     }
 
     /**
-    * @brief advance simulation to tmax.
-    * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
-    * @see Simulation::advance
-    * @param tmax next stopping point of simulation
-    * @return value at tmax
-    */
+     * @brief advance simulation to tmax.
+     * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
+     * @see Simulation::advance
+     * @param tmax next stopping point of simulation
+     * @return value at tmax
+     */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
@@ -668,13 +668,13 @@ private:
 };
 
 /**
-* Run simulation using a SECIRVVS model.
-* @param t0 start time.
-* @param tmax end time.
-* @param dt time step.
-* @param model secir model to simulate.
-* @param integrator optional integrator, uses rk45 if nullptr.
-*/
+ * Run simulation using a SECIRVVS model.
+ * @param t0 start time.
+ * @param tmax end time.
+ * @param dt time step.
+ * @param model secir model to simulate.
+ * @param integrator optional integrator, uses rk45 if nullptr.
+ */
 inline auto simulate(double t0, double tmax, double dt, const Model& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
@@ -702,15 +702,15 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 }
 
 /**
-* Get migration factors.
-* Used by migration graph simulation.
-* Like infection risk, migration of infected individuals is reduced if they are well isolated.
-* @param model the compartment model with initial values.
-* @param t current simulation time.
-* @param y current value of compartments.
-* @return vector expression, same size as y, with migration factors per compartment.
-* @tparam Base simulation type that uses a secir compartment model. see Simulation.
-*/
+ * Get migration factors.
+ * Used by migration graph simulation.
+ * Like infection risk, migration of infected individuals is reduced if they are well isolated.
+ * @param model the compartment model with initial values.
+ * @param t current simulation time.
+ * @param y current value of compartments.
+ * @return vector expression, same size as y, with migration factors per compartment.
+ * @tparam Base simulation type that uses a secir compartment model. see Simulation.
+ */
 template <class Base = mio::Simulation<Model>>
 auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
