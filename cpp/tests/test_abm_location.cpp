@@ -274,7 +274,7 @@ TEST(TestLocation, storeSubpopulations)
 
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
-    //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to RecoveredInfectedNoSymptoms
+    //setup: p1 goes from Infected to Recovered, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to Recovered
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
                                                          mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.days();
 
@@ -299,7 +299,7 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to RecoveredInfected
+        .WillOnce(testing::Return(0.6)) // transition to Recovered
         .WillRepeatedly(testing::Return(1.0));
 
     auto person1 =
@@ -318,7 +318,7 @@ TEST(TestLocation, storeSubpopulations)
         .WillOnce(testing::Return(0.8)) // draw random school group
         .WillOnce(testing::Return(0.8)) // draw random work hour
         .WillOnce(testing::Return(0.8)) // draw random school hour
-        .WillOnce(testing::Return(0.6)) // transition to RecoveredInfectedNoSymptoms
+        .WillOnce(testing::Return(0.6)) // transition to Recovered
         .WillRepeatedly(testing::Return(1.0));
     auto person3 =
         make_test_person(location, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed, t, params);
