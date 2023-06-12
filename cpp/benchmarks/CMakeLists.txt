@@ -43,5 +43,8 @@ target_link_libraries(integrator_step_benchmark PRIVATE memilio ode_secir benchm
 add_executable(flow_simulation_benchmark flow_simulation.cpp)
 target_link_libraries(flow_simulation_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
 
+add_executable(flow_simulation_seir_benchmark flow_simulation_seir.cpp)
+target_link_libraries(flow_simulation_seir_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
+
 add_executable(simulation_benchmark simulation.cpp)
 target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
