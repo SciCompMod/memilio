@@ -32,7 +32,7 @@ class TestAbm(unittest.TestCase):
         sim = abm.Simulation(t0)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
-        self.assertEqual(len(world.locations), 0)
+        self.assertEqual(len(world.locations), 1)
         self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
@@ -42,7 +42,7 @@ class TestAbm(unittest.TestCase):
 
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
-        self.assertEqual(len(world.locations), 2)
+        self.assertEqual(len(world.locations), 3)
 
         home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
