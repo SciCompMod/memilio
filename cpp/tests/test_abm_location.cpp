@@ -274,7 +274,7 @@ TEST(TestLocation, storeSubpopulations)
 
     auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
 
-    //setup: p1 goes from Infected to RecoveredInfected, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to RecoveredInfectedNoSymptoms
+    //setup: p1 goes from Infected to Recovered, p2 stays in Infected and p3 goes from Exposed to InfectedNoSymptoms to Recovered
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14,
                                                          mio::abm::VaccinationState::Unvaccinated}] = 1.5 * dt.days();
 
