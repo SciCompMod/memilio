@@ -32,10 +32,12 @@ namespace mio
 {
 namespace osecirvvs
 {
+// clang-format off
 template <class I = InfectionState>
 using Flows = TypeChart<
     //naive
-    Flow<I, I::SusceptibleNaive, I::ExposedNaive>, Flow<I, I::ExposedNaive, I::InfectedNoSymptomsNaive>,
+    Flow<I, I::SusceptibleNaive, I::ExposedNaive>, 
+    Flow<I, I::ExposedNaive, I::InfectedNoSymptomsNaive>,
     Flow<I, I::InfectedNoSymptomsNaive, I::InfectedSymptomsNaive>,
     Flow<I, I::InfectedNoSymptomsNaive, I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedNoSymptomsNaiveConfirmed, I::InfectedSymptomsNaiveConfirmed>,
@@ -45,7 +47,8 @@ using Flows = TypeChart<
     Flow<I, I::InfectedSymptomsNaiveConfirmed, I::InfectedSevereNaive>,
     Flow<I, I::InfectedSymptomsNaiveConfirmed, I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedSevereNaive, I::InfectedCriticalNaive>,
-    Flow<I, I::InfectedSevereNaive, I::SusceptibleImprovedImmunity>, Flow<I, I::InfectedCriticalNaive, I::DeadNaive>,
+    Flow<I, I::InfectedSevereNaive, I::SusceptibleImprovedImmunity>, 
+    Flow<I, I::InfectedCriticalNaive, I::DeadNaive>,
     Flow<I, I::InfectedCriticalNaive, I::SusceptibleImprovedImmunity>,
     //partial immunity
     Flow<I, I::SusceptiblePartialImmunity, I::ExposedPartialImmunity>,
@@ -77,6 +80,7 @@ using Flows = TypeChart<
     Flow<I, I::InfectedSevereImprovedImmunity, I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedCriticalImprovedImmunity, I::DeadImprovedImmunity>,
     Flow<I, I::InfectedCriticalImprovedImmunity, I::SusceptibleImprovedImmunity>>;
+// clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows<>>
 {
