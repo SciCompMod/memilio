@@ -93,7 +93,7 @@ LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeS
 /**
  * @brief Person%s in the icu go to cemetery when they are dead.
  */
-LocationType go_to_cemetery(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType get_buried(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 /**@}*/
 
 } // namespace abm

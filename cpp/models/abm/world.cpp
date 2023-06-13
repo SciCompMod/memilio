@@ -210,7 +210,7 @@ void World::use_migration_rules(bool param)
     // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     if (m_use_migration_rules) {
         m_migration_rules = {
-            std::make_pair(&go_to_cemetery, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
+            std::make_pair(&get_buried, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,
@@ -225,7 +225,7 @@ void World::use_migration_rules(bool param)
     }
     else {
         m_migration_rules = {
-            std::make_pair(&go_to_cemetery, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
+            std::make_pair(&get_buried, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,

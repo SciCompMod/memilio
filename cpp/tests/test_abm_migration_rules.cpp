@@ -378,5 +378,5 @@ TEST(TestMigrationRules, dead)
     auto dt       = mio::abm::hours(1);
     auto p_dead = make_test_person(icu, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
 
-    ASSERT_EQ(mio::abm::go_to_cemetery(p_dead, t, dt, {}), mio::abm::LocationType::Cemetery);
+    ASSERT_EQ(mio::abm::get_buried(p_dead, t, dt, {}), mio::abm::LocationType::Cemetery);
 }

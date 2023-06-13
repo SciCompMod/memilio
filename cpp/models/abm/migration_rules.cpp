@@ -161,7 +161,7 @@ LocationType return_home_when_recovered(const Person& person, const TimePoint t,
     return current_loc;
 }
 
-LocationType go_to_cemetery(const Person& person, const TimePoint t, TimeSpan /*dt*/,
+LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/,
                             const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
