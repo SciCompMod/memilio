@@ -73,16 +73,16 @@ def assign_geographical_entities(countykey_list, govkey_list):
     col_index = 0
     col_list = []
 
-    for i in range(len(countykey_list)):
+    for county_key_id in range(len(countykey_list)):
 
         # check for belonging to currently considered government region
-        if str(countykey_list[i]).startswith(str(govkey_list[gov_index])):
+        if str(countykey_list[county_key_id]).startswith(str(govkey_list[gov_index])):
             # add county to current government region
-            col_list.append(countykey_list[i])
+            col_list.append(countykey_list[county_key_id])
             col_index += 1
         # go to next government region
-        if i < len(countykey_list) - 1 and (
-            not str(countykey_list[i + 1]).startswith(
+        if county_key_id < len(countykey_list) - 1 and (
+            not str(countykey_list[county_key_id + 1]).startswith(
                 str(govkey_list[gov_index]))):
             # add government region to full table
             gov_county_table.append(col_list)
@@ -109,13 +109,13 @@ def assign_geographical_entities(countykey_list, govkey_list):
 
     state_id = 1
     state_govlist_loc = []
-    for i in range(len(govkey_list)):
+    for govkey_id in range(len(govkey_list)):
 
-        if str(int(govkey_list[i])).startswith(str(state_id)):
-            state_govlist_loc.append(govkey_list[i])
+        if str(int(govkey_list[govkey_id])).startswith(str(state_id)):
+            state_govlist_loc.append(govkey_list[govkey_id])
 
-        if i + 1 < len(govkey_list) and not str(
-                int(govkey_list[i + 1])).startswith(
+        if govkey_id + 1 < len(govkey_list) and not str(
+                int(govkey_list[govkey_id + 1])).startswith(
                 str(state_id)):
             state_id += 1
             state_gov_table.append(state_govlist_loc)
@@ -180,21 +180,22 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     if ref_year < 2013 or ref_year > 2022:
         raise gd.DataError('No Data available for year ' + str(ref_year) + '.')
-    for state_file in range(len(states)):
+    for state_id_file in range(len(states)):
         if ref_year <= 2020:
             # These files are in a zip folder.
             url = setup_dict['path'] + 'krpend-' + \
-                states[state_file] + '-0-' + str(ref_year) + '12-zip.zip'
+                states[state_id_file] + '-0-' + str(ref_year) + '12-zip.zip'
         else:
-            url = setup_dict['path'] + 'krpend-' + states[state_file] + '-0-' + \
+            url = setup_dict['path'] + 'krpend-' + states[state_id_file] + '-0-' + \
                 str(ref_year) + '12-xlsx.xlsx?__blob=publicationFile&v=2'
-        filename = 'mobility_raw_' + states[state_file] + '_' + str(ref_year)
+        filename = 'mobility_raw_' + \
+            states[state_id_file] + '_' + str(ref_year)
         filepath = os.path.join(mobility_dir) + filename + '.json'
-        commuter_migration_files[state_file] = gd.get_file(
+        commuter_migration_files[state_id_file] = gd.get_file(
             filepath, url, read_data, param_dict, interactive=True)
         if not no_raw:
             gd.write_dataframe(
-                commuter_migration_files[state_file], mobility_dir, filename, 'json')
+                commuter_migration_files[state_id_file], mobility_dir, filename, 'json')
 
     countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
     govkey_list = geoger.get_governing_regions()
@@ -223,7 +224,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     max_rel_err = 0
 
     # len of string to find countyIDs eg. 01001 or 16056
-    len_county_id = 5
+    len_county_id = len(countykey_list[0])
 
     with progress_indicator.Spinner() as p:
         for file in range(len(commuter_migration_files)):
