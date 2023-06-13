@@ -207,7 +207,7 @@ private:
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
-    LocationId m_cemetery_id; // Central cemetery for all dead person.
+    LocationId m_cemetery_id; // Central cemetery for all dead persons.
 };
 
 } // namespace abm

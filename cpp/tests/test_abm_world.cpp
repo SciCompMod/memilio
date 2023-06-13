@@ -296,15 +296,11 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(hospital.get_number_persons(), 1);
     }
 
-    // Test if a dead person can still migrate
+    // Test that a dead person cannot make a movement
     {
         auto t      = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt     = mio::abm::hours(11);
         auto params = mio::abm::GlobalInfectionParameters{};
-        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 0.1;
-        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                    mio::abm::VaccinationState::Unvaccinated}] = 0.1;
 
         auto world       = mio::abm::World(params);
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
@@ -317,7 +313,7 @@ TEST(TestWorld, evolveMigration)
 
         mio::abm::TripList& data = world.get_trip_list();
         mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
-        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(10), icu_id, home_id);
+        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(10), home_id, icu_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
 

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-202 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
@@ -257,7 +257,7 @@ TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalIn
         case InfectionState::Dead:
             time_period    = days(params.get<CriticalToDead>()[{
                 m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
-            previous_state = InfectionState::Infected_Critical;
+            previous_state = InfectionState::InfectedCritical;
             break;
 
         default:
