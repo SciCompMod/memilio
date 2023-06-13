@@ -29,7 +29,7 @@ TEST(TestInfection, init)
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(7))
         .WillOnce(testing::Return(0.4)) // Transition to Infected
-        .WillOnce(testing::Return(0.6)) // Transition to Recovered_Infected
+        .WillOnce(testing::Return(0.6)) // Transition to Recovered
         .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
                                       .viral_load_peak.params.a())) // Viral load draws
         .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
@@ -51,7 +51,7 @@ TEST(TestInfection, init)
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1) - mio::abm::seconds(1)),
               mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
-              mio::abm::InfectionState::Carrier);
+              mio::abm::InfectionState::InfectedNoSymptoms);
     EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.2689414213699951, 1e-14);
 }
 
