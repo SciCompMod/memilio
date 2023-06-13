@@ -370,8 +370,8 @@ def drop_codes_and_categories(
     if fine_resolution > 0:
 
         for i in range(1, 6):
-        # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
-        # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
+            # correct M04_N codes to M_04_M_N, N in {1,...,5}, M in {120,110,100,130,140}
+            # (M04_1, i.e. i=1, has been corrected in original file but not for i>1)
             if i != 1:
                 npi_codes_prior[npi_codes_prior == 'M04_'+str(i)] = ['M04_120_'+str(
                     i), 'M04_110_'+str(i), 'M04_100_'+str(i), 'M04_130_'+str(i), 'M04_140_'+str(i)]
@@ -1325,22 +1325,48 @@ def plot_counter(filename, directory):
             sheet_name=code, engine='openpyxl')
         # set diag = 0
         for i in range(df.shape[0]):
-            df.iloc[i,i+1]=0
+            df.iloc[i, i+1] = 0
         array_exclusion = df.iloc[:, 1:].to_numpy()
-        fig = plt.figure(figsize=(10,12))
+        if filename != 'count_deactivation':
+            # for count deactivation xlabel != ylabel
+            # else matrix is of squared form
+            array_exclusion += np.transpose(array_exclusion)
         positions = [i for i in range(len(df.columns)-1)]
         plt.xticks(positions, df.columns.to_list()[1:], rotation='vertical')
         plt.yticks(positions, df.columns.to_list()[1:])
+
+        # use different labels and title for each filename
+        if filename == 'count_deactivation':
+            plt.xlabel('Second NPI')
+            plt.ylabel('First NPI')
+            plt.title('NPI deactivations')
+        elif filename == 'joint_codes_incid_depend':
+            plt.xlabel('NPI')
+            plt.ylabel('NPI')
+            plt.title('Joint NPI prescriptions (incidence dependent)')
+        elif filename == 'joint_codes_active':
+            plt.xlabel('NPI')
+            plt.ylabel('NPI')
+            plt.title('Joint NPI implementations')
+        elif filename == 'joint_codes':
+            plt.xlabel('NPI')
+            plt.ylabel('NPI')
+            plt.title('Joint NPI prescriptions')
+        else:
+            raise gd.DataError('unknown filename: '+filename)
+
         # set vmin = 1 so that only combinations that are simultaneously active at least on one day are in colour,
         # else white
         # set vmax = 300000, this should be larger than maxima in all dataframes,
         # this way colours of heatmaps are comparable (e.g. between codes or between joint_codes and exclusions)
+
         plt.imshow(array_exclusion, cmap=cmap,
                    norm=mpl.colors.LogNorm(vmin=1, vmax=300000))
         plt.colorbar()
+        plt.tight_layout()
         plt.savefig(
             os.path.join(target_directory, filename + '_{}'.format(
-                code)))
+                code)), dpi=300)
         plt.close()
 
 
@@ -1368,10 +1394,38 @@ def plot_multiple_prescriptions(filename, directory):
                    cmap=cmap, norm=mpl.colors.LogNorm(vmin=1, vmax=50000))
         plt.colorbar()
         plt.title(code)
+        plt.tight_layout()
         plt.savefig(
             os.path.join(target_directory, filename + '_{}'.format(
-                code)))
+                code)), dpi=300)
         plt.close()
+
+
+def plot_activation(df_npis_old, df_final, directory, maincode, subcodes):
+    counties = df_final.ID_County.unique()
+    for scode in subcodes:
+        name = maincode+scode
+        mentions = df_npis_old[df_npis_old.NPI_code ==
+                               name].iloc[:, 6:].sum(axis=0)
+        for inc_idx in ['_1', '_2', '_3', '_4', '_5']:
+            mentions += df_npis_old[df_npis_old.NPI_code ==
+                                    name+inc_idx].iloc[:, 6:].sum(axis=0)
+        tick_range = (np.arange(int(len(mentions) / 100) + 1) * 100)
+        plt.xticks(tick_range)
+        plt.plot(mentions.index, mentions, c='firebrick',
+                 label=name + ' mentioned')
+        implementations = mentions[54:].copy()
+        implementations *= 0
+        for county in counties:
+            implementations += df_final[df_final.ID_County ==
+                                        county].filter(regex=name).sum(axis=1).values
+        plt.plot(implementations.index, implementations,
+                 c='g', label=name + ' active')
+        plt.grid(True)
+        plt.legend(loc='best')
+        plt.tight_layout
+        plt.savefig(directory+'npi_plots/'+name)
+        plt.clf()
 
 
 def main():
