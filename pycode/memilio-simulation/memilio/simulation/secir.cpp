@@ -286,8 +286,6 @@ PYBIND11_MODULE(_simulation_secir, m)
         },
         py::return_value_policy::move);
 
-    // IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
-
     m.def(
         "read_mobility_plain",
         [](const std::string& filename) {

@@ -196,6 +196,11 @@ class Simulation:
         read_function_edges = mio.secir.read_mobility_plain
         node_id_function = mio.secir.get_node_ids
 
+        read_result1 = mio.secir.read_input_data_county(
+            [Model(num_groups)],
+            start_date, [1002],
+            scaling_factor_infected, scaling_factor_icu, data_dir, 2, 0)
+
         path_population_data = path.join(
             data_dir, "pydata", "Germany", "county_current_population.json")
 
@@ -477,6 +482,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
+    # TODO: get abs path
     sim = Simulation(
         data_dir="data")
     print(sim.run())
