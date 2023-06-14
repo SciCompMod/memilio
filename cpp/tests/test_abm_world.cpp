@@ -262,6 +262,7 @@ TEST(TestWorld, evolveMigration)
         p3.set_assigned_location(home_id);
         p4.set_assigned_location(home_id);
         p3.set_assigned_location(hospital_id);
+        p4.set_assigned_location(hospital_id);
         p5.set_assigned_location(event_id);
         p5.set_assigned_location(work_id);
         p5.set_assigned_location(home_id);
@@ -305,20 +306,45 @@ TEST(TestWorld, evolveMigration)
         auto world       = mio::abm::World(params);
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
+        auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
         auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
 
         auto& p_dead = add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
+        auto& p_critical = add_test_person(world, hospital_id, mio::abm::AgeGroup::Age60to79,
+                                           mio::abm::InfectionState::InfectedCritical, t);
+        p_dead.set_assigned_location(icu_id);
         p_dead.set_assigned_location(home_id);
         p_dead.set_assigned_location(work_id);
+        p_critical.set_assigned_location(hospital_id);
+        p_critical.set_assigned_location(icu_id);
+
+        p_critical.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype,
+                                                         mio::abm::AgeGroup::Age60to79, params, t + dt,
+                                                         mio::abm::InfectionState::Dead));
 
         mio::abm::TripList& data = world.get_trip_list();
         mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id);
         mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(10), home_id, icu_id);
+        mio::abm::Trip trip3(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(10), home_id, icu_id);
+        mio::abm::Trip trip4(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(20), work_id, home_id);
+        mio::abm::Trip trip5(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(21), home_id, icu_id);
+        mio::abm::Trip trip6(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(21), home_id, icu_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
+        data.add_trip(trip3);
+        data.add_trip(trip4);
+        data.add_trip(trip5);
+        data.add_trip(trip6);
 
+        // Check the dead person got burried and the critical person moved to ICU
         world.evolve(t, dt);
         EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_critical.get_location().get_type(), mio::abm::LocationType::ICU);
+
+        // Check the dead person stayed in Cemetery the critical person got burried after dead
+        world.evolve(t + dt, dt);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_critical.get_location().get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 
