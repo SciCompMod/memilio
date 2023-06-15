@@ -79,20 +79,22 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("secir_model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def("run",
+        .def(
+            "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)> handle_result) {
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
+                   handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
                     [&handle_result](auto&& g, auto&& run_idx) {
                         //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so 
+                        //we don't want to run an unknown python object through parameterstudies, so
                         //we just return 0 and ignore the list returned by run().
                         //So python will behave slightly different than c++
                         handle_result(std::move(g), run_idx);
-                        return 0; 
+                        return 0;
                     });
             },
             py::arg("handle_result_func"))
@@ -178,7 +180,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
-    py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::osecir::Parameters::check_constraints)
         .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
@@ -188,9 +190,9 @@ PYBIND11_MODULE(_simulation_secir, m)
     py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
-    py::class_<mio::osecir::Model,
-               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(m,
-                                                                                                                "Model")
+    pymio::bind_class<mio::osecir::Model,
+                      mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(
+        m, "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
