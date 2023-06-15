@@ -201,7 +201,7 @@ class Simulation:
 
         mio.secir.set_nodes(
             params, start_date, end_date, data_dir, path_population_data, True,
-            graph, read_function_nodes, node_id_function,
+            graph,
             scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
             0, False)
 
@@ -478,6 +478,7 @@ class Simulation:
 
 if __name__ == "__main__":
     # TODO: get abs path
+    output_path = path.dirname(path.abspath(__file__))
     sim = Simulation(
-        data_dir="data")
+        data_dir=path.join(output_path, "../../../data"))
     print(sim.run())

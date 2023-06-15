@@ -39,6 +39,11 @@
 #include <pybind11/pybind11.h>
 #include "pybind11/stl_bind.h"
 
+#include <pybind11/stl.h>
+#include <pybind11/functional.h>
+#include <pybind11/chrono.h>
+#include <pybind11/complex.h>
+
 #include <vector>
 #include <functional>
 
@@ -239,19 +244,18 @@ PYBIND11_MODULE(_simulation_secir, m)
     // TODO: These functions are in general not secir dependent, only with the current config
     m.def(
         "set_nodes",
-        [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
+        [](const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date, const std::string& data_dir,
            const std::string& population_data_path, bool is_node_for_county,
            mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
-           decltype(mio::osecir::read_input_data_county<mio::osecir::Model>)&& read_func,
-           decltype(mio::get_node_ids)&& node_func, const std::vector<double>& scaling_factor_inf,
-           double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0, bool export_time_series = false) {
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false) {
             auto result = mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns,
                                          mio::osecir::Model, mio::MigrationParameters, mio::osecir::Parameters,
                                          decltype(mio::osecir::read_input_data_county<mio::osecir::Model>),
                                          decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                read_func, node_func, scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days,
-                export_time_series);
+                mio::osecir::read_input_data_county<mio::osecir::Model>, mio::get_node_ids, scaling_factor_inf,
+                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
