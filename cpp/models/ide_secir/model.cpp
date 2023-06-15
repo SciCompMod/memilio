@@ -230,7 +230,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>().Function(state_age) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
@@ -241,7 +241,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
                       .Distribution(state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
-                 parameters.get<RelativeTransmissionNoSymptoms>().Function(state_age) +
+                 parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age) +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
                       .Distribution(state_age) +
@@ -249,7 +249,7 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
                       .Distribution(state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
-                 parameters.get<RiskOfInfectionFromSymptomatic>().Function(state_age));
+                 parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }

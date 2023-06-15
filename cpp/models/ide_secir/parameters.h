@@ -223,11 +223,13 @@ struct StateAgeFunction {
     }
 
     /**
-     * @brief Pure virtual function depending on state_age. 
+     * @brief Here a pure virtual function is defined that depends on the state_age. 
+     *
+     * The defined function ususally depends on some function parameter.
      * 
-     * @param state_age time at which the function should be evaluated
+     * @param state_age Time at which the function is evaluated.
      */
-    virtual ScalarType Function(ScalarType state_age) = 0;
+    virtual ScalarType eval(ScalarType state_age) = 0;
 
     /**
      * @brief Get the m_funcparam object
@@ -310,7 +312,7 @@ struct ExponentialDecay : public StateAgeFunction {
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType Function(ScalarType state_age) override
+    ScalarType eval(ScalarType state_age) override
     {
         return std::exp(-m_funcparam * state_age);
     }
@@ -355,10 +357,10 @@ struct SmootherCosine : public StateAgeFunction {
      *
      * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
      * 
-     * @param state_age time at which the function should be evaluated
+     * @param[in] state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType Function(ScalarType state_age) override
+    ScalarType eval(ScalarType state_age) override
     {
         return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
     }
@@ -463,12 +465,12 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Accesses Function of m_function.
      *
-     * @param state_age time at which the function should be evaluated
+     * @param[in] state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType Function(ScalarType state_age) const
+    ScalarType eval(ScalarType state_age) const
     {
-        return m_function->Function(state_age);
+        return m_function->eval(state_age);
     }
 
     /**
@@ -561,9 +563,9 @@ public:
     int check_constraints() const
     {
         for (int i = 0; i < 20; i++) {
-            std::cout << this->get<TransmissionProbabilityOnContact>().Function(i) << "\n";
-            if (this->get<TransmissionProbabilityOnContact>().Function(i) < 0.0 ||
-                this->get<TransmissionProbabilityOnContact>().Function(i) > 1.0) {
+            std::cout << this->get<TransmissionProbabilityOnContact>().eval(i) << "\n";
+            if (this->get<TransmissionProbabilityOnContact>().eval(i) < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time point i = 0,...20",
                           0, 1);
@@ -572,8 +574,8 @@ public:
         }
 
         for (int i = 0; i < 20; i++) {
-            if (this->get<RelativeTransmissionNoSymptoms>().Function(i) < 0.0 ||
-                this->get<RelativeTransmissionNoSymptoms>().Function(i) > 1.0) {
+            if (this->get<RelativeTransmissionNoSymptoms>().eval(i) < 0.0 ||
+                this->get<RelativeTransmissionNoSymptoms>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time point i = 0,...20",
                           0, 1);
@@ -582,8 +584,8 @@ public:
         }
 
         for (int i = 0; i < 20; i++) {
-            if (this->get<RiskOfInfectionFromSymptomatic>().Function(i) < 0.0 ||
-                this->get<RiskOfInfectionFromSymptomatic>().Function(i) > 1.0) {
+            if (this->get<RiskOfInfectionFromSymptomatic>().eval(i) < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time point i = 0,...20",
                           0, 1);
