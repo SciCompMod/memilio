@@ -234,9 +234,15 @@ class Scanner:
         intermed_repr.include_list.append(
             filepaths[1].replace("model.h", "") + "infection_state.h")
 
+        # Iterate throught files in the directory of the model and check for files
         for file in os.listdir(filepaths[0]):
-            if file == "analyze_result.h":
+            if file == "parameter_space.h":
+                intermed_repr.include_list.append(filepaths[1].replace(
+                    "model.h", "") +
+                    "parameter_space.h")
+            elif file == "analyze_result.h":
                 model_has_analyze_results = True
+
         if model_has_analyze_results:
             intermed_repr.include_list.append(
                 filepaths[1].replace("model.h", "") + "analyze_result.h")

@@ -35,14 +35,14 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     @return Formatted string representing a part of the bindings.
     """
     substition_string = (
+        "//Includes from pymio\n"
         "#include \"pybind_util.h\"\n"
-        "\n//Includes from pymio\n"
         "#include \"utils/custom_index_array.h\"\n"
         "#include \"utils/parameter_set.h\"\n"
         "#include \"utils/index.h\"\n"
     )
 
-    if "CompartmentalModel" in intermed_repr.model_base:
+    if "CompartmentalModel" in intermed_repr.model_base[0]:
         substition_string += (
             "#include \"compartments/simulation.h\"\n"
             "#include \"compartments/compartmentalmodel.h\"\n"
@@ -59,9 +59,11 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     for inlcude in intermed_repr.include_list:
         substition_string += "#include \"" + inlcude + "\"\n"
 
+    substition_string += "\n#include \"pybind11/pybind11.h\"\n"
     if intermed_repr.simulation_class is not None:
         substition_string += (
-            "\n#include \"pybind11/stl_bind.h\"\n"
+            "#include \"pybind11/stl_bind.h\"\n"
+            "#include \"Eigen/Core\"\n"
             "#include <vector>\n"
         )
     return substition_string
@@ -283,7 +285,7 @@ def simulation_vector_definition(
         return ""
 
     return (
-        "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}>, mio::MigrationEdge>>);\n"
+        "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MigrationEdge>>);\n"
     ).format(
         namespace=intermed_repr.namespace,
         simulation_class=intermed_repr.simulation_class

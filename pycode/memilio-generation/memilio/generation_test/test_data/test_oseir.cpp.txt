@@ -18,17 +18,21 @@
 * limitations under the License.
 */
 
-#include "pybind_util.h"
-
 //Includes from pymio
+#include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
 
 //Includes from Memilio
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "memilio/data/analyze_result.h"
+
+#include "pybind11/pybind11.h"
 
 
 namespace py = pybind11;
