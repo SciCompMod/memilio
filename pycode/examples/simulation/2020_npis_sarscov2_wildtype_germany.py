@@ -36,11 +36,11 @@ class Simulation:
         tmax = 45.0
         dt = 0.5
 
-        start_date = datetime.date(year=2020, month=5, day=15)
-        start_day = (
-            start_date - datetime.date(year=2020, month=1, day=1)).days
+        start_date = mio.Date(2020, 5, 15)
+        start_day = (datetime.date(year=2020, month=5,
+                                   day=15) - datetime.date(year=2020, month=1, day=1)).days
 
-        end_date = datetime.date(year=2020, month=9, day=1)
+        end_date = mio.Date(2020, 9, 1)
 
         num_groups = 6
 
@@ -196,17 +196,12 @@ class Simulation:
         read_function_edges = mio.secir.read_mobility_plain
         node_id_function = mio.secir.get_node_ids
 
-        read_result1 = mio.secir.read_input_data_county(
-            [Model(num_groups)],
-            start_date, [1002],
-            scaling_factor_infected, scaling_factor_icu, data_dir, 2, 0)
-
         path_population_data = path.join(
             data_dir, "pydata", "Germany", "county_current_population.json")
 
         mio.secir.set_nodes(
             params, start_date, end_date, data_dir, path_population_data, True,
-            graph, mio.secir.read_input_data_county, mio.secir.get_node_ids,
+            graph, read_function_nodes, node_id_function,
             scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
             0, False)
 
