@@ -18,6 +18,15 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "memilio/io/history.h"
+
+struct LogTimePoint : mio::LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
 
 TEST(TestSimulation, advance_random)
 {
@@ -69,9 +78,9 @@ TEST(TestSimulation, advance_subpopulation)
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
     auto person1 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
     auto person3 =
         add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
 
@@ -81,7 +90,7 @@ TEST(TestSimulation, advance_subpopulation)
     for (size_t i = 0; i < 51; i++) {
         auto v = school.get_subpopulations().get_value(i);
         // Check whether the number of persons in infected state at the location is consistent
-        ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
+        ASSERT_LE(v[size_t(mio::abm::InfectionState::InfectedSymptoms)], 3);
         // Check the time evolution is correct
         ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }
@@ -98,4 +107,33 @@ TEST(TestSimulation, initializeSubpopulation)
     auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
     ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
+}
+
+TEST(TestSimulation, getWorldAndTimeConst)
+{
+
+    auto t     = mio::abm::TimePoint(0);
+    auto world = mio::abm::World();
+    auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
+
+    auto t_test = mio::abm::days(7);
+    ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
+
+    const mio::abm::World world_test{std::move(sim.get_world())};
+    EXPECT_EQ(world_test.get_locations().size(), 0);
+}
+
+TEST(TestSimulation, advanceWithHistory)
+{
+
+    auto world = mio::abm::World();
+    auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
+    mio::HistoryWithMemoryWriter<LogTimePoint> history;
+
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(2), history);
+    ASSERT_EQ(std::get<0>(history.get_log()).size(), 3);
+    ASSERT_NEAR(std::get<0>(history.get_log())[0], 0.0, 1e-14);
+    ASSERT_NEAR(std::get<0>(history.get_log())[1], 1.0, 1e-14);
+    auto test_get_templ_log = history.get_log<LogTimePoint>();
+    ASSERT_NEAR(test_get_templ_log[2], 2.0, 1e-14);
 }

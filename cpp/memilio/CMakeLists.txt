@@ -30,6 +30,7 @@ add_library(memilio
     io/json_serializer.cpp
     io/binary_serializer.h
     io/binary_serializer.cpp
+    io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
     io/result_io.h
