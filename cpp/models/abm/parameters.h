@@ -264,11 +264,29 @@ struct InfectionProtectionFactor {
     static auto get_default()
     {
         return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
-                    std::vector<std::pair<int, ScalarType>>{{0., 1.}});
+                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
     }
     static std::string name()
     {
         return "InfectionProtectionFactor";
+    }
+};
+
+/**
+ * @brief Personal protective factor against high viral load after infection and vaccination.
+ * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
+ * and several relevant parameters (i.e. type of protection, age group and virus variants)
+ */
+struct HighViralLoadProtectionFactor {
+    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
+    static auto get_default()
+    {
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
+                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
+    }
+    static std::string name()
+    {
+        return "HighViralLoadProtectionFactor";
     }
 };
 
@@ -286,7 +304,7 @@ struct SeverityProtectionFactor {
     }
     static std::string name()
     {
-        return "ReinfectionProtectionFactor";
+        return "SeverityProtectionFactor";
     }
 };
 

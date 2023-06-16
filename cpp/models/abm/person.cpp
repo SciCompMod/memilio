@@ -259,7 +259,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
 {
     // If the person had not infected nor vaccinated before, the function would return 0.5.
     if (m_infections.empty() && m_vaccinations.empty()) {
-        return 0.5;
+        return 0;
     }
     // Find the lastest infection / vaccination type and time.
     Vaccine last_protection_type = Vaccine::NaturalInfection;
@@ -277,11 +277,12 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
         days_since_vacc, last_protection_type, virus, params);
 }
 
-ScalarType Person::get_severity_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const
+std::pair<ScalarType, ScalarType> Person::get_severity_factor(TimePoint t, VirusVariant virus,
+                                                              const GlobalInfectionParameters& params) const
 {
     // If the person had not infected nor vaccinated before, the function would return 0.5.
     if (m_infections.empty() && m_vaccinations.empty()) {
-        return 0.5;
+        return std::pair<ScalarType, ScalarType>{0, 0};
     }
     // Find the lastest infection / vaccination type and time.
     Vaccine last_protection_type = Vaccine::NaturalInfection;
@@ -295,8 +296,9 @@ ScalarType Person::get_severity_factor(TimePoint t, VirusVariant virus, const Gl
             days_since_vacc      = t.days() - m_vaccinations.back().time.days();
         }
     }
-    return get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(days_since_vacc,
-                                                                                   last_protection_type, virus, params);
+    auto result = get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(
+        days_since_vacc, last_protection_type, virus, params);
+    return std::pair<ScalarType, ScalarType>{result, result};
 }
 
 } // namespace abm

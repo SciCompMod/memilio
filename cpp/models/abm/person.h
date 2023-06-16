@@ -357,13 +357,15 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief Get the multiplicative factor on how likely an infection is severe due to the immune system.
+     * @brief Get the multiplicative factor on how likely 1) an infection produce high viral load and, 
+     * 2) an infection is severe due to the immune system.
      * @param[in] t TimePoint of check.
      * @param[in] virus VirusVariant to check
      * @param[in] params GlobalInfectionParameters in the model.
      * @returns Protection factor for severe infection of the immune system to the given VirusVariant at the given TimePoint.
      */
-    ScalarType get_severity_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
+    std::pair<ScalarType, ScalarType> get_severity_factor(TimePoint t, VirusVariant virus,
+                                                          const GlobalInfectionParameters& params) const;
 
     /**
      * @brief Add a new vaccination
@@ -414,7 +416,7 @@ private:
         auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
         sort(lastest_protection_v.begin(), lastest_protection_v.end());
         if (lastest_protection_v.empty() || lastest_protection_v.size() == 1) {
-            return 0.5;
+            return 0;
         }
 
         // Find the corresponding section of the days since vaccination / infection in the lastest_protection_v

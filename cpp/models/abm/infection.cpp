@@ -104,7 +104,7 @@ bool Infection::is_detected() const
 
 TimePoint Infection::get_init_date() const
 {
-    return m_init_date;
+    return m_viral_load.start_date;
 }
 TimePoint Infection::draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
                                            InfectionState init_state)

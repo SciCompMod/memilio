@@ -137,7 +137,6 @@ private:
                                              InfectionState init_state);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
-    TimePoint m_init_date;
     VirusVariant m_virus_variant; ///< Variant of the Infection.
     ViralLoad m_viral_load; ///< ViralLoad of the Infection.
     ScalarType m_log_norm_alpha,
