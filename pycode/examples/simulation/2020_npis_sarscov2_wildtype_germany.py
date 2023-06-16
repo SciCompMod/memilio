@@ -3,10 +3,9 @@ import datetime
 import copy
 import os.path as path
 import memilio.simulation as mio
-from enum import Enum, auto
-
-from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
 import memilio.simulation.secir as secir
+
+from enum import Enum, auto
 from memilio.simulation.secir import AgeGroup, Index_InfectionState
 from memilio.simulation.secir import InfectionState as State
 from memilio.simulation.secir import (Model, Simulation,
@@ -32,15 +31,12 @@ class Intervention(Enum):
 class Simulation:
 
     def __init__(self, data_dir):
-        t0 = 0.0
-        tmax = 45.0
-        dt = 0.5
 
-        start_date = mio.Date(2020, 5, 15)
+        self.start_date = mio.Date(2020, 5, 15)
         start_day = (datetime.date(year=2020, month=5,
                                    day=15) - datetime.date(year=2020, month=1, day=1)).days
 
-        end_date = mio.Date(2020, 9, 1)
+        self.end_date = mio.Date(2020, 9, 1)
 
         num_groups = 6
 
@@ -100,6 +96,7 @@ class Simulation:
             0.04, 0.07, 0.07, 0.07, 0.10, 0.20]
         relativeTransmissionNoSymptomsMin = 1
         relativeTransmissionNoSymptomsMax = 1
+
         # The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
         #  depends on incidence and test and trace capacity
         riskOfInfectionFromSymptomaticMin = 0.1
@@ -189,134 +186,48 @@ class Simulation:
         scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
-        migrating_compartments = [State.Susceptible, State.Exposed,
-                                  State.InfectedNoSymptoms, State.InfectedSymptoms, State.Recovered]
-
-        read_function_nodes = mio.secir.read_input_data_county
-        read_function_edges = mio.secir.read_mobility_plain
-        node_id_function = mio.secir.get_node_ids
 
         path_population_data = path.join(
             data_dir, "pydata", "Germany", "county_current_population.json")
 
         mio.secir.set_nodes(
-            params, start_date, end_date, data_dir, path_population_data, True,
-            graph,
-            scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
-            0, False)
+            params, self.start_date, self.end_date, data_dir,
+            path_population_data, True, graph, scaling_factor_infected,
+            scaling_factor_icu, tnt_capacity_factor, 0, False)
 
-        # (
-        #    "/localdata1/test/memilio/data/pydata/Germany/county_current_population.json",
-        #    True)
+        mio.secir.set_edges(
+            data_dir, graph, len(Location))
 
-        # TODO: How to call io functions
-    #     set_node_function = mio.set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
-    #                    mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
-    #                    decltype(node_id_function)>;
-    #      =
-    #     mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
-    #                    mio::osecir::InfectionState, decltype(read_function_edges)>;
-    # BOOST_OUTCOME_TRY(
-    #     set_node_function(params, start_date, end_date, data_dir,
-    #                       mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
-    #                       true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
-    #                       scaling_factor_icu, tnt_capacity_factor, 0, false));
-    # BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
-    #                                     read_function_edges));
+        self.graph = graph
 
-        params_nodes = read_population_data_county(
-            path.join(data_dir, "pydata", "Germany"),
-            (self._start_date.year, self._start_date.month, self._start_date.day),
-            county_ids,
-            [2.5], 1.0,
-            params_nodes)
+    def run2(self, num_runs=2):
+        mio.set_log_level(mio.LogLevel.Warning)
 
-        # set counties
-        for i in range(num_nodes):
-            params_nodes[i].set_icu_capacity(1e200)
-            tnt_capacity = params_nodes[i].populations.get_total(
-            ) * 7.5 / 100000.
-            params_nodes[i].set_test_and_trace_capacity(tnt_capacity)
-            params_nodes[i].apply_constraints()
-            graph.add_node(params_nodes[i])
+        # calculate tmax
+        tmax = (
+            datetime.date(
+                self.end_date.year, self.end_date.month, self.end_date.day) -
+            datetime.date(
+                self.start_date.year, self.start_date.month, self.start_date.
+                day)).days
 
-        # set migration between counties
-        for i in range(num_nodes):
-            for j in range(num_nodes):
-                num_coeffs = num_groups * 8
-                mig_params = mio.MigrationParameters(
-                    num_coeffs, len(list(Location)))
+        results = []
 
-                populations = graph.get_node(i).populations
+        def handle_result(graph):
+            test = interpolate_simulation_result(graph)
+            results.append(interpolate_simulation_result(graph))
 
-                # commuters
-                min_commuter_age_idx = 2
-                # Nur Altersgruppen 3-5 (idx 2-4) pendeln zur Arbeit
-                max_commuter_age_idx = 4
-                working_population = 0.0
-                for age_idx in range(min_commuter_age_idx,
-                                     max_commuter_age_idx):
-                    working_population += populations.get_group_total(
-                        0, age_idx) * (0.33 if age_idx == 4 else 1.0)
-                commuter_coeff = commuter[i, j] / working_population
-                for age_idx in range(min_commuter_age_idx,
-                                     max_commuter_age_idx):
-                    for compartment in [
-                            State.Susceptible, State.Exposed,
-                            State.InfectedNoSymptoms, State.InfectedSymptoms,
-                            State.Recovered]:
-                        idx = populations.get_flat_index(
-                            [age_idx, int(compartment)])
-                        mig_params.coefficients[Location.Work.value].baseline[idx] = commuter_coeff * (
-                            0.33 if age_idx == 4 else 1.0)
+        study = secir.ParameterStudy(
+            self.graph, 0., tmax, 0.5, num_runs)
+        study.run(handle_result)
 
-                # twitter
-                total_population = populations.get_total()
-                twitter_coeff = twitter[i, j] / total_population
-                for age_idx in range(min_commuter_age_idx,
-                                     max_commuter_age_idx):
-                    for compartment in [
-                            State.Susceptible, State.Exposed,
-                            State.InfectedNoSymptoms, State.InfectedSymptoms,
-                            State.Recovered]:
-                        idx = populations.get_flat_index(
-                            [age_idx, compartment])
-                        mig_params.coefficients[Location.Other.value].baseline[idx] = twitter_coeff * (
-                            0.33 if age_idx == 4 else 1.0)
+        self.last_result = handle_result.interpolated
+        return [ts.as_ndarray() for ts in self.last_result]
 
-                # conservative balancing of ICU
-                mig_params.icu_balance.abs_fill_threshold = 0.3
-                mig_params.icu_balance.fill_difference_threshold = 0.1
-                mig_params.icu_balance.coefficient = 0.0005
-
-                if commuter_coeff > 4e-5 or twitter_coeff > 1e-5:
-                    graph.add_edge(i, j, mig_params)
-
-        self._param_study = ParameterStudy(graph, t0, tmax, dt, num_runs=1)
-
-        self._params_nodes = params_nodes
-        self._t0 = t0
-        self._tmax = tmax
-        self._data_dir = data_dir
-        self.last_result = None
-
-    def cmp(self):
-        county_ids = get_county_ids(
-            path.join(self._data_dir, "pydata", "Germany"))
-        ts = [TimeSeries(6*8) for id in county_ids]
-        # very expensive!
-        for t in range(int(self._t0), int(self._tmax) + 1):
-            date = self._start_date + datetime.timedelta(days=(t - self._t0))
-            params_nodes = read_population_data_county(
-                path.join(self._data_dir, "pydata", "Germany"),
-                (date.year, date.month, date.day),
-                county_ids,
-                [2.5], 1.0,
-                self._params_nodes)
-            for i in range(len(params_nodes)):
-                ts[i].add_time_point(
-                    t, params_nodes[i].populations.get_compartments())
-        return ts
+        # self._param_study.run(dampings, dampings_school,
+        #                       local_npis, handle_result)
+        # self.last_result = handle_result.interpolated
+        # return ts
 
     def run(self, params=[0.1, 0.5, 0.25, 0.1, 0.05, 0.1, 0.1, 0.0]):
         # todo
@@ -481,4 +392,4 @@ if __name__ == "__main__":
     output_path = path.dirname(path.abspath(__file__))
     sim = Simulation(
         data_dir=path.join(output_path, "../../../data"))
-    print(sim.run())
+    sim.run2()

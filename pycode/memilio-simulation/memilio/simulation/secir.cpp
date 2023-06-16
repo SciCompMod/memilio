@@ -268,13 +268,16 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     m.def(
         "set_edges",
-        [](const fs::path& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
-           std::initializer_list<mio::osecir::InfectionState>& migrating_compartments, size_t contact_locations_size,
-           decltype(mio::read_mobility_plain)&& read_func) {
-            auto result = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
+        [](const std::string& data_dir, mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
+           size_t contact_locations_size) {
+            auto migrating_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                   mio::osecir::InfectionState::InfectedNoSymptoms,
+                                   mio::osecir::InfectionState::InfectedSymptoms,
+                                   mio::osecir::InfectionState::Recovered};
+            auto result         = mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters,
                                          mio::MigrationCoefficientGroup, mio::osecir::InfectionState,
                                          decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, migrating_compartments, contact_locations_size, read_func);
+                data_dir, params_graph, migrating_comp, contact_locations_size, mio::read_mobility_plain);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
