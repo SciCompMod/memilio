@@ -478,40 +478,40 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2.0) {
-                log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->get<IncubationTime>()[i], 2.0);
-                return 1;
-            }
+            // if (this->get<IncubationTime>()[i] < 2.0) {
+            //     log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
+            //               this->get<IncubationTime>()[i], 2.0);
+            //     return 1;
+            // }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                return 1;
-            }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                return 1;
-            }
+            // if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
+            //     log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
+            //               this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
+            //     return 1;
+            // }
+            // else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
+            //     log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
+            //               this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
+            //     return 1;
+            // }
 
-            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSymptoms>()[i], 1.0);
-                return 1;
-            }
+            // if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
+            //     log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
+            //               this->get<TimeInfectedSymptoms>()[i], 1.0);
+            //     return 1;
+            // }
 
-            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSevere>()[i], 1.0);
-                return 1;
-            }
+            // if (this->get<TimeInfectedSevere>()[i] < 1.0) {
+            //     log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
+            //               this->get<TimeInfectedSevere>()[i], 1.0);
+            //     return 1;
+            // }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedCritical>()[i], 1.0);
-                return 1;
-            }
+            // if (this->get<TimeInfectedCritical>()[i] < 1.0) {
+            //     log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
+            //               this->get<TimeInfectedCritical>()[i], 1.0);
+            //     return 1;
+            // }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {

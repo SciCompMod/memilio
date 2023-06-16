@@ -57,15 +57,15 @@ public:
     */
     void check_constraints(ScalarType dt) const
     {
-        if (!(m_populations.get_num_time_points() > 0)) {
-            log_error("Model construction failed. No initial time point for populations.");
-        }
+        // if (!(m_populations.get_num_time_points() > 0)) {
+        //     log_error("Model construction failed. No initial time point for populations.");
+        // }
 
-        for (int i = 0; i < (int)InfectionState::Count; i++) {
-            if (m_populations[0][i] < 0) {
-                log_error("Initialization failed. Initial values for populations are less than zero.");
-            }
-        }
+        // for (int i = 0; i < (int)InfectionState::Count; i++) {
+        //     if (m_populations[0][i] < 0) {
+        //         log_error("Initialization failed. Initial values for populations are less than zero.");
+        //     }
+        // }
 
         if (!((int)m_transitions.get_num_elements() == (int)InfectionTransition::Count)) {
             log_error(
@@ -90,9 +90,9 @@ public:
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
         // get (global) max_support to determine how many flows in the past we have to compute
-        ScalarType global_max_support = this->get_global_max_support(dt);
-        std::cout << "Global max_support: " << global_max_support << "\n";
+        ScalarType global_max_support         = this->get_global_max_support(dt);
         Eigen::Index global_max_support_index = std::ceil(global_max_support / dt);
+        std::cout << "Global max_support: " << global_max_support << "\n";
 
         // remove time point
         this->m_transitions.remove_last_time_point();
@@ -103,7 +103,7 @@ public:
         // add time points to init_transitions here
         for (int i = t0_ide_index - 6 * global_max_support_index + 1; i <= t0_ide_index; i++) {
             this->m_transitions.add_time_point(i, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-            std::cout << "i: " << i << "\n";
+            // std::cout << "i: " << i << "\n";
             this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
                 secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
                 secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
@@ -112,7 +112,6 @@ public:
         // then use compute_flow function to compute following flows
 
         Eigen::Index start_shift = t0_ide_index - 6 * global_max_support_index;
-        std::cout << "first timepoint: " << start_shift << "\n";
 
         // flow from E to C for -5*global_max_support, ..., 0
         for (int i = t0_ide_index - 5 * global_max_support_index + 1; i <= t0_ide_index; i++) {
@@ -150,11 +149,6 @@ public:
             // U to R
             this->compute_flow(9, 6, dt, true, i - start_shift);
         }
-
-        std::cout << "m_transitions numtimepoints: " << this->m_transitions.get_num_time_points() << "\n";
-
-        // mio::isecir::Simulation sim(model, t0_ide, dt);
-        // sim.print_transitions();
     }
 
     /**

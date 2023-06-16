@@ -35,6 +35,10 @@ void Simulation::advance(ScalarType tmax)
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
     m_model->initialize_solver(m_dt);
 
+    ScalarType inital_time = m_model->m_transitions.get_last_time();
+    std::cout << "inital time: " << inital_time << "\n";
+    std::cout << "t0: " << m_t0 << "\n";
+    std::cout << "num time points initial: " << m_model->m_transitions.get_num_time_points() << "\n";
     // for every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
 
@@ -56,6 +60,12 @@ void Simulation::advance(ScalarType tmax)
         // compute remaining compartments from flows
         m_model->other_compartments_current_timestep(m_dt);
         m_model->compute_recovered();
+
+        std::cout << "Time: " << m_model->m_transitions.get_last_time() << "\n";
+        ScalarType timepoint = m_model->m_transitions.get_last_time() / m_dt; // - inital_time / m_dt;
+        std::cout << "Timepoint: " << timepoint << "\n";
+        // std::cout << "num timepoints: " << m_model->m_transitions.get_num_time_points() << "\n";
+        std::cout << "Get time: " << m_model->m_transitions.get_time(timepoint) << "\n";
     }
 }
 

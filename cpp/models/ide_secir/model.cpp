@@ -37,14 +37,19 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_b
     , m_N{N_init}
     , m_deaths_before{Dead_before}
 {
-    m_populations.add_time_point<Eigen::VectorXd>(
-        0, TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
-    m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
-        m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
 }
 
 void Model::initialize_solver(ScalarType dt)
-{
+{   
+    // TODO: think of where its best to add time point to m_populations, 
+    // especially wrt to check_constraints function
+
+    // add first timepoint to m_populations at last time from m_transitions
+    m_populations.add_time_point<Eigen::VectorXd>(
+        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
+        m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
+
     // compute Susceptibles at time 0  and m_forceofinfection at time -m_dt as initial values for discretization scheme
     // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
     // where also the value of m_forceofinfection for the previous timestep is used
