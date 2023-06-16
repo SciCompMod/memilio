@@ -150,8 +150,8 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         // backward difference scheme to approximate first derivative
-        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age) -
-                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].Function(state_age - dt)) /
+        sum += (parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age) -
+                parameters.get<TransitionDistributions>()[idx_InfectionTransitions].eval(state_age - dt)) /
                dt * m_transitions[i + 1][idx_IncomingFlow];
     }
 
@@ -245,26 +245,26 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         m_forceofinfection +=
-            parameters.get<TransmissionProbabilityOnContact>().Function(state_age) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
             ((parameters
                       .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
                   parameters
                       .get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                      .Function(state_age) +
+                      .eval(state_age) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                      .Function(state_age)) *
+                      .eval(state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)] *
-                 parameters.get<RelativeTransmissionNoSymptoms>().Function(state_age) +
+                 parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age) +
              (parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
                   parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                      .Function(state_age) +
+                      .eval(state_age) +
               parameters.get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] *
-                  parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                      .Function(state_age)) *
+                  parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered].eval(
+                      state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
-                 parameters.get<RiskOfInfectionFromSymptomatic>().Function(state_age));
+                 parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }
@@ -288,9 +288,9 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
         ScalarType state_age = (num_time_points - 1 - i) * dt;
 
         sum += (parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1] *
-                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].Function(state_age) +
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].eval(state_age) +
                 (1 - parameters.get<TransitionProbabilities>()[idx_TransitionDistribution1]) *
-                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].Function(state_age)) *
+                    parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].eval(state_age)) *
                m_transitions[i + 1][idx_IncomingFlow];
     }
 
