@@ -6,8 +6,7 @@ import os
 
 
 ####### minimal sanity check on data #######
-
-bd = pd.read_csv(r'~/Documents/HZI/memilio/data/mobility/bs.csv', sep=';', header=None, skiprows=1)
+bd = pd.read_csv(r'data/mobility/bs.csv', sep=';', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
@@ -71,8 +70,15 @@ for header in bd.columns:
     if (bd[header].isna().any()):
         print('Error: ' + str(len(bd[bd[header].isna()])) + ' empty entries in column' + str(header) + '. \n')
 
+# check age groups with schools
+students = bd[['personID', 'loc_id_end', 'age']].loc[bd['ActivityAfter']==2]
+print('Minimal age of people going to school: ' + str(students['age'].min()) + '. Maximal age of people going to school: ' + str(students['age'].max()) + '.\n')
+print(str(students.loc[students['age'] > 10].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
 
-
+children = bd[['personID','ActivityAfter']].loc[bd['age']<=10]
+number_of_children = children['personID'].drop_duplicates().size
+number_of_children_school = children[children['ActivityAfter'] == 2]['personID'].drop_duplicates().size
+print(str(number_of_children - number_of_children_school) + ' of ' + str(number_of_children) + ' children do not go to school. \n')
 
 
 
