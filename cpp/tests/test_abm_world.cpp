@@ -302,19 +302,17 @@ TEST(TestWorld, evolveMigration)
         auto t      = mio::abm::TimePoint(0) + mio::abm::hours(1);
         auto dt     = mio::abm::hours(2);
         auto params = mio::abm::GlobalInfectionParameters{};
-        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                  mio::abm::VaccinationState::Unvaccinated}] = 0.01;
         params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                mio::abm::VaccinationState::Unvaccinated}]   = 0.01;
+                                                mio::abm::VaccinationState::Unvaccinated}] = 0.01;
 
         auto world       = mio::abm::World(params);
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
         auto work_id     = world.add_location(mio::abm::LocationType::Work);
         auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
         auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
-        // Create a person that is dead at time t - dt
+        // Create a person that is dead at time t
         auto& p_dead = add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
-        // Create a person that will be dead at time t
+        // Create a person that is severe at hospital and will be dead at time t + dt
         auto& p_severe =
             add_test_person(world, hospital_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t + dt);
         p_dead.set_assigned_location(icu_id);
@@ -336,7 +334,7 @@ TEST(TestWorld, evolveMigration)
         // Check the dead person got burried and the severely infected person starts in Hospital
         world.evolve(t, dt);
         EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
-        EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSymptoms);
+        EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
         EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Hospital);
 
         // Check the dead person is still in Cemetery and the severely infected person dies and got burried
