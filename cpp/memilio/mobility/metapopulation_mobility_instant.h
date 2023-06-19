@@ -321,9 +321,15 @@ template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Si
 void update_status_mobility(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim, IntegratorCore& integrator,
                             Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
 {
+    mio::unused(integrator);
     auto y0 = migrated.eval();
     auto y1 = migrated;
-    integrator.step(
+    // integrator.step(
+    //     [&](auto&& y, auto&& t_, auto&& dydt) {
+    //         sim.get_model().get_derivatives(total, y, t_, dydt);
+    //     },
+    //     y0, t, dt, y1);
+    EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
             sim.get_model().get_derivatives(total, y, t_, dydt);
         },
@@ -493,19 +499,14 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
     }
-    // update status of migrated
+    // change county of migrated
     else if (mode == 1) {
-        Eigen::Index idx = m_return_times.get_num_time_points() - 1;
-        // auto v0 = find_value_reverse(node_from.get_result(), m_migrated.get_time(idx), 1e-10, 1e-10);
-        // assert(v0 != node_from.get_result().rend() && "unexpected error.");
-
+        // update status of migrated before moving to next county
+        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
         IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
         update_status_mobility(m_migrated[idx], node_from.get_simulation(), integrator_node,
                                node_from.get_result().get_last_value(), t, dt);
-        // std::cout << "update:  \n " << m_migrated.get_last_value() << "\n";
-    }
-    // change county of migrated
-    else if (mode == 2) {
+
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
 
@@ -513,8 +514,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             if (node_from.get_result().get_last_value()(i) < 0)
                 node_from.get_result().get_last_value()(i) = 0;
         }
-
-        // std::cout << "Moving to next region \n " << m_migrated.get_last_value() << "\n";
     }
     else {
         std::cout << "Invalid input mode. Should be 0,1 or 2."

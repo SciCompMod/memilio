@@ -116,6 +116,7 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
     BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
                                   (result_dir_run / "Result.h5").string()));
+    // TODO: Include lOS
     BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MigrationParameters>(params, county_ids),
                                   result_dir_run.string(), IOF_OmitDistributions));
     return success();

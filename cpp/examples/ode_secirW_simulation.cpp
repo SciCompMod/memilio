@@ -299,8 +299,8 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  */
 mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int num_days)
 {
-    std::string data_dir         = "/data";
-    std::string traveltimes_path = "/localdata1/code/memilio/travel_times_sum_rounded.txt";
+    std::string data_dir         = "/localdata1/code/memilio//data";
+    std::string traveltimes_path = "/localdata1/test/memilio/traveltimes_100kmh.txt";
     std::string durations_path   = "/localdata1/code/memilio/activity_duration_work.txt";
     auto start_date              = mio::Date(2021, 6, 1);
     auto end_date                = mio::Date(2022, 1, 1);
@@ -343,8 +343,8 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
     auto read_node = read_input_data_county(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu,
                                             "/localdata1/test/memilio/data", num_days);
 
-    // for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-    for (size_t node_idx = 0; node_idx < 5; ++node_idx) {
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+        // for (size_t node_idx = 0; node_idx < 5; ++node_idx) {
 
         auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
 
@@ -397,10 +397,13 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // mobility between nodes
-    auto mobility_data_commuter = mio::read_mobility_plain(("data/mobility/commuter_migration_scaled.txt"));
-    auto mobility_data_twitter  = mio::read_mobility_plain(("data/mobility/twitter_scaled_1252.txt"));
-    auto read_travel_times      = mio::read_mobility_plain(traveltimes_path);
-    auto travel_times           = read_travel_times.value();
+    auto mobility_data_commuter =
+        mio::read_mobility_plain(("/localdata1/test/memilio/data/mobility/commuter_migration_scaled.txt"));
+    auto mob_data = mobility_data_commuter.value();
+    auto mobility_data_twitter =
+        mio::read_mobility_plain(("/localdata1/test/memilio/data/mobility/twitter_scaled_1252.txt"));
+    auto read_travel_times = mio::read_mobility_plain(traveltimes_path);
+    auto travel_times      = read_travel_times.value();
 
     auto read_paths_mobility =
         mio::read_path_mobility("/localdata1/test/memilio/wegketten_ohne_komma.txt"); // wegketten_ohne_komma.txt
@@ -422,7 +425,8 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
             }
-            auto commuter_coeff_ij = 0.1; //data is absolute numbers, we need relative
+            auto commuter_coeff_ij =
+                mob_data(county_idx_i, county_idx_j) / working_population; //data is absolute numbers, we need relative
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
@@ -430,15 +434,23 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
                         commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
                 }
             }
-
-            //only add edges with mobility above thresholds for performance
-            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
+            auto path = path_mobility[county_idx_i][county_idx_j];
+            if (path[0] != county_idx_i || path[path.size() - 1] != county_idx_j)
+                std::cout << "falsch"
+                          << "\n";
             if (commuter_coeff_ij > 4e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, 1. / 24, path_mobility[county_idx_i][county_idx_j],
-                                      std::move(mobility_coeffs));
+                params_graph.add_edge(county_idx_i, county_idx_j, travel_times(county_idx_i, county_idx_j),
+                                      path_mobility[county_idx_i][county_idx_j], std::move(mobility_coeffs));
             }
         }
     }
+
+    int num_edges = 0;
+    for (auto& e : params_graph.edges()) {
+        num_edges += 1;
+    }
+    std::cout << "Anzahl kanten = " << num_edges << "\n";
+
     return params_graph;
 }
 
@@ -447,14 +459,18 @@ int main(int argc, char** argv)
     // TODO: No vacc currently
     mio::set_log_level(mio::LogLevel::critical);
     const auto t0       = 0.;
-    const auto num_days = 90.0;
+    const auto num_days = 15.0;
     const auto dt       = 0.5;
-    const int num_runs  = 10;
+    const int num_runs  = 2;
 
     auto params_graph = get_graph(num_days);
 
     // auto write_graph_status = write_graph(params_graph, "/localdata1/code/memilio/save_graph");
 
+    std::vector<int> county_ids(params_graph.nodes().size());
+    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+        return n.id;
+    });
     // parameter study
 
     auto parameter_study =
@@ -473,8 +489,8 @@ int main(int argc, char** argv)
                                return node.property.get_simulation().get_model();
                            });
 
-            save_single_run_result =
-                save_result_with_params(interpolated_result, params, {0, 1}, "/localdata1/code/memilio/test", run_idx);
+            save_single_run_result = save_result_with_params(interpolated_result, params, county_ids,
+                                                             "/localdata1/test/memilio/test", run_idx);
 
             std::cout << "run " << run_idx << " complete." << std::endl;
             return std::make_pair(interpolated_result, params);
@@ -488,7 +504,7 @@ int main(int argc, char** argv)
         ensemble_params.emplace_back(std::move(run.second));
     }
     auto save_results_status =
-        save_results(ensemble_results, ensemble_params, {0, 1}, "/localdata1/code/memilio/test2", false);
+        save_results(ensemble_results, ensemble_params, county_ids, "/localdata1/test/memilio/test2", false);
 
     // std::cout << "Landkreis 0" << std::endl;
     // std::cout << gr.nodes()[0].property.get_result().get_last_value() << std::endl;

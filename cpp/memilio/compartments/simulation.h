@@ -61,6 +61,19 @@ public:
     }
 
     /**
+     * @brief Copy Constructor ( TODO: t0 is hardcoded, results are not copied)
+     */
+    Simulation(const Simulation& other)
+        : m_integratorCore(other.m_integratorCore)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(
+              [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
+                  model.eval_right_hand_side(y, y, t, dydt);
+              },
+              0, m_model->get_initial_values(), other.m_integrator.get_dt(), m_integratorCore)
+    {
+    }
+    /**
      * @brief set the core integrator used in the simulation
      */
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
