@@ -21,5 +21,11 @@
 
 namespace mio
 {
+    
+RandomNumberGenerator& thread_local_rng()
+{
+    static thread_local auto rng = RandomNumberGenerator();
+    return rng;
+}
 
 } // namespace mio

@@ -28,12 +28,16 @@ add_library(memilio
     io/hdf5_cpp.h
     io/json_serializer.h
     io/json_serializer.cpp
+    io/binary_serializer.h
+    io/binary_serializer.cpp
+    io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
     io/result_io.h
     io/result_io.cpp
     io/epi_data.h
     io/epi_data.cpp
+    io/cli.h
     math/euler.cpp
     math/euler.h
     math/smoother.h
@@ -49,8 +53,10 @@ add_library(memilio
     math/matrix_shape.cpp
     math/interpolation.h
     math/interpolation.cpp
-    mobility/meta_mobility_instant.h
-    mobility/meta_mobility_instant.cpp
+    mobility/metapopulation_mobility_instant.h
+    mobility/metapopulation_mobility_instant.cpp
+    mobility/metapopulation_mobility_stochastic.h
+    mobility/metapopulation_mobility_stochastic.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
@@ -75,6 +81,8 @@ add_library(memilio
     utils/date.cpp
     utils/random_number_generator.h
     utils/random_number_generator.cpp
+    utils/miompi.h
+    utils/miompi.cpp
 )
 
 target_include_directories(memilio PUBLIC
@@ -99,4 +107,8 @@ endif()
 
 if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+endif()
+
+if(MEMILIO_ENABLE_MPI)
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
 endif()

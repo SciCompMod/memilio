@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SIMULATION_H_
-#define SIMULATION_H_
+#ifndef ODE_SIMULATION_CONFIG_H
+#define ODE_SIMULATION_CONFIG_H
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/logging.h"
@@ -89,4 +89,4 @@ struct SimulationConfig {
 
 } // namespace mio
 
-#endif
+#endif // ODE_SIMULATION_CONFIG_H

@@ -69,8 +69,8 @@ using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()))
 
 // remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
 template <class Omittand, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(
+    as_index<IndexTemplate>(std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
 } //namespace details
 
 /**
@@ -117,11 +117,11 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
@@ -134,7 +134,15 @@ public:
      * right-hand-side f of the ODE from the intercompartmental flows. It can be used in an ODE
      * solver
      *
-     * @param y the current state of the model as a flat array
+     * The distinction between pop and y is only for the case of mobility.
+     * If we have mobility, we want to evaluate the evolution of infection states for a small group of travellers (y)
+     * while they are in any population (pop). It is important that pop > y always applies.
+     *
+     * If we consider a simulation without mobility, the function is called with
+     * model.eval_right_hand_side(y, y, t, dydt)
+     *
+     * @param pop the current state of the population in the geographic unit we are considering
+     * @param y the current state of the model (or a subpopulation) as a flat array
      * @param t the current time
      * @param dydt a reference to the calculated output
      */

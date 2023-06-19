@@ -31,7 +31,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/parameter_set.h"
@@ -50,7 +50,26 @@
 #include <iterator>
 #include <limits>
 
-TEST(TestSecir, reduceToSecirAndCompareWithPreviousRun)
+TEST(TestOdeSECIRVVS, simulateDefault)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.1;
+
+    mio::osecirvvs::Model model(1);
+    model.populations.set_total(10);
+    model.populations.set_difference_from_total({(mio::AgeGroup)0, mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                10);
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(0);
+    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+}
+
+TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
 {
     // double t0   = 0;
     // double tmax = 50;
@@ -671,7 +690,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 2, true),
+                                                       TEST_DATA_DIR, 2, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -982,4 +1001,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    mio::set_log_level(mio::LogLevel::warn);
 }

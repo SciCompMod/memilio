@@ -23,14 +23,14 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
-#include "mobility/meta_mobility_instant.h"
+#include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
 #include "utils/uncertain_value.h"
 
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
@@ -100,6 +100,10 @@ PYBIND11_MODULE(_simulation, m)
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     pymio::bind_logging(m, "LogLevel");
+
+    m.def("seed_random_number_generator", [] {
+        mio::thread_local_rng().seed(mio::RandomNumberGenerator::generate_seeds());
+    });
 
     m.attr("__version__") = "dev";
 }
