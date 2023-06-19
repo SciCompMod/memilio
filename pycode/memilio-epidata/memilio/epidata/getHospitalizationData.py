@@ -37,20 +37,6 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
 
-def download_hospitalization_data():
-    # RKI content from github
-    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv'
-    # try to read csv
-    try:
-        df = pd.read_csv(url)
-    except Exception as err:
-        raise FileNotFoundError(
-            "Error in download of Hospitalization data.") from err
-    hospit_sanity_checks(df)
-
-    return df
-
-
 def hospit_sanity_checks(df):
     """! Checks the sanity of the hospitalization_data dataframe
 
@@ -186,20 +172,14 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     # get raw dataframe
     filename = "RKIHospitFull"
-    if read_data:
-        # read json file for already downloaded data
-        file_in = os.path.join(directory, filename + ".json")
+    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland/master/Aktuell_Deutschland_COVID-19-Hospitalisierungen.csv"
+    path = os.path.join(directory + filename + ".json")
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
-        try:
-            df_raw = pd.read_json(file_in)
-        except ValueError:
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist. Call program without"
-                                    " -r flag to get it.")
-    else:
-        df_raw = download_hospitalization_data()
-        if not no_raw:
-            gd.write_dataframe(df_raw, directory, filename, file_format)
+    hospit_sanity_checks(df_raw)
+
+    if not no_raw:
+        gd.write_dataframe(df_raw, directory, filename, file_format)
     df_data = df_raw.copy()
     # drop unwanted columns and rows, rename and sort dataframe
     df_data.rename(dd.GerEng, axis=1, inplace=True)
