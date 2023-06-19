@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "benchmarks/simulation.h"
-#include "benchmarks/flow_simulation.h"
 #include "ode_secirvvs/model.h"
 #include <string>
 
@@ -90,26 +89,27 @@ void setup_model(Model& model)
 } // namespace benchmark
 } // namespace mio
 
+template <unsigned width = 16, unsigned precision = 6>
 void print_to_file(FILE* outfile, const mio::TimeSeries<ScalarType>& results,
                    const std::vector<std::string>& state_names)
 {
     // print column labels
-    fprintf(outfile, "%-16s  ", "Time");
+    fprintf(outfile, "%-*s  ", width, "Time");
     for (size_t k = 0; k < static_cast<size_t>(results.get_num_elements()); k++) {
         if (k < state_names.size()) {
-            fprintf(outfile, " %-16s", state_names[k].data()); // print underlying char*
+            fprintf(outfile, " %-*s", width, state_names[k].data()); // print underlying char*
         }
         else {
-            fprintf(outfile, " %-16s", ("#" + std::to_string(k + 1)).data());
+            fprintf(outfile, " %-*s", width, ("#" + std::to_string(k + 1)).data());
         }
     }
     // print values as table
     auto num_points = static_cast<size_t>(results.get_num_time_points());
     for (size_t i = 0; i < num_points; i++) {
-        fprintf(outfile, "\n%16.6f", results.get_time(i));
+        fprintf(outfile, "\n%*.*f", width, precision, results.get_time(i));
         auto res_i = results.get_value(i);
         for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-            fprintf(outfile, " %16.6f", res_i[j]);
+            fprintf(outfile, " %*.*f", width, precision, res_i[j]);
         }
     }
     fprintf(outfile, "\n");
@@ -131,6 +131,7 @@ void flowless_sim(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -162,6 +163,7 @@ void flow_sim_comp_only(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -193,6 +195,7 @@ void flow_sim(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed

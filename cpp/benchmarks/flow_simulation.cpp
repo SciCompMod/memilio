@@ -40,6 +40,7 @@ void flowless_sim(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -67,6 +68,7 @@ void flow_sim_comp_only(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -94,6 +96,7 @@ void flow_sim(::benchmark::State& state)
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
