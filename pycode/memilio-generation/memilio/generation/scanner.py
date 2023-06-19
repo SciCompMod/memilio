@@ -221,7 +221,7 @@ class Scanner:
         self: Self, node: Cursor,
             intermed_repr: IntermediateRepresentation) -> None:
         """
-        Helper function to retreive the model specific inclides needed for pybind.
+        Helper function to retrieve the model specific includes needed for pybind.
 
         @param node Current node represented as a Cursor object.
         @param intermed_repr Dataclass used for saving the extracted model features.

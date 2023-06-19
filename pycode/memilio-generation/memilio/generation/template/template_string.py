@@ -34,7 +34,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
-    substition_string = (
+    substitution_string = (
         "//Includes from pymio\n"
         "#include \"pybind_util.h\"\n"
         "#include \"utils/custom_index_array.h\"\n"
@@ -43,30 +43,30 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
     )
 
     if "CompartmentalModel" in intermed_repr.model_base[0]:
-        substition_string += (
+        substitution_string += (
             "#include \"compartments/simulation.h\"\n"
             "#include \"compartments/compartmentalmodel.h\"\n"
             "#include \"epidemiology/populations.h\"\n"
         )
 
     if intermed_repr.simulation_class is not None:
-        substition_string += (
+        substitution_string += (
             "#include \"mobility/graph_simulation.h\"\n"
             "#include \"mobility/meta_mobility_instant.h\"\n"
         )
 
-    substition_string += "\n//Includes from Memilio\n"
+    substitution_string += "\n//Includes from Memilio\n"
     for inlcude in intermed_repr.include_list:
-        substition_string += "#include \"" + inlcude + "\"\n"
+        substitution_string += "#include \"" + inlcude + "\"\n"
 
-    substition_string += "\n#include \"pybind11/pybind11.h\"\n"
+    substitution_string += "\n#include \"pybind11/pybind11.h\"\n"
     if intermed_repr.simulation_class is not None:
-        substition_string += (
+        substitution_string += (
             "#include \"pybind11/stl_bind.h\"\n"
             "#include \"Eigen/Core\"\n"
             "#include <vector>\n"
         )
-    return substition_string
+    return substitution_string
 
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
@@ -74,7 +74,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
-    substition_string = (
+    substitution_string = (
         "namespace pymio"
         "{"
         "\n"
@@ -83,7 +83,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
 
     for key in intermed_repr.population_groups:
         if key == "AgeGroup":
-            substition_string += (
+            substitution_string += (
                 "template <>\n"
                 "std::string pretty_name<mio::{enum_class}>()\n"
                 "{{\n"
@@ -94,7 +94,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
                 enum_class=key
             )
         else:
-            substition_string += (
+            substitution_string += (
                 "template <>\n"
                 "std::string pretty_name<{namespace}{enum_class}>()\n"
                 "{{\n"
@@ -106,7 +106,7 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
                 enum_class=key
             )
 
-    return substition_string + "} // namespace pymio\n"
+    return substitution_string + "} // namespace pymio\n"
 
 
 def population_enums(intermed_repr: IntermediateRepresentation) -> str:
@@ -114,9 +114,9 @@ def population_enums(intermed_repr: IntermediateRepresentation) -> str:
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
-    substition_string = ""
+    substitution_string = ""
     for key, values in intermed_repr.enum_populations.items():
-        substition_string += (
+        substitution_string += (
             "pymio::iterable_enum<{namespace}{enum_class}>(m, \"{enum_class}\")\n\t"
         ).format(
             namespace=intermed_repr.namespace,
@@ -124,15 +124,15 @@ def population_enums(intermed_repr: IntermediateRepresentation) -> str:
         )
 
         for value in values[:-1]:
-            substition_string += (
+            substitution_string += (
                 "    .value(\"{comp_class}\", {namespace}{enum_class}::{comp_class})\n\t"
             ).format(
                 namespace=intermed_repr.namespace,
                 comp_class=value,
                 enum_class=key
             )
-        substition_string = substition_string.rstrip() + ";\n\n"
-    return substition_string
+        substitution_string = substitution_string.rstrip() + ";\n\n"
+    return substitution_string
 
 
 def population(intermed_repr: IntermediateRepresentation) -> str:
@@ -150,21 +150,21 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
-    substition_string = ""
+    substitution_string = ""
     for init in intermed_repr.model_init:
 
         if len(init["type"]) > 1:
             continue
         elif len(init["type"]) == 0:
-            substition_string += "    .def(py::init<>())\n\t"
+            substitution_string += "    .def(py::init<>())\n\t"
         else:
-            substition_string += (
+            substitution_string += (
                 "    .def(py::init<{type}>(), py::arg(\"{name}\"))\n\t"
             ).format(
                 type=init["type"][0],
                 name=init["name"][0]
             )
-    return substition_string.rstrip() + ";\n"
+    return substitution_string.rstrip() + ";\n"
 
 
 def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
