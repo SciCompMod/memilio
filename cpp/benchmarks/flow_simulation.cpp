@@ -36,19 +36,16 @@ void flowless_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    mio::benchmark::Simulation<mio::Simulation<Model>> sim(model, cfg.t0, cfg.dt);
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
-        //   run sim
+        mio::benchmark::Simulation<mio::Simulation<Model>> sim(model, cfg.t0, cfg.dt);
+        sim.set_integrator(I);
+        // run sim
         sim.advance(cfg.t_max);
-        //   clear results
-        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++)
-            sim.get_result().remove_last_time_point();
     }
 }
 
@@ -64,19 +61,16 @@ void flow_sim_comp_only(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    mio::osecirvvs::Simulation<mio::Simulation<Model>> sim(model, cfg.t0, cfg.dt);
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
-        //   run sim
+        mio::osecirvvs::Simulation<mio::Simulation<Model>> sim(model, cfg.t0, cfg.dt);
+        sim.set_integrator(I);
+        // run sim
         sim.advance(cfg.t_max);
-        //   clear results
-        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++)
-            sim.get_result().remove_last_time_point();
     }
 }
 
@@ -92,21 +86,16 @@ void flow_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    mio::osecirvvs::Simulation<mio::FlowSimulation<Model>> sim(model, cfg.t0, cfg.dt);
     std::shared_ptr<mio::IntegratorCore> I =
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    sim.set_integrator(I);
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
-        //   run sim
+        mio::osecirvvs::Simulation<mio::FlowSimulation<Model>> sim(model, cfg.t0, cfg.dt);
+        sim.set_integrator(I);
+        // run sim
         sim.advance(cfg.t_max);
-        //   clear results
-        for (Eigen::Index i = 0; i < sim.get_result().get_num_time_points() - 1; i++) {
-            sim.get_result().remove_last_time_point();
-            sim.get_flows().remove_last_time_point();
-        }
     }
 }
 
