@@ -273,8 +273,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
             days_since_vacc      = t.days() - m_vaccinations.back().time.days();
         }
     }
-    return get_protection_from_linear_piecewise_function<InfectionProtectionFactor>(
-        days_since_vacc, last_protection_type, virus, params);
+    return params.get<InfectionProtectionFactor>()[{last_protection_type, m_age, virus}](days_since_vacc);
 }
 
 std::pair<ScalarType, ScalarType> Person::get_severity_factor(TimePoint t, VirusVariant virus,
@@ -296,9 +295,9 @@ std::pair<ScalarType, ScalarType> Person::get_severity_factor(TimePoint t, Virus
             days_since_vacc      = t.days() - m_vaccinations.back().time.days();
         }
     }
-    auto result = get_protection_from_linear_piecewise_function<SeverityProtectionFactor>(
-        days_since_vacc, last_protection_type, virus, params);
-    return std::pair<ScalarType, ScalarType>{result, result};
+    auto result1 = params.get<HighViralLoadProtectionFactor>()[{last_protection_type, m_age, virus}](days_since_vacc);
+    auto result2 = params.get<SeverityProtectionFactor>()[{last_protection_type, m_age, virus}](days_since_vacc);
+    return std::pair<ScalarType, ScalarType>{result1, result2};
 }
 
 } // namespace abm

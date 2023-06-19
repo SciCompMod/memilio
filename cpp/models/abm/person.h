@@ -396,46 +396,6 @@ private:
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
-
-    /**
-     * @brief Get the protection level derived from a given linear piecewise function. 
-     * @param T InfectionProtectionFactor or SevereProtectionFactor. 
-     * @param[in] days_since_vacc The number of days since last vaccination / infection. 
-     * @param[in] last_protection_type Vaccine type to check.
-     * @param[in] virus VirusVariant to check
-     * @param[in] params GlobalInfectionParameters in the model. This param set provide all the points in the linear piecewise function.
-     * @returns Protection factor for general /severe infectionof the immune system to the given VirusVariant at the given TimePoint.
-     */
-    template <typename T>
-    ScalarType get_protection_from_linear_piecewise_function(ScalarType days_since_vacc, Vaccine last_protection_type,
-                                                             VirusVariant virus,
-                                                             const GlobalInfectionParameters& params) const
-    {
-        // Get the vector of all the points in the linear piecewise function. Each point is a pair of number of day interval
-        // since last infection/vaccination (int, first element of the pair) and protection level (ScalarType, [0-1], second element of the pair).
-        auto lastest_protection_v = params.get<T>()[{last_protection_type, m_age, virus}];
-        sort(lastest_protection_v.begin(), lastest_protection_v.end());
-        if (lastest_protection_v.empty() || lastest_protection_v.size() == 1) {
-            return 0;
-        }
-
-        // Find the corresponding section of the days since vaccination / infection in the lastest_protection_v
-        size_t counter = 0;
-        while ((counter < lastest_protection_v.size() - 1) && (lastest_protection_v[counter].first < days_since_vacc)) {
-            counter++;
-        }
-
-        // If the the current days interval are between two identifiable points in the function
-        if (days_since_vacc <= lastest_protection_v[counter].first && counter > 0) {
-            return lastest_protection_v[counter - 1].second +
-                   (lastest_protection_v[counter - 1].second - lastest_protection_v[counter].second) /
-                       (lastest_protection_v[counter - 1].first - lastest_protection_v[counter].first) *
-                       (days_since_vacc - lastest_protection_v[counter - 1].first);
-        }
-        else {
-            return 0;
-        }
-    }
 };
 
 } // namespace abm

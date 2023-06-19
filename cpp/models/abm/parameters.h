@@ -256,15 +256,14 @@ struct MaskProtection {
 
 /**
  * @brief Personal protection factor after infection and vaccination.
- * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
- * and several relevant parameters (i.e. type of protection, age group and virus variants)
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
-                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
     }
     static std::string name()
     {
@@ -274,15 +273,14 @@ struct InfectionProtectionFactor {
 
 /**
  * @brief Personal protective factor against high viral load after infection and vaccination.
- * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
- * and several relevant parameters (i.e. type of protection, age group and virus variants)
  */
 struct HighViralLoadProtectionFactor {
-    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
-                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
     }
     static std::string name()
     {
@@ -292,15 +290,14 @@ struct HighViralLoadProtectionFactor {
 
 /**
  * @brief Personal protective factor against severe symptoms after infection and vaccination.
- * The current Type holds different points in linear piecewise function (day, protection_level[0,1]) 
- * and several relevant parameters (i.e. type of protection, age group and virus variants)
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<std::vector<std::pair<int, ScalarType>>, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count},
-                    std::vector<std::pair<int, ScalarType>>{{0, 1}});
+        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
     }
     static std::string name()
     {
@@ -316,7 +313,7 @@ using GlobalInfectionParameters =
                  InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
                  InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
                  RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection, InfectionProtectionFactor, SeverityProtectionFactor>;
+                 MaskProtection, InfectionProtectionFactor, HighViralLoadProtectionFactor, SeverityProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
