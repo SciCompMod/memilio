@@ -15,7 +15,7 @@
     },
     {
         "source_file": "${memilio_SOURCE_DIR}/models/ode_secir/model.cpp",
-        "namespace": "mio::",
+        "namespace": "mio::osecir::",
         "python_module_name": "osecir",
         "python_generation_module_path": "${memilio-python_SOURCE_DIR}/../memilio-generation",
         "skbuild_path_to_database": "${memilio-python_BINARY_DIR}",
