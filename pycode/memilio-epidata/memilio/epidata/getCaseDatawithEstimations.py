@@ -25,14 +25,15 @@
 
 import os
 from datetime import date
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import requests
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getJHData as gjd
 
 
@@ -48,7 +49,7 @@ def get_case_data_with_estimations(
         make_plot=dd.defaultDict['make_plot'],
         split_berlin=dd.defaultDict['split_berlin'],
         rep_date=dd.defaultDict['rep_date']
-        ):
+):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
 WARNING: This file is experimental and has not been tested.
     From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confirmed
@@ -62,7 +63,7 @@ WARNING: This file is experimental and has not been tested.
     @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.data_path
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
@@ -83,8 +84,9 @@ WARNING: This file is experimental and has not been tested.
             rep_date)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
-            start_date, end_date, impute_dates, moving_average, make_plot_jh)
+        gjd.get_jh_data(
+            read_data, file_format, out_folder, no_raw, start_date, end_date,
+            impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -185,7 +187,7 @@ WARNING: This file is experimental and has not been tested.
             get_weekly_deaths_data_age_gender_resolved(
                 data_path, read_data=True)
             # df_cases[week] = df_cases[date].dt.isocalendar().week
-    #if make_plot:
+    # if make_plot:
     #    plt.show()
 
 
@@ -208,7 +210,15 @@ def compare_estimated_and_rki_deathsnumbers(
     @param make_plot Defines if plots are generated
 
     """
-    df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="%Y-%m-%d")
+    try:
+        df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="ISO8601")
+    except ValueError:
+        try:
+            df_cases['Date'] = pd.to_datetime(
+                df_cases['Date'], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
     # we set january 2020 to week 1
     # 2020 had 53 weeks
     # meaning weak 45 is first week in 2021
@@ -237,10 +247,9 @@ def compare_estimated_and_rki_deathsnumbers(
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week = gd.loadExcel(
-        "Cases_deaths_weekly", apiUrl=data_path, extension=".xlsx",
-        param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week = pd.read_excel(
+        data_path + "Cases_deaths_weekly.xlsx", sheet_name='COVID_Todesfälle',
+        header=0, engine='openpyxl')
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -261,7 +270,7 @@ def compare_estimated_and_rki_deathsnumbers(
     df_real_deaths_per_week.loc[df_real_deaths_per_week.year ==
                                 2021, 'week'] += 53
 
-    #combine both dataframes to one dataframe
+    # combine both dataframes to one dataframe
     df_cases_week = df_cases_week.merge(
         df_real_deaths_per_week, how='outer', on="week")
     del df_cases_week['year']
@@ -279,7 +288,7 @@ def compare_estimated_and_rki_deathsnumbers(
 
         df_jh_week['Deaths_weekly_accumulated'] = df_jh_week['Deaths_weekly'].cumsum()
 
-        #plot
+        # plot
         df_cases_week.plot(
             x="week",
             y=["Deaths_weekly", "Deaths_estimated_weekly",
@@ -315,14 +324,12 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
     if not read_data:
         download_weekly_deaths_numbers(data_path)
 
-    df_real_deaths_per_week_age = gd.loadExcel(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG10', "header": 0,
-                    "engine": 'openpyxl'})
-    df_real_deaths_per_week_gender = gd.loadExcel(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG20_G', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week_age = pd.read_excel(
+        data_path + 'Cases_deaths_weekly.xlsx',
+        sheet_name='COVID_Todesfälle_KW_AG10', header=0, engine='openpyxl')
+    df_real_deaths_per_week_gender = pd.read_excel(
+        data_path + 'Cases_deaths_weekly.xlsx',
+        sheet_name='COVID_Todesfälle_KW_AG20_G', header=0, engine='openpyxl')
     df_real_deaths_per_week_age.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'AG 0-9 Jahre': 'age 0-9 years',

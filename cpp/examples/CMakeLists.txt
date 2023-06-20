@@ -26,8 +26,23 @@ target_link_libraries(ode_secir_ageres_example PRIVATE memilio ode_secir)
 add_executable(graph_example graph.cpp)
 target_link_libraries(graph_example PRIVATE memilio ode_seir)
 
-add_executable(abm_example abm.cpp)
-target_link_libraries(abm_example PRIVATE memilio abm)
+add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
+target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
+
+add_executable(abm_minimal_example abm_minimal.cpp)
+target_link_libraries(abm_minimal_example PRIVATE memilio abm)
+
+add_executable(abm_history_example abm_history_object.cpp)
+target_link_libraries(abm_history_example PRIVATE memilio abm)
+
+add_executable(twitter_migration_example twitter_migration.cpp)
+target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
+
+add_executable(ide_seir_example ide_seir.cpp)
+target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
+
+add_executable(ide_secir_example ide_secir.cpp)
+target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
@@ -35,21 +50,20 @@ if(MEMILIO_HAS_JSONCPP)
   target_include_directories(ode_secir_read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # configured headers
 endif()
 
-add_executable(twitter_migration_example twitter_migration.cpp)
-target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
-
 if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
   target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
+  add_executable(cli_example cli.cpp)
+  target_link_libraries(cli_example PRIVATE memilio)
+endif()
+
+if(MEMILIO_HAS_JSONCPP)
   add_executable(serialize_example serialize.cpp)
   target_link_libraries(serialize_example PRIVATE memilio)
 endif()
-
-add_executable(ide_seir_example ide_seir.cpp)
-target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 
 if(MEMILIO_HAS_HDF5)
   add_executable(ode_secir_save_results ode_secir_save_results.cpp)

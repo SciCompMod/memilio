@@ -23,16 +23,16 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
-#include "mobility/mobility.h"
+#include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
 #include "utils/uncertain_value.h"
 
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
 namespace py = pybind11;
@@ -87,19 +87,23 @@ PYBIND11_MODULE(_simulation, m)
     m.def(
         "get_state_id_de",
         [](int county) {
-            return int(mio::regions::de::get_state_id(mio::regions::de::CountyId(county)));
+            return int(mio::regions::get_state_id(int(mio::regions::CountyId(county))));
         },
         py::arg("county_id"));
     m.def(
         "get_holidays_de",
         [](int state, mio::Date start_date, mio::Date end_date) {
-            auto h = mio::regions::de::get_holidays(mio::regions::de::StateId(state), start_date, end_date);
+            auto h = mio::regions::get_holidays(mio::regions::StateId(state), start_date, end_date);
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     pymio::bind_logging(m, "LogLevel");
+
+    m.def("seed_random_number_generator", [] {
+        mio::thread_local_rng().seed(mio::RandomNumberGenerator::generate_seeds());
+    });
 
     m.attr("__version__") = "dev";
 }

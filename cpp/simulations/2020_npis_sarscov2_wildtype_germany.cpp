@@ -19,12 +19,16 @@
 */
 
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/random_number_generator.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
+#include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -440,141 +444,6 @@ void set_synthetic_population_data(std::vector<mio::osecir::Model>& counties)
 }
 
 /**
- * Adds county nodes to graph.
- * Reads list counties and populations from files in the data directory. 
- * @param params Parameters that are shared between all nodes.
- * @param start_date start date of the simulation.
- * @param end_date end date of the simulation.
- * @param data_dir data directory.
- * @param params_graph graph object that the nodes will be added to.
- * @returns any io errors that happen during reading of the files.
- */
-mio::IOResult<void> set_nodes(const mio::osecir::Parameters& params, mio::Date start_date, mio::Date end_date,
-                              const fs::path& data_dir,
-                              mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph)
-{
-    namespace de = mio::regions::de;
-
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<mio::osecir::Model> counties(county_ids.size(),
-                                             mio::osecir::Model(int(size_t(params.get_num_groups()))));
-    for (auto& county : counties) {
-        county.parameters = params;
-    }
-    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
-    auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(mio::osecir::read_population_data_county(counties, start_date, county_ids,
-                                                               scaling_factor_infected, scaling_factor_icu,
-                                                               (data_dir / "pydata" / "Germany").string()));
-    // set_synthetic_population_data(counties);
-
-    for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
-
-        //local parameters
-        auto tnt_capacity = counties[county_idx].populations.get_total() * 7.5 / 100000.;
-        assign_uniform_distribution(counties[county_idx].parameters.get<mio::osecir::TestAndTraceCapacity>(),
-                                    0.8 * tnt_capacity, 1.2 * tnt_capacity);
-
-        //holiday periods (damping set globally, see set_npis)
-        auto holiday_periods =
-            de::get_holidays(de::get_state_id(de::CountyId(county_ids[county_idx])), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.get<mio::osecir::ContactPatterns>();
-        contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
-        std::transform(
-            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
-            });
-
-        //uncertainty in populations
-        //TODO: do we need uncertainty in age groups as well?
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = mio::Index<mio::osecir::InfectionState>(0); j < mio::osecir::InfectionState::Count; ++j) {
-                auto& compartment_value = counties[county_idx].populations[{i, j}];
-                assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
-                                            1.1 * double(compartment_value));
-            }
-        }
-
-        params_graph.add_node(county_ids[county_idx], counties[county_idx]);
-    }
-    return mio::success();
-}
-
-/**
- * Adds edges to graph.
- * Edges represent commuting and other mobility between counties.
- * Reads mobility from files in the data directory.
- * @param data_dir data directory.
- * @param params_graph graph object that the nodes will be added to.
- * @returns any io errors that happen during reading of the files.
- */
-mio::IOResult<void> set_edges(const fs::path& data_dir,
-                              mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph)
-{
-    // mobility between nodes
-    BOOST_OUTCOME_TRY(mobility_data_commuter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(mobility_data_twitter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
-    if (size_t(mobility_data_commuter.rows()) != params_graph.nodes().size() ||
-        size_t(mobility_data_commuter.cols()) != params_graph.nodes().size() ||
-        size_t(mobility_data_twitter.rows()) != params_graph.nodes().size() ||
-        size_t(mobility_data_twitter.cols()) != params_graph.nodes().size()) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices not the correct size.");
-    }
-
-    auto migrating_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
-                                   mio::osecir::InfectionState::InfectedNoSymptoms,
-                                   mio::osecir::InfectionState::InfectedSymptoms,
-                                   mio::osecir::InfectionState::Recovered};
-    for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
-        for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
-            auto& populations = params_graph.nodes()[county_idx_i].property.populations;
-            // mobility coefficients have the same number of components as the contact matrices.
-            // so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto mobility_coeffs = mio::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
-
-            //commuters
-            auto working_population = 0.0;
-            auto min_commuter_age   = mio::AgeGroup(2);
-            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
-            }
-            auto commuter_coeff_ij = mobility_data_commuter(county_idx_i, county_idx_j) /
-                                     working_population; //data is absolute numbers, we need relative
-            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_index = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
-                        commuter_coeff_ij * (age == max_commuter_age ? 0.33 : 1.0);
-                }
-            }
-            //others
-            auto total_population = populations.get_total();
-            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
-                                 total_population; //data is absolute numbers, we need relative
-            for (auto age = mio::AgeGroup(0); age < populations.size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : migrating_compartments) {
-                    auto coeff_idx = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
-                }
-            }
-
-            //only add edges with mobility above thresholds for performance
-            //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
-            if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
-                params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs));
-            }
-        }
-    }
-
-    return mio::success();
-}
-
-/**
  * Create the input graph for the parameter study.
  * Reads files from the data directory.
  * @param start_date start date of the simulation.
@@ -583,7 +452,7 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
  * @returns created graph or any io errors that happen during reading of the files.
  */
 mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>>
-create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
+get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 {
     const auto start_day = mio::get_day_in_year(start_date);
 
@@ -595,174 +464,37 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 7.5 / 100000.;
+    auto migrating_compartments  = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
+                                    mio::osecir::InfectionState::InfectedNoSymptoms,
+                                    mio::osecir::InfectionState::InfectedSymptoms,
+                                    mio::osecir::InfectionState::Recovered};
+
     // graph of counties with populations and local parameters
     // and mobility between counties
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
-    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
-    BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
+    const auto& read_function_nodes = mio::osecir::read_input_data_county<mio::osecir::Model>;
+    const auto& read_function_edges = mio::read_mobility_plain;
+    const auto& node_id_function    = mio::get_node_ids;
+
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecir::TestAndTraceCapacity, mio::osecir::ContactPatterns, mio::osecir::Model,
+                       mio::MigrationParameters, mio::osecir::Parameters, decltype(read_function_nodes),
+                       decltype(node_id_function)>;
+    const auto& set_edge_function =
+        mio::set_edges<ContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+                       mio::osecir::InfectionState, decltype(read_function_edges)>;
+    BOOST_OUTCOME_TRY(
+        set_node_function(params, start_date, end_date, data_dir,
+                          mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
+                          true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                          scaling_factor_icu, tnt_capacity_factor, 0, false));
+    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     return mio::success(params_graph);
-}
-
-/**
- * Load the input graph for the parameter study that was previously saved.
- * @param save_dir directory where the graph was saved.
- * @returns created graph or any io errors that happen during reading of the files.
- */
-mio::IOResult<mio::Graph<mio::osecir::Model, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
-{
-    return mio::read_graph<mio::osecir::Model>(save_dir.string());
-}
-
-/**
- * Save the input graph for the parameter study.
- * @param save_dir directory where the graph will be saved.
- * @returns any io errors that happen during writing of the files.
- */
-mio::IOResult<void> save_graph(const mio::Graph<mio::osecir::Model, mio::MigrationParameters>& params_graph,
-                               const fs::path& save_dir)
-{
-    return mio::write_graph(params_graph, save_dir.string());
-}
-
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param params parameters for each county node.
- * @param county_ids id of each county node.
- * @return graph with county nodes but no edges.
- */
-auto make_graph_no_edges(const std::vector<mio::osecir::Model>& params, const std::vector<int>& county_ids)
-{
-    //make a graph without edges for writing to file
-    auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
-    for (auto i = size_t(0); i < county_ids.size(); ++i) {
-        graph.add_node(county_ids[i], params[i]);
-    }
-    return graph;
-}
-
-/**
- * Save the result of a single parameter study run.
- * Creates a new subdirectory for this run.
- * @param result result of the simulation run.
- * @param params parameters used for the simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @param run_idx index of the run.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
-                                const std::vector<mio::osecir::Model>& params, const std::vector<int>& county_ids,
-                                const fs::path& result_dir, size_t run_idx)
-{
-    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                       (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
-        mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
-    return mio::success();
-}
-
-/**
- * Save the results of a parameter study.
- * Stores different percentiles and sums of the results and parameters. 
- * @param ensemble_results result of each simulation run.
- * @param ensemble_params parameters used for each simulation run.
- * @param county_ids ids of the county nodes.
- * @param result_dir top level directory for all results of the parameter study.
- * @return any io errors that occur during writing of the files.
- */
-mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
-                                 const std::vector<std::vector<mio::osecir::Model>>& ensemble_params,
-                                 const std::vector<int>& county_ids, const fs::path& result_dir)
-{
-    //save results and sum of results over nodes
-    auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
-    auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
-    for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0}, num_groups,
-                                           (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids, num_groups,
-                                           (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
-    }
-
-    //make directories for percentiles
-    auto result_dir_p05 = result_dir / "p05";
-    auto result_dir_p25 = result_dir / "p25";
-    auto result_dir_p50 = result_dir / "p50";
-    auto result_dir_p75 = result_dir / "p75";
-    auto result_dir_p95 = result_dir / "p95";
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p05.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p25.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p50.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p75.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p95.string()));
-
-    //save percentiles of results, summed over nodes
-    {
-        auto ensemble_results_sum_p05 = mio::ensemble_percentile(ensemble_result_sum, 0.05);
-        auto ensemble_results_sum_p25 = mio::ensemble_percentile(ensemble_result_sum, 0.25);
-        auto ensemble_results_sum_p50 = mio::ensemble_percentile(ensemble_result_sum, 0.50);
-        auto ensemble_results_sum_p75 = mio::ensemble_percentile(ensemble_result_sum, 0.75);
-        auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
-
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
-    }
-
-    //save percentiles of results
-    {
-        auto ensemble_results_p05 = mio::ensemble_percentile(ensemble_results, 0.05);
-        auto ensemble_results_p25 = mio::ensemble_percentile(ensemble_results, 0.25);
-        auto ensemble_results_p50 = mio::ensemble_percentile(ensemble_results, 0.50);
-        auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
-        auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
-
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(
-            mio::save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
-    }
-
-    //save percentiles of parameters
-    {
-        auto ensemble_params_p05 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.05);
-        auto ensemble_params_p25 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.25);
-        auto ensemble_params_p50 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.50);
-        auto ensemble_params_p75 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.75);
-        auto ensemble_params_p95 = mio::osecir::ensemble_params_percentile(ensemble_params, 0.95);
-
-        auto make_graph = [&county_ids](auto&& params) {
-            return make_graph_no_edges(params, county_ids);
-        };
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
-            mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
-    }
-    return mio::success();
 }
 
 /**
@@ -783,24 +515,26 @@ enum class RunMode
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns any io error that occurs during reading or writing of files.
  */
-mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
+mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
+                        bool save_single_runs = true)
 {
     const auto start_date   = mio::Date(2020, 12, 12);
-    const auto num_days_sim = 20.0;
+    const auto num_days_sim = 5.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 5;
 
     //create or load graph
     mio::Graph<mio::osecir::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
-        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        BOOST_OUTCOME_TRY(created, get_graph(start_date, end_date, data_dir));
+        BOOST_OUTCOME_TRY(write_graph(created, save_dir.string()));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+        BOOST_OUTCOME_TRY(loaded, mio::read_graph<mio::osecir::Model>(save_dir.string()));
         params_graph = loaded;
     }
 
@@ -812,34 +546,42 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::osecir::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-    ensemble_results.reserve(size_t(num_runs));
-    auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
-    ensemble_params.reserve(size_t(num_runs));
-    auto save_result_result = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
-    parameter_study.run(
+    auto save_single_run_result = mio::IOResult<void>(mio::success());
+    auto ensemble = parameter_study.run(
         [](auto&& graph) {
             return draw_sample(graph);
         },
-        [&](auto results_graph) {
-            ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
+        [&](auto results_graph, auto&& run_idx) {
+            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
 
-            ensemble_params.emplace_back();
-            ensemble_params.back().reserve(results_graph.nodes().size());
+            auto params = std::vector<mio::osecir::Model>{};
+            params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                           std::back_inserter(params), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
-            if (save_result_result) {
-                save_result_result =
-                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            if (save_single_run_result && save_single_runs) {
+                save_single_run_result =
+                    save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
             }
-            ++run_idx;
+            return std::make_pair(std::move(interpolated_result), std::move(params));
         });
-    BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+
+    if (ensemble.size() > 0){
+        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_results.reserve(ensemble.size());
+        auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
+        ensemble_params.reserve(ensemble.size());
+        for (auto&& run: ensemble)
+        {
+            ensemble_results.emplace_back(std::move(run.first));
+            ensemble_params.emplace_back(std::move(run.second));
+        }
+
+        BOOST_OUTCOME_TRY(save_single_run_result);
+        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+    }
 
     return mio::success();
 }
@@ -853,48 +595,80 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::warn);    
+    mio::mpi::init();
 
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 4) {
+    bool save_single_runs = true;
+    if (argc == 5) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        if (atoi(argv[4]) == 0) {
+            save_single_runs = false;
+        }
+        if (mio::mpi::is_root()) {
+            printf("\n Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+            printf("\n Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
+    }
+    else if (argc == 4) {
+        mode       = RunMode::Save;
+        data_dir   = argv[1];
+        save_dir   = argv[2];
+        result_dir = argv[3];
+        if (mio::mpi::is_root()) {
+            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
     }
     else if (argc == 3) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
-        printf("Loading graph from \"%s\".\n", save_dir.c_str());
+        if (mio::mpi::is_root()) {
+            printf("Loading graph from \"%s\".\n", save_dir.c_str());
+            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
     }
     else {
-        printf("Usage:\n");
-        printf("2020_npis_wildtype <data_dir> <save_dir> <result_dir>\n");
-        printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
-        printf("\tStore the results in <result_dir>\n");
-        printf("2020_npis_wildtype <load_dir> <result_dir>\n");
-        printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        if (mio::mpi::is_root()) {
+            printf("Usage:\n");
+            printf("2020_npis_wildtype <data_dir> <save_dir> <result_dir>\n");
+            printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
+            printf("\tStore the results in <result_dir>\n");
+            printf("2020_npis_wildtype <load_dir> <result_dir>\n");
+            printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        }
+        mio::mpi::finalize();
         return 0;
     }
-    printf("Saving results to \"%s\".\n", result_dir.c_str());
-
-    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
-    printf("Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
+    if (mio::mpi::is_root()) {
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
-    printf("\n");
 
-    auto result = run(mode, data_dir, save_dir, result_dir);
+    // mio::thread_local_rng().seed(
+    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    mio::thread_local_rng().synchronize_seeds();
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : mio::thread_local_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
+    }
+
+    auto result = run(mode, data_dir, save_dir, result_dir, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
+        mio::mpi::finalize();
         return -1;
     }
+    mio::mpi::finalize();
     return 0;
 }

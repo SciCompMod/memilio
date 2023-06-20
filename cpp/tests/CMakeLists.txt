@@ -5,10 +5,9 @@ set(GOOGLE_TEST_INDIVIDUAL ON)
 include(AddGoogleTest)
 
 set(TESTSOURCES
-    test_household.cpp
     testmain.cpp
     test_populations.cpp
-    test_seir.cpp
+    test_odeseir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
@@ -23,8 +22,18 @@ set(TESTSOURCES
     test_graph_simulation.cpp
     test_stl_util.cpp
     test_uncertain.cpp
+    test_random_number_generator.cpp
     test_time_series.cpp
-    test_abm.cpp
+    test_abm_household.cpp
+    test_abm_infection.cpp
+    test_abm_location.cpp
+    test_abm_lockdown_rules.cpp
+    test_abm_masks.cpp
+    test_abm_migration_rules.cpp
+    test_abm_person.cpp
+    test_abm_simulation.cpp
+    test_abm_testing_strategy.cpp
+    test_abm_world.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
@@ -34,36 +43,43 @@ set(TESTSOURCES
     test_damping_sampling.cpp
     test_dynamic_npis.cpp
     test_regions.cpp
+    test_io_cli.cpp
     test_io_framework.cpp
+    test_binary_serializer.cpp
     test_compartmentsimulation.cpp
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_ide_seir.cpp
+    test_history.cpp
+    abm_helpers.h
+    abm_helpers.cpp
+    test_ide_secir.cpp
     distributions_helpers.h
     distributions_helpers.cpp
     actions.h
     matchers.h
     temp_file_register.h
+    sanitizers.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
-    set(TESTSOURCES ${TESTSOURCES}
-        test_json_serializer.cpp
-        test_epi_data_io.cpp
-    )
+set(TESTSOURCES ${TESTSOURCES}
+test_json_serializer.cpp
+test_epi_data_io.cpp
+)
 endif()
 
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
-    set(TESTSOURCES ${TESTSOURCES}
-        test_save_parameters.cpp
-        test_save_results.cpp
-    )
+set(TESTSOURCES ${TESTSOURCES}
+test_save_parameters.cpp
+test_save_results.cpp
+)
 endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir abm gtest_main)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ide_seir ide_secir abm gtest_main)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

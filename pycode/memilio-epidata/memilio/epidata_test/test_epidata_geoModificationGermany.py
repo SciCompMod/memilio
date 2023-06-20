@@ -18,10 +18,15 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import pandas as pd
 from unittest.mock import patch
+
+import pandas as pd
 from pyfakefs import fake_filesystem_unittest
+
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
@@ -387,7 +392,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         county_table = geoger.get_official_county_table()
         # test headers of df
         for name in self.county_table_test_headers:
-            if(name not in county_table.columns.tolist()):
+            if (name not in county_table.columns.tolist()):
                 self.assertFalse("headers have changed.")
 
     def test_get_nuts3_county_id_map(self):
@@ -544,8 +549,8 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         # the test dataframe should be unchanged as it is the input of the function
         # avoid error due to comparison of int32 and int64 columns.
         pd.testing.assert_frame_equal(
-            test_df.astype(dtype={'ID_County' : "int64"}), 
-            pd.DataFrame(self.eisenach_unmerged_data).astype(dtype={'ID_County' : "int64"}))
+            test_df.astype(dtype={'ID_County': "int64"}),
+            pd.DataFrame(self.eisenach_unmerged_data).astype(dtype={'ID_County': "int64"}))
 
 
 if __name__ == '__main__':

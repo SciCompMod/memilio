@@ -1,0 +1,14 @@
+name: "📚 Documentation"
+description: "Report Documentation Issues."
+labels:
+  - "class::documentation"
+body:
+- type: markdown
+  attributes:
+    value: "Please check our [existing issues](https://github.com/DLR-SC/memilio/issues) beforehand."
+- type: textarea
+  id: doc-description
+  attributes:
+    label: "Provide a description of requested documentation changes."
+  validations:
+    required: true

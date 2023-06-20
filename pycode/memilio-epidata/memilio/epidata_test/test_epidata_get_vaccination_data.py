@@ -18,15 +18,18 @@
 # limitations under the License.
 ######################################################################
 import unittest
-from unittest.mock import patch, call
-from pyfakefs import fake_filesystem_unittest
+from unittest.mock import call, patch
 
 import pandas as pd
+from pyfakefs import fake_filesystem_unittest
 
+from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import modifyDataframeSeries as mdfs
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -59,7 +62,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         ]
         df_to_concatenate = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
-        df_vacc_data = pd.concat([df_vacc_data, df_to_concatenate], ignore_index=True)
+        df_vacc_data = pd.concat(
+            [df_vacc_data, df_to_concatenate], ignore_index=True)
 
     df_vacc_data = df_vacc_data.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
@@ -87,7 +91,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         ]
         df_to_concatenate = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
-        df_vacc_data_altern = pd.concat([df_vacc_data_altern, df_to_concatenate], ignore_index=True)
+        df_vacc_data_altern = pd.concat(
+            [df_vacc_data_altern, df_to_concatenate], ignore_index=True)
 
     df_vacc_data_altern = df_vacc_data_altern.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
@@ -96,24 +101,16 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    @unittest.skip
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
-    def test_get_vaccination_data_alternative_ages_no_errors_with_plots(
-            self, mockv):
+    @patch('builtins.input', return_value='y')
+    def test_get_vaccination_data_alternative_ages(self, mockin, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
-            self, mockv):
-        gvd.get_vaccination_data(out_folder=self.path)
-
-    @unittest.skip
-    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
-           return_value=df_vacc_data)
-    def test_get_standard_vaccination_sanitize_3(
-            self, mockv):
+    @patch('builtins.input', return_value='y')
+    def test_get_standard_vaccination_sanitize_3(self, mockin, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
@@ -162,16 +159,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "Impfschutz": [1, 1, 2, 3, 1],
                 "Anzahl": [10000, 1, 2, 3, 4]})
         gvd.sanity_checks(df_no_errors)
-
-    @patch('builtins.print')
-    @patch('memilio.epidata.getVaccinationData.pd.read_csv',
-           side_effect=ImportError())
-    def test_download_not_working(self, mock_download, mock_print):
-        with self.assertRaises(ImportError):
-            df = gvd.download_vaccination_data()
-        expected_call = call(
-            "Error in reading csv while downloading vaccination data.")
-        mock_print.assert_has_calls([expected_call])
 
     def test_sanitizing_based_on_regions(self):
         to_county_map = {0: [1001, 1002, 2001], 1: [6000], 2: [6005, 6006]}

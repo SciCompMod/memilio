@@ -19,10 +19,12 @@
 #############################################################################
 import unittest
 
-from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
-from memilio.simulation.secir import Model, simulate, AgeGroup, Index_InfectionState, Simulation
-from memilio.simulation.secir import InfectionState as State
 import numpy as np
+
+from memilio.simulation import ContactMatrix, Damping, UncertainContactMatrix
+from memilio.simulation.secir import AgeGroup, Index_InfectionState
+from memilio.simulation.secir import InfectionState as State
+from memilio.simulation.secir import Model, Simulation, simulate
 
 
 class Test_secir_integration(unittest.TestCase):

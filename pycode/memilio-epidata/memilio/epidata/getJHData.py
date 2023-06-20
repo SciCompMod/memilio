@@ -24,19 +24,20 @@
 """
 
 import os
-import pandas
 from datetime import date
 
-from memilio.epidata import modifyDataframeSeries as mdfs
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+import pandas
+
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def get_jh_data(read_data=dd.defaultDict['read_data'],
                 file_format=dd.defaultDict['file_format'],
                 out_folder=dd.defaultDict['out_folder'],
                 no_raw=dd.defaultDict['no_raw'],
-                start_date=date(2020,1,22),
+                start_date=date(2020, 1, 22),
                 end_date=dd.defaultDict['end_date'],
                 impute_dates=dd.defaultDict['impute_dates'],
                 moving_average=dd.defaultDict['moving_average'],
@@ -67,41 +68,23 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    """
 
     filename = "FullData_JohnHopkins"
+    url = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
+    path = os.path.join(out_folder, filename + ".json")
+    df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
-    if read_data:
-        file_in = os.path.join(out_folder, filename + ".json")
-        # if once dowloaded just read json file
-        try:
-            df = pandas.read_json(file_in)
-        # pandas>1.5 raise FileNotFoundError instead of ValueError
-        except (ValueError, FileNotFoundError) as err:
-            raise FileNotFoundError("Error: The file: " + file_in + \
-                                  " does not exist." + \
-                                  " Call program without -r flag to get it.") \
-                from err
-    else:
-        # Get data:
-        # https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv
-        df = gd.loadCsv('time-series-19-covid-combined',
-                        apiUrl='https://raw.githubusercontent.com/datasets/covid-19/master/data/')
+    if not no_raw:
+        gd.write_dataframe(df, out_folder, filename, "json")
 
-        # convert "Datenstand" to real date:
-        # df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize
-        # ('Europe/Berlin')
-
-        # output data to not always download it
-        if not no_raw:
-            gd.write_dataframe(df, out_folder, filename, "json")
-
-    df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
+    df.rename({'Country/Region': 'CountryRegion',
+              'Province/State': 'ProvinceState'}, axis=1, inplace=True)
     print("Available columns:", df.columns)
-    
-    # extract subframe of dates
-    df=mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
+    # extract subframe of dates
+    df = mdfs.extract_subframe_based_on_dates(df, start_date, end_date)
 
     # Change "Korea, South" to SouthKorea
-    df.loc[df['CountryRegion'] == "Korea, South", ['CountryRegion']] = 'SouthKorea'
+    df.loc[df['CountryRegion'] == "Korea, South",
+           ['CountryRegion']] = 'SouthKorea'
 
     # Generate folders if needed
     directory_ger = os.path.join(out_folder, 'Germany/')
@@ -125,16 +108,19 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     ########### Countries ##########################
 
-    gb = df.groupby(['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
+    gb = df.groupby(['CountryRegion', 'Date']).agg(
+        {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_countries_jh", file_format)
+    gd.write_dataframe(gb.reset_index(), out_folder,
+                       "all_countries_jh", file_format)
 
     for key in countries:
         # get data for specific countries
         gb_country = gb.reset_index()[gb.reset_index()["CountryRegion"] == key]
         dir_country = countries[key]
         gd.check_dir(dir_country)
-        gd.write_dataframe(gb_country, dir_country, "whole_country_" + key + "_jh", file_format)
+        gd.write_dataframe(gb_country, dir_country,
+                           "whole_country_" + key + "_jh", file_format)
 
     # Check what about external provinces. Should they be added?
 
@@ -146,7 +132,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
         {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_provincestate_jh", file_format)
+    gd.write_dataframe(gb.reset_index(), out_folder,
+                       "all_provincestate_jh", file_format)
 
     # print(dfD[dfD.ProvinceState=="Saskatchewan"])
     # print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])

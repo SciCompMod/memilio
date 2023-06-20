@@ -18,8 +18,9 @@
 # limitations under the License.
 #############################################################################
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -34,9 +35,9 @@ def getMobilityFromFile(directory, mobility_file):
     @param mobility_file Mobility matrix file which has to be updated.
     @return Mobility matrix data frame.
     """
-    mobility_matrix = gd.loadCsv(
-        '', directory + mobility_file, extension='.txt',
-        param_dict={'sep': ' ', 'header': None})
+    mobility_matrix = pd.read_csv(
+        os.path.join(directory + mobility_file + '.txt'),
+        sep=' ', header=None)
 
     return mobility_matrix
 
@@ -105,7 +106,8 @@ def updateMobility2022(directory, mobility_file):
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
     if (len(mobility_matrix.index) == 401) and (len(mobility_matrix.columns) == 401):
-        gd.write_dataframe(mobility_matrix, directory, mobility_file + '_dim401', 'txt',
+        gd.write_dataframe(
+            mobility_matrix, directory, mobility_file + '_dim401', 'txt',
             param_dict={'sep': ' ', 'header': None, 'index': False})
         # merge eisenach
         ids400 = geoger.get_county_ids()
@@ -119,7 +121,8 @@ def updateMobility2022(directory, mobility_file):
         mobility_matrix_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
                                                                               idx_eisenach_old].values
 
-        gd.write_dataframe(mobility_matrix_new, directory, mobility_file, 'txt',
+        gd.write_dataframe(
+            mobility_matrix_new, directory, mobility_file, 'txt',
             param_dict={'sep': ' ', 'header': None, 'index': False})
 
         return mobility_matrix_new

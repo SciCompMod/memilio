@@ -26,11 +26,13 @@
 
 import os
 import sys
+
 import numpy as np
 import pandas as pd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
+
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def get_new_counties(data):
@@ -46,6 +48,21 @@ def get_new_counties(data):
 
     # create 7 new counties
     data_temp = np.append(data, np.zeros((7, data.shape[1])), axis=0)
+
+    old_to_new_counties = {
+        3159: [3152, 3156],
+        13071: [13056, 13002, 13055, 13052],
+        13072: [13051, 13053],
+        13073: [13061, 13005, 13057],
+        13074: [13006, 13058],
+        13075: [13059, 13062, 13001],
+        13076: [13054, 13060]}
+
+    no_data_avail = []
+    for new_county in old_to_new_counties.keys():
+        if not all(item in data_temp[:, 0]
+                   for item in old_to_new_counties[new_county]):
+            no_data_avail.append(new_county)
 
     # Göttingen
     data_temp[-7, 0] = 3159
@@ -72,47 +89,51 @@ def get_new_counties(data):
 
     for i in range(len(data_temp[:, 0])):
         # fuse "Göttingen" and "Osterode am Harz" into Göttingen
-        if data_temp[i, 0] in [3152, 3156]:
+        if data_temp[i, 0] in old_to_new_counties[3159]:
             data_temp[-7, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Müritz", "Neubrandenburg", "Mecklenburg-Sterlitz"
         # and "Demmin" into "Mecklenburgische Seenplatte"
-        if data_temp[i, 0] in [13056, 13002, 13055, 13052]:
+        if data_temp[i, 0] in old_to_new_counties[13071]:
             data_temp[-6, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Bad Doberan and Güstrow" into "Landkreis Rostosck"
-        if data_temp[i, 0] in [13051, 13053]:
+        if data_temp[i, 0] in old_to_new_counties[13072]:
             data_temp[-5, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Rügen", "Stralsund" and "Nordvorpommern" into
         # "Vorpommern Rügen"
-        if data_temp[i, 0] in [13061, 13005, 13057]:
+        if data_temp[i, 0] in old_to_new_counties[13073]:
             data_temp[-4, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Wismar" and "Nordwestmecklenburg" into
         # "Nordwestmecklenburg"
-        if data_temp[i, 0] in [13006, 13058]:
+        if data_temp[i, 0] in old_to_new_counties[13074]:
             data_temp[-3, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Ostvorpommern", "Uecker-Randow" and "Greifswald"
         # into "Vorpommern Greifswald"
-        if data_temp[i, 0] in [13059, 13062, 13001]:
+        if data_temp[i, 0] in old_to_new_counties[13075]:
             data_temp[-2, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
         # fuse "Ludwigslust" and "Parchim" into "Ludwigslust-Parchim"
-        if data_temp[i, 0] in [13054, 13060]:
+        if data_temp[i, 0] in old_to_new_counties[13076]:
             data_temp[-1, 1:] += data_temp[i, 1:]
             to_delete.append(i)
 
     data_temp = np.delete(data_temp, to_delete, 0)
     sorted_inds = np.argsort(data_temp[:, 0])
     data_temp = data_temp[sorted_inds, :]
+    # potentially remove new counties if there was no data available
+    for county in no_data_avail:
+        data_temp = np.delete(arr=data_temp, obj=np.where(
+            data_temp[:, 0] == county)[0][0], axis=0)
     return data_temp
 
 
@@ -146,64 +167,18 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     filename_zensus = 'zensus'
     filename_reg_key = 'reg_key'
 
-    if read_data:
+    url_zensus = 'https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv'
+    url_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
+        '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
+    path_zensus = os.path.join(directory, filename_zensus + ".json")
+    path_reg_key = os.path.join(directory, filename_zensus + ".json")
+    zensus = gd.get_file(
+        path_zensus, url_zensus, read_data, param_dict={}, interactive=True)
+    reg_key = gd.get_file(path_reg_key, url_reg_key, read_data, param_dict={
+        "engine": None, "sheet_name": 'Tabelle_1A', "header": 12}, interactive=True)
+    counties = geoger.get_official_county_table()
 
-        # Read counties File
-        file_in = os.path.join(directory, filename_counties + ".json")
-        try:
-            counties = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-
-        # Read Zensus File
-        file_in = os.path.join(directory, filename_zensus + ".json")
-        try:
-            zensus = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-
-        # Read reg_key File
-        file_in = os.path.join(directory, filename_reg_key + ".json")
-        try:
-            reg_key = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-    else:
-        try:
-            counties = geoger.get_official_county_table()
-        except FileNotFoundError:
-            error_message = "Error: The counties file does not exist."
-            raise FileNotFoundError(error_message)
-
-        # Download zensus
-
-        try:
-            # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
-            # utf_8_sig can identify those bytes as one sign and display it correctly
-            zensus = gd.loadCsv(
-                "abad92e8eead46a4b0d252ee9438eb53_1", param_dict={"encoding":'utf_8_sig'})
-        except FileNotFoundError:
-            error_message = "Error: The zensus file does not exist."
-            raise FileNotFoundError(error_message)
-
-        # Download reg_key
-
-        try:
-            path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                           '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-            # read tables
-            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='', param_dict={
-                                   "engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
-        except FileNotFoundError:
-            error_message = "Error: The reg-key file does not exist."
-            raise FileNotFoundError(error_message)
-
+    if not read_data:
         if not no_raw:
             if not counties.empty:
                 gd.write_dataframe(counties, directory,
@@ -280,9 +255,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
-        df_pop_raw = gd.loadExcel(
+        df_pop_raw = gd.get_file(
             new_data_file, apiUrl='', extension='.xlsx',
-            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4})
+            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4}, interactive=True)
         column_names = list(df_pop_raw.columns)
         # rename columns
         rename_columns = {
@@ -430,7 +405,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             file_format=file_format)
 
         # find region keys for census population data
-        key = np.zeros((len(zensus)))
+        key = np.zeros(len(zensus))
         for i in range(len(key)):
             for j in range(len(reg_key)):
                 if zensus['Name'].values[i] == reg_key['NAME'].values.astype(
@@ -502,7 +477,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                     try:
                         if data[i, 0] == int(
                                 counties[dd.EngEng['idCounty']].values[j]):
-                            ratio[i] = counties[dd.EngEng['population']].values[j]/data[i, 1]
+                            ratio[i] = counties[dd.EngEng['population']
+                                                ].values[j]/data[i, 1]
 
                     except ValueError:
                         pass
