@@ -299,11 +299,15 @@ TEST(TestWorld, evolveMigration)
 
     // Test that a dead person cannot make a movement
     {
-        auto t      = mio::abm::TimePoint(0) + mio::abm::hours(1);
-        auto dt     = mio::abm::hours(2);
+        auto t      = mio::abm::TimePoint(0);
+        auto dt     = mio::abm::days(1);
         auto params = mio::abm::GlobalInfectionParameters{};
+        // Time to go from severe to critical infection is 1 day (dt).
+        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
+                                                  mio::abm::VaccinationState::Unvaccinated}] = 1;
+        // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
         params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
-                                                mio::abm::VaccinationState::Unvaccinated}] = 0.01;
+                                                mio::abm::VaccinationState::Unvaccinated}] = 0.5 * 1;
 
         auto world       = mio::abm::World(params);
         auto home_id     = world.add_location(mio::abm::LocationType::Home);
