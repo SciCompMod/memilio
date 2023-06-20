@@ -1,8 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)   
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -158,6 +157,16 @@ LocationType return_home_when_recovered(const Person& person, const TimePoint t,
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.get_infection_state(t) == InfectionState::Recovered) {
         return LocationType::Home;
+    }
+    return current_loc;
+}
+
+LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/,
+                            const MigrationParameters& /*params*/)
+{
+    auto current_loc = person.get_location().get_type();
+    if (person.get_infection_state(t) == InfectionState::Dead) {
+        return LocationType::Cemetery;
     }
     return current_loc;
 }
