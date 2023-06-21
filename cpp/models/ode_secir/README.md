@@ -12,6 +12,10 @@ The model consists of the following major classes:
 6. Parameter Space: Factory class for the 'Parameters' to set distributions to the different parameters and providing the opportunity to sample from these parameter set containing random distributions.
 7. Parameter Studies: Method to be called on a set of 'Parameters' with a given set of random distributions to sample from the distributions and run ensemble run simulations with the obtained samples.
 
+Below is an overview of the model architecture and its compartments.
+
+![secir](https://github.com/DLR-SC/memilio/assets/69154294/288d03f4-17ee-47fc-9fcd-b30e04525f24)
+
 ## Simulation
 
 The simulation runs in discrete time steps using a numerical integration scheme. At each time step, a part of the population of each age-aware compartment moves from the current compartment to a new one. Different numerical integrations schemes are available, see the `math` folder. The Simulation class handles the parameters and the numerical integrator. It also stores the result. Ensemble runs can be done using the Parameter Studies class as soon as random distributions are set for all the parameters. This can be done using the Parameter Space class.

@@ -6,6 +6,10 @@ Vaccinations are modeled by adding compartments for partially and fully vaccinat
 
 The ratio of two variants can change over time, which affects the average transmissiblity of the disease. Infectiousness of different variants can be set in the parameters.
 
+Below is an overview of the model architecture and its compartments.
+
+![secirvvs](https://github.com/DLR-SC/memilio/assets/69154294/374bf838-4ae4-4e8e-8e05-9f36cf478397)
+
 ## Examples
 
 The extended model is used in the 2021_vaccination_sarscov2_delta_germany simulation. 
