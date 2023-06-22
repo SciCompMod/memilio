@@ -114,6 +114,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::string line;
 
     std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     std::vector<std::string> titles;
     boost::split(titles, line, boost::is_any_of(";"));
     uint32_t count                        = 0;
@@ -138,6 +139,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
         // read columns in this row
         split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
         uint32_t person_id   = row[index["puid"]];
         uint32_t age         = row[index["age"]]; // TODO
@@ -153,8 +155,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         }
         auto it_person = persons.find(person_id);
         if (it_person == persons.end()) {
-            auto& person = world.add_person(home, mio::abm::InfectionState::Susceptible,
-                                            static_cast<mio::abm::AgeGroup>((age / 7)));
+            auto& person =
+                world.add_person(home, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age / 7));
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
