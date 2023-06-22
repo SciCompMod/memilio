@@ -22,10 +22,12 @@
 
 #include "memilio/config.h"
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/math/integrator.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/euler.h"
+#include <functional>
 
 namespace mio
 {
@@ -140,11 +142,46 @@ public:
         return m_integrator.get_dt();
     }
 
+protected:
+    /**
+     * @brief setup the simulation with an ODE solver
+     * @param[in] model: An instance of a compartmental model
+     * @param[in] t0 start time
+     * @param[in] dt initial step size of integration
+     */
+    Simulation(Model const& model, mio::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> init_values, double t0 = 0.,
+               double dt = 0.1)
+        : m_integratorCore(
+              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(f, t0, init_values, dt, m_integratorCore)
+    {
+    }
+
 private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
     OdeIntegrator m_integrator;
+
 }; // namespace mio
+
+template <class M>
+class SimulationFlows : public Simulation<M>
+{
+public:
+    using Model = M;
+
+    /**
+     * @brief setup the simulation with an ODE solver
+     * @param[in] model: An instance of a compartmental model
+     * @param[in] t0 start time
+     * @param[in] dt initial step size of integration
+     */
+    SimulationFlows(Model const& model, double t0 = 0., double dt = 0.1)
+        : Simulation<M>(model, , model.get_initial_flows(), t0, dt)
+    {
+    }
+};
 
 /**
  * @brief A class for the simulation of a compartment model with Flows. The Flows are integrated when calling the time integration scheme.
