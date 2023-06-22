@@ -22,12 +22,10 @@
 
 #include "memilio/config.h"
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/math/integrator.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/euler.h"
-#include <functional>
 
 namespace mio
 {
@@ -149,12 +147,16 @@ protected:
      * @param[in] t0 start time
      * @param[in] dt initial step size of integration
      */
-    Simulation(Model const& model, mio::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> init_values, double t0 = 0.,
-               double dt = 0.1)
+    template <class ODESystem>
+    Simulation(Model const& model, double t0, double dt, ODESystem&& s)
         : m_integratorCore(
               std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
-        , m_integrator(f, t0, init_values, dt, m_integratorCore)
+        , m_integrator(
+              [&model = *m_model, &s](auto&& y, auto&& t, auto&& dydt) {
+                  s.right_hand_side(model, y, t, dydt);
+              },
+              t0, s.initial_values(model), dt, m_integratorCore)
     {
     }
 
@@ -162,8 +164,7 @@ private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
     OdeIntegrator m_integrator;
-
-}; // namespace mio
+};
 
 template <class M>
 class SimulationFlows : public Simulation<M>
@@ -178,9 +179,89 @@ public:
      * @param[in] dt initial step size of integration
      */
     SimulationFlows(Model const& model, double t0 = 0., double dt = 0.1)
-        : Simulation<M>(model, , model.get_initial_flows(), t0, dt)
+        : Simulation<M>(model, t0, dt, ODESystem())
     {
     }
+
+    /**
+     * @brief get_result returns the values for all compartments within the
+     * simulated model for each time step.
+     * @return a TimeSeries to represent a numerical solution for the model. 
+     * For each simulated time step, the TimeSeries containts the population  
+     * size for each compartment. 
+     */
+    TimeSeries<ScalarType> get_result() const
+    {
+        // overwrite get_result from the base class, so that it returns compartments, too
+        const auto flows = get_flows();
+        const auto model = this->get_model();
+        TimeSeries<ScalarType> result(flows.get_time(0), model.get_initial_values());
+        for (size_t i = 1; i < flows.get_num_time_points(); i++) {
+            result.add_time_point(flows.get_time(i));
+            model.get_derivatives(flows.get_value(i), result[i]);
+            result[i] += result[0];
+        }
+        return result;
+    }
+
+    /**
+     * @brief get_flows returns the values describing the transition between 
+     * compartments for each time step.
+     *
+     * Which flows are used by the model is defined by the Flows template 
+     * argument for the CompartmentalModel using an explicit FlowChart.
+     * To get the correct index for the flow between two compartments use 
+     * CompartmentalModel::get_flow_index.
+     *
+     * @return a TimeSeries to represent a numerical solution for the 
+     * flows in the model. 
+     * For each simulated time step, the TimeSeries containts the value for 
+     * each flow. 
+     */
+    TimeSeries<ScalarType>& get_flows()
+    {
+        // use get_result from the base class
+        return Simulation<M>::get_result();
+    }
+
+    /**
+     * @brief get_flows returns the values describing the transition between 
+     * compartments for each time step.
+     *
+     * Which flows are used by the model is defined by the Flows template 
+     * argument for the CompartmentalModel using an explicit FlowChart.
+     * To get the correct index for the flow between two compartments use 
+     * CompartmentalModel::get_flow_index.
+     *
+     * @return a TimeSeries to represent a numerical solution for the 
+     * flows in the model. 
+     * For each simulated time step, the TimeSeries containts the value for 
+     * each flow. 
+     */
+    const TimeSeries<ScalarType>& get_flows() const
+    {
+        // use get_result from the base class
+        return Simulation<M>::get_result();
+    }
+
+private:
+    struct ODESystem {
+        static inline void right_hand_side(const Model& m, Eigen::Ref<const Eigen::VectorXd> flows, double t,
+                                           Eigen::Ref<Eigen::VectorXd> dflow_dt)
+        {
+            // compute current population
+            Eigen::VectorXd y(static_cast<Eigen::Index>(Model::Compartments::Count));
+            m.get_derivatives(flows, y);
+            y += m.get_initial_values();
+            // compute current flows
+            dflow_dt.setZero();
+            m.get_flows(y, y, t, dflow_dt);
+        }
+        static inline Eigen::VectorXd initial_values(const Model& m)
+        {
+            return m.get_initial_flows();
+        }
+    };
 };
 
 /**

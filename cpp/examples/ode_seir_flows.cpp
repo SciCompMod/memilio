@@ -17,12 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
+#include "memilio/utils/time_series.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include <iostream>
+#include <vector>
 
 void print_to_terminal(const mio::TimeSeries<ScalarType>& results, const std::vector<std::string>& state_names)
 {
@@ -77,7 +80,10 @@ int main()
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 
     model.check_constraints();
-    auto seir = simulate_flows(t0, tmax, dt, model);
+    mio::SimulationFlows<mio::oseir::Model> sim(model, t0, dt);
+    sim.advance(tmax);
+    std::vector<mio::TimeSeries<ScalarType>> seir = {sim.get_result(), sim.get_flows()};
+    // auto seir = simulate_flows(t0, tmax, dt, model);
 
     printf("Compartments: \n");
     print_to_terminal(seir[0], {});
