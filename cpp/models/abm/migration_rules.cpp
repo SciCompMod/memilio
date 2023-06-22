@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)   
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
@@ -134,7 +134,7 @@ LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*
 LocationType go_to_hospital(const Person& person, const TimePoint t, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
-    if (person.get_infection_state(t) == InfectionState::Infected_Severe) {
+    if (person.get_infection_state(t) == InfectionState::InfectedSevere) {
         return LocationType::Hospital;
     }
     return current_loc;
@@ -143,7 +143,7 @@ LocationType go_to_hospital(const Person& person, const TimePoint t, TimeSpan /*
 LocationType go_to_icu(const Person& person, const TimePoint t, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
-    if (person.get_infection_state(t) == InfectionState::Infected_Critical) {
+    if (person.get_infection_state(t) == InfectionState::InfectedCritical) {
         return LocationType::ICU;
     }
     return current_loc;
@@ -154,8 +154,18 @@ LocationType return_home_when_recovered(const Person& person, const TimePoint t,
 {
     auto current_loc = person.get_location().get_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
-        person.get_infection_state(t) == InfectionState::Recovered_Infected) {
+        person.get_infection_state(t) == InfectionState::Recovered) {
         return LocationType::Home;
+    }
+    return current_loc;
+}
+
+LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/,
+                            const Parameters& /*params*/)
+{
+    auto current_loc = person.get_location().get_type();
+    if (person.get_infection_state(t) == InfectionState::Dead) {
+        return LocationType::Cemetery;
     }
     return current_loc;
 }

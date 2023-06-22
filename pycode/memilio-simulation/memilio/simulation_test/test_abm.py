@@ -32,8 +32,8 @@ class TestAbm(unittest.TestCase):
         sim = abm.Simulation(t0, 6)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
-        self.assertEqual(len(world.locations), 0)
-        self.assertEqual(len(sim.result), 1)
+        self.assertEqual(len(world.locations), 1)
+        self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
@@ -42,7 +42,7 @@ class TestAbm(unittest.TestCase):
 
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
-        self.assertEqual(len(world.locations), 2)
+        self.assertEqual(len(world.locations), 3)
 
         home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
@@ -77,7 +77,7 @@ class TestAbm(unittest.TestCase):
         # check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, mio.AgeGroup(2))
-        self.assertEqual(p1.location.index, 0)
+        self.assertEqual(p1.location.index, 1)
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
@@ -102,10 +102,8 @@ class TestAbm(unittest.TestCase):
 
         social_event = world.locations[social_event_id.index]
 
-        world.parameters.InfectedToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
-                                          abm.VaccinationState.Unvaccinated] = 0.0
-        world.parameters.InfectedToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(0),
-                                             abm.VaccinationState.Unvaccinated] = 0.0
+        world.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(0)] = 0.0
+        world.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(0)] = 0.0
 
         # trips
         trip_list = abm.TripList()

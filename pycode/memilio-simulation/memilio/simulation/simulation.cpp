@@ -23,7 +23,7 @@
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
 #include "epidemiology/uncertain_matrix.h"
-#include "mobility/meta_mobility_instant.h"
+#include "mobility/metapopulation_mobility_instant.h"
 #include "utils/date.h"
 #include "utils/logging.h"
 #include "utils/time_series.h"
@@ -32,7 +32,7 @@
 #include "utils/index.h"
 #include "utils/custom_index_array.h"
 
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/date.h"
 #include "memilio/geography/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"

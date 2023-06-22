@@ -64,56 +64,52 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_groups); age_group++) {
             // Global infection parameters
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<IncubationPeriod>()[{VirusVariant::Wildtype, age_group,
-                                                                          VaccinationState::Unvaccinated}];
+                return model.parameters.template get<IncubationPeriod>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<SusceptibleToExposedByCarrier>()[{
-                    VirusVariant::Wildtype, age_group, VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<SusceptibleToExposedByInfected>()[{
-                    VirusVariant::Wildtype, age_group, VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<CarrierToInfected>()[{VirusVariant::Wildtype, age_group,
-                                                                           VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<CarrierToRecovered>()[{VirusVariant::Wildtype, age_group,
-                                                                            VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<InfectedToRecovered>()[{VirusVariant::Wildtype, age_group,
-                                                                             VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<InfectedToSevere>()[{VirusVariant::Wildtype, age_group,
-                                                                          VaccinationState::Unvaccinated}];
+                return model.parameters
+                    .template get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<SevereToCritical>()[{VirusVariant::Wildtype, age_group,
-                                                                          VaccinationState::Unvaccinated}];
+                return model.parameters.template get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<SevereToRecovered>()[{VirusVariant::Wildtype, age_group,
-                                                                           VaccinationState::Unvaccinated}];
+                return model.parameters.template get<SevereToCritical>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<CriticalToDead>()[{VirusVariant::Wildtype, age_group,
-                                                                        VaccinationState::Unvaccinated}];
+                return model.parameters.template get<SevereToRecovered>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<CriticalToRecovered>()[{VirusVariant::Wildtype, age_group,
-                                                                             VaccinationState::Unvaccinated}];
+                return model.parameters.template get<CriticalToDead>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, age_group,
-                                                                                VaccinationState::Unvaccinated}];
+                return model.parameters.template get<CriticalToRecovered>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group,
-                                                                         VaccinationState::Unvaccinated}];
+                return model.parameters.template get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, age_group}];
+            });
+            param_percentil(node, [age_group](auto&& model) -> auto& {
+                return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group}];
             });
         }
         for (size_t run = 0; run < num_runs; run++) {

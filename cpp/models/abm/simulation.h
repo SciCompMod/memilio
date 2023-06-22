@@ -25,6 +25,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
+#include "memilio/io/history.h"
 
 namespace mio
 {
@@ -63,6 +64,25 @@ public:
      */
     void advance(TimePoint tmax);
 
+    /** 
+     * @brief Run the Simulation from the current time to tmax.
+     * @param[in] tmax Time to stop.
+     * @param[in] history History object to log data of the Simulation.
+     */
+    template <typename History>
+    void advance(TimePoint tmax, History& history)
+    {
+        //log initial system state
+        initialize_locations(m_t);
+        store_result_at(m_t);
+        history.log(*this);
+        while (m_t < tmax) {
+            evolve_world(tmax);
+            store_result_at(m_t);
+            history.log(*this);
+        }
+    }
+
     /**
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
@@ -70,6 +90,14 @@ public:
     const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
+    }
+
+    /**
+     * @brief Get the current time of the Simulation.
+     */
+    TimePoint get_time() const
+    {
+        return m_t;
     }
 
     /**
@@ -87,6 +115,7 @@ public:
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
+    void evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.

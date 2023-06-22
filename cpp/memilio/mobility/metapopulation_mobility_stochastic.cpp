@@ -1,7 +1,7 @@
-/*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+/* 
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann
+* Authors: Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,39 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_VACCINE_H
-#define EPI_ABM_VACCINE_H
-
-#include "abm/time.h"
-
-#include <cstdint>
+#include "memilio/mobility/metapopulation_mobility_stochastic.h"
 
 namespace mio
 {
-namespace abm
-{
 
-/** 
- * Vaccine in ABM.
- * can be used as 0-based index
- */
-enum class Vaccine : std::uint32_t
-{
-    Generic = 0,
-
-    Count //last!!
-};
-
-/**
- * A vaccination is a tuple of TimePoint and Vaccine.
- * The TimePoint describes the time of administration of the Vaccine.
-*/
-struct Vaccination {
-    TimePoint t;
-    Vaccine vaccine;
-};
-
-} // namespace abm
 } // namespace mio
-
-#endif

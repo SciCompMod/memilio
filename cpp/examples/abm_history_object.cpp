@@ -26,30 +26,35 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include "memilio/io/history.h"
 
-void write_results_to_file(const mio::abm::Simulation& sim)
+std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream myfile("abm_minimal.txt");
-    myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        myfile << sim.get_result().get_time(i);
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            myfile << v[j];
-            if (j < v.size() - 1) {
-                myfile << " ";
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            myfile << "\n";
-        }
+    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
+           std::to_string(std::get<1>(tuple_id));
+}
+
+template <typename T>
+void write_log_to_file(const T& history)
+{
+    auto logg = history.get_log();
+    // Write the results to a file.
+    auto loc_id      = std::get<1>(logg);
+    auto time_points = std::get<0>(logg);
+    std::string input;
+    std::ofstream myfile("test_output.txt");
+    myfile << "Locations as numbers:\n";
+    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
+        myfile << convert_loc_id_to_string(loc_id[0][loc_id_index]) << "\n";
     }
+    myfile << "Timepoints:\n";
+
+    for (int t = 0; t < time_points.size(); ++t) {
+        input += std::to_string(time_points[t]) + " ";
+    }
+    myfile << input << "\n";
+
     myfile.close();
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
 int main()
@@ -60,27 +65,19 @@ int main()
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
+    // There are 3 households for each household group.
+    int n_households = 3;
+
     // Assign the name to general age group.
     const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
     const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
     const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
     const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
 
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_0_TO_4};
-    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-    world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
-
-    // Check if the parameters satisfy their contraints.
-    world.parameters.check_constraints();
-
-    // There are 3 households for each household group.
-    int n_households = 3;
-
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(AGE_GROUP_0_TO_4, 1);
-    child.set_age_weight(AGE_GROUP_0_TO_4, 1);
+    child.set_age_weight(AGE_GROUP_5_TO_14, 1);
 
     auto parent = mio::abm::HouseholdMember(6); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
@@ -154,7 +151,7 @@ int main()
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == AGE_GROUP_0_TO_4) {
+        if (person.get_age() == AGE_GROUP_5_TO_14) {
             person.set_assigned_location(school);
         }
         if (person.get_age() == AGE_GROUP_15_TO_34 || person.get_age() == AGE_GROUP_35_TO_59) {
@@ -170,7 +167,28 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    sim.advance(tmax);
+    struct LogTimePoint : mio::LogAlways {
+        using Type = double;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            return sim.get_time().hours();
+        }
+    };
+    struct LogLocationIds : mio::LogOnce {
+        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+        static Type log(const mio::abm::Simulation& sim)
+        {
+            Type location_ids{};
+            for (auto& location : sim.get_world().get_locations()) {
+                location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+            }
+            return location_ids;
+        }
+    };
 
-    write_results_to_file(sim);
+    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+
+    sim.advance(tmax, history);
+
+    write_log_to_file(history);
 }

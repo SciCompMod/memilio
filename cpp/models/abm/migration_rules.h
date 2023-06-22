@@ -86,6 +86,11 @@ LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const Paramete
  * @brief Person%s in the hospital/icu return home when they recover.
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params);
+
+/**
+ * @brief Person%s in the icu go to cemetery when they are dead.
+ */
+LocationType get_buried(const Person& person, TimePoint t, TimeSpan dt, const Parameters& params);
 /**@}*/
 
 } // namespace abm

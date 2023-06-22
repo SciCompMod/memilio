@@ -57,16 +57,15 @@ TEST(TestMasks, maskProtection)
     mio::abm::Parameters params(6);
 
     // set incubation period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_5_TO_14,
-                                              mio::abm::VaccinationState::Unvaccinated}] = 2.;
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_5_TO_14}] = 2.;
 
     //setup location with some chance of exposure
     auto t                  = mio::abm::TimePoint(0);
     auto infection_location = mio::abm::Location(mio::abm::Location(mio::abm::LocationType::School, 0, 6));
     auto susc_person1       = mio::abm::Person(infection_location, AGE_GROUP_15_TO_34);
     auto susc_person2       = mio::abm::Person(infection_location, AGE_GROUP_15_TO_34);
-    auto infected1 = make_test_person(infection_location, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Infected, t,
-                                      params); // infected 7 days prior
+    auto infected1          = make_test_person(infection_location, AGE_GROUP_15_TO_34,
+                                               mio::abm::InfectionState::InfectedSymptoms, t, params); // infected 7 days prior
 
     infection_location.add_person(infected1);
 

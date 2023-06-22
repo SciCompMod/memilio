@@ -59,6 +59,7 @@ public:
     World(size_t num_agegroups)
         : parameters(num_agegroups)
         , m_trip_list()
+        , m_cemetery_id(add_location(LocationType::Cemetery))
     {
         use_migration_rules(true);
     }
@@ -73,8 +74,7 @@ public:
         , m_trip_list(other.m_trip_list)
     {
         // Create copies of persons in the world
-        auto persons = other.get_persons();
-        for (auto& person : persons) {
+        for (auto& person : other.get_persons()) {
             m_persons.push_back(std::make_unique<Person>(person));
         }
 
@@ -134,28 +134,28 @@ public:
     }
 
     /** 
-     * Prepare the World for the next simulation step.
+     * @brief Prepare the World for the next Simulation step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * Follow up on the World after the simulation step.
+     * @brief Follow up on the World after the Simulation step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
     void end_step(TimePoint t, TimeSpan dt);
 
     /** 
-     * Evolve the world one time step.
+     * @brief Evolve the world one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
     void evolve(TimePoint t, TimeSpan dt);
 
     /** 
-     * Add a Location to the world.
+     * @brief Add a Location to the World.
      * @param[in] type Type of Location to add.
      * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
      * @return Index and type of the newly created Location.
@@ -163,7 +163,7 @@ public:
     LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
     /** 
-     * @brief Add a Person to the world.
+     * @brief Add a Person to the World.
      * @param[in] id Index and type of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
@@ -195,7 +195,7 @@ public:
      * @brief Find an assigned Location of a Person.
      * @param[in] type The #LocationType that specifies the assigned Location.
      * @param[in] person The Person.
-     * @return Pointer to the assigned Location.
+     * @return Reference to the assigned Location.
      */
     Location& find_location(LocationType type, const Person& person);
 
@@ -226,7 +226,7 @@ public:
 
     /** 
      * @brief Get the TestingStrategy.
-     * @return Refernce to the list of TestingSchemes that are checked for testing.
+     * @return Reference to the list of TestingScheme%s that are checked for testing.
      */
     TestingStrategy& get_testing_strategy();
 
@@ -251,14 +251,15 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::unique_ptr<Location>> m_locations;
-    TestingStrategy m_testing_strategy;
-    TripList m_trip_list;
-    bool m_use_migration_rules;
-    std::vector<
-        std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&), std::vector<LocationType>>>
-        m_migration_rules;
+    std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
+    std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
+    TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
+    TripList m_trip_list; ///< List of all Trip%s the Person%s do.
+    bool m_use_migration_rules; ///< Whether migration rules are considered.
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const Parameters&),
+                          std::vector<LocationType>>>
+        m_migration_rules; ///< Rules that govern the migration between Location%s.
+    LocationId m_cemetery_id; // Central cemetery for all dead persons.
 };
 
 } // namespace abm
