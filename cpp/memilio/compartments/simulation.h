@@ -148,15 +148,15 @@ protected:
      * @param[in] dt initial step size of integration
      */
     template <class ODESystem>
-    Simulation(Model const& model, double t0, double dt, ODESystem&& s)
+    Simulation(Model const& model, double t0, double dt, ODESystem& sys)
         : m_integratorCore(
               std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
-              [&model = *m_model, &s](auto&& y, auto&& t, auto&& dydt) {
-                  s.right_hand_side(model, y, t, dydt);
+              [&model = *m_model, &sys](auto&& y, auto&& t, auto&& dydt) {
+                  sys.right_hand_side(model, y, t, dydt);
               },
-              t0, s.initial_values(model), dt, m_integratorCore)
+              t0, sys.initial_values(model), dt, m_integratorCore)
     {
     }
 
@@ -171,6 +171,7 @@ class SimulationFlows : public Simulation<M>
 {
 public:
     using Model = M;
+    using Base  = Simulation<M>;
 
     /**
      * @brief setup the simulation with an ODE solver
@@ -179,7 +180,7 @@ public:
      * @param[in] dt initial step size of integration
      */
     SimulationFlows(Model const& model, double t0 = 0., double dt = 0.1)
-        : Simulation<M>(model, t0, dt, ODESystem())
+        : SimulationFlows(model, t0, dt, std::make_unique<ODESystem>(model.populations.numel()))
     {
     }
 
@@ -190,18 +191,25 @@ public:
      * For each simulated time step, the TimeSeries containts the population  
      * size for each compartment. 
      */
-    TimeSeries<ScalarType> get_result() const
+    TimeSeries<ScalarType>& get_result()
     {
-        // overwrite get_result from the base class, so that it returns compartments, too
-        const auto flows = get_flows();
-        const auto model = this->get_model();
-        TimeSeries<ScalarType> result(flows.get_time(0), model.get_initial_values());
-        for (size_t i = 1; i < flows.get_num_time_points(); i++) {
-            result.add_time_point(flows.get_time(i));
-            model.get_derivatives(flows.get_value(i), result[i]);
-            result[i] += result[0];
-        }
-        return result;
+        // overwrite get_result from the base class, so that it also returns compartments (instead of flows)
+        compute_population_results();
+        return m_result;
+    }
+
+    /**
+     * @brief get_result returns the values for all compartments within the
+     * simulated model for each time step.
+     * @return a TimeSeries to represent a numerical solution for the model. 
+     * For each simulated time step, the TimeSeries containts the population  
+     * size for each compartment. 
+     */
+    const TimeSeries<ScalarType>& get_result() const
+    {
+        // overwrite get_result from the base class, so that it also returns compartments (instead of flows)
+        compute_population_results();
+        return m_result;
     }
 
     /**
@@ -221,7 +229,7 @@ public:
     TimeSeries<ScalarType>& get_flows()
     {
         // use get_result from the base class
-        return Simulation<M>::get_result();
+        return Base::get_result();
     }
 
     /**
@@ -241,27 +249,59 @@ public:
     const TimeSeries<ScalarType>& get_flows() const
     {
         // use get_result from the base class
-        return Simulation<M>::get_result();
+        return Base::get_result();
     }
 
 private:
     struct ODESystem {
-        static inline void right_hand_side(const Model& m, Eigen::Ref<const Eigen::VectorXd> flows, double t,
-                                           Eigen::Ref<Eigen::VectorXd> dflow_dt)
+        ODESystem(const size_t population_size)
+            : pop(population_size)
+        {
+        }
+
+        inline void right_hand_side(const Model& model, Eigen::Ref<const Eigen::VectorXd> flows, double t,
+                                    Eigen::Ref<Eigen::VectorXd> dflows_dt)
         {
             // compute current population
-            Eigen::VectorXd y(static_cast<Eigen::Index>(Model::Compartments::Count));
-            m.get_derivatives(flows, y);
-            y += m.get_initial_values();
-            // compute current flows
-            dflow_dt.setZero();
-            m.get_flows(y, y, t, dflow_dt);
+            //   flows contains the accumulated outflows of each compartment for each target compartment at time t
+            //   using that the ODEs are linear, get_derivatives computes the total change in population from t0 to t
+            model.get_derivatives(flows, pop); // note: overwrites values in pop
+            //   add the initial value of the ODEs
+            pop += model.get_initial_values();
+            // compute current flows for the current population
+            dflows_dt.setZero();
+            model.get_flows(pop, pop, t, dflows_dt); // this result is used by the integrator
         }
-        static inline Eigen::VectorXd initial_values(const Model& m)
+
+        inline Eigen::VectorXd initial_values(const Model& m)
         {
             return m.get_initial_flows();
         }
+
+        Eigen::VectorXd pop;
     };
+
+    SimulationFlows(Model const& model, double t0, double dt, std::unique_ptr<ODESystem> sys)
+        : Base(model, t0, dt, *sys)
+        , m_system(std::move(sys)) // take ownership of *sys
+        , m_result(t0, model.get_initial_values())
+    {
+    }
+
+    void compute_population_results() const
+    {
+        const auto& flows = get_flows();
+        const auto& model = this->get_model();
+        // calculate new time points
+        for (size_t i = m_result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
+            m_result.add_time_point(flows.get_time(i));
+            model.get_derivatives(flows.get_value(i), m_result.get_value(i));
+            m_result.get_value(i) += m_result.get_value(0);
+        }
+    }
+
+    std::unique_ptr<ODESystem> m_system;
+    mutable mio::TimeSeries<ScalarType> m_result;
 };
 
 /**
