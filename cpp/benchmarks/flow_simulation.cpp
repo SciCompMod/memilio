@@ -131,9 +131,11 @@ BENCHMARK(flowless_sim)->Name("Dummy 1/3");
 BENCHMARK(flowless_sim)->Name("Dummy 2/3");
 BENCHMARK(flowless_sim)->Name("Dummy 3/3");
 // actual benchmarks
-BENCHMARK(flowless_sim)->Name("mio::Simulation on osecirvvs::Model (pre 511 branch) without flows");
-BENCHMARK(flow_sim_comp_only)->Name("mio::Simulation on osecirvvs::Model with flows");
-BENCHMARK(flow_sim)->Name("mio::FlowSimulation on osecirvvs::Model with flows");
-BENCHMARK(flow_sim2)->Name("mio::SimulationFlows on osecirvvs::Model with flows");
+BENCHMARK(flowless_sim)
+    ->Name(
+        "osecirvvs::Simulation<mio::Simulation> on osecirvvs::Model (osecirvvs::* from pre 511 branch) without flows");
+BENCHMARK(flow_sim_comp_only)->Name("osecirvvs::Simulation<mio::Simulation> on osecirvvs::Model with flows");
+BENCHMARK(flow_sim)->Name("osecirvvs::Simulation<mio::FlowSimulation> on osecirvvs::Model with flows");
+BENCHMARK(flow_sim2)->Name("osecirvvs::Simulation<mio::SimulationFlows> on osecirvvs::Model with flows");
 // run all benchmarks
 BENCHMARK_MAIN();
