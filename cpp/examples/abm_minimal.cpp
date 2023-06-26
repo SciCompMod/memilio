@@ -27,23 +27,29 @@
 #include <string>
 #include <iostream>
 
-std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
+void write_results_to_file(const mio::abm::Simulation& sim)
 {
-    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
-           std::to_string(std::get<1>(tuple_id));
-}
-
-std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> get_agents_per_location(
-    std::tuple<mio::abm::LocationType, uint32_t> loc_id,
-    std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>& log)
-{
-    std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> agents_per_location;
-    for (auto& log_tuple : log) {
-        if (std::get<0>(log_tuple).type == std::get<0>(loc_id) && std::get<0>(log_tuple).index == std::get<1>(loc_id)) {
-            agents_per_location.push_back(std::make_tuple(std::get<1>(log_tuple), std::get<2>(log_tuple)));
+    // The results are saved in a table with 9 rows.
+    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
+    // S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // I_Crit = InfectedCritical, R = Recovered, D = Dead
+    std::ofstream myfile("abm_minimal.txt");
+    myfile << "# t S E I_NS I_Sy I_Sev I_Crit R D\n";
+    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
+        myfile << sim.get_result().get_time(i);
+        auto v = sim.get_result().get_value(i);
+        for (auto j = 0; j < v.size(); ++j) {
+            myfile << v[j];
+            if (j < v.size() - 1) {
+                myfile << " ";
+            }
+        }
+        if (i < sim.get_result().get_num_time_points() - 1) {
+            myfile << "\n";
         }
     }
-    return agents_per_location;
+    myfile.close();
+    std::cout << "Results written to abm_minimal.txt" << std::endl;
 }
 
 int main()
@@ -85,14 +91,6 @@ int main()
     threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
     add_household_group_to_world(world, threePersonHousehold_group);
 
-    // Assign an infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = world.get_persons();
-    for (auto& person : persons) {
-        uint32_t state = rand() % (uint32_t)mio::abm::InfectionState::Count;
-        world.set_infection_state(person, (mio::abm::InfectionState)state);
-    }
-
     // Add one social event with 5 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
     auto event = world.add_location(mio::abm::LocationType::SocialEvent);
@@ -125,6 +123,18 @@ int main()
         mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
+    // Assign infection state to each person.
+    // The infection states are chosen randomly.
+    auto persons = world.get_persons();
+    for (auto& person : persons) {
+        mio::abm::InfectionState infection_state =
+            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
+        if (infection_state != mio::abm::InfectionState::Susceptible)
+            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         world.get_global_infection_parameters(), start_date,
+                                                         infection_state));
+    }
+
     // Assign locations to the people
     for (auto& person : persons) {
         //assign shop and event
@@ -150,94 +160,7 @@ int main()
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
     auto sim  = mio::abm::Simulation(t0, std::move(world));
 
-    struct LogTimePoint : LogAlways {
-        using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
-        {
-            return sim.get_time().hours();
-        }
-    };
-    struct LogLocationIds : LogOnce {
-        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation& sim)
-        {
-            std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
-            for (auto&& locations : sim.get_world().get_locations()) {
-                for (auto location : locations) {
-                    location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
-                }
-            }
-            return location_ids;
-        }
-    };
+    sim.advance(tmax);
 
-    struct LogPersonsPerLocationAndInfectionTime : LogAlways {
-        using Type =
-            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
-        static Type log(const mio::abm::Simulation& sim)
-        {
-            std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
-                location_ids_person{};
-            for (auto&& person : sim.get_world().get_persons()) {
-                location_ids_person.push_back(std::make_tuple(person.get_location_id(), person.get_person_id(),
-                                                              person.get_time_since_transmission(),
-                                                              person.get_infection_state()));
-            }
-            return location_ids_person;
-        }
-    };
-
-    History<DataWriterToBuffer, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime> history;
-
-    sim.advance(tmax, history);
-
-    auto logg = history.get_log();
-
-    // Write the results to a file.
-    auto loc_id      = std::get<1>(logg);
-    auto agents      = std::get<2>(logg);
-    auto time_points = std::get<0>(logg);
-    std::string input;
-    std::ofstream myfile("test_output.txt");
-    for (auto loc_id_index = 0; loc_id_index < loc_id[0].size(); ++loc_id_index) {
-        input = convert_loc_id_to_string(loc_id[0][loc_id_index]) + " " + std::to_string(time_points.size());
-        for (int t = 0; t < time_points.size(); ++t) {
-            auto a_per_loc = get_agents_per_location(loc_id[0][loc_id_index], agents[t]);
-            input += " " + std::to_string(time_points[t]) + " " + std::to_string(a_per_loc.size());
-            for (auto& agent : a_per_loc) {
-                double time_since_transmission;
-                if (std::get<1>(agent) > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
-                    time_since_transmission = -1;
-                }
-                else {
-                    time_since_transmission = std::get<1>(agent).hours();
-                }
-                input += " " + std::to_string(std::get<0>(agent)) + " " + std::to_string(time_since_transmission);
-            }
-        }
-        myfile << input << "\n";
-    }
-    myfile.close();
-
-    // The results are saved in a table with 9 rows.
-    // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
-    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
-    auto f_abm = fopen("abm_minimal.txt", "w");
-    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
-    for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", sim.get_result().get_time(i));
-        auto v = sim.get_result().get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
-            }
-        }
-        if (i < sim.get_result().get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
-        }
-    }
-    fclose(f_abm);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    write_results_to_file(sim);
 }

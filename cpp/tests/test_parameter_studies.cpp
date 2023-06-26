@@ -21,7 +21,7 @@
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 #include <stdio.h>

@@ -24,6 +24,9 @@ import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):

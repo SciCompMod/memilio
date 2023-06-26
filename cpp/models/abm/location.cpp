@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen
+* Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,9 +19,8 @@
 */
 #include "abm/mask_type.h"
 #include "abm/mask.h"
-#include "memilio/utils/random_number_generator.h"
 #include "abm/location.h"
-#include "abm/person.h"
+#include "memilio/utils/random_number_generator.h"
 #include "abm/random_events.h"
 
 #include <numeric>
@@ -31,213 +30,157 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
-    : m_type(type)
-    , m_index(index)
-    , m_capacity(LocationCapacity())
+Location::Location(LocationId loc_id, uint32_t num_cells)
+    : m_id(loc_id)
     , m_capacity_adapted_transmission_risk(false)
-    , m_subpopulations(Eigen::Index(InfectionState::Count))
-    , m_cached_exposure_rate({AgeGroup::Count, VaccinationState::Count})
-    , m_cells(std::vector<Cell>(num_cells))
+    , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
     , m_npi_active(false)
 {
-    m_subpopulations.add_time_point(0);
-    m_subpopulations.get_last_value().setZero();
+    assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-InfectionState Location::interact(const Person& person, TimeSpan dt,
-                                  const GlobalInfectionParameters& global_params) const
+ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
 {
-    auto infection_state       = person.get_infection_state();
-    auto vaccination_state     = person.get_vaccination_state();
-    auto age                   = person.get_age();
-    ScalarType mask_protection = person.get_protective_factor(global_params);
-    switch (infection_state) {
-    case InfectionState::Susceptible:
-        if (!person.get_cells().empty()) {
-            for (auto cell_index : person.get_cells()) {
-                InfectionState new_state = random_transition(
-                    infection_state, dt,
-                    {{InfectionState::Exposed,
-                      (1 - mask_protection) * m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
-                if (new_state != infection_state) {
-                    return new_state;
-                }
-            }
-            return infection_state;
+    ScalarType prob = 0;
+    for (uint32_t age_transmitter = 0; age_transmitter != static_cast<uint32_t>(AgeGroup::Count); ++age_transmitter) {
+        prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
+                m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
+    }
+    return prob;
+}
+
+ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus) const
+{
+    return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
+           m_parameters.get<AerosolTransmissionRates>()[{virus}];
+}
+
+void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+{
+    // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
+    auto age_receiver          = person.get_age();
+    ScalarType mask_protection = person.get_mask_protective_factor(global_params);
+    assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
+    for (auto cell_index :
+         person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
+        std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
+        for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
+            VirusVariant virus = static_cast<VirusVariant>(v);
+            ScalarType local_indiv_trans_prob_v =
+                (std::min(m_parameters.get<MaximumContacts>(),
+                          transmission_contacts_per_day(cell_index, virus, age_receiver)) +
+                 transmission_air_per_day(cell_index, virus)) *
+                (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
+
+            local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }
-        else {
-            return random_transition(
-                infection_state, dt,
-                {{InfectionState::Exposed, (1 - mask_protection) * m_cached_exposure_rate[{age, vaccination_state}]}});
+        VirusVariant virus =
+            random_transition(VirusVariant::Count, dt,
+                              local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
+        if (virus != VirusVariant::Count) {
+            person.add_new_infection(
+                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
         }
-    case InfectionState::Carrier:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Infected, global_params.get<CarrierToInfected>()[{age, vaccination_state}]},
-             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age, vaccination_state}]}});
-    case InfectionState::Infected:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age, vaccination_state}]},
-             {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age, vaccination_state}]}});
-    case InfectionState::Infected_Severe:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age, vaccination_state}]},
-             {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age, vaccination_state}]}});
-    case InfectionState::Infected_Critical:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age, vaccination_state}]},
-             {InfectionState::Dead, global_params.get<CriticalToDead>()[{age, vaccination_state}]}});
-    case InfectionState::Recovered_Carrier: //fallthrough!
-    case InfectionState::Recovered_Infected:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{age, vaccination_state}]}});
-    default:
-        return infection_state; //some states don't transition
     }
 }
 
-void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
-    if (m_cells.empty() && m_num_persons == 0) {
-        m_cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
-    }
-    else if (m_cells.empty()) {
-        auto num_carriers               = get_subpopulation(InfectionState::Carrier);
-        auto num_infected               = get_subpopulation(InfectionState::Infected);
-        auto relative_transmission_risk = compute_relative_transmission_risk();
-        m_cached_exposure_rate.array() =
-            relative_transmission_risk * std::min(m_parameters.get<MaximumContacts>(), ScalarType(m_num_persons)) /
-            m_num_persons *
-            (global_params.get<SusceptibleToExposedByCarrier>().array().cast<ScalarType>() * num_carriers +
-             global_params.get<SusceptibleToExposedByInfected>().array().cast<ScalarType>() * num_infected);
-    }
-    else {
-        for (auto& cell : m_cells) {
-            if (cell.num_people == 0) {
-                cell.cached_exposure_rate = {{AgeGroup::Count, VaccinationState::Count}, 0.};
-            }
-            else {
-                auto relative_transmission_risk = compute_relative_transmission_risk();
-                cell.cached_exposure_rate.array() =
-                    std::min(m_parameters.get<MaximumContacts>(), ScalarType(cell.num_people)) / cell.num_people *
-                    (global_params.get<SusceptibleToExposedByCarrier>().array().cast<ScalarType>() * cell.num_carriers +
-                     global_params.get<SusceptibleToExposedByInfected>().array().cast<ScalarType>() *
-                         cell.num_infected) *
-                    relative_transmission_risk;
+    for (auto& cell : m_cells) {
+        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup::Count}, 0.};
+        cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
+        for (auto&& p : cell.m_persons) {
+            if (p->is_infected(t)) {
+                auto inf   = p->get_infection();
+                auto virus = inf.get_virus_variant();
+                auto age   = p->get_age();
+                /* average infectivity over the time step 
+                 *  to second order accuracy using midpoint rule
+                */
+                cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
+                cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2);
             }
         }
-    }
-}
-
-void Location::add_person(const Person& p)
-{
-    ++m_num_persons;
-    InfectionState s = p.get_infection_state();
-    change_subpopulation(s, +1);
-    if (!m_cells.empty()) {
-        for (auto i : p.get_cells()) {
-            ++m_cells[i].num_people;
-            if (s == InfectionState::Carrier) {
-                ++m_cells[i].num_carriers;
-            }
-            else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
-                     s == InfectionState::Infected_Critical) {
-                ++m_cells[i].num_infected;
-            }
+        if (m_capacity_adapted_transmission_risk) {
+            cell.m_cached_exposure_rate_air.array() *= cell.compute_space_per_person_relative();
         }
     }
 }
 
-void Location::remove_person(const Person& p)
+void Location::add_person(Person& p, std::vector<uint32_t> cells)
 {
-    --m_num_persons;
-    InfectionState s = p.get_infection_state();
-    change_subpopulation(s, -1);
-    for (auto i : p.get_cells()) {
-        --m_cells[i].num_people;
-        if (s == InfectionState::Carrier) {
-            --m_cells[i].num_carriers;
-        }
-        else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
-                 s == InfectionState::Infected_Critical) {
-            --m_cells[i].num_infected;
-        }
+    m_persons.push_back(&p);
+    for (uint32_t cell_idx : cells)
+        m_cells[cell_idx].m_persons.push_back(&p);
+}
+
+void Location::remove_person(Person& p)
+{
+    m_persons.erase(std::remove(m_persons.begin(), m_persons.end(), &p), m_persons.end());
+    for (auto&& cell : m_cells) {
+        cell.m_persons.erase(std::remove(cell.m_persons.begin(), cell.m_persons.end(), &p), cell.m_persons.end());
     }
 }
 
-void Location::changed_state(const Person& p, InfectionState old_infection_state)
+size_t Location::get_number_persons()
 {
-    change_subpopulation(old_infection_state, -1);
-    change_subpopulation(p.get_infection_state(), +1);
-    for (auto i : p.get_cells()) {
-        if (old_infection_state == InfectionState::Carrier) {
-            --m_cells[i].num_carriers;
-        }
-        else if (old_infection_state == InfectionState::Infected ||
-                 old_infection_state == InfectionState::Infected_Severe ||
-                 old_infection_state == InfectionState::Infected_Critical) {
-            --m_cells[i].num_infected;
-        }
-        if (p.get_infection_state() == InfectionState::Carrier) {
-            ++m_cells[i].num_carriers;
-        }
-        else if (p.get_infection_state() == InfectionState::Infected ||
-                 p.get_infection_state() == InfectionState::Infected_Severe ||
-                 p.get_infection_state() == InfectionState::Infected_Critical) {
-            ++m_cells[i].num_infected;
-        }
-    }
-}
-
-void Location::change_subpopulation(InfectionState s, int delta)
-{
-    m_subpopulations.get_last_value()[size_t(s)] += delta;
-    assert(m_subpopulations.get_last_value()[size_t(s)] >= 0 && "subpopulations must be non-negative");
-}
-
-int Location::get_subpopulation(InfectionState s) const
-{
-    return (int)m_subpopulations.get_last_value()[size_t(s)];
+    return m_persons.size();
 }
 
 /*
-For every location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
-the location "Home", which is 66. We multiply this rate with the factor m_capacity.persons / m_capacity.volume of the 
-considered location. For the dependency of the transmission risk on the occupancy we use a linear approximation which 
-leads to: 66 * (m_capacity.persons / m_capacity.volume) * (m_num_persons / m_capacity.persons).
+For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
+the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
 */
-ScalarType Location::compute_relative_transmission_risk()
+ScalarType Cell::compute_space_per_person_relative()
 {
-    if (m_capacity.volume != 0 && m_capacity_adapted_transmission_risk) {
-        return 66.0 * m_num_persons / m_capacity.volume;
+    if (m_capacity.volume != 0) {
+        return 66.0 / m_capacity.volume;
     }
     else {
         return 1.0;
     }
 }
 
-void Location::add_subpopulations_timepoint(const TimePoint& t)
+size_t Cell::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    // Get the previous time point index.
-    // Since index starts from 0, we need to -1 from the current time point.
-    auto last_idx = m_subpopulations.get_num_time_points() - 1;
-    m_subpopulations.add_time_point(t.days());
-    m_subpopulations.get_last_value() = m_subpopulations.get_value(last_idx);
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+        return p->get_infection_state(t) == state;
+    });
 }
 
-void Location::initialize_subpopulation(const TimePoint& t)
+size_t Location::get_subpopulation(TimePoint t, InfectionState state) const
 {
-    // We make a copy of subpoulation to the new TimePoint t and delete the first TimePoint.
-    add_subpopulations_timepoint(t);
-    m_subpopulations.remove_time_point(0);
+    return count_if(m_persons.begin(), m_persons.end(), [&](observer_ptr<Person> p) {
+        return p->get_infection_state(t) == state;
+    });
+}
+
+void Location::store_subpopulations(const TimePoint t)
+{
+    m_subpopulations.add_time_point(t.days());
+    Eigen::VectorXd subpopulations(Eigen::VectorXd::Zero((size_t)InfectionState::Count));
+    for (auto p : m_persons)
+        ++subpopulations[(size_t)p->get_infection_state(t)];
+    m_subpopulations.get_last_value() = subpopulations;
+}
+
+void Location::initialize_subpopulations(const TimePoint t)
+{
+    if (m_subpopulations.get_num_time_points() == 0) {
+        store_subpopulations(t);
+    }
+    else {
+        if (m_subpopulations.get_last_time() != t.days()) { // if not already saved
+            store_subpopulations(t);
+        }
+    }
+}
+const TimeSeries<ScalarType>& Location::get_subpopulations() const
+{
+    return m_subpopulations;
 }
 
 } // namespace abm

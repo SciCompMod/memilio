@@ -30,6 +30,7 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import progress_indicator
 
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources
@@ -306,11 +307,13 @@ def get_official_county_table():
 
     @return County table with essential columns.
     """
-    path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/'
-    county_table = gd.loadExcel(
-        targetFileName='04-kreise.xlsx?__blob=publicationFile',
-        apiUrl=path_counties, extension='',
-        param_dict={'sheet_name': 1, 'header': 5, 'engine': 'openpyxl'})
+    url_counties = 'http://www.destatis.de/DE/Themen/Laender-Regionen/' \
+        'Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx?__blob=publicationFile'
+    with progress_indicator.Percentage(message="Downloading " + url_counties) as p:
+        file = gd.download_file(url_counties, 1024, None,
+                                p.set_progress, verify=False)
+    county_table = pd.read_excel(
+        file, sheet_name=1, header=5, engine='openpyxl')
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
         '2': "type",  # name not important, column not used so far
@@ -482,8 +485,7 @@ def get_countyid_to_intermediateregionid_map(merge_ulm=True,
     regions_sorted = [0 for i in range(len(county_ids))]
     counties_sorted = [0 for i in range(len(county_ids))]
 
-    idx = 0
-    # region will be a list of region id first and a list of counties ids second
+    idx = 0   # region will be a list of region id first and a list of counties ids second
     for region, county_list in regions_to_county.items():
         for county in county_list:
             if not merge_eisenach or not CountyMerging[16063][1] == county:

@@ -23,7 +23,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/utils/history.h"
+#include "memilio/io/history.h"
 
 namespace mio
 {
@@ -40,19 +40,19 @@ class Simulation
 public:
     /**
      * @brief Create a simulation.
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      * @param[in] world The World to simulate.
      */
-    Simulation(TimePoint t, World&& world);
+    Simulation(TimePoint t0, World&& world);
 
     /**
      * @brief Create a Simulation with an empty World.
      * World needs to be filled later.
      * @see Simulation::get_world
-     * @param[in] t The starting time of the Simulation.
+     * @param[in] t0 The starting time of the Simulation.
      */
-    Simulation(TimePoint t)
-        : Simulation(t, World())
+    Simulation(TimePoint t0)
+        : Simulation(t0, World())
     {
     }
 
@@ -65,20 +65,19 @@ public:
     /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
-     * @param[in] history History to store the result of the Simulation.
+     * @param[in] history History object to log data of the Simulation.
      */
     template <typename History>
     void advance(TimePoint tmax, History& history)
     {
         //log initial system state
+        initialize_locations(m_t);
+        store_result_at(m_t);
         history.log(*this);
-
         while (m_t < tmax) {
-            auto dt = std::min(m_dt, tmax - m_t);
-            m_world.evolve(m_t, dt);
-            m_t += m_dt;
-            history.log(*this);
+            evolve_world(tmax);
             store_result_at(m_t);
+            history.log(*this);
         }
     }
 
@@ -86,7 +85,7 @@ public:
      * @brief Get the result of the Simulation.
      * Sum over all Location%s of the number of Person%s in an #InfectionState.
      */
-    const TimeSeries<double>& get_result() const
+    const TimeSeries<ScalarType>& get_result() const
     {
         return m_result;
     }
@@ -112,10 +111,12 @@ public:
     }
 
 private:
+    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
+    void evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
-    TimeSeries<double> m_result; ///< The result of the Simulation.
+    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

@@ -25,6 +25,7 @@ set(TESTSOURCES
     test_random_number_generator.cpp
     test_time_series.cpp
     test_abm_household.cpp
+    test_abm_infection.cpp
     test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
@@ -42,6 +43,7 @@ set(TESTSOURCES
     test_damping_sampling.cpp
     test_dynamic_npis.cpp
     test_regions.cpp
+    test_io_cli.cpp
     test_io_framework.cpp
     test_binary_serializer.cpp
     test_compartmentsimulation.cpp
@@ -49,6 +51,9 @@ set(TESTSOURCES
     test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_ide_seir.cpp
+    test_history.cpp
+    abm_helpers.h
+    abm_helpers.cpp
     test_ide_secir.cpp
     distributions_helpers.h
     distributions_helpers.cpp
