@@ -131,6 +131,15 @@ public:
     }
 
     /**
+     * @brief Get the id of this Location.
+     * @return The #LocationId of the Location.
+     */
+    LocationId get_id() const
+    {
+        return m_id;
+    }
+
+    /**
      * @brief Get the index of this Location.
      * @return The index of the Location.
      */
