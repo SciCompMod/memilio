@@ -40,7 +40,7 @@ struct LocationMapping {
 std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
 {
     std::string locationType  = std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id)));
-    std::string locationIndex = std::to_string(std::get<1>(tuple_id)) + "\"";
+    std::string locationIndex = std::to_string(std::get<1>(tuple_id));
     if (static_cast<std::uint32_t>(std::get<0>(tuple_id)) < 10) {
         locationType = "0" + locationType;
     }
@@ -48,7 +48,7 @@ std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t
         locationIndex = "0" + locationIndex;
     }
 
-    return locationType + locationIndex;
+    return "I" + locationType + locationIndex;
 }
 
 std::vector<std::tuple<uint32_t, mio::abm::TimeSpan>> get_agents_per_location(
@@ -299,7 +299,7 @@ std::vector<mio::abm::LocationId> add_households(mio::abm::World& world, std::ve
     id.type = mio::abm::LocationType::Home;
     //add LocationIds for Mapping
     for (int hh = 0; hh < std::accumulate(households.begin(), households.end(), 0); ++hh) {
-        id.index = new_index;
+        id.index = (int)new_index;
         locations.emplace_back(id);
         ++new_index;
     }
@@ -395,7 +395,7 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
 */
 void set_infection_parameters(mio::abm::GlobalInfectionParameters infection_params)
 {
-     infection_params.set<mio::abm::IncubationPeriod>(
+    infection_params.set<mio::abm::IncubationPeriod>(
         {{mio::abm::VirusVariant::Count, mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 4.});
 
     //0-4
@@ -786,11 +786,10 @@ mio::abm::InfectionState get_infection_state(ScalarType exposed, ScalarType infe
                                              ScalarType infected_symptoms, ScalarType infected_severe,
                                              ScalarType infected_critical, ScalarType recovered)
 {
-    ScalarType susceptible = 1 - exposed - infected_no_symptoms - infected_symptoms - infected_severe -
-                             infected_critical - recovered;
+    ScalarType susceptible =
+        1 - exposed - infected_no_symptoms - infected_symptoms - infected_severe - infected_critical - recovered;
     std::vector<ScalarType> weights = {
-        susceptible,     exposed,           infected_no_symptoms,           infected_symptoms,
-        infected_severe, infected_critical, recovered};
+        susceptible, exposed, infected_no_symptoms, infected_symptoms, infected_severe, infected_critical, recovered};
     if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
         mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
@@ -809,16 +808,15 @@ mio::abm::InfectionState get_infection_state(ScalarType exposed, ScalarType infe
  * @param[in] infected_critical percentage of infection state 'infected critical'
  * @param[in] recovered percentage of infection state 'recovered'
 */
-void assign_infection_states(mio::abm::World& world, mio::abm::TimePoint t0, ScalarType exposed, ScalarType infected_no_symptoms,
-                             ScalarType infected_symptoms, ScalarType infected_severe, ScalarType infected_critical,
-                             ScalarType recovered)
+void assign_infection_states(mio::abm::World& world, mio::abm::TimePoint t0, ScalarType exposed,
+                             ScalarType infected_no_symptoms, ScalarType infected_symptoms, ScalarType infected_severe,
+                             ScalarType infected_critical, ScalarType recovered)
 {
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        auto infection_state = get_infection_state(exposed, infected_no_symptoms, infected_symptoms,
-                                                              infected_severe, infected_critical,
-                                                              recovered);
-        if(infection_state != mio::abm::InfectionState::Susceptible){
+        auto infection_state = get_infection_state(exposed, infected_no_symptoms, infected_symptoms, infected_severe,
+                                                   infected_critical, recovered);
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t0, infection_state));
         }
@@ -828,8 +826,8 @@ void assign_infection_states(mio::abm::World& world, mio::abm::TimePoint t0, Sca
 std::vector<mio::abm::LocationId> find_all_locations_of_type(mio::abm::World& world, mio::abm::LocationType type)
 {
     std::vector<mio::abm::LocationId> locations;
-    for(auto& loc : world.get_locations()){
-        if(loc.get_type() == type){
+    for (auto& loc : world.get_locations()) {
+        if (loc.get_type() == type) {
             locations.push_back(mio::abm::LocationId{loc.get_index(), type});
         }
     }
@@ -844,7 +842,7 @@ void assign_locations(mio::abm::World& world)
 {
     //get locations from world
     //schools
-    std::vector<mio::abm::LocationId> schools =  find_all_locations_of_type(world, mio::abm::LocationType::School);
+    std::vector<mio::abm::LocationId> schools = find_all_locations_of_type(world, mio::abm::LocationType::School);
     std::vector<ScalarType> school_weights(schools.size(), 1);
     //hispitals
     std::vector<mio::abm::LocationId> hospitals = find_all_locations_of_type(world, mio::abm::LocationType::Hospital);
@@ -856,10 +854,12 @@ void assign_locations(mio::abm::World& world)
     std::vector<mio::abm::LocationId> workplaces = find_all_locations_of_type(world, mio::abm::LocationType::Work);
     std::vector<ScalarType> workplaces_weights(workplaces.size(), 1);
     //shops
-    std::vector<mio::abm::LocationId> basic_shops = find_all_locations_of_type(world, mio::abm::LocationType::BasicsShop);
+    std::vector<mio::abm::LocationId> basic_shops =
+        find_all_locations_of_type(world, mio::abm::LocationType::BasicsShop);
     std::vector<ScalarType> basic_shops_weights(basic_shops.size(), 1);
     //social events
-    std::vector<mio::abm::LocationId> social_events =find_all_locations_of_type(world, mio::abm::LocationType::SocialEvent);
+    std::vector<mio::abm::LocationId> social_events =
+        find_all_locations_of_type(world, mio::abm::LocationType::SocialEvent);
     std::vector<ScalarType> social_event_weights(social_events.size(), 1);
 
     auto persons = world.get_persons();
@@ -921,8 +921,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0, co
                                 three_person_hh_pct, four_person_hh_pct, five_person_hh_pct);
 
     //Assign an infection state to every person
-    assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct, infected_severe_pct,
-                            infected_critical_pct, recovered_pct);
+    assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
+                            infected_severe_pct, infected_critical_pct, recovered_pct);
     //Assign the locations to persons
     assign_locations(world);
 
@@ -970,9 +970,9 @@ struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
     }
 };
 
-void write_results_to_file(
-    std::string path,
-    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>::WriteWrapper::Data& logg)
+void write_results_to_file(std::string path,
+                           mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                        LogPersonsPerLocationAndInfectionTime>::WriteWrapper::Data& logg)
 {
     auto location_ids = std::get<1>(logg);
     auto agents       = std::get<2>(logg);
