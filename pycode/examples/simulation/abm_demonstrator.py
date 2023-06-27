@@ -439,7 +439,7 @@ def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, in
         infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
-        if(infection_state != abm.InfectionState.Susceptible):
+        if(abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
             person.add_new_infection(Infection(VirusVariant.Wildtype, person.age, world.infection_parameters, t0, abm.InfectionState(infection_state), False))
 
 def find_all_locations_of_type(world, type):
@@ -554,15 +554,14 @@ def write_location_mapping_to_file(path, mapping):
 
 
 def set_sim_result_at_start(sim):
-    for locations in sim.world.locations:
-        for location in locations:
-            result = sim.result.get_last_value()
-            result += location.population.get_last_value()
+    for location in sim.world.locations:
+        result = sim.result.get_last_value()
+        result += location.population.get_last_value()
 
 
 def run_abm_simulation():
     
-    input_path = '~/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt'
+    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList_modified.txt'
     output_path = 'output/'
     #set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
