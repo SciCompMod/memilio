@@ -24,7 +24,9 @@ import numpy as np
 from memilio.simulation import abm
 from memilio.simulation.abm import AgeGroup
 from memilio.simulation.abm import VaccinationState
+from memilio.simulation.abm import VirusVariant
 from memilio.simulation.abm import History
+from memilio.simulation.abm import Infection
 
 # class used to map input areas to abm locations
 class LocationMapping:
@@ -38,159 +40,159 @@ def set_infection_parameters():
     infection_params = abm.GlobalInfectionParameters()
 
     # AgeGroup 0-4
-    infection_params.IncubationPeriod[AgeGroup.Age0to4,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age0to4,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                                    VaccinationState.Unvaccinated] = 0.05
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age0to4,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                                     VaccinationState.Unvaccinated] = 0.05
-    infection_params.CarrierToInfected[AgeGroup.Age0to4,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                        VaccinationState.Unvaccinated] = 0.276
-    infection_params.CarrierToRecovered[AgeGroup.Age0to4,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                         VaccinationState.Unvaccinated] = 0.092
-    infection_params.InfectedToRecovered[AgeGroup.Age0to4,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                          VaccinationState.Unvaccinated] = 0.142
-    infection_params.InfectedToSevere[AgeGroup.Age0to4,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                       VaccinationState.Unvaccinated] = 0.001
-    infection_params.SevereToRecovered[AgeGroup.Age0to4,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                        VaccinationState.Unvaccinated] = 0.186
-    infection_params.SevereToCritical[AgeGroup.Age0to4,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                       VaccinationState.Unvaccinated] = 0.015
-    infection_params.CriticalToRecovered[AgeGroup.Age0to4,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                          VaccinationState.Unvaccinated] = 0.143
-    infection_params.CriticalToDead[AgeGroup.Age0to4,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                     VaccinationState.Unvaccinated] = 0.001
-    infection_params.RecoveredToSusceptible[AgeGroup.Age0to4,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                             VaccinationState.Unvaccinated] = 0
 
     # AgeGroup 5-14
-    infection_params.IncubationPeriod[AgeGroup.Age5to14,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age5to14,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                                    VaccinationState.Unvaccinated] = 0.1
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age5to14,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                                     VaccinationState.Unvaccinated] = 0.1
-    infection_params.CarrierToInfected[AgeGroup.Age5to14,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                        VaccinationState.Unvaccinated] = 0.276
-    infection_params.CarrierToRecovered[AgeGroup.Age5to14,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                         VaccinationState.Unvaccinated] = 0.092
-    infection_params.InfectedToRecovered[AgeGroup.Age5to14,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                          VaccinationState.Unvaccinated] = 0.142
-    infection_params.InfectedToSevere[AgeGroup.Age5to14,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                       VaccinationState.Unvaccinated] = 0.001
-    infection_params.SevereToRecovered[AgeGroup.Age5to14,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                        VaccinationState.Unvaccinated] = 0.186
-    infection_params.SevereToCritical[AgeGroup.Age5to14,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                       VaccinationState.Unvaccinated] = 0.015
-    infection_params.CriticalToRecovered[AgeGroup.Age5to14,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                          VaccinationState.Unvaccinated] = 0.143
-    infection_params.CriticalToDead[AgeGroup.Age5to14,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                     VaccinationState.Unvaccinated] = 0.001
-    infection_params.RecoveredToSusceptible[AgeGroup.Age5to14,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                             VaccinationState.Unvaccinated] = 0.
 
     # AgeGroup 15-34
-    infection_params.IncubationPeriod[AgeGroup.Age15to34,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age15to34,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                                    VaccinationState.Unvaccinated] = 0.13
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age15to34,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                                     VaccinationState.Unvaccinated] = 0.13
-    infection_params.CarrierToInfected[AgeGroup.Age15to34,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                        VaccinationState.Unvaccinated] = 0.315
-    infection_params.CarrierToRecovered[AgeGroup.Age15to34,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                         VaccinationState.Unvaccinated] = 0.079
-    infection_params.InfectedToRecovered[AgeGroup.Age15to34,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                          VaccinationState.Unvaccinated] = 0.139
-    infection_params.InfectedToSevere[AgeGroup.Age15to34,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                       VaccinationState.Unvaccinated] = 0.003
-    infection_params.SevereToRecovered[AgeGroup.Age15to34,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                        VaccinationState.Unvaccinated] = 0.157
-    infection_params.SevereToCritical[AgeGroup.Age15to34,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                       VaccinationState.Unvaccinated] = 0.013
-    infection_params.CriticalToRecovered[AgeGroup.Age15to34,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                          VaccinationState.Unvaccinated] = 0.126
-    infection_params.CriticalToDead[AgeGroup.Age15to34,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                     VaccinationState.Unvaccinated] = 0.021
-    infection_params.RecoveredToSusceptible[AgeGroup.Age15to34,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                             VaccinationState.Unvaccinated] = 0.
 
     # AgeGroup 35-59
-    infection_params.IncubationPeriod[AgeGroup.Age35to59,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age35to59,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                                    VaccinationState.Unvaccinated] = 0.11
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age35to59,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                                     VaccinationState.Unvaccinated] = 0.11
-    infection_params.CarrierToInfected[AgeGroup.Age35to59,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                        VaccinationState.Unvaccinated] = 0.315
-    infection_params.CarrierToRecovered[AgeGroup.Age35to59,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                         VaccinationState.Unvaccinated] = 0.079
-    infection_params.InfectedToRecovered[AgeGroup.Age35to59,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                          VaccinationState.Unvaccinated] = 0.136
-    infection_params.InfectedToSevere[AgeGroup.Age35to59,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                       VaccinationState.Unvaccinated] = 0.009
-    infection_params.SevereToRecovered[AgeGroup.Age35to59,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                        VaccinationState.Unvaccinated] = 0.113
-    infection_params.SevereToCritical[AgeGroup.Age35to59,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                       VaccinationState.Unvaccinated] = 0.02
-    infection_params.CriticalToRecovered[AgeGroup.Age35to59,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                          VaccinationState.Unvaccinated] = 0.05
-    infection_params.CriticalToDead[AgeGroup.Age35to59,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                     VaccinationState.Unvaccinated] = 0.008
-    infection_params.RecoveredToSusceptible[AgeGroup.Age35to59,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                             VaccinationState.Unvaccinated] = 0.
 
     # AgeGroup 60-79
-    infection_params.IncubationPeriod[AgeGroup.Age60to79,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age60to79,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                                    VaccinationState.Unvaccinated] = 0.04
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age60to79,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                                     VaccinationState.Unvaccinated] = 0.04
-    infection_params.CarrierToInfected[AgeGroup.Age60to79,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                        VaccinationState.Unvaccinated] = 0.315
-    infection_params.CarrierToRecovered[AgeGroup.Age60to79,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                         VaccinationState.Unvaccinated] = 0.079
-    infection_params.InfectedToRecovered[AgeGroup.Age60to79,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                          VaccinationState.Unvaccinated] = 0.123
-    infection_params.InfectedToSevere[AgeGroup.Age60to79,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated] = 0.024
-    infection_params.SevereToRecovered[AgeGroup.Age60to79,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                        VaccinationState.Unvaccinated] = 0.083
-    infection_params.SevereToCritical[AgeGroup.Age60to79,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated] = 0.035
-    infection_params.CriticalToRecovered[AgeGroup.Age60to79,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                          VaccinationState.Unvaccinated] = 0.035
-    infection_params.CriticalToDead[AgeGroup.Age60to79,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                     VaccinationState.Unvaccinated] = 0.023
-    infection_params.RecoveredToSusceptible[AgeGroup.Age60to79,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                             VaccinationState.Unvaccinated] = 0.
 
     # AgeGroup 80+
-    infection_params.IncubationPeriod[AgeGroup.Age80plus,
+    infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByCarrier[AgeGroup.Age80plus,
+    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                                    VaccinationState.Unvaccinated] = 0.07
-    infection_params.SusceptibleToExposedByInfected[AgeGroup.Age80plus,
+    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                                     VaccinationState.Unvaccinated] = 0.07
-    infection_params.CarrierToInfected[AgeGroup.Age80plus,
+    infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                        VaccinationState.Unvaccinated] = 0.315
-    infection_params.CarrierToRecovered[AgeGroup.Age80plus,
+    infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                         VaccinationState.Unvaccinated] = 0.079
-    infection_params.InfectedToRecovered[AgeGroup.Age80plus,
+    infection_params.InfectedSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                          VaccinationState.Unvaccinated] = 0.115
-    infection_params.InfectedToSevere[AgeGroup.Age80plus,
+    infection_params.InfectedSymptomsToSevere[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                       VaccinationState.Unvaccinated] = 0.033
-    infection_params.SevereToRecovered[AgeGroup.Age80plus,
+    infection_params.SevereToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                        VaccinationState.Unvaccinated] = 0.055
-    infection_params.SevereToCritical[AgeGroup.Age80plus,
+    infection_params.SevereToCritical[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                       VaccinationState.Unvaccinated] = 0.036
-    infection_params.CriticalToRecovered[AgeGroup.Age80plus,
+    infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                          VaccinationState.Unvaccinated] = 0.035
-    infection_params.CriticalToDead[AgeGroup.Age80plus,
+    infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                     VaccinationState.Unvaccinated] = 0.052
-    infection_params.RecoveredToSusceptible[AgeGroup.Age80plus,
+    infection_params.RecoveredToSusceptible[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                             VaccinationState.Unvaccinated] = 0.
 
     return infection_params
@@ -265,7 +267,7 @@ def make_multiple_person_households(household_size,
 def add_households(world, distribution, num_inhabitants):
     household_sizes = np.zeros(len(distribution))
     locationIds = []
-    new_index = len(world.locations[int(abm.LocationType.Home)])
+    new_index = len(world.locations)
     # distribute inhabintants to households
     while num_inhabitants > 0:
         size = np.random.choice(
@@ -352,7 +354,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
             # set maximum contacts and capacity for social events
             world.get_individualized_location(
                 location).infection_parameters.MaximumContacts = 30.
-            world.get_individualized_location(location).set_capacity(30, 40)
+            world.get_individualized_location(location).set_capacity(30, 40, 0)
             locationIds.append(location)
         elif (area.type == 'shopping_business'):
             # area 'shopping_business' corresponds to location type School, Hospital, BasicsShops, Work
@@ -363,7 +365,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
                 world.get_individualized_location(
                     location).infection_parameters.MaximumContacts = 40.
                 world.get_individualized_location(
-                    location).set_capacity(500, 2000)
+                    location).set_capacity(500, 2000, 0)
                 locationIds.append(location)
                 has_school = True
             elif (not has_hospital):
@@ -373,13 +375,13 @@ def create_locations_from_input(world, input_areas, household_distribution):
                 world.get_individualized_location(
                     locHosp).infection_parameters.MaximumContacts = 5.
                 world.get_individualized_location(
-                    locHosp).set_capacity(300, 10000)
+                    locHosp).set_capacity(300, 10000, 0)
                 locICU = world.add_location(abm.LocationType.ICU)
                 # set maximum contacts and capacity for icu
                 world.get_individualized_location(
                     locICU).infection_parameters.MaximumContacts = 5.
                 world.get_individualized_location(
-                    locICU).set_capacity(30, 1000)
+                    locICU).set_capacity(30, 1000, 0)
                 locationIds.append(locHosp)
                 locationIds.append(locICU)
                 has_hospital = True
@@ -393,7 +395,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
                     world.get_individualized_location(
                         location).infection_parameters.MaximumContacts = 20.
                     world.get_individualized_location(
-                        location).set_capacity(100, 1000)
+                        location).set_capacity(100, 1000, 0)
                     locationIds.append(location)
                 else:
                     location = world.add_location(abm.LocationType.Work)
@@ -401,7 +403,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
                     world.get_individualized_location(
                         location).infection_parameters.MaximumContacts = 40.
                     world.get_individualized_location(
-                        location).set_capacity(300, 2000)
+                        location).set_capacity(300, 2000, 0)
                     locationIds.append(location)
         elif (area.type == 'university'):
             # area 'university' corresponds to location type 'Work'
@@ -409,7 +411,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
             # set maximum contacts and capacity for work
             world.get_individualized_location(
                 location).infection_parameters.MaximumContacts = 50.
-            world.get_individualized_location(location).set_capacity(200, 4000)
+            world.get_individualized_location(location).set_capacity(200, 4000, 0)
             locationIds.append(location)
         elif (area.type == 'mixed'):
             # area 'mixed' corresponds either to location type 'Work' or location type 'Home' with same probability
@@ -420,7 +422,7 @@ def create_locations_from_input(world, input_areas, household_distribution):
                 world.get_individualized_location(
                     location).infection_parameters.MaximumContacts = 40.
                 world.get_individualized_location(
-                    location).set_capacity(100, 2000)
+                    location).set_capacity(100, 2000, 0)
                 locationIds.append(location)
             else:
                 locationIds = add_households(
@@ -429,32 +431,38 @@ def create_locations_from_input(world, input_areas, household_distribution):
     return mapping
 
 
-def assign_infection_states(world, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
-                            infected_severe_pct, infected_critical_pct, recovered_infected_no_symptoms,
-                            recovered_infected):
-    susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - infected_symptoms_pct - infected_severe_pct - infected_critical_pct - recovered_infected_no_symptoms - recovered_infected
+def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
+                            infected_severe_pct, infected_critical_pct, recovered_pct):
+    susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - infected_symptoms_pct - infected_severe_pct - infected_critical_pct - recovered_pct
     for person in world.persons:
         #draw infection state from distribution for every agent
         infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
-                                               infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_infected_no_symptoms,
-                                               recovered_infected, 0.0])
-        world.set_infection_state(person, abm.InfectionState(infection_state))
+                                               infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
+        if(infection_state != abm.InfectionState.Susceptible):
+            person.add_new_infection(Infection(VirusVariant.Wildtype, person.age, world.infection_parameters, t0, abm.InfectionState(infection_state), False))
+
+def find_all_locations_of_type(world, type):
+    locations = []
+    for loc in world.locations:
+        if(loc.type == type):
+            locations.append(abm.LocationId(loc.index, type))
+    return locations
 
 
 def assign_locations(world):
     # get locations from world
-    schools = world.locations[abm.LocationType.School]
+    schools = find_all_locations_of_type(world, abm.LocationType.School)
     school_weights = [(1/len(schools)) for i in range(len(schools))]
-    hospitals = world.locations[abm.LocationType.Hospital]
+    hospitals = find_all_locations_of_type(world, abm.LocationType.Hospital)
     hospital_weights = [(1/len(hospitals)) for i in range(len(hospitals))]
-    icus = world.locations[abm.LocationType.ICU]
+    icus = find_all_locations_of_type(world, abm.LocationType.ICU)
     icu_weights = [(1/len(icus)) for i in range(len(icus))]
-    workplaces = world.locations[abm.LocationType.Work]
+    workplaces = find_all_locations_of_type(world, abm.LocationType.Work)
     workplace_weights = [(1/len(workplaces)) for i in range(len(workplaces))]
-    basic_shops = world.locations[abm.LocationType.BasicsShop]
+    basic_shops = find_all_locations_of_type(world, abm.LocationType.BasicsShop)
     shop_weights = [(1/len(basic_shops)) for i in range(len(basic_shops))]
-    social_events = world.locations[abm.LocationType.SocialEvent]
+    social_events = find_all_locations_of_type(world, abm.LocationType.SocialEvent)
     event_weights = [(1/len(social_events)) for i in range(len(social_events))]
 
     # assign locations to agents
@@ -554,7 +562,7 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
     
-    input_path = 'input/AreaList.txt'
+    input_path = '~/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.txt'
     output_path = 'output/'
     #set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
@@ -574,8 +582,8 @@ def run_abm_simulation():
     mapping = create_locations_from_input(
         sim.world, areas, household_distribution)
     #assign initial infection states according to distribution
-    assign_infection_states(sim.world, 0.005, 0.001,
-                            0.001, 0.0001, 0.0, 0.0, 0.0)
+    assign_infection_states(sim.world, t0, 0.005, 0.001,
+                            0.001, 0.0001, 0.0, 0.0)
     #assign locations to agents
     assign_locations(sim.world)
     #as the simulation results for t=0 is set in the simulation constructor 
