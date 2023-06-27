@@ -108,7 +108,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("ICU", mio::abm::LocationType::ICU)
         .value("Car", mio::abm::LocationType::Car)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
-        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
+        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact)
+        .value("Cemetery", mio::abm::LocationType::Cemetery);
 
     py::class_<mio::abm::TestParameters>(m, "TestParameters")
         .def(py::init<double, double>())
