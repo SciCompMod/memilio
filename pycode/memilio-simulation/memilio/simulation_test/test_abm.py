@@ -119,8 +119,7 @@ class TestAbm(unittest.TestCase):
 
         # run
         t1 = t0 + abm.days(1)
-        history = abm.History()
-        sim.advance(t1, history)
+        sim.advance(t1)
         self.assertEqual(sim.result.get_num_time_points(), 25)
 
 
