@@ -143,7 +143,7 @@ struct StateAgeFunction {
      * @param tol Tolerance defining when 
      * @return ScalarType max_support
      */
-    virtual ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10)
+    virtual ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-12)
     {
         ScalarType max_support = 0;
 
@@ -607,7 +607,6 @@ public:
     int check_constraints() const
     {
         for (int i = 0; i < 20; i++) {
-            std::cout << this->get<TransmissionProbabilityOnContact>().eval(i) << "\n";
             if (this->get<TransmissionProbabilityOnContact>().eval(i) < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "

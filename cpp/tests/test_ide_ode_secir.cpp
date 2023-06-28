@@ -46,8 +46,8 @@
 TEST(IdeOdeSecir, compareIdeOde)
 {
     ScalarType t0   = 0;
-    ScalarType tmax = 65;
-    ScalarType dt   = 0.5;
+    ScalarType tmax = 71;
+    ScalarType dt   = 0.1;
 
     ScalarType cont_freq = 10;
 
@@ -64,6 +64,8 @@ TEST(IdeOdeSecir, compareIdeOde)
     model_ode.parameters.set<mio::osecir::Seasonality>(0.0);
     mio::ContactMatrixGroup& contact_matrix = model_ode.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    // TODO: check if this is the right way to set the contact matrix for the ODE model
+    model_ode.parameters.get<mio::osecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Parameters needed to determine transition rates
     model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 5.4;
@@ -96,9 +98,9 @@ TEST(IdeOdeSecir, compareIdeOde)
     model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 0.5;
     model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 0.5;
     // Choose TestAndTraceCapacity very large so that riskFromInfectedSymptomatic = RiskOfInfectionFromSymptomatic
-    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
+    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<ScalarType>::max();
     // Choose ICUCapacity very large so that CriticalPerSevereAdjusted=CriticalPerSevere and deathsPerSevereAdjusted = 0
-    model_ode.parameters.get<mio::osecir::ICUCapacity>() = std::numeric_limits<double>::max();
+    model_ode.parameters.get<mio::osecir::ICUCapacity>() = std::numeric_limits<ScalarType>::max();
 
     model_ode.check_constraints();
 
@@ -110,7 +112,7 @@ TEST(IdeOdeSecir, compareIdeOde)
     integrator->set_rel_tolerance(1e-2);
     integrator->set_abs_tolerance(1e-2);
 
-    mio::TimeSeries<double> secihurd_ode = simulate(t0, tmax, dt, model_ode, integrator);
+    mio::TimeSeries<ScalarType> secihurd_ode = simulate(t0, tmax, dt, model_ode, integrator);
 
     bool print_to_terminal = true;
 
@@ -141,19 +143,35 @@ TEST(IdeOdeSecir, compareIdeOde)
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType N           = nb_total_t0;
-    ScalarType Dead_before = 10;
+    ScalarType t0_ide      = 70;
+    ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
+                                         [(int)mio::osecir::InfectionState::Dead];
+
+    // std::cout << "ODE numtimepoints: " << (Eigen::Index)secihurd_ode.get_num_time_points() << "\n";
+    // std::cout << "Time point at t0_ide -dt: "
+    //           << (Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2 << "\n";
+    // std::cout << "Dead ODE at t0_ide - dt: "
+    //           << secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
+    //                          [(int)mio::osecir::InfectionState::Dead]
+    //           << "\n";
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
     mio::TimeSeries<ScalarType> init_transitions(num_transitions);
     Vec vec_init(num_transitions);
+    // add dummy time point so that model initialization works
+    // TODO: check if it is possible to initialize with an empty time series for init_transitions
     init_transitions.add_time_point(0, vec_init);
 
     // Initialize model.
     mio::isecir::Model model_ide(std::move(init_transitions), N, Dead_before);
 
     // Set working parameters.
-    // To compare woth the ODE model we use ExponentialDecay functions as TransitionDistributions
+
+    // Contact matrix; contact_matrix was already defined for ODE
+    model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    // To compare with the ODE model we use ExponentialDecay functions as TransitionDistributions
     // We set the funcparams so that they correspond to the above ODE model
     mio::isecir::ExponentialDecay expdecay(1.0);
     mio::isecir::StateAgeFunctionWrapper delaydistribution(expdecay);
@@ -199,20 +217,32 @@ TEST(IdeOdeSecir, compareIdeOde)
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model_ide.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
 
-    mio::ContactMatrixGroup contact_matrix_ide = mio::ContactMatrixGroup(1, 1);
-    contact_matrix_ide[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix_ide);
+    // // Set contact matrix
+    // mio::ContactMatrixGroup contact_matrix_ide = mio::ContactMatrixGroup(1, 1);
+    // contact_matrix_ide[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    // model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix_ide);
 
-    // mio::isecir::StateAgeFunctionWrapper proboncontact(constfunc);
-    // mio::isecir::ConstantFunction constfunc(
-    //     model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0]);
-    // model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-    // model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
-    // model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
+    // Set further parameters
+    mio::isecir::ConstantFunction constfunc_proboncontact(
+        model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0]);
+    mio::isecir::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
+    model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(proboncontact);
 
-    ScalarType t0_ide = 6 * model_ide.get_global_max_support(dt) + 3;
+    mio::isecir::ConstantFunction constfunc_reltransnosy(
+        model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
+    mio::isecir::StateAgeFunctionWrapper reltransnosy(constfunc_reltransnosy);
+    model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(reltransnosy);
+
+    mio::isecir::ConstantFunction constfunc_riskofinf(
+        model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
+    mio::isecir::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
+    model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
+
+    // Set t0 for IDE simulation
+    // ScalarType t0_ide = 6 * model_ide.get_global_max_support(dt);
     std::cout << "t0_ide: " << t0_ide << "\n";
 
+    // Compute initial flows from results of ODE simulation
     model_ide.compute_initial_flows_from_compartments(secihurd_ode, t0_ide, dt);
 
     model_ide.check_constraints(dt);
@@ -220,9 +250,9 @@ TEST(IdeOdeSecir, compareIdeOde)
     // Carry out simulation
     std::cout << "Simulating now \n";
     mio::isecir::Simulation sim(model_ide, t0_ide, dt);
-    // sim.print_transitions();
     sim.advance(tmax);
     // sim.print_transitions();
-    // sim.print_compartments();
+    sim.print_compartments();
+    // sim.print_transitions();
     // mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
 }

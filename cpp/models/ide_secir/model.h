@@ -102,12 +102,14 @@ public:
         // flow from S to E for -6*global_max_support, ..., 0 (directly from compartments)
         // add time points to init_transitions here
         for (int i = t0_ide_index - 6 * global_max_support_index + 1; i <= t0_ide_index; i++) {
-            this->m_transitions.add_time_point(i, mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
-            // std::cout << "i: " << i << "\n";
+            this->m_transitions.add_time_point(i * dt,
+                                               mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
             this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
                 secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
                 secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
         }
+
+        std::cout << "Computing flows for initialization. \n";
 
         // then use compute_flow function to compute following flows
 
