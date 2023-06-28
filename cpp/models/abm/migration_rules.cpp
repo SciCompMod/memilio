@@ -160,8 +160,7 @@ LocationType return_home_when_recovered(const Person& person, const TimePoint t,
     return current_loc;
 }
 
-LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/,
-                            const Parameters& /*params*/)
+LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/, const Parameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {

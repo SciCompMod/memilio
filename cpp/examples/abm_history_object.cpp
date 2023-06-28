@@ -59,20 +59,20 @@ void write_log_to_file(const T& history)
 
 int main()
 {
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(6);
+    // Assign the names to general age groups.
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+
+    // Create the world with 4 age groups.
+    auto world = mio::abm::World(4);
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // There are 3 households for each household group.
     int n_households = 3;
-
-    // Assign the name to general age group.
-    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
-    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
-    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
-    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.

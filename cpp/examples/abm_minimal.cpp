@@ -54,17 +54,17 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 
 int main()
 {
-    // Create the world with infection parameters.
-    auto world = mio::abm::World(6);
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
-
     // Assign the name to general age group.
     const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
     const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
     const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
     const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+
+    // Create the world with 4 age groups.
+    auto world = mio::abm::World(4);
+
+    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
+    world.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_0_TO_4};

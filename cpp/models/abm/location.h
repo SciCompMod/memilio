@@ -109,6 +109,17 @@ public:
     {
     }
 
+    Location(const Location& other)
+        : m_id(other.m_id)
+        , m_agegroups(other.m_agegroups)
+        , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
+        , m_parameters(other.m_parameters)
+        , m_cells(other.m_cells.size(), other.m_agegroups)
+        , m_required_mask(other.m_required_mask)
+        , m_npi_active(other.m_npi_active)
+    {
+    }
+
     /**
      * @brief Compare two Location%s.
      */
@@ -360,7 +371,7 @@ public:
 
 private:
     LocationId m_id; ///< Id of the Location including type and index.
-    size_t m_agegroups;
+    size_t m_agegroups; ///< The number of age groups in the model.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.

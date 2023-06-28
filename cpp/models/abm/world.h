@@ -70,19 +70,26 @@ public:
      */
     World(const World& other)
         : parameters(other.parameters)
+        , m_persons()
         , m_locations()
         , m_trip_list(other.m_trip_list)
+        , m_cemetery_id(add_location(LocationType::Cemetery))
     {
-        // Create copies of persons in the world
-        for (auto& person : other.get_persons()) {
-            m_persons.push_back(std::make_unique<Person>(person));
+        for (auto& origin_loc : other.get_locations()) {
+            if (origin_loc.get_type() != LocationType::Cemetery) {
+                // Copy a location
+                m_locations.emplace_back(std::make_unique<Location>(origin_loc));
+            }
+            for (auto& person : other.get_persons()) {
+                // If a person is in this location, copy this person and add it to this location.
+                if (person.get_location() == origin_loc) {
+                    LocationId origin_id = {origin_loc.get_index(), origin_loc.get_type()};
+                    m_persons.push_back(std::make_unique<Person>(person, get_individualized_location(origin_id)));
+                    auto& copied_person = *m_persons.back();
+                    get_individualized_location(origin_id).add_person(copied_person);
+                }
+            }
         }
-
-        // Create copies of locations in the world
-        for (auto& location : other.get_locations()) {
-            m_locations.push_back(std::make_unique<Location>(location));
-        }
-
         use_migration_rules(other.m_use_migration_rules);
     }
 

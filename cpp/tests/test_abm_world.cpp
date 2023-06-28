@@ -420,6 +420,14 @@ TEST(TestWorld, copyWorld)
     ASSERT_EQ(copied_world.get_persons().size(), 2);
     ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(), p1.get_location().get_index());
     ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(), p2.get_location().get_index());
+    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(), p1.get_location().get_type());
+    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(), p2.get_location().get_type());
+    ASSERT_EQ(copied_world.get_locations()[1].get_number_persons(), 1);
+    ASSERT_EQ(copied_world.get_locations()[2].get_number_persons(), 1);
+    ASSERT_EQ(copied_world.get_locations()[3].get_number_persons(), 0);
+    ASSERT_EQ(copied_world.get_locations()[4].get_number_persons(), 0);
+    ASSERT_EQ(&(world.get_persons()[0].get_location()), &(p1.get_location()));
+    ASSERT_EQ(&(world.get_persons()[1].get_location()), &(p2.get_location()));
 
     //Assert the locations and persons of copied world are stored in different address of original world
     ASSERT_NE(&copied_world.get_locations()[1], &school1);
@@ -428,13 +436,17 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&copied_world.get_locations()[4], &home);
     ASSERT_NE(&copied_world.get_persons()[0], &p1);
     ASSERT_NE(&copied_world.get_persons()[1], &p2);
+    ASSERT_NE(&(copied_world.get_persons()[0].get_location()), &school1);
+    ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &school2);
+    ASSERT_NE(&(copied_world.get_locations()[1]), &(p1.get_location()));
+    ASSERT_NE(&(copied_world.get_locations()[2]), &(p2.get_location()));
 
     // Evolve the world and check if the copied world is also involved accordingly
-    p1.migrate_to(home, {0});
-    p2.migrate_to(work, {0});
-    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(), home.get_type());
-    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(), work.get_type());
+    p1.migrate_to(work, {0});
+    p2.migrate_to(home, {0});
+    ASSERT_NE(copied_world.get_persons()[0].get_location().get_type(), work.get_type());
+    ASSERT_NE(copied_world.get_persons()[1].get_location().get_type(), home.get_type());
     copied_world = mio::abm::World(world);
-    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(), home.get_type());
-    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(), work.get_type());
+    ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(), work.get_type());
+    ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(), home.get_type());
 }

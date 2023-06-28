@@ -559,107 +559,85 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
-                log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller {:.4f}", (size_t)i,
+                log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedNoSymptoms of age group {:.0f} "
+                          "smaller than {:d} ",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedSymptoms of age group {:.0f} "
+                          "smaller than {:d}",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error(
+                    "Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller than {:d}",
+                    (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
+                return 1;
+            }
+
+            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller than {:d}", (size_t)i,
                           0);
                 return 1;
             }
 
-            if (this->get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedNoSymptoms of age group {:.0f} "
-                          "smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
+            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
                 return 1;
             }
 
-            if (this->get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedSymptoms of age group {:.0f} "
-                          "smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
+            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller than {:d}",
+                          (size_t)i, 0);
                 return 1;
             }
 
-            if (this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToSymptoms of age group {:.0f} smaller {:d} or "
-                    "larger {:d}",
-                    (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<InfectedNoSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error(
-                    "Constraint check: Parameter InfectedNoSymptomsToRecovered of age group {:.0f} smaller {:d} or "
-                    "larger {:d}",
-                    (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<InfectedSymptomsToRecovered>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter InfectedSymptomsToRecovered of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<InfectedSymptomsToSevere>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter InfectedSymptomsToSevere of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<SevereToCritical>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter SevereToCritical of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<SevereToRecovered>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter SevereToRecovered of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<CriticalToDead>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter CriticalToDead of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<CriticalToRecovered>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter CriticalToRecovered of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<RecoveredToSusceptible>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter RecoveredToSusceptible of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
-                          (size_t)i, 0, 1);
-                return 1;
-            }
-
-            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
-                this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] > 1.0) {
-                log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller {:d} or "
-                          "larger {:d}",
+            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0) {
+                log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
+                          "larger than {:d}",
                           (size_t)i, 0, 1);
                 return 1;
             }

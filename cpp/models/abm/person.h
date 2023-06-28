@@ -56,6 +56,27 @@ public:
      */
     explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
+    explicit Person(const Person& other, Location& location)
+        : m_location(&location)
+        , m_assigned_locations(other.m_assigned_locations)
+        , m_vaccinations(other.m_vaccinations)
+        , m_infections(other.m_infections)
+        , m_quarantine(other.m_quarantine)
+        , m_age(other.m_age)
+        , m_time_at_location(other.m_time_at_location)
+        , m_random_workgroup(other.m_random_workgroup)
+        , m_random_schoolgroup(other.m_random_schoolgroup)
+        , m_random_goto_work_hour(other.m_random_goto_work_hour)
+        , m_random_goto_school_hour(other.m_random_goto_school_hour)
+        , m_time_since_negative_test(other.m_time_since_negative_test)
+        , m_mask(other.m_mask)
+        , m_wears_mask(other.m_wears_mask)
+        , m_mask_compliance(other.m_mask_compliance)
+        , m_person_id(other.m_person_id)
+        , m_cells(other.m_cells)
+    {
+    }
+
     /**
      * @brief Compare two Person%s.
      */
