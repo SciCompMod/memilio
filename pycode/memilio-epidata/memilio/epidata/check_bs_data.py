@@ -6,12 +6,12 @@ import os
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv(r'data/mobility/bs.csv', header=None, skiprows=1)
+bd = pd.read_csv(r'C:\Users\korf_sa\Documents\rep\pycode\memilio-epidata\memilio\epidata\bs_bigger.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
     columns={0: 'idTrafficZone', 1: 'tripID', 2: 'personID', 3: 'tripChain', 4: 'startZone', 5: 'destZone', 6: 'loc_id_start', 7: 'loc_id_end',
-             8: 'countyStart', 9: 'countyEnd', 10: 'hhID', 11: 'TripID', 12: 'tripDistance', 13: 'startTime', 14: 'travelTime', 19: 'vehicleChoice', 20:
+             8: 'countyStart', 9: 'countyEnd', 10: 'hhID', 11: 'tripChainID', 12: 'tripDistance', 13: 'startTime', 14: 'travelTime', 19: 'vehicleChoice', 20:
              'ActivityBefore', 21: 'ActivityAfter', 15: 'loCs', 16: 'laCs', 17: 'loCe', 18: 'laCe', 22: 'age'},
     inplace=True)
 
@@ -46,24 +46,40 @@ if households.drop(households.loc[households['counts']>1].index).size / bd[['per
           str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
 
 # check if there are invalid entries
-if not bd['tripID'].ge(100000000).all():
+if not bd['idTrafficZone'].ge(30000000).all():
     print('Error: There is an entry in "tripID" that is not assignable. \n')
+    # number of entries that are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripID'].ge(30000000)].size) + '. \n')
 if not bd['personID'].ge(100000000).all():
     print('Error: There is an entry in "personID" that is not assignable. \n')
-if not bd['tripChain'].between(1, 10).all():
+    # number of entries that are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['personID'].ge(100000000)].size) + '. \n')
+if not bd['tripChain'].between(1, 100).all():
     print('Error: There is an entry in "tripChain" that is not assignable. \n')
-if not bd['countyStart'].between(1001, 16077).all():
+    # number of entries that are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripChain'].between(1, 100)].size) + '. \n')
+    # max assigned value
+    print('Max assigned value: ' + str(bd['tripChain'].max()) + '. \n')
+if not bd['countyStart'].ge(30000000).all():
     print('Error: There is an entry in "countyStart" that is not assignable. \n')
-if not bd['countyEnd'].between(1001, 16077).all():
+    # which ones are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyStart'].ge(30000000)].size) + '. \n')
+if not bd['countyEnd'].ge(30000000).all():
     print('Error: There is an entry in "countyEnd" that is not assignable. \n')
+    # which ones are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyEnd'].ge(30000000)].size) + '. \n')
 if not bd['hhID'].ge(100000000).all():
     print('Error: There is an entry in "hhID" that is not assignable. \n')
-if not bd['TripID'].between(1, 10).all():
-    print('Error: There is an entry in "TripID" that is not assignable. \n')
+if not bd['tripChainID'].between(-1, -1).all():
+    print('Error: There is an entry in "tripChainID" that is not assignable. \n')
 if not bd['vehicleChoice'].between(1, 5).all():
     print('Error: There is an entry in "vehicleChoice" that is not assignable. \n')
+    #print number of entries that are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['vehicleChoice'].between(1, 5)].size) + '. \n')
 if not bd['ActivityAfter'].between(0, 7).all():
     print('Error: There is an entry in "ActivityAfter" that is not assignable. \n')
+    #print number of entries that are not assignable
+    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['ActivityAfter'].between(0, 7)].size) + '. \n')
 
 # check if there are empty cells
 for header in bd.columns:
