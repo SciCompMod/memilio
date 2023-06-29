@@ -58,12 +58,12 @@ void split_line(std::string string, std::vector<int32_t>* row)
 {
     std::vector<std::string> strings;
 
-    std::string x = ";;", y = ";-1;";
+    std::string x = ",,", y = ",-1,";
     size_t pos;
     while ((pos = string.find(x)) != std::string::npos) {
         string.replace(pos, 2, y);
     } // Temporary fix to handle empty cells.
-    boost::split(strings, string, boost::is_any_of(";"));
+    boost::split(strings, string, boost::is_any_of(","));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
         return std::stoi(s);
     });
@@ -98,6 +98,28 @@ mio::abm::LocationType get_location_type(uint32_t acitivity_end)
     return type;
 }
 
+mio::abm::AgeGroup determine_age_group(uint32_t age)
+{
+    if (age <= 4) {
+        return mio::abm::AgeGroup::Age0to4;
+    }
+    else if (age <= 14) {
+        return mio::abm::AgeGroup::Age5to14;
+    }
+    else if (age <= 34) {
+        return mio::abm::AgeGroup::Age15to34;
+    }
+    else if (age <= 59) {
+        return mio::abm::AgeGroup::Age35to59;
+    }
+    else if (age <= 79) {
+        return mio::abm::AgeGroup::Age60to79;
+    }
+    else {
+        return mio::abm::AgeGroup::Age80plus;
+    }
+}
+
 void create_world_from_data(mio::abm::World& world, const std::string& filename)
 {
     const fs::path p = filename;
@@ -116,7 +138,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::getline(fin, line);
     line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     std::vector<std::string> titles;
-    boost::split(titles, line, boost::is_any_of(";"));
+    boost::split(titles, line, boost::is_any_of(","));
     uint32_t count                        = 0;
     std::map<std::string, uint32_t> index = {};
     for (auto const& title : titles) {
@@ -127,6 +149,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
 
+    int number_persons = 0;
+
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     world.get_individualized_location(hospital).set_capacity(584, 26242);
@@ -134,7 +158,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     world.get_individualized_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     world.get_individualized_location(icu).set_capacity(30, 1350);
 
-    while (std::getline(fin, line)) {
+    while (std::getline(fin, line) && number_persons < 500000) {
         row.clear();
 
         // read columns in this row
@@ -155,13 +179,13 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         }
         auto it_person = persons.find(person_id);
         if (it_person == persons.end()) {
-            auto& person =
-                world.add_person(home, mio::abm::InfectionState::Susceptible, static_cast<mio::abm::AgeGroup>(age / 7));
+            auto& person = world.add_person(home, mio::abm::InfectionState::Susceptible, determine_age_group(age));
             person.set_assigned_location(home);
             person.set_assigned_location(hospital);
             person.set_assigned_location(icu);
             persons.insert({person_id, person});
             it_person = persons.find(person_id);
+            number_persons++;
         }
         auto it_location              = locations.find(location_id);
         mio::abm::LocationId location = it_location->second;
