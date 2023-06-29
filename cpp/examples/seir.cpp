@@ -58,4 +58,20 @@ int main()
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
+
+    std::cout << "Print reproduction numbers" << std::endl;
+
+    for (Eigen::Index timepts = 0; timepts < seir.get_num_time_points(); timepts++) {
+
+        double susceptibles_t = seir.get_value(timepts)[(Eigen::Index)mio::oseir::InfectionState::Susceptible];
+
+        double coeffSusceptiblestoExposed =
+            model.parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timepts)(0, 0) *
+
+            model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>() / model.populations.get_total();
+
+        std::cout << "time: " << timepts << " reproduction nb at t: "
+                  << coeffSusceptiblestoExposed * susceptibles_t * model.parameters.get<mio::oseir::TimeInfected>()
+                  << std::endl;
+    }
 }
