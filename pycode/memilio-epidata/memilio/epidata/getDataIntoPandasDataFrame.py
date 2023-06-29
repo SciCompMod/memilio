@@ -173,7 +173,10 @@ def get_file(
 
     if read_data:
         try:
-            df = pd.read_json(filepath)
+            if filepath.endswith('xlsx'):
+                df = pd.read_excel(filepath, **param_dict)
+            else:
+                df = pd.read_json(filepath)
         except FileNotFoundError:
             if interactive and user_choice(
                 "Warning: The file: " + filepath +
