@@ -38,7 +38,7 @@ namespace mio
 template <class M, typename FP=double>
 class Simulation
 {
-    static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
+    static_assert(is_compartment_model<M,FP>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;

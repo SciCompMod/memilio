@@ -81,7 +81,7 @@ public:
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
     using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
-                                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, double t)>;
+                                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP t)>;
 
     // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
     // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
@@ -121,7 +121,7 @@ public:
     //REMARK: Not pure virtual for easier java/python bindings
     virtual void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>,
                                  Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> /*y*/,
-                                 double /*t*/, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> /*dydt*/) const {};
+                                 FP /*t*/, Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> /*dydt*/) const {};
 #endif // USE_DERIV_FUNC
 
     /**
@@ -145,7 +145,7 @@ public:
      * @param dydt a reference to the calculated output
      */
     void eval_right_hand_side(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> pop,
-                              Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, double t,
+                              Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP t,
                               Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const
     {
         dydt.setZero();
@@ -212,10 +212,11 @@ private:
  * Otherwise the template is invalid.
  * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
  */
-template <class M>
+template <class M, typename FP=double>
 using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
-    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
-    std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>>(),
+    std::declval<Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>>>(),
+    std::declval<double>(), std::declval<Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>>>()));
 
 /**
  * detect the get_initial_values member function of a compartment model.
@@ -224,9 +225,9 @@ using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right
  * Otherwise the template is invalid.
  * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
  */
-template <class M>
+template <class M, typename FP=double>
 using get_initial_values_expr_t =
-    decltype(std::declval<Eigen::VectorXd&>() = std::declval<const M&>().get_initial_values());
+    decltype(std::declval<Eigen::Matrix<FP,Eigen::Dynamic,1>&>() = std::declval<const M&>().get_initial_values());
 
 /**
  * Template meta function to check if a type is a valid compartment model. 
@@ -235,9 +236,14 @@ using get_initial_values_expr_t =
  * Otherwise, `value` will be equal to false.
  * @tparam Sim a type that may or may not be a compartment model.
  */
-template <class M>
-using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
-                                                           is_expression_valid<get_initial_values_expr_t, M>::value)>;
+//template <class M>
+//using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
+//                                                           is_expression_valid<get_initial_values_expr_t, M>::value>)>;
+
+
+template <class M, typename FP=double>
+    using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M, FP>::value &&
+                                                               is_expression_valid<get_initial_values_expr_t, M>::value)>;
 
 } // namespace mio
 

@@ -25,6 +25,7 @@
 #include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 #include "ode_seair/infection_state.h"
 #include "ode_seair/parameters.h"
+#include "ad/ad.hpp"
 
 namespace mio
 {
@@ -35,9 +36,11 @@ namespace oseair
     * define the model *
     ********************/
 
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>,
+                                        Parameters, ad::gt1s<double>::type>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>,
+                                    Parameters, ad::gt1s<double>::type>;
 
 public:
     Model()
@@ -45,8 +48,9 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> /* pop */, Eigen::Ref<const Eigen::VectorXd> y, double /* t */,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> /* pop */,
+                         Eigen::Ref<const Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> y, ad::gt1s<double>::type /* t */,
+                         Eigen::Ref<Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> dydt) const override
     {
         auto& params     = this->parameters;
         /*        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *

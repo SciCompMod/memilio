@@ -24,6 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
+#include "ad/ad.hpp"
 
 #include <vector>
 
@@ -40,7 +41,7 @@ namespace oseair
  * @brief Social distancing.
  */
 struct AlphaA {
-  using Type = UncertainValue;
+    using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.2);
@@ -56,7 +57,7 @@ struct AlphaA {
  * @brief Quarantining.
  */
 struct AlphaI {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.2);
@@ -71,7 +72,7 @@ struct AlphaI {
  * @brief Rate of testing.
  */
 struct Kappa {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.2);
@@ -87,7 +88,7 @@ struct Kappa {
  * @brief Recovery rate.
  */
 struct Beta {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.0067);
@@ -102,7 +103,7 @@ struct Beta {
  * @brief Death Rate.
  */
 struct Mu {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.0041);
@@ -118,7 +119,7 @@ struct Mu {
  * @brief Inverse of the latent period of the virus.
  */
 struct TLatentInverse {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.5);
@@ -133,7 +134,7 @@ struct TLatentInverse {
  * @brief Infectious period for unconfirmed infected people.
  */
 struct Rho {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.1);
@@ -149,7 +150,7 @@ struct Rho {
  * @brief Rate recovered people become susceptible again.
  */
 struct Gamma {
-  using Type = UncertainValue;
+  using Type = ad::gt1s<double>::type;
   static Type get_default()
   {
     return Type(0.0);
@@ -167,7 +168,7 @@ struct Gamma {
      * @brief probability of getting infected from a contact
      */
 struct TransmissionProbabilityOnContact {
-    using Type = UncertainValue;
+    using Type = ad::gt1s<double>::type;
     static Type get_default()
     {
         return Type(1.0);
@@ -182,7 +183,7 @@ struct TransmissionProbabilityOnContact {
      * @brief the latent time in day unit
      */
 struct TimeExposed {
-    using Type = UncertainValue;
+    using Type = ad::gt1s<double>::type;
     static Type get_default()
     {
         return Type(5.2);
@@ -197,7 +198,7 @@ struct TimeExposed {
      * @brief the infectious time in day unit
      */
 struct TimeInfected {
-    using Type = UncertainValue;
+    using Type = ad::gt1s<double>::type;
     static Type get_default()
     {
         return Type(6.0);
