@@ -58,7 +58,7 @@ def user_choice(message, default=False):
 
 def download_file(
         url, chunk_size=1024, timeout=None, progress_function=None,
-        verify=True, auth=('','')):
+        verify=True):
     """! Download a file using GET over HTTP.
 
     @param url Full url of the file to download.
@@ -85,7 +85,7 @@ def download_file(
     try:
         req = requests.get(
             url, stream=True, timeout=timeout,
-            verify=verify in [True, "interactive"], auth=('RE009937', 'sebham-Cewbu5-bertam'))
+            verify=verify in [True, "interactive"])
     except OSError:
         if verify == "interactive" and user_choice(
             url +
@@ -146,7 +146,7 @@ def extract_zip(file, **param_dict):
 def get_file(
         filepath='', url='', read_data=dd.defaultDict['read_data'],
         param_dict={},
-        interactive=False, auth=('','')):
+        interactive=False):
     """! Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.

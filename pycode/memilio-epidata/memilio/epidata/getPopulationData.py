@@ -25,6 +25,7 @@
 """
 
 import os
+import twill
 
 import numpy as np
 import pandas as pd
@@ -39,7 +40,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
                         split_gender=False,
-                        merge_eisenach=True):
+                        merge_eisenach=True,
+                        username='',
+                        password=''):
     """! Download age-stratified population data for the German counties.
 
     There are two different data sources that can be transformed in a simple
@@ -92,12 +95,27 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
     new_data_file = os.path.join(directory, filename+'.xlsx')
+    sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
+    
+    # sign in to regionalstatistik.de with given username and password
+    twill.commands.go(sign_in_url)
+    twill.commands.fv('3', 'KENNUNG', username)
+    twill.commands.fv('3', 'PASSWORT', password)
+    twill.commands.submit('login', '3')
+    # navigate to file
+    twill.commands.follow('Themen')
+    twill.commands.follow('12')
+    twill.commands.follow('12411')
+    twill.commands.follow('12411-02-03-4')
+    twill.commands.submit('45', '3')
+    twill.commands.submit('1', '4')
+    url=twill.browser.url
 
     df_pop_raw = gd.get_file(
-        new_data_file, url='https://www.regionalstatistik.de/genesis/online?operation=ergebnistabelleDownload&levelindex=3&levelid=1688024651637&option=xlsx', read_data=False,
+        new_data_file, url=url, read_data=False,
         param_dict={"engine": "openpyxl",
                     "sheet_name": filename, "header": 4},
-        interactive=False, auth=('',''))
+        interactive=False)
     column_names = list(df_pop_raw.columns)
     # rename columns
     rename_columns = {
