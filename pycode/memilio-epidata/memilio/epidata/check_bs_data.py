@@ -6,7 +6,7 @@ import os
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv(r'data/mobility/bs.csv', sep=';', header=None, skiprows=1)
+bd = pd.read_csv(r'data/mobility/bs.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
@@ -28,12 +28,12 @@ if (duplicate_trips.any()):
     if (~bd[['tripID']].duplicated().any()):
         print('There are no duplicate TripIDs. There are multiple TripIDs for the same Trip. \n')
 activities_after_duplicate_trips  = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime', 'ActivityAfter']].loc[trips.duplicated(keep=False)]
-if (activities_after_duplicate_trips.duplicated().any()):
-    print('Error: Multiple acitivities after the same trip. \n')
+if (~activities_after_duplicate_trips.duplicated(keep=False).all()):
+    print('Error: Multiple activities after the same trip. \n')
 
 # check if persons have more than one home
 person_homes = bd[['personID', 'loc_id_end', 'ActivityAfter']].loc[bd['ActivityAfter']==7]
-person_homes = person_homes.groupby(['personID']).size().reset_index(name='counts')
+person_homes = person_homes.drop_duplicates().groupby(['personID']).size().reset_index(name='counts')
 person_homes.drop(person_homes.loc[person_homes['counts']<2].index, inplace=True)
 if(person_homes.size > 0):
     print('Error: There are people that have more than one home. \n')
@@ -46,9 +46,9 @@ if households.drop(households.loc[households['counts']>1].index).size / bd[['per
           str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
 
 # check if there are invalid entries
-if not bd['tripID'].gt(100000000).all():
+if not bd['tripID'].ge(100000000).all():
     print('Error: There is an entry in "tripID" that is not assignable. \n')
-if not bd['personID'].gt(100000000).all():
+if not bd['personID'].ge(100000000).all():
     print('Error: There is an entry in "personID" that is not assignable. \n')
 if not bd['tripChain'].between(1, 10).all():
     print('Error: There is an entry in "tripChain" that is not assignable. \n')
@@ -56,7 +56,7 @@ if not bd['countyStart'].between(1001, 16077).all():
     print('Error: There is an entry in "countyStart" that is not assignable. \n')
 if not bd['countyEnd'].between(1001, 16077).all():
     print('Error: There is an entry in "countyEnd" that is not assignable. \n')
-if not bd['hhID'].gt(100000000).all():
+if not bd['hhID'].ge(100000000).all():
     print('Error: There is an entry in "hhID" that is not assignable. \n')
 if not bd['TripID'].between(1, 10).all():
     print('Error: There is an entry in "TripID" that is not assignable. \n')
@@ -73,9 +73,9 @@ for header in bd.columns:
 # check age groups with schools
 students = bd[['personID', 'loc_id_end', 'age']].loc[bd['ActivityAfter']==2]
 print('Minimal age of people going to school: ' + str(students['age'].min()) + '. Maximal age of people going to school: ' + str(students['age'].max()) + '.\n')
-print(str(students.loc[students['age'] > 10].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
+print(str(students.loc[students['age'] > 20].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
 
-children = bd[['personID','ActivityAfter']].loc[bd['age']<=10]
+children = bd[['personID','ActivityAfter']].loc[bd['age']<=20]
 number_of_children = children['personID'].drop_duplicates().size
 number_of_children_school = children[children['ActivityAfter'] == 2]['personID'].drop_duplicates().size
 print(str(number_of_children - number_of_children_school) + ' of ' + str(number_of_children) + ' children do not go to school. \n')
