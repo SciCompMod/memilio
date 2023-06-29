@@ -25,7 +25,6 @@
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -33,164 +32,6 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-
-
-def get_new_counties(data):
-    """! Creates 7 new counties that were formed since 2011 and deletes old counties
-
-   Downloaded data is from 2011.
-   However, new counties have been defined.
-   Thus, the new ones have to be added, the data has to be calculated and the old counties have to be deleted.
-
-   @param data_temp Pandas dataframe
-   @return Changed data
-   """
-
-    # create 7 new counties
-    data_temp = np.append(data, np.zeros((7, data.shape[1])), axis=0)
-
-    old_to_new_counties = {
-        3159: [3152, 3156],
-        13071: [13056, 13002, 13055, 13052],
-        13072: [13051, 13053],
-        13073: [13061, 13005, 13057],
-        13074: [13006, 13058],
-        13075: [13059, 13062, 13001],
-        13076: [13054, 13060]}
-
-    no_data_avail = []
-    for new_county in old_to_new_counties.keys():
-        if not all(item in data_temp[:, 0]
-                   for item in old_to_new_counties[new_county]):
-            no_data_avail.append(new_county)
-
-    # Göttingen
-    data_temp[-7, 0] = 3159
-
-    # Mecklenburgische Seenplatte
-    data_temp[-6, 0] = 13071
-
-    # Landkreis Rostock
-    data_temp[-5, 0] = 13072
-
-    # Vorpommern Rügen
-    data_temp[-4, 0] = 13073
-
-    # Nordwestmecklenburg
-    data_temp[-3, 0] = 13074
-
-    # Vorpommern Greifswald
-    data_temp[-2, 0] = 13075
-
-    # Ludwigslust-Parchim
-    data_temp[-1, 0] = 13076
-
-    to_delete = []
-
-    for i in range(len(data_temp[:, 0])):
-        # fuse "Göttingen" and "Osterode am Harz" into Göttingen
-        if data_temp[i, 0] in old_to_new_counties[3159]:
-            data_temp[-7, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Müritz", "Neubrandenburg", "Mecklenburg-Sterlitz"
-        # and "Demmin" into "Mecklenburgische Seenplatte"
-        if data_temp[i, 0] in old_to_new_counties[13071]:
-            data_temp[-6, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Bad Doberan and Güstrow" into "Landkreis Rostosck"
-        if data_temp[i, 0] in old_to_new_counties[13072]:
-            data_temp[-5, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Rügen", "Stralsund" and "Nordvorpommern" into
-        # "Vorpommern Rügen"
-        if data_temp[i, 0] in old_to_new_counties[13073]:
-            data_temp[-4, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Wismar" and "Nordwestmecklenburg" into
-        # "Nordwestmecklenburg"
-        if data_temp[i, 0] in old_to_new_counties[13074]:
-            data_temp[-3, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Ostvorpommern", "Uecker-Randow" and "Greifswald"
-        # into "Vorpommern Greifswald"
-        if data_temp[i, 0] in old_to_new_counties[13075]:
-            data_temp[-2, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-        # fuse "Ludwigslust" and "Parchim" into "Ludwigslust-Parchim"
-        if data_temp[i, 0] in old_to_new_counties[13076]:
-            data_temp[-1, 1:] += data_temp[i, 1:]
-            to_delete.append(i)
-
-    data_temp = np.delete(data_temp, to_delete, 0)
-    sorted_inds = np.argsort(data_temp[:, 0])
-    data_temp = data_temp[sorted_inds, :]
-    # potentially remove new counties if there was no data available
-    for county in no_data_avail:
-        data_temp = np.delete(arr=data_temp, obj=np.where(
-            data_temp[:, 0] == county)[0][0], axis=0)
-    return data_temp
-
-
-def load_population_data(out_folder=dd.defaultDict['out_folder'],
-                         read_data=dd.defaultDict['read_data'],
-                         no_raw=dd.defaultDict['no_raw'],
-                         file_format=dd.defaultDict['file_format']):
-    """! Load of county_table, zensus and reg_key files
-
-    Data is downloaded from the following sources
-   - Federal Statistical Office of Germany (Destatis/Genesis-Online), current
-        data for population per county [stored in "county_table"]
-   - Zensus2011 data with additional information on regional keys
-        [stored in "reg_key"]
-   - Zensus2011 data from opendata splitted for age and gender
-        [stored in "zensus"]
-
-   Data is either downloaded or read from "out_folder"/Germany/.
-
-   @param out_folder Path to folder where data is written in folder out_folder/Germany. Default defined in defaultDict.
-   @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
-   @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
-   @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @return Three dataframes of county_table, reg_key and zensus data.
-    """
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
-    filename_counties = 'county_table'
-    filename_zensus = 'zensus'
-    filename_reg_key = 'reg_key'
-
-    url_zensus = 'https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv'
-    url_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-        '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-    path_zensus = os.path.join(directory, filename_zensus + ".json")
-    path_reg_key = os.path.join(directory, filename_zensus + ".json")
-    zensus = gd.get_file(
-        path_zensus, url_zensus, read_data, param_dict={}, interactive=True)
-    reg_key = gd.get_file(path_reg_key, url_reg_key, read_data, param_dict={
-        "engine": None, "sheet_name": 'Tabelle_1A', "header": 12}, interactive=True)
-    counties = geoger.get_official_county_table()
-
-    if not read_data:
-        if not no_raw:
-            if not counties.empty:
-                gd.write_dataframe(counties, directory,
-                                   filename_counties, file_format)
-            if not zensus.empty:
-                gd.write_dataframe(zensus, directory,
-                                   filename_zensus, file_format)
-            if not reg_key.empty:
-                gd.write_dataframe(reg_key, directory,
-                                   filename_reg_key, file_format)
-
-    return counties, zensus, reg_key
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
@@ -251,276 +92,152 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
     new_data_file = os.path.join(directory, filename+'.xlsx')
-    new_data_avail = os.path.isfile(new_data_file)
 
-    if new_data_avail:
-        print('Information: Using new population data file ' + filename)
-        df_pop_raw = gd.get_file(
-            new_data_file, url='', read_data=True,
-            param_dict={"engine": "openpyxl",
-                        "sheet_name": filename, "header": 4},
-            interactive=False)
-        column_names = list(df_pop_raw.columns)
-        # rename columns
-        rename_columns = {
-            column_names[0]: dd.EngEng['idCounty'],
-            column_names[1]: dd.EngEng['county'],
-            column_names[2]: dd.EngEng['ageRKI'],
-            column_names[3]: dd.EngEng['number'],
-            column_names[4]: dd.EngEng['male'],
-            column_names[5]: dd.EngEng['female'],
-        }
-        df_pop_raw.rename(columns=rename_columns, inplace=True)
-        # remove date and explanation rows at end of table
-        # -33 for '12411-09-01-4-B', -38 for '12411-02-03-4'
-        df_pop_raw = df_pop_raw[:-38].reset_index(drop=True)
-        # get indices of counties first lines
-        idCounty_idx = list(df_pop_raw.index[
-            df_pop_raw[dd.EngEng['idCounty']].isna() == False])
+    df_pop_raw = gd.get_file(
+        new_data_file, url='https://www.regionalstatistik.de/genesis/online?operation=ergebnistabelleDownload&levelindex=3&levelid=1688024651637&option=xlsx', read_data=False,
+        param_dict={"engine": "openpyxl",
+                    "sheet_name": filename, "header": 4},
+        interactive=False, auth=('',''))
+    column_names = list(df_pop_raw.columns)
+    # rename columns
+    rename_columns = {
+        column_names[0]: dd.EngEng['idCounty'],
+        column_names[1]: dd.EngEng['county'],
+        column_names[2]: dd.EngEng['ageRKI'],
+        column_names[3]: dd.EngEng['number'],
+        column_names[4]: dd.EngEng['male'],
+        column_names[5]: dd.EngEng['female'],
+    }
+    df_pop_raw.rename(columns=rename_columns, inplace=True)
+    # remove date and explanation rows at end of table
+    # -33 for '12411-09-01-4-B', -38 for '12411-02-03-4'
+    df_pop_raw = df_pop_raw[:-38].reset_index(drop=True)
+    # get indices of counties first lines
+    idCounty_idx = list(df_pop_raw.index[
+        df_pop_raw[dd.EngEng['idCounty']].isna() == False])
 
-        # read county list and create output data frame
-        counties = np.array(geoger.get_county_names_and_ids(
-            merge_berlin=True, merge_eisenach=False, zfill=True))
-        new_cols = {dd.EngEng['idCounty']: counties[:, 1],
-                    dd.EngEng['county']: counties[:, 0]}
-        age_cols = df_pop_raw.loc[
-            idCounty_idx[0]: idCounty_idx[1] - 2,  # -1 for '12411-09-01-4-B'
-            dd.EngEng['ageRKI']].copy().values
-        nage = len(age_cols)
-        for i in range(len(age_cols)):
-            if i == 0:
-                upper_bound = str(int(age_cols[i][
-                    age_cols[i].index('unter ')+6:].split(' ')[0])-1)
-                age_cols[i] = '0-' + upper_bound
-            elif i == len(age_cols)-1:
-                lower_bound = age_cols[i].split(' ')[0]
-                age_cols[i] = lower_bound + '-99'
-            else:
-                lower_bound = age_cols[i].split(' ')[0]
-                upper_bound = str(int(age_cols[i][
-                    age_cols[i].index('unter ')+6:].split(' ')[0])-1)
-                age_cols[i] = lower_bound + '-' + upper_bound
-
-        # add age_cols with zero initilization to new_cols
-        new_cols.update({age: 0 for age in age_cols})
-        df_pop = pd.DataFrame(new_cols)
-
-        empty_data = ['.', '-']
-        for i in idCounty_idx:
-            # county information needed
-            if df_pop_raw.loc[i, dd.EngEng['idCounty']] in counties[:, 1]:
-                # direct assignment of population data found
-                df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
-                           [i, dd.EngEng['idCounty']],
-                           age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
-                                                      ['number']].values
-            # Berlin and Hamburg
-            elif df_pop_raw.loc[i, dd.EngEng['idCounty']] + '000' in counties[:, 1]:
-                # direct assignment of population data found
-                df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
-                           [i, dd.EngEng['idCounty']] + '000',
-                           age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
-                                                      ['number']].values
-            # empty rows
-            elif df_pop_raw.loc[i: i + nage - 1,
-                                dd.EngEng['number']].values.any() in empty_data:
-                if not df_pop_raw.loc[i: i + nage - 1,
-                                      dd.EngEng['number']].values.all() in empty_data:
-                    raise gd.DataError(
-                        'Error. Partially incomplete data for county ' +
-                        df_pop_raw.loc[i, dd.EngEng['idCounty']])
-            # additional information for local entities not needed
-            elif df_pop_raw.loc[i, dd.EngEng['idCounty']] in ['03241001', '05334002', '10041100']:
-                pass
-            # Germany, federal states, and governing regions
-            elif len(df_pop_raw.loc[i, dd.EngEng['idCounty']]) < 5:
-                pass
-            else:
-                print('no data for ' + df_pop_raw.loc
-                      [i, dd.EngEng['idCounty']])
-                raise gd.DataError(
-                    'Error. County ID in input population data'
-                    'found which could not be assigned.')
-
-        if df_pop[age_cols].sum().sum() != 83155031:
-            raise gd.DataError('Wrong total population size')
-
-        new_cols = [
-            dd.EngEng['idCounty'],
-            dd.EngEng['population'],
-            '<3 years', '3-5 years', '6-14 years', '15-17 years',
-            '18-24 years', '25-29 years', '30-39 years', '40-49 years',
-            '50-64 years', '65-74 years', '>74 years']
-        df_pop_export = pd.DataFrame(columns=new_cols)
-        df_pop_export[df_pop.columns[0]] = df_pop[dd.EngEng['idCounty']]
-        # <3 and 3-5
-        df_pop_export[df_pop_export.columns[2:4]] = df_pop[df_pop.columns[2:4]]
-        # 6-14
-        df_pop_export[df_pop_export.columns[4]] = \
-            df_pop[df_pop.columns[4:6]].sum(axis=1)
-        # 15-17
-        df_pop_export[df_pop_export.columns[5]] = df_pop[df_pop.columns[6]]
-        # 18-24
-        df_pop_export[df_pop_export.columns[6]] = \
-            df_pop[df_pop.columns[7:9]].sum(axis=1)
-        # 25-29
-        df_pop_export[df_pop_export.columns[7]] = df_pop[df_pop.columns[9]]
-        # 30-39
-        df_pop_export[df_pop_export.columns[8]] = \
-            df_pop[df_pop.columns[10:12]].sum(axis=1)
-        # 40-49
-        df_pop_export[df_pop_export.columns[9]] = \
-            df_pop[df_pop.columns[12:14]].sum(axis=1)
-        # 50-64
-        df_pop_export[df_pop_export.columns[10]] = \
-            df_pop[df_pop.columns[14:17]].sum(axis=1)
-        # 65-74
-        df_pop_export[df_pop_export.columns[11]] = df_pop[df_pop.columns[17]]
-        # >74
-        df_pop_export[df_pop_export.columns[12]] = df_pop[df_pop.columns[18]]
-
-        df_pop_export[dd.EngEng['population']
-                      ] = df_pop_export.iloc[:, 2:].sum(axis=1)
-
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
-
-        if len(df_pop_export) == 401:
-            filename = 'county_current_population_dim401'
-            gd.write_dataframe(df_pop_export, directory, filename, file_format)
-
-        if len(df_pop_export) == 400 or merge_eisenach == True:
-            filename = 'county_current_population'
-
-            # Merge Eisenach and Wartburgkreis
-            df_pop_export = geoger.merge_df_counties_all(
-                df_pop_export, sorting=[dd.EngEng["idCounty"]],
-                columns=dd.EngEng["idCounty"])
-
-            gd.write_dataframe(df_pop_export, directory, filename, file_format)
-
-        return df_pop_export
-
-    else:
-        counties, zensus, reg_key = load_population_data(
-            out_folder, read_data=read_data, no_raw=no_raw,
-            file_format=file_format)
-
-        # find region keys for census population data
-        key = np.zeros(len(zensus))
-        for i in range(len(key)):
-            for j in range(len(reg_key)):
-                if zensus['Name'].values[i] == reg_key['NAME'].values.astype(
-                        str)[j]:
-                    if zensus[dd.invert_dict(dd.GerEng)[dd.EngEng['population']]].values[i] == round(
-                            reg_key['Zensus_EWZ'].values[j] * 1000):
-                        key[i] = reg_key['AGS'].values[j]
-
-        inds = np.unique(key, return_index=True)[1]
-        # columns of downloaded data which should be replaced
-        male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17',
-                'M_18_bis_24', 'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49',
-                'M_50_bis_64', 'M_65_bis_74', 'M_75_und_aelter']
-        female = ['W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17',
-                  'W_18_bis_24', 'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49',
-                  'W_50_bis_64', 'W_65_bis_74', 'W_75_und_aelter']
-
-        if not split_gender:
-            # get data from zensus file and add male and female population data
-            data = np.zeros((len(inds), len(male)+2))
-            data[:, 0] = key[inds].astype(int)
-            data[:, 1] = zensus[dd.invert_dict(
-                dd.GerEng)[dd.EngEng['population']]].values[inds].astype(int)
-            for i in range(len(male)):
-                data[:, i+2] = zensus[male[i]].values[inds].astype(
-                    int) + zensus[female[i]].values[inds].astype(int)
-
-            # define new columns for dataframe
-            columns = [
-                dd.EngEng['idCounty'],
-                dd.EngEng['population'],
-                '<3 years', '3-5 years', '6-14 years', '15-17 years',
-                '18-24 years', '25-29 years', '30-39 years', '40-49 years',
-                '50-64 years', '65-74 years', '>74 years']
+    # read county list and create output data frame
+    counties = np.array(geoger.get_county_names_and_ids(
+        merge_berlin=True, merge_eisenach=False, zfill=True))
+    new_cols = {dd.EngEng['idCounty']: counties[:, 1],
+                dd.EngEng['county']: counties[:, 0]}
+    age_cols = df_pop_raw.loc[
+        idCounty_idx[0]: idCounty_idx[1] - 2,  # -1 for '12411-09-01-4-B'
+        dd.EngEng['ageRKI']].copy().values
+    nage = len(age_cols)
+    for i in range(len(age_cols)):
+        if i == 0:
+            upper_bound = str(int(age_cols[i][
+                age_cols[i].index('unter ')+6:].split(' ')[0])-1)
+            age_cols[i] = '0-' + upper_bound
+        elif i == len(age_cols)-1:
+            lower_bound = age_cols[i].split(' ')[0]
+            age_cols[i] = lower_bound + '-99'
         else:
-            # get data from zensus file
-            data = np.zeros((len(inds), len(male)+len(female)+2))
-            data[:, 0] = key[inds].astype(int)
-            data[:, 1] = zensus[dd.invert_dict(
-                dd.GerEng)[dd.EngEng['population']]].values[inds].astype(int)
-            for i in range(len(male)):
-                data[:, i+2] = zensus[male[i]].values[inds].astype(int)
-            for i in range(len(female)):
-                data[:, i+len(male)+2] = zensus[female[i]
-                                                ].values[inds].astype(int)
+            lower_bound = age_cols[i].split(' ')[0]
+            upper_bound = str(int(age_cols[i][
+                age_cols[i].index('unter ')+6:].split(' ')[0])-1)
+            age_cols[i] = lower_bound + '-' + upper_bound
 
-            # define new columns for dataframe
-            columns = [
-                dd.EngEng['idCounty'],
-                dd.EngEng['population'],
-                'M <3 years', 'M 3-5 years', 'M 6-14 years', 'M 15-17 years',
-                'M 18-24 years', 'M 25-29 years', 'M 30-39 years',
-                'M 40-49 years', 'M 50-64 years', 'M 65-74 years',
-                'M >74 years', 'F <3 years', 'F 3-5 years', 'F 6-14 years',
-                'F 15-17 years', 'F 18-24 years', 'F 25-29 years',
-                'F 30-39 years', 'F 40-49 years', 'F 50-64 years',
-                'F 65-74 years', 'F >74 years']
+    # add age_cols with zero initilization to new_cols
+    new_cols.update({age: 0 for age in age_cols})
+    df_pop = pd.DataFrame(new_cols)
 
-        data = get_new_counties(data)
+    empty_data = ['.', '-']
+    for i in idCounty_idx:
+        # county information needed
+        if df_pop_raw.loc[i, dd.EngEng['idCounty']] in counties[:, 1]:
+            # direct assignment of population data found
+            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
+                        [i, dd.EngEng['idCounty']],
+                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
+                                                    ['number']].values
+        # Berlin and Hamburg
+        elif df_pop_raw.loc[i, dd.EngEng['idCounty']] + '000' in counties[:, 1]:
+            # direct assignment of population data found
+            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
+                        [i, dd.EngEng['idCounty']] + '000',
+                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
+                                                    ['number']].values
+        # empty rows
+        elif df_pop_raw.loc[i: i + nage - 1,
+                            dd.EngEng['number']].values.any() in empty_data:
+            if not df_pop_raw.loc[i: i + nage - 1,
+                                    dd.EngEng['number']].values.all() in empty_data:
+                raise gd.DataError(
+                    'Error. Partially incomplete data for county ' +
+                    df_pop_raw.loc[i, dd.EngEng['idCounty']])
+        # additional information for local entities not needed
+        elif df_pop_raw.loc[i, dd.EngEng['idCounty']] in ['03241001', '05334002', '10041100']:
+            pass
+        # Germany, federal states, and governing regions
+        elif len(df_pop_raw.loc[i, dd.EngEng['idCounty']]) < 5:
+            pass
+        else:
+            print('no data for ' + df_pop_raw.loc
+                    [i, dd.EngEng['idCounty']])
+            raise gd.DataError(
+                'Error. County ID in input population data'
+                'found which could not be assigned.')
 
-        # create Dataframe of raw data without adjusting population
-        df = pd.DataFrame(data.astype(int), columns=columns)
+    if df_pop[age_cols].sum().sum() != 83155031:
+        raise gd.DataError('Wrong total population size')
 
-        # compute ratio of current and 2011 population data
-        ratio = np.ones(len(data[:, 0]))
-        for i in range(len(ratio)):
-            for j in range(len(counties)):
-                if not counties[dd.EngEng['idCounty']].isnull().values[j]:
-                    try:
-                        if data[i, 0] == int(
-                                counties[dd.EngEng['idCounty']].values[j]):
-                            ratio[i] = counties[dd.EngEng['population']
-                                                ].values[j]/data[i, 1]
+    new_cols = [
+        dd.EngEng['idCounty'],
+        dd.EngEng['population'],
+        '<3 years', '3-5 years', '6-14 years', '15-17 years',
+        '18-24 years', '25-29 years', '30-39 years', '40-49 years',
+        '50-64 years', '65-74 years', '>74 years']
+    df_pop_export = pd.DataFrame(columns=new_cols)
+    df_pop_export[df_pop.columns[0]] = df_pop[dd.EngEng['idCounty']]
+    # <3 and 3-5
+    df_pop_export[df_pop_export.columns[2:4]] = df_pop[df_pop.columns[2:4]]
+    # 6-14
+    df_pop_export[df_pop_export.columns[4]] = \
+        df_pop[df_pop.columns[4:6]].sum(axis=1)
+    # 15-17
+    df_pop_export[df_pop_export.columns[5]] = df_pop[df_pop.columns[6]]
+    # 18-24
+    df_pop_export[df_pop_export.columns[6]] = \
+        df_pop[df_pop.columns[7:9]].sum(axis=1)
+    # 25-29
+    df_pop_export[df_pop_export.columns[7]] = df_pop[df_pop.columns[9]]
+    # 30-39
+    df_pop_export[df_pop_export.columns[8]] = \
+        df_pop[df_pop.columns[10:12]].sum(axis=1)
+    # 40-49
+    df_pop_export[df_pop_export.columns[9]] = \
+        df_pop[df_pop.columns[12:14]].sum(axis=1)
+    # 50-64
+    df_pop_export[df_pop_export.columns[10]] = \
+        df_pop[df_pop.columns[14:17]].sum(axis=1)
+    # 65-74
+    df_pop_export[df_pop_export.columns[11]] = df_pop[df_pop.columns[17]]
+    # >74
+    df_pop_export[df_pop_export.columns[12]] = df_pop[df_pop.columns[18]]
 
-                    except ValueError:
-                        pass
+    df_pop_export[dd.EngEng['population']
+                    ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
-        # adjust population data for all ages to current level
-        data_current = np.zeros(data.shape)
-        data_current[:, 0] = data[:, 0].copy()
-        for i in range(len(data[0, :]) - 1):
-            data_current[:, i + 1] = np.multiply(data[:, i + 1], ratio)
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
 
-        # create dataframe
-        df_current = pd.DataFrame(
-            np.round(data_current).astype(int), columns=columns)
+    if len(df_pop_export) == 401:
+        filename = 'county_current_population_dim401'
+        gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
+    if len(df_pop_export) == 400 or merge_eisenach == True:
+        filename = 'county_current_population'
 
-        if len(df_current) == 400 or merge_eisenach == True:
-            # Merge Eisenach and Wartburgkreis
-            df_current = geoger.merge_df_counties_all(
-                df_current, sorting=[dd.EngEng["idCounty"]],
-                columns=dd.EngEng["idCounty"])
-            df = geoger.merge_df_counties_all(
-                df, sorting=[dd.EngEng["idCounty"]],
-                columns=dd.EngEng["idCounty"])
+        # Merge Eisenach and Wartburgkreis
+        df_pop_export = geoger.merge_df_counties_all(
+            df_pop_export, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
 
-            filename = 'county_current_population'
-            filename_raw = 'county_population'
-        else:  # Write Dataframe without merging
-            if (len(df_current) != 400) and (len(df_current) != 401):
-                print('Population output only contains ' +
-                      str(len(df_current)) + ' counties. Is this intended?')
-            filename = 'county_current_population_dim' + str(len(df_current))
-            filename_raw = 'county_population_dim' + str(len(df_current))
+        gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
-        gd.write_dataframe(df_current, directory, filename, file_format)
-        gd.write_dataframe(df, directory, filename_raw, file_format)
-
-        return df_current
-
+    return df_pop_export
 
 def main():
     """! Main program entry."""
