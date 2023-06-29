@@ -106,7 +106,7 @@ public:
      * Initial transitions are used to calculate the initial compartment sizes.
      * @param[in] dt Time discretization step size.         
      */
-    void initialize(ScalarType dt);
+    void initialize_solver(ScalarType dt);
 
     /**
     * @brief Computes number of Susceptibles for the current last time in m_populations.
@@ -179,13 +179,22 @@ public:
                              int idx_TransitionDistribution1, int idx_TransitionDistribution2, ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (compartments apart from S, R, D) for the current last timestep in m_populations.
+     * @brief Sets all values of remaining compartments (compartments apart from S) for the time 0 in m_populations during initialization.
      *
      * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
      * 
      * @param[in] dt Time discretization step size.
      */
-    void other_compartments_current_timestep(ScalarType dt);
+    void other_compartments_current_timestep_initialization(ScalarType dt);
+
+    /**
+     * @brief Sets all values of remaining compartments (compartments apart from S) for the current last timestep in m_populations directly from flows.
+     *
+     * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
+     * 
+     * @param[in] dt Time discretization step size.
+     */
+    void other_compartments_current_timestep_direct();
 
     /**
      * @brief Computes total number of Recovered for the current last time in m_populations.

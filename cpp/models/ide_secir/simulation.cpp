@@ -33,7 +33,7 @@ namespace isecir
 void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    m_model->initialize(m_dt);
+    m_model->initialize_solver(m_dt);
 
     // for every time step:
     while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
@@ -47,15 +47,13 @@ void Simulation::advance(ScalarType tmax)
         // compute flows:
         m_model->flows_current_timestep(m_dt);
 
-        // compute D
+        // compute remaining compartments
         m_model->compute_deaths();
+        m_model->other_compartments_current_timestep_direct();
+        m_model->compute_recovered();
 
         // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):
         m_model->update_forceofinfection(m_dt);
-
-        // compute remaining compartments from flows
-        m_model->other_compartments_current_timestep(m_dt);
-        m_model->compute_recovered();
     }
 }
 
