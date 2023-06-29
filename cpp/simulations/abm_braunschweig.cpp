@@ -191,11 +191,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             number_persons++;
         }
         auto it_location              = locations.find(location_id);
-        mio::abm::LocationId location = it_location->second;
+        mio::abm::LocationId location;
         if (get_location_type(activity) != mio::abm::LocationType::Home) {
             if (it_location == locations.end()) {
                 location = world.add_location(get_location_type(activity), 0);
                 locations.insert({location_id, location});
+            }
+            else{
+                location = it_location->second;
             }
             it_person->second.set_assigned_location(location);
         }
