@@ -171,11 +171,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t home_id     = row[index["huid"]];
         uint32_t activity    = row[index["activity_end"]];
 
-        auto it_home              = locations.find(home_id);
-        mio::abm::LocationId home = it_home->second;
+        mio::abm::LocationId home;
+        auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
             home = world.add_location(mio::abm::LocationType::Home, 0);
             locations.insert({home_id, home});
+        }
+        else {
+            home = it_home->second;
         }
         auto it_person = persons.find(person_id);
         if (it_person == persons.end()) {
@@ -592,7 +595,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../data/mobility/bs.csv");
+    create_world_from_data(world,
+                           "C:/Users/korf_sa/Documents/rep/pycode/memilio-epidata/memilio/epidata/bs_bigger.csv");
 
     // Assign an infection state to each person.
     assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
