@@ -80,9 +80,9 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    inline Eigen::VectorXd get_compartments() const
+    inline Eigen::Matrix<typename Base::Type,Eigen::Dynamic,1> get_compartments() const
     {
-        return this->array().template cast<double>();
+        return this->array().template cast<typename Base::Type>();
     }
 
     /**
