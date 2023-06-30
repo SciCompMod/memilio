@@ -85,7 +85,7 @@ public:
      * @param[in] person_id PersonId of the Person.
      * @return Reference to unique pointer in m_persons.
     */
-    std::unique_ptr<mio::abm::Person>& get_person(uint32_t person_id, uint32_t person_world_id);
+    std::vector<std::unique_ptr<mio::abm::Person>>::iterator get_person(uint32_t person_id, uint32_t person_world_id);
 
 private:
     //persons that will migrate to other worlds

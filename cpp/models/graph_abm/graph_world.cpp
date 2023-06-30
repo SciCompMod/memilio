@@ -61,12 +61,13 @@ void GraphWorld::add_existing_person(std::unique_ptr<mio::abm::Person>&& person)
     Base::m_persons.push_back(std::move(person));
 }
 
-std::unique_ptr<mio::abm::Person>& GraphWorld::get_person(uint32_t person_id, uint32_t person_world_id)
+std::vector<std::unique_ptr<mio::abm::Person>>::iterator GraphWorld::get_person(uint32_t person_id,
+                                                                                uint32_t person_world_id)
 {
-    return *std::find_if(Base::m_persons.begin(), Base::m_persons.end(),
-                         [person_id, person_world_id](const std::unique_ptr<mio::abm::Person>& person) {
-                             return (person_id == person->get_person_id() && person_world_id == person->get_world_id());
-                         });
+    return std::find_if(Base::m_persons.begin(), Base::m_persons.end(),
+                        [person_id, person_world_id](const std::unique_ptr<mio::abm::Person>& person) {
+                            return (person_id == person->get_person_id() && person_world_id == person->get_world_id());
+                        });
 }
 
 void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
@@ -106,7 +107,9 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
             auto& trip            = m_trip_list.get_next_trip();
-            auto& person          = get_person(trip.person_id, trip.person_world_id);
+            auto person_iterator  = get_person(trip.person_id, trip.person_world_id);
+            auto& person          = *person_iterator;
+            auto person_index     = person_iterator - Base::m_persons.begin();
             auto current_location = person->get_location();
             if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
@@ -116,7 +119,8 @@ void GraphWorld::migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt)
                         //person changes world
                         person->migrate_to_other_world(target_location, false);
                         m_persons_to_migrate.push_back(std::move(person));
-                        Base::m_persons.erase(Base::m_persons.begin() + trip.person_id);
+                        //TODO: hier ist das problem
+                        Base::m_persons.erase(Base::m_persons.begin() + person_index);
                     }
                     else {
                         person->migrate_to(target_location);

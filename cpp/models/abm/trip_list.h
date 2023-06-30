@@ -57,9 +57,10 @@ struct Trip {
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
      */
     Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
-         const std::vector<uint32_t>& input_cells = {})
+         const std::vector<uint32_t>& input_cells = {}, uint32_t world_id = 0)
     {
         person_id             = id;
+        person_world_id       = world_id;
         time                  = time_new;
         migration_destination = destination;
         migration_origin      = origin;
