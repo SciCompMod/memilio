@@ -75,6 +75,8 @@ void World::set_infection_state(Person& person, InfectionState inf_state)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    int migrations = 0;
+    int not_migrating = 0;
     for (auto& person : m_persons) {
         for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
@@ -98,9 +100,14 @@ void World::migration(TimePoint t, TimeSpan dt)
                         }
                     }
                 }
+                else{
+                    not_migrating++;
+                }
+                migrations++;
             }
         }
     }
+    printf("%2.3f of %d migrations did not happen\n", (float)not_migrating/(float)migrations, migrations);
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
