@@ -26,6 +26,13 @@
 #include "abm/person.h"
 #include "abm/lockdown_rules.h" // IWYU pragma: keep
 #include "abm/trip_list.h"
+#include "abm/mask_type.h"
+#include "abm/migration_rules.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/stl_util.h"
+#include "abm/infection.h"
+#include "abm/vaccine.h"
+
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
@@ -88,7 +95,14 @@ public:
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void evolve(TimePoint t, TimeSpan dt);
+    void evolve(TimePoint t, TimeSpan dt)
+    {
+        begin_step(t, dt);
+        interaction(t, dt);
+        m_testing_strategy.update_activity_status(t);
+        migration(t, dt);
+        end_step(t, dt);
+    }
 
     /** 
      * @brief Add a Location to the World.
@@ -96,7 +110,12 @@ public:
      * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
      * @return Index and type of the newly created Location.
      */
-    LocationId add_location(LocationType type, uint32_t num_cells = 1);
+    LocationId add_location(LocationType type, uint32_t num_cells = 1)
+    {
+        LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+        m_locations.emplace_back(std::make_unique<Location<FP>>(id, num_cells));
+        return id;
+    }
 
     /** 
      * @brief Add a Person to the World.
@@ -104,7 +123,14 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
      */
-    Person<FP>& add_person(const LocationId id, AgeGroup age);
+    Person<FP>& add_person(const LocationId id, AgeGroup age)
+    {
+        uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+        m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
+        auto& person = *m_persons.back();
+        get_individualized_location(id).add_person(person);
+        return person;
+    }
 
     /**
      * @brief Get a range of all Location%s in the World.
@@ -133,7 +159,7 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
-    Location<FP>& find_location(LocationType type, const Person& person);
+    Location<FP>& find_location(LocationType type, const Person<FP>& person);
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
@@ -189,13 +215,77 @@ private:
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void interaction(TimePoint t, TimeSpan dt);
+    void interaction(TimePoint t, TimeSpan dt)
+    {
+        for (auto&& person : m_persons) {
+            person->interact(t, dt, m_infection_parameters);
+        }
+    }
+
+
     /**
      * @brief Person%s move in the World according to rules.
      * @param[in] t The current TimePoint.
      * @param[in] dt The length of the time step of the Simulation.
      */
-    void migration(TimePoint t, TimeSpan dt);
+    void migration(TimePoint t, TimeSpan dt)
+    {
+        std::vector<std::pair<LocationType (*)(const Person<FP>&, TimePoint,
+                                               TimeSpan, const MigrationParameters<FP>&),
+                              std::vector<LocationType>>>
+            m_enhanced_migration_rules;
+        for (auto rule : m_migration_rules) {
+            //check if transition rule can be applied
+            bool nonempty         = false;
+            const auto& loc_types = rule.second;
+            for (auto loc_type : loc_types) {
+                nonempty = std::find_if(m_locations.begin(), m_locations.end(),
+                                        [loc_type](const std::unique_ptr<Location<FP>>& location) {
+                                            return location->get_type() == loc_type;
+                                        }) != m_locations.end();
+            }
+
+            if (nonempty) {
+                m_enhanced_migration_rules.push_back(rule);
+            }
+        }
+        for (auto& person : m_persons) {
+            for (auto rule : m_enhanced_migration_rules) {
+                //check if transition rule can be applied
+                auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
+                auto& target_location = find_location(target_type, *person);
+                auto current_location = person->get_location();
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
+                        if (wears_mask) {
+                            person->migrate_to(target_location);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        // check if a person makes a trip
+        size_t num_trips = m_trip_list.num_trips();
+        if (num_trips != 0) {
+            while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
+                auto& trip            = m_trip_list.get_next_trip();
+                auto& person          = m_persons[trip.person_id];
+                auto current_location = person->get_location();
+                if (!person->is_in_quarantine() && current_location == get_individualized_location(trip.migration_origin)) {
+                    auto& target_location = get_individualized_location(trip.migration_destination);
+                    if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                        person->apply_mask_intervention(target_location);
+                        person->migrate_to(target_location);
+                    }
+                }
+                m_trip_list.increase_index();
+            }
+        }
+    }
+
 
     std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
     std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.

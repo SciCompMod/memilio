@@ -23,7 +23,7 @@
 #include "abm/location.h"
 #include "abm/random_events.h"
 #include "abm/location.h"
-#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/random_number_generator.h" // IWYU pragma: keep
 #include "abm/location_type.h"
 
 #include <random>
@@ -33,13 +33,15 @@ namespace mio
 namespace abm
 {
 
-LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+template<typename FP>
+LocationType random_migration(const Person<FP>& person, TimePoint t, TimeSpan dt,
+                              const MigrationParameters<FP>& params)
 {
     auto current_loc     = person.get_location().get_type();
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
-    if (t < params.get<LockdownDate>()) {
+    if (t < params.template get<LockdownDate>()) {
         return random_transition(current_loc, dt,
                                  {make_transition(LocationType::Work), make_transition(LocationType::Home),
                                   make_transition(LocationType::School), make_transition(LocationType::SocialEvent),
