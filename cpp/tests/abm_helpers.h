@@ -17,14 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef TEST_ABM_H
-#define TEST_ABM_H
+#ifndef ABM_HELPERS_H
+#define ABM_HELPERS_H
 
 #include "abm/abm.h"
-#include "abm/age.h"
-#include "abm/location_type.h"
-#include "abm/migration_rules.h"
-#include "abm/lockdown_rules.h"
 #include "memilio/math/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
@@ -87,4 +83,21 @@ struct ScopedMockDistribution {
     typename Distribution::GeneratorFunction old;
 };
 
-#endif //TEST_ABM_H
+/**
+ * @brief Create a Person without a World object. Intended for simple use in tests.
+*/
+mio::abm::Person make_test_person(mio::abm::Location& location,
+                                  mio::abm::AgeGroup age_group               = mio::abm::AgeGroup::Age15to34,
+                                  mio::abm::InfectionState infection_state   = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                      = mio::abm::TimePoint(0),
+                                  mio::abm::GlobalInfectionParameters params = {});
+
+/**
+ * @brief Add a Person to the World. Intended for simple use in tests.
+*/
+mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId loc_id,
+                                  mio::abm::AgeGroup age                   = mio::abm::AgeGroup::Age15to34,
+                                  mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
+                                  mio::abm::TimePoint t                    = mio::abm::TimePoint(0));
+
+#endif //ABM_HELPERS_H

@@ -1,8 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn 
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn , David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,6 +24,8 @@
 #include "abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
+#include "abm/infection.h"
+#include "abm/vaccine.h"
 
 namespace mio
 {
@@ -33,19 +34,18 @@ namespace abm
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
-    auto& locations = m_locations[(uint32_t)type];
-    uint32_t index  = static_cast<uint32_t>(locations.size());
-    locations.emplace_back(Location(type, index, num_cells));
-    return {index, type};
+    LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+    m_locations.emplace_back(std::make_unique<Location>(id, num_cells));
+    return id;
 }
 
-Person& World::add_person(LocationId id, InfectionState infection_state, AgeGroup age)
+Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
-                                                 VaccinationState::Unvaccinated, person_id));
+    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
-    get_location(person).add_person(person);
+    person.set_assigned_location(m_cemetery_id);
+    get_individualized_location(id).add_person(person);
     return person;
 }
 
@@ -55,70 +55,68 @@ void World::evolve(TimePoint t, TimeSpan dt)
     interaction(t, dt);
     m_testing_strategy.update_activity_status(t);
     migration(t, dt);
+    end_step(t, dt);
 }
 
-void World::interaction(TimePoint /*t*/, TimeSpan dt)
+void World::interaction(TimePoint t, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
-        auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc);
+        person->interact(t, dt, m_infection_parameters);
     }
-}
-
-void World::set_infection_state(Person& person, InfectionState inf_state)
-{
-    auto& loc      = get_location(person);
-    auto old_state = person.get_infection_state();
-    person.set_infection_state(inf_state);
-    loc.changed_state(person, old_state);
 }
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    int migrations = 0;
-    int not_migrating = 0;
+    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+                          std::vector<LocationType>>>
+        m_enhanced_migration_rules;
+    for (auto rule : m_migration_rules) {
+        //check if transition rule can be applied
+        bool nonempty         = false;
+        const auto& loc_types = rule.second;
+        for (auto loc_type : loc_types) {
+            nonempty = std::find_if(m_locations.begin(), m_locations.end(),
+                                    [loc_type](const std::unique_ptr<Location>& location) {
+                                        return location->get_type() == loc_type;
+                                    }) != m_locations.end();
+        }
+
+        if (nonempty) {
+            m_enhanced_migration_rules.push_back(rule);
+        }
+    }
     for (auto& person : m_persons) {
-        for (auto rule : m_migration_rules) {
+        for (auto rule : m_enhanced_migration_rules) {
             //check if transition rule can be applied
-            const auto& locs = rule.second;
-            bool nonempty    = !locs.empty();
-            nonempty         = std::all_of(locs.begin(), locs.end(), [this](LocationType type) {
-                return !m_locations[(uint32_t)type].empty();
-            });
-            if (nonempty) {
-                auto target_type = rule.first(*person, t, dt, m_migration_parameters);
-                if (person->get_assigned_location_index(target_type) != INVALID_LOCATION_INDEX) {
-                    Location* target = find_location(target_type, *person);
-                    if (m_testing_strategy.run_strategy(*person, *target)) {
-                        if (target != &get_location(*person) &&
-                            target->get_total_population_size() < target->get_capacity().persons) {
-                            bool wears_mask = person->apply_mask_intervention(*target);
-                            if (wears_mask) {
-                                person->migrate_to(get_location(*person), *target);
-                            }
-                            break;
-                        }
+            auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
+            auto& target_location = find_location(target_type, *person);
+            auto current_location = person->get_location();
+            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                if (target_location != current_location &&
+                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+                    bool wears_mask = person->apply_mask_intervention(target_location);
+                    if (wears_mask) {
+                        person->migrate_to(target_location);
                     }
+                    break;
                 }
-                else{
-                    not_migrating++;
-                }
-                migrations++;
             }
         }
     }
-    printf("%2.3f of %d migrations did not happen\n", (float)not_migrating/(float)migrations, migrations);
+    printf("%2.3f of %d migrations did not happen\n", (float)not_migrating / (float)migrations, migrations);
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip   = m_trip_list.get_next_trip();
-            auto& person = m_persons[trip.person_id];
-            if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
-                Location& target = get_individualized_location(trip.migration_destination);
-                if (m_testing_strategy.run_strategy(*person, target)) {
-                    person->apply_mask_intervention(target);
-                    person->migrate_to(get_location(*person), target);
+            auto& trip            = m_trip_list.get_next_trip();
+            auto& person          = m_persons[trip.person_id];
+            auto current_location = person->get_location();
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
+                current_location == get_individualized_location(trip.migration_origin)) {
+                auto& target_location = get_individualized_location(trip.migration_destination);
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    person->apply_mask_intervention(target_location);
+                    person->migrate_to(target_location);
                 }
             }
             m_trip_list.increase_index();
@@ -128,18 +126,21 @@ void World::migration(TimePoint t, TimeSpan dt)
 
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
-    for (auto&& locations : m_locations) {
-        for (auto& location : locations) {
-            location.begin_step(dt, m_infection_parameters);
-            location.add_subpopulations_timepoint(t + dt);
-        }
+    for (auto& location : m_locations) {
+        location->cache_exposure_rates(t, dt);
     }
 }
 
-auto World::get_locations() const -> Range<
-    std::pair<std::vector<std::vector<Location>>::const_iterator, std::vector<std::vector<Location>>::const_iterator>>
+void World::end_step(TimePoint t, TimeSpan dt)
 {
-    return std::make_pair(m_locations.begin(), m_locations.end());
+    for (auto& location : m_locations) {
+        location->store_subpopulations(t + dt);
+    }
+}
+
+auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
+{
+    return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
 }
 
 auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
@@ -149,37 +150,28 @@ auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPer
 
 const Location& World::get_individualized_location(LocationId id) const
 {
-    return m_locations[(uint32_t)id.type][id.index];
+    return *m_locations[id.index];
 }
 
 Location& World::get_individualized_location(LocationId id)
 {
-    return m_locations[(uint32_t)id.type][id.index];
+    return *m_locations[id.index];
 }
 
-const Location& World::get_location(const Person& person) const
-{
-    return get_individualized_location(person.get_location_id());
-}
-
-Location* World::find_location(LocationType type, const Person& person)
+Location& World::find_location(LocationType type, const Person& person)
 {
     auto index = person.get_assigned_location_index(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return &get_individualized_location({index, type});
+    return get_individualized_location({index, type});
 }
 
-Location& World::get_location(const Person& person)
+size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
 {
-    return get_individualized_location(person.get_location_id());
-}
-
-int World::get_subpopulation_combined(InfectionState s, LocationType type) const
-{
-    auto& locs = m_locations[(uint32_t)type];
-    return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc) {
-        return running_sum + loc.get_subpopulation(s);
-    });
+    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
+                           [t, s, type](size_t running_sum, const std::unique_ptr<Location>& loc) {
+                               return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
+                                                              : running_sum;
+                           });
 }
 
 MigrationParameters& World::get_migration_parameters()
@@ -219,6 +211,7 @@ void World::use_migration_rules(bool param)
     // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     if (m_use_migration_rules) {
         m_migration_rules = {
+            std::make_pair(&get_buried, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,
@@ -233,6 +226,7 @@ void World::use_migration_rules(bool param)
     }
     else {
         m_migration_rules = {
+            std::make_pair(&get_buried, std::vector<LocationType>{LocationType::ICU, LocationType::Cemetery}),
             std::make_pair(&return_home_when_recovered,
                            std::vector<LocationType>{
                                LocationType::Home,

@@ -24,9 +24,11 @@
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/utils/date.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/random_number_generator.h"
 #include "ode_secirvvs/parameters_io.h"
 #include "ode_secirvvs/parameter_space.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/stl_util.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
@@ -569,7 +571,7 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
         tnt_capacity_factor, mio::get_offset_in_days(end_date, start_date), false));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, migrating_compartments, contact_locations.size(),
-                                        read_function_edges));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
 
     return mio::success(params_graph);
 }
@@ -630,35 +632,42 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //run parameter study
     auto parameter_study =
         mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
-    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-    ensemble_results.reserve(size_t(num_runs));
-    auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
-    ensemble_params.reserve(size_t(num_runs));
-    auto save_result_result = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
-    parameter_study.run(
+    auto save_single_run_result = mio::IOResult<void>(mio::success());
+    auto ensemble = parameter_study.run(
         [&](auto&& graph) {
             return draw_sample(graph, high);
         },
-        [&](auto results_graph) {
-            ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
-
-            ensemble_params.emplace_back();
-            ensemble_params.back().reserve(results_graph.nodes().size());
+        [&](auto results_graph, auto&& run_idx) {
+            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+            auto params = std::vector<mio::osecirvvs::Model>();
+            params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                           std::back_inserter(params), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
-            if (save_result_result && save_single_runs) {
-                save_result_result = save_result_with_params(ensemble_results.back(), ensemble_params.back(),
-                                                             county_ids, result_dir, run_idx);
+            if (save_single_run_result && save_single_runs) {
+                save_single_run_result =
+                    save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
             }
             std::cout << "run " << run_idx << " complete." << std::endl;
-            ++run_idx;
+            return std::make_pair(interpolated_result, params);
         });
-    BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+
+    if (ensemble.size() > 0){
+        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_results.reserve(ensemble.size());
+        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
+        ensemble_params.reserve(ensemble.size());
+        for (auto&& run: ensemble)
+        {
+            ensemble_results.emplace_back(std::move(run.first));
+            ensemble_params.emplace_back(std::move(run.second));
+        }
+
+        BOOST_OUTCOME_TRY(save_single_run_result);
+        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs));
+    }
 
     return mio::success();
 }
@@ -673,6 +682,7 @@ int main(int argc, char** argv)
     //- ...
 
     mio::set_log_level(mio::LogLevel::warn);
+    mio::mpi::init();
 
     bool late      = false;
     bool masks     = true;
@@ -726,18 +736,22 @@ int main(int argc, char** argv)
         else {
             future = false;
         }
-        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
-               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        if (mio::mpi::is_root()) {
+            printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+                   (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
     }
     else if (argc == 4) {
         mode       = RunMode::Load;
         save_dir   = argv[1];
         result_dir = argv[2];
         data_dir   = "";
-        printf("Loading graph from \"%s\".\n", save_dir.c_str());
-        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        if (mio::mpi::is_root()) {
+            printf("Loading graph from \"%s\".\n", save_dir.c_str());
+            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
     }
     else if (argc == 5) {
         mode       = RunMode::Save;
@@ -747,19 +761,24 @@ int main(int argc, char** argv)
         if (atoi(argv[4]) == 0) {
             save_single_runs = false;
         }
-        printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
-               (int)masks, (int)late, (int)high, (int)long_time, (int)future);
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-        printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        if (mio::mpi::is_root()) {
+            printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+                   (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+        }
     }
     else {
-        printf("Usage:\n");
-        printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
-        printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
-        printf("\tStore the results in <result_dir>\n");
-        printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
-        printf("2021_vaccination_delta <load_dir> <result_dir>\n");
-        printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        if (mio::mpi::is_root()) {
+            printf("Usage:\n");
+            printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
+            printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
+            printf("\tStore the results in <result_dir>\n");
+            printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
+            printf("2021_vaccination_delta <load_dir> <result_dir>\n");
+            printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        }
+        mio::mpi::finalize();
         return 0;
     }
 
@@ -781,27 +800,34 @@ int main(int argc, char** argv)
     if (test) {
         result_dir += "_test";
     }
-    boost::filesystem::path dir(result_dir);
-    bool created = boost::filesystem::create_directories(dir);
+    if (mio::mpi::is_root()) {
+        boost::filesystem::path dir(result_dir);
+        bool created = boost::filesystem::create_directories(dir);
 
-    if (created) {
-        mio::log_info("Directory '{:s}' was created.", dir.string());
+        if (created) {
+            mio::log_info("Directory '{:s}' was created.", dir.string());
+        }
+        printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
-    printf("Saving results to \"%s\".\n", result_dir.c_str());
 
     //mio::thread_local_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    printf("Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
+    mio::thread_local_rng().synchronize_seeds();
+    if (mio::mpi::is_root()) {
+        printf("Seeds: ");
+        for (auto s : mio::thread_local_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
     }
-    printf("\n");
 
     auto result =
         run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
+        mio::mpi::finalize();
         return -1;
     }
+    mio::mpi::finalize();
     return 0;
 }
