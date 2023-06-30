@@ -296,7 +296,7 @@ def analyze_npi_data(
         # compute correlations
         npis_corr = df_npis_used.iloc[:, 2:].corr().values
         # plot log-colored correlations
-        plt.imshow(abs(npis_corr), cmap='flag')
+        plt.imshow(abs(npis_corr), cmap='gray_r')
         # plot histogram
         plt.figure()
         plt.hist(npis_corr.flatten(), bins=50)
