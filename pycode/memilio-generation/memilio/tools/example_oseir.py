@@ -23,15 +23,15 @@ Example for the ode seir model.
 import argparse
 import os
 
-import importlib_resources
+import importlib.resources 
 
 from memilio.generation import Generator, Scanner, ScannerConfig
 
 
 def run_memilio_generation(print_ast=False):
     # Define ScannerConfig and initialize Scanner
-    pkg = importlib_resources.files("memilio.generation")
-    with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
+    pkg = importlib.resources.files("memilio.generation")
+    with importlib.resources.as_file(pkg.joinpath('../tools/config.json')) as path:
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
     scanner = Scanner(conf)

@@ -25,7 +25,7 @@ import os
 import subprocess
 from typing import Any, List, TextIO
 
-import importlib_resources
+import importlib.resources
 from clang.cindex import Config, Cursor, Type
 
 
@@ -65,11 +65,11 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
     @param skbuild_path_to_database Value from config.json
     @return Path of directory
     """
-    pkg = importlib_resources.files("memilio.generation")
+    pkg = importlib.resources.files("memilio.generation")
     filename = skbuild_path_to_database.split('_skbuild')
     dirname = ""
     if (len(filename) > 1):
-        with importlib_resources.as_file(
+        with importlib.resources.as_file(
                 pkg.joinpath("../../_skbuild" + filename[-1] +
                              "/compile_commands.json")) as path:
             dirname, _ = os.path.split(path)

@@ -27,7 +27,7 @@ setup(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
     install_requires=['libclang==14.0.6',
-                      'dataclasses', 'dataclasses_json', 'importlib-resources>=1.1.0; python_version < \'3.9\''],
+                      'dataclasses', 'dataclasses_json'],
     extras_require={'dev': []},
     long_description='',
     test_suite='memilio.generation_test',

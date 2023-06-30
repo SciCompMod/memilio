@@ -22,9 +22,7 @@
 @brief Dataclass to represent the needed information of a model. Interface between the scanner and generator.
 """
 from dataclasses import dataclass, field
-from typing import Any, Dict, Union
-
-from typing_extensions import Self
+from typing import Any, Dict, Union, Self
 
 
 @dataclass

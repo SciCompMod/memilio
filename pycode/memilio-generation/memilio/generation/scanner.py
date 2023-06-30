@@ -27,11 +27,10 @@ import os
 import subprocess
 import sys
 import tempfile
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Self
 from warnings import catch_warnings
 
 from clang.cindex import *
-from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
 
@@ -77,7 +76,7 @@ class Scanner:
                     file_args.append(argument)
         file_args = file_args[1:-4]
         clang_cmd = [
-            "clang", self.config.source_file,
+            "clang-14", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
