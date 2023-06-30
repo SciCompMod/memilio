@@ -24,7 +24,7 @@
 #include "abm/parameters.h"
 #include "abm/location.h"
 #include "abm/person.h"
-#include "abm/lockdown_rules.h"
+#include "abm/lockdown_rules.h" // IWYU pragma: keep
 #include "abm/trip_list.h"
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
@@ -42,19 +42,20 @@ namespace abm
  * @brief The World of the Simulation.
  * It consists of Location%s and Person%s (Agents).
  */
+template<typename FP=double>
 class World
 {
 public:
-    using LocationIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::iterator>;
-    using ConstLocationIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Location>>::const_iterator>;
-    using PersonIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
-    using ConstPersonIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
+    using LocationIterator      = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::iterator>;
+    using ConstLocationIterator = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Location<FP>>>::const_iterator>;
+    using PersonIterator        = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::iterator>;
+    using ConstPersonIterator   = PointerDereferencingIterator<typename std::vector<std::unique_ptr<Person<FP>>>::const_iterator>;
 
     /**
      * @brief Create a World.
      * @param[in] params Parameters of the Infection that are the same everywhere in the World.
      */
-    World(const GlobalInfectionParameters& params = {})
+    World(const GlobalInfectionParameters<FP>& params = {})
         : m_infection_parameters(params)
         , m_migration_parameters()
         , m_trip_list()
@@ -103,7 +104,7 @@ public:
      * @param[in] age AgeGroup of the person.
      * @return Reference to the newly created Person.
      */
-    Person& add_person(const LocationId id, AgeGroup age);
+    Person<FP>& add_person(const LocationId id, AgeGroup age);
 
     /**
      * @brief Get a range of all Location%s in the World.
@@ -122,9 +123,9 @@ public:
      * @param[in] id LocationId of the Location.
      * @return Reference to the Location.
      */
-    const Location& get_individualized_location(LocationId id) const;
+    const Location<FP>& get_individualized_location(LocationId id) const;
 
-    Location& get_individualized_location(LocationId id);
+    Location<FP>& get_individualized_location(LocationId id);
 
     /**
      * @brief Find an assigned Location of a Person.
@@ -132,7 +133,7 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
-    Location& find_location(LocationType type, const Person& person);
+    Location<FP>& find_location(LocationType type, const Person& person);
 
     /** 
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
@@ -145,17 +146,17 @@ public:
      * @brief Get the MigrationParameters.
      * @return Reference to the MigrationParameters.
      */
-    MigrationParameters& get_migration_parameters();
+    MigrationParameters<FP>& get_migration_parameters();
 
-    const MigrationParameters& get_migration_parameters() const;
+    const MigrationParameters<FP>& get_migration_parameters() const;
 
     /** 
      * @brief Get the GlobalInfectionParameters.
      * @return Reference to the GlobalInfectionParameters.
      */
-    GlobalInfectionParameters& get_global_infection_parameters();
+    GlobalInfectionParameters<FP>& get_global_infection_parameters();
 
-    const GlobalInfectionParameters& get_global_infection_parameters() const;
+    const GlobalInfectionParameters<FP>& get_global_infection_parameters() const;
 
     /**
      * @brief Get the migration data.
@@ -178,9 +179,9 @@ public:
      * @brief Get the TestingStrategy.
      * @return Reference to the list of TestingScheme%s that are checked for testing.
      */
-    TestingStrategy& get_testing_strategy();
+    TestingStrategy<FP>& get_testing_strategy();
 
-    const TestingStrategy& get_testing_strategy() const;
+    const TestingStrategy<FP>& get_testing_strategy() const;
 
 private:
     /**
@@ -196,15 +197,16 @@ private:
      */
     void migration(TimePoint t, TimeSpan dt);
 
-    std::vector<std::unique_ptr<Person>> m_persons; ///< Vector with pointers to every Person.
-    std::vector<std::unique_ptr<Location>> m_locations; ///< Vector with pointers to every Location.
-    TestingStrategy m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
-    GlobalInfectionParameters m_infection_parameters; /** Parameters of the Infection that are the same everywhere in
+    std::vector<std::unique_ptr<Person<FP>>> m_persons; ///< Vector with pointers to every Person.
+    std::vector<std::unique_ptr<Location<FP>>> m_locations; ///< Vector with pointers to every Location.
+    TestingStrategy<FP> m_testing_strategy; ///< List of TestingScheme%s that are checked for testing.
+    GlobalInfectionParameters<FP> m_infection_parameters; /** Parameters of the Infection that are the same everywhere in
     the World.*/
-    MigrationParameters m_migration_parameters; ///< Parameters that describe the migration between Location%s.
+    MigrationParameters<FP> m_migration_parameters; ///< Parameters that describe the migration between Location%s.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(const Person<FP>&, TimePoint, TimeSpan,
+                                           const MigrationParameters<FP>&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
 };
