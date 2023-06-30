@@ -589,7 +589,7 @@ def run_abm_simulation():
 
     # print compartment values
     # only used for validation purposes
-    print("t S E C I I_s I_c R_C R_I D")
+    print("t S E C I I_s I_c R D")
     for t in range(sim.result.get_num_time_points()):
         line = str(sim.result.get_time(t)) + " "
         comps = sim.result.get_value(t)
