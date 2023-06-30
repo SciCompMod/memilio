@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.11
     - uses: pre-commit/action@v3.0.0
 
   build-py-epidata:
@@ -104,10 +104,10 @@ jobs:
         with:
           name: python-wheels-epidata
           path: pycode/wheelhouse
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: Install Python Wheels
         run: |
           for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific

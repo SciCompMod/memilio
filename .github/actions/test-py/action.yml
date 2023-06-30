@@ -38,10 +38,10 @@ runs:
       with:
         name: python-wheels-simulation
         path: pycode/wheelhouse
-    - name: Set up Python 3.8
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.11
     - name: Install Python Wheels
       shell: bash
       run: |
