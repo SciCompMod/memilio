@@ -39,17 +39,19 @@ namespace mio
  * The uncertainty is represented by a distribution object of kind
  * ParameterDistribution and the current scalar value can be 
  * replaced by drawing a new sample from the the distribution
+ * @tparam FP underlying floating point type, e.g., double
  */
+template<typename FP=double>
 class UncertainValue
 {
 public:
-    UncertainValue(ScalarType v, const ParameterDistribution& dist)
+    UncertainValue(FP v, const ParameterDistribution& dist)
         : m_value(v)
         , m_dist(dist.clone())
     {
     }
 
-    UncertainValue(ScalarType v = 0.)
+    UncertainValue(FP v = 0.)
         : m_value(v)
     {
     }
@@ -83,7 +85,7 @@ public:
     /**
      * @brief Conversion to scalar by returning the scalar contained in UncertainValue
      */
-    ScalarType value() const
+    FP value() const
     {
         return m_value;
     }
@@ -91,11 +93,11 @@ public:
     /**
      * @brief Conversion to scalar reference by returning the scalar contained in UncertainValue
      */
-    operator ScalarType&()
+    operator FP&()
     {
         return m_value;
     }
-    operator const ScalarType&() const
+    operator const FP&() const
     {
         return m_value;
     }
@@ -103,7 +105,7 @@ public:
     /**
      * @brief Set an UncertainValue from a scalar, distribution remains unchanged.
      */
-    UncertainValue& operator=(ScalarType v)
+    UncertainValue& operator=(FP v)
     {
         m_value = v;
         return *this;
@@ -115,21 +117,32 @@ public:
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_distribution(const ParameterDistribution& dist);
+    void set_distribution(const ParameterDistribution& dist)
+    {
+        m_dist.reset(dist.clone());
+    }
+
+
 
     /**
      * @brief Returns the parameter distribution.
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<const ParameterDistribution> get_distribution() const;
+    observer_ptr<const ParameterDistribution> get_distribution() const
+    {
+        return m_dist.get();
+    }
 
     /**
      * @brief Returns the parameter distribution.
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution();
+    observer_ptr<ParameterDistribution> get_distribution()
+    {
+        return m_dist.get();
+    }
 
     /**
      * @brief Sets the value by sampling from the distribution
@@ -137,7 +150,14 @@ public:
      *
      * If no distribution is set, the value is not changed.
      */
-    ScalarType draw_sample();
+    FP draw_sample()
+    {
+        if (m_dist) {
+            m_value = m_dist->get_sample();
+        }
+
+        return m_value;
+    }
 
     /**
      * serialize this. 
@@ -164,7 +184,7 @@ public:
     {
         auto obj = io.expect_object("UncertainValue");
         if (!(io.flags() & IOF_OmitValues) && !(io.flags() & IOF_OmitDistributions)) {
-            auto v = obj.expect_element("Value", Tag<ScalarType>{});
+            auto v = obj.expect_element("Value", Tag<FP>{});
             auto d = obj.expect_optional("Distribution", Tag<std::shared_ptr<ParameterDistribution>>{});
             return apply(
                 io,
@@ -178,7 +198,7 @@ public:
                 v, d);
         }
         else if (!(io.flags() & IOF_OmitValues) && (io.flags() & IOF_OmitDistributions)) {
-            auto v = obj.expect_element("Value", Tag<ScalarType>{});
+            auto v = obj.expect_element("Value", Tag<FP>{});
             return apply(
                 io,
                 [](auto&& v_) {
@@ -206,13 +226,14 @@ public:
     }
 
 private:
-    ScalarType m_value;
+    FP m_value;
     std::unique_ptr<ParameterDistribution> m_dist;
 };
 
 //gtest printer
 //TODO: should be extended when UncertainValue gets operator== that compares distributions as well
-inline void PrintTo(const UncertainValue& uv, std::ostream* os)
+template<typename FP=double>
+inline void PrintTo(const UncertainValue<FP>& uv, std::ostream* os)
 {
     (*os) << uv.value();
 }

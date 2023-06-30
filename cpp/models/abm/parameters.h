@@ -41,8 +41,9 @@ namespace abm
 /**
  * @brief Time that a Person is infected but not yet infectious.
  */
+template<typename FP=double>
 struct IncubationPeriod {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -53,8 +54,9 @@ struct IncubationPeriod {
     }
 };
 
+template<typename FP=double>
 struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -65,8 +67,9 @@ struct SusceptibleToExposedByInfectedNoSymptoms {
     }
 };
 
+template<typename FP=double>
 struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -77,8 +80,9 @@ struct SusceptibleToExposedByInfectedSymptoms {
     }
 };
 
+template<typename FP=double>
 struct InfectedNoSymptomsToSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -89,8 +93,9 @@ struct InfectedNoSymptomsToSymptoms {
     }
 };
 
+template<typename FP=double>
 struct InfectedNoSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -101,8 +106,9 @@ struct InfectedNoSymptomsToRecovered {
     }
 };
 
+template<typename FP=double>
 struct InfectedSymptomsToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -113,8 +119,9 @@ struct InfectedSymptomsToRecovered {
     }
 };
 
+template<typename FP=double>
 struct InfectedSymptomsToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -125,8 +132,9 @@ struct InfectedSymptomsToSevere {
     }
 };
 
+template<typename FP=double>
 struct SevereToCritical {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -137,8 +145,9 @@ struct SevereToCritical {
     }
 };
 
+template<typename FP=double>
 struct SevereToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -149,8 +158,9 @@ struct SevereToRecovered {
     }
 };
 
+template<typename FP=double>
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -161,8 +171,9 @@ struct CriticalToRecovered {
     }
 };
 
+template<typename FP=double>
 struct CriticalToDead {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
@@ -173,8 +184,9 @@ struct CriticalToDead {
     }
 };
 
+template<typename FP=double>
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.);
@@ -227,8 +239,9 @@ struct InfectivityDistributions {
 /**
  * @brief Probability that an Infection is detected.
  */
+template<typename FP=double>
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue<FP>, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
         return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.5);
@@ -242,8 +255,9 @@ struct DetectInfection {
 /**
  * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
  */
+template<typename FP=double>
 struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue, MaskType>;
+    using Type = CustomIndexArray<UncertainValue<FP>, MaskType>;
     static auto get_default()
     {
         return Type({MaskType::Count}, 1.);
@@ -257,12 +271,14 @@ struct MaskProtection {
 /**
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
+template<typename FP=double>
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
-                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
-                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection>;
+    ParameterSet<IncubationPeriod<FP>, SusceptibleToExposedByInfectedNoSymptoms<FP>,
+                 SusceptibleToExposedByInfectedSymptoms<FP>,
+                 InfectedNoSymptomsToSymptoms<FP>, InfectedNoSymptomsToRecovered<FP>, InfectedSymptomsToRecovered<FP>,
+                 InfectedSymptomsToSevere<FP>, SevereToCritical<FP>, SevereToRecovered<FP>, CriticalToDead<FP>, CriticalToRecovered<FP>,
+                 RecoveredToSusceptible<FP>, ViralLoadDistributions, InfectivityDistributions, DetectInfection<FP>,
+                 MaskProtection<FP>>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -318,13 +334,15 @@ using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, Aer
 /**
  * @brief Parameters that describe the reliability of a test.
  */
+template<typename FP=double>
 struct TestParameters {
-    UncertainValue sensitivity;
-    UncertainValue specificity;
+    UncertainValue<FP> sensitivity;
+    UncertainValue<FP> specificity;
 };
 
+template<typename FP=double>
 struct GenericTest {
-    using Type = TestParameters;
+    using Type = TestParameters<FP>;
     static Type get_default()
     {
         return Type{0.9, 0.99};
@@ -338,8 +356,9 @@ struct GenericTest {
 /**
  * @brief Reliability of an AntigenTest.
  */
-struct AntigenTest : public GenericTest {
-    using Type = TestParameters;
+template<typename FP=double>
+struct AntigenTest : public GenericTest<FP> {
+    using Type = TestParameters<FP>;
     static Type get_default()
     {
         return Type{0.8, 0.88};
@@ -353,8 +372,9 @@ struct AntigenTest : public GenericTest {
 /**
  * @brief Reliability of a PCRTest.
  */
-struct PCRTest : public GenericTest {
-    using Type = TestParameters;
+template<typename FP=double>
+struct PCRTest : public GenericTest<FP> {
+    using Type = TestParameters<FP>;
     static Type get_default()
     {
         return Type{0.9, 0.99};
@@ -383,8 +403,9 @@ struct LockdownDate {
 /**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
+template<typename FP=double>
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static auto get_default()
     {
         return Type({AgeGroup::Count}, 1.0);
@@ -503,8 +524,9 @@ struct GotoSchoolTimeMaximum {
 /**
  * @brief Parameters that control the migration between Location%s.
  */
+template<typename FP=double>
 using MigrationParameters =
-    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate<FP>, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
                  GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
 } // namespace abm

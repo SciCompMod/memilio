@@ -21,7 +21,7 @@
 #ifndef IDE_SEIR_PARAMS_H
 #define IDE_SEIR_PARAMS_H
 
-#include "memilio/math/eigen.h"
+#include "memilio/math/eigen.h" // IWYU pragma: keep
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/parameter_set.h"
 
@@ -82,8 +82,9 @@ namespace iseir
     * We use the type UncertainContactMatrix, because of the Randomness in this variable.
     * Via this parameter, dampings can be included to simulate non-pharmaceutical interventions.
     */
+    template<typename FP=double>
     struct ContactFrequency {
-        using Type = UncertainContactMatrix;
+        using Type = UncertainContactMatrix<FP>;
         static Type get_default()
         {
             ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, 1);
@@ -93,7 +94,8 @@ namespace iseir
     };
 
     // Define Parameterset for IDE SEIR model.
-    using ParametersBase = ParameterSet<TransmissionRisk, LatencyTime, InfectiousTime, ContactFrequency>;
+    template<typename FP=double>
+    using ParametersBase = ParameterSet<TransmissionRisk, LatencyTime, InfectiousTime, ContactFrequency<FP>>;
 
 } // namespace iseir
 } // namespace mio

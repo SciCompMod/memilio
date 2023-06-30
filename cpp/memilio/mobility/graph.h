@@ -260,7 +260,7 @@ private:
  * @param[in] export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class TestAndTrace, class ContactPattern, class Model, class MigrationParams, class Parameters,
-          class ReadFunction, class NodeIdFunction>
+          class ReadFunction, class NodeIdFunction, typename FP=double>
 IOResult<void>
 set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
           const std::string& population_data_path, bool is_node_for_county, Graph<Model, MigrationParams>& params_graph,
@@ -282,7 +282,7 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
 
         //local parameters
         auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
-        tnt_value       = UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value       = UncertainValue<FP>(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
         auto id = 0;
@@ -308,7 +308,7 @@ set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::pa
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
                 compartment_value =
-                    UncertainValue(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                    UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
                                                                                      1.1 * double(compartment_value)));
             }

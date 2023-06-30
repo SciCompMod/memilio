@@ -72,8 +72,8 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
  * @param directory directory where files should be stored
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  */
-template <class Model>
-IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory,
+template <class Model, typename FP=double>
+IOResult<void> write_graph(const Graph<Model, MigrationParameters<FP>>& graph, const std::string& directory,
                            int ioflags = IOF_None)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
@@ -132,8 +132,8 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
  * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  * @param read_edges boolean value that decides whether the edges of the graph should also be read in.
  */
-template <class Model>
-IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& directory, int ioflags = IOF_None, bool read_edges = true)
+template <class Model, typename FP=double>
+IOResult<Graph<Model, MigrationParameters<FP>>> read_graph(const std::string& directory, int ioflags = IOF_None, bool read_edges = true)
 {
     std::string abs_path;
     if (!file_exists(directory, abs_path)) {
@@ -141,7 +141,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
         return failure(StatusCode::FileNotFound, directory);
     }
 
-    auto graph = Graph<Model, MigrationParameters>{};
+    auto graph = Graph<Model, MigrationParameters<FP>>{};
 
     //read nodes, as many as files are available
     for (auto inode = 0;; ++inode) {
@@ -179,7 +179,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
                     return failure(StatusCode::OutOfRange,
                                 edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
                 }
-                BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
+                BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters<FP>>{}, ioflags));
                 graph.add_edge(start_node_idx, end_node_idx, parameters);
             }
         }

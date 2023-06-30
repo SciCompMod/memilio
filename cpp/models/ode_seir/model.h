@@ -22,7 +22,7 @@
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
@@ -34,14 +34,14 @@ namespace oseir
 /********************
     * define the model *
     ********************/
-
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+template<typename FP=double>
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters<FP>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>>;
 
 public:
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(Populations<FP>({InfectionState::Count}, 0.), ParameterSet<FP>())
     {
     }
 
@@ -49,19 +49,19 @@ public:
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
         auto& params     = this->parameters;
-        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                           params.template get<TransmissionProbabilityOnContact>() / this->populations.get_total();
 
         dydt[(size_t)InfectionState::Susceptible] =
             -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Exposed] =
             coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+            (1.0 / params.template get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
         dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
+            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 };
 

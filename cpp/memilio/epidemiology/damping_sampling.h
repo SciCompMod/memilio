@@ -34,6 +34,7 @@ namespace mio
  * The damping value is weighted by group (e.g. age) to be able to e.g. construct dampings that only
  * apply to specific groups.
  */
+template<typename FP=double>
 class DampingSampling
 {
 public:
@@ -47,7 +48,7 @@ public:
      * @param groups weights of age groups.
      */
     template <class V>
-    DampingSampling(const UncertainValue& value, DampingLevel level, DampingType type, SimulationTime time,
+    DampingSampling(const UncertainValue<FP>& value, DampingLevel level, DampingType type, SimulationTime time,
                     const std::vector<size_t> matrices, const Eigen::MatrixBase<V>& groups)
         : m_value(value)
         , m_level(level)
@@ -63,11 +64,11 @@ public:
      * @return the random value.
      * @{
      */
-    const UncertainValue& get_value() const
+    const UncertainValue<FP>& get_value() const
     {
         return m_value;
     }
-    UncertainValue& get_value()
+    UncertainValue<FP>& get_value()
     {
         return m_value;
     }
@@ -77,7 +78,7 @@ public:
      * Set the random value.
      * @param v random value.
      */
-    void set_value(const UncertainValue& v)
+    void set_value(const UncertainValue<FP>& v)
     {
         m_value = v;
     }
@@ -225,7 +226,7 @@ public:
         auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
         auto ty  = obj.expect_element("Type", Tag<DampingType>{});
         auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
-        auto v   = obj.expect_element("Value", Tag<UncertainValue>{});
+        auto v   = obj.expect_element("Value", Tag<UncertainValue<FP>>{});
         auto m   = obj.expect_list("MatrixIndices", Tag<size_t>{});
         auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorXd>{});
         return apply(
@@ -237,7 +238,7 @@ public:
     }
 
 private:
-    UncertainValue m_value;
+    UncertainValue<FP> m_value;
     DampingLevel m_level;
     DampingType m_type;
     SimulationTime m_time;

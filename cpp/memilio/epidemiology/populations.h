@@ -50,14 +50,14 @@ namespace mio
  *
  */
 
-template <class... Categories>
-class Populations : public CustomIndexArray<UncertainValue, Categories...>
+template <typename FP=double, class... Categories>
+class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
-    using Base  = CustomIndexArray<UncertainValue, Categories...>;
+    using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
     using Index = typename Base::Index;
 
-    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
+    template <class... Ts, typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
