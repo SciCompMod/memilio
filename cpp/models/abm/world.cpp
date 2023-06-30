@@ -67,6 +67,8 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    int migrations    = 0;
+    int not_migrating = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_enhanced_migration_rules;
@@ -88,19 +90,25 @@ void World::migration(TimePoint t, TimeSpan dt)
     for (auto& person : m_persons) {
         for (auto rule : m_enhanced_migration_rules) {
             //check if transition rule can be applied
-            auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
-            auto& target_location = find_location(target_type, *person);
-            auto current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
+            auto target_type = rule.first(*person, t, dt, m_migration_parameters);
+            if (person->get_assigned_location_index(target_type) != INVALID_LOCATION_INDEX) {
+                auto& target_location = find_location(target_type, *person);
+                auto current_location = person->get_location();
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
+                        if (wears_mask) {
+                            person->migrate_to(target_location);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
+            else {
+                not_migrating++;
+            }
+            migrations++;
         }
     }
     printf("%2.3f of %d migrations did not happen\n", (float)not_migrating / (float)migrations, migrations);
