@@ -34,39 +34,12 @@ namespace abm
 {
 
 
-void World::begin_step(TimePoint t, TimeSpan dt)
-{
-    for (auto& location : m_locations) {
-        location->cache_exposure_rates(t, dt);
-    }
-}
 
-void World::end_step(TimePoint t, TimeSpan dt)
-{
-    for (auto& location : m_locations) {
-        location->store_subpopulations(t + dt);
-    }
-}
 
-auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
-{
-    return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
-}
 
-auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
-{
-    return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
-}
 
-const Location& World::get_individualized_location(LocationId id) const
-{
-    return *m_locations[id.index];
-}
 
-Location& World::get_individualized_location(LocationId id)
-{
-    return *m_locations[id.index];
-}
+
 
 Location& World::find_location(LocationType type, const Person& person)
 {

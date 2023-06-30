@@ -81,14 +81,24 @@ public:
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void begin_step(TimePoint t, TimeSpan dt);
+    void begin_step(TimePoint t, TimeSpan dt)
+    {
+        for (auto& location : m_locations) {
+            location->cache_exposure_rates(t, dt);
+        }
+    }
 
     /** 
      * @brief Follow up on the World after the Simulation step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
-    void end_step(TimePoint t, TimeSpan dt);
+    void end_step(TimePoint t, TimeSpan dt)
+    {
+        for (auto& location : m_locations) {
+            location->store_subpopulations(t + dt);
+        }
+    }
 
     /** 
      * @brief Evolve the world one time step.
@@ -136,22 +146,35 @@ public:
      * @brief Get a range of all Location%s in the World.
      * @return A range of all Location%s.
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
+    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const
+    {
+        return std::make_pair(ConstLocationIterator(m_locations.begin()), ConstLocationIterator(m_locations.end()));
+    }
 
     /**
      * @brief Get a range of all Person%s in the World.
      * @return A range of all Person%s.
      */
-    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
+    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const
+    {
+        return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
+    }
 
     /**
      * @brief Get an individualized Location.
      * @param[in] id LocationId of the Location.
      * @return Reference to the Location.
      */
-    const Location<FP>& get_individualized_location(LocationId id) const;
+    const Location<FP>& get_individualized_location(LocationId id) const
+    {
+        return *m_locations[id.index];
+    }
 
-    Location<FP>& get_individualized_location(LocationId id);
+
+    Location<FP>& get_individualized_location(LocationId id)
+    {
+        return *m_locations[id.index];
+    }
 
     /**
      * @brief Find an assigned Location of a Person.
