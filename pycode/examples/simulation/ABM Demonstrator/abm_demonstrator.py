@@ -46,10 +46,6 @@ def set_infection_parameters():
     # AgeGroup 0-4
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                              VaccinationState.Unvaccinated] = 0.05
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                                            VaccinationState.Unvaccinated] = 0.05
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                                   VaccinationState.Unvaccinated] = 0.276
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age0to4,
@@ -72,10 +68,6 @@ def set_infection_parameters():
     # AgeGroup 5-14
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                              VaccinationState.Unvaccinated] = 0.1
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                                            VaccinationState.Unvaccinated] = 0.1
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                                   VaccinationState.Unvaccinated] = 0.276
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age5to14,
@@ -98,10 +90,6 @@ def set_infection_parameters():
     # AgeGroup 15-34
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                              VaccinationState.Unvaccinated] = 0.13
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                                            VaccinationState.Unvaccinated] = 0.13
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                                   VaccinationState.Unvaccinated] = 0.315
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age15to34,
@@ -124,10 +112,6 @@ def set_infection_parameters():
     # AgeGroup 35-59
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                              VaccinationState.Unvaccinated] = 0.11
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                                            VaccinationState.Unvaccinated] = 0.11
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                                   VaccinationState.Unvaccinated] = 0.315
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age35to59,
@@ -150,10 +134,6 @@ def set_infection_parameters():
     # AgeGroup 60-79
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                              VaccinationState.Unvaccinated] = 0.04
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                                            VaccinationState.Unvaccinated] = 0.04
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                                   VaccinationState.Unvaccinated] = 0.315
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age60to79,
@@ -176,10 +156,6 @@ def set_infection_parameters():
     # AgeGroup 80+
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                       VaccinationState.Unvaccinated] = 4
-    infection_params.SusceptibleToExposedByInfectedNoSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                              VaccinationState.Unvaccinated] = 0.07
-    infection_params.SusceptibleToExposedByInfectedSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                                            VaccinationState.Unvaccinated] = 0.07
     infection_params.InfectedNoSymptomsToSymptoms[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                                   VaccinationState.Unvaccinated] = 0.315
     infection_params.InfectedNoSymptomsToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
@@ -520,7 +496,7 @@ def convert_loc_id_to_string(loc_id):
     if int(loc_id[1]) < 10:
         index = "0" + index
 
-    return "I" + type + index
+    return type + index
 
 
 def get_agents_per_location(loc_id, agents):
@@ -575,8 +551,8 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
 
-    input_path = 'AreaList.txt'
-    output_path = 'output/'
+    input_path = '/INSIDe_Demonstrator_AreaList_modified.txt'
+    output_path = 'output'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
