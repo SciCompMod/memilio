@@ -23,7 +23,7 @@ Example for the ode seir model.
 import argparse
 import os
 
-import importlib.resources 
+import importlib.resources
 
 from memilio.generation import Generator, Scanner, ScannerConfig
 
