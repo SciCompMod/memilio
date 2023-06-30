@@ -18,16 +18,12 @@
 # limitations under the License.
 #############################################################################
 import os
-import sys
-import time
-from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist
@@ -123,7 +119,7 @@ def compute_hierarch_clustering(corr_mat, corr_pairwdist,
     # iterate over list
     for metric in metrics:
         cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=metric)
-        # compute cophentic correlation distance
+        # compute cophenetic correlation distance
         coph_corr, coph_dists = hierarchy.cophenet(
             cluster_hierarch, pdist(corr_mat))
         scores[metric] = coph_corr
@@ -182,7 +178,7 @@ def analyze_npi_data(
         npi_codes_considered):
 
     if not read_data:
-        x = 15
+        raise FileNotFoundError('')
         # transform_npi_data(fine_resolution=2,
         #                file_format=dd.defaultDict['file_format'],
         #                out_folder=dd.defaultDict['out_folder'],
@@ -209,26 +205,24 @@ def analyze_npi_data(
     except KeyError:
         pass
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
-    all_codes = []
     # merge subcodes of considered npis (Do we want this? To discuss...)
-    df_merged = df_npis.iloc[:, :2].copy()
-    for subcode in npi_codes_considered:
-        df_merged[subcode] = df_npis.filter(regex=subcode).sum(axis=1)
-        all_codes.append(df_npis.filter(regex=subcode).columns)
         # get code levels (main/subcodes) and position of main codes
         # code_level = [i.count('_') for i in npi_codes]
         # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
 
     # check if any other integer than 0: not implemented or 1: implemented is
     # used (maybe to specify the kind of implementation)
-    if len(np.where(df_merged[npi_codes_considered] > 1)[0]) > 0:
+
+    npi_codes_considered = npis.NPI_code.values.tolist()#[x for x in npis.NPI_code if len(x) <=8]
+
+    if len(np.where(df_npis[npi_codes_considered] > 1)[0]) > 0:
 
         print("Info: Please ensure that NPI information is only boolean.")
 
     else:
         # sum over different NPIs and plot share of countires implementing
         # these NPIs versus counties without corresponding actions
-        df_npis_aggregated = df_merged.groupby(
+        df_npis_aggregated = df_npis.groupby(
             dd.EngEng['date']).agg(
             {i: sum for i in npi_codes_considered}).copy()
         npis_total_sum = df_npis_aggregated.sum()
@@ -250,8 +244,8 @@ def analyze_npi_data(
                 npi_used_indices_all.append(
                     np.where(npis[dd.EngEng['npiCode']] == 'M01a_010')[0][0])
 
-        npis_unused = np.array(npis['Description'])[npi_unused_indices_all]
-        npis_used = np.array(npis['Description'])[npi_used_indices_all]
+        npis_unused = np.array(npis['Description'])[npi_unused_indices_all] # for all fr1 codes: len=153
+        npis_used = np.array(npis['Description'])[npi_used_indices_all] # for all fr1 codes: len=14
         npi_codes_used = list(np.array(npi_codes_considered)[npi_used_indices])
         npi_codes_unused = list(
             np.array(npi_codes_considered)[npi_unused_indices])
@@ -302,7 +296,7 @@ def analyze_npi_data(
         # compute correlations
         npis_corr = df_npis_used.iloc[:, 2:].corr().values
         # plot log-colored correlations
-        plt.imshow(abs(npis_corr), cmap='gray_r')
+        plt.imshow(abs(npis_corr), cmap='flag')
         # plot histogram
         plt.figure()
         plt.hist(npis_corr.flatten(), bins=50)
@@ -370,7 +364,7 @@ def analyze_npi_data(
 
         metric = 'centroid'
         cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
-            npis_corr,
+            npis_corr, # same result as abs(npis_corr)
             corr_pairwdist,
             metric)
         # # plot dendrogram
@@ -382,7 +376,7 @@ def analyze_npi_data(
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
             npis_corr, cluster_hierarch,
             [wg * max_coph_dist
-             for wg in [0.65]])
+             for wg in [0.50]]) # 10 cluster
 
         cluster_dict = dict()
         cluster_codes = [[] for i in range(npi_idx_to_cluster_idx[0].max()+1)]
@@ -485,7 +479,7 @@ def main():
     npis_final = []
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
     file_format = 'json'
-    npi_codes_considered = []
+    npi_codes_considered = ['M01a_010', 'M01a_020']
     analyze_npi_data(True, True, fine_resolution, npis_final,
                      directory, file_format, npi_codes_considered)
 
