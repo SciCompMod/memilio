@@ -21,12 +21,12 @@
 #define EPI_ABM_LOCKDOWN_RULES_H
 
 #include "abm/time.h"
-#include "abm/location_type.h"
-#include "abm/person.h"
+#include "abm/location_type.h" // IWYU pragma: keep
+#include "abm/person.h" // IWYU pragma: keep
 #include "abm/parameters.h"
 
-#include "memilio/epidemiology/damping.h"
-#include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/epidemiology/damping.h" // IWYU pragma: keep
+#include "memilio/epidemiology/contact_matrix.h" // IWYU pragma: keep
 
 namespace mio
 {
@@ -47,7 +47,8 @@ namespace abm
  * @param[in] p Percentage of Person%s that work in home office.
  * @param[in, out] params Migration parameters that include Damping.
  */
-void set_home_office(TimePoint t_begin, double p, MigrationParameters& params);
+template<typename FP=double>
+void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& params);
 
 /**
  * @brief If schools are closed, students stay at home instead of going to school.
@@ -55,7 +56,8 @@ void set_home_office(TimePoint t_begin, double p, MigrationParameters& params);
  * @param[in] p Percentage of Person%s that are homeschooled.
  * @param[in,out] params Migration parameters that include Damping.
  */
-void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params);
+template<typename FP=double>
+void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& params);
 
 /** 
  * @brief During lockdown Person%s join social events less often.
@@ -66,7 +68,8 @@ void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
  * @param[in,out] params Migration parameters that include Damping.
  */
-void close_social_events(TimePoint t_begin, double p, MigrationParameters& params);
+template<typename FP=double>
+void close_social_events(TimePoint t_begin, double p, MigrationParameters<FP>& params);
 
 } // namespace abm
 } //namespace mio

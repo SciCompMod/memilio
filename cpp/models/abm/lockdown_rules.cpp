@@ -18,30 +18,30 @@
 * limitations under the License.
 */
 #include "abm/lockdown_rules.h"
-#include "abm/person.h"
+#include "abm/person.h" // IWYU pragma: keep
 #include "abm/time.h"
 
 namespace mio
 {
 namespace abm
 {
-
-void set_home_office(TimePoint t_begin, double p, MigrationParameters& params)
+template<typename FP>
+void set_home_office(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.template get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
-
-void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params)
+template<typename FP>
+void set_school_closure(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.template get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
-
-void close_social_events(TimePoint t_begin, double p, MigrationParameters& params)
+template<typename FP>
+void close_social_events(TimePoint t_begin, double p, MigrationParameters<FP>& params)
 {
     auto damping1 = Eigen::VectorXd::Constant((size_t)AgeGroup::Count, p);
-    params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.template get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
 }
 
 } // namespace abm

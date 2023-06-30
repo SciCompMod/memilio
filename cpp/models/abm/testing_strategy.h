@@ -21,7 +21,7 @@
 #ifndef EPI_ABM_TESTING_SCHEME_H
 #define EPI_ABM_TESTING_SCHEME_H
 
-#include "abm/parameters.h"
+#include "abm/parameters.h" // IWYU pragma: keep
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
@@ -97,27 +97,31 @@ public:
      * @param[in] l Location to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
-    bool evaluate(const Person& p, const Location& l, TimePoint t) const;
+    template<typename FP=double>
+    bool evaluate(const Person<FP>& p, const Location<FP>& l, TimePoint t) const;
 
 private:
     /**
      * @brief Check if a Person has the required age to get tested.
      * @param[in] p Person to be checked.
      */
-    bool has_requested_age(const Person& p) const;
+    template<typename FP=double>
+    bool has_requested_age(const Person<FP>& p) const;
 
     /**
      * @brief Check if a Location is in the set of Location%s that are allowed for testing.
      * @param[in] l Location to be checked.
      */
-    bool is_requested_location_type(const Location& l) const;
+    template<typename FP=double>
+    bool is_requested_location_type(const Location<FP>& l) const;
 
     /**
      * @brief Check if a Person has the required InfectionState to get tested.
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to check.
      */
-    bool has_requested_infection_state(const Person& p, TimePoint t) const;
+    template<typename FP=double>
+    bool has_requested_infection_state(const Person<FP>& p, TimePoint t) const;
 
     std::vector<AgeGroup> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::vector<LocationType> m_location_types; /**< Set of #LocationState%s that are either allowed or required to be 
@@ -129,6 +133,7 @@ private:
 /**
  * @brief TestingScheme to regular test Person%s.
  */
+template<typename FP=double>
 class TestingScheme
 {
 public:
@@ -143,7 +148,7 @@ public:
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
     TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest& test_type, ScalarType probability);
+                  TimePoint start_date, TimePoint end_date, const GenericTest<FP>& test_type, ScalarType probability);
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.
@@ -181,14 +186,14 @@ public:
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person& person, const Location& location, TimePoint t) const;
+    bool run_scheme(Person<FP>& person, const Location<FP>& location, TimePoint t) const;
 
 private:
     std::vector<TestingCriteria> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.
-    GenericTest m_test_type; ///< Type of the test.
+    GenericTest<FP> m_test_type; ///< Type of the test.
     ScalarType m_probability; ///< Probability of performing the test.
     bool m_is_active = false; ///< Whether the scheme is currently active.
 };
@@ -196,6 +201,7 @@ private:
 /**
  * @brief Set of TestingSchemes that are checked for testing.
  */
+template<typename FP=double>
 class TestingStrategy
 {
 public:
@@ -204,19 +210,19 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<TestingScheme>& testing_schemes);
+    explicit TestingStrategy(const std::vector<TestingScheme<FP>>& testing_schemes);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const TestingScheme& scheme);
+    void add_testing_scheme(const TestingScheme<FP>& scheme);
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing.
      * @param[in] scheme TestingScheme to be removed.
      */
-    void remove_testing_scheme(const TestingScheme& scheme);
+    void remove_testing_scheme(const TestingScheme<FP>& scheme);
 
     /**
      * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
@@ -232,10 +238,10 @@ public:
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person& person, const Location& location, TimePoint t) const;
+    bool run_strategy(Person<FP>& person, const Location<FP>& location, TimePoint t) const;
 
 private:
-    std::vector<TestingScheme> m_testing_schemes; ///< Set of schemes that are checked for testing.
+    std::vector<TestingScheme<FP>> m_testing_schemes; ///< Set of schemes that are checked for testing.
 };
 
 } // namespace abm

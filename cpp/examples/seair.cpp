@@ -62,7 +62,7 @@ int main()
 
 
 
-    auto seair = simulate<mio::oseair::Model,ad::gt1s<double>::type>(t0, tmax, dt, model);
+    auto seair = mio::simulate<mio::oseair::Model,ad::gt1s<double>::type>(t0, tmax, dt, model);
 //    const std::string file_name = "seair.txt";
 //    std::cout << "Writing output to " << file_name << std::endl;
 //    mio::time_series_to_file(seair, file_name);
