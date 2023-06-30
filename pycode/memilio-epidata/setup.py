@@ -90,8 +90,8 @@ setup(
             'pyfakefs>=4.2.1',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
-            'pylint<=2.11.1',
-            'pylint_json2html<=0.3.0',
+            'pylint>=2.13.0,<2.16',
+            'pylint_json2html==0.4.0',
         ],
     },
     cmdclass={

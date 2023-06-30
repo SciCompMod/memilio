@@ -20,7 +20,6 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
-        /opt/python/cp310-cp310/bin/python setup.py bdist_wheel
         /opt/python/cp311-cp311/bin/python setup.py bdist_wheel
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
