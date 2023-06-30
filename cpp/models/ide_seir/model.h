@@ -21,10 +21,14 @@
 #ifndef IDE_SEIR_H
 #define IDE_SEIR_H
 
-#include "memilio/math/eigen.h"
+#include "memilio/math/eigen.h"  // IWYU pragma: keep
 #include "memilio/utils/time_series.h"
-#include "ide_seir/parameters.h"
+#include "ide_seir/parameters.h" // IWYU pragma: keep
 #include "ide_seir/infection_state.h"
+#include "memilio/utils/logging.h"
+
+
+#include <iostream>
 
 #include <vector>
 
@@ -32,9 +36,11 @@ namespace mio
 {
 namespace iseir
 {
+template<typename FP=double>
 class Model
 {
-    using Pa = ParametersBase;
+    using Pa = ParametersBase<FP>;
+    using Vec = TimeSeries<double>::Vector;
 
 public:
     /**
@@ -50,7 +56,14 @@ public:
         * @param[in] dt_init The size of the time step used for numerical simulation.
         * @param[in] N_init The population of the considered region. 
         */
-    Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init = Pa());
+    Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init = Pa())
+        : parameters{Parameterset_init}
+        , m_result{std::move(init)}
+        , m_result_SEIR{TimeSeries<double>(4)}
+        , m_dt{dt_init}
+        , m_N{N_init}
+    {
+    }
 
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.
@@ -63,7 +76,37 @@ public:
         * @return The result of the simulation, stored in a TimeSeries with simulation time and 
         *       associated number of susceptibles.
         */
-    TimeSeries<double> const& simulate(int t_max);
+    TimeSeries<double> const& simulate(int t_max)
+    {
+
+        m_l = (int)std::floor(parameters.template get<LatencyTime>() / m_dt);
+        m_k = (int)std::ceil((parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>()) / m_dt);
+        if (m_result.get_time(0) > -(m_k - 1) * m_dt) {
+            log_warning("Constraint check: Initial data starts later than necessary. The simulation may be distorted. "
+                        "Start the data at time {:.4f} at the latest.",
+                        -(m_k - 1) * m_dt);
+        }
+
+        while (m_result.get_last_time() < t_max) {
+            m_result.add_time_point(m_result.get_last_time() + m_dt);
+            Eigen::Index idx = m_result.get_num_time_points();
+
+            // R0t is the effective reproduction number at time t
+            auto R0t1 =
+                parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
+                parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
+            auto R0t2 =
+                parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
+                parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
+
+            m_result.get_last_value() =
+                Vec::Constant(1, m_result[idx - 2][0] * exp(m_dt * (0.5 * 1 / m_N) *
+                                                            (R0t1 * num_integration_inner_integral(idx - 2) +
+                                                             R0t2 * num_integration_inner_integral(idx - 1))));
+        }
+        return m_result;
+    }
+
 
     /**
         * @brief Calculate the distribution of the population in E, I and, R based on the calculated values for S.
@@ -74,7 +117,19 @@ public:
         * @return The result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an
         *   associated Vector with values for S, E, I, and R.
         */
-    TimeSeries<double> const& calculate_EIR();
+    TimeSeries<double> const& calculate_EIR()
+    {
+        Eigen::Index num_points = m_result.get_num_time_points();
+        double S, E, I, R;
+        for (Eigen::Index i = m_k; i < num_points; ++i) {
+            S = m_result[i][Eigen::Index(InfectionState::S)];
+            E = m_result[i - m_l][Eigen::Index(InfectionState::S)] - S;
+            I = m_result[i - m_k][Eigen::Index(InfectionState::S)] - m_result[i - m_l][Eigen::Index(InfectionState::S)];
+            R = m_N - S - E - I;
+            m_result_SEIR.add_time_point(m_result.get_time(i), (Vec(4) << S, E, I, R).finished());
+        }
+        return m_result_SEIR;
+    }
 
     /**
         * @brief Displays the results of the simulation.
@@ -86,7 +141,26 @@ public:
         * @param[in] calculated_SEIR If true, the calculated numbers for E, I and R are displayed 
         *    in addition to the results for S.
         */
-    void print_result(bool calculated_SEIR = false) const;
+    void print_result(bool calculated_SEIR = false) const
+    {
+        if (calculated_SEIR) {
+            std::cout << "# time  |  S  |  E  |  I  |  R" << std::endl;
+            Eigen::Index num_points = m_result_SEIR.get_num_time_points();
+            for (Eigen::Index i = 0; i < num_points; ++i) {
+                printf(" %.9f %.9f %.9f %.9f %.9f\n", m_result_SEIR.get_time(i),
+                       m_result_SEIR[i][Eigen::Index(InfectionState::S)], m_result_SEIR[i][Eigen::Index(InfectionState::E)],
+                       m_result_SEIR[i][Eigen::Index(InfectionState::I)],
+                       m_result_SEIR[i][Eigen::Index(InfectionState::R)]);
+            }
+        }
+        else {
+            std::cout << "# time  |  number of susceptibles" << std::endl;
+            Eigen::Index num_points = m_result.get_num_time_points();
+            for (Eigen::Index i = 0; i < num_points; ++i) {
+                std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(InfectionState::S)] << std::endl;
+            }
+        }
+    }
 
     // Used Parameters for the simulation.
     Pa parameters{};
@@ -100,7 +174,16 @@ private:
         * @param[in] q parameter q of the generalized Beta distribution.
         * @result Evaluation of the generalized beta distribution at the given evaluation point.
         */
-    double generalized_beta_distribution(double tau, double p = 3.0, double q = 10.0) const;
+    double generalized_beta_distribution(double tau, double p = 3.0, double q = 10.0) const
+    {
+        if ((parameters.template get<LatencyTime>() < tau) &&
+            (parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() > tau)) {
+            return tgamma(p + q) * pow(tau - parameters.template get<LatencyTime>(), p - 1) *
+                   pow(parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() - tau, q - 1) /
+                   (tgamma(p) * tgamma(q) * pow(parameters.template get<InfectiousTime>(), p + q - 1));
+        }
+        return 0.0;
+    }
 
     /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
@@ -112,7 +195,10 @@ private:
         * @return Numerically approximated derivative of the function belonging to the compartment at the point t[idx].
         */
     double central_difference_quotient(TimeSeries<double> const& ts_ide, InfectionState compartment,
-                                       Eigen::Index idx) const;
+                                       Eigen::Index idx) const
+    {
+        return (ts_ide[idx + 1][Eigen::Index(compartment)] - ts_ide[idx - 1][Eigen::Index(compartment)]) / (2 * m_dt);
+    }
 
     /**
         * @brief Numerical integration of the inner integral of the integro-differential equation for the group S using
@@ -121,7 +207,20 @@ private:
         * @param[in] idx Index of the point of time used in the inner integral.
         * @return Result of the numerical integration.
         */
-    double num_integration_inner_integral(Eigen::Index idx) const;
+    double num_integration_inner_integral(Eigen::Index idx) const
+    {
+        double res     = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
+                                central_difference_quotient(m_result, InfectionState::S, m_k) +
+                            generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_l)) *
+                                central_difference_quotient(m_result, InfectionState::S, idx - m_l));
+        Eigen::Index i = idx - m_k + 1;
+        while (i <= idx - m_l - 2) {
+            res += (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(i)) *
+                    central_difference_quotient(m_result, InfectionState::S, i));
+            ++i;
+        }
+        return res;
+    }
 
     // TimeSeries containing points of time and the corresponding number of susceptibles.
     TimeSeries<double> m_result;

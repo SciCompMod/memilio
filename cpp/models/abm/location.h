@@ -38,6 +38,7 @@ namespace mio
 {
 namespace abm
 {
+template<typename>
 class Person;
 
 /**
@@ -59,13 +60,14 @@ struct CellCapacity {
  * @brief The Location can be split up into several Cell%s. 
  * This allows a finer division of the people at the Location.
  */
+template<typename FP=double>
 struct Cell {
-    std::vector<observer_ptr<Person>> m_persons;
+    std::vector<observer_ptr<Person<FP>>> m_persons;
     CustomIndexArray<ScalarType, VirusVariant, AgeGroup> m_cached_exposure_rate_contacts;
     CustomIndexArray<ScalarType, VirusVariant> m_cached_exposure_rate_air;
     CellCapacity m_capacity;
 
-    explicit Cell(std::vector<observer_ptr<Person>> persons = {})
+    explicit Cell(std::vector<observer_ptr<Person<FP>>> persons = {})
         : m_persons(std::move(persons))
         , m_cached_exposure_rate_contacts({{VirusVariant::Count, AgeGroup::Count}, 0.})
         , m_cached_exposure_rate_air({{VirusVariant::Count}, 0.})
@@ -92,6 +94,7 @@ struct Cell {
 /**
  * @brief All Location%s in the simulated World where Person%s gather.
  */
+template<typename FP=double>
 class Location
 {
 public:
@@ -163,20 +166,20 @@ public:
      * @param[in] dt Length of the current Simulation time step.
      * @param[in] global_params Global infection parameters.
      */
-    void interact(Person& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
+    void interact(Person<FP>& person, TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& global_params) const;
 
     /** 
      * @brief Add a Person to the population at this Location.
      * @param[in] person The Person arriving.
      * @param[in] cell_idx [Default: 0] Index of the Cell the Person shall go to.
     */
-    void add_person(Person& person, std::vector<uint32_t> cells = {0});
+    void add_person(Person<FP>& person, std::vector<uint32_t> cells = {0});
 
     /** 
      * @brief Remove a Person from the population of this Location.
      * @param[in] person The Person leaving.
      */
-    void remove_person(Person& person);
+    void remove_person(Person<FP>& person);
 
     /** 
      * @brief Prepare the Location for the next Simulation step.
@@ -203,7 +206,7 @@ public:
      * @brief Get the Cell%s of this Location.
      * @return The vector of all Cell%s of the Location.
      */
-    const std::vector<Cell>& get_cells() const
+    const std::vector<Cell<FP>>& get_cells() const
     {
         return m_cells;
     }
@@ -334,10 +337,10 @@ private:
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
-    std::vector<observer_ptr<Person>> m_persons{}; ///< A vector of all Person%s at the Location.
+    std::vector<observer_ptr<Person<FP>>> m_persons{}; ///< A vector of all Person%s at the Location.
     TimeSeries<ScalarType> m_subpopulations{Eigen::Index(
         InfectionState::Count)}; ///< A TimeSeries of the #InfectionState%s for each TimePoint at the Location.
-    std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
+    std::vector<Cell<FP>> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
 };

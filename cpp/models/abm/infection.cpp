@@ -26,32 +26,7 @@ namespace mio
 namespace abm
 {
 
-Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                     InfectionState init_state, bool detected)
-    : m_virus_variant(virus)
-    , m_detected(detected)
-{
-    m_viral_load.start_date = draw_infection_course(age, params, init_date, init_state);
 
-    auto vl_params    = params.get<ViralLoadDistributions>()[{
-        virus, age, VaccinationState::Unvaccinated}]; // TODO: change vaccination state
-    m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak.params);
-    m_viral_load.incline =
-        vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline.params);
-    m_viral_load.decline =
-        vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline.params);
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
-
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
-
-    auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
-    m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
-    m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta.params);
-}
 
 ScalarType Infection::get_viral_load(TimePoint t) const
 {

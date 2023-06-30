@@ -26,6 +26,7 @@
 #include "abm/parameters.h"
 
 #include <vector>
+#include <cmath>
 
 namespace mio
 {
@@ -43,6 +44,7 @@ struct ViralLoad {
     ScalarType decline; ///< Decline of the ViralLoad during decline phase in log_10 scale per day (always negative).
 };
 
+template<typename FP=double>
 class Infection
 {
 
@@ -55,8 +57,33 @@ public:
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
      */
-    Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-              InfectionState start_state = InfectionState::Exposed, bool detected = false);
+    Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters<FP>& params, TimePoint init_date,
+              InfectionState init_state = InfectionState::Exposed, bool detected = false)
+        : m_virus_variant(virus)
+        , m_detected(detected)
+    {
+        m_viral_load.start_date = draw_infection_course(age, params, init_date, init_state);
+
+        auto vl_params    = params.template get<ViralLoadDistributions>()[{
+                                                               virus, age, VaccinationState::Unvaccinated}]; // TODO: change vaccination state
+        m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak.params);
+        m_viral_load.incline =
+            vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline.params);
+        m_viral_load.decline =
+            vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline.params);
+        m_viral_load.end_date =
+            m_viral_load.start_date +
+            days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+
+        m_viral_load.end_date =
+            m_viral_load.start_date +
+            days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+
+        auto inf_params  = params.template get<InfectivityDistributions>()[{virus, age}];
+        m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
+        m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta.params);
+    }
+
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -107,7 +134,7 @@ private:
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.
      */
-    TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+    TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters<FP>& params, TimePoint init_date,
                                     InfectionState init_state);
 
     /**
@@ -117,7 +144,7 @@ private:
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      */
-    void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+    void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters<FP>& params, TimePoint init_date,
                                        InfectionState init_state);
 
     /**
@@ -128,7 +155,7 @@ private:
      * @param[in] init_state InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.
      */
-    TimePoint draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
+    TimePoint draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters<FP>& params, TimePoint init_date,
                                              InfectionState init_state);
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.

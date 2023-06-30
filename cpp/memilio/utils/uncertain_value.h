@@ -51,7 +51,7 @@ public:
     {
     }
 
-    UncertainValue(FP v = 0.)
+    UncertainValue(FP v = static_cast<FP>(0.))
         : m_value(v)
     {
     }

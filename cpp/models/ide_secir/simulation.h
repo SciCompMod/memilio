@@ -37,6 +37,7 @@ namespace isecir
 /**
  * run the simulation in discrete steps and report results.
  */
+template<typename FP=double>
 class Simulation
 {
 
@@ -47,7 +48,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Step size of numerical solver.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
+    Simulation(Model<FP> const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))
         , m_t0(t0)
         , m_dt(dt)
@@ -58,7 +59,35 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax);
+    void advance(ScalarType tmax)
+    {
+        mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
+        m_model->initialize(m_dt);
+
+        // for every time step:
+        while (m_model->m_transitions.get_last_time() < tmax - m_dt / 2) {
+
+            m_model->m_transitions.add_time_point(m_model->m_transitions.get_last_time() + m_dt);
+            m_model->m_populations.add_time_point(m_model->m_populations.get_last_time() + m_dt);
+
+            // compute_S:
+            m_model->compute_susceptibles(m_dt);
+
+            // compute flows:
+            m_model->flows_current_timestep(m_dt);
+
+            // compute D
+            m_model->compute_deaths();
+
+            // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):
+            m_model->update_forceofinfection(m_dt);
+
+            // compute remaining compartments from flows
+            m_model->other_compartments_current_timestep(m_dt);
+            m_model->compute_recovered();
+        }
+    }
+
 
     /**
      * @brief Get the result of the simulation.
@@ -93,7 +122,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    const Model& get_model() const
+    const Model<FP>& get_model() const
     {
         return *m_model;
     }
@@ -101,7 +130,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    Model& get_model()
+    Model<FP>& get_model()
     {
         return *m_model;
     }
@@ -130,17 +159,41 @@ public:
      * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
      * simulation are printed. 
      */
-    void print_transitions() const;
+    void print_transitions() const
+    {
+        // print transitions after simulation
+        std::cout << "# time  |  S -> E  |  E - > C  |  C -> I  |  C -> R  |  I -> H  |  I -> R  |  H -> U  |  H -> R  |  "
+                     "U -> D  |  U -> R  "
+                  << std::endl;
+        for (Eigen::Index i = 0; i < m_model->m_transitions.get_num_time_points(); ++i) {
+            std::cout << m_model->m_transitions.get_time(i);
+            for (Eigen::Index j = 0; j < m_model->m_transitions.get_num_elements(); ++j) {
+                std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_transitions[i][j];
+            }
+            std::cout << "\n" << std::endl;
+        }
+    }
 
     /**
      * @brief Print the simulated numbers of individuals in each compartment for each time step.
      * 
      * The TimeSeries m_populations with simulated numbers of individuals in each compartment for each time step are printed. 
      */
-    void print_compartments() const;
+    void print_compartments() const
+    {
+        // print compartments after simulation
+        std::cout << "# time  |  S  |  E  |  C  |  I  |  H  |  U  |  R  |  D  |" << std::endl;
+        for (Eigen::Index i = 0; i < m_model->m_populations.get_num_time_points(); ++i) {
+            std::cout << m_model->m_populations.get_time(i);
+            for (Eigen::Index j = 0; j < m_model->m_populations.get_num_elements(); ++j) {
+                std::cout << "  |  " << std::fixed << std::setprecision(8) << m_model->m_populations[i][j];
+            }
+            std::cout << "\n" << std::endl;
+        }
+    }
 
 private:
-    std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
+    std::unique_ptr<Model<FP>> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_t0; ///< Start time used for simulation.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
 };
@@ -153,7 +206,15 @@ private:
  * @param[in] model an instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  */
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model);
+template<typename FP=double>
+TimeSeries<ScalarType> simulate(FP t0, FP tmax, FP dt, Model<FP> const& model)
+{
+    model.check_constraints(dt);
+    Simulation<FP> sim(model, t0, dt);
+    sim.advance(tmax);
+    return sim.get_result();
+}
+
 
 } // namespace isecir
 } // namespace mio

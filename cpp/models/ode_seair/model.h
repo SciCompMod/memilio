@@ -35,16 +35,16 @@ namespace oseair
 /********************
     * define the model *
     ********************/
-
+template<typename FP=ad::gt1s<double>::type>
 class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>,
-                                        Parameters, ad::gt1s<double>::type>
+                                        Parameters, FP>
 {
     using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>,
-                                    Parameters, ad::gt1s<double>::type>;
+                                    Parameters, FP>;
 
 public:
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(Populations<FP>({InfectionState::Count}, 0.), ParameterSet<FP>())
     {
     }
 
@@ -67,14 +67,14 @@ public:
         dydt[(size_t)InfectionState::Recovered] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]; */
 
-        auto& alpha_a = params.get<AlphaA>();
-        auto& alpha_i = params.get<AlphaI>();
-        auto& kappa = params.get<Kappa>();
-        auto& beta = params.get<Beta>();
-        auto& mu = params.get<Mu>();
-        auto& t_latent_inverse = params.get<TLatentInverse>();
-        auto& rho = params.get<Rho>();
-        auto& gamma = params.get<Gamma>();
+        auto& alpha_a = params.template get<AlphaA>();
+        auto& alpha_i = params.template get<AlphaI>();
+        auto& kappa = params.template get<Kappa>();
+        auto& beta = params.template get<Beta>();
+        auto& mu = params.template get<Mu>();
+        auto& t_latent_inverse = params.template get<TLatentInverse>();
+        auto& rho = params.template get<Rho>();
+        auto& gamma = params.template get<Gamma>();
 
 
 

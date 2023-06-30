@@ -38,6 +38,7 @@ namespace abm
 {
 
 struct LocationId;
+template<typename>
 class Location;
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
@@ -45,6 +46,7 @@ static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max
 /**
  * @brief Agents in the simulated World that can carry and spread the Infection.
  */
+template<typename FP=double>
 class Person
 {
 public:
@@ -54,7 +56,7 @@ public:
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location<FP>& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
      * @brief Compare two Person%s.
@@ -71,25 +73,25 @@ public:
      * @param[in] dt Length of the current Simulation TimeStep.
      * @param[in, out] global_infection_parameters Infection parameters that are the same in all Location%s.
      */
-    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params);
+    void interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters<FP>& params);
 
     /** 
      * @brief Migrate to a different Location.
      * @param[in, out] loc_new The new Location of the Person.
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
-    void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+    void migrate_to(Location<FP>& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.
      * @return The latest Infection of the Person.
      */
-    Infection& get_infection()
+    Infection<FP>& get_infection()
     {
         return m_infections.back();
     }
 
-    const Infection& get_infection() const
+    const Infection<FP>& get_infection() const
     {
         return m_infections.back();
     }
@@ -126,7 +128,7 @@ public:
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
      */
-    void add_new_infection(Infection&& inf);
+    void add_new_infection(Infection<FP>&& inf);
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -141,9 +143,9 @@ public:
      * @brief Get the current Location of the Person.
      * @return Current Location of the Person.
      */
-    Location& get_location();
+    Location<FP>& get_location();
 
-    const Location& get_location() const;
+    const Location<FP>& get_location() const;
 
     /**
      * @brief Get the time the Person has been at its current Location.
@@ -168,7 +170,7 @@ public:
      * Location per #LocationType.
      * @param[in] location The new assigned Location.
      */
-    void set_assigned_location(Location& location);
+    void set_assigned_location(Location<FP>& location);
 
     /**
      * @brief Set an assigned Location of the Person. 
@@ -203,7 +205,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True the Person works from home.
      */
-    bool goes_to_work(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_work(TimePoint t, const MigrationParameters<FP>& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -212,7 +214,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to work.
      */
-    TimeSpan get_go_to_work_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_work_time(const MigrationParameters<FP>& params) const;
 
     /**
      * @brief Draw if the Person goes to school or stays at home during lockdown.
@@ -221,7 +223,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return True if the Person goes to school.
      */
-    bool goes_to_school(TimePoint t, const MigrationParameters& params) const;
+    bool goes_to_school(TimePoint t, const MigrationParameters<FP>& params) const;
 
     /**
      * @brief Draw at what time the Person goes to work.
@@ -230,7 +232,7 @@ public:
      * @param[in] params Parameters that describe the migration between Location%s.
      * @return The time of going to school.
      */
-    TimeSpan get_go_to_school_time(const MigrationParameters& params) const;
+    TimeSpan get_go_to_school_time(const MigrationParameters<FP>& params) const;
 
     /**
      * @brief Answers the question if a Person is currently in quarantine.
@@ -261,7 +263,7 @@ public:
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
      */
-    bool get_tested(TimePoint t, const TestParameters& params);
+    bool get_tested(TimePoint t, const TestParameters<FP>& params);
 
     /**
      * @brief Get the PersonID of the Person.
@@ -299,7 +301,7 @@ public:
      * @param[in] params The parameters of the Infection that are the same everywhere within the World.
      * @return The reduction factor of getting an Infection when wearing the Mask.
      */
-    ScalarType get_mask_protective_factor(const GlobalInfectionParameters& params) const;
+    ScalarType get_mask_protective_factor(const GlobalInfectionParameters<FP>& params) const;
 
     /**
      * @brief For every #LocationType a Person has a compliance value between -1 and 1.
@@ -327,7 +329,7 @@ public:
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
-    bool apply_mask_intervention(const Location& target);
+    bool apply_mask_intervention(const Location<FP>& target);
 
     /**
      * @brief Decide if a Person is currently wearing a Mask.
@@ -370,11 +372,11 @@ public:
     }
 
 private:
-    observer_ptr<Location> m_location; ///< Current Location of the Person.
+    observer_ptr<Location<FP>> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
-    std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
+    std::vector<Infection<FP>> m_infections; ///< Vector with all Infection%s the Person had.
     bool m_quarantine = false; ///< Whether the Person is currently in quarantine.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.

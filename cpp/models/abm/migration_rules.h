@@ -22,7 +22,7 @@
 #define EPI_ABM_MIGRATION_RULES_H
 
 #include "abm/location_type.h"
-#include "abm/parameters.h"
+#include "abm/parameters.h" // IWYU pragma: keep
 #include "abm/time.h"
 
 namespace mio
@@ -30,6 +30,7 @@ namespace mio
 namespace abm
 {
 
+template<typename>
 class Person;
 
 /**
@@ -46,49 +47,58 @@ class Person;
 /**
  * @brief Completely random migration to any other Location.
  */
-LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType random_migration(const Person<FP>& p, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief School age children go to school in the morning and return later in the day.
  */
-LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_school(const Person<FP>& p, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /** 
  * @brief Adults may go shopping in their free time.
  */
-LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_shop(const Person<FP>& person, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief Person%s might go to social events.
  */
-LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_event(const Person<FP>& person, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief Adults go to work in the morning and return later in the day.
  */
-LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_work(const Person<FP>& person, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief Person%s who are in quarantine should go home.
  */
-LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                              const MigrationParameters& /*params*/);
+template<typename FP=double>
+LocationType go_to_quarantine(const Person<FP>& person, TimePoint /*t*/, TimeSpan /*dt*/,
+                              const MigrationParameters<FP>& /*params*/);
 
 /**
  * @brief Infected Person%s may be hospitalized.
  */
-LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_hospital(const Person<FP>& p, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief Person%s in the hospital may be put in intensive care.
  */
-LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+template<typename FP=double>
+LocationType go_to_icu(const Person<FP>& p, TimePoint t, TimeSpan dt, const MigrationParameters<FP>& params);
 
 /**
  * @brief Person%s in the hospital/icu return home when they recover.
  */
-LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
-                                        const MigrationParameters& params);
+template<typename FP=double>
+LocationType return_home_when_recovered(const Person<FP>& person, TimePoint t, TimeSpan dt,
+                                        const MigrationParameters<FP>& params);
 /**@}*/
 
 } // namespace abm
