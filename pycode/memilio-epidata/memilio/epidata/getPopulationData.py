@@ -23,9 +23,11 @@
 @brief Downloads data about population statistic
 
 """
-
+import requests
 import os
 import twill
+import time
+import io
 
 import numpy as np
 import pandas as pd
@@ -45,16 +47,13 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         password=''):
     """! Download age-stratified population data for the German counties.
 
-    There are two different data sources that can be transformed in a simple
-    data file with age-resolved information per county and on which our other
-    tools can continue to operate on.
-
-    1.) Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
+    The data we use is:
+    Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
     'Bevölkerung nach Geschlecht und Altersgruppen (17)' 
     of regionalstatistik.de. 
     ATTENTION: The raw file cannot be downloaded 
     automatically by our scripts without an Genesis Online account. In order to
-    work on this dataset, please manually download it from:
+    work on this dataset, please enter your username and password or manually download it from:
 
     https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
     Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
@@ -62,21 +61,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
     krfr. Städte". 
 
-    Download the xlsx file and put it under dd.defaultDict['out_folder'], 
+    Download the xlsx or csv file and put it under dd.defaultDict['out_folder'], 
     this normally is Memilio/data/pydata/Germany. 
     The folders 'pydata/Germany' have to be created if they do not exist yet. 
     Then this script can be run.
-    TODO: The following parameters have no effect for this source.
-
-    2.) Combination of data from Federal Statistical Office of Germany and 
-    Zensus2011 to compute very simple approximations of age-stratified number
-    of inhabitants per county. Population from the Zensus data of all age groups is scaled to the
-    total population of our more recent migration data by a factor which
-    represents the relative increase/decrease in population size
-    between 2011 and 2019 for each county"
-    This data can either be downloaded automatically or read from
-    "out_folder"/Germany/ if it was downloaded before.
-
+    
     @param read_data False or True. Defines if data is read from file or
         downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data.
@@ -94,28 +83,36 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
-    new_data_file = os.path.join(directory, filename+'.xlsx')
-    sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
+    if not read_data:
+        sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
+        
+        # sign in to regionalstatistik.de with given username and password
+        twill.browser.user_agent=requests.utils.default_headers()['User-Agent']
+        twill.commands.go(sign_in_url)
+        twill.commands.fv('3', 'KENNUNG', username)
+        twill.commands.fv('3', 'PASSWORT', password)
+        twill.commands.submit('login', '3')
+        # navigate to file
+        twill.commands.follow('Themen')
+        twill.commands.follow('12')
+        # wait 1 second to prevent error
+        time.sleep(1)
+        twill.commands.follow('12411')
+        twill.commands.follow('12411-02-03-4')
+        twill.commands.submit('45', '3')
+        twill.commands.submit('1', '5')
+        
+        df_pop_raw = pd.read_csv(io.StringIO(twill.browser.html), sep=';', header=6)
     
-    # sign in to regionalstatistik.de with given username and password
-    twill.commands.go(sign_in_url)
-    twill.commands.fv('3', 'KENNUNG', username)
-    twill.commands.fv('3', 'PASSWORT', password)
-    twill.commands.submit('login', '3')
-    # navigate to file
-    twill.commands.follow('Themen')
-    twill.commands.follow('12')
-    twill.commands.follow('12411')
-    twill.commands.follow('12411-02-03-4')
-    twill.commands.submit('45', '3')
-    twill.commands.submit('1', '4')
-    url=twill.browser.url
+    else:
+        data_file = os.path.join(directory, filename)
+        if os.path.isfile(data_file+'.xlsx'):
+            df_pop_raw = pd.read_excel(data_file+'.xlsx', engine='openpyxl', sheet_name=filename, header=4)
+        elif os.path.isfile(data_file+'.csv'):
+            df_pop_raw = pd.read_excel(data_file+'.csv', sep=';', header=6)
+        else:
+            raise FileNotFoundError('Data file '+filename+' was not found in out_folder/Germany')
 
-    df_pop_raw = gd.get_file(
-        new_data_file, url=url, read_data=False,
-        param_dict={"engine": "openpyxl",
-                    "sheet_name": filename, "header": 4},
-        interactive=False)
     column_names = list(df_pop_raw.columns)
     # rename columns
     rename_columns = {
@@ -124,15 +121,15 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         column_names[2]: dd.EngEng['ageRKI'],
         column_names[3]: dd.EngEng['number'],
         column_names[4]: dd.EngEng['male'],
-        column_names[5]: dd.EngEng['female'],
+        column_names[5]: dd.EngEng['female']
     }
     df_pop_raw.rename(columns=rename_columns, inplace=True)
     # remove date and explanation rows at end of table
-    # -33 for '12411-09-01-4-B', -38 for '12411-02-03-4'
-    df_pop_raw = df_pop_raw[:-38].reset_index(drop=True)
+    df_pop_raw = df_pop_raw[:np.where(df_pop_raw.ID_County.str.contains('__'))[0][0]].reset_index(drop=True)
     # get indices of counties first lines
-    idCounty_idx = list(df_pop_raw.index[
-        df_pop_raw[dd.EngEng['idCounty']].isna() == False])
+    idCounty_idx = []
+    for id in df_pop_raw[dd.EngEng['idCounty']].unique():
+        idCounty_idx.append(df_pop_raw[df_pop_raw[dd.EngEng['idCounty']]==id].index.min())
 
     # read county list and create output data frame
     counties = np.array(geoger.get_county_names_and_ids(
@@ -163,6 +160,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     empty_data = ['.', '-']
     for i in idCounty_idx:
+        if i == 432:
+            x=1
         # county information needed
         if df_pop_raw.loc[i, dd.EngEng['idCounty']] in counties[:, 1]:
             # direct assignment of population data found
