@@ -23,7 +23,7 @@
 #include "abm/world.h"
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/io/history.h"
+#include "memilio/io/history.h" // IWYU pragma: keep
 
 namespace mio
 {
@@ -33,6 +33,7 @@ namespace abm
 /**
  * @brief Run the Simulation in discrete steps, evolve the World and report results.
  */
+template<typename FP=double>
 class Simulation
 {
     using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
@@ -43,7 +44,14 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      * @param[in] world The World to simulate.
      */
-    Simulation(TimePoint t0, World&& world);
+    Simulation(TimePoint t, World<FP>&& world)
+        : m_world(std::move(world))
+        , m_result(Eigen::Index(InfectionState::Count))
+        , m_t(t)
+        , m_dt(hours(1))
+    {
+        initialize_locations(m_t);
+    }
 
     /**
      * @brief Create a Simulation with an empty World.
@@ -52,7 +60,7 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      */
     Simulation(TimePoint t0)
-        : Simulation(t0, World())
+        : Simulation(t0, World<FP>())
     {
     }
 
@@ -60,7 +68,16 @@ public:
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
      */
-    void advance(TimePoint tmax);
+    void advance(TimePoint tmax)
+    {
+        //log initial system state
+        initialize_locations(m_t);
+        store_result_at(m_t);
+        while (m_t < tmax) {
+            evolve_world(tmax);
+            store_result_at(m_t);
+        }
+    }
 
     /** 
      * @brief Run the Simulation from the current time to tmax.
@@ -101,21 +118,40 @@ public:
     /**
      * @brief Get the World that this Simulation evolves.
      */
-    World& get_world()
+    World<FP>& get_world()
     {
         return m_world;
     }
-    const World& get_world() const
+    const World<FP>& get_world() const
     {
         return m_world;
     }
 
 private:
-    void initialize_locations(TimePoint t);
-    void store_result_at(TimePoint t);
-    void evolve_world(TimePoint tmax);
+    void initialize_locations(TimePoint t)
+    {
+        for (auto& location : m_world.get_locations()) {
+            location.initialize_subpopulations(t);
+        }
+    }
 
-    World m_world; ///< The World to simulate.
+    void store_result_at(TimePoint t)
+    {
+        m_result.add_time_point(t.days());
+        m_result.get_last_value().setZero();
+        for (auto& location : m_world.get_locations()) {
+            m_result.get_last_value() += location.get_subpopulations().get_last_value().template cast<ScalarType>();
+        }
+    }
+
+    void evolve_world(TimePoint tmax)
+    {
+        auto dt = std::min(m_dt, tmax - m_t);
+        m_world.evolve(m_t, dt);
+        m_t += m_dt;
+    }
+
+    World<FP> m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.

@@ -90,10 +90,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
     m_infection_states.erase(last, m_infection_states.end());
 }
 
-bool TestingCriteria::evaluate(const Person& p, const Location& l, TimePoint t) const
-{
-    return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p, t);
-}
+
 
 bool TestingCriteria::has_requested_age(const Person& p) const
 {

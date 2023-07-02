@@ -98,7 +98,10 @@ public:
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
      */
     template<typename FP=double>
-    bool evaluate(const Person<FP>& p, const Location<FP>& l, TimePoint t) const;
+    bool evaluate(const Person<FP>& p, const Location<FP>& l, TimePoint t) const
+    {
+        return has_requested_age(p) && is_requested_location_type(l) && has_requested_infection_state(p, t);
+    }
 
 private:
     /**
