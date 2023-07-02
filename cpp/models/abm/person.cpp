@@ -107,7 +107,7 @@ void Person::change_time_since_transmission(const InfectionState curr_inf_state,
     if (new_inf_state == InfectionState::Recovered || new_inf_state == InfectionState::Dead) {
         m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
     }
-    if (curr_inf_state != new_inf_state) {
+    else if (curr_inf_state != new_inf_state) {
         if (new_inf_state == InfectionState::Exposed) {
             m_time_since_transmission = mio::abm::TimeSpan(0);
         }
