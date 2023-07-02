@@ -20,7 +20,6 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
-#include "abm/person.h"
 #include "abm/mask_type.h"
 #include "abm/parameters.h"
 #include "abm/location_type.h"
@@ -34,6 +33,7 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/memory.h"
+#include "abm/infection.h"
 #include <array>
 #include <random>
 #include <numeric>
@@ -230,7 +230,7 @@ public:
                                   local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
             if (virus != VirusVariant::Count) {
                 person.add_new_infection(
-                    Infection<FP>(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+                    mio::abm::Infection<FP>(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
             }
         }
     }
