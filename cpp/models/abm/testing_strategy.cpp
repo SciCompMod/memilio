@@ -92,13 +92,7 @@ void TestingCriteria::remove_infection_state(const InfectionState infection_stat
 
 
 
-bool TestingCriteria::has_requested_age(const Person& p) const
-{
-    if (m_ages.empty()) {
-        return true; // no condition on the age
-    }
-    return std::find(m_ages.begin(), m_ages.end(), p.get_age()) != m_ages.end();
-}
+
 
 bool TestingCriteria::is_requested_location_type(const Location& l) const
 {

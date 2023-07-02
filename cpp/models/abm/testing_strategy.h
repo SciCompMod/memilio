@@ -109,7 +109,13 @@ private:
      * @param[in] p Person to be checked.
      */
     template<typename FP=double>
-    bool has_requested_age(const Person<FP>& p) const;
+    bool has_requested_age(const Person<FP>& p) const
+    {
+        if (m_ages.empty()) {
+            return true; // no condition on the age
+        }
+        return std::find(m_ages.begin(), m_ages.end(), p.get_age()) != m_ages.end();
+    }
 
     /**
      * @brief Check if a Location is in the set of Location%s that are allowed for testing.
