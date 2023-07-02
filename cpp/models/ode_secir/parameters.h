@@ -490,7 +490,7 @@ public:
                 return 1;
             }
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
-                log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
+                log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
                 return 1;
             }
