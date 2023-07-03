@@ -25,6 +25,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/time.h"
+#include "memilio/utils/random_number_generator.h" // IWYU pragma: keep
 
 namespace mio
 {
@@ -122,7 +123,13 @@ private:
      * @param[in] l Location to be checked.
      */
     template<typename FP=double>
-    bool is_requested_location_type(const Location<FP>& l) const;
+    bool is_requested_location_type(const Location<FP>& l) const
+    {
+        if (m_location_types.empty()) {
+            return true; // no condition on the location
+        }
+        return std::find(m_location_types.begin(), m_location_types.end(), l.get_type()) != m_location_types.end();
+    }
 
     /**
      * @brief Check if a Person has the required InfectionState to get tested.
@@ -130,7 +137,14 @@ private:
      * @param[in] t TimePoint when to check.
      */
     template<typename FP=double>
-    bool has_requested_infection_state(const Person<FP>& p, TimePoint t) const;
+    bool has_requested_infection_state(const Person<FP>& p, TimePoint t) const
+    {
+        if (m_infection_states.empty()) {
+            return true; // no condition on infection state
+        }
+        return std::find(m_infection_states.begin(), m_infection_states.end(), p.get_infection_state(t)) !=
+               m_infection_states.end();
+    }
 
     std::vector<AgeGroup> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
     std::vector<LocationType> m_location_types; /**< Set of #LocationState%s that are either allowed or required to be 
@@ -157,36 +171,69 @@ public:
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
     TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
-                  TimePoint start_date, TimePoint end_date, const GenericTest<FP>& test_type, ScalarType probability);
+                  TimePoint start_date, TimePoint end_date, const GenericTest<FP>& test_type, ScalarType probability)
+        : m_testing_criteria(testing_criteria)
+        , m_minimal_time_since_last_test(minimal_time_since_last_test)
+        , m_start_date(start_date)
+        , m_end_date(end_date)
+        , m_test_type(test_type)
+        , m_probability(probability)
+    {
+    }
+
 
     /**
      * @brief Compares two TestingScheme%s for functional equality.
      */
-    bool operator==(const TestingScheme& other) const;
+    bool operator==(const TestingScheme& other) const
+    {
+        return this->m_testing_criteria == other.m_testing_criteria &&
+               this->m_minimal_time_since_last_test == other.m_minimal_time_since_last_test &&
+               this->m_start_date == other.m_start_date && this->m_end_date == other.m_end_date &&
+               this->m_test_type.get_default().sensitivity == other.m_test_type.get_default().sensitivity &&
+               this->m_test_type.get_default().specificity == other.m_test_type.get_default().specificity &&
+               this->m_probability == other.m_probability;
+        //To be adjusted and also TestType should be static.
+    }
 
     /**
      * @brief Add a TestingCriteria to the set of TestingCriteria that are checked for testing.
      * @param[in] criteria TestingCriteria to be added.
      */
-    void add_testing_criteria(const TestingCriteria criteria);
+    void add_testing_criteria(const TestingCriteria criteria)
+    {
+        if (std::find(m_testing_criteria.begin(), m_testing_criteria.end(), criteria) == m_testing_criteria.end()) {
+            m_testing_criteria.push_back(criteria);
+        }
+    }
 
     /**
      * @brief Remove a TestingCriteria from the set of TestingCriteria that are checked for testing.
      * @param[in] criteria TestingCriteria to be removed.
      */
-    void remove_testing_criteria(const TestingCriteria criteria);
+    void remove_testing_criteria(const TestingCriteria criteria)
+    {
+        auto last = std::remove(m_testing_criteria.begin(), m_testing_criteria.end(), criteria);
+        m_testing_criteria.erase(last, m_testing_criteria.end());
+    }
 
     /**
      * @brief Get the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
-    bool is_active() const;
+    bool is_active() const
+    {
+        return m_is_active;
+    }
 
     /**
      * @brief Checks if the scheme is active at a given time and updates activity status.
      * @param[in] t TimePoint to be updated at.
      */
-    void update_activity_status(TimePoint t);
+    void update_activity_status(TimePoint t)
+    {
+        m_is_active = (m_start_date <= t && t <= m_end_date);
+    }
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
@@ -195,7 +242,21 @@ public:
      * @param[in] t TimePoint when to run the scheme.
      * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(Person<FP>& person, const Location<FP>& location, TimePoint t) const;
+    bool run_scheme(Person<FP>& person, const Location<FP>& location, TimePoint t) const
+    {
+        if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
+            double random = UniformDistribution<double>::get_instance()();
+            if (random < m_probability) {
+                if (std::any_of(m_testing_criteria.begin(), m_testing_criteria.end(),
+                                [person, location, t](TestingCriteria tr) {
+                                    return tr.evaluate(person, location, t);
+                                })) {
+                    return !person.get_tested(t, m_test_type.get_default());
+                }
+            }
+        }
+        return true;
+    }
 
 private:
     std::vector<TestingCriteria> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
@@ -219,26 +280,45 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<TestingScheme<FP>>& testing_schemes);
+    explicit TestingStrategy(const std::vector<TestingScheme<FP>>& testing_schemes)
+        : m_testing_schemes(testing_schemes)
+    {
+    }
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const TestingScheme<FP>& scheme);
+    void add_testing_scheme(const TestingScheme<FP>& scheme)
+    {
+        if (std::find(m_testing_schemes.begin(), m_testing_schemes.end(), scheme) == m_testing_schemes.end()) {
+            m_testing_schemes.push_back(scheme);
+        }
+    }
+
 
     /**
      * @brief Remove a TestingScheme from the set of schemes that are checked for testing.
      * @param[in] scheme TestingScheme to be removed.
      */
-    void remove_testing_scheme(const TestingScheme<FP>& scheme);
+    void remove_testing_scheme(const TestingScheme<FP>& scheme)
+    {
+        auto last = std::remove(m_testing_schemes.begin(), m_testing_schemes.end(), scheme);
+        m_testing_schemes.erase(last, m_testing_schemes.end());
+    }
 
     /**
      * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
      * changes the activity status for each TestingScheme accordingly.
      * @param t TimePoint to check the activity status of each TestingScheme.
      */
-    void update_activity_status(const TimePoint t);
+    void update_activity_status(const TimePoint t)
+    {
+        for (auto& ts : m_testing_schemes) {
+            ts.update_activity_status(t);
+        }
+    }
+
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
@@ -247,7 +327,19 @@ public:
      * @param[in] t TimePoint when to run the strategy.
      * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(Person<FP>& person, const Location<FP>& location, TimePoint t) const;
+    bool run_strategy(Person<FP>& person, const Location<FP>& location, TimePoint t) const
+    {
+        // Person who is in quarantine but not yet home should go home. Otherwise they can't because they test positive.
+        if (location.get_type() == mio::abm::LocationType::Home && person.is_in_quarantine()) {
+            return true;
+        }
+        return std::all_of(m_testing_schemes.begin(), m_testing_schemes.end(), [&person, location, t](TestingScheme<FP> ts) {
+            if (ts.is_active()) {
+                return ts.run_scheme(person, location, t);
+            }
+            return true;
+        });
+    }
 
 private:
     std::vector<TestingScheme<FP>> m_testing_schemes; ///< Set of schemes that are checked for testing.

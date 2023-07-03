@@ -241,7 +241,20 @@ void add_household_to_world(World<FP>& world, const Household& household)
  * @param[in,out] world The World to which the group has to be added.
  * @param[in] household_group The HouseholdGroup to add.
  */
-void add_household_group_to_world(World& world, const HouseholdGroup& household_group);
+template<typename FP=double>
+void add_household_group_to_world(World<FP>& world, const HouseholdGroup& household_group)
+{
+    auto households = household_group.get_households();
+
+    for (auto& householdTuple : households) {
+        int count;
+        Household household;
+        std::tie(household, count) = householdTuple;
+        for (int j = 0; j < count; j++) {
+            add_household_to_world(world, household);
+        }
+    }
+}
 
 } // namespace abm
 } // namespace mio
