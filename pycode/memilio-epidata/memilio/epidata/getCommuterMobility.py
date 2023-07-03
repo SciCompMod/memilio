@@ -26,8 +26,6 @@ import collections
 import os
 import numpy as np
 import pandas as pd
-import wget
-from zipfile import ZipFile
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -167,14 +165,14 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
-    countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
+    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
     govkey_list = geoger.get_governing_regions()
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
 
     population = gPd.get_population_data(
-        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
+        out_folder=out_folder, merge_eisenach=True, read_data=read_data)
 
     countypop_list = list(population[dd.EngEng["population"]])
 
@@ -210,6 +208,11 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
         commuter_migration_file = gd.get_file(
             '', url, False, param_dict, interactive=True)
+        
+        # merge eisenach and wartburgkreis
+        commuter_migration_file.iloc[:,2].replace('16056', '16063', inplace = True)
+        commuter_migration_file.iloc[:,0].replace('16056', '16063', inplace = True)
+        
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -247,7 +250,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         current_row = countykey2numlist[commuter_migration_file.iloc[i][2]]
                         # TODO
                         val = commuter_migration_file.iloc[i][4]
-                        mat_commuter_migration[current_row, current_col] = val
+                        mat_commuter_migration[current_row, current_col] += val
                         checksum += val
                         counties_migratedfrom[countykey2govkey[commuter_migration_file.iloc[i][2]]
                                               ][countykey2localnumlist[commuter_migration_file.iloc[i][2]]] = 1
@@ -428,34 +431,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     df_commuter_migration = pd.DataFrame(
         data=mat_commuter_migration, columns=countykey_list)
     df_commuter_migration.index = countykey_list
-    filename = 'migration_bfa_20' + files[0].split(
-        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
-    gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
-
-    # this is neither a very elegant nor a very general way to merge...
-    # better options to be searched for!
-    merge_id = 16063
-    new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
-    old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
-
-    mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx,
-                                                                :] + mat_commuter_migration[old_idx, :]
-    mat_commuter_migration[:, new_idx] = mat_commuter_migration[:,
-                                                                new_idx] + mat_commuter_migration[:, old_idx]
-    mat_commuter_migration[new_idx, new_idx] = 0
-
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
-
-    countykey_list = geoger.get_county_ids()
-    df_commuter_migration = pd.DataFrame(
-        data=mat_commuter_migration, columns=countykey_list)
-    df_commuter_migration.index = countykey_list
     commuter_sanity_checks(df_commuter_migration)
     filename = 'migration_bfa_20' + files[0].split(
-        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+        '-20')[1][0:2]
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
-    gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
     gd.write_dataframe(
         df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
         'commuter_migration_scaled_20' + files[0].split('-20')[1][0: 2],

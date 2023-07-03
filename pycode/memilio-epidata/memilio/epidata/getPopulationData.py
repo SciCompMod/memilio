@@ -121,6 +121,11 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
     df_pop_export[dd.EngEng['population']
                   ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
+    if df_pop_export[dd.EngEng['population']][df_pop_export.ID_County=='16056'].values==0:
+        df_pop_export = geoger.merge_df_counties_all(
+            df_pop_export, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
+
     if len(df_pop_export) == 401:
         filename = 'county_current_population_dim401'
         gd.write_dataframe(df_pop_export, directory, filename, file_format)
@@ -139,7 +144,7 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    '''creates new dataframe and copies values of counties from old dataframe'''
+    '''Creates new dataframe and copies values of counties from old dataframe'''
 
     new_cols = {dd.EngEng['idCounty']: counties[:, 1],
                 dd.EngEng['county']: counties[:, 0]}
