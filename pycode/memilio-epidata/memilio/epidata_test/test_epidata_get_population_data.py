@@ -21,9 +21,6 @@ import os
 import unittest
 from unittest.mock import patch
 
-import twill
-import numpy as np
-import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import defaultDict as dd

@@ -198,6 +198,7 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
 def get_population_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
+                        no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
                         username='',
                         password=''):
@@ -229,9 +230,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param out_folder Path to folder where data is written in folder
         out_folder/Germany. Default defined in defaultDict.
     @param no_raw True or False. Defines if unchanged raw data is written or
-        not. Default defined in defaultDict.
-    @param split_gender [Default: False] or True. Defines whether data is
-        splitted by gender
+        not. Default defined in defaultDict. Currently not used.
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.

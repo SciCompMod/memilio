@@ -119,6 +119,7 @@ jobs:
           getjhdata -o data_dl --no-progress-indicators
           getdividata -o data_dl --no-progress-indicators
           getcommutermobility -o data_dl --no-progress-indicators
+          getpopulationdata -o data_dl --no-progress-indicators --username=${{ secrets.REGIODBUSER }} --password=${{ secrets.REGIODBPW }}
           getvaccinationdata -o data_dl --no-progress-indicators
           gethospitalizationdata -o data_dl --no-progress-indicators
       - name: Upload Data

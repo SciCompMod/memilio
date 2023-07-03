@@ -348,6 +348,13 @@ def cli(what):
         help='Disables all progress indicators (used for downloads etc.).',
         action='store_true')
 
+    parser.add_argument(
+        '--username', type=str
+    )
+
+    parser.add_argument(
+        '--password', type=str
+    )
     args = vars(parser.parse_args())
     # disable progress indicators globally, if the argument --no-progress-indicators was specified
     progress_indicator.ProgressIndicator.disable_indicators(
