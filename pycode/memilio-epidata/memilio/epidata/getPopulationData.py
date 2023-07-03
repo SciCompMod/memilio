@@ -264,7 +264,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     # read county list and create output data frame
     counties = np.array(geoger.get_county_names_and_ids(
-        merge_berlin=True, merge_eisenach=False, zfill=True))
+        merge_berlin=True, merge_eisenach=merge_eisenach, zfill=True))
     age_cols = df_pop_raw.loc[
         idCounty_idx[0]: idCounty_idx[1] - 2,  # -1 for '12411-09-01-4-B'
         dd.EngEng['ageRKI']].copy().values
