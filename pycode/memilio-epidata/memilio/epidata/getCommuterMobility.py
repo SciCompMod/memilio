@@ -208,11 +208,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
         commuter_migration_file = gd.get_file(
             '', url, False, param_dict, interactive=True)
-        
+
         # merge eisenach and wartburgkreis
-        commuter_migration_file.iloc[:,2].replace('16056', '16063', inplace = True)
-        commuter_migration_file.iloc[:,0].replace('16056', '16063', inplace = True)
-        
+        commuter_migration_file.iloc[:, 2].replace(
+            '16056', '16063', inplace=True)
+        commuter_migration_file.iloc[:, 0].replace(
+            '16056', '16063', inplace=True)
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from

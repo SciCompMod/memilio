@@ -121,7 +121,7 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
     df_pop_export[dd.EngEng['population']
                   ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
-    if df_pop_export[dd.EngEng['population']][df_pop_export.ID_County=='16056'].values==0:
+    if df_pop_export[dd.EngEng['population']][df_pop_export.ID_County == '16056'].values == 0:
         df_pop_export = geoger.merge_df_counties_all(
             df_pop_export, sorting=[dd.EngEng["idCounty"]],
             columns=dd.EngEng["idCounty"])

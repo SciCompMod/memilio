@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p data_dl
           getcasedata -o data_dl --no-progress-indicators
-          getpopulationdata -o data_dl --no-progress-indicators --username=${{ secrets.REGIODBUSER }} --password=${{ secrets.REGIODBPW }}
+          getpopuldata -o data_dl --no-progress-indicators --username=${{ secrets.REGIODBUSER }} --password=${{ secrets.REGIODBPW }}
           getjhdata -o data_dl --no-progress-indicators
           getdividata -o data_dl --no-progress-indicators
           getcommutermobility -o data_dl --no-progress-indicators
