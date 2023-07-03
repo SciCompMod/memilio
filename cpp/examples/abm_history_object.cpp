@@ -17,11 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/abm.h"
+#include "abm/abm.h" // IWYU pragma: keep
 #include "abm/household.h"
 #include <cstdio>
 #include "abm/world.h"
-#include "memilio/io/io.h"
+#include "memilio/io/io.h" // IWYU pragma: keep
 #include "abm/location_type.h"
 #include <fstream>
 #include <string>
@@ -60,13 +60,13 @@ void write_log_to_file(const T& history)
 int main()
 {
     // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
-    mio::abm::GlobalInfectionParameters infection_params;
+    mio::abm::GlobalInfectionParameters<double> infection_params;
 
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    infection_params.get<mio::abm::IncubationPeriod>() = 4.;
+    infection_params.get<mio::abm::IncubationPeriod<double>>() = 4.;
 
     // Create the world with infection parameters.
-    auto world = mio::abm::World(infection_params);
+    auto world = mio::abm::World<double>(infection_params);
 
     // There are 3 households for each household group.
     int n_households = 3;
@@ -120,12 +120,12 @@ int main()
     auto probability      = 0.5;
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type        = mio::abm::AntigenTest();
+    auto test_type        = mio::abm::AntigenTest<double>();
     auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work =
         std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
     auto testing_scheme_work =
-        mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme<double>(testing_criteria_work, testing_min_time, start_date, end_date, test_type, probability);
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 
     // Assign infection state to each person.
@@ -135,7 +135,7 @@ int main()
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection<double>(mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), start_date,
                                                          infection_state));
     }
@@ -163,18 +163,18 @@ int main()
 
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation(t0, std::move(world));
+    auto sim  = mio::abm::Simulation<double>(t0, std::move(world));
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<double>& sim)
         {
             return sim.get_time().hours();
         }
     };
     struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<double>& sim)
         {
             Type location_ids{};
             for (auto& location : sim.get_world().get_locations()) {

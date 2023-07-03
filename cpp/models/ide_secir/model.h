@@ -356,7 +356,7 @@ public:
 
             m_forceofinfection +=
                 parameters.template get<TransmissionProbabilityOnContact>() *
-                parameters.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
+                parameters.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
                 ((parameters
                           .template get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
                       parameters

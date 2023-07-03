@@ -103,7 +103,7 @@ LocationType go_to_shop(const Person<FP>& person, TimePoint t,
     if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine()) {
         return random_transition(current_loc, dt,
-                                 {{LocationType::BasicsShop, params.template get<BasicShoppingRate>()[person.get_age()]}});
+                                 {{LocationType::BasicsShop, params.template get<BasicShoppingRate<FP>>()[person.get_age()]}});
     }
 
     //return home

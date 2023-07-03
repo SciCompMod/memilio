@@ -49,7 +49,7 @@ public:
      * @param[in] dt Step size of numerical solver.
      */
     Simulation(Model<FP> const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
-        : m_model(std::make_unique<Model>(model))
+        : m_model(std::make_unique<Model<FP>>(model))
         , m_t0(t0)
         , m_dt(dt)
     {

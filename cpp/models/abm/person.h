@@ -456,7 +456,7 @@ public:
             return 0.;
         }
         else {
-            return params.template get<MaskProtection>()[m_mask.get_type()];
+            return params.template get<MaskProtection<FP>>()[m_mask.get_type()];
         }
     }
 

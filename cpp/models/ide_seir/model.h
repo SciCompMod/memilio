@@ -93,10 +93,10 @@ public:
 
             // R0t is the effective reproduction number at time t
             auto R0t1 =
-                parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
+                parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(m_result.get_time(idx - 2))(0, 0) *
                 parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
             auto R0t2 =
-                parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
+                parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(m_result.get_last_time())(0, 0) *
                 parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
 
             m_result.get_last_value() =
