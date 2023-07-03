@@ -64,28 +64,16 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
         corr_offdiag = np.append(corr_offdiag, abs(
             corr_mat[np.ix_(clusters[ii], clusters_perp[ii])].flatten()))
 
-    corr_thresholds = [0.25, 0.5, 0.75]
-    cluster_quantification = np.zeros(6)
-    for ii in range(len(corr_thresholds)):
-        num_diag = len(np.where(corr_diag > corr_thresholds[ii])[0])
-        num_offdiag = len(np.where(corr_offdiag > corr_thresholds[ii])[0])
-        if ii < len(corr_thresholds)-1:
-            num_diag -= len(np.where(corr_diag > corr_thresholds[ii+1])[0])
-            num_offdiag -= len(np.where(corr_offdiag >
-                               corr_thresholds[ii+1])[0])
-        cluster_quantification[2*ii] = num_diag / (num_diag+num_offdiag)
-        cluster_quantification[2*ii+1] = (
-            num_diag+num_offdiag) / (len(indices_all)**2)
+    step_width=0.02
+    corr_thresholds = np.linspace(0+step_width, 1, int(1/step_width))
+    p_diag = np.array([len(np.where(corr_offdiag <= corr_thresholds[i])[0])
+                      for i in range(len(corr_thresholds))])/len(corr_offdiag)*step_width
+    p_offdiag = np.array([len(np.where(corr_diag < corr_thresholds[i])[0])
+                         for i in range(len(corr_thresholds))])/len(corr_diag)*step_width
+    
+    print(p_diag.sum(), p_offdiag.sum())
 
-    # print scores on clustering
-    print("Number of clusters: " + str(len(clusters)) +
-          ", shares diag/all between [0.25, 0.5, 0.75]: %.4f" %
-          cluster_quantification[0] + " (%.4f" % cluster_quantification[1] +
-          "), " + " %.4f " % cluster_quantification[2] + " (%.4f" %
-          cluster_quantification[3] + "), " + " %.4f " %
-          cluster_quantification[4] + " (%.4f" % cluster_quantification[5] + ")")
-
-    return cluster_quantification
+    return clusters, p_diag.sum()+p_offdiag.sum()
 
 
 def compute_hierarch_clustering(corr_mat, corr_pairwdist,
@@ -158,6 +146,9 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
     # allow single entries
     if not isinstance(weights, list):
         weights = [weights]
+
+    total_eval_number = [[] for weight in weights]
+    n=0
     # iterate over weights
     for weight in weights:
         # use the given weight to flatten the dendrogram
@@ -165,12 +156,16 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
             cluster_hierarch, weight, criterion='distance')
 
         # evaluate clustering
-        evaluate_clustering(corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
+        clusters, total_eval_number[n]=evaluate_clustering(corr_mat, npi_idx_to_cluster_idx, npi_indices_all)
 
         # append new npi_idx to cluster_idx assignment to list of assignments
         npi_idx_to_cluster_idx_list.append(npi_idx_to_cluster_idx)
+        n+=1
+    
+    # print scores on clustering
+    print("Number of clusters: " + str(len(clusters)) + "; evaluation number: " + str(round(np.nanmax(abs(np.array(total_eval_number))), 4)))
 
-    return npi_idx_to_cluster_idx_list
+    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmax(abs(np.array(total_eval_number))))]
 
 
 def analyze_npi_data(
@@ -324,12 +319,12 @@ def analyze_npi_data(
             plt.figure()
             plt.title(metric)
             hierarchy.dendrogram(cluster_hierarch)
-            plt.show()
+            # plt.show()
             max_coph_dist = coph_dist.max()
             flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in [0.6, 0.625, 0.65, 0.675, 0.7, 0.725, 0.75]])
+                 for wg in np.linspace(0.01,1,100)])
             # ward
             metric = 'ward'
             cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
@@ -344,7 +339,7 @@ def analyze_npi_data(
             max_coph_dist = coph_dist.max()
             flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
-                [wg * max_coph_dist for wg in [0.1, 0.125, 0.15, 0.175, 0.2]])
+                [wg * max_coph_dist for wg in np.linspace(0.01,1,100)])
             # average
             metric = 'average'
             cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
@@ -360,7 +355,7 @@ def analyze_npi_data(
             flatten_hierarch_clustering(
                 npis_corr, cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in [0.475, 0.5, 0.525, 0.55, 0.575, 0.6, 0.625, 0.65]])
+                 for wg in np.linspace(0.01,1,100)])
 
         metric = 'centroid'
         cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
@@ -379,14 +374,14 @@ def analyze_npi_data(
              for wg in [0.50]]) # 10 cluster
 
         cluster_dict = dict()
-        cluster_codes = [[] for i in range(npi_idx_to_cluster_idx[0].max()+1)]
-        cluster_desc = [[] for i in range(npi_idx_to_cluster_idx[0].max()+1)]
-        for i in range(len(npi_idx_to_cluster_idx[0])):
+        cluster_codes = [[] for i in range(npi_idx_to_cluster_idx.max()+1)]
+        cluster_desc = [[] for i in range(npi_idx_to_cluster_idx.max()+1)]
+        for i in range(len(npi_idx_to_cluster_idx)):
             cluster_dict[npi_codes_used[i]
-                         ] = "CM_" + str(npi_idx_to_cluster_idx[0][i]).zfill(3)
-            cluster_codes[npi_idx_to_cluster_idx[0]
+                         ] = "CM_" + str(npi_idx_to_cluster_idx[i]).zfill(3)
+            cluster_codes[npi_idx_to_cluster_idx
                           [i]].append(npi_codes_used[i])
-            cluster_desc[npi_idx_to_cluster_idx[0]
+            cluster_desc[npi_idx_to_cluster_idx
                          [i]].append(str(npis_used[i]))
 
         # create clustered dataframe
