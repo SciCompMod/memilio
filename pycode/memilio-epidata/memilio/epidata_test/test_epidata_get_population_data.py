@@ -48,6 +48,5 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
                 username='', password='', read_data=True, directory=directory)
 
 
-
 if __name__ == '__main__':
     unittest.main()

@@ -221,7 +221,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     this normally is Memilio/data/pydata/Germany. 
     The folders 'pydata/Germany' have to be created if they do not exist yet. 
     Then this script can be run.
-    
+
     @param read_data False or True. Defines if data is read from file or
         downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data.
@@ -237,7 +237,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         combined as one entity 'Wartburgkreis'.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    
+
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
