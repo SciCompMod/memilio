@@ -126,6 +126,8 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
             df_pop_export, sorting=[dd.EngEng["idCounty"]],
             columns=dd.EngEng["idCounty"])
 
+    gd.check_dir(directory)
+
     if len(df_pop_export) == 401:
         filename = 'county_current_population_dim401'
         gd.write_dataframe(df_pop_export, directory, filename, file_format)

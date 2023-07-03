@@ -19,8 +19,10 @@
 #############################################################################
 import os
 import unittest
-from unittest.mock import patch
+import json
+import pandas as pd
 
+from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import defaultDict as dd
@@ -33,9 +35,31 @@ progress_indicator.ProgressIndicator.disable_indicators(True)
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     path = '/home/Population_Data'
-    
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(
+        here, 'test_data', 'test_epidata_popul_export.json')
+    with open(filename) as file_object:
+        df_pop = pd.DataFrame(json.load(file_object))
+
     def setUp(self):
         self.setUpPyfakefs()
+
+    def test_export_population_data(self):
+
+        result_df = gpd.export_population_dataframe(
+            self.df_pop, self.path, 'json', True)
+        # check if one file is written
+        self.assertEqual(len(os.listdir(self.path)), 1)
+
+        # test result
+        self.assertEqual(result_df[result_df.ID_County == 16056].empty, True)
+        self.assertEqual(
+            result_df[result_df.ID_County == 16063]['Population'].values, 81222)
+        self.assertEqual(result_df.shape, (400, 13))
+        self.assertListEqual(list(result_df.columns), ['ID_County', 'Population', '<3 years', '3-5 years', '6-14 years', '15-17 years',
+                                                       '18-24 years', '25-29 years', '30-39 years', '40-49 years',
+                                                       '50-64 years', '65-74 years', '>74 years'])
 
     def test_read_population_data(self):
 

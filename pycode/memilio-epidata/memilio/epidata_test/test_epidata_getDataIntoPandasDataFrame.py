@@ -507,8 +507,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         arg_dict_cases_est = {**arg_dict_cases}
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
-        
-        arg_dict_popul = {**arg_dict_all, "username":None, "password":None}
+
+        arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
 
         getVaccinationData.main()
         mock_vaccination.assert_called()
