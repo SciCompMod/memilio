@@ -237,6 +237,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @return DataFrame with adjusted population data for all ages to current level.
     """
 
+    print(username, password)
+
     directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 

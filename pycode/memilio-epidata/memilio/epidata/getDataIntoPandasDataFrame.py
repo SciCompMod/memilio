@@ -260,7 +260,7 @@ def cli(what):
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
+                "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
@@ -348,13 +348,14 @@ def cli(what):
         help='Disables all progress indicators (used for downloads etc.).',
         action='store_true')
 
-    parser.add_argument(
-        '--username', type=str
-    )
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
 
-    parser.add_argument(
-        '--password', type=str
-    )
+        parser.add_argument(
+            '--password', type=str
+        )
     args = vars(parser.parse_args())
     # disable progress indicators globally, if the argument --no-progress-indicators was specified
     progress_indicator.ProgressIndicator.disable_indicators(
