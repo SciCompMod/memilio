@@ -25,33 +25,41 @@
 #include "lct_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
-
+#include <string>
 
 
 namespace mio
 {
 namespace lsecir
 {
-class Model: public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters>
+class Model
 {
     using ParameterSet = Parameters;
 
 public:
-    Model();
+    Model(TimeSeries<ScalarType>&& init, ScalarType N_0, const InfectionState InfectionState_init= InfectionState(), const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
     * @brief Checks constraints on model parameters.
     */
     void check_constraints() const;
 
-    void eval_right_hand_side();
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t,
+                              Eigen::Ref<Eigen::VectorXd> dydt) const;
+    
+    void calculate_populations();
+    std::string get_heading() const;
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    InfectionState InfectionStates;
-    /* Attention: m_populations and m_transitions do not necessarily have the same number of time points due to the initialization part. */
-    TimeSeries<ScalarType>
-        m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
+    InfectionState m_InfectionStates;
+    TimeSeries<ScalarType> m_Subcompartments;
+    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
+    
 
+    Eigen::VectorXd get_initial_values(){
+        return m_Subcompartments[0];
+    }
+    
 private:
     ScalarType m_N{0}; ///< Total population size of the considered region.
 };

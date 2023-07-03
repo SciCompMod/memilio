@@ -21,6 +21,8 @@
 
 #ifndef LCTSECIR_INFECTIONSTATE_H
 #define LCTSECIR_INFECTIONSTATE_H
+
+#include "memilio/utils/logging.h"
 #include<vector>
 
 
@@ -48,6 +50,7 @@ enum class InfectionStateBase
 };
 
 class InfectionState{
+public:
     InfectionState():
     m_SubcompartmentNumbers(std::vector<int>((int)InfectionStateBase::Count, 1)),
     m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1))
@@ -56,18 +59,19 @@ class InfectionState{
     }
 
     InfectionState(std::vector<int> SubcompartmentNumbers):
-        m_SubcompartmentNumbers(std::move(SubcompartmentNumber))
+        m_SubcompartmentNumbers(std::move(SubcompartmentNumbers)),
         m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1)){
-        if(!(SubcompartmentNumber.size()==(int)InfectionStateBase::Count)){
+        if(!(m_SubcompartmentNumbers.size()==(int)InfectionStateBase::Count)){
             log_error("Vector for number of subcompartments has the wrong size.");
         }
+        //TODO: lieber constraint ceck rein, dann auc prüfen, dass >=1
         set_compartment_index();
     }
     
 
     void set_compartment_index(){
             int index=0;
-            for(int i=0; i< (int)InfectionStateBase::Count;i++){
+            for(int i=0; i<(int)(InfectionStateBase::Count) ;i++){
                 m_SubcompartmentNumbersindexfirst[i]=index;
                 index=index+m_SubcompartmentNumbers[i];
             }
@@ -76,10 +80,9 @@ class InfectionState{
         }
 
     std::vector<int> m_SubcompartmentNumbers;
-    istd::vector<int> m_SubcompartmentNumbersindexfirst();
-    int Count;
-        
-}
+    std::vector<int> m_SubcompartmentNumbersindexfirst;
+    int Count;    
+};
 
 } // namespace lsecir
 } // namespace mio

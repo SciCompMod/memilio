@@ -24,7 +24,6 @@
 #include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/math/smoother.h"
 
 #include <vector>
 
@@ -36,24 +35,6 @@ namespace lsecir
 /**********************************************
 * Define Parameters of the LCT-SECIHURD model *
 **********************************************/
-
-/**
- * @brief Defines Number of Subcompartments for each compartment in InfectionState.
- */
-struct SubcompartmentNumbers {
-    /* For consistency, also define Number for Compartments where are no subcompartments possible. 
-    For these States set number on 1.*/
-    using Type = std::vector<int>;
-    static Type get_default()
-    {
-        return std::vector<int>((int)InfectionState::Count, 1);
-    }
-
-    static std::string name()
-    {
-        return "TransitionProbabilities";
-    }
-};
 
 /**
  * @brief The latency time in the SECIR model in day unit.
@@ -88,7 +69,7 @@ struct TimeInfectedNoSymptoms {
 /**
  * @brief Average time spent in the TimeInfectedSymptoms before going to Hospital or recover in the SECIR model in day unit.
  */
-struct TimeInfectedNoSymptoms {
+struct TimeInfectedSymptoms {
     using Type = ScalarType;
     static Type get_default()
     {
@@ -253,8 +234,8 @@ struct DeathsPerCritical {
     }
 };
 
-using ParametersBase =
-    ParameterSet<SubcompartmentNumbers, TimeLatency, TimeInfectedNoSymptoms, TimeInfectedNoSymptoms, TimeInfectedSevere,
+using Parameters =
+    ParameterSet<TimeLatency, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere,
                  TimeInfectedCritical, TransmissionProbabilityOnContact, ContactPatterns,
                  RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic, RecoveredPerInfectedNoSymptoms,
                  SeverePerInfectedSymptoms, CriticalPerSevere, DeathsPerCritical>;

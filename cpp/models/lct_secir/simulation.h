@@ -25,43 +25,42 @@
 #include "lct_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/utils/metaprogramming.h"
+#include "memilio/math/stepper_wrapper.h"
 #include <memory>
 #include <cstdio>
 #include <iostream>
+#include <string>
 
 namespace mio
 {
 namespace lsecir
 {
-
 /**
- * run the simulation in discrete steps and report results.
+ * @brief A class for the simulation of a LCT model.
  */
 class Simulation
 {
-
 public:
     /**
-     * @brief setup the Simulation for an LCT model.
-     * @param[in] model An instance of the LCT model.
-     * @param[in] t0 Start time.
-     * @param[in] dt Step size of numerical solver.
+     * @brief setup the simulation with an ODE solver
+     * @param[in] model An instance of a LCT model
+     * @param[in] t0 start time
+     * @param[in] dt initial step size of integration
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
-        : m_model(std::make_unique<Model>(model))
-        , m_t0(t0)
-        , m_dt(dt),
-        m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>()),
-        m_integrator(
+    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
+        : m_integratorCore(
+              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
-                  model.eval_right_hand_side(y, y, t, dydt);
+                  model.eval_right_hand_side(y, t, dydt);
               },
               t0, m_model->get_initial_values(), dt, m_integratorCore)
     {
     }
 
-    /*
+    /**
      * @brief set the core integrator used in the simulation
      */
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
@@ -70,20 +69,32 @@ public:
         m_integrator.set_integrator(m_integratorCore);
     }
 
-    /** 
-     * Run the simulation from the current time to tmax.
-     * @param tmax Time to stop.
+    /**
+     * @brief get_integrator
+     * @return reference to the core integrator used in the simulation
      */
-    void advance(ScalarType tmax);
+    IntegratorCore& get_integrator()
+    {
+        return *m_integratorCore;
+    }
 
     /**
-     * @brief Get the result of the simulation.
-     * Return the number of persons in all InfectionState%s.
-     * @return The result of the simulation.
+     * @brief get_integrator
+     * @return reference to the core integrator used in the simulation
      */
-    TimeSeries<double>& get_result()
+    IntegratorCore const& get_integrator() const
     {
-        return m_model->m_populations;
+        return *m_integratorCore;
+    }
+
+    /**
+     * @brief advance simulation to tmax
+     * tmax must be greater than get_result().get_last_time_point()
+     * @param tmax next stopping point of simulation
+     */
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    {
+        return m_integrator.advance(tmax);
     }
 
     /**
@@ -91,23 +102,22 @@ public:
      * Return the number of persons in all InfectionState%s.
      * @return The result of the simulation.
      */
-    const TimeSeries<double>& get_result() const
+    TimeSeries<ScalarType>& get_result()
     {
-        return m_model->m_populations;
+        return m_integrator.get_result();
     }
 
     /**
-     * @brief Get the transitions between the different InfectionState%s.
-     * 
-     * @return TimeSeries with stored transitions calculated in the simulation.
+     * @brief get_result returns the final simulation result
+     * @return a TimeSeries to represent the final simulation result
      */
-    TimeSeries<ScalarType> const& get_transitions()
+    const TimeSeries<ScalarType>& get_result() const
     {
-        return m_model->m_transitions;
+        return m_integrator.get_result();
     }
 
     /**
-     * @brief returns the simulation model used in simulation.
+     * @brief returns the simulation model used in simulation
      */
     const Model& get_model() const
     {
@@ -115,7 +125,7 @@ public:
     }
 
     /**
-     * @brief returns the simulation model used in simulation.
+     * @brief returns the simulation model used in simulation
      */
     Model& get_model()
     {
@@ -123,55 +133,54 @@ public:
     }
 
     /**
-     * @brief get the starting time of the simulation.
-     * 
-     */
-    ScalarType get_t0()
+     * @brief returns the next time step chosen by integrator
+    */
+    double get_dt() const
     {
-        return m_t0;
+        return m_integrator.get_dt();
     }
-
-    /**
-     * @brief get the time step of the simulation.
-     * 
-     */
-    ScalarType get_dt()
-    {
-        return m_dt;
-    }
-
-    /**
-     * @brief Print the transition part of the simulation result.
-     * 
-     * The TimeSeries m_transitions with initial values used for the simulation and calculated transitions by the 
-     * simulation are printed. 
-     */
-    void print_transitions() const;
-
-    /**
-     * @brief Print the simulated numbers of individuals in each compartment for each time step.
-     * 
-     * The TimeSeries m_populations with simulated numbers of individuals in each compartment for each time step are printed. 
-     */
-    void print_compartments() const;
 
 private:
-    std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
-    ScalarType m_t0; ///< Start time used for simulation.
-    ScalarType m_dt; ///< Time step used for numerical computations in simulation.
-};
+    std::shared_ptr<IntegratorCore> m_integratorCore;
+    std::unique_ptr<Model> m_model;
+    OdeIntegrator m_integrator;
+}; 
+
+//TODO: In utils oder so verschieben
+void print_TimeSeries(const TimeSeries<double>& result, std::string heading)
+{ 
+    // print compartments after simulation
+    std::cout << heading << std::endl;
+    for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
+        std::cout << result.get_time(i);
+        for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
+            std::cout << " | " << std::fixed << std::setprecision(8) << result[i][j];
+        }
+        std::cout << "\n" << std::endl;
+    }
+}
 
 /**
- * @brief simulates a compartmental model
+ * @brief simulate simulates a compartmental model
  * @param[in] t0 start time
  * @param[in] tmax end time
  * @param[in] dt initial step size of integration
- * @param[in] model an instance of a compartmental model
+ * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  */
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model);
-
-} // namespace isecir
+TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
+                                std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    model.check_constraints();
+    Simulation sim(model, t0, dt);
+    if (integrator) {
+        sim.set_integrator(integrator);
+    }
+    sim.advance(tmax);
+    print_TimeSeries(sim.get_result(), model.get_heading());
+    return sim.get_result();
+}
+} // namespace lsecir
 } // namespace mio
 
-#endif //LCT_SECIR_SIMULATION_H
+#endif // LCT_SECIR_SIMULATION_H
