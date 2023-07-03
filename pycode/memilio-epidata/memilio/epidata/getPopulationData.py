@@ -23,6 +23,7 @@
 @brief Downloads data about population statistic
 
 """
+import warnings
 import requests
 import os
 import twill
@@ -85,23 +86,25 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
     if not read_data:
         sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
-        
+
         # sign in to regionalstatistik.de with given username and password
         twill.browser.user_agent=requests.utils.default_headers()['User-Agent']
         twill.commands.go(sign_in_url)
         twill.commands.fv('3', 'KENNUNG', username)
         twill.commands.fv('3', 'PASSWORT', password)
         twill.commands.submit('login', '3')
-        # navigate to file
+        # navigate to file as in documentation
         twill.commands.follow('Themen')
         twill.commands.follow('12')
         # wait 1 second to prevent error
         time.sleep(1)
         twill.commands.follow('12411')
         twill.commands.follow('12411-02-03-4')
+        # start 'Werteabruf'
         twill.commands.submit('45', '3')
+        # read csv file (1,4 for xlsx)
         twill.commands.submit('1', '5')
-        
+
         df_pop_raw = pd.read_csv(io.StringIO(twill.browser.html), sep=';', header=6)
     
     else:
@@ -125,10 +128,10 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     }
     df_pop_raw.rename(columns=rename_columns, inplace=True)
     # remove date and explanation rows at end of table
-    df_pop_raw = df_pop_raw[:np.where(df_pop_raw.ID_County.str.contains('__'))[0][0]].reset_index(drop=True)
+    df_pop_raw = df_pop_raw[:np.where(df_pop_raw[dd.EngEng['idCounty']].str.contains('__')==True)[0][0]].reset_index(drop=True)
     # get indices of counties first lines
     idCounty_idx = []
-    for id in df_pop_raw[dd.EngEng['idCounty']].unique():
+    for id in df_pop_raw[dd.EngEng['idCounty']].dropna().unique():
         idCounty_idx.append(df_pop_raw[df_pop_raw[dd.EngEng['idCounty']]==id].index.min())
 
     # read county list and create output data frame
@@ -160,30 +163,31 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     empty_data = ['.', '-']
     for i in idCounty_idx:
-        if i == 432:
-            x=1
-        # county information needed
-        if df_pop_raw.loc[i, dd.EngEng['idCounty']] in counties[:, 1]:
-            # direct assignment of population data found
-            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
-                        [i, dd.EngEng['idCounty']],
-                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
-                                                    ['number']].values
-        # Berlin and Hamburg
-        elif df_pop_raw.loc[i, dd.EngEng['idCounty']] + '000' in counties[:, 1]:
-            # direct assignment of population data found
-            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
-                        [i, dd.EngEng['idCounty']] + '000',
-                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
-                                                    ['number']].values
-        # empty rows
-        elif df_pop_raw.loc[i: i + nage - 1,
+
+        # check for empty rows
+        if df_pop_raw.loc[i: i + nage - 1,
                             dd.EngEng['number']].values.any() in empty_data:
             if not df_pop_raw.loc[i: i + nage - 1,
                                     dd.EngEng['number']].values.all() in empty_data:
                 raise gd.DataError(
                     'Error. Partially incomplete data for county ' +
                     df_pop_raw.loc[i, dd.EngEng['idCounty']])
+
+        # county information needed
+        elif df_pop_raw.loc[i, dd.EngEng['idCounty']] in counties[:, 1]:
+            # direct assignment of population data found
+            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
+                        [i, dd.EngEng['idCounty']],
+                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
+                                                    ['number']].values.astype(int)
+        # Berlin and Hamburg
+        elif df_pop_raw.loc[i, dd.EngEng['idCounty']] + '000' in counties[:, 1]:
+            # direct assignment of population data found
+            df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
+                        [i, dd.EngEng['idCounty']] + '000',
+                        age_cols] = df_pop_raw.loc[i: i + nage - 1, dd.EngEng
+                                                    ['number']].values.astype(int)
+        
         # additional information for local entities not needed
         elif df_pop_raw.loc[i, dd.EngEng['idCounty']] in ['03241001', '05334002', '10041100']:
             pass
@@ -197,8 +201,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                 'Error. County ID in input population data'
                 'found which could not be assigned.')
 
-    if df_pop[age_cols].sum().sum() != 83155031:
-        raise gd.DataError('Wrong total population size')
+    if df_pop[age_cols].sum().sum() != 83237124:
+        if df_pop[age_cols].sum().sum() == 83155031:
+            warnings.warn('Using data of 2020. Newer data is available.')
+        else:
+            raise gd.DataError('')
 
     new_cols = [
         dd.EngEng['idCounty'],
