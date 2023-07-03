@@ -20,8 +20,7 @@
 import io
 import os
 import unittest
-from datetime import date, timedelta
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd

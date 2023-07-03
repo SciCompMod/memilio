@@ -436,8 +436,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     filename = 'migration_bfa_20' + files[0].split(
         '-20')[1][0:2]
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
+    directory = directory.split('pydata')[0] + 'mobility/'
+    gd.check_dir(directory)
     gd.write_dataframe(
-        df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
+        df_commuter_migration, directory,
         'commuter_migration_scaled_20' + files[0].split('-20')[1][0: 2],
         'txt', {'sep': ' ', 'index': False, 'header': False})
 

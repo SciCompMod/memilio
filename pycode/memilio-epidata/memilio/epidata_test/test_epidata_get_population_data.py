@@ -32,6 +32,8 @@ progress_indicator.ProgressIndicator.disable_indicators(True)
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
+    path = '/home/Population_Data'
+    
     def setUp(self):
         self.setUpPyfakefs()
 

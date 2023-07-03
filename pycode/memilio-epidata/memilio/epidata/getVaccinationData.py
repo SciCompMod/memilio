@@ -605,7 +605,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,
-            no_raw=no_raw, split_gender=False, merge_eisenach=True)
+            no_raw=no_raw, merge_eisenach=True)
 
     with progress_indicator.Spinner(message='Preparing Population data and age groups'):
         min_age_pop = []

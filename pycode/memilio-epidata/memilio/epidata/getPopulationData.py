@@ -205,8 +205,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
-                        username='',
-                        password=''):
+                        username=None,
+                        password=None):
     """! Download age-stratified population data for the German counties.
 
     The data we use is:
