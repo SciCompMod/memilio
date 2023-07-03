@@ -198,8 +198,6 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
 def get_population_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw'],
-                        split_gender=False,
                         merge_eisenach=True,
                         username='',
                         password=''):
