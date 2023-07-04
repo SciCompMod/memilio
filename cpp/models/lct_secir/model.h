@@ -27,7 +27,6 @@
 #include "memilio/utils/time_series.h"
 #include <string>
 
-
 namespace mio
 {
 namespace lsecir
@@ -37,30 +36,32 @@ class Model
     using ParameterSet = Parameters;
 
 public:
-    Model(TimeSeries<ScalarType>&& init, ScalarType N_0, const InfectionState InfectionState_init= InfectionState(), const ParameterSet& Parameterset_init = ParameterSet());
+    Model(Eigen::VectorXd init, const InfectionState InfectionState_init = InfectionState(),
+          const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
     * @brief Checks constraints on model parameters.
     */
     void check_constraints() const;
 
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t,
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, ScalarType t,
                               Eigen::Ref<Eigen::VectorXd> dydt) const;
-    
-    void calculate_populations();
-    std::string get_heading() const;
+
+    TimeSeries<ScalarType> calculate_populations(const TimeSeries<ScalarType>& result) const;
+
+    std::string get_heading_CompartmentsBase() const;
+    std::string get_heading_Subcompartments() const;
+
+    Eigen::VectorXd get_initial_values()
+    {
+        return m_initial_values;
+    }
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     InfectionState m_InfectionStates;
-    TimeSeries<ScalarType> m_Subcompartments;
-    TimeSeries<ScalarType> m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
-    
 
-    Eigen::VectorXd get_initial_values(){
-        return m_Subcompartments[0];
-    }
-    
 private:
+    Eigen::VectorXd m_initial_values;
     ScalarType m_N{0}; ///< Total population size of the considered region.
 };
 

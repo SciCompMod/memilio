@@ -20,16 +20,12 @@
 #ifndef LCT_SECIR_SIMULATION_H
 #define LCT_SECIR_SIMULATION_H
 
-#include "lct_secir/parameters.h"
-#include "lct_secir/infection_state.h"
 #include "lct_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
-#include <memory>
-#include <cstdio>
-#include <iostream>
+#include "memilio/math/eigen.h"
 #include <string>
 
 namespace mio
@@ -48,17 +44,7 @@ public:
      * @param[in] t0 start time
      * @param[in] dt initial step size of integration
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
-        , m_model(std::make_unique<Model>(model))
-        , m_integrator(
-              [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
-                  model.eval_right_hand_side(y, t, dydt);
-              },
-              t0, m_model->get_initial_values(), dt, m_integratorCore)
-    {
-    }
+    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1);
 
     /**
      * @brief set the core integrator used in the simulation
@@ -92,7 +78,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
         return m_integrator.advance(tmax);
     }
@@ -135,7 +121,7 @@ public:
     /**
      * @brief returns the next time step chosen by integrator
     */
-    double get_dt() const
+    ScalarType get_dt() const
     {
         return m_integrator.get_dt();
     }
@@ -144,21 +130,9 @@ private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
     OdeIntegrator m_integrator;
-}; 
+};
 
-//TODO: In utils oder so verschieben
-void print_TimeSeries(const TimeSeries<double>& result, std::string heading)
-{ 
-    // print compartments after simulation
-    std::cout << heading << std::endl;
-    for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
-        std::cout << result.get_time(i);
-        for (Eigen::Index j = 0; j < result.get_num_elements(); ++j) {
-            std::cout << " | " << std::fixed << std::setprecision(8) << result[i][j];
-        }
-        std::cout << "\n" << std::endl;
-    }
-}
+void print_TimeSeries(const TimeSeries<ScalarType>& result, std::string heading);
 
 /**
  * @brief simulate simulates a compartmental model
@@ -168,18 +142,9 @@ void print_TimeSeries(const TimeSeries<double>& result, std::string heading)
  * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
  */
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
-                                std::shared_ptr<IntegratorCore> integrator = nullptr)
-{
-    model.check_constraints();
-    Simulation sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
-    }
-    sim.advance(tmax);
-    print_TimeSeries(sim.get_result(), model.get_heading());
-    return sim.get_result();
-}
+TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model,
+                                std::shared_ptr<IntegratorCore> integrator = nullptr);
+
 } // namespace lsecir
 } // namespace mio
 

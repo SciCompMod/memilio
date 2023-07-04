@@ -21,11 +21,9 @@
 #define LCT_SECIR_PARAMS_H
 
 #include "memilio/utils/parameter_set.h"
-#include "lct_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-
-#include <vector>
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -37,9 +35,9 @@ namespace lsecir
 **********************************************/
 
 /**
- * @brief The latency time in the SECIR model in day unit.
+ * @brief Average Time spent in the Exposed compartment.
  */
-struct TimeLatency {
+struct TimeExposed {
     using Type = ScalarType;
     static Type get_default()
     {
@@ -47,7 +45,7 @@ struct TimeLatency {
     }
     static std::string name()
     {
-        return "TimeLatency";
+        return "TimeExposed";
     }
 };
 
@@ -234,15 +232,112 @@ struct DeathsPerCritical {
     }
 };
 
-using Parameters =
-    ParameterSet<TimeLatency, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere,
-                 TimeInfectedCritical, TransmissionProbabilityOnContact, ContactPatterns,
-                 RelativeTransmissionNoSymptoms, RiskOfInfectionFromSymptomatic, RecoveredPerInfectedNoSymptoms,
-                 SeverePerInfectedSymptoms, CriticalPerSevere, DeathsPerCritical>;
-                 // TODO: write constraint check for parameters 
+using ParametersBase =
+    ParameterSet<TimeExposed, TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere, TimeInfectedCritical,
+                 TransmissionProbabilityOnContact, ContactPatterns, RelativeTransmissionNoSymptoms,
+                 RiskOfInfectionFromSymptomatic, RecoveredPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
+                 CriticalPerSevere, DeathsPerCritical>;
+
+/**
+ * @brief Parameters of an LCT-SECIR model.
+ */
+class Parameters : public ParametersBase
+{
+public:
+    Parameters()
+        : ParametersBase()
+    {
+    }
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
+     */
+    int check_constraints() const
+    {
+        if (this->get<TimeExposed>() < 1.0) {
+            log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
+            return 1;
+        }
+
+        if (this->get<TimeInfectedNoSymptoms>() < 1.0) {
+            log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {:.4f}", 1.0);
+            return 1;
+        }
+
+        if (this->get<TimeInfectedSymptoms>() < 1.0) {
+            log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {:.4f}", 1.0);
+            return 1;
+        }
+
+        if (this->get<TimeInfectedSevere>() < 1.0) {
+            log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {:.4f}", 1.0);
+            return 1;
+        }
+
+        if (this->get<TimeInfectedCritical>() < 1.0) {
+            log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {:.4f}", 1.0);
+            return 1;
+        }
+
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RelativeTransmissionNoSymptoms>() < 0.0 || this->get<RelativeTransmissionNoSymptoms>() > 1.0) {
+            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RiskOfInfectionFromSymptomatic>() < 0.0 || this->get<RiskOfInfectionFromSymptomatic>() > 1.0) {
+            log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<RecoveredPerInfectedNoSymptoms>() < 0.0 || this->get<RecoveredPerInfectedNoSymptoms>() > 1.0) {
+            log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<SeverePerInfectedSymptoms>() < 0.0 || this->get<SeverePerInfectedSymptoms>() > 1.0) {
+            log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<CriticalPerSevere>() < 0.0 || this->get<CriticalPerSevere>() > 1.0) {
+            log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+
+        if (this->get<DeathsPerCritical>() < 0.0 || this->get<DeathsPerCritical>() > 1.0) {
+            log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+            return 1;
+        }
+        return 0;
+    }
+
+private:
+    Parameters(ParametersBase&& base)
+        : ParametersBase(std::move(base))
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+};
 
 } // namespace lsecir
 } // namespace mio
-
 
 #endif // LCT_SECIR_PARAMS_H

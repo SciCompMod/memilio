@@ -18,17 +18,14 @@
 * limitations under the License.
 */
 
-
 #ifndef LCTSECIR_INFECTIONSTATE_H
 #define LCTSECIR_INFECTIONSTATE_H
 
 #include "memilio/utils/logging.h"
-#include<vector>
-
+#include <vector>
 
 namespace mio
 {
-
 namespace lsecir
 {
 
@@ -49,39 +46,90 @@ enum class InfectionStateBase
     Count              = 8
 };
 
-class InfectionState{
+class InfectionState
+{
 public:
-    InfectionState():
-    m_SubcompartmentNumbers(std::vector<int>((int)InfectionStateBase::Count, 1)),
-    m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1))
+    InfectionState()
+        : m_SubcompartmentNumbers(std::vector<int>((int)InfectionStateBase::Count, 1))
+        , m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1))
     {
         set_compartment_index();
     }
 
-    InfectionState(std::vector<int> SubcompartmentNumbers):
-        m_SubcompartmentNumbers(std::move(SubcompartmentNumbers)),
-        m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1)){
-        if(!(m_SubcompartmentNumbers.size()==(int)InfectionStateBase::Count)){
-            log_error("Vector for number of subcompartments has the wrong size.");
-        }
-        //TODO: lieber constraint ceck rein, dann auc prüfen, dass >=1
+    InfectionState(std::vector<int> SubcompartmentNumbers)
+        : m_SubcompartmentNumbers(std::move(SubcompartmentNumbers))
+        , m_SubcompartmentNumbersindexfirst(std::vector<int>((int)InfectionStateBase::Count, 1))
+    {
+        check_constraints();
         set_compartment_index();
     }
-    
 
-    void set_compartment_index(){
-            int index=0;
-            for(int i=0; i<(int)(InfectionStateBase::Count) ;i++){
-                m_SubcompartmentNumbersindexfirst[i]=index;
-                index=index+m_SubcompartmentNumbers[i];
-            }
-            Count=index;
+    void set_SubcompartmentNumbers(std::vector<int> SubcompartmentNumbers)
+    {
+        m_SubcompartmentNumbers = SubcompartmentNumbers;
+        check_constraints();
+        set_compartment_index();
+    }
 
+    int get_number(InfectionStateBase infectionstatebase) const
+    {
+        return m_SubcompartmentNumbers[(int)infectionstatebase];
+    }
+
+    int get_number(int infectionstatebaseindex) const
+    {
+        return m_SubcompartmentNumbers[infectionstatebaseindex];
+    }
+
+    int get_firstindex(InfectionStateBase infectionstatebase) const
+    {
+        return m_SubcompartmentNumbersindexfirst[(int)infectionstatebase];
+    }
+
+    int get_firstindex(int infectionstatebaseindex) const
+    {
+        return m_SubcompartmentNumbersindexfirst[infectionstatebaseindex];
+    }
+
+    int get_count() const
+    {
+        return m_Count;
+    }
+
+private:
+    void check_constraints()
+    {
+        if (!(m_SubcompartmentNumbers.size() == (int)InfectionStateBase::Count)) {
+            log_error("Vector for number of subcompartments has the wrong size.");
         }
+        if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Susceptible] == 1)) {
+            log_error("Susceptible compartment can not have Subcompartments.");
+        }
+        if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Recovered] == 1)) {
+            log_error("Recovered compartment can not have Subcompartments.");
+        }
+        if (!(m_SubcompartmentNumbers[(int)InfectionStateBase::Dead] == 1)) {
+            log_error("Dead compartment can not have Subcompartments.");
+        }
+        for (int i = 0; i < (int)InfectionStateBase::Count; ++i) {
+            if (m_SubcompartmentNumbers[i] < 1) {
+                log_error("All compartments should have at least one Subcompartment.");
+            }
+        }
+    }
+    void set_compartment_index()
+    {
+        int index = 0;
+        for (int i = 0; i < (int)(InfectionStateBase::Count); i++) {
+            m_SubcompartmentNumbersindexfirst[i] = index;
+            index                                = index + m_SubcompartmentNumbers[i];
+        }
+        m_Count = index;
+    }
 
     std::vector<int> m_SubcompartmentNumbers;
     std::vector<int> m_SubcompartmentNumbersindexfirst;
-    int Count;    
+    int m_Count;
 };
 
 } // namespace lsecir
