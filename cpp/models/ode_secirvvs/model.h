@@ -32,18 +32,19 @@ namespace mio
 {
 namespace osecirvvs
 {
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+template<typename FP=double>
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters<FP>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters<FP>>;
 
 public:
-    Model(const Populations& pop, const ParameterSet& params)
+    Model(const Populations<FP>& pop, const ParameterSet<FP>& params)
         : Base(pop, params)
     {
     }
 
     Model(int num_agegroups)
-        : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
+        : Model(Populations<FP>({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet<FP>(AgeGroup(num_agegroups)))
     {
     }
 
@@ -53,14 +54,14 @@ public:
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
-        ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
+        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns>();
 
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
             test_and_trace_required +=
-                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+                (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsPartialImmunity}) +
                  this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsImprovedImmunity}) +
@@ -123,27 +124,27 @@ public:
             dydt[SIIi] = 0;
             dydt[EIIi] = 0;
 
-            double rateE   = 1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]);
-            double rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+            double rateE   = 1.0 / (2 * params.template get<SerialInterval>()[i] - params.template get<IncubationTime>()[i]);
+            double rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
 
-            double reducExposedPartialImmunity           = params.get<ReducExposedPartialImmunity>()[i];
-            double reducExposedImprovedImmunity          = params.get<ReducExposedImprovedImmunity>()[i];
-            double reducInfectedSymptomsPartialImmunity  = params.get<ReducInfectedSymptomsPartialImmunity>()[i];
-            double reducInfectedSymptomsImprovedImmunity = params.get<ReducInfectedSymptomsImprovedImmunity>()[i];
+            double reducExposedPartialImmunity           = params.template get<ReducExposedPartialImmunity>()[i];
+            double reducExposedImprovedImmunity          = params.template get<ReducExposedImprovedImmunity>()[i];
+            double reducInfectedSymptomsPartialImmunity  = params.template get<ReducInfectedSymptomsPartialImmunity>()[i];
+            double reducInfectedSymptomsImprovedImmunity = params.template get<ReducInfectedSymptomsImprovedImmunity>()[i];
             double reducInfectedSevereCriticalDeadPartialImmunity =
-                params.get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
+                params.template get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i];
             double reducInfectedSevereCriticalDeadImprovedImmunity =
-                params.get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
-            double reducTimeInfectedMild = params.get<ReducTimeInfectedMild>()[i];
+                params.template get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i];
+            double reducTimeInfectedMild = params.template get<ReducTimeInfectedMild>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto riskFromInfectedSymptomatic = smoother_cosine(
-                test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 15,
-                params.get<RiskOfInfectionFromSymptomatic>()[i], params.get<MaxRiskOfInfectionFromSymptomatic>()[i]);
+                test_and_trace_required, params.template get<TestAndTraceCapacity>(), params.template get<TestAndTraceCapacity>() * 15,
+                params.template get<RiskOfInfectionFromSymptomatic>()[i], params.template get<MaxRiskOfInfectionFromSymptomatic>()[i]);
 
             auto riskFromInfectedNoSymptoms = smoother_cosine(
-                test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 2,
-                params.get<RelativeTransmissionNoSymptoms>()[i], 1.0);
+                test_and_trace_required, params.template get<TestAndTraceCapacity>(), params.template get<TestAndTraceCapacity>() * 2,
+                params.template get<RelativeTransmissionNoSymptoms>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t SNj    = this->populations.get_flat_index({j, InfectionState::SusceptibleNaive});
@@ -184,8 +185,8 @@ public:
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
-                    (1 + params.get<Seasonality>() *
-                             sin(3.141592653589793 * (std::fmod((params.get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                    (1 + params.template get<Seasonality>() *
+                             sin(3.141592653589793 * (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
@@ -223,10 +224,10 @@ public:
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
             // is set to infinity and this functionality is deactivated, so this is OK for the moment.
             double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
-                                params.get<CriticalPerSevere>()[i], 0);
+                smoother_cosine(icu_occupancy, 0.90 * params.template get<ICUCapacity>(), params.template get<ICUCapacity>(),
+                                params.template get<CriticalPerSevere>()[i], 0);
 
-            double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
+            double deathsPerSevereAdjusted = params.template get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
             /**** path of immune-naive ***/
 
@@ -234,17 +235,17 @@ public:
             dydt[INSNi]  = rateE * y[ENi] - rateINS * y[INSNi];
             dydt[INSNCi] = -rateINS * y[INSNCi];
 
-            dydt[ISyNi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNi] -
-                          (y[ISyNi] / params.get<TimeInfectedSymptoms>()[i]);
-            dydt[ISyNCi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNCi] -
-                           (y[ISyNCi] / params.get<TimeInfectedSymptoms>()[i]);
+            dydt[ISyNi] = (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNi] -
+                          (y[ISyNi] / params.template get<TimeInfectedSymptoms>()[i]);
+            dydt[ISyNCi] = (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSNCi] -
+                           (y[ISyNCi] / params.template get<TimeInfectedSymptoms>()[i]);
 
-            dydt[ISevNi] = params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] *
+            dydt[ISevNi] = params.template get<SeverePerInfectedSymptoms>()[i] / params.template get<TimeInfectedSymptoms>()[i] *
                                (y[ISyNi] + y[ISyNCi]) -
-                           (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevNi];
-            dydt[ICrNi] = -y[ICrNi] / params.get<TimeInfectedCritical>()[i];
+                           (1 / params.template get<TimeInfectedSevere>()[i]) * y[ISevNi];
+            dydt[ICrNi] = -y[ICrNi] / params.template get<TimeInfectedCritical>()[i];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[ICrNi] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
+            dydt[ICrNi] += criticalPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevNi];
 
             /**** path of partially immune (e.g., one dose of vaccination) ***/
 
@@ -252,23 +253,23 @@ public:
             dydt[INSPIi]  = rateE * y[EPIi] - (rateINS / reducTimeInfectedMild) * y[INSPIi];
             dydt[INSPICi] = -(rateINS / reducTimeInfectedMild) * y[INSPICi];
             dydt[ISyPIi]  = (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                               (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
+                               (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) *
                                (rateINS / reducTimeInfectedMild) * y[INSPIi] -
-                           (y[ISyPIi] / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
+                           (y[ISyPIi] / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
             dydt[ISyPICi] = (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
+                                (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) *
                                 (rateINS / reducTimeInfectedMild) * y[INSPICi] -
-                            (y[ISyPICi] / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
+                            (y[ISyPICi] / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild));
             dydt[ISevPIi] = reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity *
-                                params.get<SeverePerInfectedSymptoms>()[i] /
-                                (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                                params.template get<SeverePerInfectedSymptoms>()[i] /
+                                (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
                                 (y[ISyPIi] + y[ISyPICi]) -
-                            (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevPIi];
-            dydt[ICrPIi] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICrPIi];
+                            (1 / params.template get<TimeInfectedSevere>()[i]) * y[ISevPIi];
+            dydt[ICrPIi] = -(1 / params.template get<TimeInfectedCritical>()[i]) * y[ICrPIi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrPIi] += reducInfectedSevereCriticalDeadPartialImmunity /
                             reducInfectedSevereCriticalDeadPartialImmunity * criticalPerSevereAdjusted /
-                            params.get<TimeInfectedSevere>()[i] * y[ISevPIi];
+                            params.template get<TimeInfectedSevere>()[i] * y[ISevPIi];
 
             /**** path of twice vaccinated, here called immune although reinfection is possible now ***/
 
@@ -278,82 +279,82 @@ public:
             dydt[INSIICi] = -(rateINS / reducTimeInfectedMild) * y[INSIICi];
 
             dydt[ISyIIi] = (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                               (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
+                               (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) *
                                (rateINS / reducTimeInfectedMild) * y[INSIIi] -
-                           (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIIi];
+                           (1 / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIIi];
             dydt[ISyIICi] = (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                                (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) *
+                                (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) *
                                 (rateINS / reducTimeInfectedMild) * y[INSIICi] -
-                            (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIICi];
+                            (1 / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * y[ISyIICi];
             dydt[ISevIIi] = reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity *
-                                params.get<SeverePerInfectedSymptoms>()[i] /
-                                (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
+                                params.template get<SeverePerInfectedSymptoms>()[i] /
+                                (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) *
                                 (y[ISyIIi] + y[ISyIICi]) -
-                            (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevIIi];
-            dydt[ICrIIi] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICrIIi];
+                            (1 / params.template get<TimeInfectedSevere>()[i]) * y[ISevIIi];
+            dydt[ICrIIi] = -(1 / params.template get<TimeInfectedCritical>()[i]) * y[ICrIIi];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[ICrIIi] += reducInfectedSevereCriticalDeadImprovedImmunity /
                             reducInfectedSevereCriticalDeadImprovedImmunity * criticalPerSevereAdjusted /
-                            params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
+                            params.template get<TimeInfectedSevere>()[i] * y[ISevIIi];
 
             // compute auxiliary compartment of all past infections
             dydt[ITi] =
-                (1 / params.get<TimeInfectedSymptoms>()[i]) * (y[ISyNi] + y[ISyNCi]) +
-                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyPIi] + y[ISyPICi]) +
-                (1 / (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyIIi] + y[ISyIICi]);
+                (1 / params.template get<TimeInfectedSymptoms>()[i]) * (y[ISyNi] + y[ISyNCi]) +
+                (1 / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyPIi] + y[ISyPICi]) +
+                (1 / (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild)) * (y[ISyIIi] + y[ISyIICi]);
 
             // recovered and deaths from all paths
-            dydt[SIIi] += params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
-                          (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] *
+            dydt[SIIi] += params.template get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * (y[INSNi] + y[INSNCi]) +
+                          (1 - params.template get<SeverePerInfectedSymptoms>()[i]) / params.template get<TimeInfectedSymptoms>()[i] *
                               (y[ISyNi] + y[ISyNCi]) +
-                          (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi] +
-                          (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
+                          (1 - params.template get<CriticalPerSevere>()[i]) / params.template get<TimeInfectedSevere>()[i] * y[ISevNi] +
+                          (1 - params.template get<DeathsPerCritical>()[i]) / params.template get<TimeInfectedCritical>()[i] * y[ICrNi];
 
             dydt[SIIi] +=
                 (1 - (reducInfectedSymptomsPartialImmunity / reducExposedPartialImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
+                         (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i])) *
                     rateINS / reducTimeInfectedMild * (y[INSPIi] + y[INSPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSymptomsPartialImmunity) *
-                         params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyPIi] + y[ISyPICi]) +
+                         params.template get<SeverePerInfectedSymptoms>()[i]) /
+                    (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyPIi] + y[ISyPICi]) +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                         params.get<CriticalPerSevere>()[i]) /
-                    params.get<TimeInfectedSevere>()[i] * y[ISevPIi] +
+                         params.template get<CriticalPerSevere>()[i]) /
+                    params.template get<TimeInfectedSevere>()[i] * y[ISevPIi] +
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                         params.get<DeathsPerCritical>()[i]) /
-                    params.get<TimeInfectedCritical>()[i] * y[ICrPIi];
+                         params.template get<DeathsPerCritical>()[i]) /
+                    params.template get<TimeInfectedCritical>()[i] * y[ICrPIi];
 
             dydt[SIIi] +=
                 (1 - (reducInfectedSymptomsImprovedImmunity / reducExposedImprovedImmunity) *
-                         (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i])) *
+                         (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i])) *
                     rateINS / reducTimeInfectedMild * (y[INSIIi] + y[INSIICi]) +
                 (1 - (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSymptomsImprovedImmunity) *
-                         params.get<SeverePerInfectedSymptoms>()[i]) /
-                    (params.get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyIIi] + y[ISyIICi]) +
+                         params.template get<SeverePerInfectedSymptoms>()[i]) /
+                    (params.template get<TimeInfectedSymptoms>()[i] * reducTimeInfectedMild) * (y[ISyIIi] + y[ISyIICi]) +
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                     params.get<CriticalPerSevere>()[i]) /
-                    params.get<TimeInfectedSevere>()[i] * y[ISevIIi] +
+                     params.template get<CriticalPerSevere>()[i]) /
+                    params.template get<TimeInfectedSevere>()[i] * y[ISevIIi] +
                 (1 -
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                     params.get<DeathsPerCritical>()[i]) /
-                    params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
+                     params.template get<DeathsPerCritical>()[i]) /
+                    params.template get<TimeInfectedCritical>()[i] * y[ICrIIi];
 
-            dydt[DNi]  = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICrNi];
+            dydt[DNi]  = params.template get<DeathsPerCritical>()[i] / params.template get<TimeInfectedCritical>()[i] * y[ICrNi];
             dydt[DPIi] = reducInfectedSevereCriticalDeadPartialImmunity /
-                         reducInfectedSevereCriticalDeadPartialImmunity * params.get<DeathsPerCritical>()[i] /
-                         params.get<TimeInfectedCritical>()[i] * y[ICrPIi];
+                         reducInfectedSevereCriticalDeadPartialImmunity * params.template get<DeathsPerCritical>()[i] /
+                         params.template get<TimeInfectedCritical>()[i] * y[ICrPIi];
             dydt[DIIi] = reducInfectedSevereCriticalDeadImprovedImmunity /
-                         reducInfectedSevereCriticalDeadImprovedImmunity * params.get<DeathsPerCritical>()[i] /
-                         params.get<TimeInfectedCritical>()[i] * y[ICrIIi];
+                         reducInfectedSevereCriticalDeadImprovedImmunity * params.template get<DeathsPerCritical>()[i] /
+                         params.template get<TimeInfectedCritical>()[i] * y[ICrIIi];
             // add potential, additional deaths due to ICU overflow
-            dydt[DNi] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
+            dydt[DNi] += deathsPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevNi];
             dydt[DPIi] +=
                 (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
-                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevPIi];
+                deathsPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevPIi];
             dydt[DIIi] +=
                 (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
-                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
+                deathsPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevIIi];
         }
     }
 
@@ -365,8 +366,8 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Model");
-        obj.add_element("Parameters", parameters);
-        obj.add_element("Populations", populations);
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
     }
 
     /**
@@ -377,8 +378,8 @@ public:
     static IOResult<Model> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Model");
-        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet<FP>>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations<FP>>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {
@@ -389,6 +390,7 @@ public:
 };
 
 //forward declaration, see below.
+
 template <class Base = mio::Simulation<Model>>
 class Simulation;
 
