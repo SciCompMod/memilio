@@ -21,6 +21,7 @@ set(TESTSOURCES
     test_graph.cpp
     test_graph_simulation.cpp
     test_graph_abm.cpp
+    test_abm_graph_simulation.cpp
     test_stl_util.cpp
     test_uncertain.cpp
     test_random_number_generator.cpp
