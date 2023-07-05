@@ -326,9 +326,6 @@ template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSim
 void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
                                        SimulationNode<Sim>& node_to)
 {
-    if (t == mio::abm::TimePoint(0) + mio::abm::days(10)) {
-        std::cout << "max";
-    }
     mio::unused(t);
     mio::unused(dt);
     size_t person_iter       = 0;

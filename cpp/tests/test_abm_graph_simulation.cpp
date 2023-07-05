@@ -21,6 +21,7 @@
 #include "models/abm/world.h"
 #include "models/abm/person.h"
 #include "models/graph_abm/graph_simulation.h"
+#include "models/graph_abm/graph_simulation.cpp"
 #include "abm_helpers.h"
 
 TEST(TestGraphSimulation, advance_random)
@@ -29,6 +30,7 @@ TEST(TestGraphSimulation, advance_random)
     auto world     = mio::graph_abm::GraphWorld(infection_params, 0);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
+    auto home = world.add_location(mio::abm::LocationType::Home);
     auto& p1       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
     auto& p2       = world.add_person(location1, mio::abm::AgeGroup::Age5to14);
     auto& p3       = world.add_person(location2, mio::abm::AgeGroup::Age5to14);
@@ -37,74 +39,56 @@ TEST(TestGraphSimulation, advance_random)
     p2.set_assigned_location(location1);
     p3.set_assigned_location(location2);
     p4.set_assigned_location(location2);
+    p1.set_assigned_location(home);
+    p2.set_assigned_location(home);
+    p3.set_assigned_location(home);
+    p4.set_assigned_location(home);
 
-    auto t0 = mio::abm::TimePoint(0);
+    auto sim = mio::graph_abm::GraphSimulation(mio::abm::TimePoint(0), std::move(world));
 
-    auto sim = mio::graph_abm::GraphSimulation(t0, std::move(world));
-
-    //auto sim = mio::graph_abm::GraphSimulation(mio::abm::TimePoint(0), std::move(world));
-
-    // sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-    // ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
-    // ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
-    // for (auto&& v : sim.get_result()) {
-    //     ASSERT_EQ(v.sum(), 4);
-    // }
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(18));
+    ASSERT_EQ(sim.get_result().get_num_time_points(), 19);
+    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 18.0 / 24.0, 19));
+    for (auto&& v : sim.get_result()) {
+        ASSERT_EQ(v.sum(), 4);
+    }
 }
 
-// TEST(TestDiscreteDistribution, generate)
-// {
-//     using namespace mio;
-//     auto distribution = mio::DiscreteDistribution<size_t>();
+TEST(TestGraphSimulation, advance_subpopulation)
+{
+    mio::abm::GlobalInfectionParameters infection_params;
+    auto world     = mio::graph_abm::GraphWorld(infection_params, 0);
+    auto location_id = world.add_location(mio::abm::LocationType::School);
+    auto& school     = world.get_individualized_location(location_id);
+    auto person1 =
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
+    auto person2 =
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+    auto person3 =
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
 
-//     std::vector<double> weights;
-//     for (size_t i = 0; i < 50; i++) {
-//         weights = {};
-//         ASSERT_EQ(distribution(weights), 0);
+    auto sim = mio::graph_abm::GraphSimulation(mio::abm::TimePoint(0), std::move(world));
+    sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
 
-//         weights = {0.5};
-//         ASSERT_EQ(distribution(weights), 0);
+    for (size_t i = 0; i < 51; i++) {
+        auto v = school.get_subpopulations().get_value(i);
+        // Check whether the number of persons in infected state at the location is consistent
+        ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
+        // Check the time evolution is correct
+        ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
+    }
+}
 
-//         weights = {0.5, 1.3, 0.1, 0.4, 0.3};
-//         auto d  = distribution(weights);
-//         ASSERT_GE(d, 0);
-//         ASSERT_LE(d, 4);
-//     }
-// }
+TEST(TestGraphSimulation, initializeSubpopulation)
+{
+    mio::abm::GlobalInfectionParameters infection_params;
+    auto world     = mio::graph_abm::GraphWorld(infection_params, 0);
+    auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport);
+    auto loc    = world.get_individualized_location(loc_id);
+    ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
 
-// TEST(TestSimulation, advance_subpopulation)
-// {
-//     auto world       = mio::abm::World();
-//     auto location_id = world.add_location(mio::abm::LocationType::School);
-//     auto& school     = world.get_individualized_location(location_id);
-//     auto person1 =
-//         add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
-//     auto person2 =
-//         add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
-//     auto person3 =
-//         add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
+    auto t   = mio::abm::TimePoint(0);
+    auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
-//     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
-//     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
-
-//     for (size_t i = 0; i < 51; i++) {
-//         auto v = school.get_subpopulations().get_value(i);
-//         // Check whether the number of persons in infected state at the location is consistent
-//         ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
-//         // Check the time evolution is correct
-//         ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
-//     }
-// }
-
-// TEST(TestSimulation, initializeSubpopulation)
-// {
-//     auto world  = mio::abm::World();
-//     auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
-//     auto loc    = world.get_individualized_location(loc_id);
-//     ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
-
-//     auto t   = mio::abm::TimePoint(0);
-//     auto sim = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
-
-//     ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
-// }
+    ASSERT_EQ(sim.get_world().get_individualized_location(loc_id).get_subpopulations().get_time(0), 7);
+}
