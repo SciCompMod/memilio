@@ -110,8 +110,8 @@ struct TimeInfectedCritical {
 };
 
 /**
-* @brief Probability of getting infected from a contact.
-*/
+ * @brief Probability of getting infected from a contact.
+ */
 struct TransmissionProbabilityOnContact {
     using Type = ScalarType;
     static Type get_default()
@@ -143,8 +143,8 @@ struct ContactPatterns {
 };
 
 /**
-* @brief The relative InfectedNoSymptoms infectability.
-*/
+ * @brief The relative InfectedNoSymptoms infectability.
+ */
 struct RelativeTransmissionNoSymptoms {
     using Type = ScalarType;
     static Type get_default()
@@ -158,8 +158,8 @@ struct RelativeTransmissionNoSymptoms {
 };
 
 /**
-* @brief The risk of infection from symptomatic cases in the SECIR model.
-*/
+ * @brief The risk of infection from symptomatic cases in the SECIR model.
+ */
 struct RiskOfInfectionFromSymptomatic {
     using Type = ScalarType;
     static Type get_default()
@@ -173,8 +173,8 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 /**
-* @brief The percentage of asymptomatic cases in the SECIR model.
-*/
+ * @brief The percentage of asymptomatic cases in the SECIR model.
+ */
 struct RecoveredPerInfectedNoSymptoms {
     using Type = ScalarType;
     static Type get_default()
@@ -188,8 +188,8 @@ struct RecoveredPerInfectedNoSymptoms {
 };
 
 /**
-* @brief The percentage of hospitalized patients per infected patients in the SECIR model.
-*/
+ * @brief The percentage of hospitalized patients per infected patients in the SECIR model.
+ */
 struct SeverePerInfectedSymptoms {
     using Type = ScalarType;
     static Type get_default()
@@ -203,8 +203,8 @@ struct SeverePerInfectedSymptoms {
 };
 
 /**
-* @brief The percentage of ICU patients per hospitalized patients in the SECIR model
-*/
+ * @brief The percentage of ICU patients per hospitalized patients in the SECIR model.
+ */
 struct CriticalPerSevere {
     using Type = ScalarType;
     static Type get_default()
@@ -218,8 +218,8 @@ struct CriticalPerSevere {
 };
 
 /**
-* @brief The percentage of dead patients per ICU patients in the SECIR model
-*/
+ * @brief The percentage of dead patients per ICU patients in the SECIR model.
+ */
 struct DeathsPerCritical {
     using Type = ScalarType;
     static Type get_default()
@@ -244,13 +244,16 @@ using ParametersBase =
 class Parameters : public ParametersBase
 {
 public:
+    /**
+     * @brief Default constructor.
+     */
     Parameters()
         : ParametersBase()
     {
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
+     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not.
      * @return Returns 1 if one constraint is not satisfied, otherwise 0. 
      */
     int check_constraints() const

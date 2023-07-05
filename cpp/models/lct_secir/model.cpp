@@ -35,7 +35,7 @@ Model::Model(Eigen::VectorXd init, const InfectionState InfectionState_init, con
     , m_InfectionStates{InfectionState_init}
     , m_initial_values{std::move(init)}
 {
-    m_N = m_initial_values.sum() - m_initial_values[(int)m_InfectionStates.get_firstindex(InfectionStateBase::Dead)];
+    m_N0 = m_initial_values.sum() - m_initial_values[(int)m_InfectionStates.get_firstindex(InfectionStateBase::Dead)];
 }
 
 void Model::check_constraints() const
@@ -53,6 +53,7 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
     ScalarType C     = 0;
     ScalarType I     = 0;
     ScalarType dummy = 0;
+
     //calculate sum of all subcompartments for InfectedNoSymptoms
     for (int i = 0; i < m_InfectionStates.get_number(InfectionStateBase::InfectedNoSymptoms); i++) {
         C = C + y[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedNoSymptoms) + i];
@@ -61,9 +62,10 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
     for (int i = 0; i < m_InfectionStates.get_number(InfectionStateBase::InfectedSymptoms); i++) {
         I = I + y[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms) + i];
     }
+
     //S'
     dydt[0] =
-        -y[0] / (m_N - y[m_InfectionStates.get_firstindex(InfectionStateBase::Dead)]) *
+        -y[0] / (m_N0 - y[m_InfectionStates.get_firstindex(InfectionStateBase::Dead)]) *
         parameters.get<TransmissionProbabilityOnContact>() *
         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(0, 0) *
         (parameters.get<RelativeTransmissionNoSymptoms>() * C + parameters.get<RiskOfInfectionFromSymptomatic>() * I);
@@ -71,8 +73,11 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
     //E'
     dydt[1] = -dydt[0];
     for (int i = 0; i < m_InfectionStates.get_number(InfectionStateBase::Exposed); i++) {
+        // dummy stores the value of the flow from dydt[1 + i] to dydt[2 + i].
+        // 1+i is always the index of a (sub-)compartment of E and 2+i can also be the index of the first (sub-)compartment of C
         dummy =
             m_InfectionStates.get_number(InfectionStateBase::Exposed) * (1 / parameters.get<TimeExposed>()) * y[1 + i];
+        // subtract flow from dydt[1 + i] and add to dydt[2 + i]
         dydt[1 + i] = dydt[1 + i] - dummy;
         dydt[2 + i] = dummy;
     }
@@ -88,12 +93,14 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
     }
 
     //I'
+    // flow from last (sub-) compartment of C must be split between I_1 and R
     dydt[m_InfectionStates.get_firstindex(InfectionStateBase::Recovered)] =
         dydt[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms)] *
         parameters.get<RecoveredPerInfectedNoSymptoms>();
     dydt[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms)] =
         dydt[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms)] *
         (1 - parameters.get<RecoveredPerInfectedNoSymptoms>());
+
     for (int i = 0; i < m_InfectionStates.get_number(InfectionStateBase::InfectedSymptoms); i++) {
         dummy = m_InfectionStates.get_number(InfectionStateBase::InfectedSymptoms) *
                 (1 / parameters.get<TimeInfectedSymptoms>()) *
@@ -134,6 +141,8 @@ void Model::eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, 
             dydt[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedCritical) + i] - dummy;
         dydt[m_InfectionStates.get_firstindex(InfectionStateBase::InfectedCritical) + i + 1] = dummy;
     }
+    // last flow from U has to be divided between R and D.
+    // Must be calculated separately in order not to overwrite the already calculated values ​​for R.
     dummy = m_InfectionStates.get_number(InfectionStateBase::InfectedCritical) *
             (1 / parameters.get<TimeInfectedCritical>()) *
             y[m_InfectionStates.get_firstindex(InfectionStateBase::Recovered) - 1];
@@ -154,6 +163,7 @@ TimeSeries<ScalarType> Model::calculate_populations(const TimeSeries<ScalarType>
     Eigen::VectorXd dummy((int)InfectionStateBase::Count);
     for (Eigen::Index i = 0; i < result.get_num_time_points(); ++i) {
         for (int j = 0; j < dummy.size(); ++j) {
+            // use segment of vector of the rsult with subcompartments of InfectionStateBase with index j and sum up values of subcompartments.
             dummy[j] = result[i]
                            .segment(Eigen::Index(m_InfectionStates.get_firstindex(j)),
                                     Eigen::Index(m_InfectionStates.get_number(j)))
@@ -167,20 +177,21 @@ TimeSeries<ScalarType> Model::calculate_populations(const TimeSeries<ScalarType>
 
 std::string Model::get_heading_CompartmentsBase() const
 {
-    return "# time | S | E | C | I | H | U | R | D";
+    return "S | E | C | I | H | U | R | D";
 }
 
 std::string Model::get_heading_Subcompartments() const
 {
 
-    std::string heading = "# time | S";
+    std::string heading = "S";
     std::string filler  = " | ";
+    // if E has subcompartments in the model, append E1 to En to the heading
     if (m_InfectionStates.get_number(InfectionStateBase::Exposed) > 1) {
         for (int i = 0; i < m_InfectionStates.get_number(InfectionStateBase::Exposed); i++) {
             heading = heading + filler + "E" + std::to_string(i + 1);
         }
     }
-    else {
+    else { // if E does not have subcompartments in the model, just append E
         heading = heading + filler + "E";
     }
     if (m_InfectionStates.get_number(InfectionStateBase::InfectedNoSymptoms) > 1) {
