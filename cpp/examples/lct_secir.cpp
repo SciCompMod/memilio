@@ -62,7 +62,8 @@ int main()
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
     model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()   = 7.1;
+    // also possible to change values with setter
+    model.parameters.set<mio::lsecir::TimeInfectedCritical>(7.1);
 
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
 
@@ -75,7 +76,7 @@ int main()
     model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
     model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
     model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
+    model.parameters.set<mio::lsecir::DeathsPerCritical>(0.3);
 
     // perform simulation
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, tmax, 0.5, model);
@@ -86,8 +87,10 @@ int main()
     // print it
     mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
 
-    /*std::vector<mio::TimeSeries<double>> results_from_sim = {result};
+    /*
+    std::vector<mio::TimeSeries<double>> results_from_sim = {result};
     std::vector<int> ids                                  = {1};
     auto save_result_status =
-      mio::save_result(results_from_sim, ids, (int)(size_t)InfState.get_count(), "test_result.h5");*/
+    mio::save_result(results_from_sim, ids, (int)(size_t)InfState.get_count(), "test_result.h5");
+    */
 }

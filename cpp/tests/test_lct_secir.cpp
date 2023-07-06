@@ -21,16 +21,18 @@
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/simulation.h"
+#include "ode_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
-#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
-
-#include "ode_secir/model.h"
+#include "load_test_data.h"
 
 #include <gtest/gtest.h>
+#include <vector>
+#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
+// Test confirms that default construction works
 TEST(TestLCTSecir, simulateDefault)
 {
     ScalarType t0   = 0;
@@ -52,6 +54,8 @@ TEST(TestLCTSecir, simulateDefault)
     }
 }
 
+/* Test compares the result for an LCT SECIR model with one single Subcompartment for each infection state 
+    with the result of the equivalent ODE SECIR model. */
 TEST(TestLCTSecir, compareWithOdeSecir)
 {
     ScalarType t0   = 0;
@@ -75,7 +79,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(5.));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
@@ -127,7 +131,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns>();
     contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    contact_matrix_ode[0].add_damping(0.7, mio::SimulationTime(5.));
+    contact_matrix_ode[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
     model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 0.7;
@@ -136,8 +140,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.2;
     model_ode.parameters.get<mio::osecir::CriticalPerSevere>()[(mio::AgeGroup)0]                = 0.25;
     model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                = 0.3;
-    // zu R großer unterschied sowie S, E,C
-    // evtl erstmal für LCT testen ob immer n0 ergibt.
+
     mio::TimeSeries<double> result_ode =
         simulate(t0, tmax, dt, model_ode,
                  std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
@@ -146,6 +149,105 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     for (int i = 1; i < 4; ++i) {
         for (int j = 0; j < model_lct.infectionStates.get_count(); ++j) {
             ASSERT_NEAR(result_lct[i][j], result_ode[i][j], 1e-5);
+        }
+    }
+}
+
+//SetUp for comparing with previous run
+class ModelTestLCTSecir : public testing::Test
+{
+protected:
+    virtual void SetUp()
+    {
+        // Number of subcompartments
+        std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
+        SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
+        SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
+        SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
+        mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+
+        // define initial population distribution in infection states, one entry per Subcompartment
+        Eigen::VectorXd init(InfState.get_count());
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 50;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 50;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 10;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 2]   = 5;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 3]   = 3;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 4]   = 2;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
+        init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
+
+        // initialize model
+        model = new mio::lsecir::Model(std::move(init), InfState);
+
+        // Set Parameters of the model
+        model->parameters.get<mio::lsecir::TimeExposed>()            = 2 * 4.2 - 5.2;
+        model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
+        model->parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
+        model->parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
+        model->parameters.get<mio::lsecir::TimeInfectedCritical>()   = 7.1;
+
+        model->parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
+
+        mio::ContactMatrixGroup& contact_matrix = model->parameters.get<mio::lsecir::ContactPatterns>();
+        contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+        contact_matrix[0].add_damping(0.7, mio::SimulationTime(2.));
+
+        model->parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
+        model->parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
+        model->parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
+        model->parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
+        model->parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
+        model->parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
+    }
+
+    virtual void TearDown()
+    {
+        delete model;
+    }
+
+public:
+    mio::lsecir::Model* model = nullptr;
+};
+
+// Test compares a simulation with the result of a previous run stored in a .csv file
+TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
+{
+    ScalarType tmax                    = 3;
+    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
+        0, tmax, 0.5, *model,
+        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
+
+    // compare result of subcompartments
+    auto compare = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
+
+    ASSERT_EQ(compare.size(), static_cast<size_t>(result.get_num_time_points()));
+    for (size_t i = 0; i < compare.size(); i++) {
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(result.get_num_elements()) + 1) << "at row " << i;
+        ASSERT_NEAR(result.get_time(i), compare[i][0], 1e-7) << "at row " << i;
+        for (size_t j = 1; j < compare[i].size(); j++) {
+            ASSERT_NEAR(result.get_value(i)[j - 1], compare[i][j], 1e-7) << " at row " << i;
+        }
+    }
+
+    // compare results of base compartments
+    mio::TimeSeries<ScalarType> population = model->calculate_populations(result);
+    auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-compartments-compare.csv");
+
+    ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));
+    for (size_t i = 0; i < compare_population.size(); i++) {
+        ASSERT_EQ(compare_population[i].size(), static_cast<size_t>(population.get_num_elements()) + 1)
+            << "at row " << i;
+        ASSERT_NEAR(population.get_time(i), compare_population[i][0], 1e-7) << "at row " << i;
+        for (size_t j = 1; j < compare_population[i].size(); j++) {
+            ASSERT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-7) << " at row " << i;
         }
     }
 }

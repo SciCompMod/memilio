@@ -24,7 +24,6 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include <string>
-#include <iostream>
 
 namespace mio
 {
