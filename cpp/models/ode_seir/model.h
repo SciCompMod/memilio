@@ -25,6 +25,8 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
+#include "parameters.h"
+#include <array>
 
 namespace mio
 {

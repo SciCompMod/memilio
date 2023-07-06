@@ -17,11 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/time_series.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "models/ode_seir/reproduction_nb.h"
 
 int main()
 {
@@ -59,19 +61,21 @@ int main()
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
 
-    std::cout << "Print reproduction numbers" << std::endl;
+    ReproductionNumber reprod;
 
-    for (Eigen::Index timepts = 0; timepts < seir.get_num_time_points(); timepts++) {
-
-        double susceptibles_t = seir.get_value(timepts)[(Eigen::Index)mio::oseir::InfectionState::Susceptible];
-
-        double coeffSusceptiblestoExposed =
-            model.parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timepts)(0, 0) *
+      double coeffSusceptiblestoExposed =
+            model.parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(0)(0, 0) *
 
             model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>() / model.populations.get_total();
 
-        std::cout << "time: " << timepts << " reproduction nb at t: "
-                  << coeffSusceptiblestoExposed * susceptibles_t * model.parameters.get<mio::oseir::TimeInfected>()
-                  << std::endl;
-    }
+            double time = model.parameters.get<mio::oseir::TimeInfected>();
+
+
+    double r = reprod.getReproductionNumber((Eigen::Index)0,coeffSusceptiblestoExposed,time,seir);
+    std::cout<<r<<std::endl;
+
+    Eigen::VectorXd results = reprod.getReproductionNumbers(coeffSusceptiblestoExposed, time, seir);
+
+    std::cout<<results<<std::endl;
 }
+
