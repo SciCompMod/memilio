@@ -169,11 +169,13 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id   = row[index["puid"]];
-        uint32_t age         = row[index["age"]]; // TODO
-        uint32_t location_id = row[index["loc_id_end"]];
-        uint32_t home_id     = row[index["huid"]];
-        uint32_t activity    = row[index["activity_end"]];
+        uint32_t person_id          = row[index["puid"]];
+        uint32_t age                = row[index["age"]]; // TODO
+        uint32_t target_location_id = row[index["loc_id_end"]];
+        uint32_t start_location_id  = row[index["loc_id_start"]];
+        uint32_t home_id            = row[index["huid"]];
+        uint32_t activity_end       = row[index["activity_end"]];
+        uint32_t trip_start         = row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
@@ -194,18 +196,21 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             it_person = persons.find(person_id);
             number_persons++;
         }
-        auto it_location = locations.find(location_id);
+        auto it_location = locations.find(target_location_id);
         mio::abm::LocationId location;
-        if (get_location_type(activity) != mio::abm::LocationType::Home) {
+        if (get_location_type(activity_end) != mio::abm::LocationType::Home) {
             if (it_location == locations.end()) {
-                location = world.add_location(get_location_type(activity), 1);
-                locations.insert({location_id, location});
+                location = world.add_location(get_location_type(activity_end), 1);
+                locations.insert({target_location_id, location});
             }
             else {
                 location = it_location->second;
             }
             it_person->second.set_assigned_location(location);
         }
+        world.get_trip_list().add_trip(
+            mio::abm::Trip(it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                           locations.find(target_location_id)->second, locations.find(start_location_id)->second));
     }
 }
 
@@ -604,6 +609,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 
     // Create the world object from statistical data.
     create_world_from_data(world, "../../data/mobility/bs.csv");
+    world.use_migration_rules(false);
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
@@ -623,8 +629,8 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
-    auto t0               = mio::abm::TimePoint(18000); // Start time per simulation
-    auto tmax             = mio::abm::TimePoint(18000) + mio::abm::hours(6); // End time per simulation
+    auto t0               = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax             = mio::abm::TimePoint(0) + mio::abm::hours(30); // End time per simulation
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of collected results
     ensemble_results.reserve(size_t(num_runs));
     auto run_idx            = size_t(1); // The run index

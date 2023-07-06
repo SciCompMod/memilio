@@ -67,8 +67,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    int migrations    = 0;
-    int not_migrating = 0;
+    int migrations = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_enhanced_migration_rules;
@@ -100,18 +99,15 @@ void World::migration(TimePoint t, TimeSpan dt)
                         bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
                             person->migrate_to(target_location);
+                            migrations++;
                         }
                         break;
                     }
                 }
             }
-            else {
-                not_migrating++;
-            }
-            migrations++;
         }
     }
-    printf("%2.3f of %d migrations did not happen\n", (float)not_migrating / (float)migrations, migrations);
+
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
@@ -119,17 +115,19 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& trip            = m_trip_list.get_next_trip();
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
-                current_location == get_individualized_location(trip.migration_origin)) {
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead){
+            //  && current_location == get_individualized_location(trip.migration_origin)) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
                     person->migrate_to(target_location);
+                    migrations++;
                 }
             }
             m_trip_list.increase_index();
         }
     }
+    printf("%d migrations\n", migrations);
 }
 
 void World::begin_step(TimePoint t, TimeSpan dt)
