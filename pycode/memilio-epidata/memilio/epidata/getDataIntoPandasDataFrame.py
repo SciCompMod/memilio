@@ -173,7 +173,10 @@ def get_file(
 
     if read_data:
         try:
-            df = pd.read_json(filepath)
+            if filepath.endswith('xlsx'):
+                df = pd.read_excel(filepath, **param_dict)
+            else:
+                df = pd.read_json(filepath)
         except FileNotFoundError:
             if interactive and user_choice(
                 "Warning: The file: " + filepath +
@@ -235,6 +238,7 @@ def cli(what):
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
     - no_raw
+    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -341,9 +345,21 @@ def cli(what):
             '-sd', '--sanitize_data', type=int, default=1,
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
-    args = parser.parse_args()
 
-    return vars(args)
+    parser.add_argument(
+        '--no-progress-indicators',
+        help='Disables all progress indicators (used for downloads etc.).',
+        action='store_true')
+
+    args = vars(parser.parse_args())
+    # disable progress indicators globally, if the argument --no-progress-indicators was specified
+    progress_indicator.ProgressIndicator.disable_indicators(
+        args["no_progress_indicators"])
+    # remove the no_progress_indicators entry from the dict
+    # (after disabling indicators, its value is no longer usefull)
+    args.pop("no_progress_indicators")
+
+    return args
 
 
 def append_filename(

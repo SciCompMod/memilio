@@ -42,6 +42,7 @@ class IntermediateRepresentation:
     model_init: list = field(default_factory=list)
     model_base: list = field(default_factory=list)
     population_groups: list = field(default_factory=list)
+    include_list: list = field(default_factory=list)
     age_group: dict = field(default_factory=dict)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
