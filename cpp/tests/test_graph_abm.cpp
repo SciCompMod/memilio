@@ -229,3 +229,20 @@ TEST(TestGraphWorld, test_evolve_migration)
         EXPECT_EQ(world1.get_persons_to_migrate().size(), 4);
     }
 }
+
+TEST(TestGraphWorld, test_add_existing_person)
+{
+    auto params = mio::abm::GlobalInfectionParameters{};
+    auto world  = mio::graph_abm::GraphWorld(params, 0);
+
+    auto loc        = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
+    auto person_ptr = std::make_unique<mio::abm::Person>(loc, mio::abm::AgeGroup::Age35to59, 0, 0);
+    world.add_existing_person(std::move(person_ptr));
+
+    EXPECT_EQ(world.get_persons().size(), 1);
+    auto& person = *world.get_person(0, 0);
+    mio::unused(person);
+    EXPECT_EQ(person->get_person_id(), 0U);
+    EXPECT_EQ(person->get_world_id(), 0U);
+    EXPECT_EQ(person->get_age(), mio::abm::AgeGroup::Age35to59);
+}
