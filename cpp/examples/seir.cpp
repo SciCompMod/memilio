@@ -60,22 +60,5 @@ int main()
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
-
-    ReproductionNumber reprod;
-
-      double coeffSusceptiblestoExposed =
-            model.parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(0)(0, 0) *
-
-            model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>() / model.populations.get_total();
-
-            double time = model.parameters.get<mio::oseir::TimeInfected>();
-
-
-    double r = reprod.getReproductionNumber((Eigen::Index)0,coeffSusceptiblestoExposed,time,seir);
-    std::cout<<r<<std::endl;
-
-    Eigen::VectorXd results = reprod.getReproductionNumbers(coeffSusceptiblestoExposed, time, seir);
-
-    std::cout<<results<<std::endl;
 }
 
