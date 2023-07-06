@@ -103,11 +103,12 @@ public:
     }
 
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    InfectionState m_InfectionStates; ///< InfectionState specifies number of subcompartments.
+    InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.
 
 private:
     Eigen::VectorXd m_initial_values; ///< Initial values of the model.
-    ScalarType m_N0{0}; ///< Total population size of living people at time t_0 for the considered region.
+    ScalarType m_N0{
+        0}; ///< Total population size at time t_0 for the considered region (inclusive initial value for Dead).
 };
 
 } // namespace lsecir

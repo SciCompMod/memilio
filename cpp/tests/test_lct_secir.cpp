@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-#include "load_test_data.h"
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/simulation.h"
@@ -29,13 +28,8 @@
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 #include "ode_secir/model.h"
-#include "ode_secir/parameter_space.h"
-#include "ode_secir/analyze_result.h"
-#include "ode_secir/parameters.h"
 
 #include <gtest/gtest.h>
-
-#include <iostream>
 
 TEST(TestLCTSecir, simulateDefault)
 {
@@ -43,10 +37,19 @@ TEST(TestLCTSecir, simulateDefault)
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
 
-    mio::lsecir::Model model(Eigen::VectorXd::Constant((int)mio::lsecir::InfectionStateBase::Count, 15));
+    Eigen::VectorXd init = Eigen::VectorXd::Constant((int)mio::lsecir::InfectionStateBase::Count, 15);
+    init[0]              = 200;
+    init[3]              = 50;
+    init[5]              = 30;
+
+    mio::lsecir::Model model(init);
     mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(t0, tmax, dt, model);
 
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+    ScalarType sum_pop = init.sum();
+    for (Eigen::Index i = 0; i < result.get_num_time_points(); i++) {
+        ASSERT_NEAR(sum_pop, result[i].sum(), 1e-5);
+    }
 }
 
 TEST(TestLCTSecir, compareWithOdeSecir)
@@ -84,7 +87,6 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(
         t0, tmax, dt, model_lct,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
-    mio::lsecir::print_TimeSeries(result_lct);
 
     // Initialize ODE model with one single age group
     mio::osecir::Model model_ode(1);
@@ -109,6 +111,12 @@ TEST(TestLCTSecir, compareWithOdeSecir)
                                                     init.sum());
 
     // set parameters fitting to these of the lct model
+    // no restrictions by additional parameters
+    model_ode.parameters.set<mio::osecir::StartDay>(0);
+    model_ode.parameters.set<mio::osecir::Seasonality>(0);
+    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity>() = std::numeric_limits<double>::max();
+    model_ode.parameters.get<mio::osecir::ICUCapacity>()          = std::numeric_limits<double>::max();
+
     model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] =
         5.2; // TimeExposed = 2 * SerialInterval - IncubationTime
     model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] =
@@ -130,9 +138,14 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     model_ode.parameters.get<mio::osecir::DeathsPerCritical>()[(mio::AgeGroup)0]                = 0.3;
     // zu R großer unterschied sowie S, E,C
     // evtl erstmal für LCT testen ob immer n0 ergibt.
-    mio::TimeSeries<double> result_ode = mio::osecir::simulate(
-        t0, tmax, dt, model_ode,
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
-    mio::lsecir::print_TimeSeries(result_ode);
+    mio::TimeSeries<double> result_ode =
+        simulate(t0, tmax, dt, model_ode,
+                 std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
+
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
+    for (int i = 1; i < 4; ++i) {
+        for (int j = 0; j < model_lct.infectionStates.get_count(); ++j) {
+            ASSERT_NEAR(result_lct[i][j], result_ode[i][j], 1e-5);
+        }
+    }
 }
