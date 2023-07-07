@@ -208,7 +208,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<MigrationGraph, double, double>(m, "MigrationSimulation");
+    pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
