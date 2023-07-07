@@ -47,7 +47,7 @@ void bind_GraphSimulation(pybind11::module& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal)
         .def_property_readonly("t", &GS::get_t)
-        .def("advance", py::overload_cast<double>(&GS::advance), pybind11::arg("tmax"));
+        .def("advance", pybind11::overload_cast<double>(&GS::advance), pybind11::arg("tmax"));
 }
 
 } // namespace pymio
