@@ -248,3 +248,21 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
 }
+
+TEST(TestPerson, migrateToOtherWorld)
+{
+    auto t = mio::abm::TimePoint(0);
+
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
+    auto work = mio::abm::Location(mio::abm::LocationType::Work, 1, 1);
+
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Susceptible);
+
+    person.migrate_to_other_world(work, true);
+
+    ASSERT_EQ(person.get_location(), work);
+    ASSERT_EQ(work.get_subpopulation(t, mio::abm::InfectionState::Susceptible), 1);
+    ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Susceptible), 0);
+    ASSERT_EQ(work.get_cells()[0].m_persons.size(), 1);
+    ASSERT_EQ(home.get_cells()[0].m_persons.size(), 0);
+}
