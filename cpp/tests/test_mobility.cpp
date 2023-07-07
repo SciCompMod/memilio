@@ -194,7 +194,6 @@ TEST(TestMobility, ABMEdgeApplyMigration)
 
     auto t0   = mio::abm::TimePoint(0);
     auto dt   = mio::abm::hours(12);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(10);
 
     mio::SimulationNode<mio::graph_abm::GraphSimulation> node1(t0, std::move(world1));
     mio::SimulationNode<mio::graph_abm::GraphSimulation> node2(t0, std::move(world2));
