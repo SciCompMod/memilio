@@ -75,12 +75,15 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
 
     return clusters, p_diag.sum()+p_offdiag.sum()
 
+# TODO: Used name 'methods' instead of 'metrics'. This is conform with documentation of hierarchy.linkage
+    # and does not lead to confusion with metric used in pdist. To discuss!
+
 
 def compute_hierarch_clustering(corr_mat, corr_pairwdist,
-                                metrics=['single', 'complete', 'average',
+                                methods=['single', 'complete', 'average',
                                          'weighted', 'centroid', 'median',
                                          'ward']):
-    """! Computes a hierarchical clustering for a (list of) metric(s) and
+    """! Computes a hierarchical clustering for a (list of) method(s) and
     provides the maximum cophenetic distance(s) as well as a score for the
     clustering (see @method evaluate_clustering(...)).
 
@@ -88,41 +91,46 @@ def compute_hierarch_clustering(corr_mat, corr_pairwdist,
         to be clustered hierarchically.
     @param corr_pairwdist Computed pairwise distance between the features / data
         set items.
-    @param metric Metric or list of metrics to compute the hierarchical
+    @param method method or list of methods to compute the hierarchical
         clustering.
 
     @return (List of) hierarchical clustering(s), maximum cophenetic distance(s)
         and scores of the hierarchical clustering.
     """
-    # NOTE: if changing metric, pay attention to linkage methods;
+
+    # NOTE: if changing method, pay attention to linkage methods;
     #       'centroid', 'median', and 'ward' are correctly defined only if
-    #       Euclidean pairwise metric is used.
+    #       Euclidean pairwise metric is used in distance matrix that we used as input.
+
     # Based on the distances, we compute an hierarchical clustering for
-    # different metrics
-    max_coph_corr = 0
+    # different methods
+    max_coph_corr_dist = 0
     scores = dict()
     # allow single entry
-    if not isinstance(metrics, list):
-        metrics = [metrics]
+    if not isinstance(methods, list):
+        methods = [methods]
     # iterate over list
-    for metric in metrics:
-        cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=metric)
-        # compute cophenetic correlation distance
-        coph_corr, coph_dists = hierarchy.cophenet(
-            cluster_hierarch, pdist(corr_mat))
-        scores[metric] = coph_corr
-        if coph_corr > max_coph_corr:
-            max_coph_corr = coph_corr
-            max_metric = metric
-            max_coph_dist = coph_dists
+    for method in methods:
+        cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=method)
+        # compute cophenetic correlation distance and cophenetic distance matrix
+        # TODO: Why was pdist(corr_mat) used as input for hierarchy.cophenet?
+        # Shouldn't we use the same distance matrix as input both for linkage and cophenet?
+        # To discuss!
+        coph_corr_dist, coph_dist_mat = hierarchy.cophenet(
+            cluster_hierarch, corr_pairwdist)
+        scores[method] = coph_corr_dist
+        if coph_corr_dist > max_coph_corr_dist:
+            max_coph_corr_dist = coph_corr_dist
+            max_method = method
+            max_coph_dist_mat = coph_dist_mat
 
-    cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=max_metric)
+    cluster_hierarch = hierarchy.linkage(corr_pairwdist, method=max_method)
 
     print(
-        "Cophentic correlation distance for metric " + max_metric + ": " +
-        str(max_coph_corr))
+        "Cophenetic correlation distance for method " + max_method + ": " +
+        str(max_coph_corr_dist))
 
-    return cluster_hierarch, max_coph_dist, scores
+    return cluster_hierarch, max_coph_dist_mat, scores
 
 
 def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
@@ -306,68 +314,73 @@ def analyze_npi_data(
         corr_pairwdist = hierarchy.distance.pdist(
             npis_corr, metric='euclidean')
 
-        # compute hierarchical clustering (via best-suited metric)
-        compare_metrics = True
-        if compare_metrics:
+        # compute hierarchical clustering (via best-suited method)
+        compare_methods = True
+        if compare_methods:
+
             # centroid
-            metric = 'centroid'
-            cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
+            method = 'centroid'
+            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
                 abs(npis_corr),
                 corr_pairwdist,
-                metric)
+                method)
             # # plot dendrogram
             plt.figure()
-            plt.title(metric)
+            plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
             # plt.show()
-            max_coph_dist = coph_dist.max()
+            max_coph_dist = coph_dist_mat.max()
+            # TODO: Discuss why abs(npis_corr) is used as input and not corr_pairwdist
             flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in np.linspace(0.01,1,100)])
+                 for wg in np.linspace(0.01, 1, 100)])
+
             # ward
-            metric = 'ward'
-            cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
+            method = 'ward'
+            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
                 npis_corr,
                 corr_pairwdist,
-                metric)
+                method)
             # # plot dendrogram
             # plt.figure()
-            # plt.title(metric)
+            # plt.title(method)
             # hierarchy.dendrogram(cluster_hierarch)
             # plt.show()
-            max_coph_dist = coph_dist.max()
+            max_coph_dist = coph_dist_mat.max()
             flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
-                [wg * max_coph_dist for wg in np.linspace(0.01,1,100)])
+                [wg * max_coph_dist for wg in np.linspace(0.01, 1, 100)])
+
             # average
-            metric = 'average'
-            cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
+            method = 'average'
+            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
                 abs(npis_corr),
                 corr_pairwdist,
-                metric)
+                method)
             # # plot dendrogram
             # plt.figure()
-            # plt.title(metric)
+            # plt.title(method)
             # hierarchy.dendrogram(cluster_hierarch)
             # plt.show()
-            max_coph_dist = coph_dist.max()
+            max_coph_dist = coph_dist_mat.max()
             flatten_hierarch_clustering(
                 npis_corr, cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in np.linspace(0.01,1,100)])
+                 for wg in np.linspace(0.01, 1, 100)])
 
-        metric = 'centroid'
-        cluster_hierarch, coph_dist, scores = compute_hierarch_clustering(
-            npis_corr, # same result as abs(npis_corr)
+        # centroid
+        method = 'centroid'
+        cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
+            npis_corr,  # same result as abs(npis_corr)
             corr_pairwdist,
-            metric)
+            method)
         # # plot dendrogram
         # plt.figure()
-        # plt.title(metric)
+        # plt.title(method)
         # hierarchy.dendrogram(cluster_hierarch)
         # plt.show()
-        max_coph_dist = coph_dist.max()
+        max_coph_dist = coph_dist_mat.max()
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
             npis_corr, cluster_hierarch,
             [wg * max_coph_dist
