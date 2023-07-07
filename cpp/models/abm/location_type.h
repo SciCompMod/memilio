@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -43,6 +43,7 @@ enum class LocationType : std::uint32_t
     Car,
     PublicTransport,
     TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
+    Cemetery, // Location for all the dead persons. It is created once for the World.
 
     Count //last!
 };

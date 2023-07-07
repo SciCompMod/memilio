@@ -63,9 +63,9 @@ TEST(TestGraphSimulation, advance_subpopulation)
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
     auto person1 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
     auto person3 =
         add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
 
@@ -75,7 +75,7 @@ TEST(TestGraphSimulation, advance_subpopulation)
     for (size_t i = 0; i < 51; i++) {
         auto v = school.get_subpopulations().get_value(i);
         // Check whether the number of persons in infected state at the location is consistent
-        ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
+        ASSERT_LE(v[size_t(mio::abm::InfectionState::InfectedSymptoms)], 3);
         // Check the time evolution is correct
         ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }

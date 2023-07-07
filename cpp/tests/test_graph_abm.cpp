@@ -51,19 +51,23 @@ TEST(TestGraphWorld, test_evolve_state_transition)
     auto params = mio::abm::GlobalInfectionParameters{};
     //setup so p1 and p3 don't transition
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 2 * dt.days();
-    params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                               mio::abm::VaccinationState::Unvaccinated}]   = 2 * dt.days();
-    params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.days();
-    params.get<mio::abm::InfectedToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                              mio::abm::VaccinationState::Unvaccinated}]    = 2 * dt.days();
-    params.get<mio::abm::InfectedToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                 mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
+                                              mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        2 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        2 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+                                                      mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{
+        mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, mio::abm::VaccinationState::Unvaccinated}] =
+        2 * dt.days();
 
     auto world     = mio::graph_abm::GraphWorld(params, 0);
     auto location1 = world.add_location(mio::abm::LocationType::School);
-    auto& p1 = add_test_person(world, location1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
+    auto& p1 =
+        add_test_person(world, location1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
     auto& p2 = add_test_person(world, location1, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible);
     p1.set_assigned_location(location1);
     p2.set_assigned_location(location1);
@@ -75,7 +79,7 @@ TEST(TestGraphWorld, test_evolve_state_transition)
 
     world.evolve(t, dt);
 
-    EXPECT_EQ(p1.get_infection_state(t + dt), mio::abm::InfectionState::Infected);
+    EXPECT_EQ(p1.get_infection_state(t + dt), mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(p2.get_infection_state(t + dt), mio::abm::InfectionState::Exposed);
 }
 
@@ -141,14 +145,16 @@ TEST(TestGraphWorld, test_evolve_migration)
         auto params = mio::abm::GlobalInfectionParameters{};
 
         //setup so p1-p5 don't transition
-        params.get<mio::abm::CarrierToInfected>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.days();
-        params.get<mio::abm::CarrierToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                    mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
+        params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{
+            mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+            mio::abm::VaccinationState::Unvaccinated}]                                                  = 2 * dt.days();
+        params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                             mio::abm::AgeGroup::Age15to34,
+                                                             mio::abm::VaccinationState::Unvaccinated}] = 2 * dt.days();
         params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                  mio::abm::VaccinationState::Unvaccinated}]   = 2 * dt.days();
+                                                  mio::abm::VaccinationState::Unvaccinated}]            = 2 * dt.days();
         params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
-                                                   mio::abm::VaccinationState::Unvaccinated}]  = 2 * dt.days();
+                                                   mio::abm::VaccinationState::Unvaccinated}]           = 2 * dt.days();
 
         auto world1 = mio::graph_abm::GraphWorld(params, 0);
         auto world2 = mio::graph_abm::GraphWorld(params, 1);
@@ -166,8 +172,8 @@ TEST(TestGraphWorld, test_evolve_migration)
             add_test_person(world1, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
         auto& p2 =
             add_test_person(world1, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Susceptible, t);
-        auto& p3 = add_test_person(world1, home_id, mio::abm::AgeGroup::Age5to14,
-                                   mio::abm::InfectionState::Infected_Severe, t);
+        auto& p3 =
+            add_test_person(world1, home_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSevere, t);
         auto& p4 =
             add_test_person(world1, home_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Susceptible, t);
         auto& p5 =

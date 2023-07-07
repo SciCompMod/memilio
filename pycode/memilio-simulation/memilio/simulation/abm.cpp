@@ -36,12 +36,11 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::iterable_enum<mio::abm::InfectionState>(m, "InfectionState", py::module_local{})
         .value("Susceptible", mio::abm::InfectionState::Susceptible)
         .value("Exposed", mio::abm::InfectionState::Exposed)
-        .value("Carrier", mio::abm::InfectionState::Carrier)
-        .value("Infected", mio::abm::InfectionState::Infected)
-        .value("Infected_Severe", mio::abm::InfectionState::Infected_Severe)
-        .value("Infected_Critical", mio::abm::InfectionState::Infected_Critical)
-        .value("Recovered_Carrier", mio::abm::InfectionState::Recovered_Carrier)
-        .value("Recovered_Infected", mio::abm::InfectionState::Recovered_Infected)
+        .value("InfectedNoSymptoms", mio::abm::InfectionState::InfectedNoSymptoms)
+        .value("InfectedSymptoms", mio::abm::InfectionState::InfectedSymptoms)
+        .value("InfectedSevere", mio::abm::InfectionState::InfectedSevere)
+        .value("InfectedCritical", mio::abm::InfectionState::InfectedCritical)
+        .value("Recovered", mio::abm::InfectionState::Recovered)
         .value("Dead", mio::abm::InfectionState::Dead);
 
     pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
@@ -229,7 +228,9 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
-        .def("advance", py::overload_cast<mio::abm::TimePoint>(&mio::abm::Simulation::advance))
+        .def("advance",
+             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
+             py::arg("tmax"))
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }

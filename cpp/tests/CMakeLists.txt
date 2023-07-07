@@ -53,6 +53,7 @@ set(TESTSOURCES
     test_transform_iterator.cpp
     test_metaprogramming.cpp
     test_ide_seir.cpp
+    test_history.cpp
     abm_helpers.h
     abm_helpers.cpp
     test_ide_secir.cpp
