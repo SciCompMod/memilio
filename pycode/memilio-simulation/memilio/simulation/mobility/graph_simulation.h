@@ -31,10 +31,10 @@ namespace pymio
 /*
  * @brief bind GraphSimulation for any node and edge type
  */
-template <class Graph>
+template <class Graph, class Timepoint, class Timespan>
 void bind_GraphSimulation(pybind11::module& m, std::string const& name)
 {
-    using GS = mio::GraphSimulation<Graph>;
+    using GS = mio::GraphSimulation<Graph, Timepoint, Timespan>;
     pybind11::class_<GS>(m, name.c_str())
         .def(pybind11::init([](Graph& graph, double t0, double dt) {
                  return std::make_unique<GS>(mio::make_migration_sim(t0, dt, std::move(graph)));

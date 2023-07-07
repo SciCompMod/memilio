@@ -79,20 +79,22 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("secir_model_graph",
                                py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def("run",
+        .def(
+            "run",
             [](mio::ParameterStudy<Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)> handle_result) {
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)>
+                   handle_result) {
                 self.run(
                     [](auto&& g) {
                         return draw_sample(g);
                     },
                     [&handle_result](auto&& g, auto&& run_idx) {
                         //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so 
+                        //we don't want to run an unknown python object through parameterstudies, so
                         //we just return 0 and ignore the list returned by run().
                         //So python will behave slightly different than c++
                         handle_result(std::move(g), run_idx);
-                        return 0; 
+                        return 0;
                     });
             },
             py::arg("handle_result_func"))
@@ -206,7 +208,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
+    pymio::bind_GraphSimulation<MigrationGraph, double, double>(m, "MigrationSimulation");
 
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
