@@ -43,7 +43,8 @@ struct Trip {
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**
@@ -79,18 +80,24 @@ public:
     /**
      * @brief Get the next Trip.
      */
-    const Trip& get_next_trip() const;
+    const Trip& get_next_trip(bool weekend) const;
 
     /**
      * @brief Get the time at which the next Trip will happen.
      */
-    TimePoint get_next_trip_time() const;
+    TimePoint get_next_trip_time(bool weekend) const;
 
     /**
      * @brief Add a Trip to migration data.
      * @param[in] trip The Trip to be added.
+     * @param[in] weekend If the Trip is made on a weekend day.     
      */
-    void add_trip(Trip trip);
+    void add_trip(Trip trip, bool weekend = false);
+
+    /**
+     * @brief Use the same TripList for weekend and weekday.
+     */
+    void use_weekday_trips_on_weekend();
 
     /**
      * @brief Increment the current index to select the next Trip.
@@ -101,11 +108,19 @@ public:
     }
 
     /**
+     * @brief Reset the current index to 0.
+     */
+    void reset_index()
+    {
+        m_current_index = 0;
+    }
+
+    /**
      * @brief Get the length of the TripList.
      */
-    size_t num_trips() const
+    size_t num_trips(bool weekend = false) const
     {
-        return m_trips.size();
+        return weekend ? m_trips_weekday.size() : m_trips_weekend.size();
     }
 
     /**
@@ -117,7 +132,10 @@ public:
     }
 
 private:
-    std::vector<Trip> m_trips; ///< The list of Trip%s a Person makes.
+    std::vector<Trip>
+        m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday. It is assumed, that these Trips are used everyday.
+    std::vector<Trip>
+        m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day. It is assumed, that these Trips are used every Saturday and Sunday.
     uint32_t m_current_index; ///< The index of the Trip a Person makes next.
 };
 

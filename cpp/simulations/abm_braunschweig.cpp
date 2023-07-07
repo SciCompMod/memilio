@@ -212,6 +212,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             mio::abm::Trip(it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
                            locations.find(target_location_id)->second, locations.find(start_location_id)->second));
     }
+    world.get_trip_list().use_weekday_trips_on_weekend();
 }
 
 void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
