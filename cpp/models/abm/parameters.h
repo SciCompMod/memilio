@@ -254,11 +254,14 @@ struct MaskProtection {
     }
 };
 
+using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
+
 /**
- * @brief Personal protection factor after infection and vaccination.
+ * @brief Personal protection factor after infection and vaccination, which depends on type of vaccine
+ * age group and virus variant.  
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
         return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
@@ -272,27 +275,11 @@ struct InfectionProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against high viral load after infection and vaccination.
- */
-struct HighViralLoadProtectionFactor {
-    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
-    static auto get_default()
-    {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
-    }
-    static std::string name()
-    {
-        return "HighViralLoadProtectionFactor";
-    }
-};
-
-/**
- * @brief Personal protective factor against severe symptoms after infection and vaccination.
+ * @brief Personal protective factor against severe symptoms after infection and vaccination, which depends on type of vaccine
+ * age group and virus variant.  
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<std::function<ScalarType(ScalarType)>, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, Vaccine, AgeGroup, VirusVariant>;
     static auto get_default()
     {
         return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
@@ -306,6 +293,23 @@ struct SeverityProtectionFactor {
 };
 
 /**
+ * @brief Personal protective factor against high viral load.
+ */
+struct HighViralLoadProtectionFactor {
+    using Type = InputFunctionForProtectionLevel;
+    static auto get_default()
+    {
+        return Type([](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
+    }
+    static std::string name()
+    {
+        return "HighViralLoadProtectionFactor";
+    }
+};
+
+/**
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
@@ -313,7 +317,7 @@ using GlobalInfectionParameters =
                  InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
                  InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
                  RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection, InfectionProtectionFactor, HighViralLoadProtectionFactor, SeverityProtectionFactor>;
+                 MaskProtection, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.

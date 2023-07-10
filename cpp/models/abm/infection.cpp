@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -195,7 +195,6 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
 TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params,
                                                     TimePoint init_date, InfectionState init_state)
 {
-    assert(init_state != InfectionState::Dead && "Cannot initialize dead person.");
 
     auto start_date = init_date;
     TimeSpan time_period{}; // time period for current infection state
@@ -249,6 +248,11 @@ TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalIn
                     days(params.get<CriticalToRecovered>()[{m_virus_variant, age}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedCritical;
             }
+            break;
+
+        case InfectionState::Dead:
+            time_period    = days(params.get<CriticalToDead>()[{m_virus_variant, age}]); // TODO: subject to change
+            previous_state = InfectionState::InfectedCritical;
             break;
 
         default:
