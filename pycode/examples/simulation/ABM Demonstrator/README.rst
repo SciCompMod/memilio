@@ -72,7 +72,7 @@ The text file output.txt contains an agent level output for every location and t
 - Agent id m (am-tn)
 - Time since transmission for am-tn
 
-The time since transmission as well as the timesteps are given in hours. If an agent is not susceptible, recovered or dead, his time since transmission is set to -1.
+The time since transmission as well as the timesteps are given in hours. If an agent is susceptible, recovered or dead, his time since transmission is set to -1.
 
 Additionally to the txt output, there is a console output. The console output is a table with the number of agents per timestep and infection state.
 The timesteps are given in days here instead of hours. The infection states are

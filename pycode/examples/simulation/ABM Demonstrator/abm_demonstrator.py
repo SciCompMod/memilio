@@ -552,7 +552,7 @@ def set_sim_result_at_start(sim):
 def run_abm_simulation():
 
     input_path = '/INSIDe_Demonstrator_AreaList_modified.txt'
-    output_path = 'output'
+    output_path = '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -587,15 +587,17 @@ def run_abm_simulation():
     write_location_mapping_to_file(
         output_path + 'location_mapping.txt', mapping)
 
-    # print compartment values
+    # print compartment values to csv
     # only used for validation purposes
-    print("t S E C I I_s I_c R D")
-    for t in range(sim.result.get_num_time_points()):
-        line = str(sim.result.get_time(t)) + " "
-        comps = sim.result.get_value(t)
-        for c in range(len(comps)):
-            line += str(comps[c]) + " "
-        print(line)
+    with open(output_path + 'console_output.csv', 'w') as f:
+        f.write("t S E C I I_s I_c R D\n")
+        for t in range(sim.result.get_num_time_points()):
+            line = str(sim.result.get_time(t)) + " "
+            comps = sim.result.get_value(t)
+            for c in range(len(comps)):
+                line += str(comps[c]) + " "
+            f.write(line + "\n")
+    print('done')
 
 
 if __name__ == "__main__":
