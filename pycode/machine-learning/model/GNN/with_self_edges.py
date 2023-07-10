@@ -10,6 +10,8 @@ import scipy
 import time
 from functools import partial
 
+import matplotlib.pyplot as plt
+
 import numpy as np
 import scipy.sparse as sp
 import tensorflow as tf
@@ -62,7 +64,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(
     os.path.dirname(
         os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-    'data/data_GNN_nodamp_20pop_1k')
+    'data/data_GNN_nodamp_400pop_1k_30days')
 
 file = open(os.path.join(path_data, 'data_secir_age_groups.pickle'), 'rb')
 data_secir = pickle.load(file)
@@ -92,8 +94,9 @@ sub_matrix = commuter_data.iloc[:numer_of_nodes, 0:numer_of_nodes]
 
 
 adjacency_matrix = np.asarray(sub_matrix.copy())
-adjacency_matrix[adjacency_matrix > 0] = 1
-
+# adjacency_matrix[adjacency_matrix > 0] = 1
+# adjacency_matrix[adjacency_matrix < 5] = 0
+# adjacency_matrix[adjacency_matrix > 5] = 1
 node_features = new_inputs
 
 node_labels = new_labels
@@ -141,20 +144,23 @@ node_labels = new_labels
 # create edge features from adjacency matrix
 df = pd.DataFrame(data=np.asarray(sub_matrix))
 
-#df = pd.DataFrame(data=adjacency_list)
+# df = pd.DataFrame(data=adjacency_list)
 edge_features = df.rename_axis('Source')\
     .reset_index()\
     .melt('Source', value_name='Weight', var_name='Target')\
     .reset_index(drop=True)
 
+
 edge_features = edge_features[
-    edge_features.Weight != 0]
+    edge_features.Weight != 0]  # 157864 edges
+
+# edge_features = edge_features[
+#     edge_features.Weight >= 5]   # 32085 edges
 
 
 transformer = FunctionTransformer(np.log1p, validate=True)
 scaled_edges = transformer.transform(
     edge_features['Weight'].values.reshape(-1, 1))
-
 
 # df = pd.DataFrame(data=adjacency_list)
 # edge_features_withoutselfedges = df.rename_axis('Source')\
@@ -195,7 +201,7 @@ scaled_edges = transformer.transform(
 class MyDataset(spektral.data.dataset.Dataset):
     def read(self):
         self.a = adjacency_matrix
-        #self.a = np.asarray(adjacency_list)
+        # self.a = np.asarray(adjacency_list)
         # #self.e = np.asarray(edge_features['Weight']).reshape(
         # np.asarray(edge_features['Weight']).shape[0], 1)
         self.e = scaled_edges.reshape(np.asarray(
@@ -215,11 +221,7 @@ class MyDataset(spektral.data.dataset.Dataset):
 #         return [spektral.data.Graph(x=x, y=y, e=self.e) for x, y in zip(node_features, node_labels)]
 #         super().__init__(**kwargs)
 # data = MyDataset()
-#data = MyDataset(transforms=NormalizeAdj())
-data = MyDataset()
-batch_size = 32
-epochs = 500
-es_patience = 50  # Patience for early stopping
+# data = MyDataset(transforms=NormalizeAdj())
 
 # Train/valid/test split
 # idxs = np.random.permutation(len(data))
@@ -254,8 +256,8 @@ def preprocess(adjacency):
     return laplacian, edge_laplacian, incidence
 
 
-#laplacian, edge_laplacian, incidence = preprocess(adjacency_matrix)
-#matrix_tuple = [laplacian, edge_laplacian, incidence]
+# laplacian, edge_laplacian, incidence = preprocess(adjacency_matrix)
+# matrix_tuple = [laplacian, edge_laplacian, incidence]
 
 
 ################################################################################
@@ -265,13 +267,13 @@ class Net(Model):
     def __init__(self):
         super().__init__()
 
-        #self.conv1 = ECCConv(24,   activation="relu")
-        initializer = tf.keras.initializers.GlorotUniform(seed = 42)
+        # self.conv1 = ECCConv(24,   activation="relu")
+        # initializer = tf.keras.initializers.GlorotUniform(seed=42)
         self.conv1 = XENetConvBatch(
-            32, 240, 1,  activation="relu", kernel_initializer=initializer)
+            32, 240, 1,  activation="relu")
 
-        #self.srcpool = SRCPool()
-        #self.sagpool = MinCutPool(k = 50)
+        # self.srcpool = SRCPool()
+        # self.sagpool = MinCutPool(k = 50)
 
         # self.conv2 = XENetConv(
         #     32, 240, 1,  activation="relu")
@@ -293,36 +295,24 @@ class Net(Model):
 
         # a = np.asarray(a)
         # e = np.asarray(e)
-        #x,e= self.conv1([x, a, e])
+        # x,e= self.conv1([x, a, e])
 
         # e = np.asarray(edge_features['Weight']).reshape(
         #     np.asarray(edge_features['Weight']).shape[0], 1)
 
         x, e = self.conv1([x, a, e])
-        #x_pool, a_pool = self.srcpool([x, a])
-        #x_pool, a_pool = self.sagpool([x, a])
+        # x_pool, a_pool = self.srcpool([x, a])
+        # x_pool, a_pool = self.sagpool([x, a])
 
-
-        #x,e= self.conv1([x, matrix_tuple,e])
+        # x,e= self.conv1([x, matrix_tuple,e])
 
         # x, e = self.conv2([x, a, e])
         # x = self.conv3([x, a])
         # x = self.global_pool([x])
-        #output = self.dense(x_pool)
+        # output = self.dense(x_pool)
         output = self.dense(x)
 
         return output
-
-
-# decayed_lr = tf.keras.optimizers.schedules.ExponentialDecay(
-#         initial_learning_rate=0.01,
-#         decay_steps=200,
-#         decay_rate=0.95,
-#         staircase=True)
-learning_rate = 0.001
-model = Net()
-optimizer = Adam(learning_rate=learning_rate)
-loss_fn = MeanAbsolutePercentageError()
 
 
 # @tf.function(input_signature=loader_tr.tf_signature(),
@@ -359,7 +349,6 @@ def test_evaluation(loader):
 
     inputs, target = loader.__next__()
     pred = model(inputs, training=False)
- 
 
     mean_per_batch = []
 
@@ -367,8 +356,8 @@ def test_evaluation(loader):
         MAPE_v = []
         for v_p, v_t in zip(batch_p, batch_t):
 
-            pred_ = tf.reshape(v_p, (26, 48))
-            target_ = tf.reshape(v_t, (26, 48))
+            pred_ = tf.reshape(v_p, (31, 48))
+            target_ = tf.reshape(v_t, (31, 48))
 
             diff = pred_ - target_
             relative_err = (abs(diff))/abs(target_)
@@ -390,6 +379,14 @@ def test_evaluation(loader):
     return mean_percentage
 
 
+################################################################################
+#                Training and Evaluation
+#################################################################################
+data = MyDataset()
+batch_size = 32
+epochs = 200
+es_patience = 200  # Patience for early stopping
+
 kf = KFold(n_splits=5)
 train_idxs = []
 test_idxs = []
@@ -402,16 +399,20 @@ test_scores = []
 train_losses = []
 val_losses = []
 
+losses_history_all = []
+val_losses_history_all = []
+
+
+learning_rate = 0.001
+optimizer = Adam(learning_rate=learning_rate)
+loss_fn = MeanAbsolutePercentageError()
+
 start = time.perf_counter()
 
 
 for train_idx, test_idx in zip(train_idxs, test_idxs):
 
-    learning_rate = 0.001
     model = Net()
-    optimizer = Adam(learning_rate=learning_rate)
-    loss_fn = MeanAbsolutePercentageError()
-
 
     data_tr = data[train_idx[:(int(0.8*len(train_idx)))]]
     data_va = data[train_idx[(int(0.8*len(train_idx))):]]
@@ -430,7 +431,7 @@ for train_idx, test_idx in zip(train_idxs, test_idxs):
     results = []
     losses_history = []
     val_losses_history = []
-    #start = time.perf_counter()
+    # start = time.perf_counter()
     for batch in loader_tr:
         step += 1
         loss, acc = train_step(*batch)
@@ -463,7 +464,7 @@ for train_idx, test_idx in zip(train_idxs, test_idxs):
             results = []
             losses_history.append(loss)
             val_losses_history.append(val_loss)
-    #elapsed = time.perf_counter() - start
+    # elapsed = time.perf_counter() - start
     ################################################################################
     # Evaluate model
     ################################################################################
@@ -478,13 +479,23 @@ for train_idx, test_idx in zip(train_idxs, test_idxs):
     test_scores.append(test_loss)
     train_losses.append(np.asarray(losses_history).min())
     val_losses.append(np.asarray(val_losses_history).min())
+    losses_history_all.append(losses_history)
+    val_losses_history_all.append(val_losses_history)
 
-
-    ##### set random weight for next run 
-    # model.set_weights 
-     
 
 elapsed = time.perf_counter() - start
+
+
+# plot the losses
+plt.figure()
+plt.plot(np.asarray(losses_history_all).mean(axis=0), label='train loss')
+plt.plot(np.asarray(val_losses_history_all).mean(axis=0), label='val loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss ( MAPE)')
+plt.title('Loss for APPNPConv')
+plt.legend()
+plt.savefig('losses_APPNP')
+
 
 print("Best train losses: {} ".format(train_losses))
 print("Best validation losses: {}".format(val_losses))
