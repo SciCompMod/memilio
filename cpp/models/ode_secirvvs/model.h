@@ -391,7 +391,8 @@ public:
 
 //forward declaration, see below.
 
-template <class Base = mio::Simulation<Model>>
+
+template <typename FP=double,class Base = mio::Simulation<Model<FP>>>
 class Simulation;
 
 /**
@@ -408,7 +409,7 @@ double get_infections_relative(const Simulation<Base>& model, double t, const Ei
     * specialization of compartment model simulation for the SECIRVVS model.
     * @tparam Base simulation type, default mio::Simulation. For testing purposes only!
     */
-template <class Base>
+template <class FP,class Base>
 class Simulation : public Base
 {
 public:
@@ -418,7 +419,7 @@ public:
     * @param t0 start time
     * @param dt time steps
     */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
+    Simulation(Model<FP> const& model, double t0 = 0., double dt = 0.1)
         : Base(model, t0, dt)
         , m_t_last_npi_check(t0)
     {

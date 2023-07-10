@@ -35,19 +35,20 @@ namespace osecir
 
 // Create template specializations for the age resolved
 // SECIHURD model
-
-class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
+template<typename FP=double>
+class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters<FP>>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters<FP>>;
 
 public:
-    Model(const Populations& pop, const ParameterSet& params)
+    Model(const Populations<FP>& pop, const ParameterSet<FP>& params)
         : Base(pop, params)
     {
     }
 
     Model(int num_agegroups)
-        : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
+        : Model(Populations<FP>({AgeGroup(num_agegroups), InfectionState::Count}),
+                ParameterSet<FP>(AgeGroup(num_agegroups)))
     {
     }
 
@@ -65,13 +66,13 @@ public:
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
-        ContactMatrixGroup const& contact_matrix = params.get<ContactPatterns>();
+        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns>();
 
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            auto rateINS = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
-            test_and_trace_required += (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+            auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
+            test_and_trace_required += (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
                                        this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptoms});
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
         }
