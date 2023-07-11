@@ -184,7 +184,7 @@ int main()
         }
     };
 
-    mio::History<mio::DataWriterToBuffer, LogTimePoint, LogLocationIds> history;
+    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
 
     sim.advance(tmax, history);
 
