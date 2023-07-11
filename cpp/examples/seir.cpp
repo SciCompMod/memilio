@@ -17,13 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ode_seir/model.h"
-#include "ode_seir/infection_state.h"
+#include "ode_seir/model.h" // IWYU pragma: keep
+#include "ode_seir/infection_state.h" // IWYU pragma: keep
 #include "ode_seir/parameters.h"
-#include "memilio/compartments/simulation.h"
+#include "memilio/compartments/simulation.h" // IWYU pragma: keep
 #include "memilio/utils/logging.h"
 #include "memilio/math/adapt_rk.h"
-#include "memilio/utils/time_series.h"
+#include "memilio/utils/time_series.h" // IWYU pragma: keep
 #include "memilio/utils/time_series_to_file.h"
 #include <fstream>
 
@@ -39,7 +39,7 @@ int main()
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model model;
+    mio::oseir::Model<double> model;
 
     double total_population                                                                            = 10000;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;

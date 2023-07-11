@@ -92,9 +92,9 @@ public:
             dydt[Ei] = 0;
 
             double rateE =
-                1.0 / (2 * params.get<SerialInterval>()[i] - params.get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
+                1.0 / (2 * params.template get<SerialInterval>()[i] - params.template get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
             double rateINS =
-                0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
+                0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t Sj    = this->populations.get_flat_index({j, InfectionState::Susceptible});
@@ -107,22 +107,22 @@ public:
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto riskFromInfectedSymptomatic = smoother_cosine(
-                    test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
-                    params.get<RiskOfInfectionFromSymptomatic>()[j],
-                    params.get<MaxRiskOfInfectionFromSymptomatic>()[j]);
+                    test_and_trace_required, params.template get<TestAndTraceCapacity>(), params.template get<TestAndTraceCapacity>() * 5,
+                    params.template get<RiskOfInfectionFromSymptomatic>()[j],
+                    params.template get<MaxRiskOfInfectionFromSymptomatic>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val =
-                    (1 + params.get<Seasonality>() *
-                             sin(3.141592653589793 * (std::fmod((params.get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                    (1 + params.template get<Seasonality>() *
+                             sin(3.141592653589793 * (std::fmod((params.template get<StartDay>() + t), 365.0) / 182.5 + 0.5)));
                 double cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
                 double Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
                 double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S = y[Si] * cont_freq_eff * divNj * params.get<TransmissionProbabilityOnContact>()[i] *
-                                 (params.get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] +
+                double dummy_S = y[Si] * cont_freq_eff * divNj * params.template get<TransmissionProbabilityOnContact>()[i] *
+                                 (params.template get<RelativeTransmissionNoSymptoms>()[j] * pop[INSj] +
                                   riskFromInfectedSymptomatic * pop[ISyj]);
 
                 dydt[Si] -= dummy_S;
@@ -131,30 +131,30 @@ public:
 
             // ICU capacity shortage is close
             double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
-                                params.get<CriticalPerSevere>()[i], 0);
+                smoother_cosine(icu_occupancy, 0.90 * params.template get<ICUCapacity>(), params.template get<ICUCapacity>(),
+                                params.template get<CriticalPerSevere>()[i], 0);
 
-            double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
+            double deathsPerSevereAdjusted = params.template get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
             dydt[Ei] -= rateE * y[Ei]; // only exchange of E and INS done here
             dydt[INSi] = rateE * y[Ei] - rateINS * y[INSi];
-            dydt[ISyi] = (1 - params.get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
-                         (1 / params.get<TimeInfectedSymptoms>()[i]) * y[ISyi];
-            dydt[ISevi] = params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] -
-                          (1 / params.get<TimeInfectedSevere>()[i]) * y[ISevi];
-            dydt[ICri] = -(1 / params.get<TimeInfectedCritical>()[i]) * y[ICri];
+            dydt[ISyi] = (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS * y[INSi] -
+                         (1 / params.template get<TimeInfectedSymptoms>()[i]) * y[ISyi];
+            dydt[ISevi] = params.template get<SeverePerInfectedSymptoms>()[i] / params.template get<TimeInfectedSymptoms>()[i] * y[ISyi] -
+                          (1 / params.template get<TimeInfectedSevere>()[i]) * y[ISevi];
+            dydt[ICri] = -(1 / params.template get<TimeInfectedCritical>()[i]) * y[ICri];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-            dydt[ICri] += criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+            dydt[ICri] += criticalPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevi];
 
             dydt[Ri] =
-                params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi] +
-                (1 - params.get<SeverePerInfectedSymptoms>()[i]) / params.get<TimeInfectedSymptoms>()[i] * y[ISyi] +
-                (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi] +
-                (1 - params.get<DeathsPerCritical>()[i]) / params.get<TimeInfectedCritical>()[i] * y[ICri];
+                params.template get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSi] +
+                (1 - params.template get<SeverePerInfectedSymptoms>()[i]) / params.template get<TimeInfectedSymptoms>()[i] * y[ISyi] +
+                (1 - params.template get<CriticalPerSevere>()[i]) / params.template get<TimeInfectedSevere>()[i] * y[ISevi] +
+                (1 - params.template get<DeathsPerCritical>()[i]) / params.template get<TimeInfectedCritical>()[i] * y[ICri];
 
-            dydt[Di] = params.get<DeathsPerCritical>()[i] / params.get<TimeInfectedCritical>()[i] * y[ICri];
+            dydt[Di] = params.template get<DeathsPerCritical>()[i] / params.template get<TimeInfectedCritical>()[i] * y[ICri];
             // add potential, additional deaths due to ICU overflow
-            dydt[Di] += deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
+            dydt[Di] += deathsPerSevereAdjusted / params.template get<TimeInfectedSevere>()[i] * y[ISevi];
         }
     }
 
@@ -168,8 +168,8 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Model");
-        obj.add_element("Parameters", parameters);
-        obj.add_element("Populations", populations);
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
     }
 
     /**
@@ -180,8 +180,8 @@ public:
     static IOResult<Model> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Model");
-        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
-        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet<FP>>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations<FP>>{});
         return apply(
             io,
             [](auto&& par_, auto&& pop_) {
