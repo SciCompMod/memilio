@@ -1,12 +1,14 @@
-Check [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) and use the **draft** feature before a Pull request/Merge request.
-
 # Changes and Information
 
-Please **briefly list the changes** made and what the **Reviewer should look out for**, as well as **additional Information**:
+Please **briefly list the changes** made, additional Information and what the Reviewer should look out for:
 
 -
 
-## Checks by code author
+## Merge Request - Guideline Checklist
+
+Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) and use the **draft** feature before a Pull Request if it's not ready to review.
+
+### Checks by code author
 
 - [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
 - [ ] New code adheres to [coding guidelines](https://github.com/DLR-SC/memilio/wiki/Coding-guidelines)
@@ -15,7 +17,7 @@ Please **briefly list the changes** made and what the **Reviewer should look out
 - [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
 
-## Checks by code reviewer(s)
+### Checks by code reviewer(s)
 
 - [ ] Corresponding issue(s) is/are linked and addressed
 - [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
