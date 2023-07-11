@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/lockdown_rules.h"
-#include "abm/person.h"
-#include "abm/time.h"
+#include "models/abm/lockdown_rules.h"
+#include "models/abm/person.h"
+#include "models/abm/time.h"
 
 namespace mio
 {

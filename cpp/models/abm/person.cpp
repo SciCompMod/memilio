@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/person.h"
-#include "abm/location_type.h"
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/world.h"
-#include "abm/location.h"
+#include "models/abm/person.h"
+#include "models/abm/location_type.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/world.h"
+#include "models/abm/location.h"
 #include "memilio/utils/random_number_generator.h"
 #include <vector>
 
@@ -31,9 +31,10 @@ namespace mio
 namespace abm
 {
 
-Person::Person(Location& location, AgeGroup age, uint32_t person_id)
+Person::Person(Location& location, AgeGroup age, uint32_t person_id, uint32_t world_id)
     : m_location(&location)
-    , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
+    , m_assigned_locations((uint32_t)LocationType::Count,
+                           std::make_pair(INVALID_LOCATION_INDEX, INVALID_LOCATION_WORLD_ID))
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(0)
@@ -42,6 +43,7 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     , m_wears_mask(false)
     , m_mask_compliance((uint32_t)LocationType::Count, 0.)
     , m_person_id(person_id)
+    , m_world_id(world_id)
     , m_cells{0}
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
@@ -65,6 +67,17 @@ void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
         m_location = &loc_new;
         m_cells    = cells;
         loc_new.add_person(*this, cells);
+        m_time_at_location = TimeSpan(0);
+    }
+}
+
+void Person::migrate_to_other_world(Location& loc_new, bool set_time_at_location, const std::vector<uint32_t>& cells)
+{
+    m_location->remove_person(*this);
+    m_location = &loc_new;
+    m_cells    = cells;
+    loc_new.add_person(*this, cells);
+    if (set_time_at_location) {
         m_time_at_location = TimeSpan(0);
     }
 }
@@ -113,17 +126,24 @@ void Person::set_assigned_location(Location& location)
     * For now only use it like this:  auto home_id   = world.add_location(mio::abm::LocationType::Home);
     *                                 person.set_assigned_location(home);
     */
-    m_assigned_locations[(uint32_t)location.get_type()] = location.get_index();
+    m_assigned_locations[(uint32_t)location.get_type()].first  = location.get_index();
+    m_assigned_locations[(uint32_t)location.get_type()].second = location.get_world_id();
 }
 
 void Person::set_assigned_location(LocationId id)
 {
-    m_assigned_locations[(uint32_t)id.type] = id.index;
+    m_assigned_locations[(uint32_t)id.type].first  = id.index;
+    m_assigned_locations[(uint32_t)id.type].second = id.world_id;
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const
 {
-    return m_assigned_locations[(uint32_t)type];
+    return m_assigned_locations[(uint32_t)type].first;
+}
+
+uint32_t Person::get_assigned_location_world_id(LocationType type) const
+{
+    return m_assigned_locations[(uint32_t)type].second;
 }
 
 bool Person::goes_to_work(TimePoint t, const MigrationParameters& params) const
@@ -201,6 +221,11 @@ bool Person::get_tested(TimePoint t, const TestParameters& params)
 uint32_t Person::get_person_id()
 {
     return m_person_id;
+}
+
+uint32_t Person::get_world_id()
+{
+    return m_world_id;
 }
 
 std::vector<uint32_t>& Person::get_cells()

@@ -27,6 +27,7 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"
 #include "memilio/compartments/simulation.h"
+#include "graph_abm/graph_world.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 
@@ -34,9 +35,9 @@
 
 TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 {
-    auto t0   = 0;
-    auto tmax = 5;
-    auto dt   = 0.5;
+    double t0   = 0.;
+    double tmax = 5.;
+    double dt   = 0.5;
 
     mio::oseir::Model model1;
     model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
@@ -166,4 +167,52 @@ TEST(TestMobility, edgeApplyMigration)
     edge.apply_migration(t, 0.5, node1, node2);
     EXPECT_DOUBLE_EQ(node1.get_result().get_last_value().sum(), 900);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1100);
+}
+
+TEST(TestMobility, ABMEdgeApplyMigration)
+{
+    mio::abm::GlobalInfectionParameters infection_params;
+    auto world1 = mio::graph_abm::GraphWorld(infection_params, 0);
+    auto world2 = mio::graph_abm::GraphWorld(infection_params, 1);
+
+    //add locations
+    auto home   = world1.add_location(mio::abm::LocationType::Home);
+    auto work   = world2.add_location(mio::abm::LocationType::Work);
+    auto school = world2.add_location(mio::abm::LocationType::School);
+    world1.add_person(home, mio::abm::AgeGroup::Age5to14);
+    world1.add_person(home, mio::abm::AgeGroup::Age35to59);
+
+    for (auto& person : world1.get_persons()) {
+        person.set_assigned_location(home);
+        if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
+            person.set_assigned_location(school);
+        }
+        else {
+            person.set_assigned_location(work);
+        }
+    }
+
+    auto t0   = mio::abm::TimePoint(0);
+    auto dt   = mio::abm::hours(12);
+
+    mio::SimulationNode<mio::graph_abm::GraphSimulation> node1(t0, std::move(world1));
+    mio::SimulationNode<mio::graph_abm::GraphSimulation> node2(t0, std::move(world2));
+
+    mio::MigrationEdgeABM edge;
+
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons_to_migrate().size(), 0);
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons().size(), 2);
+    EXPECT_EQ(node2.get_simulation().get_graph_world().get_persons().size(), 0);
+
+    node1.evolve(t0, dt);
+    node2.evolve(t0, dt);
+
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons_to_migrate().size(), 2);
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons().size(), 0);
+    EXPECT_EQ(node2.get_simulation().get_graph_world().get_persons().size(), 0);
+    t0 += dt;
+    edge.apply_migration(t0, dt, node1, node2);
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons_to_migrate().size(), 0);
+    EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons().size(), 0);
+    EXPECT_EQ(node2.get_simulation().get_graph_world().get_persons().size(), 2);
 }

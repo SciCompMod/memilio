@@ -17,11 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/mask_type.h"
-#include "abm/mask.h"
-#include "abm/location.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/mask.h"
+#include "models/abm/location.h"
 #include "memilio/utils/random_number_generator.h"
-#include "abm/random_events.h"
+#include "models/abm/random_events.h"
 
 #include <numeric>
 

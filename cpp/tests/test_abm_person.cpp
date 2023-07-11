@@ -34,9 +34,9 @@ TEST(TestPerson, migrate)
 {
     auto t      = mio::abm::TimePoint(0);
     auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0);
-    auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 1);
+    auto loc1   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 1);
     auto loc2   = mio::abm::Location(mio::abm::LocationType::School, 0);
-    auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto loc3   = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 2);
     auto person = make_test_person(home, mio::abm::AgeGroup::Age0to4, mio::abm::InfectionState::Recovered);
     person.migrate_to(loc1, {0});
 
@@ -68,7 +68,7 @@ TEST(TestPerson, setGetAssignedLocation)
     person.set_assigned_location(location);
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 2);
 
-    person.set_assigned_location({4, mio::abm::LocationType::Work});
+    person.set_assigned_location({4, mio::abm::LocationType::Work, 0});
     ASSERT_EQ((int)person.get_assigned_location_index(mio::abm::LocationType::Work), 4);
 }
 
@@ -96,8 +96,8 @@ TEST(TestPerson, quarantine)
         mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59, mio::abm::VaccinationState::Unvaccinated}] =
         0.5 * dt.days();
 
-    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
-                                   infection_parameters);
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::InfectedSymptoms,
+                                   t_morning, infection_parameters);
 
     person.detect_infection(t_morning);
 
@@ -157,8 +157,8 @@ TEST(TestPerson, get_tested)
 
 TEST(TestPerson, getCells)
 {
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 0, 1);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 2);
     auto person   = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms);
     home.add_person(person);
     person.migrate_to(location, {0, 1});
@@ -247,4 +247,22 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
     ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+}
+
+TEST(TestPerson, migrateToOtherWorld)
+{
+    auto t = mio::abm::TimePoint(0);
+
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 0);
+    auto work = mio::abm::Location(mio::abm::LocationType::Work, 1, 1);
+
+    auto person = make_test_person(home, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Susceptible);
+
+    person.migrate_to_other_world(work, true);
+
+    ASSERT_EQ(person.get_location(), work);
+    ASSERT_EQ(work.get_subpopulation(t, mio::abm::InfectionState::Susceptible), 1);
+    ASSERT_EQ(home.get_subpopulation(t, mio::abm::InfectionState::Susceptible), 0);
+    ASSERT_EQ(work.get_cells()[0].m_persons.size(), 1);
+    ASSERT_EQ(home.get_cells()[0].m_persons.size(), 0);
 }

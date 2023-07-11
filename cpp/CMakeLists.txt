@@ -116,6 +116,7 @@ add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
+    add_subdirectory(models/graph_abm)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirvvs)
     add_subdirectory(models/ide_secir)
