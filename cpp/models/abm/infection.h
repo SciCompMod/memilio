@@ -87,6 +87,12 @@ public:
     InfectionState get_infection_state(TimePoint t) const;
 
     /**
+     * @brief Get the starting time  of the Infection.
+     * @return starting time point of the Infection.
+     */
+    TimePoint get_infection_start() const;
+
+    /**
      * @brief Set the Infection to detected.
      */
     void set_detected();

@@ -97,8 +97,8 @@ InfectionState Person::get_infection_state(TimePoint t) const
 
 void Person::add_new_infection(Infection&& inf)
 {
+    m_time_since_transmission = TimePoint(0) - inf.get_infection_start();
     m_infections.push_back(std::move(inf));
-    m_time_since_transmission = mio::abm::TimeSpan(0);
 }
 
 void Person::change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,

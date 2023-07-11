@@ -393,7 +393,7 @@ void create_locations_from_input(std::vector<std::pair<std::string, std::string>
  * Set infection parameters
  * @param[in, out] infection_params infection parameters 
 */
-void set_infection_parameters(mio::abm::GlobalInfectionParameters infection_params)
+void set_infection_parameters(mio::abm::GlobalInfectionParameters& infection_params)
 {
     infection_params.set<mio::abm::IncubationPeriod>(
         {{mio::abm::VirusVariant::Count, mio::abm::AgeGroup::Count, mio::abm::VaccinationState::Count}, 4.});

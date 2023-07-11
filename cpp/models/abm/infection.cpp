@@ -93,6 +93,15 @@ InfectionState Infection::get_infection_state(TimePoint t) const
         .second;
 }
 
+TimePoint Infection::get_infection_start() const
+{
+    return (*std::find_if(m_infection_course.begin(), m_infection_course.end(),
+                          [](const std::pair<TimePoint, InfectionState>& inf) {
+                              return (inf.second == InfectionState::Exposed);
+                          }))
+        .first;
+}
+
 void Infection::set_detected()
 {
     m_detected = true;
@@ -196,7 +205,6 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
 TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params,
                                                     TimePoint init_date, InfectionState init_state)
 {
-
     auto start_date = init_date;
     TimeSpan time_period{}; // time period for current infection state
     InfectionState previous_state{init_state}; // next state to enter
