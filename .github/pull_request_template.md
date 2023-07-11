@@ -2,12 +2,12 @@
 
 Please briefly list the changes made:
 
-[Describe here in 2-3 lines. For details, reference to issues to avoid redundant information.]
+[Describe here in 2–3 lines. For details, reference to issues to avoid redundant information.]
 
-## Merge Request - GuideLine Checklist
+## Merge Request - Guideline Checklist
 
 - *Check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) before opening a Pull request/Merge request.*
-- *Request a reviewer when your work is ready to review, before this please use the draft feature.*
+- *Request a reviewer when your work is ready to review, before this, please use the draft feature.*
 
 ### Checks by code author
 
