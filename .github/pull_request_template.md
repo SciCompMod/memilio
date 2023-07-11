@@ -2,9 +2,9 @@ Check [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) and us
 
 # Changes and Information
 
-Please briefly list the changes made and what the Reviewer should look out for, as well as additional Information:
+Please **briefly list the changes** made and what the **Reviewer should look out for**, as well as **additional Information**:
 
-[Describe here in 2–3 lines. For details, reference to issues to avoid redundant information.]
+-
 
 ## Checks by code author
 
