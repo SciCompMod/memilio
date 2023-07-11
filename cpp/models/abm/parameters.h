@@ -53,30 +53,6 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedNoSymptoms";
-    }
-};
-
-struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedSymptoms";
-    }
-};
-
 struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
@@ -258,11 +234,10 @@ struct MaskProtection {
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
-                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
-                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
