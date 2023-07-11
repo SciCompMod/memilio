@@ -265,7 +265,7 @@ public:
             flows[get_flow_index<InfectionState::ExposedNaive, InfectionState::InfectedNoSymptomsNaive>({i})] +=
                 rateE * y[ENi];
 
-            // // InfectedNoSymptoms
+            // InfectedNoSymptoms
             flows[get_flow_index<InfectionState::InfectedNoSymptomsNaive, InfectionState::SusceptibleImprovedImmunity>(
                 {i})] = params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSNi];
             flows[get_flow_index<InfectionState::InfectedNoSymptomsNaive, InfectionState::InfectedSymptomsNaive>({i})] =
@@ -277,7 +277,7 @@ public:
                                  InfectionState::SusceptibleImprovedImmunity>({i})] =
                 params.get<RecoveredPerInfectedNoSymptoms>()[i] * rateINS * y[INSNCi];
 
-            // // InfectedSymptoms
+            // InfectedSymptoms
             flows[get_flow_index<InfectionState::InfectedSymptomsNaive, InfectionState::InfectedSevereNaive>({i})] =
                 params.get<SeverePerInfectedSymptoms>()[i] / params.get<TimeInfectedSymptoms>()[i] * y[ISyNi];
 

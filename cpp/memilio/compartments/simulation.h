@@ -264,7 +264,8 @@ private:
         {
             // compute current population
             //   flows contains the accumulated outflows of each compartment for each target compartment at time t
-            //   using that the ODEs are linear, get_derivatives computes the total change in population from t0 to t
+            //   using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change
+            //   in population from t0 to t
             model.get_derivatives(flows, pop); // note: overwrites values in pop
             //   add the initial value of the ODEs
             pop += model.get_initial_values();

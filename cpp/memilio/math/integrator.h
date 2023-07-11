@@ -123,7 +123,7 @@ public:
      * @brief create an integrator for two specific IVPs. 
      *
      * The two IVPs are conjoined and use the same integration scheme.
-     * For example, we consider the compartments and flows as head an tail.
+     * For example, we consider the compartments and flows as head and tail.
      *
      * @param f rhs of the ODE
      * @param t0 initial point of independent variable t

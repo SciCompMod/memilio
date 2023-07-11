@@ -63,11 +63,11 @@ std::tuple<Args...> as_tuple(T<Args...>);
 template <template <class...> class T, class... Args>
 T<Args...> as_index(std::tuple<Args...>);
 
-// remove all occurances of Omittand from the types in a std::tuple<types...>
+// remove all occurrences of Omittand from the types in a std::tuple<types...>
 template <class Omittand, class Tuple>
 using filtered_tuple_t = decltype(filter_tuple<Omittand>(std::declval<Tuple>()));
 
-// remove all occurances of Omittand from the types in an Index = IndexTemplate<types...>
+// remove all occurrences of Omittand from the types in an Index = IndexTemplate<types...>
 template <class Omittand, template <class...> class IndexTemplate, class Index>
 using filtered_index_t = decltype(
     as_index<IndexTemplate>(std::declval<filtered_tuple_t<Omittand, decltype(as_tuple(std::declval<Index>()))>>()));
@@ -255,9 +255,9 @@ public:
     }
 
     /**
-     * @brief compute the right-hand-side of the ODE dydt = f(y, t)
+     * @brief Compute the right-hand-side f(y, t) of the ODE and store it in dydt.
      *
-     * This function is uses get_flow(..., flows) and get_derivatives(flows, dydt) to provide the
+     * This function uses get_flow(..., flows) and get_derivatives(flows, dydt) to provide the
      * same interface as a CompartmentalModel without flows
      *
      * @param pop the current population of the model as a flat array
@@ -325,7 +325,7 @@ public:
     template <Comp Source, Comp Target>
     constexpr size_t get_flow_index() const
     {
-        static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indizes must be specified");
+        static_assert(std::is_same<FlowIndex, Index<>>::value, "Other indices must be specified");
         return FlowChart().template get<Flow<Comp, Source, Target>>();
     }
 
