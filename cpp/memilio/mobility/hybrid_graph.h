@@ -48,6 +48,16 @@ public:
     {
     }
 
+    ABMGraph& get_abm_graph()
+    {
+        return m_abm_graph;
+    }
+
+    ODEGraph& get_ode_graph()
+    {
+        return m_ode_graph;
+    }
+
 private:
     ABMGraph m_abm_graph;
     ODEGraph m_ode_graph;

@@ -32,17 +32,15 @@ class HybridGraphSimulation
     using node_function_abm = std::function<void(Timepoint, Timespan, typename HybridGraph::NodeProperty&)>;
     using node_function_ode = std::function<void(double, double, typename HybridGraph::ODEGraph::NodeProperty&)>;
 
-    using edge_function_abm =
-        std::function<void(Timepoint, Timespan, typename HybridGraph::ABMGraph::EdgeProperty&,
-    typename HybridGraph::ABMGraph::NodeProperty&,
-    typename HybridGraph::ABMGraph::NodeProperty&)>;
-    using edge_function_ode = std::function<void(double, double, typename HybridGraph::ODEGraph::EdgeProperty&,
-        typename HybridGraph::ODEGraph::NodeProperty&,
-        typename HybridGraph::ODEGraph::NodeProperty&)>;
-    using edge_function_hybrid =
-        std::function<void(Timepoint, Timespan, typename HybridGraph::MigrationEdgeHybrid&,
-    typename HybridGraph::ABMGraph::NodeProperty&,
-    typename HybridGraph::ODEGraph::NodeProperty&)>;
+    using edge_function_abm    = std::function<void(Timepoint, Timespan, typename HybridGraph::ABMGraph::EdgeProperty&,
+                                                 typename HybridGraph::ABMGraph::NodeProperty&,
+                                                 typename HybridGraph::ABMGraph::NodeProperty&)>;
+    using edge_function_ode    = std::function<void(double, double, typename HybridGraph::ODEGraph::EdgeProperty&,
+                                                 typename HybridGraph::ODEGraph::NodeProperty&,
+                                                 typename HybridGraph::ODEGraph::NodeProperty&)>;
+    using edge_function_hybrid = std::function<void(Timepoint, Timespan, typename HybridGraph::MigrationEdgeHybrid&,
+                                                    typename HybridGraph::ABMGraph::NodeProperty&,
+                                                    typename HybridGraph::ODEGraph::NodeProperty&)>;
 
     using time_conversion_function = std::function<double(Timepoint)>;
     HybridGraphSimulation(Timepoint t0, Timespan dt, const HybridGraph& g, const node_function_abm& node_func_abm,
@@ -64,7 +62,8 @@ class HybridGraphSimulation
 
     HybridGraphSimulation(Timepoint t0, Timespan dt, HybridGraph&& g, const node_function_abm& node_func_abm,
                           const node_function_ode& node_func_ode, const edge_function_abm& edge_func_abm,
-                          const edge_function_ode& edge_func_ode, const edge_function_hybrid& edge_func_hybrid)
+                          const edge_function_ode& edge_func_ode, const edge_function_hybrid& edge_func_hybrid,
+                          const time_conversion_function& time_conversion_func)
         : m_t_abm(t0)
         , m_dt_abm(dt)
         , m_t_ode(time_conversion_func(t0))
@@ -78,10 +77,28 @@ class HybridGraphSimulation
     {
     }
 
-    // void advance(Timepoint tmax)
-    // {
-    //     auto dt = m_t;
-    // }
+    void advance(Timepoint tmax, const time_conversion_function& time_conversion_func)
+    {
+        while (m_t_abm < t_max) {
+            if (m_t_abm + m_dt_abm > t_max) {
+                m_dt_abm = t_max - m_t_abm;
+                m_dt_ode = time_conversion_func(tmax) - m_t_ode;
+            }
+
+            //advance abm nodes until t+dt
+            for (auto& abm_node : m_graph.get_abm_graph().nodes()) {
+                m_node_func_abm(m_t_abm, m_dt_abm, abm_node.property);
+            }
+
+            //advance ode nodes until t+dt
+            for (auto& ode_node : m_graph.get_ode_graph().nodes()) {
+                m_node_func_ode(m_t_ode, m_dt_ode, ode_node.property);
+            }
+
+            m_t_abm += m_dt_abm;
+            m_t_ode += m_dt_ode;
+        }
+    }
 
 private:
     Timepoint m_t_abm;
