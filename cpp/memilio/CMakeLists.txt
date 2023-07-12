@@ -61,6 +61,10 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    mobility/hybrid_graph.h
+    mobility/hybrid_graph.cpp
+    mobility/hybrid_graph_simulation.h
+    mobility/hybrid_graph_simulation.cpp
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp

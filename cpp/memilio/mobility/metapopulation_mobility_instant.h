@@ -318,16 +318,14 @@ public:
     }
 
     template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool> = true>
-    void apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
+    void apply_migration(mio::abm::TimePoint /*t*/, mio::abm::TimeSpan /*dt*/, SimulationNode<Sim>& node_from,
                          SimulationNode<Sim>& node_to);
 };
 
 template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool>>
-void MigrationEdgeABM::apply_migration(mio::abm::TimePoint t, mio::abm::TimeSpan dt, SimulationNode<Sim>& node_from,
-                                       SimulationNode<Sim>& node_to)
+void MigrationEdgeABM::apply_migration(mio::abm::TimePoint /*t*/, mio::abm::TimeSpan /*dt*/,
+                                       SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
-    mio::unused(t);
-    mio::unused(dt);
     size_t person_iter       = 0;
     auto& persons_to_migrate = node_from.get_simulation().get_graph_world().get_persons_to_migrate();
     while (person_iter < persons_to_migrate.size()) {
