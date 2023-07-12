@@ -77,12 +77,12 @@ class HybridGraphSimulation
     {
     }
 
-    void advance(Timepoint tmax, const time_conversion_function& time_conversion_func)
+    void advance(Timepoint t_max, const time_conversion_function& time_conversion_func)
     {
         while (m_t_abm < t_max) {
             if (m_t_abm + m_dt_abm > t_max) {
                 m_dt_abm = t_max - m_t_abm;
-                m_dt_ode = time_conversion_func(tmax) - m_t_ode;
+                m_dt_ode = time_conversion_func(t_max) - m_t_ode;
             }
 
             //advance abm nodes until t+dt
