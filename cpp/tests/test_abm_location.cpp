@@ -100,21 +100,23 @@ TEST(TestLocation, CacheExposureRate)
         auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
         auto location  = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
         auto infected1 = mio::abm::Person(home, age);
-        infected1.add_new_infection(mio::abm::Infection(variant, age, params, t));
+        infected1.add_new_infection(
+            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
         infected1.migrate_to(location, {0});
         auto infected2 = mio::abm::Person(home, age);
-        infected2.add_new_infection(mio::abm::Infection(variant, age, params, t));
+        infected2.add_new_infection(
+            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
         infected2.migrate_to(location, {0, 1});
 
         //cache precomputed results
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.0020454543682044937,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_contacts[{variant, age}]), 0.015015859523894731,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0020454543682044937, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0010227271841022469,
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.015015859523894731, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_contacts[{variant, age}]), 0.0075079297619473654,
                     1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0010227271841022469, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0075079297619473654, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_contacts[{variant, age}]), 0, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
 
@@ -125,8 +127,8 @@ TEST(TestLocation, CacheExposureRate)
         location.set_capacity(2, 22, 2); // Capacity for Cell 3
         location.cache_exposure_rates(t, dt);
 
-        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.0061363631046134817, 1e-14);
-        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.0030681815523067408, 1e-14);
+        EXPECT_NEAR((location.get_cells()[0].m_cached_exposure_rate_air[{variant}]), 0.045047578571684191, 1e-14);
+        EXPECT_NEAR((location.get_cells()[1].m_cached_exposure_rate_air[{variant}]), 0.022523789285842095, 1e-14);
         EXPECT_NEAR((location.get_cells()[2].m_cached_exposure_rate_air[{variant}]), 0, 1e-14);
     }
 }
