@@ -22,26 +22,27 @@
 #define MIO_MOBILITY_HYBRID_GRAPH_SIMULATION_H
 
 #include "memilio/mobility/hybrid_graph_simulation.h"
+#include <functional>
 
 namespace mio
 {
 template <class Timepoint, class Timespan, class HybridGraph>
 class HybridGraphSimulation
 {
-    using node_function_abm = std::function<void(Timepoint, Timespan)>; //, typename HybridGraph::NodeProperty&)>;
-    using node_function_ode = std::function<void(double, double)>; //typename HybridGraph::ODEGraph::NodeProperty&)>;
+    using node_function_abm = std::function<void(Timepoint, Timespan, typename HybridGraph::NodeProperty&)>;
+    using node_function_ode = std::function<void(double, double, typename HybridGraph::ODEGraph::NodeProperty&)>;
 
     using edge_function_abm =
-        std::function<void(Timepoint, Timespan)>; //, typename HybridGraph::ABMGraph::EdgeProperty&,
-    //typename HybridGraph::ABMGraph::NodeProperty&,
-    //typename HybridGraph::ABMGraph::NodeProperty&)>;
-    using edge_function_ode = std::function<void(double, double)>; //typename HybridGraph::ODEGraph::EdgeProperty&,
-        //typename HybridGraph::ODEGraph::NodeProperty&,
-        //typename HybridGraph::ODEGraph::NodeProperty&)>;
+        std::function<void(Timepoint, Timespan, typename HybridGraph::ABMGraph::EdgeProperty&,
+    typename HybridGraph::ABMGraph::NodeProperty&,
+    typename HybridGraph::ABMGraph::NodeProperty&)>;
+    using edge_function_ode = std::function<void(double, double, typename HybridGraph::ODEGraph::EdgeProperty&,
+        typename HybridGraph::ODEGraph::NodeProperty&,
+        typename HybridGraph::ODEGraph::NodeProperty&)>;
     using edge_function_hybrid =
-        std::function<void(Timepoint, Timespan)>; //, typename HybridGraph::MigrationEdgeHybrid&,
-    //typename HybridGraph::ABMGraph::NodeProperty&,
-    //typename HybridGraph::ODEGraph::NodeProperty&)>;
+        std::function<void(Timepoint, Timespan, typename HybridGraph::MigrationEdgeHybrid&,
+    typename HybridGraph::ABMGraph::NodeProperty&,
+    typename HybridGraph::ODEGraph::NodeProperty&)>;
 
     using time_conversion_function = std::function<double(Timepoint)>;
     HybridGraphSimulation(Timepoint t0, Timespan dt, const HybridGraph& g, const node_function_abm& node_func_abm,
@@ -64,8 +65,8 @@ class HybridGraphSimulation
     HybridGraphSimulation(Timepoint t0, Timespan dt, HybridGraph&& g, const node_function_abm& node_func_abm,
                           const node_function_ode& node_func_ode, const edge_function_abm& edge_func_abm,
                           const edge_function_ode& edge_func_ode, const edge_function_hybrid& edge_func_hybrid)
-        : m_t(t0)
-        , m_dt(dt)
+        : m_t_abm(t0)
+        , m_dt_abm(dt)
         , m_t_ode(time_conversion_func(t0))
         , m_dt_ode(time_conversion_func(Timepoint(0) + dt))
         , m_graph(std::move(g))
@@ -77,10 +78,10 @@ class HybridGraphSimulation
     {
     }
 
-    void advance(Timepoint tmax)
-    {
-        auto dt = m_t
-    }
+    // void advance(Timepoint tmax)
+    // {
+    //     auto dt = m_t;
+    // }
 
 private:
     Timepoint m_t_abm;
