@@ -44,37 +44,6 @@ using check_constraints_expr_t = decltype(std::declval<T>().check_constraints())
 template <class T>
 using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
 
-// Empty struct used to pass parameter packs via function arguments.
-template <class... Ts>
-struct typelist {
-};
-
-// The following functions are not defined anywhere. Their use is to provide type conversions via their return type.
-
-// Function declaration used to remove OmittedTag from the type list of a tuple.
-// First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
-// Tag == OmittedTag, of type tuple<>. This list is then concatonated, effectively removing OmittedTag.
-template <class OmittedTag, class... Tags>
-decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
-                                                               std::tuple<Tags>>::type>()...))
-    filter_tuple(std::tuple<Tags...>);
-
-// Function declaration used to replace type T by std::tuple.
-template <template <class...> class T, class... Args>
-std::tuple<Args...> as_tuple(T<Args...>);
-
-// Function declaration used to replace std::tuple by type T.
-template <template <class...> class T, class... Args>
-T<Args...> as_index(std::tuple<Args...>);
-
-// Remove all occurrences of OmittedTag from the types in a std::tuple<types...>.
-template <class OmittedTag, class Tuple>
-using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()));
-
-// Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
-template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
 } //namespace details
 
 /**
@@ -197,6 +166,37 @@ public:
     Populations populations{};
     ParameterSet parameters{};
 };
+
+namespace details
+{
+// The following functions are not defined anywhere. Their use is to provide type conversions via their return type.
+
+// Function declaration used to remove OmittedTag from the type list of a tuple.
+// First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
+// Tag == OmittedTag, of type tuple<>. This list is then concatonated, effectively removing OmittedTag.
+template <class OmittedTag, class... Tags>
+decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
+                                                               std::tuple<Tags>>::type>()...))
+    filter_tuple(std::tuple<Tags...>);
+
+// Function declaration used to replace type T by std::tuple.
+template <template <class...> class T, class... Args>
+std::tuple<Args...> as_tuple(T<Args...>);
+
+// Function declaration used to replace std::tuple by type T.
+template <template <class...> class T, class... Args>
+T<Args...> as_index(std::tuple<Args...>);
+
+// Remove all occurrences of OmittedTag from the types in a std::tuple<types...>.
+template <class OmittedTag, class Tuple>
+using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()));
+
+// Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
+template <class OmittedTag, template <class...> class IndexTemplate, class Index>
+using filtered_index_t = decltype(as_index<IndexTemplate>(
+    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+
+} //namespace details
 
 /**
  * @brief CompartmentalModel with flows. 
