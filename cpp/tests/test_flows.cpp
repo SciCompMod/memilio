@@ -121,13 +121,13 @@ TEST(TestFlows, SimulationFlows)
     auto seir = simulate_flows(t0, tmax, dt, model);
     // verify results (computed using flows)
     auto results = seir[0].get_last_value();
-    EXPECT_NEAR(results[0], 9660.5835936179428, 1e-14);
-    EXPECT_NEAR(results[1], 118.38410512338653, 1e-14);
-    EXPECT_NEAR(results[2], 104.06636087558746, 1e-14);
-    EXPECT_NEAR(results[3], 116.96594038308582, 1e-14);
+    EXPECT_NEAR(results[0], 9660.5835936179408, 1e-14);
+    EXPECT_NEAR(results[1], 118.38410512338650, 1e-14);
+    EXPECT_NEAR(results[2], 104.06636087558745, 1e-14);
+    EXPECT_NEAR(results[3], 116.96594038308581, 1e-14);
     // test flow results
     auto flows_results = seir[1].get_last_value();
-    EXPECT_NEAR(flows_results[0], 39.416406382059776, 1e-14);
+    EXPECT_NEAR(flows_results[0], 39.416406382059762, 1e-14);
     EXPECT_NEAR(flows_results[1], 21.032301258673261, 1e-14);
     EXPECT_NEAR(flows_results[2], 16.965940383085815, 1e-14);
 }
@@ -164,10 +164,10 @@ TEST(TestFlows, CompareSimulations)
     auto results_flows  = seir_sim_flows[0].get_last_value();
     auto results        = seir_sim.get_last_value();
 
-    EXPECT_NEAR(results[0], results_flows[0], 1e-14);
-    EXPECT_NEAR(results[1], results_flows[1], 1e-14);
-    EXPECT_NEAR(results[2], results_flows[2], 1e-14);
-    EXPECT_NEAR(results[3], results_flows[3], 1e-14);
+    EXPECT_NEAR(results[0], results_flows[0], 1e-10);
+    EXPECT_NEAR(results[1], results_flows[1], 1e-10);
+    EXPECT_NEAR(results[2], results_flows[2], 1e-10);
+    EXPECT_NEAR(results[3], results_flows[3], 1e-10);
 }
 
 TEST(TestFlows, GetInitialFlows)

@@ -160,42 +160,14 @@ void flow_sim(::benchmark::State& state)
     }
 }
 
-// simulation with flows (in Model definition and calculated by Simulation)
-void flow_sim2(::benchmark::State& state)
-{
-    using Model = mio::benchmark::FlowModel;
-    // suppress non-critical messages
-    mio::set_log_level(mio::LogLevel::critical);
-    // load config
-    auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
-    // create model
-    Model model;
-    mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore> I =
-        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
-    // run benchmark
-    for (auto _ : state) {
-        // This code gets timed
-        mio::SimulationFlows<Model> sim(model, cfg.t0, cfg.dt);
-        sim.set_integrator(I);
-        sim.advance(cfg.t_max);
-        results = sim.get_result();
-        // results = mio::simulate_flows(cfg.t0, cfg.t_max, cfg.dt, model, I)[0];
-    }
-}
-
 // register functions as a benchmarks and set a name
 // mitigate influence of cpu scaling
-// BENCHMARK(flowless_sim)->Name("Dummy 1/3");
-// BENCHMARK(flowless_sim)->Name("Dummy 2/3");
-// BENCHMARK(flowless_sim)->Name("Dummy 3/3");
+BENCHMARK(flowless_sim)->Name("Dummy 1/3");
+BENCHMARK(flowless_sim)->Name("Dummy 2/3");
+BENCHMARK(flowless_sim)->Name("Dummy 3/3");
 // actual benchmarks
 BENCHMARK(flowless_sim)->Name("mio::Simulation on oseir::Model (pre 511 branch) without flows");
 BENCHMARK(flow_sim_comp_only)->Name("mio::Simulation on oseir::Model with flows");
-BENCHMARK(flow_sim)->Name("mio::FlowSimulation on oseir::Model with flows");
-BENCHMARK(flow_sim2)->Name("mio::SimulationFlows on oseir::Model with flows");
+BENCHMARK(flow_sim)->Name("mio::SimulationFlows on oseir::Model with flows");
 // run all benchmarks
 BENCHMARK_MAIN();
