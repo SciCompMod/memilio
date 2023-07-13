@@ -24,11 +24,10 @@
 """
 import collections
 import os
-from zipfile import ZipFile
-
 import numpy as np
 import pandas as pd
 import wget
+from zipfile import ZipFile
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
@@ -68,8 +67,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     if verify_sorted(countykey_list) == False:
         raise gd.DataError("Error. Input list not sorted.")
 
-    # Create list of government regions with lists of counties that belong to them and list of states with government
-    # regions that belong to them; only works with sorted lists of keys.
+    # Create list of government regions with lists of counties that belong to them and list of states with government regions that belong to them; only works with sorted lists of keys.
     gov_county_table = []
 
     gov_index = 0
@@ -139,7 +137,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     Agency of Work data.
 
     Keyword arguments:
-    @param read_data True or False. Defines if data is read from file or downloaded. 
+    @param read_data True or False. Defines if data is read from file or downloaded.
         Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Folder where data is written to. Default defined in defaultDict.
@@ -185,8 +183,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     govkey2numlist = collections.OrderedDict(
         zip(govkey_list, list(range(0, len(govkey_list)))))
 
-    (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
-        countykey_list, govkey_list)
+    (countykey2govkey, countykey2localnumlist, gov_county_table,
+     state_gov_table) = assign_geographical_entities(countykey_list, govkey_list)
 
     mat_commuter_migration = np.zeros(
         [len(countykey_list), len(countykey_list)])
@@ -208,22 +206,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
         # This File is in a zip folder so it has to be unzipped first before it can be read.
         param_dict = {"sheet_name": 3, "engine": "pyxlsb"}
-        filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
-        # Unzip it
-        zipfile = wget.download(url, filepath)
-        with ZipFile(zipfile, 'r') as zipObj:
-            zipObj.extractall(path=filepath)
-        # Read the file
-        filename = item.split('-20')[0] + '.xlsb'
-        file = filename.replace('-', '_')
-        commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
-        # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
-        # delete zip folder after extracting
-        os.remove(os.path.join(filepath, item))
-        # delete file after reading
-        os.remove(os.path.join(filepath, file))
+        commuter_migration_file = gd.get_file(
+            '', url, False, param_dict, interactive=True)
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -247,8 +233,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                 curr_county_migratedto = commuter_migration_file.iloc[i][1]
                 current_key = commuter_migration_file.iloc[i][0]
                 # migration to itself excluded!
-                counties_migratedfrom[countykey2govkey[current_key]
-                                      ][countykey2localnumlist[current_key]] = 1
+                counties_migratedfrom[countykey2govkey[current_key]][
+                    countykey2localnumlist[current_key]] = 1
 
             if not isinstance(commuter_migration_file.iloc[i][2], float):
                 # removal of nan's, regional keys are stored as strings
@@ -263,8 +249,8 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         val = commuter_migration_file.iloc[i][4]
                         mat_commuter_migration[current_row, current_col] = val
                         checksum += val
-                        counties_migratedfrom[countykey2govkey[commuter_migration_file.iloc[i][2]]][
-                            countykey2localnumlist[commuter_migration_file.iloc[i][2]]] = 1
+                        counties_migratedfrom[countykey2govkey[commuter_migration_file.iloc[i][2]]
+                                              ][countykey2localnumlist[commuter_migration_file.iloc[i][2]]] = 1
 
                     # take summed values of other REMAINING counties of government region
                     # here, some counties of the region are stated explicitly and the rest is summed
@@ -279,7 +265,11 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                             # sum population of all counties not explicitly migrated from
                             # of the current gov region migrated from
                         dummy_pop_sum = 0
-                        for k in range(0, len(gov_county_table[govkey2numlist[dummy_key_wozeros]])):
+                        for k in range(
+                            0,
+                            len(
+                                gov_county_table
+                                [govkey2numlist[dummy_key_wozeros]])):
                             if counties_migratedfrom[govkey2numlist[dummy_key_wozeros]][k] < 1:
                                 # get identifier (0-401) for county key
                                 globindex = countykey2numlist[gov_county_table[govkey2numlist[dummy_key_wozeros]][k]]
@@ -287,7 +277,11 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                 dummy_pop_sum += countypop_list[globindex]
 
                         # distribute emigration relatively to county population where migration comes from
-                        for k in range(0, len(gov_county_table[govkey2numlist[dummy_key_wozeros]])):
+                        for k in range(
+                            0,
+                            len(
+                                gov_county_table
+                                [govkey2numlist[dummy_key_wozeros]])):
                             if counties_migratedfrom[govkey2numlist[dummy_key_wozeros]][k] < 1:
                                 # get identifier (0-401) for county key
                                 globindex = countykey2numlist[gov_county_table[govkey2numlist[dummy_key_wozeros]][k]]
@@ -308,20 +302,32 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                         # sum population of all counties not explicitly migrated to
                         # of the current gov region migrated to
                         dummy_pop_sum = 0
-                        for k in range(0, len(gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]])):
+                        for k in range(
+                            0,
+                            len(
+                                gov_county_table
+                                [
+                                    govkey2numlist
+                                    [commuter_migration_file.iloc[i][2]]])):
                             if counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] < 1:
                                 # get identifier (0-401) for county key
-                                globindex = countykey2numlist[gov_county_table[govkey2numlist[
-                                    commuter_migration_file.iloc[i][2]]][k]]
+                                globindex = countykey2numlist[gov_county_table[
+                                    govkey2numlist[commuter_migration_file.iloc[i][2]]][k]]
                                 # sum up
                                 dummy_pop_sum += countypop_list[globindex]
 
                         # distribute emigration relatively to county population where migration comes from
-                        for k in range(0, len(gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]])):
+                        for k in range(
+                            0,
+                            len(
+                                gov_county_table
+                                [
+                                    govkey2numlist
+                                    [commuter_migration_file.iloc[i][2]]])):
                             if counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] < 1:
                                 # get identifier (0-401) for county key
-                                globindex = countykey2numlist[gov_county_table[govkey2numlist[
-                                    commuter_migration_file.iloc[i][2]]][k]]
+                                globindex = countykey2numlist[gov_county_table[
+                                    govkey2numlist[commuter_migration_file.iloc[i][2]]][k]]
                                 counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] = 1
 
                                 # set value computed relatively to county size and effective migration
@@ -581,8 +587,9 @@ def main():
 
     arg_dict_commuter = {**arg_dict, "setup_dict": setup_dict}
 
-    get_neighbors_mobility(1001, abs_tol=0, rel_tol=0, tol_comb='or',
-                           merge_eisenach=True, out_folder=dd.defaultDict['out_folder'])
+    get_neighbors_mobility(
+        1001, abs_tol=0, rel_tol=0, tol_comb='or', merge_eisenach=True,
+        out_folder=dd.defaultDict['out_folder'])
 
     get_commuter_data(**arg_dict_commuter)
 

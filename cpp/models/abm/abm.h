@@ -28,10 +28,16 @@
 #include "abm/world.h"
 #include "abm/person.h"
 #include "abm/location.h"
-#include "abm/state.h"
 #include "abm/location_type.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/migration_rules.h"
 #include "abm/testing_strategy.h"
+#include "abm/infection.h"
+#include "abm/infection_state.h"
+#include "abm/virus_variant.h"
+#include "abm/vaccine.h"
+#include "abm/age.h"
+#include "abm/household.h"
+#include "abm/lockdown_rules.h"
 
 #endif

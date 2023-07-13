@@ -68,31 +68,12 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    """
 
     filename = "FullData_JohnHopkins"
+    url = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
+    path = os.path.join(out_folder, filename + ".json")
+    df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
-    if read_data:
-        file_in = os.path.join(out_folder, filename + ".json")
-        # if once dowloaded just read json file
-        try:
-            df = pandas.read_json(file_in)
-        # pandas>1.5 raise FileNotFoundError instead of ValueError
-        except (ValueError, FileNotFoundError) as err:
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist." +
-                                    " Call program without -r flag to get it.") \
-                from err
-    else:
-        # Get data:
-        # https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv
-        df = gd.loadCsv('time-series-19-covid-combined',
-                        apiUrl='https://raw.githubusercontent.com/datasets/covid-19/master/data/')
-
-        # convert "Datenstand" to real date:
-        # df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize
-        # ('Europe/Berlin')
-
-        # output data to not always download it
-        if not no_raw:
-            gd.write_dataframe(df, out_folder, filename, "json")
+    if not no_raw:
+        gd.write_dataframe(df, out_folder, filename, "json")
 
     df.rename({'Country/Region': 'CountryRegion',
               'Province/State': 'ProvinceState'}, axis=1, inplace=True)
