@@ -86,7 +86,11 @@ class Test_osecir_integration(unittest.TestCase):
         contacts = ContactMatrix(
             np.full((self.nb_groups, self.nb_groups), fact * cont_freq))
         contacts.add_damping(
-            Damping(coeffs=np.full((self.nb_groups, self.nb_groups), 0.7), t=30.0, level=0, type=0))
+            Damping(
+                coeffs=np.full(
+                    (self.nb_groups, self.nb_groups),
+                    0.7),
+                t=30.0, level=0, type=0))
         model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
         self.model = model
@@ -114,8 +118,9 @@ class Test_osecir_integration(unittest.TestCase):
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/ode-secihurd-ageres-compare.csv'),
-            sep=r'(?<!#)\s+')
-        refData.columns = pd.Series(refData.columns.str.replace(r"#\s", ""))
+            sep=r'(?<!#)\s+', engine='python')
+        refData.columns = pd.Series(refData.columns.str.replace(
+            r"#\s", "", regex=True))
 
         result = simulate(t0=self.t0, tmax=self.tmax,
                           dt=self.dt, model=self.model)
