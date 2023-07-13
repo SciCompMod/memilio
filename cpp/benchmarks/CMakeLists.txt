@@ -40,11 +40,11 @@ set_target_properties(benchmark PROPERTIES FOLDER "Extern")
 add_executable(integrator_step_benchmark integrator_step.cpp)
 target_link_libraries(integrator_step_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
 
-add_executable(flow_simulation_benchmark flow_simulation.cpp)
-target_link_libraries(flow_simulation_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
+add_executable(flow_simulation_ode_secirvvs_benchmark flow_simulation_ode_secirvvs.cpp)
+target_link_libraries(flow_simulation_ode_secirvvs_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
 
-add_executable(flow_simulation_seir_benchmark flow_simulation_seir.cpp)
-target_link_libraries(flow_simulation_seir_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
+add_executable(flow_simulation_ode_seir_benchmark flow_simulation_ode_seir.cpp)
+target_link_libraries(flow_simulation_ode_seir_benchmark PRIVATE memilio ode_seir benchmark::benchmark)
 
 add_executable(simulation_benchmark simulation.cpp)
 target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
