@@ -90,7 +90,7 @@ mio::abm::LocationType get_location_type(uint32_t acitivity_end)
         type = mio::abm::LocationType::SocialEvent; // Freizeit
         break;
     case 5:
-        type = mio::abm::LocationType::Home; // Private Erledigung
+        type = mio::abm::LocationType::BasicsShop; // Private Erledigung
         break;
     case 6:
         type = mio::abm::LocationType::SocialEvent; // Sonstiges
@@ -171,8 +171,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
         uint32_t person_id          = row[index["puid"]];
         uint32_t age                = row[index["age"]]; // TODO
-        uint32_t target_location_id = row[index["loc_id_end"]];
-        uint32_t start_location_id  = row[index["loc_id_start"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
         uint32_t home_id            = row[index["huid"]];
         uint32_t activity_end       = row[index["activity_end"]];
         uint32_t trip_start         = row[index["start_time"]];
