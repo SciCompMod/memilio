@@ -52,6 +52,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_ide_seir.cpp
     test_history.cpp
+    test_reproduction_nb_seir.cpp
     abm_helpers.h
     abm_helpers.cpp
     test_ide_secir.cpp
