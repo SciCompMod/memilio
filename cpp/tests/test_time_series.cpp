@@ -322,3 +322,34 @@ TYPED_TEST(TestTimeSeries, create)
         }
     }
 }
+
+TYPED_TEST(TestTimeSeries, print_table)
+{
+    std::stringstream output;
+    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            ts[i][j] = i + j + 0.123456789;
+        }
+    }
+
+    std::string expected_output_1 = "Time col_1 col_2\n0.00 0.12 1.12\n0.00 1.12 2.12\n";
+    ts.print_table({"col_1", "col_2"}, 4, 2, output);
+    std::string actual_output_1 = output.str();
+    EXPECT_EQ(expected_output_1, actual_output_1);
+
+    output.str("");
+
+    std::string expected_output_3 = "Time   col_1  col_2 \n   0.0    0.1    1.1\n   0.0    1.1    2.1\n";
+    ts.print_table({"col_1", "col_2"}, 6, 1, output);
+    std::string actual_output_3 = output.str();
+    EXPECT_EQ(expected_output_3, actual_output_3);
+
+    output.str("");
+
+    std::string expected_output_2 = "Time         col_1        col_2       \n      0.0000       0.1235       "
+                                    "1.1235\n      0.0000       1.1235       2.1235\n";
+    ts.print_table({"col_1", "col_2"}, 12, 4, output);
+    std::string actual_output_2 = output.str();
+    EXPECT_EQ(expected_output_2, actual_output_2);
+}
