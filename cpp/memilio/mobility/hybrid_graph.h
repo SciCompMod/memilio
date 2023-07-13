@@ -21,6 +21,7 @@
 #define HYBRID_GRAPH_H
 
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/stl_util.h"
 
 namespace mio
 {
@@ -48,20 +49,90 @@ public:
     {
     }
 
-    ABMGraph& get_abm_graph()
+    ABMGraph& get_abm_graph() &
     {
         return m_abm_graph;
     }
 
-    ODEGraph& get_ode_graph()
+    const ABMGraph& get_abm_graph() const&
+    {
+        return m_abm_graph;
+    }
+
+    ODEGraph& get_ode_graph() &
     {
         return m_ode_graph;
+    }
+
+    const ODEGraph& get_ode_graph() const&
+    {
+        return m_ode_graph;
+    }
+
+    auto hybrid_edges()
+    {
+        return make_range(begin(m_hybrid_edges), end(m_hybrid_edges));
+    }
+
+    auto hybrid_edges() const
+    {
+        return make_range(begin(m_hybrid_edges), end(m_hybrid_edges));
+    }
+
+    Node<typename ABMGraph::NodeProperty>& get_abm_node_from_hybrid_edge(Edge<MigrationEdgeHybrid>& edge)
+    {
+        auto start_idx = edge.start_node_idx;
+        auto end_idx   = edge.end_node_idx;
+        auto iter      = std::find_if(m_abm_graph.nodes().begin(), m_abm_graph.nodes().end(),
+                                      [start_idx](const Node<ABMGraph::NodeProperty>& node) {
+                                     return node.id == start_idx;
+                                 });
+        if (iter != m_abm_graph.nodes().end()) {
+            return *iter;
+        }
+        else {
+            iter = std::find_if(m_abm_graph.nodes().begin(), m_abm_graph.nodes().end(),
+                                [end_idx](const Node<ABMGraph::NodeProperty>& node) {
+                                    return node.id == end_idx;
+                                });
+            if (iter != m_abm_graph.nodes().end()) {
+                return *iter;
+            }
+            else {
+                mio::log_error("Hybrid edge is not in graph");
+            }
+        }
+    }
+
+    Node<typename ODEGraph::NodeProperty>& get_ode_node_from_hybrid_edge(Edge<MigrationEdgeHybrid>& edge)
+    {
+        auto start_idx = edge.start_node_idx;
+        auto end_idx   = edge.end_node_idx;
+        auto iter      = std::find_if(m_ode_graph.nodes().begin(), m_ode_graph.nodes().end(),
+                                      [start_idx](const Node<ODEGraph::NodeProperty>& node) {
+                                     return node.id == start_idx;
+                                 });
+        if (iter != m_ode_graph.nodes().end()) {
+            return *iter;
+        }
+        else {
+            iter = std::find_if(m_ode_graph.nodes().begin(), m_ode_graph.nodes().end(),
+                                [end_idx](const Node<ODEGraph::NodeProperty>& node) {
+                                    return node.id == end_idx;
+                                });
+            if (iter != m_ode_graph.nodes().end()) {
+                return *iter;
+            }
+            else {
+                mio::log_error("Hybrid edge is not in graph");
+            }
+        }
     }
 
 private:
     ABMGraph m_abm_graph;
     ODEGraph m_ode_graph;
-    std::vector<Node<ABM>> m_abm_nodes_to_ode_nodes;
+    std::vector<Node<typename ABMGraph::NodeProperty>> m_abm_nodes_to_ode_nodes;
     std::vector<Edge<MigrationEdgeHybrid>> m_hybrid_edges;
 };
 

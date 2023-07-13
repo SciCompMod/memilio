@@ -97,6 +97,32 @@ class HybridGraphSimulation
 
             m_t_abm += m_dt_abm;
             m_t_ode += m_dt_ode;
+
+            //advance abm edges
+            for (auto& abm_edge : m_graph.get_abm_graph().edges()) {
+                m_edge_func_abm(m_t_abm, m_dt_abm, abm_edge.property,
+                                m_graph.get_abm_graph().nodes()[abm_edge.start_node_idx].property,
+                                m_graph.get_abm_graph().nodes()[abm_edge.end_node_idx].property);
+            }
+
+            //advance ode_edges
+            for (auto& ode_edge : m_graph.get_ode_graph().edges()) {
+                m_edge_func_ode(m_t_ode, m_dt_ode, ode_edge.property,
+                                m_graph.get_ode_graph().nodes()[ode_edge.start_node_idx].property,
+                                m_graph.get_ode_graph().nodes()[ode_edge.end_node_idx].property);
+            }
+
+            //advance hybrid edges
+            for (auto& hybrid_edge : m_graph.hybrid_edges()) {
+                m_edge_func_hybrid(m_t_abm, m_dt_abm, hybrid_edge.property,
+                                   m_graph.get_abm_node_from_hybrid_edge(hybrid_edge),
+                                   m_graph.get_ode_node_from_hybrid_edge(hybrid_edge));
+            }
+        }
+
+        //store results for abm nodes for last timepoint
+        for (auto& abm_node : m_graph.get_abm_graph().nodes()) {
+            n.property.end_simulation(t_max);
         }
     }
 
