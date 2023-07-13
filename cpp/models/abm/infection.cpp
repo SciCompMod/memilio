@@ -43,10 +43,6 @@ Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionPara
         m_viral_load.start_date +
         days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
 
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
-
     auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
     m_log_norm_alpha = inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
     m_log_norm_beta  = inf_params.infectivity_beta.get_distribution_instance()(inf_params.infectivity_beta.params);
@@ -70,7 +66,7 @@ ScalarType Infection::get_viral_load(TimePoint t) const
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    if (m_viral_load.start_date >= t)
+    if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed)
         return 0;
     return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
