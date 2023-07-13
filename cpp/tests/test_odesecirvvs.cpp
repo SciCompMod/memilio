@@ -31,7 +31,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/parameter_set.h"
@@ -693,7 +693,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 2, true),
+                                                       TEST_DATA_DIR, 2, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -1004,6 +1004,6 @@ TEST(TestOdeSECIRVVS, check_constraints_parameters)
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(0.5);
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB161>(-4);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-    
+
     mio::set_log_level(mio::LogLevel::warn);
 }

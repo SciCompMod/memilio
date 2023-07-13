@@ -182,6 +182,7 @@ class Scanner:
         if node.spelling == self.config.model_class:
             intermed_repr.model_class = node.spelling
             self.check_model_base(node, intermed_repr)
+            self.check_model_includes(node, intermed_repr)
             if self.config.optional.get("age_group"):
                 self.check_age_group(node, intermed_repr)
         elif (self.config.optional.get("simulation_class")
@@ -215,6 +216,38 @@ class Scanner:
         For now this is handled by the parent node, which represents the class.
         """
         pass
+
+    def check_model_includes(
+        self: Self, node: Cursor,
+            intermed_repr: IntermediateRepresentation) -> None:
+        """
+        Helper function to retrieve the model specific includes needed for pybind.
+
+        @param node Current node represented as a Cursor object.
+        @param intermed_repr Dataclass used for saving the extracted model features.
+        """
+        filepath = node.location.file.name
+        filepaths = filepath.split("../")
+        model_has_analyze_results = False
+
+        intermed_repr.include_list.append(filepaths[1])
+        intermed_repr.include_list.append(
+            filepaths[1].replace("model.h", "") + "infection_state.h")
+
+        # Iterate throught files in the directory of the model and check for files
+        for file in os.listdir(filepaths[0]):
+            if file == "parameter_space.h":
+                intermed_repr.include_list.append(filepaths[1].replace(
+                    "model.h", "") +
+                    "parameter_space.h")
+            elif file == "analyze_result.h":
+                model_has_analyze_results = True
+
+        if model_has_analyze_results:
+            intermed_repr.include_list.append(
+                filepaths[1].replace("model.h", "") + "analyze_result.h")
+        else:
+            intermed_repr.include_list.append("memilio/data/analyze_result.h")
 
     def check_age_group(
         self: Self, node: Cursor,

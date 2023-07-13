@@ -30,9 +30,8 @@ namespace mio
 namespace abm
 {
 
-Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
-    : m_type(type)
-    , m_index(index)
+Location::Location(LocationId loc_id, uint32_t num_cells)
+    : m_id(loc_id)
     , m_capacity_adapted_transmission_risk(false)
     , m_cells(num_cells)
     , m_required_mask(MaskType::Community)
@@ -72,7 +71,7 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
                 (std::min(m_parameters.get<MaximumContacts>(),
                           transmission_contacts_per_day(cell_index, virus, age_receiver)) +
                  transmission_air_per_day(cell_index, virus)) *
-                (1 - mask_protection) * dt.days() / days(1).days() * person.get_protection_factor(virus, t);
+                (1 - mask_protection) * dt.days() * person.get_protection_factor(virus, t);
 
             local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
         }

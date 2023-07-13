@@ -53,7 +53,7 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByCarrier {
+struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -61,11 +61,11 @@ struct SusceptibleToExposedByCarrier {
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByCarrier";
+        return "InfectedNoSymptomsToSymptoms";
     }
 };
 
-struct SusceptibleToExposedByInfected {
+struct InfectedNoSymptomsToRecovered {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -73,11 +73,11 @@ struct SusceptibleToExposedByInfected {
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByInfected";
+        return "InfectedNoSymptomsToRecovered";
     }
 };
 
-struct CarrierToInfected {
+struct InfectedSymptomsToRecovered {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -85,11 +85,11 @@ struct CarrierToInfected {
     }
     static std::string name()
     {
-        return "CarrierToInfected";
+        return "InfectedSymptomsToRecovered";
     }
 };
 
-struct CarrierToRecovered {
+struct InfectedSymptomsToSevere {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
@@ -97,31 +97,7 @@ struct CarrierToRecovered {
     }
     static std::string name()
     {
-        return "CarrierToRecovered";
-    }
-};
-
-struct InfectedToRecovered {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectedToRecovered";
-    }
-};
-
-struct InfectedToSevere {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectedToSevere";
+        return "InfectedSymptomsToSevere";
     }
 };
 
@@ -184,7 +160,11 @@ struct RecoveredToSusceptible {
         return "RecoveredToSusceptible";
     }
 };
-
+/**
+ * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+ * Section 3.3.1 or see also supplementary materials Fig. S5.
+*/
 struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
@@ -205,6 +185,10 @@ struct ViralLoadDistributions {
     }
 };
 
+/**
+ * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+*/
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
@@ -258,8 +242,8 @@ struct MaskProtection {
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
-                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
                  InfectivityDistributions, DetectInfection, MaskProtection>;
 

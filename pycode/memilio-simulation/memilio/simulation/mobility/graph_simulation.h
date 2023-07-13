@@ -20,7 +20,7 @@
 #ifndef PYMIO_GRAPH_SIMULATION_H
 #define PYMIO_GRAPH_SIMULATION_H
 
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/graph_simulation.h"
 
 #include "pybind11/pybind11.h"

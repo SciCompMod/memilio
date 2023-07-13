@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MOBILITY_H
-#define MOBILITY_H
+#ifndef METAPOPULATION_MOBILITY_INSTANT_H
+#define METAPOPULATION_MOBILITY_INSTANT_H
 
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/time_series.h"
@@ -537,4 +537,4 @@ make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdg
 
 } // namespace mio
 
-#endif //MOBILITY_H
+#endif //METAPOPULATION_MOBILITY_INSTANT_H
