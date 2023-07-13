@@ -30,6 +30,8 @@
 namespace mio
 {
 
+using DefaultIntegratorCore = mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>;
+
 /**
  * @brief A class for the simulation of a compartment model.
  * @tparam M a CompartmentModel type
@@ -49,8 +51,7 @@ public:
      * @param[in] dt initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        : m_integratorCore(std::make_shared<DefaultIntegratorCore>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
@@ -149,12 +150,11 @@ protected:
      */
     template <class ODESystem>
     Simulation(Model const& model, double t0, double dt, ODESystem& sys)
-        : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
+        : m_integratorCore(std::make_shared<DefaultIntegratorCore>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
               [&model = *m_model, &sys](auto&& y, auto&& t, auto&& dydt) {
-                  sys.right_hand_side(model, y, t, dydt);
+                  sys.right_hand_side(model, y, y, t, dydt);
               },
               t0, sys.initial_values(model), dt, m_integratorCore)
     {
@@ -259,7 +259,9 @@ private:
         {
         }
 
-        inline void right_hand_side(const Model& model, Eigen::Ref<const Eigen::VectorXd> flows, double t,
+        /// @brief Stand-in for model.eval_right_hand_side(...), that calculates the derivative of flows.
+        inline void right_hand_side(const Model& model, Eigen::Ref<const Eigen::VectorXd>,
+                                    Eigen::Ref<const Eigen::VectorXd> flows, double t,
                                     Eigen::Ref<Eigen::VectorXd> dflows_dt)
         {
             // compute current population
@@ -274,12 +276,13 @@ private:
             model.get_flows(pop, pop, t, dflows_dt); // this result is used by the integrator
         }
 
+        /// @brief Stand-in for model.get_initial_values(), that returns the initial values for the flows.
         inline Eigen::VectorXd initial_values(const Model& m)
         {
             return m.get_initial_flows();
         }
 
-        Eigen::VectorXd pop;
+        Eigen::VectorXd pop; ///< pre-allocated temporary, used in right_hand_side()
     };
 
     SimulationFlows(Model const& model, double t0, double dt, std::unique_ptr<ODESystem> sys)
@@ -289,174 +292,26 @@ private:
     {
     }
 
+    /**
+     * @brief Computes the population based on the simulated flows.
+     * Uses the same method as ODESystem::right_hand_side to compute the population given the flows and initil values.
+     * Adds time points to m_result until it has the same number of time points as flow result (get_flows()). Does not
+     * recalculate older values.
+     */
     void compute_population_results() const
     {
         const auto& flows = get_flows();
         const auto& model = this->get_model();
         // calculate new time points
-        for (size_t i = m_result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
+        for (Eigen::Index i = m_result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
             m_result.add_time_point(flows.get_time(i));
             model.get_derivatives(flows.get_value(i), m_result.get_value(i));
             m_result.get_value(i) += m_result.get_value(0);
         }
     }
 
-    std::unique_ptr<ODESystem> m_system;
-    mutable mio::TimeSeries<ScalarType> m_result;
-};
-
-/**
- * @brief A class for the simulation of a compartment model with Flows. The Flows are integrated when calling the time integration scheme.
- * @tparam M a CompartmentModel type
- */
-template <class M>
-class FlowSimulation
-{
-    static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
-
-public:
-    using Model = M;
-
-    /**
-     * @brief setup the simulation with an ODE solver
-     * @param[in] model: An instance of a compartmental model
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
-     */
-    FlowSimulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(
-              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
-        , m_model(std::make_unique<Model>(model))
-        , m_integrator(
-              [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
-                  auto n_flows = model.get_initial_flows().size();
-                  dydt.setZero();
-                  model.get_flows(y, y, t, dydt.tail(n_flows));
-                  model.get_derivatives(dydt.tail(n_flows), dydt.head(model.populations.numel()));
-              },
-              t0, m_model->get_initial_values(), m_model->get_initial_flows(), dt, m_integratorCore)
-    {
-    }
-
-    /**
-     * @brief set the core integrator used in the simulation
-     */
-    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
-    {
-        m_integratorCore = std::move(integrator);
-        m_integrator.set_integrator(m_integratorCore);
-    }
-
-    /**
-     * @brief get_integrator
-     * @return reference to the core integrator used in the simulation
-     */
-    IntegratorCore& get_integrator()
-    {
-        return *m_integratorCore;
-    }
-
-    /**
-     * @brief get_integrator
-     * @return reference to the core integrator used in the simulation
-     */
-    IntegratorCore const& get_integrator() const
-    {
-        return *m_integratorCore;
-    }
-
-    /**
-     * @brief advance simulation to tmax
-     * tmax must be greater than get_result().get_last_time_point()
-     * @param tmax next stopping point of simulation
-     */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
-    {
-        return m_integrator.advance(tmax);
-    }
-
-    /**
-     * @brief get_result returns the values for all compartments within the
-     * simulated model for each time step.
-     * @return a TimeSeries to represent a numerical solution for the model. 
-     * For each simulated time step, the TimeSeries containts the population  
-     * size for each compartment. 
-     */
-    TimeSeries<ScalarType>& get_result()
-    {
-        return m_integrator.get_result_head();
-    }
-
-    /**
-     * @brief get_result returns the values for all compartments within the
-     * simulated model for each time step.
-     * @return a TimeSeries to represent a numerical solution for the model. 
-     * For each simulated time step, the TimeSeries containts the population  
-     * size for each compartment. 
-     */
-    const TimeSeries<ScalarType>& get_result() const
-    {
-        return m_integrator.get_result_head();
-    }
-
-    /**
-     * @brief get_flows returns the values describing the transition between 
-     * compartments for each time step.
-     *
-     * Which flows are used by the model is defined by the Flows template 
-     * argument for the CompartmentalModel using an explicit FlowChart.
-     * To get the correct index for the flow between two compartments use 
-     * CompartmentalModel::get_flow_index.
-     *
-     * @return a TimeSeries to represent a numerical solution for the 
-     * flows in the model. 
-     * For each simulated time step, the TimeSeries containts the value for 
-     * each flow. 
-     */
-    TimeSeries<ScalarType>& get_flows()
-    {
-        return m_integrator.get_result_tail();
-    }
-
-    /**
-     * @brief get_flows returns the values describing the transition between 
-     * compartments for each time step.
-     *
-     * Which flows are used by the model is defined by the Flows template 
-     * argument for the CompartmentalModel using an explicit FlowChart.
-     * To get the correct index for the flow between two compartments use 
-     * CompartmentalModel::get_flow_index.
-     *
-     * @return a TimeSeries to represent a numerical solution for the 
-     * flows in the model. 
-     * For each simulated time step, the TimeSeries containts the value for 
-     * each flow. 
-     */
-    const TimeSeries<ScalarType>& get_flows() const
-    {
-        return m_integrator.get_result_tail();
-    }
-
-    /**
-     * @brief returns the simulation model used in simulation
-     */
-    const Model& get_model() const
-    {
-        return *m_model;
-    }
-
-    /**
-     * @brief returns the simulation model used in simulation
-     */
-    Model& get_model()
-    {
-        return *m_model;
-    }
-
-private:
-    std::shared_ptr<IntegratorCore> m_integratorCore;
-    std::unique_ptr<Model> m_model;
-    SplitOdeIntegrator m_integrator;
+    std::unique_ptr<ODESystem> m_system; ///< instance of ODESystem supplied to Base constructor
+    mutable mio::TimeSeries<ScalarType> m_result; ///< population result of the simulation
 };
 
 /**
@@ -512,7 +367,7 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
  * @tparam Model a compartment model type
  * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model, class Sim = FlowSimulation<Model>>
+template <class Model, class Sim = SimulationFlows<Model>>
 std::vector<TimeSeries<ScalarType>> simulate_flows(double t0, double tmax, double dt, Model const& model,
                                                    std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
