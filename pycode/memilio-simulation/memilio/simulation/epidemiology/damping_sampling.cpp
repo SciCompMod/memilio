@@ -32,7 +32,7 @@ namespace pymio
 
 void bind_damping_sampling(py::module& m, std::string const& name)
 {
-    pymio::pybind_pickle_class<mio::DampingSampling>(m, name.c_str())
+    pymio::bind_class<mio::DampingSampling>(m, name.c_str())
         .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
                  return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),

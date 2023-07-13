@@ -32,10 +32,9 @@ namespace pymio
 
 //bind class and add pickling based on memilio serialization framework
 template <class T, class... Args>
-void pybind_pickle_class(cls)
+void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 {
-    decltype(auto) pickle_class = pybind11::class_<T, Args...>(m, name);
-    pickle_class.def(pybind11::pickle(
+    cls.def(pybind11::pickle(
         [](const T& object) { // __getstate__
             auto tuple = mio::serialize_pickle(object);
             if (tuple) {
@@ -68,7 +67,7 @@ decltype(auto) bind_class(pybind11::module& m, std::string const& name)
     if (is_serializable) {
         pybind_pickle_class<T, Args...>(cls);
     }
-    return cls
+    return cls;
 }
 
 // the following functions help bind class template realizations

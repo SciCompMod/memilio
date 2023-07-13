@@ -40,7 +40,7 @@ void bind_parameter_distribution(py::module& m, std::string const& name)
 
 void bind_parameter_distribution_normal(py::module& m, std::string const& name)
 {
-    pymio::pybind_pickle_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, name.c_str())
+    pymio::bind_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, name.c_str())
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
              py::arg("std_dev"))
         .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
@@ -51,7 +51,7 @@ void bind_parameter_distribution_normal(py::module& m, std::string const& name)
 
 void bind_parameter_distribution_uniform(py::module& m, std::string const& name)
 {
-    pymio::pybind_pickle_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, name.c_str())
+    pymio::bind_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, name.c_str())
         .def(py::init<>())
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 }
