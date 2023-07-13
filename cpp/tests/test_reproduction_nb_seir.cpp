@@ -5,6 +5,7 @@
 #include "memilio/utils/time_series.h"
 #include "ode_seir/model.h"
 
+
 TEST(ReproductionNumberTest, SingleNumberCalculation){
     double t0   = 0;
     double tmax = 1;
@@ -14,12 +15,11 @@ TEST(ReproductionNumberTest, SingleNumberCalculation){
 
     double checkReproductionNumber = 2.328; //Correct result for these input values
 
-    double coeffStoE = model.parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(0)(0, 0) *
-                           model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>() / model.populations.get_total();          
+    double coeffStoE =  0;       
     Eigen::Index timept = 0;
-    double TimeInfected = 1;
+    double TimeInfected = 6;
     mio::TimeSeries<double> y = mio::simulate(t0, tmax, dt, model);
-    EXPECT_NEAR(getReproductionNumber(timept, coeffStoE, TimeInfected, y), checkReproductionNumber, 3e-10);
+    EXPECT_NEAR(getReproductionNumber(timept, coeffStoE, TimeInfected, y), checkReproductionNumber, 1e-12);
 }
 
 TEST(ReproductionNumberTest, AllNumbersCalculation){
@@ -45,7 +45,7 @@ TEST(ReproductionNumberTest, AllNumbersCalculation){
     Eigen::VectorXd temp = getReproductionNumbers(coeffStoE, TimeInfected, y);
 
     for(Eigen::Index i = 0; i < temp.size(); i++){
-        EXPECT_NEAR(temp[i], checkReproductionNumbers[i], 3e-10);
+        EXPECT_NEAR(temp[i], checkReproductionNumbers[i], 1e-12);
     }
 
 }
