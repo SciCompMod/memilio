@@ -35,13 +35,19 @@ namespace osecir
 
 // Create template specializations for the age resolved
 // SECIHURD model
+// clang-format off
 template <class I = InfectionState>
-using Flows =
-    TypeChart<Flow<I, I::Susceptible, I::Exposed>, Flow<I, I::Exposed, I::InfectedNoSymptoms>,
-              Flow<I, I::InfectedNoSymptoms, I::InfectedSymptoms>, Flow<I, I::InfectedNoSymptoms, I::Recovered>,
-              Flow<I, I::InfectedSymptoms, I::InfectedSevere>, Flow<I, I::InfectedSymptoms, I::Recovered>,
-              Flow<I, I::InfectedSevere, I::InfectedCritical>, Flow<I, I::InfectedSevere, I::Recovered>,
-              Flow<I, I::InfectedCritical, I::Dead>, Flow<I, I::InfectedCritical, I::Recovered>>;
+using Flows = TypeChart<Flow<I, I::Susceptible,        I::Exposed>,
+                        Flow<I, I::Exposed,            I::InfectedNoSymptoms>,
+                        Flow<I, I::InfectedNoSymptoms, I::InfectedSymptoms>,
+                        Flow<I, I::InfectedNoSymptoms, I::Recovered>,
+                        Flow<I, I::InfectedSymptoms,   I::InfectedSevere>,
+                        Flow<I, I::InfectedSymptoms,   I::Recovered>,
+                        Flow<I, I::InfectedSevere,     I::InfectedCritical>,
+                        Flow<I, I::InfectedSevere,     I::Recovered>,
+                        Flow<I, I::InfectedCritical,   I::Dead>,
+                        Flow<I, I::InfectedCritical,   I::Recovered>>;
+// clang-format on
 
 class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters, Flows<>>
 {
