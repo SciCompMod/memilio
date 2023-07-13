@@ -110,12 +110,14 @@ void World::migration(TimePoint t, TimeSpan dt)
 
     // check if a person makes a trip
     bool weekend         = t.is_weekend();
-    auto time_of_the_day = mio::abm::TimePoint(0) + t.time_since_midnight();
     size_t num_trips     = m_trip_list.num_trips(weekend);
+    if(t.hour_of_day() == 0){
+        m_trip_list.reset_index();
+    }
 
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
-               m_trip_list.get_next_trip_time(weekend) < time_of_the_day + dt) {
+               m_trip_list.get_next_trip_time(weekend).hour_of_day() < (t + dt).hour_of_day()) {
             auto& trip            = m_trip_list.get_next_trip(weekend);
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
@@ -129,7 +131,6 @@ void World::migration(TimePoint t, TimeSpan dt)
             }
             m_trip_list.increase_index();
         }
-        m_trip_list.reset_index();
     }
     printf("%d migrations\n", migrations);
 }
