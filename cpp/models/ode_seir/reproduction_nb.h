@@ -7,8 +7,6 @@
 #include "ode_seir/parameters.h"
 #include "parameters.h"
 
-class ReproductionNumber{
-    public: 
-        double getReproductionNumber(Eigen::Index timept, double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
-        Eigen::VectorXd getReproductionNumbers(double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
-};
+
+double getReproductionNumber(Eigen::Index timept, double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
+Eigen::VectorXd getReproductionNumbers(double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
