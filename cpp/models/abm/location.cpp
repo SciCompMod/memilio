@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen, David Kerkmann
 *
@@ -81,7 +81,8 @@ void Location::interact(Person& person, TimePoint t, TimeSpan dt, const GlobalIn
                               local_indiv_trans_prob); // use VirusVariant::Count for no virus submission
         if (virus != VirusVariant::Count) {
             person.add_new_infection(
-                Infection(virus, age_receiver, global_params, t + dt / 2)); // Starting time in first approximation
+                Infection(virus, age_receiver, global_params, t + dt / 2, mio::abm::InfectionState::Exposed, false,
+                          person.get_lastest_protection())); // Starting time in first approximation
         }
     }
 }
@@ -95,7 +96,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {
-                auto inf   = p->get_infection();
+                auto inf   = p->get_infections().back();
                 auto virus = inf.get_virus_variant();
                 auto age   = p->get_age();
                 /* average infectivity over the time step 

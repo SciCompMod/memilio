@@ -431,36 +431,6 @@ void create_assign_locations(mio::abm::World& world)
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }
 
-/* Find point in linear piecewise function with x-axis = day, y-axis=protection_level[0,1]
- * @param[in] v different points in linear piecewise function (day, protection_level[0,1])
- * @param[in] days_since_vacc days since last vaccination / infection
- */
-ScalarType get_point_on_linear_piecewise_function(std::vector<std::pair<int, ScalarType>> v, ScalarType days_since_vacc)
-{
-    // Get the vector of all the points in the linear piecewise function. Each point is a pair of number of day interval
-    // since last infection/vaccination (int, first element of the pair) and protection level (ScalarType, [0-1], second element of the pair).
-    sort(v.begin(), v.end());
-    if (v.empty() || v.size() == 1) {
-        return 0;
-    }
-
-    // Find the corresponding section of the days since vaccination / infection in the lastest_protection_v
-    size_t counter = 0;
-    while ((counter < v.size() - 1) && (v[counter].first < days_since_vacc)) {
-        counter++;
-    }
-
-    // If the the current days interval are between two identifiable points in the function
-    if (days_since_vacc <= v[counter].first && counter > 0) {
-        return v[counter - 1].second + (v[counter - 1].second - v[counter].second) /
-                                           (v[counter - 1].first - v[counter].first) *
-                                           (days_since_vacc - v[counter - 1].first);
-    }
-    else {
-        return 0;
-    }
-}
-
 /**
  * Assign an infection state to each person.
  */
@@ -471,9 +441,11 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     for (auto& person : persons) {
         auto infection_state =
             determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
-        if (infection_state != mio::abm::InfectionState::Susceptible)
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state));
+                                                         world.get_global_infection_parameters(), t, infection_state,
+                                                         false, person.get_lastest_protection()));
+        }
     }
 }
 
@@ -483,7 +455,7 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 
     // Set protection level from high viral load. Information based on: https://doi.org/10.1093/cid/ciaa886
     infection_params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.863}, {1, 0.969}, {7, 0.029}, {10, 0.002}, {14, 0.0014}, {21, 0}}, days);
     };
 
@@ -668,131 +640,60 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
         0.001;
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age0to4}] = 0.0;
-
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age0to4,
-                                                                 mio::abm::VirusVariant::Wildtype}] =
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}, days);
     };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.714}, {60, 0.711}, {90, 0.618}, {120, 0.594}, {150, 0.640}, {450, 0.5}}, days);
-    };
-    // Set up personal severe protection levels.
-    // Protection of severe infection is based on:
+
+    // Set up personal severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {450, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {450, 0.5}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age0to4,
-                                                                mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.1}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age0to4,
-                                                                mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.256},
-                                                       {14, 0.831},
-                                                       {30, 0.974},
-                                                       {60, 0.978},
-                                                       {90, 1.},
-                                                       {120, 0.915},
-                                                       {150, 0.938},
-                                                       {180, 0.676},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age0to4,
-                                                                mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.886}, {60, 0.89}, {90, 0.785}, {120, 0.881}, {150, 0.517}, {450, 0.5}}, days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
+            {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}, days);
     };
 
     //5-14
@@ -820,132 +721,59 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age5to14}] =
         0.0;
-
-    // Set up personal infection and vaccine protection levels.
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.91}, {60, 0.92}, {90, 0.88}, {120, 0.84}, {150, 0.81}, {180, 0.88}, {450, 0.5}}, days);
     };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.714}, {60, 0.711}, {90, 0.618}, {120, 0.594}, {150, 0.640}, {450, 0.5}}, days);
-    };
-    // Set up personal severe protection levels.
-    // Protection of severe infection is based on:
+    // Set up personal severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {450, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {450, 0.5}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age5to14,
-                                                                mio::abm::VirusVariant::Wildtype}] =
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
+    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.1}},
-                                                      days);
-    };
-    // Information (same for all age-groups) is based from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.97},
-                                                       {30, 0.957},
-                                                       {60, 0.944},
-                                                       {90, 0.937},
-                                                       {120, 0.918},
-                                                       {150, 0.90},
-                                                       {180, 0.892},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age5to14, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.886}, {60, 0.89}, {90, 0.785}, {120, 0.881}, {150, 0.517}, {450, 0.5}}, days);
     };
 
     //15-34
@@ -974,131 +802,58 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34}] =
         0.0;
-
-    // Set up personal infection and vaccine protection levels.
-    // Information is based on from: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
+    // Set up personal infection and vaccine protection levels, based on: https://doi.org/10.1038/s41577-021-00550-x, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}, days);
     };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.714}, {60, 0.711}, {90, 0.618}, {120, 0.594}, {150, 0.640}, {450, 0.5}}, days);
-    };
-    // Set up personal severe protection levels.
-    // Protection of severe infection is based on:
+    // Set up personal severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {450, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {450, 0.5}},
+                                                                             days);
     };
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.1}},
-                                                      days);
-    };
-    // Information (same for all age-groups) is based from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.97},
-                                                       {30, 0.957},
-                                                       {60, 0.944},
-                                                       {90, 0.937},
-                                                       {120, 0.918},
-                                                       {150, 0.90},
-                                                       {180, 0.892},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.886}, {60, 0.89}, {90, 0.785}, {120, 0.881}, {150, 0.517}, {450, 0.5}}, days);
     };
 
     //35-59
@@ -1126,131 +881,59 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age35to59}] =
         0.0;
-
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.89}, {60, 0.84}, {90, 0.78}, {120, 0.68}, {150, 0.57}, {180, 0.39}, {450, 0.1}}, days);
     };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.714}, {60, 0.711}, {90, 0.618}, {120, 0.594}, {150, 0.640}, {450, 0.5}}, days);
-    };
-    // Set up personal severe protection levels.
-    // Protection of severe infection is based on:
+    // Set up personal severe protection levels, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {450, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {450, 0.5}},
+                                                                             days);
     };
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.88}, {60, 0.91}, {90, 0.98}, {120, 0.94}, {150, 0.88}, {180, 0.90}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.4}},
-                                                      days);
-    };
-    // Information (same for all age-groups) is based from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.97},
-                                                       {30, 0.957},
-                                                       {60, 0.944},
-                                                       {90, 0.937},
-                                                       {120, 0.918},
-                                                       {150, 0.90},
-                                                       {180, 0.892},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age35to59, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.886}, {60, 0.89}, {90, 0.785}, {120, 0.881}, {150, 0.517}, {450, 0.5}}, days);
     };
 
     //60-79
@@ -1279,130 +962,59 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}] =
         0.0;
-
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.87}, {60, 0.85}, {90, 0.78}, {120, 0.67}, {150, 0.61}, {180, 0.50}, {450, 0.1}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.731}, {60, 0.634}, {90, 0.519}, {120, 0.445}, {150, 0.433}, {450, 0.1}}, days);
     };
     // Set up personal severe protection levels.
     // Protection of severe infection of age group 65 + is different from other age group, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {360, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {360, 0.5}},
+                                                                             days);
     };
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.91}, {60, 0.86}, {90, 0.91}, {120, 0.94}, {150, 0.95}, {180, 0.90}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.4}},
-                                                      days);
-    };
-    // Information (same for all age-groups) is based from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.97},
-                                                       {30, 0.957},
-                                                       {60, 0.944},
-                                                       {90, 0.937},
-                                                       {120, 0.918},
-                                                       {150, 0.90},
-                                                       {180, 0.892},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age60to79, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.829}, {60, 0.894}, {90, 0.649}, {120, 0.784}, {150, 0.046}, {450, 0.001}}, days);
     };
 
     //80+
@@ -1431,139 +1043,60 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
     infection_params
         .get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age80plus}] =
         0.0;
-
     // Protection of reinfection is the same for all age-groups, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5, https://doi.org/10.1038/s41591-021-01377-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.852},
-                                                       {180, 0.852},
-                                                       {210, 0.845},
-                                                       {240, 0.828},
-                                                       {270, 0.797},
-                                                       {300, 0.759},
-                                                       {330, 0.711},
-                                                       {360, 0.661},
-                                                       {390, 0.616},
-                                                       {420, 0.580},
-                                                       {450, 0.559},
-                                                       {450, 0.550}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.852},
+                                                                              {180, 0.852},
+                                                                              {210, 0.845},
+                                                                              {240, 0.828},
+                                                                              {270, 0.797},
+                                                                              {300, 0.759},
+                                                                              {330, 0.711},
+                                                                              {360, 0.661},
+                                                                              {390, 0.616},
+                                                                              {420, 0.580},
+                                                                              {450, 0.559},
+                                                                              {450, 0.550}},
+                                                                             days);
     };
     // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.80}, {60, 0.79}, {90, 0.75}, {120, 0.56}, {150, 0.49}, {180, 0.43}, {450, 0.1}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.513},
-                                                       {14, 0.698},
-                                                       {30, 0.684},
-                                                       {45, 0.668},
-                                                       {60, 0.654},
-                                                       {75, 0.632},
-                                                       {85, 0.588},
-                                                       {100, 0.598},
-                                                       {112, 0.587},
-                                                       {126, 0.577},
-                                                       {450, 0.5}},
-                                                      days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1038/s41467-023-35815-7
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.786}, {14, 0.883}, {30, 0.786}, {90, 0.719}, {150, 0.684}, {450, 0.5}}, days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
-            {{0, 0.5}, {30, 0.731}, {60, 0.634}, {90, 0.519}, {120, 0.445}, {150, 0.433}, {450, 0.1}}, days);
     };
     // Set up personal severe protection levels.
     // Protection of severe infection of age group 65 + is different from other age group, based on:
     // https://doi.org/10.1016/S0140-6736(22)02465-5
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::NaturalInfection, mio::abm::AgeGroup::Age0to4, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.967},
-                                                       {30, 0.975},
-                                                       {60, 0.977},
-                                                       {90, 0.974},
-                                                       {120, 0.963},
-                                                       {150, 0.947},
-                                                       {180, 0.93},
-                                                       {210, 0.929},
-                                                       {240, 0.923},
-                                                       {270, 0.908},
-                                                       {300, 0.893},
-                                                       {330, 0.887},
-                                                       {360, 0.887},
-                                                       {360, 0.5}},
-                                                      days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{0, 0.967},
+                                                                              {30, 0.975},
+                                                                              {60, 0.977},
+                                                                              {90, 0.974},
+                                                                              {120, 0.963},
+                                                                              {150, 0.947},
+                                                                              {180, 0.93},
+                                                                              {210, 0.929},
+                                                                              {240, 0.923},
+                                                                              {270, 0.908},
+                                                                              {300, 0.893},
+                                                                              {330, 0.887},
+                                                                              {360, 0.887},
+                                                                              {360, 0.5}},
+                                                                             days);
     };
-    // Information is from: https://doi.org/10.1016/S0140-6736(21)02183-8
+    // Information is based on: https://doi.org/10.1016/S0140-6736(21)02183-8
     infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Pfizer, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
+        mio::abm::ProtectionType::GenericVaccine, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function(
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>(
             {{0, 0.5}, {30, 0.84}, {60, 0.88}, {90, 0.89}, {120, 0.86}, {150, 0.85}, {180, 0.83}, {450, 0.5}}, days);
-    };
-    // Information (same for all age-groups) comes from: https://doi.org/10.1016/S0140-6736(21)02754-9
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Astrazeneca, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 0.732},
-                                                       {14, 0.864},
-                                                       {30, 0.835},
-                                                       {45, 0.779},
-                                                       {60, 0.756},
-                                                       {75, 0.693},
-                                                       {85, 0.608},
-                                                       {100, 0.597},
-                                                       {112, 0.505},
-                                                       {126, 0.422},
-                                                       {450, 0.4}},
-                                                      days);
-    };
-    // Information (same for all age-groups) is based from DOI: 10.1056/NEJMc2119432
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Moderna, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.97},
-                                                       {30, 0.957},
-                                                       {60, 0.944},
-                                                       {90, 0.937},
-                                                       {120, 0.918},
-                                                       {150, 0.90},
-                                                       {180, 0.892},
-                                                       {540, 0.5}},
-                                                      days);
-    };
-    // Information is from: https://doi.org/10.1016/S0140-6736(22)00152-0
-    infection_params.get<mio::abm::SeverityProtectionFactor>()[{
-        mio::abm::Vaccine::Janssen, mio::abm::AgeGroup::Age80plus, mio::abm::VirusVariant::Wildtype}] =
-        [](ScalarType days) -> ScalarType {
-        return get_point_on_linear_piecewise_function({{0, 1},
-                                                       {14, 0.86},
-                                                       {30, 0.847},
-                                                       {60, 0.834},
-                                                       {90, 821},
-                                                       {120, 0.81},
-                                                       {150, 0.795},
-                                                       {180, 0.782},
-                                                       {540, 0.5}},
-                                                      days);
     };
 }
 

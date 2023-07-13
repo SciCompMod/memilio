@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann
+* Authors: David Kerkmann, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,8 +25,8 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGro
 {
     mio::abm::Person p = mio::abm::Person(location, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        p.add_new_infection(
-            mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
+        p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state,
+                                                false, p.get_lastest_protection()));
     }
     return p;
 }
@@ -37,7 +37,8 @@ mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId l
     mio::abm::Person& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age,
-                                                world.get_global_infection_parameters(), t, infection_state));
+                                                world.get_global_infection_parameters(), t, infection_state, false,
+                                                p.get_lastest_protection()));
     }
     return p;
 }

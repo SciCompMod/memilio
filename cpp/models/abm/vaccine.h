@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: David Kerkmann, Khoa Nguyen
 *
@@ -33,28 +33,26 @@ namespace abm
  * Vaccine in ABM.
  * can be used as 0-based index
  */
-enum class Vaccine : std::uint32_t
+enum class ProtectionType : std::uint32_t
 {
-    NaturalInfection = 0,
-    Moderna          = 1,
-    Pfizer           = 2,
-    Astrazeneca      = 3,
-    Janssen          = 4,
+    NoProtection     = 0,
+    NaturalInfection = 1,
+    GenericVaccine   = 2, // Represent the Pfizer vaccine
     Count //last!!
 };
 
 /**
- * A vaccination is a tuple of TimePoint and Vaccine.
+ * A vaccination is a tuple of TimePoint and ProtectionType.
  * The TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
-    Vaccination(Vaccine v, TimePoint t)
+    Vaccination(ProtectionType pt, TimePoint t)
     {
-        vaccine = v;
-        time    = t;
+        protection_type = pt;
+        time            = t;
     }
 
-    Vaccine vaccine;
+    ProtectionType protection_type;
     TimePoint time;
 };
 

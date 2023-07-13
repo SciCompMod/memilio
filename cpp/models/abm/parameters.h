@@ -261,10 +261,10 @@ using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
  * age group and virus variant.  
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
             return 0;
         });
     }
@@ -279,10 +279,10 @@ struct InfectionProtectionFactor {
  * age group and virus variant.  
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, Vaccine, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({Vaccine::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
             return 0;
         });
     }

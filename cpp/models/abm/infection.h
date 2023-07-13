@@ -54,9 +54,11 @@ public:
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
+     * @param[in] lastest_protection The pair value of last type of protection (previous infection/vaccination) and TimePoint of that protection.
      */
     Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-              InfectionState start_state = InfectionState::Exposed, bool detected = false);
+              InfectionState start_state = InfectionState::Exposed, bool detected = false,
+              std::pair<ProtectionType, TimePoint> lastest_protection = {ProtectionType::NoProtection, TimePoint(0)});
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -113,7 +115,8 @@ private:
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                    InfectionState init_state);
+                                    InfectionState start_state,
+                                    std::pair<ProtectionType, TimePoint> lastest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
@@ -123,7 +126,8 @@ private:
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      */
     void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                       InfectionState init_state);
+                                       InfectionState start_state,
+                                       std::pair<ProtectionType, TimePoint> lastest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.

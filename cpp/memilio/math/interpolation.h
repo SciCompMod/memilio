@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -19,6 +19,8 @@
 */
 #ifndef INTERPOLATION_H_
 #define INTERPOLATION_H_
+#include <iostream>
+#include <vector>
 
 namespace mio
 {
@@ -38,6 +40,39 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 {
     auto weight = (x_eval - x_1) / (x_2 - x_1);
     return y1 + weight * (y2 - y1);
+}
+
+/**
+ * @brief Linear interpolation between two point of a dataset, which is represented by a vector of pairs of node and value.
+ * @param[in] vector Vector of pairs of node and value.
+ * @param[in] node The node whose value need to be found.
+ * @param[out] unnamed Interpolation result.
+ */
+template <typename X, typename Y>
+Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>>& vector, const X& node)
+{
+    // If the vector is empty or has only 1 node, return 0
+    if (vector.empty() || vector.size() == 1) {
+        return 0.0;
+    }
+
+    std::vector<std::pair<X, X>> copy_vector(vector);
+    sort(copy_vector.begin(), copy_vector.end());
+
+    // Find the corresponding section of the node in the data set
+    size_t counter = 0;
+    while ((counter < copy_vector.size() - 1) && (copy_vector[counter].first < node)) {
+        counter++;
+    }
+    std::cout << "Counter: " << counter << "\n";
+    std::cout << "Node: " << node << "\n";
+    // If the current days interval are between two identifiable points in the dataset.
+    if (node <= copy_vector[counter].first && counter > 0) {
+        return copy_vector[counter - 1].second + (copy_vector[counter - 1].second - copy_vector[counter].second) /
+                                                     (copy_vector[counter - 1].first - copy_vector[counter].first) *
+                                                     (node - copy_vector[counter - 1].first);
+    }
+    return 0.0;
 }
 
 } // namespace mio

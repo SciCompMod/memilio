@@ -29,6 +29,7 @@
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
+#include "memilio/math/interpolation.h"
 #include "memilio/utils/random_number_generator.h"
 #include "abm/migration_rules.h"
 #include "abm/testing_strategy.h"

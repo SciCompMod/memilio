@@ -81,17 +81,17 @@ public:
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
-     * @brief Get the latest Infection of the Person.
-     * @return The latest Infection of the Person.
+     * @brief Get all Infection%s of the Person.
+     * @return The all Infection%s of the Person.
      */
-    Infection& get_infection()
+    std::vector<Infection>& get_infections()
     {
-        return m_infections.back();
+        return m_infections;
     }
 
-    const Infection& get_infection() const
+    const std::vector<Infection>& get_infections() const
     {
-        return m_infections.back();
+        return m_infections;
     }
 
     /** 
@@ -357,25 +357,27 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief Get the multiplicative factor on how likely 1) an infection produce high viral load and, 
-     * 2) an infection is severe due to the immune system.
+     * @brief Get the multiplicative factor on how likely an infection produce high viral load.
      * @param[in] t TimePoint of check.
-     * @param[in] virus VirusVariant to check
      * @param[in] params GlobalInfectionParameters in the model.
-     * @returns Protection factor for severe infection of the immune system to the given VirusVariant at the given TimePoint.
+     * @returns Protection factor for high viral load of the immune system at the given TimePoint.
      */
-    std::pair<ScalarType, ScalarType> get_severity_factor(TimePoint t, VirusVariant virus,
-                                                          const GlobalInfectionParameters& params) const;
+    ScalarType get_high_viral_load_factor(TimePoint t, const GlobalInfectionParameters& params) const;
 
     /**
      * @brief Add a new vaccination
-     * @param[in] v Vaccine that is taken by the person. 
+     * @param[in] v ProtectionType (i.e vaccine) that is taken by the person. 
      * @param[in] t TimePoint of vaccination.
     */
-    void add_new_vaccination(Vaccine v, TimePoint t)
+    void add_new_vaccination(ProtectionType v, TimePoint t)
     {
         m_vaccinations.push_back(Vaccination(v, t));
     }
+
+    /**
+     * @brief Get the lastest infection/vaccination from the Person.
+    */
+    std::pair<ProtectionType, TimePoint> get_lastest_protection() const;
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
