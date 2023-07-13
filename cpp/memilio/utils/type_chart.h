@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef TYPE_CHART_H_
-#define TYPE_CHART_H_
+#ifndef MIO_UTILS_TYPE_CHART_H_
+#define MIO_UTILS_TYPE_CHART_H_
 
+#include "memilio/io/io.h"
 #include "memilio/utils/index.h"
 
 #include <tuple>
@@ -35,25 +36,25 @@ class TypeChart
 {
 public:
     /**
-     * @brief get a type by index
-     * @tparam index position of a type
-     * @return the type at position index of TypeChart
+     * @brief Get a type by index.
+     * @tparam Index position of a type.
+     * @return The type at position Index of TypeChart.
      */
-    template <size_t index>
+    template <size_t Index>
     constexpr auto get() const
     {
-        return std::get<index>(m_types);
+        return std::get<Index>(m_types);
     }
 
     /**
-     * @brief get index of a given type
-     * @tparam Type a type in TypeChart
-     * @return position of Type within TypeChart
+     * @brief Get index of a given type.
+     * @tparam Type A type contained in TypeChart.
+     * @return Position of Type within TypeChart.
      */
     template <class Type>
     constexpr size_t get() const
     {
-        return get_impl<0>(Type());
+        return get_impl<0>(mio::Tag<Type>());
     }
 
     /// @brief returns the number of Types in TypeChart
@@ -63,26 +64,28 @@ public:
     }
 
 private:
-    template <size_t index, class Type>
+    /// @brief Iterates Index via recursion, as long as Type is not the Index-th position of Types.
+    template <size_t Index, class Type>
     inline constexpr std::enable_if_t<
-        !std::is_same<Type, typename std::tuple_element<index, std::tuple<Types...>>::type>::value, size_t>
-    get_impl(Type f) const
+        !std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value, size_t>
+    get_impl(mio::Tag<Type> f) const
     {
-        static_assert(index < sizeof...(Types), "Type is not contained in TypeChart");
-        return get_impl<index + 1>(f);
+        static_assert(Index < sizeof...(Types), "Type is not contained in TypeChart");
+        return get_impl<Index + 1>(f);
     }
 
-    template <size_t index, class Type>
+    /// @brief Returns Index. This ends the recursion of get_impl, when Type is the Index-th position of Types.
+    template <size_t Index, class Type>
     inline constexpr std::enable_if_t<
-        std::is_same<Type, typename std::tuple_element<index, std::tuple<Types...>>::type>::value, size_t>
-    get_impl(Type) const
+        std::is_same<Type, typename std::tuple_element<Index, std::tuple<Types...>>::type>::value, size_t>
+    get_impl(mio::Tag<Type>) const
     {
-        return index;
+        return Index;
     }
 
-    std::tuple<Types...> m_types;
+    std::tuple<Types...> m_types; ///< Store types. Never instanced.
 };
 
 } // namespace mio
 
-#endif // TYPE_CHART_H_
+#endif // MIO_UTILS_TYPE_CHART_H_
