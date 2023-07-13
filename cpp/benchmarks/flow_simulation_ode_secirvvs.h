@@ -25,7 +25,7 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = ::mio::osecirvvs::Model;
+using FlowModel = osecirvvs::Model;
 
 // the following is taken from
 // https://github.com/DLR-SC/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_secirvvs/model.h
@@ -594,80 +594,78 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 template <class Model>
 void setup_model(Model& model)
 {
-    for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                                = 10;
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 11;
-        model.populations[{i, mio::osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 12;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = 13;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 13;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 14;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 14;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 15;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 15;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = 5;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 5;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 6;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 6;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 7;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 7;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereNaive}]                         = 8;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 1;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 2;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalNaive}]                       = 3;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 4;
-        model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 5;
-        model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = 6;
-        model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 7;
-        model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadNaive}]                    = 0;
-        model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadPartialImmunity}]          = 0;
-        model.populations[{(mio::AgeGroup)0, mio::osecirvvs::InfectionState::DeadImprovedImmunity}]         = 0;
-        model.populations.template set_difference_from_group_total<mio::AgeGroup>(
-            {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, 1000);
+    for (AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
+        model.populations[{i, osecirvvs::InfectionState::ExposedNaive}]                                = 10;
+        model.populations[{i, osecirvvs::InfectionState::ExposedImprovedImmunity}]                     = 11;
+        model.populations[{i, osecirvvs::InfectionState::ExposedPartialImmunity}]                      = 12;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsNaive}]                     = 13;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 13;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity}]           = 14;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 14;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 15;
+        model.populations[{i, osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 15;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsNaive}]                       = 5;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed}]              = 5;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsPartialImmunity}]             = 6;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 6;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity}]            = 7;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 7;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSevereNaive}]                         = 8;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSevereImprovedImmunity}]              = 1;
+        model.populations[{i, osecirvvs::InfectionState::InfectedSeverePartialImmunity}]               = 2;
+        model.populations[{i, osecirvvs::InfectionState::InfectedCriticalNaive}]                       = 3;
+        model.populations[{i, osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = 4;
+        model.populations[{i, osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = 5;
+        model.populations[{i, osecirvvs::InfectionState::SusceptibleImprovedImmunity}]                 = 6;
+        model.populations[{i, osecirvvs::InfectionState::SusceptiblePartialImmunity}]                  = 7;
+        model.populations[{(AgeGroup)0, osecirvvs::InfectionState::DeadNaive}]                         = 0;
+        model.populations[{(AgeGroup)0, osecirvvs::InfectionState::DeadPartialImmunity}]               = 0;
+        model.populations[{(AgeGroup)0, osecirvvs::InfectionState::DeadImprovedImmunity}]              = 0;
+        model.populations.template set_difference_from_group_total<AgeGroup>(
+            {i, osecirvvs::InfectionState::SusceptibleNaive}, 1000);
     }
 
-    model.parameters.template get<mio::osecirvvs::ICUCapacity>()          = 100;
-    model.parameters.template get<mio::osecirvvs::TestAndTraceCapacity>() = 0.0143;
-    model.parameters.template get<mio::osecirvvs::DailyFirstVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array().setConstant(5);
-    model.parameters.template get<mio::osecirvvs::DailyFullVaccination>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.template get<mio::osecirvvs::DailyFullVaccination>().array().setConstant(3);
+    model.parameters.template get<osecirvvs::ICUCapacity>()          = 100;
+    model.parameters.template get<osecirvvs::TestAndTraceCapacity>() = 0.0143;
+    model.parameters.template get<osecirvvs::DailyFirstVaccination>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyFirstVaccination>().array().setConstant(5);
+    model.parameters.template get<osecirvvs::DailyFullVaccination>().resize(SimulationDay(size_t(1000)));
+    model.parameters.template get<osecirvvs::DailyFullVaccination>().array().setConstant(3);
 
-    auto& contacts       = model.parameters.template get<mio::osecirvvs::ContactPatterns>();
+    auto& contacts       = model.parameters.template get<osecirvvs::ContactPatterns>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, SimulationTime(5.0));
 
     //times
-    model.parameters.template get<mio::osecirvvs::IncubationTime>()[mio::AgeGroup(0)]       = 5.2;
-    model.parameters.template get<mio::osecirvvs::SerialInterval>()[mio::AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
-    model.parameters.template get<mio::osecirvvs::TimeInfectedSymptoms>()[mio::AgeGroup(0)] = 7;
-    model.parameters.template get<mio::osecirvvs::TimeInfectedSevere>()[mio::AgeGroup(0)]   = 6;
-    model.parameters.template get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 7;
+    model.parameters.template get<osecirvvs::IncubationTime>()[AgeGroup(0)]       = 5.2;
+    model.parameters.template get<osecirvvs::SerialInterval>()[AgeGroup(0)]       = 0.5 * 3.33 + 0.5 * 5.2;
+    model.parameters.template get<osecirvvs::TimeInfectedSymptoms>()[AgeGroup(0)] = 7;
+    model.parameters.template get<osecirvvs::TimeInfectedSevere>()[AgeGroup(0)]   = 6;
+    model.parameters.template get<osecirvvs::TimeInfectedCritical>()[AgeGroup(0)] = 7;
 
     //probabilities
-    model.parameters.template get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.15;
-    model.parameters.template get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = 0.5;
+    model.parameters.template get<osecirvvs::TransmissionProbabilityOnContact>()[AgeGroup(0)] = 0.15;
+    model.parameters.template get<osecirvvs::RelativeTransmissionNoSymptoms>()[AgeGroup(0)]   = 0.5;
     // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
     // depends on incidence and test and trace capacity
-    model.parameters.template get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]    = 0.0;
-    model.parameters.template get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)] = 0.4;
-    model.parameters.template get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[mio::AgeGroup(0)]    = 0.2;
-    model.parameters.template get<mio::osecirvvs::SeverePerInfectedSymptoms>()[mio::AgeGroup(0)]         = 0.1;
-    model.parameters.template get<mio::osecirvvs::CriticalPerSevere>()[mio::AgeGroup(0)]                 = 0.1;
-    model.parameters.template get<mio::osecirvvs::DeathsPerCritical>()[mio::AgeGroup(0)]                 = 0.1;
+    model.parameters.template get<osecirvvs::RiskOfInfectionFromSymptomatic>()[AgeGroup(0)]    = 0.0;
+    model.parameters.template get<osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)] = 0.4;
+    model.parameters.template get<osecirvvs::RecoveredPerInfectedNoSymptoms>()[AgeGroup(0)]    = 0.2;
+    model.parameters.template get<osecirvvs::SeverePerInfectedSymptoms>()[AgeGroup(0)]         = 0.1;
+    model.parameters.template get<osecirvvs::CriticalPerSevere>()[AgeGroup(0)]                 = 0.1;
+    model.parameters.template get<osecirvvs::DeathsPerCritical>()[AgeGroup(0)]                 = 0.1;
 
-    model.parameters.template get<mio::osecirvvs::ReducExposedPartialImmunity>()[mio::AgeGroup(0)]           = 0.8;
-    model.parameters.template get<mio::osecirvvs::ReducExposedImprovedImmunity>()[mio::AgeGroup(0)]          = 0.331;
-    model.parameters.template get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[mio::AgeGroup(0)]  = 0.65;
-    model.parameters.template get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[mio::AgeGroup(0)] = 0.243;
-    model.parameters.template get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[mio::AgeGroup(0)] =
-        0.1;
-    model.parameters.template get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[mio::AgeGroup(0)] =
-        0.091;
-    model.parameters.template get<mio::osecirvvs::ReducTimeInfectedMild>()[mio::AgeGroup(0)] = 0.9;
+    model.parameters.template get<osecirvvs::ReducExposedPartialImmunity>()[AgeGroup(0)]                     = 0.8;
+    model.parameters.template get<osecirvvs::ReducExposedImprovedImmunity>()[AgeGroup(0)]                    = 0.331;
+    model.parameters.template get<osecirvvs::ReducInfectedSymptomsPartialImmunity>()[AgeGroup(0)]            = 0.65;
+    model.parameters.template get<osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[AgeGroup(0)]           = 0.243;
+    model.parameters.template get<osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[AgeGroup(0)]  = 0.1;
+    model.parameters.template get<osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[AgeGroup(0)] = 0.091;
+    model.parameters.template get<osecirvvs::ReducTimeInfectedMild>()[AgeGroup(0)]                           = 0.9;
 
-    model.parameters.template get<mio::osecirvvs::Seasonality>() = 0.2;
+    model.parameters.template get<osecirvvs::Seasonality>() = 0.2;
 
     model.apply_constraints();
 }
