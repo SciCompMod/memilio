@@ -148,7 +148,7 @@ public:
     }
 
     /** move ctor and assignment */
-    TimeSeries(TimeSeries&& other) = default;
+    TimeSeries(TimeSeries&& other)            = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /**
@@ -444,6 +444,54 @@ public:
     }
 
     /**
+     * @brief Print out the TimeSeries as a table.
+     *
+     * All entries in the table are space separated with at least one space. The first row of the table starts with
+     * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
+     * value (see get_value) for every row (i.e. time point) in the TimeSeries.
+     * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
+     * includes the decimals and decimal point. If a number or column label is too long, they will not be cut off, but
+     * the table will no longer look nicely formatted.
+     * If the column_labels vector is too short, the default column label "#i" is used for the i-th column
+     * (starting at 1, as "Time" is used for column 0). Excess column_labels are ignored.
+     *
+     * @param column_labels Vector of custom labels for each column.
+     * @param width The number of characters reserved for each number.
+     * @param precision The number of decimals.
+     * @param out Which ostream to use. Prints to terminal by default.
+     */
+    void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
+                     std::ostream& out = std::cout)
+    {
+        // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
+        // print column labels
+        const auto w = width, p = precision;
+        set_ostream_format(out, w, p) << std::left << "Time";
+        for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
+            if (k < column_labels.size()) {
+                out << " ";
+                set_ostream_format(out, w, p) << std::left << column_labels[k];
+            }
+            else {
+                out << " ";
+                set_ostream_format(out, w, p) << std::left << "#" + std::to_string(k + 1);
+            }
+        }
+        // print values as table
+        auto num_points = static_cast<size_t>(get_num_time_points());
+        for (size_t i = 0; i < num_points; i++) {
+            out << "\n";
+            set_ostream_format(out, w, p) << std::right << get_time(i);
+            auto res_i = get_value(i);
+            for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
+                out << " ";
+                set_ostream_format(out, w, p) << std::right << res_i[j];
+            }
+        }
+        out << "\n";
+    }
+
+    /**
      * print this object (googletest)
      */
     friend void PrintTo(const TimeSeries& self, std::ostream* os)
@@ -451,7 +499,7 @@ public:
         *os << '\n' << self.get_valid_block();
     }
 
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("TimeSeries");
@@ -459,19 +507,22 @@ public:
         obj.add_element("Data", get_valid_block());
     }
 
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<TimeSeries> deserialize(IOContext& io)
     {
-        auto obj = io.expect_object("TimeSeries");
-        auto nt = obj.expect_element("NumTimePoints", Tag<Eigen::Index>{});
+        auto obj  = io.expect_object("TimeSeries");
+        auto nt   = obj.expect_element("NumTimePoints", Tag<Eigen::Index>{});
         auto data = obj.expect_element("Data", Tag<Matrix>{});
-        return apply(io, [](auto&& nt_, auto&& data_) {
-            auto ts = TimeSeries(data_.rows() - 1);
-            ts.m_data.resize(data_.rows(), data_.cols());
-            ts.m_data = data_;
-            ts.m_num_time_points = nt_;
-            return ts;
-        }, nt, data);
+        return apply(
+            io,
+            [](auto&& nt_, auto&& data_) {
+                auto ts = TimeSeries(data_.rows() - 1);
+                ts.m_data.resize(data_.rows(), data_.cols());
+                ts.m_data            = data_;
+                ts.m_num_time_points = nt_;
+                return ts;
+            },
+            nt, data);
     }
 
 private:
@@ -527,8 +578,9 @@ struct TimeSeriesIterTraits {
     }
     using Matrix      = typename TimeSeries<FP>::Matrix;
     using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-    using VectorValue = typename decltype(
-        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorValue = typename decltype(std::declval<MatrixPtr>()
+                                              ->col(std::declval<Eigen::Index>())
+                                              .tail(std::declval<Eigen::Index>()))::PlainObject;
     using VectorReference =
         decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
     using TimeValue     = FP;

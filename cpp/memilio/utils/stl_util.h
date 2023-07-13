@@ -27,6 +27,7 @@
 #include <utility>
 #include <iterator>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <cstring>
 #include <cassert>
@@ -34,6 +35,21 @@
 
 namespace mio
 {
+
+/**
+ * @brief Adds manipulators for width, (fixed) precision and fill character to an ostream.
+ * Note that the formatting is consumed by the first output given to the ostream.
+ * @param out Any std::ostream.
+ * @param width Minimum width of the output.
+ * @param precision The exact number of decimals (used only for numbers).
+ * @param fill The character used for padding.
+ * @return Returns a reference to out.
+ */
+inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t precision, char fill = ' ')
+{
+    // Note: ostream& operator<< returns a reference to itself
+    return out << std::setw(width) << std::fixed << std::setprecision(precision) << std::setfill(fill);
+}
 
 /**
  * @brief inserts element in a sorted vector, replacing items that are equal

@@ -24,32 +24,9 @@
 #include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+
 #include <iostream>
 #include <vector>
-
-void print_to_terminal(const mio::TimeSeries<ScalarType>& results, const std::vector<std::string>& state_names)
-{
-    // print column labels
-    printf("%-16s  ", "Time");
-    for (size_t k = 0; k < static_cast<size_t>(results.get_num_elements()); k++) {
-        if (k < state_names.size()) {
-            printf(" %-16s", state_names[k].data()); // print underlying char*
-        }
-        else {
-            printf(" %-16s", ("#" + std::to_string(k + 1)).data());
-        }
-    }
-    // print values as table
-    auto num_points = static_cast<size_t>(results.get_num_time_points());
-    for (size_t i = 0; i < num_points; i++) {
-        printf("\n%16.6f", results.get_time(i));
-        auto res_i = results.get_value(i);
-        for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-            printf(" %16.6f", res_i[j]);
-        }
-    }
-    printf("\n");
-}
 
 int main()
 {
@@ -80,16 +57,13 @@ int main()
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 
     model.check_constraints();
-    mio::SimulationFlows<mio::oseir::Model> sim(model, t0, dt);
-    sim.advance(tmax);
-    std::vector<mio::TimeSeries<ScalarType>> seir = {sim.get_result(), sim.get_flows()};
-    // auto seir = simulate_flows(t0, tmax, dt, model);
+    auto seir = simulate_flows(t0, tmax, dt, model);
 
     printf("Compartments: \n");
-    print_to_terminal(seir[0], {});
+    seir[0].print_table({"S", "E", "I", "R"});
 
     printf("Flows: \n");
-    print_to_terminal(seir[1], {});
+    seir[1].print_table({"S->E", "E->I", "I->R"});
 
     printf("\n number total: %f\n", seir[0].get_last_value()[0] + seir[0].get_last_value()[1] +
                                         seir[0].get_last_value()[2] + seir[0].get_last_value()[3]);
