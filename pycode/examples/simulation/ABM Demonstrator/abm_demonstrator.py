@@ -319,6 +319,8 @@ def insert_locations_to_map(mapping, inputId, locationIds):
 
 
 def create_locations_from_input(world, input_areas, household_distribution):
+    #set seeds to have fixed locations for given input
+    np.random.seed(0)
     # map input area ids to corresponding abm location ids
     mapping = []
     # bools to make sure the world has a school and a hospital
