@@ -23,6 +23,7 @@ setup(
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
+    cmake_args=['-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON'], #need shared libs so there is one shared log level
     install_requires=[],
     extras_require={'dev': ['numpy >= 1.22'], },
     long_description='', test_suite='memilio.simulation_test',)
