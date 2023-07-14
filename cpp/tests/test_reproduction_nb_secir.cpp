@@ -9,7 +9,7 @@
 #include "memilio/math/stepper_wrapper.h"
 
 
-TEST(SecirReproductionNumberTest, SecirSingleNumberCalculation){
+TEST(SecirReproductionNumberTest, SecirSingleNumberCalculation){//Tests the function getReproductionNumber
         double t0   = 0;
     double tmax = 50;
     double dt   = 0.1;
@@ -70,10 +70,10 @@ TEST(SecirReproductionNumberTest, SecirSingleNumberCalculation){
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
 
-    EXPECT_NEAR(getReproductionNumber(0,secihurd, params), 3.2451999999999992, 3e-12);
+    EXPECT_NEAR(get_reproduction_number(0,secihurd, params), 3.2451999999999992, 3e-12);
 }
 
-TEST(SecirReproductionNumberTest, SecirAllNumbersCalculation){
+TEST(SecirReproductionNumberTest, SecirAllNumbersCalculation){//Tests the function getReproductionNumbers()
             double t0   = 0;
     double tmax = 50;
     double dt   = 0.1;
@@ -134,9 +134,9 @@ TEST(SecirReproductionNumberTest, SecirAllNumbersCalculation){
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
 
-    Eigen::VectorXd checkReproductionNumbers;
+    Eigen::VectorXd check_reproduction_numbers;
 
-    checkReproductionNumbers<< 2.1638667159763307,
+    check_reproduction_numbers<< 2.1638667159763307,
  2.1632954864514815,
  2.1571571556004301,
  2.1504039811502995,
@@ -190,6 +190,6 @@ TEST(SecirReproductionNumberTest, SecirAllNumbersCalculation){
 0.53165999117327567;
 
     for(Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++){
-        EXPECT_NEAR(getReproductionNumbers(secihurd, params)[i], checkReproductionNumbers[i], 3e-12);
+        EXPECT_NEAR(get_reproduction_numbers(secihurd, params)[i], check_reproduction_numbers[i], 3e-12);
     }
 }

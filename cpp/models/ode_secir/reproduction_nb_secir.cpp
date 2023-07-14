@@ -1,6 +1,6 @@
 #include "reproduction_nb_secir.h"
 
-double getReproductionNumber(Eigen::Index timept, mio::TimeSeries<double> y, mio::osecir::Parameters &params){
+double get_reproduction_number(Eigen::Index timept, mio::TimeSeries<double> y, mio::osecir::Parameters &params){
      //First get susceptibles in different groups at time t
 
         mio::ContactMatrixGroup &contact_matrix = params.get<mio::osecir::ContactPatterns>();
@@ -59,10 +59,10 @@ double getReproductionNumber(Eigen::Index timept, mio::TimeSeries<double> y, mio
         return tempvector1.maxCoeff();
     }
 
-Eigen::VectorXd getReproductionNumbers(mio::TimeSeries<double>y, mio::osecir::Parameters &params){
+Eigen::VectorXd get_reproduction_numbers(mio::TimeSeries<double>y, mio::osecir::Parameters &params){
     Eigen::VectorXd temp(y.get_num_time_points());
     for(int i = 0; i < y.get_num_time_points(); i++){
-        temp[i] = getReproductionNumber((Eigen::Index)i, y, params);
+        temp[i] = get_reproduction_number((Eigen::Index)i, y, params);
     }
     return temp;
 }

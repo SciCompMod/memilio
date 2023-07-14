@@ -8,5 +8,5 @@
 
 
 
-double getReproductionNumber(Eigen::Index timept, mio::TimeSeries<double> y, mio::osecir::Parameters &params);
-Eigen::VectorXd getReproductionNumbers(mio::TimeSeries<double>y, mio::osecir::Parameters &params);  
+double get_reproduction_number(Eigen::Index timept, mio::TimeSeries<double> y, mio::osecir::Parameters &params);
+Eigen::VectorXd get_reproduction_numbers(mio::TimeSeries<double>y, mio::osecir::Parameters &params);  
