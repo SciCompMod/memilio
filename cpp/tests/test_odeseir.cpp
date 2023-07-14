@@ -150,6 +150,32 @@ TEST(TestSeir, check_constraints_parameters)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-    
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestSeir, apply_constraints_parameters)
+{
+    mio::oseir::Model model;
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+
+    EXPECT_EQ(model.parameters.apply_constraints(), 0);
+
+    mio::set_log_level(mio::LogLevel::off);
+    model.parameters.set<mio::oseir::TimeExposed>(-5.2);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed>(), 1);
+
+    model.parameters.set<mio::oseir::TimeInfected>(0);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected>(), 1);
+
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR(model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>(), 0.5, 1e-14);
+
     mio::set_log_level(mio::LogLevel::warn);
 }

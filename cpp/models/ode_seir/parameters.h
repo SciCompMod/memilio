@@ -109,6 +109,35 @@ public:
     }
 
     /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
+     * @return Returns 1 if one ore more constraint was corrected, 0 otherwise.  
+     */
+    int apply_constraints()
+    {
+        int corrected = 0;
+        if (this->get<TimeExposed>() <= 0.0) {
+            log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}",
+                        this->get<TimeExposed>(), 1.0);
+            this->get<TimeExposed>() = 1.0;
+            corrected                = 1;
+        }
+        if (this->get<TimeInfected>() <= 0.0) {
+            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}",
+                        this->get<TimeInfected>(), 1.0);
+            this->get<TimeInfected>() = 1.0;
+            corrected                 = 1;
+        }
+        if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
+            this->get<TransmissionProbabilityOnContact>() > 1.0) {
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                        this->get<TransmissionProbabilityOnContact>(), 0.5);
+            this->get<TransmissionProbabilityOnContact>() = 0.5;
+            corrected                                     = 1;
+        }
+        return corrected;
+    }
+
+    /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
      * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
