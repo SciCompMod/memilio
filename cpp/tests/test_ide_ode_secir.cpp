@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 // #include "Eigen/src/Core/util/Meta.h"
+#include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "matchers.h"
 // #include "load_test_data.h"
 #include "ode_secir/infection_state.h"
@@ -46,8 +47,8 @@
 TEST(IdeOdeSecir, compareIdeOde)
 {
     ScalarType t0   = 0;
-    ScalarType tmax = 71;
-    ScalarType dt   = 0.1;
+    ScalarType tmax = 13.3;
+    ScalarType dt   = 0.01;
 
     ScalarType cont_freq = 10;
 
@@ -104,13 +105,17 @@ TEST(IdeOdeSecir, compareIdeOde)
 
     model_ode.check_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    // TODO: find out how we can change the integrator to another one from boost that doesn't use adaptive time steps
+    // auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator =
+        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>();
+    // auto integrator = std::make_shared<boost::numeric::odeint::runge_kutta_cash_karp54>();
     // choose dt_min = dt_max so that we have a fixed time step and can compare to IDE
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
     // set tolerance as follows so that every time step is only computed once (found out by trying)
-    integrator->set_rel_tolerance(1e-2);
-    integrator->set_abs_tolerance(1e-2);
+    integrator->set_rel_tolerance(1e-1);
+    integrator->set_abs_tolerance(1e-1);
 
     mio::TimeSeries<ScalarType> secihurd_ode = simulate(t0, tmax, dt, model_ode, integrator);
 
@@ -143,7 +148,7 @@ TEST(IdeOdeSecir, compareIdeOde)
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType N           = nb_total_t0;
-    ScalarType t0_ide      = 70;
+    ScalarType t0_ide      = 13;
     ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
                                          [(int)mio::osecir::InfectionState::Dead];
 
@@ -173,7 +178,11 @@ TEST(IdeOdeSecir, compareIdeOde)
 
     // To compare with the ODE model we use ExponentialDecay functions as TransitionDistributions
     // We set the funcparams so that they correspond to the above ODE model
-    mio::isecir::ExponentialDecay expdecay(1.0);
+    //TODO: We have to carefully set the default parameter or set the parameter for S to E explicitly to not have any surprises
+    // when calculating the calc_time when computing compartments
+    // maybe we should check this in check constraints or set this max_support explicitly to 0 so that the user
+    // doesn't have to think of this
+    mio::isecir::ExponentialDecay expdecay(10.0);
     mio::isecir::StateAgeFunctionWrapper delaydistribution(expdecay);
     std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     // TransitionDistribution from S to E is never used, put in default
@@ -243,9 +252,27 @@ TEST(IdeOdeSecir, compareIdeOde)
     std::cout << "t0_ide: " << t0_ide << "\n";
 
     // Compute initial flows from results of ODE simulation
-    model_ide.compute_initial_flows_from_compartments(secihurd_ode, t0_ide, dt);
+    model_ide.compute_initial_flows_from_compartments2(secihurd_ode, t0_ide, dt);
 
     model_ide.check_constraints(dt);
+
+    std::cout << model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)]
+              << "\n";
+
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Exposed)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Exposed)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)];
+    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Recovered)] =
+        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Recovered)];
 
     // Carry out simulation
     std::cout << "Simulating now \n";

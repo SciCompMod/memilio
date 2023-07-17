@@ -37,16 +37,17 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_b
     , m_N{N_init}
     , m_deaths_before{Dead_before}
 {
-}
-
-void Model::initialize_solver(ScalarType dt)
-{   
-    // TODO: think of where its best to add time point to m_populations, 
-    // especially wrt to check_constraints function
-
     // add first timepoint to m_populations at last time from m_transitions
     m_populations.add_time_point<Eigen::VectorXd>(
         m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+}
+
+void Model::initialize_solver(ScalarType dt)
+{
+    // TODO: think of where its best to add time point to m_populations,
+    // especially wrt to check_constraints function
+
+    // compute deaths at time t0
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =
         m_deaths_before + m_transitions.get_last_value()[Eigen::Index(InfectionTransition::InfectedCriticalToDead)];
 
@@ -54,6 +55,8 @@ void Model::initialize_solver(ScalarType dt)
     // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
     // where also the value of m_forceofinfection for the previous timestep is used
     update_forceofinfection(dt, true);
+    std::cout << "\n";
+
     if (m_forceofinfection > 0) {
         m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
             m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
@@ -265,6 +268,11 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                       state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
+        // std::cout << "sigma1: " << m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
+        //           << "\n";
+        // std::cout << "sigma2: "
+        //           << m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
+        //           << "\n";
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }
