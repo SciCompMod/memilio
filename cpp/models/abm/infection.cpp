@@ -141,7 +141,7 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
         case InfectionState::InfectedNoSymptoms:
             // roll out next infection step
             v = uniform_dist();
-            if (v < 0.5) { // TODO: subject to change
+            if (v < 0.79) { // TODO: subject to change
                 time_period = days(params.get<InfectedNoSymptomsToSymptoms>()[{
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedSymptoms;
@@ -156,7 +156,7 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
         case InfectionState::InfectedSymptoms:
             // roll out next infection step
             v = uniform_dist();
-            if (v < 0.5) { // TODO: subject to change
+            if (v < 0.08) { // TODO: subject to change
                 time_period = days(params.get<InfectedSymptomsToSevere>()[{
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedSevere;
@@ -170,7 +170,7 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
         case InfectionState::InfectedSevere:
             // roll out next infection step
             v = uniform_dist();
-            if (v < 0.5) { // TODO: subject to change
+            if (v < 0.18) { // TODO: subject to change
                 time_period = days(params.get<SevereToCritical>()[{
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedCritical;
@@ -184,7 +184,7 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
         case InfectionState::InfectedCritical:
             // roll out next infection step
             v = uniform_dist();
-            if (v < 0.5) { // TODO: subject to change
+            if (v < 0.22) { // TODO: subject to change
                 time_period = days(params.get<CriticalToDead>()[{
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 next_state  = InfectionState::Dead;
