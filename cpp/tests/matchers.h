@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -33,18 +33,15 @@ template <class M>
 struct MatrixPrintWrap : public M {
     friend void PrintTo(const MatrixPrintWrap& m, std::ostream* os)
     {
-        if (m.rows() == 1)
-        {            
+        if (m.rows() == 1) {
             //print row vector inline
             (*os) << m;
         }
-        else if (m.cols() == 1)
-        {
+        else if (m.cols() == 1) {
             //print col vector inline transposed
             (*os) << m.transpose() << " T";
         }
-        else
-        {
+        else {
             //print matrix on its own
             (*os) << '\n' << m;
         }
@@ -69,10 +66,13 @@ const MatrixPrintWrap<M>& print_wrap(const Eigen::EigenBase<M>& m)
  * @return matcher that accepts eigen matrix types
  */
 MATCHER_P3(MatrixNear, other, rtol, atol,
-           "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = " + testing::PrintToString(rtol) +
-               ", atol = " + testing::PrintToString(atol) + ")")
+           "approx. equal to " + testing::PrintToString(print_wrap(other)) +
+               " (rtol = " + testing::PrintToString(rtol) + ", atol = " + testing::PrintToString(atol) + ")")
 {
-    mio::unused(result_listener);
+    if (arg.rows() != other.rows() || arg.cols() != other.cols()) {
+        *result_listener << "different dimensions";
+        return false;
+    }
     return ((arg - other).array().abs() <= (atol + rtol * other.array().abs())).all();
 }
 
@@ -82,7 +82,7 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
  * @return matcher that accepts eigen matrix types
  */
 MATCHER_P(MatrixNear, other,
-           "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = 1e-15, atol = 1e-15)")
+          "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = 1e-15, atol = 1e-15)")
 {
     mio::unused(result_listener);
     return ((arg - other).array().abs() <= (1e-15 + 1e-15 * other.array().abs())).all();
@@ -124,7 +124,7 @@ struct IOResultPrintWrap : public mio::IOResult<T> {
  * @brief wrap an IOResult for gtest printing
  * returns a reference to the original object, no copying or moving, mind the lifetime!
  */
-template<class T>
+template <class T>
 const IOResultPrintWrap<T>& print_wrap(const mio::IOResult<T>& r)
 {
     return static_cast<const IOResultPrintWrap<T>&>(r);
@@ -137,8 +137,27 @@ const IOResultPrintWrap<T>& print_wrap(const mio::IOResult<T>& r)
  */
 MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
 {
-    mio::unused(result_listener);
-    return bool(arg);
+    if (arg) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
+}
+
+/**
+ * gmock matcher for IOResult.
+ * The matcher succeeds if the IOResult represents failure with the specified status code.
+ * @return matcher that checks an IOResult
+ */
+MATCHER_P(IsFailure, status_code, std::string(negation ? "isn't" : "is") + " failure. ")
+{
+    if (arg.error().code() == status_code) {
+        return true;
+    }
+
+    *result_listener << arg.error().formatted_message();
+    return false;
 }
 
 /**

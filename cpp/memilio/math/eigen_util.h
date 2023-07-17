@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -50,9 +50,10 @@ struct Seq {
  */
 template <class M>
 struct is_dynamic_vector {
-    static constexpr bool value =
-        (std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic && std::remove_reference_t<M>::ColsAtCompileTime == 1) ||
-        (std::remove_reference_t<M>::RowsAtCompileTime == 1 && std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic);
+    static constexpr bool value = (std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
+                                   std::remove_reference_t<M>::ColsAtCompileTime == 1) ||
+                                  (std::remove_reference_t<M>::RowsAtCompileTime == 1 &&
+                                   std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic);
 };
 
 /**
@@ -60,8 +61,8 @@ struct is_dynamic_vector {
  */
 template <class M>
 struct is_dynamic_matrix {
-    static constexpr bool value =
-        std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic && std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic;
+    static constexpr bool value = std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic &&
+                                  std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic;
 };
 
 /**
@@ -86,17 +87,15 @@ Eigen::Index minor_size(M&& m)
  * helper to get the matrix type from an eigen expression 
  * with correct const volatile qualitfications.
  */
-template<class M>
-struct CVPlainMatrix
-{
+template <class M>
+struct CVPlainMatrix {
     using Type = typename M::PlainMatrix;
 };
-template<class M>
-struct CVPlainMatrix<Eigen::Ref<const M>>
-{
+template <class M>
+struct CVPlainMatrix<Eigen::Ref<const M>> {
     using Type = const M;
 };
-template<class M>
+template <class M>
 using CVPlainMatrixT = typename CVPlainMatrix<M>::Type;
 
 /**
@@ -129,7 +128,7 @@ template <class M, std::enable_if_t<is_dynamic_matrix<M>::value, int> = 0>
 auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
 {
     assert(rows.start + rows.stride * rows.n <= m.rows());
-    assert(cols.start + cols.stride * cols.n <= m.rows());
+    assert(cols.start + cols.stride * cols.n <= m.cols());
 
     auto majSpec   = std::remove_reference_t<M>::IsRowMajor ? rows : cols;
     auto minSpec   = std::remove_reference_t<M>::IsRowMajor ? cols : rows;
@@ -137,8 +136,8 @@ auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
     auto minStride = minSpec.stride;
     auto data      = m.data() + majSpec.start * minor_size(m) + minSpec.start;
 
-    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
-        data, rows.n, cols.n, {majStride, minStride});
+    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>, Eigen::Unaligned,
+                      Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(data, rows.n, cols.n, {majStride, minStride});
 }
 
 /**
@@ -167,7 +166,7 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
  * Defines value = true if M is an Eigen matrix expression.
  * Defines value = false, otherwise.
  */
-template<class M>
+template <class M>
 using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
 
 /**
@@ -176,10 +175,12 @@ using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
  * @param b a matrix expression of the same shape as a
  * @return a matrix expression the shape of a with each coefficient the maximum of the coefficients of a and b.
  */
-template<class A, class B>
+template <class A, class B>
 auto max(const Eigen::MatrixBase<A>& a, B&& b)
 {
-    return a.binaryExpr(std::forward<B>(b), [](auto a_i, auto b_i) { return std::max(a_i, b_i); });
+    return a.binaryExpr(std::forward<B>(b), [](auto a_i, auto b_i) {
+        return std::max(a_i, b_i);
+    });
 }
 
 /**
@@ -191,25 +192,25 @@ auto max(const Eigen::MatrixBase<A>& a, B&& b)
  * @param f a function that returns a numeric scalar for each element of v. 
  * @return an array expression ´a´ the same size as v where a[i] = f(v[i]).
  */
-template<class Rng, class F>
+template <class Rng, class F>
 auto map(const Rng& v, F f)
 {
     using Result = std::result_of_t<F(const typename Rng::value_type&)>;
     using Scalar = std::decay_t<Result>;
     using Array  = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
-    return Array::NullaryExpr(v.size(), [f, &v] (Eigen::Index i) -> Scalar { 
+    return Array::NullaryExpr(v.size(), [f, &v](Eigen::Index i) -> Scalar {
         return f(v[size_t(i)]);
     });
 }
 
 namespace details
 {
-    //true if elements returned by matrix(i, j) are references where matrix is of type M;
-    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v).
-    template <class M>
-    using IsElementReference =
-        std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
-}
+//true if elements returned by matrix(i, j) are references where matrix is of type M;
+//false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v).
+template <class M>
+using IsElementReference =
+    std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
+} // namespace details
 
 /**
  * iterate over elements of eigen matrix expressions in row major order.
@@ -352,14 +353,12 @@ public:
      * The proxy stores a copy of the element and forwards the address of this copy.
      * @{
      */
-    template <class Dummy                                                        = MatrixRef,
-              std::enable_if_t<details::IsElementReference<Dummy>::value, void*> = nullptr>
+    template <class Dummy = MatrixRef, std::enable_if_t<details::IsElementReference<Dummy>::value, void*> = nullptr>
     pointer operator->() const
     {
         return &(**this);
     }
-    template <class Dummy                                                         = MatrixRef,
-              std::enable_if_t<!details::IsElementReference<Dummy>::value, void*> = nullptr>
+    template <class Dummy = MatrixRef, std::enable_if_t<!details::IsElementReference<Dummy>::value, void*> = nullptr>
     pointer operator->() const
     {
         return Proxy{**this};

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -19,9 +19,11 @@
 */
 #define _USE_MATH_DEFINES
 
-#include "memilio/mobility/mobility.h"
-#include "seir/seir.h"
-#include "secir/secir.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
+#include "ode_secir/model.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"
 #include "memilio/compartments/simulation.h"
@@ -36,22 +38,21 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     auto tmax = 5;
     auto dt   = 0.5;
 
-    mio::SeirModel model1;
-    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 0.9;
-    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 0.1;
+    mio::oseir::Model model1;
+    model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
+    model1.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
     model1.populations.set_total(1000);
-    model1.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 10;
-    model1.parameters.set<mio::TransmissionRisk>(0.4);
-    model1.parameters.set<mio::StageTimeIncubationInv>(1./4);
-    model1.parameters.set<mio::StageTimeInfectiousInv>(1./10);
+    model1.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model1.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.4);
+    model1.parameters.set<mio::oseir::TimeExposed>(4);
+    model1.parameters.set<mio::oseir::TimeInfected>(10);
 
-    auto model2 = model1;
-    model2.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 1.;
+    auto model2                                                                                           = model1;
+    model2.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_migration_sim(
-        t0, dt,
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::SeirModel>>, mio::MigrationEdge>());
+        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -62,8 +63,8 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = mio::Simulation<mio::SeirModel>(model1, t0);
-    auto single_sim2 = mio::Simulation<mio::SeirModel>(model2, t0);
+    auto single_sim1 = mio::Simulation<mio::oseir::Model>(model1, t0);
+    auto single_sim2 = mio::Simulation<mio::oseir::Model>(model2, t0);
     single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
     single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
 
@@ -75,25 +76,27 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     EXPECT_DOUBLE_EQ(g.nodes()[1].property.get_result().get_last_time(), single_sim2.get_result().get_last_time());
 
     //graph may have different time steps, so we can't expect high accuracy here
-    EXPECT_NEAR((g.nodes()[0].property.get_result().get_last_value() - single_sim1.get_result().get_last_value()).norm(),
-                0.0, 1e-6);
-    EXPECT_NEAR((g.nodes()[1].property.get_result().get_last_value() - single_sim2.get_result().get_last_value()).norm(),
-                0.0, 1e-6);
+    EXPECT_NEAR(
+        (g.nodes()[0].property.get_result().get_last_value() - single_sim1.get_result().get_last_value()).norm(), 0.0,
+        1e-6);
+    EXPECT_NEAR(
+        (g.nodes()[1].property.get_result().get_last_value() - single_sim2.get_result().get_last_value()).norm(), 0.0,
+        1e-6);
 }
 
 TEST(TestMobility, nodeEvolve)
 {
-    using Model = mio::SecirModel;
+    using Model = mio::osecir::Model;
     Model model(1);
     auto& params = model.parameters;
 
-    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
+    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}] = 100;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
-    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = 100;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
+    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] = 2.;
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -107,34 +110,36 @@ TEST(TestMobility, nodeEvolve)
 
 TEST(TestMobility, edgeApplyMigration)
 {
-    using Model = mio::SecirModel;
+    using Model = mio::osecir::Model;
 
     //setup nodes
     Model model(1);
     auto& params = model.parameters;
-    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
+    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
-    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
-    params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0] = 0.5;
-    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 1000);
+    params.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 1.;
+    params.get<mio::osecir::SeverePerInfectedSymptoms>()[(mio::AgeGroup)0]        = 0.5;
+    params.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]                   = 1.5;
+    params.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]                   = 2.;
     params.apply_constraints();
     double t = 3.125;
-    mio::SimulationNode<mio::SecirSimulation<>> node1(model, t);
-    mio::SimulationNode<mio::SecirSimulation<>> node2(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
+    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
 
     //setup edge
     mio::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));
 
     //forward migration
     edge.apply_migration(t, 0.5, node1, node2);
-    EXPECT_EQ(print_wrap(node1.get_result().get_last_value()), print_wrap((Eigen::VectorXd(8) << 990-99, 0, 0, 10-1, 0, 0, 0, 0).finished()));
-    EXPECT_EQ(print_wrap(node2.get_result().get_last_value()), print_wrap((Eigen::VectorXd(8) << 990+99, 0, 0, 10+1, 0, 0, 0, 0).finished()));
+    EXPECT_EQ(print_wrap(node1.get_result().get_last_value()),
+              print_wrap((Eigen::VectorXd(8) << 990 - 99, 0, 0, 10 - 1, 0, 0, 0, 0).finished()));
+    EXPECT_EQ(print_wrap(node2.get_result().get_last_value()),
+              print_wrap((Eigen::VectorXd(8) << 990 + 99, 0, 0, 10 + 1, 0, 0, 0, 0).finished()));
 
     //returns
     node1.evolve(t, 0.5);
@@ -153,8 +158,7 @@ TEST(TestMobility, edgeApplyMigration)
     EXPECT_GT(v[4], 0);
     EXPECT_NEAR(v[4], 0, 5.);
     EXPECT_DOUBLE_EQ(node2.get_result().get_last_value().sum(), 1000);
-    
-    
+
     //migrate again
     node1.evolve(t, 0.5);
     node2.evolve(t, 0.5);

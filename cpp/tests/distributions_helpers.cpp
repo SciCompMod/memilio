@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -19,7 +19,6 @@
 */
 #include <distributions_helpers.h>
 #include <matchers.h>
-#include "secir/parameter_studies.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -65,8 +64,9 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
             EXPECT_EQ(self.get_predefined_samples().size(),
                       p_other_uniform_distribution->get_predefined_samples().size());
             for (size_t i = 0; i < self.get_predefined_samples().size(); i++) {
-                EXPECT_THAT(self.get_predefined_samples()[i],
-                            FloatingPointEqual(p_other_uniform_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
+                EXPECT_THAT(
+                    self.get_predefined_samples()[i],
+                    FloatingPointEqual(p_other_uniform_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
             }
         }
         const mio::ParameterDistribution& other;

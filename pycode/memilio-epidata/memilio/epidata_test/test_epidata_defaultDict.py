@@ -19,6 +19,7 @@
 #############################################################################
 import unittest
 from datetime import date
+
 from memilio.epidata import defaultDict as dd
 
 
@@ -52,15 +53,15 @@ class Test_defaultDict(unittest.TestCase):
         date(2020, 4, 24): 'start_date',
         'json_timeasstring': 'file_format'
     }
-    test_values_notin_dd = ('no_raw', 'impute_dates', 'split_berlin', 
-                            'update_data', 'make_plot')
+    test_values_notin_dd = ('no_raw', 'impute_dates', 'split_berlin',
+                            'make_plot')
 
     def test_invert_dict(self):
         inv_county = dd.invert_dict(dd.County)
         # check that test_dict_county is a subset of inv_county
         for county in self.test_dict_county.keys():
             self.assertIn(county, inv_county.keys())
-            self.assertEqual(self.test_dict_county[county], 
+            self.assertEqual(self.test_dict_county[county],
                              inv_county[county])
         # check inverted state dictionary complete
         inv_state = dd.invert_dict(dd.State)
@@ -69,7 +70,7 @@ class Test_defaultDict(unittest.TestCase):
         inv_dd = dd.invert_dict(dd.defaultDict)
         for defaultvalue in self.test_dict_dd.keys():
             self.assertIn(defaultvalue, inv_dd.keys())
-            self.assertEqual(self.test_dict_dd[defaultvalue], 
+            self.assertEqual(self.test_dict_dd[defaultvalue],
                              inv_dd[defaultvalue])
         for value in self.test_values_notin_dd:
             self.assertNotIn(value, inv_dd.values())
@@ -78,6 +79,7 @@ class Test_defaultDict(unittest.TestCase):
         # tests whether the names of counties and states are unique
         self.assertEqual(dd.invert_dict(dd.invert_dict(dd.County)), dd.County)
         self.assertEqual(dd.invert_dict(dd.invert_dict(dd.State)), dd.State)
+
 
 if __name__ == '__main__':
     unittest.main()

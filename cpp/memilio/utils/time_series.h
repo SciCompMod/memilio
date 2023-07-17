@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -20,6 +20,7 @@
 #ifndef EPI_TIME_SERIES_H
 #define EPI_TIME_SERIES_H
 
+#include "memilio/io/io.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/stl_util.h"
@@ -36,8 +37,8 @@ namespace mio
 
 namespace details
 {
-    /** round an integer to the nearest greater power of 2 */
-    inline Eigen::Index next_pow2(Eigen::Index i);
+/** round an integer to the nearest greater power of 2 */
+inline Eigen::Index next_pow2(Eigen::Index i);
 } // namespace details
 
 template <class FP, bool IsConstant>
@@ -130,10 +131,19 @@ public:
     /** copy assignment */
     TimeSeries& operator=(const TimeSeries& other)
     {
-        auto data = Matrix(other.get_num_elements() + 1, details::next_pow2(other.m_num_time_points));
-        data.leftCols(other.m_num_time_points) = other.get_valid_block();
-        m_data                                 = std::move(data);
-        m_num_time_points                      = other.m_num_time_points;
+        if (get_num_elements() == other.get_num_elements()) {
+            //assign with preserved storage if possible
+            reserve(other.m_num_time_points);
+            m_num_time_points = other.m_num_time_points;
+            get_valid_block() = other.get_valid_block();
+        }
+        else {
+            //assign with new storage
+            auto data = Matrix(other.get_num_elements() + 1, details::next_pow2(other.m_num_time_points));
+            data.leftCols(other.m_num_time_points) = other.get_valid_block();
+            m_data                                 = std::move(data);
+            m_num_time_points                      = other.m_num_time_points;
+        }
         return *this;
     }
 
@@ -206,8 +216,7 @@ public:
     {
         assert(i >= 0 && i < m_num_time_points);
         m_num_time_points -= 1;
-        for (auto j = i; j < m_num_time_points; ++j)
-        {
+        for (auto j = i; j < m_num_time_points; ++j) {
             m_data.col(j) = m_data.col(j + 1);
         }
     }
@@ -313,6 +322,21 @@ public:
         assert(m_data.outerStride() == m_data.rows());
         return m_data.data();
     }
+
+    /**
+     * Matrix expression that contains one time point per column.
+     * Each column contains the corresponding time at index 0.
+     * @{
+     */
+    auto matrix()
+    {
+        return get_valid_block();
+    }
+    auto matrix() const
+    {
+        return get_valid_block();
+    }
+    /** @} */
 
     /*********************
      * 
@@ -427,6 +451,29 @@ public:
         *os << '\n' << self.get_valid_block();
     }
 
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TimeSeries");
+        obj.add_element("NumTimePoints", m_num_time_points);
+        obj.add_element("Data", get_valid_block());
+    }
+
+    template<class IOContext>
+    static IOResult<TimeSeries> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("TimeSeries");
+        auto nt = obj.expect_element("NumTimePoints", Tag<Eigen::Index>{});
+        auto data = obj.expect_element("Data", Tag<Matrix>{});
+        return apply(io, [](auto&& nt_, auto&& data_) {
+            auto ts = TimeSeries(data_.rows() - 1);
+            ts.m_data.resize(data_.rows(), data_.cols());
+            ts.m_data = data_;
+            ts.m_num_time_points = nt_;
+            return ts;
+        }, nt, data);
+    }
+
 private:
     void add_time_point_noinit()
     {
@@ -451,195 +498,195 @@ private:
 
 namespace details
 {
-    /** round integer up to the next higher power of 2 */
-    inline Eigen::Index next_pow2(Eigen::Index i)
+/** round integer up to the next higher power of 2 */
+inline Eigen::Index next_pow2(Eigen::Index i)
+{
+    //https://stackoverflow.com/questions/1322510/given-an-integer-how-do-i-find-the-next-largest-power-of-two-using-bit-twiddlin
+    --i;
+    i |= i >> 1;
+    i |= i >> 2;
+    i |= i >> 4;
+    i |= i >> 8;
+    i |= i >> 16;
+    IF_CONSTEXPR(sizeof(Eigen::Index) == 8)
     {
-        //https://stackoverflow.com/questions/1322510/given-an-integer-how-do-i-find-the-next-largest-power-of-two-using-bit-twiddlin
-        --i;
-        i |= i >> 1;
-        i |= i >> 2;
-        i |= i >> 4;
-        i |= i >> 8;
-        i |= i >> 16;
-        IF_CONSTEXPR(sizeof(Eigen::Index) == 8) {
-            i |= i >> 32;
-        }
-        ++i;
-        return i;
+        i |= i >> 32;
     }
+    ++i;
+    return i;
+}
 
-    /**
+/**
      * type traits for time series iterators
      */
-    template <class FP, bool IsConst>
-    struct TimeSeriesIterTraits {
-        static bool is_const()
-        {
-            return IsConst;
-        }
-        using Matrix      = typename TimeSeries<FP>::Matrix;
-        using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-        using VectorValue = typename decltype(std::declval<MatrixPtr>()
-                                                  ->col(std::declval<Eigen::Index>())
-                                                  .tail(std::declval<Eigen::Index>()))::PlainObject;
-        using VectorReference =
-            decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
-        using TimeValue     = FP;
-        using TimeReference = std::conditional_t<IsConst, const FP&, FP&>;
-    };
+template <class FP, bool IsConst>
+struct TimeSeriesIterTraits {
+    static bool is_const()
+    {
+        return IsConst;
+    }
+    using Matrix      = typename TimeSeries<FP>::Matrix;
+    using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
+    using VectorValue = typename decltype(
+        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorReference =
+        decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
+    using TimeValue     = FP;
+    using TimeReference = std::conditional_t<IsConst, const FP&, FP&>;
+};
 
-    /** base class for TimeSeries iterators that iterate by time point (i.e. column) 
+/** base class for TimeSeries iterators that iterate by time point (i.e. column) 
      * @tparam Derived Iterator derived type, provides get_reference member function
      * @tparam FP floating point type of the TimeSeries
      * @tparam IsConstIter true for const_iterator
      * @tparam ValueType define iterator::value_type
      * @tparam ReferenceType define iterator::reference, must be the same type as returned by Derived::get_reference
     */
-    template <class Derived, class FP, bool IsConstIter, class ValueType, class ReferenceType>
-    class TimeSeriesIteratorBase
+template <class Derived, class FP, bool IsConstIter, class ValueType, class ReferenceType>
+class TimeSeriesIteratorBase
+{
+protected:
+    using Traits    = details::TimeSeriesIterTraits<FP, IsConstIter>;
+    using MatrixPtr = typename Traits::MatrixPtr;
+    MatrixPtr m_matrix;
+    Eigen::Index m_col_idx = -1;
+
+public:
+    TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
+        : m_matrix(m)
+        , m_col_idx(col_idx)
     {
-    protected:
-        using Traits    = details::TimeSeriesIterTraits<FP, IsConstIter>;
-        using MatrixPtr = typename Traits::MatrixPtr;
-        MatrixPtr m_matrix;
-        Eigen::Index m_col_idx = -1;
+        assert(m_matrix != nullptr);
+    }
 
-    public:
-        TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
-            : m_matrix(m)
-            , m_col_idx(col_idx)
+    using difference_type   = std::ptrdiff_t;
+    using iterator_category = std::random_access_iterator_tag;
+    using reference         = ReferenceType;
+    using value_type        = ValueType;
+    struct pointer {
+        reference m_ref;
+        reference* operator->()
         {
-            assert(m_matrix != nullptr);
-        }
-
-        using difference_type   = std::ptrdiff_t;
-        using iterator_category = std::random_access_iterator_tag;
-        using reference         = ReferenceType;
-        using value_type        = ValueType;
-        struct pointer {
-            reference m_ref;
-            reference* operator->()
-            {
-                return &m_ref;
-            }
-        };
-
-        reference operator*() const
-        {
-            assert(m_col_idx >= 0 && m_col_idx < m_matrix->cols());
-            return static_cast<const Derived&>(*this).get_reference();
-        }
-
-        pointer operator->() const
-        {
-            return *(*this);
-        }
-
-        reference operator[](difference_type i) const
-        {
-            return *((*this) + i);
-        }
-
-        Derived& operator+=(difference_type i)
-        {
-            m_col_idx += i;
-            return static_cast<Derived&>(*this);
-        }
-
-        Derived operator+(difference_type i) const
-        {
-            auto tmp = static_cast<const Derived&>(*this);
-            tmp += i;
-            return tmp;
-        }
-
-        friend Derived operator+(difference_type i, const TimeSeriesIteratorBase& b)
-        {
-            auto tmp = static_cast<const Derived&>(b);
-            tmp += i;
-            return tmp;
-        }
-
-        Derived& operator-=(difference_type i)
-        {
-            m_col_idx -= i;
-            return static_cast<Derived&>(*this);
-        }
-
-        Derived operator-(difference_type i) const
-        {
-            auto tmp = static_cast<const Derived&>(*this);
-            tmp -= i;
-            return tmp;
-        }
-
-        difference_type operator-(const TimeSeriesIteratorBase& other) const
-        {
-            return m_col_idx - other.m_col_idx;
-        }
-
-        Derived& operator++()
-        {
-            ++m_col_idx;
-            return static_cast<Derived&>(*this);
-        }
-
-        Derived operator++(int)
-        {
-            auto tmp = static_cast<Derived&>(*this);
-            ++(*this);
-            return tmp;
-        }
-
-        Derived& operator--()
-        {
-            --m_col_idx;
-            return static_cast<Derived&>(*this);
-        }
-
-        Derived operator--(int)
-        {
-            auto tmp = static_cast<Derived&>(*this);
-            --(*this);
-            return tmp;
-        }
-
-        bool operator==(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return m_col_idx == other.m_col_idx;
-        }
-
-        bool operator!=(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return !(*this == other);
-        }
-
-        bool operator<(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return m_col_idx < other.m_col_idx;
-        }
-
-        bool operator>(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return m_col_idx > other.m_col_idx;
-        }
-
-        bool operator<=(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return m_col_idx <= other.m_col_idx;
-        }
-
-        bool operator>=(const TimeSeriesIteratorBase& other) const
-        {
-            assert(m_matrix == other.m_matrix);
-            return m_col_idx >= other.m_col_idx;
+            return &m_ref;
         }
     };
+
+    reference operator*() const
+    {
+        assert(m_col_idx >= 0 && m_col_idx < m_matrix->cols());
+        return static_cast<const Derived&>(*this).get_reference();
+    }
+
+    pointer operator->() const
+    {
+        return *(*this);
+    }
+
+    reference operator[](difference_type i) const
+    {
+        return *((*this) + i);
+    }
+
+    Derived& operator+=(difference_type i)
+    {
+        m_col_idx += i;
+        return static_cast<Derived&>(*this);
+    }
+
+    Derived operator+(difference_type i) const
+    {
+        auto tmp = static_cast<const Derived&>(*this);
+        tmp += i;
+        return tmp;
+    }
+
+    friend Derived operator+(difference_type i, const TimeSeriesIteratorBase& b)
+    {
+        auto tmp = static_cast<const Derived&>(b);
+        tmp += i;
+        return tmp;
+    }
+
+    Derived& operator-=(difference_type i)
+    {
+        m_col_idx -= i;
+        return static_cast<Derived&>(*this);
+    }
+
+    Derived operator-(difference_type i) const
+    {
+        auto tmp = static_cast<const Derived&>(*this);
+        tmp -= i;
+        return tmp;
+    }
+
+    difference_type operator-(const TimeSeriesIteratorBase& other) const
+    {
+        return m_col_idx - other.m_col_idx;
+    }
+
+    Derived& operator++()
+    {
+        ++m_col_idx;
+        return static_cast<Derived&>(*this);
+    }
+
+    Derived operator++(int)
+    {
+        auto tmp = static_cast<Derived&>(*this);
+        ++(*this);
+        return tmp;
+    }
+
+    Derived& operator--()
+    {
+        --m_col_idx;
+        return static_cast<Derived&>(*this);
+    }
+
+    Derived operator--(int)
+    {
+        auto tmp = static_cast<Derived&>(*this);
+        --(*this);
+        return tmp;
+    }
+
+    bool operator==(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return m_col_idx == other.m_col_idx;
+    }
+
+    bool operator!=(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return !(*this == other);
+    }
+
+    bool operator<(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return m_col_idx < other.m_col_idx;
+    }
+
+    bool operator>(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return m_col_idx > other.m_col_idx;
+    }
+
+    bool operator<=(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return m_col_idx <= other.m_col_idx;
+    }
+
+    bool operator>=(const TimeSeriesIteratorBase& other) const
+    {
+        assert(m_matrix == other.m_matrix);
+        return m_col_idx >= other.m_col_idx;
+    }
+};
 } // namespace details
 
 /** Iterate over vector values of a time series by time point */

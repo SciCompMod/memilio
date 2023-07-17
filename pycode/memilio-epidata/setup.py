@@ -1,9 +1,10 @@
-import sys
 import os
 import subprocess
-from setuptools import setup, find_packages, Command
+import sys
 
-__version__ = '0.1.0'
+from setuptools import Command, find_packages, setup
+
+__version__ = '0.7.0'
 
 
 class PylintCommand(Command):
@@ -14,8 +15,8 @@ class PylintCommand(Command):
     user_options = []
 
     def initialize_options(self):
-        from pylint.reporters.text import TextReporter, ParseableTextReporter
         from pylint.reporters.json_reporter import JSONReporter
+        from pylint.reporters.text import ParseableTextReporter, TextReporter
         from pylint_json2html import JsonExtendedReporter
 
         self.lint_modules = ["memilio/"]
@@ -54,36 +55,42 @@ setup(
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [
-            'getrkidata=memilio.epidata.getRKIData:main',
+            'getcasedata=memilio.epidata.getCaseData:main',
             'getpopuldata=memilio.epidata.getPopulationData:main',
             'getjhdata = memilio.epidata.getJHData:main',
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getrkiestimation = memilio.epidata.getRKIDatawithEstimations:main',
-            'getcommutermobility = memilio.epidata.getCommuterMobility:main'
+            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
+            'getcommutermobility = memilio.epidata.getCommuterMobility:main',
+            'getvaccinationdata = memilio.epidata.getVaccinationData:main',
+            'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
         ],
     },
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        'pandas<1.2.0',
-        'matplotlib<3.4',
+        # smaller pandas versions contain a bug that sometimes prevents reading
+        # some excel files (e.g. population or twitter data)
+        'pandas>=1.2.2',
+        'matplotlib',
         'tables',
-        'numpy>=1.21',
+        'numpy>=1.22',  # smaller numpy versions cause a security issue
         'openpyxl',
         'xlrd',
         'xlsxwriter',
         'requests',
-	    'pyxlsb',
-        'wget'
+        'pyxlsb',
+        'wget',
+        'python-magic'
     ],
     extras_require={
         'dev': [
-            'pyfakefs==4.1.0',
-            'freezegun',
-            'coverage',
+            # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
+            'pyfakefs>=4.2.1',
+            # coverage 7.0.0 can't find .whl files and breaks CI
+            'coverage>=7.0.1',
             'pylint<=2.11.1',
             'pylint_json2html<=0.3.0',
         ],

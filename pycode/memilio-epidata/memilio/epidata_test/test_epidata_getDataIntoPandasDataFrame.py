@@ -17,24 +17,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import unittest
-from pyfakefs import fake_filesystem_unittest
 import os
+import json
 import sys
-from io import StringIO
-from unittest.mock import patch, call, mock_open
 from datetime import date, datetime
+from io import StringIO
+import unittest
+from unittest.mock import patch, PropertyMock
+
 import pandas as pd
+from pyfakefs import fake_filesystem_unittest
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-
-from memilio.epidata import getVaccinationData
-from memilio.epidata import getPopulationData
-from memilio.epidata import getRKIData
-from memilio.epidata import getDIVIData
-from memilio.epidata import getRKIDatawithEstimations
-from memilio.epidata import getJHData
+from memilio.epidata import getCaseData, getCaseDatawithEstimations
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import (getDIVIData, getJHData, getPopulationData,
+                             getVaccinationData)
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -42,7 +40,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     path = '/home/x/'
 
     data = ("""{"type": "FeatureCollection",\
-"name": "RKI_COVID19",\
+"name": "Cases_COVID19",\
 "features": [\
 { "type": "Feature", "properties": { "ObjectId": 1, "IdBundesland": 1, "Bundesland": "Schleswig-Holstein",\
 "Landkreis": "SK Flensburg", "Altersgruppe": "A15-A34", "Geschlecht": "M", "AnzahlFall": 1, "AnzahlTodesfall": 0,\
@@ -55,79 +53,27 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 "Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-26T00:00:00Z", "NeuGenesen": -9, "AnzahlGenesen": 0, "IstErkrankungsbeginn": 0, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null }\
 ]}""")
 
+    # use hospitalization data file to test get_file
+    here = os.path.dirname(os.path.abspath(__file__))
+    test_data_file = os.path.join(
+        here, "test_data", "TestSetFullHospitalizationData.json")
+    # Load JSON file data to a python dict object.
+    with open(test_data_file) as file_object:
+        dict_object = json.load(file_object)
+
+    test_string_file = json.dumps(dict_object)
+
     def setUp(self):
         self.setUpPyfakefs()
-        del sys.argv[1:] # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
-        # TODO:Is this is a good way to solve this?
 
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.urlopen')
-    def test_load_geojson_error(self, mock_urlopen):
-
-        mock_urlopen.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadGeojson("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.geojson' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_excel')
-    def test_load_Excel_error(self, mock_urlopen):
-
-        mock_urlopen.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadExcel("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.xls' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
-    def test_load_csv_error(self, mock_csv):
-        # return an empty dataframe
-        mock_csv.return_value = pd.DataFrame()
-
-        df_test = gd.loadCsv("targetFileName")
-        expected_call = [
-            call(
-                'https://opendata.arcgis.com/datasets/' +
-                "targetFileName" + '.csv', encoding=None)]
-        mock_csv.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-        df_test = gd.loadCsv(
-            "targetFileName",
-            apiUrl='https://opendata.arcgis.com/datasets/different/',
-            extension='.notcsv')
-        expected_call = [
-            call(
-                'https://opendata.arcgis.com/datasets/different/' +
-                "targetFileName" + '.notcsv', encoding=None)]
-        mock_csv.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
-    def test_load_csv_working(self, mock_csv):
-        mock_csv.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadCsv("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.csv' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
+    def write_data(self, path_to_file):
+        with open(path_to_file, 'w') as f:
+            f.write(self.test_string_file)
 
     def test_cli_correct_default(self):
-        
+
         out_path_default = dd.defaultDict['out_folder']
-        
+
         arg_dict = gd.cli("population")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
@@ -138,19 +84,19 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
-        
+
         arg_dict = gd.cli("jh")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         out_folder = arg_dict["out_folder"]
-        no_raw = arg_dict["no_raw"]                                             
-        
+        no_raw = arg_dict["no_raw"]
+
         assert read_data == dd.defaultDict['read_data']
         assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
 
-        arg_dict = gd.cli("rki")
+        arg_dict = gd.cli("cases")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         out_folder = arg_dict["out_folder"]
@@ -171,7 +117,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert no_raw == dd.defaultDict['no_raw']
         assert rep_date == dd.defaultDict['rep_date']
 
-        arg_dict = gd.cli("rkiest")
+        arg_dict = gd.cli("cases_est")
         read_data = arg_dict["read_data"]
         file_format = arg_dict["file_format"]
         make_plot = arg_dict["make_plot"]
@@ -248,45 +194,38 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         the_exception = error.exception
         self.assertEqual(str(the_exception), "Wrong key or cli_dict.")
 
+        # test wrong keys
         test_args = ["prog", '-f', 'wrong_format']
         with patch.object(sys, 'argv', test_args):
-
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
-            self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
+                gd.cli("cases")
+            self.assertRegex(mock_stderr.getvalue(), r"invalid choice")
 
         test_args = ["prog", '--update-data', ]
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
-            self.assertRegexpMatches(
+                gd.cli("cases")
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
         test_args = ["prog", '--start_date']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
-            self.assertRegexpMatches(
+                gd.cli("cases")
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
         test_args = ["prog", '--end_date']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("rki")
-            self.assertRegexpMatches(
+                gd.cli("cases")
+            self.assertRegex(
                 mock_stderr.getvalue(),
                 r"unrecognized arguments")
 
-        test_args = ["prog", '--make-plot']
-        with patch.object(sys, 'argv', test_args):
-            with self.assertRaises(SystemExit) as cm:
-                gd.cli("divi")
-            self.assertRegexpMatches(
-                mock_stderr.getvalue(),
-                r"unrecognized arguments")
-
+        # test wrong date format
         test_args = ["prog", '--start-date', '2020,3,24']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
@@ -335,7 +274,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                      '--moving-average', 0, '--no-raw', '--impute-dates']
 
         with patch.object(sys, 'argv', test_args):
-            arg_dict = gd.cli("rki")
+            arg_dict = gd.cli("cases")
             [read_data, file_format, out_folder, impute_dates, make_plot,
              moving_average, split_berlin, no_raw, rep_date] = [
                 arg_dict["read_data"],
@@ -362,7 +301,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                      folder, '--file-format', 'json', '--make-plot']
 
         with patch.object(sys, 'argv', test_args):
-            arg_dict = gd.cli("rkiest")
+            arg_dict = gd.cli("cases_est")
             [read_data, file_format, out_folder, no_raw, make_plot] = [
                 arg_dict["read_data"],
                 arg_dict["file_format"],
@@ -478,7 +417,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         file0 = "test_csv.csv"
 
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(os.listdir(self.path), [file0])        
+        self.assertEqual(os.listdir(self.path), [file0])
 
         gd.write_dataframe(df, self.path, "test_json", 'json')
 
@@ -488,7 +427,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), [file0, file1])
 
         file_with_path = os.path.join(self.path, file1)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json)
 
@@ -505,15 +444,16 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         file2 = "test_json_timeasstring.json"
 
         self.assertEqual(len(os.listdir(self.path)), 3)
-        self.assertEqual(os.listdir(self.path).sort(), [file0, file1, file2].sort())
+        self.assertEqual(os.listdir(self.path).sort(),
+                         [file0, file1, file2].sort())
 
         file_with_path = os.path.join(self.path, file2)
-        f = open(file_with_path, "r")
+        f = open(file_with_path)
         fread = f.read()
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
         # TODO: Why does check of hdf5 not work?
-        #gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
+        # gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
         # file = "test_hdf.h5"
         # self.assertEqual(len(os.listdir(self.path)), 3)
         # self.assertEqual(os.listdir(self.path), [file])
@@ -534,18 +474,18 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
         error_message = "Error: The file format: " + 'wrong' + \
-                        " does not exist. Use json, json_timeasstring, csv, or hdf5."
+                        " does not exist. Use json, json_timeasstring, hdf5, csv or txt."
         self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
-    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
-    @patch('memilio.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
+    @patch('memilio.epidata.getCaseDatawithEstimations.get_case_data_with_estimations')
     @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
-            self, mock_jh, mock_rkiwe, mock_vaccination, mock_popul,
-            mock_rki, mock_divi):
+            self, mock_jh, mock_caseswe, mock_vaccination, mock_popul,
+            mock_cases, mock_divi):
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],
@@ -553,29 +493,28 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             "out_folder": os.path.join(dd.defaultDict['out_folder']),
             'no_raw': dd.defaultDict["no_raw"]}
 
-        arg_dict_vaccination = {
-            **arg_dict_all,
+        arg_dict_data_download = {
+            "start_date": dd.defaultDict['start_date'],
             "end_date": dd.defaultDict['end_date'],
-            "make_plot": dd.defaultDict['make_plot'],
-            "moving_average": dd.defaultDict['moving_average'],
-            "start_date": dd.defaultDict['start_date']}
-
-        arg_dict_rki_est = {**arg_dict_all,
-                            "make_plot": dd.defaultDict['make_plot']}
-
-        arg_dict_rki = {
-            **arg_dict_all,
             "impute_dates": dd.defaultDict['impute_dates'],
-            "make_plot": dd.defaultDict['make_plot'],
             "moving_average": dd.defaultDict['moving_average'],
-            "split_berlin": dd.defaultDict['split_berlin'],
-            "rep_date": dd.defaultDict['rep_date']}
+            "make_plot": dd.defaultDict['make_plot']}
+
+        arg_dict_cases = {
+            **arg_dict_all, **arg_dict_data_download,
+            "rep_date": dd.defaultDict['rep_date'],
+            "split_berlin": dd.defaultDict['split_berlin']}
 
         arg_dict_divi = {
-            **arg_dict_all, "end_date": dd.defaultDict['end_date'],
-            "impute_dates": dd.defaultDict['impute_dates'],
-            "moving_average": dd.defaultDict['moving_average'],
-            "start_date": dd.defaultDict['start_date']}
+            **arg_dict_all, **arg_dict_data_download}
+
+        arg_dict_vaccination = {
+            **arg_dict_all, **arg_dict_data_download,
+            "sanitize_data": dd.defaultDict['sanitize_data']}
+
+        arg_dict_cases_est = {**arg_dict_cases}
+
+        arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
 
         getVaccinationData.main()
         mock_vaccination.assert_called()
@@ -585,21 +524,91 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
-        getRKIData.main()
-        mock_rki.assert_called()
-        mock_rki.assert_called_with(**arg_dict_rki)
+        getCaseData.main()
+        mock_cases.assert_called()
+        mock_cases.assert_called_with(**arg_dict_cases)
 
         getDIVIData.main()
         mock_divi.assert_called()
         mock_divi.assert_called_with(**arg_dict_divi)
 
-        getRKIDatawithEstimations.main()
-        mock_rkiwe.assert_called()
-        mock_rkiwe.assert_called_with(**arg_dict_rki_est)
+        getCaseDatawithEstimations.main()
+        mock_caseswe.assert_called()
+        mock_caseswe.assert_called_with(**arg_dict_cases_est)
 
         getJHData.main()
         mock_jh.assert_called()
-        mock_jh.assert_called_with(**arg_dict_all)
+        mock_jh.assert_called_with(**arg_dict_jh)
+
+    def test_get_file_read(self):
+        # first test with read_data = True. get_file should return the json file as dataframe
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = ''
+        read_data = True
+        param_dict = {}
+
+        # write file
+        gd.check_dir(self.path)
+        self.write_data(filepath)
+
+        df = gd.get_file(filepath, url, read_data, param_dict)
+
+        # check if non-empty dataframe is returned (Error is raised if dataframe is empty)
+        self.assertEqual(
+            str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
+
+    @patch('pandas.read_json')
+    def test_get_file_empty_df(self, mock_json):
+
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = ''
+        read_data = True
+        param_dict = {}
+
+        # return empty dataframe
+        mock_json.return_value = pd.DataFrame()
+
+        # get_file should raise an error if returned dataframe is empty
+        with self.assertRaises(gd.DataError) as error:
+            gd.get_file(filepath, url, read_data, param_dict)
+
+        error_message = "Error: Dataframe is empty."
+        self.assertEqual(str(error.exception), error_message)
+
+    @patch('requests.get')
+    @patch('builtins.input')
+    @patch('pandas.read_json')
+    def test_get_file_user_input(self, mock_json, mock_in, mock_request):
+
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = 'test_url.com'
+        read_data = True
+        param_dict = {}
+
+        # test with user input 'N'; get_file should raise filenotfounderror
+        mock_json.side_effect = FileNotFoundError
+        mock_in.return_value = 'N'
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
+
+        error_message = "Error: The file from " + filepath + \
+            " does not exist. Call program without -r flag to get it."
+        self.assertEqual(str(error.exception), error_message)
+
+        # test with user input 'y'; get file should try to download from url
+        mock_in.return_value = 'y'
+        # url should not be opened here. Instead raise a 404 Error
+        type(mock_request).status_code = PropertyMock(return_value=404)
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
+
+        error_message = 'Error: URL test_url.com could not be opened.'
+        self.assertEqual(str(error.exception), error_message)
+
+        # check call count
+        self.assertEqual(mock_in.call_count, 2)
 
 
 if __name__ == '__main__':

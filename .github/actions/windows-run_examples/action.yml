@@ -1,0 +1,26 @@
+name: "Windows Examples"
+description: "Run the C++ examples on Windows"
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the example binary."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download built example directory
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp/build-win/bin
+    - name: Run examples
+      shell: pwsh
+      run: |
+        cd cpp/build-win/bin
+        $errchk = (Get-ChildItem -Path ./| Where-Object { $_.Name -like "*_example.exe"} | Measure-Object).Count
+        if( $errchk -gt 0){
+          Write-Output "Running windows Examples."
+          Get-ChildItem -Path ./| Where-Object { $_.Name -like "*_example.exe"} | Foreach { Write "Running $_"; if( $(Start-Process $_.FullName -Passthru -Wait).ExitCode -ne 0){Write "Programm terminated with error, abort."; Exit 1}}
+        } else {
+          Write-Output "No Examples found, abort."	
+          Exit 1
+        }

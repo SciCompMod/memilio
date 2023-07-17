@@ -38,13 +38,18 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
 
     path = '/home/NPIData'
 
-    #load test data from test_data folder
+    # load test data from test_data folder
     here = os.path.dirname(os.path.abspath(__file__))
-    df_npis_old = pd.read_json(os.path.join(here, 'test_data', 'TestSetNPIsUnterkategorien.json'))
-    df_npis_desc = pd.read_json(os.path.join(here, 'test_data', 'TestSetNPIsDescription.json'))
-    df_npis_combinations_pre = pd.read_json(os.path.join(here, 'test_data', 'TestSetNPIsCombinations.json'))
-    df_cases = pd.read_json(os.path.join(here, 'test_data', 'TestSetNPIsCaseData.json'))
-    df_pop = pd.read_json(os.path.join(here, 'test_data', 'TestSetNPIsPopulationData.json'))
+    df_npis_old = pd.read_json(os.path.join(
+        here, 'test_data', 'TestSetNPIsUnterkategorien.json'))
+    df_npis_desc = pd.read_json(os.path.join(
+        here, 'test_data', 'TestSetNPIsDescription.json'))
+    df_npis_combinations_pre = pd.read_json(os.path.join(
+        here, 'test_data', 'TestSetNPIsCombinations.json'))
+    df_cases = pd.read_json(os.path.join(
+        here, 'test_data', 'TestSetNPIsCaseData.json'))
+    df_pop = pd.read_json(os.path.join(
+        here, 'test_data', 'TestSetNPIsPopulationData.json'))
 
     df_npis_old_renamed = df_npis_old.rename(dd.GerEng, axis=1, inplace=False)
 
@@ -111,14 +116,14 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         'M01_100_5', 'M01_110_5', 'M01_120_5', 'M01_130_5', 'M01_140_5', ]
 
     codes_to_drop = ['M02_120', 'M02_120_1', 'M02_120_2',
-                    'M02_120_3', 'M02_120_4', 'M02_120_5',
-                    'M07_100', 'M07_100_1', 'M07_100_2',
-                    'M07_100_3', 'M07_100_4', 'M07_100_5']
+                     'M02_120_3', 'M02_120_4', 'M02_120_5',
+                     'M07_100', 'M07_100_1', 'M07_100_2',
+                     'M07_100_3', 'M07_100_4', 'M07_100_5']
 
     missing_codes = ['M02_120_1', 'M02_120_2',
-                    'M02_120_3', 'M02_120_4', 'M02_120_5',
-                    'M07_100_1', 'M07_100_2',
-                    'M07_100_3', 'M07_100_4', 'M07_100_5']
+                     'M02_120_3', 'M02_120_4', 'M02_120_5',
+                     'M07_100_1', 'M07_100_2',
+                     'M07_100_3', 'M07_100_4', 'M07_100_5']
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -309,15 +314,15 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         # incidence depending NPIs can first be activated on day 4 due to activation_days_threshold=3
         # incidence is constantly > 20
         # M1_2_1,M1_3_1,M1_1_2,M1_3_2 always 0
-        #M1_2_2 is 0 if M1_2 is 1
+        # M1_2_2 is 0 if M1_2 is 1
         self.assertEqual(
             npis_test.M1_2_2.tolist(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-            
+
         self.assertEqual(
             npis_test.M1_3_2.tolist(),
             [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
-        #_4 -> Incidence > 50
+        # _4 -> Incidence > 50
         # M1_3_4 is always 0 - cant be simultaneously active with M1_3_2
         self.assertEqual(
             npis_test.M1_3_4.to_list(),
@@ -325,15 +330,16 @@ class TestGetNPIData(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             npis_test.M1_2_4.to_list(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
-        #_5 is always 0 since incidence is never > 100 in this test
+        # _5 is always 0 since incidence is never > 100 in this test
 
-        #M1_1_1 should not be active when M2,3_2,3,4,5 is active
+        # M1_1_1 should not be active when M2,3_2,3,4,5 is active
         self.assertEqual(
             npis_test.M1_1_1.to_list(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         self.assertEqual(mock_plot.call_count, 4)
         self.assertEqual(mock_plot_mult.call_count, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -63,20 +63,20 @@ public:
  * Dampings are square matrix valued, coefficient d_ij affects the contacts from group i to group j.
  * @tparam S Matrix shape type
  */
-template<class S>
+template <class S>
 class Damping : public std::tuple<typename S::Matrix, DampingLevel, DampingType, SimulationTime>
 {
 public:
-    using Shape = S;
+    using Shape  = S;
     using Matrix = typename Shape::Matrix;
-    using Base = std::tuple<Matrix, DampingLevel, DampingType, SimulationTime>;
+    using Base   = std::tuple<Matrix, DampingLevel, DampingType, SimulationTime>;
 
     /**
      * create a default Damping.
      * @param shape_args arguments to construct the shape of the damping matrix (can be Shape itself, copy ctor)
      * @tparam T constructor arguments of Damping::Shape.
      */
-    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
     explicit Damping(T... shape_args)
         : Base(Matrix::Zero(Shape(shape_args...).rows(), Shape(shape_args...).cols()), {}, {}, {})
     {
@@ -94,7 +94,8 @@ public:
     Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime t)
         : Base(m, level, type, t)
     {
-        assert((get_coeffs().array() >= 0.).all() && (get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
+        assert((get_coeffs().array() >= 0.).all() && (get_coeffs().array() <= 1.).all() &&
+               "damping coefficient out of range");
     }
 
     /**
@@ -106,7 +107,7 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
     Damping(double d, DampingLevel level, DampingType type, SimulationTime t, T... shape_args)
         : Damping(Matrix::Constant(Shape(shape_args...).rows(), Shape(shape_args...).cols(), d), level, type, t)
     {
@@ -131,7 +132,7 @@ public:
      * @param t time at which the damping becomes active
      * @tparam T Shape constructor arguments.
      */
-    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
     Damping(double d, SimulationTime t, T... shape_args)
         : Damping(d, DampingLevel(0), DampingType(0), t, shape_args...)
     {
@@ -199,7 +200,7 @@ public:
     friend void PrintTo(const Damping& self, std::ostream* os)
     {
         *os << '[' << std::get<SimulationTime>(self) << ',' << std::get<DampingType>(self) << ','
-                << std::get<DampingLevel>(self) << ']';
+            << std::get<DampingLevel>(self) << ']';
         *os << '\n' << std::get<Matrix>(self);
     }
 
@@ -244,7 +245,7 @@ public:
  * @see get_matrix_at 
  * @tparam D an instance of Damping template or compatible type. 
  */
-template<class D>
+template <class D>
 class Dampings
 {
 public:
@@ -262,7 +263,7 @@ public:
      * @param num_dampings number of initial elements in the collection
      * @tparam T Shape constructor arguments.
      */
-    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
     explicit Dampings(T... shape_args)
         : m_dampings()
         , m_shape(shape_args...)
@@ -288,12 +289,12 @@ public:
     {
         add_(damping);
     }
-    template<class... T>
+    template <class... T>
     void add(T&&... t)
     {
         add_(value_type(std::forward<T>(t)...));
     }
-    template<class...T>
+    template <class... T>
     void add(double d, T... t)
     {
         add_(value_type(d, std::forward<T>(t)..., m_shape));
@@ -315,7 +316,6 @@ public:
     {
         m_dampings.clear();
     }
-
 
     /**
      * Computes the real contact frequency at a point in time.
@@ -445,22 +445,25 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
-    static IOResult<Dampings> deserialize(IOContext& io) 
+    template <class IOContext>
+    static IOResult<Dampings> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Dampings");
-        auto s = obj.expect_element("Shape", Tag<Shape>{});
-        auto d = obj.expect_list("Dampings", Tag<value_type>{});
-        return apply(io, [](auto&& s_, auto&& d_) -> IOResult<Dampings> {
-            Dampings dampings(s_);
-            for (auto&& i : d_) {
-                if (i.get_shape() != s_) {
-                    return failure(StatusCode::InvalidValue, "Dampings must all have the same shape.");
+        auto s   = obj.expect_element("Shape", Tag<Shape>{});
+        auto d   = obj.expect_list("Dampings", Tag<value_type>{});
+        return apply(
+            io,
+            [](auto&& s_, auto&& d_) -> IOResult<Dampings> {
+                Dampings dampings(s_);
+                for (auto&& i : d_) {
+                    if (i.get_shape() != s_) {
+                        return failure(StatusCode::InvalidValue, "Dampings must all have the same shape.");
+                    }
+                    dampings.add(i);
                 }
-                dampings.add(i);
-            }
-            return success(dampings);
-        }, s, d);
+                return success(dampings);
+            },
+            s, d);
     }
 
 private:
@@ -475,8 +478,7 @@ private:
      */
     static void update_active_dampings(
         const value_type& damping,
-        std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>>&
-            active_by_type,
+        std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>>& active_by_type,
         std::vector<std::tuple<Matrix, DampingLevel>>& sum_by_level);
 
     /**
@@ -519,6 +521,7 @@ void Dampings<D>::finalize() const
         std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>> active_by_type;
         std::vector<std::tuple<Matrix, DampingLevel>> sum_by_level;
         for (auto& damping : m_dampings) {
+            //update active damping
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
             assert((combined_damping.array() <= 1).all() && (combined_damping.array() >= 0).all() &&
@@ -548,7 +551,7 @@ void Dampings<D>::add_(const value_type& damping)
     m_accumulated_dampings_cached.clear();
 }
 
-template<class S>
+template <class S>
 void Dampings<S>::update_active_dampings(
     const value_type& damping,
     std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>>& active_by_type,
@@ -558,6 +561,7 @@ void Dampings<S>::update_active_dampings(
 
     const int MatrixIdx = 0;
 
+    //find active with same type and level if existent
     auto iter_active_same_type = std::find_if(active_by_type.begin(), active_by_type.end(), [&damping](auto& active) {
         return get<DampingLevel>(active) == get<DampingLevel>(damping) &&
                get<DampingType>(active) == get<DampingType>(damping);
@@ -565,16 +569,20 @@ void Dampings<S>::update_active_dampings(
     if (iter_active_same_type != active_by_type.end()) {
         //replace active of the same type and level
         auto& active_same_type = *iter_active_same_type;
+        //find active with the same level
         auto& sum_same_level   = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
             return get<DampingLevel>(sum) == get<DampingLevel>(damping);
         });
+        //remove active with the same type and level and add new one
         get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
+        //avoid negative values due to rounding error if e.g. a previous damping is lifted
+        get<MatrixIdx>(sum_same_level) = get<MatrixIdx>(sum_same_level).cwiseMax(0.);
         get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {
-        //add new type
+        //add new type to active
         active_by_type.emplace_back(get<MatrixIdx>(damping), get<DampingLevel>(damping), get<DampingType>(damping));
-
+        //find damping with same level if existent
         auto iter_sum_same_level = std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
             return get<DampingLevel>(sum) == get<DampingLevel>(damping);
         });
@@ -592,9 +600,9 @@ void Dampings<S>::update_active_dampings(
 /**
  * aliases for common damping specializations.
  */
-using SquareDamping = Damping<SquareMatrixShape>;
+using SquareDamping  = Damping<SquareMatrixShape>;
 using SquareDampings = Dampings<SquareDamping>;
-using VectorDamping = Damping<ColumnVectorShape>;
+using VectorDamping  = Damping<ColumnVectorShape>;
 using VectorDampings = Dampings<VectorDamping>;
 
 } // namespace mio

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -17,7 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "seir/seir.h"
+#include "ode_seir/model.h"
+#include "ode_seir/infection_state.h"
+#include "ode_seir/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 
@@ -31,23 +33,26 @@ int main()
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::SeirModel model;
+    mio::oseir::Model model;
 
-    double total_population = 10000;
-    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 100;
-    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}] = 100;
-    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}] = 100;
-    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = total_population - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}]
-                                                                                              - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}]
-                                                                                              - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}];
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<mio::StageTimeIncubationInv>(1./5.2);
-    model.parameters.set<mio::StageTimeInfectiousInv>(1./6);
-    model.parameters.set<mio::TransmissionRisk>(0.04);
-    model.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 
-    print_seir_params(model);
+    model.check_constraints();
+    // print_seir_params(model);
 
     auto seir = simulate(t0, tmax, dt, model);
 

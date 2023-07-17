@@ -22,21 +22,24 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
- * a duration of time.
- * resolution 1 second.
+ * @brief A duration of time.
+ * Resolution 1 second.
  */
 class TimeSpan
 {
 public:
     /**
-     * default ctor, uninitialized.
+     * @brief Default ctor, uninitialized.
      */
     TimeSpan() = default;
 
     /**
-     * creates a TimeSpan that represents a number of seconds.
+     * @brief Creates a TimeSpan that represents a number of seconds.
+     * @param[in] seconds The number of seconds.
      */
     explicit TimeSpan(int seconds)
         : m_seconds(seconds)
@@ -44,7 +47,7 @@ public:
     }
 
     /**
-     * length of time in days.
+     * @brief Length of time in days.
      */
     double days() const
     {
@@ -52,15 +55,15 @@ public:
     }
 
     /**
-     * length of time in hours.
+     * @brief Length of time in hours.
      */
     double hours() const
     {
         return double(m_seconds) / (60 * 60);
     };
-    
+
     /**
-     * length of time in seconds.
+     * @brief Length of time in seconds.
      */
     int seconds() const
     {
@@ -68,7 +71,7 @@ public:
     }
 
     /**
-     * comparison operators
+     * @name Comparison operators.
      * @{
      */
     bool operator==(const TimeSpan& other) const
@@ -98,7 +101,7 @@ public:
     /**@}*/
 
     /**
-     * numeric operators for addition, subtraction, and scalar integer multiplication and division. 
+     * @name Numeric operators for addition, subtraction, and scalar integer multiplication and division. 
      * @{
      */
     TimeSpan operator+(const TimeSpan& s) const
@@ -141,22 +144,23 @@ public:
     /**@}*/
 
 private:
-    int m_seconds;
+    int m_seconds; ///< The duration of time in seconds.
 };
 
 /**
- * represents a point in time.
- * seconds from an unspecified monday at 00:00 (epoch). 
+ * @brief Represents a point in time.
+ * Seconds from an unspecified monday at 00:00 (epoch). 
  */
 class TimePoint
 {
 public:
     /**
-     * default ctor, unitinialized.
+     * @brief Default ctor, unitinialized.
      */
     TimePoint() = default;
     /**
-     * creates a TimePoint from a specified number of seconds.
+     * @brief Creates a TimePoint from a specified number of seconds.
+     * @param[in] seconds The number of seconds after the epoch.
      */
     explicit TimePoint(int seconds)
         : m_seconds(seconds)
@@ -164,21 +168,21 @@ public:
     }
 
     /**
-     * time since the epoch in days.
+     * @brief Time since the epoch in days.
      */
     double days() const
     {
         return double(m_seconds) / (24 * 60 * 60);
     }
     /**
-     * time since the epoch in hours.
+     * @brief Time since the epoch in hours.
      */
     double hours() const
     {
         return double(m_seconds) / (60 * 60);
-    };    
+    };
     /**
-     * time since the epoch in seconds.
+     * @brief Time since the epoch in seconds.
      */
     int seconds() const
     {
@@ -186,7 +190,7 @@ public:
     }
 
     /**
-     * index of current day of the week (0,...,6 = Mo,...,Sun)
+     * @brief Index of current day of the week (0,...,6 = Mo,...,Sun).
      */
     int day_of_week() const
     {
@@ -194,7 +198,7 @@ public:
     }
 
     /**
-     * hour in the current day (0 - 23).
+     * @brief Hour in the current day (0 - 23).
      */
     int hour_of_day() const
     {
@@ -202,15 +206,15 @@ public:
     }
 
     /**
-     * time since midnight
+     * @brief Time since midnight.
      */
     TimeSpan time_since_midnight() const
     {
-        return  TimeSpan(seconds() - ((int)days())*60*60*24);
+        return TimeSpan(seconds() - ((int)days()) * 60 * 60 * 24);
     }
 
     /**
-     * comparison operators.
+     * @name Comparison operators.
      * @{
      */
     bool operator==(const TimePoint& other) const
@@ -240,7 +244,7 @@ public:
     /**@}*/
 
     /**
-     * add or subtract a TimeSpan.
+     * @brief Add or subtract a TimeSpan.
      * @{
      */
     TimePoint operator+(const TimeSpan& s) const
@@ -264,20 +268,21 @@ public:
     /**@}*/
 
     /**
-     * TimeSpan difference between two time points.
+     * @brief TimeSpan difference between this and another TimePoint.
+     * @param[in] p2 The other TimePoint.
      */
-    TimeSpan operator-(const TimePoint& p2)
+    TimeSpan operator-(const TimePoint& p2) const
     {
         return TimeSpan{m_seconds - p2.seconds()};
     }
 
 private:
-    int m_seconds;
+    int m_seconds; ///< The number of seconds after the epoch.
 };
 
 /**
- * create a TimeSpan of a specified number of seconds.
- * @param seconds number of seconds in the time span.
+ * @brief Create a TimeSpan of a specified number of seconds.
+ * @param[in] seconds Number of seconds in the TimeSpan.
  */
 inline TimeSpan seconds(int seconds)
 {
@@ -285,18 +290,17 @@ inline TimeSpan seconds(int seconds)
 }
 
 /**
- * create a TimeSpan of a specified number of minutes.
- * @param minutes number of minutes in the time span.
+ * @brief Create a TimeSpan of a specified number of minutes.
+ * @param[in] minutes Number of minutes in the TimeSpan.
  */
 inline TimeSpan minutes(int minutes)
 {
     return TimeSpan(minutes * 60);
 }
 
-
 /**
- * create a TimeSpan of a specified number of hours.
- * @param seconds number of hours in the time span.
+ * @brief Create a TimeSpan of a specified number of hours.
+ * @param[in] seconds Number of hours in the TimeSpan.
  */
 inline TimeSpan hours(int hours)
 {
@@ -304,14 +308,20 @@ inline TimeSpan hours(int hours)
 }
 
 /**
- * create a TimeSpan with a specified number of days.
- * @param seconds number of days in the time span.
+ * @brief Create a TimeSpan with a specified number of days.
+ * @param[in] seconds Number of days in the TimeSpan.
  */
 inline TimeSpan days(int days)
 {
     return TimeSpan(days * 24 * 60 * 60);
 }
 
+inline TimeSpan days(double days)
+{
+    return TimeSpan((int)(days * 24 * 60 * 60));
+}
+
+} // namespace abm
 } // namespace mio
 
 #endif

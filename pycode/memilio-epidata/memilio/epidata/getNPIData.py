@@ -21,7 +21,7 @@ from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import time
 import os
 import copy
@@ -145,7 +145,7 @@ def read_files(directory, fine_resolution):
                 for code in codelist:
                     df_npis_per_code = pd.read_csv(
                         os.path.join(directory,
-                                     'kr_massn_unterkat_{}.csv'.format(code)),
+                                     f'kr_massn_unterkat_{code}.csv'),
                         sep=',')
 
                     # set some parameters for dataframe
@@ -1432,7 +1432,8 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    df = get_npi_data(fine_resolution=2, file_format='csv')
+    df = get_npi_data(start_date=date(2020, 1, 1),
+                      fine_resolution=2, file_format='csv')
 
 
 if __name__ == "__main__":

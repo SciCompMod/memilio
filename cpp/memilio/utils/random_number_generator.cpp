@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -21,5 +21,11 @@
 
 namespace mio
 {
+    
+RandomNumberGenerator& thread_local_rng()
+{
+    static thread_local auto rng = RandomNumberGenerator();
+    return rng;
+}
 
 } // namespace mio

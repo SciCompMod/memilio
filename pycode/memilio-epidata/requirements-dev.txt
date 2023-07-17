@@ -1,6 +1,5 @@
 # dev dependencies, pyfakefs 4.2.0 is broken!
 pyfakefs==4.1.0
-freezegun
-coverage
+coverage>=7.0.1
 pylint<=2.11.1
 pylint_json2html<=0.3.0

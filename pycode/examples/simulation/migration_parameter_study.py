@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -17,83 +17,115 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import memilio.simulation as mio
-import memilio.simulation.secir as secir
+import argparse
+
 import numpy as np
 
+import memilio.simulation as mio
+import memilio.simulation.secir as secir
+
+
 def parameter_study():
-    #setup basic parameters
-    model = secir.SecirModel1()
+    mio.set_log_level(mio.LogLevel.Warning)
 
-    model.parameters.times[0].set_incubation(5.2)
-    model.parameters.times[0].set_infectious_mild(6)
-    model.parameters.times[0].set_serialinterval(4.2)
-    model.parameters.times[0].set_hospitalized_to_home(12)
-    model.parameters.times[0].set_home_to_hospitalized(5)
-    model.parameters.times[0].set_hospitalized_to_icu(2)
-    model.parameters.times[0].set_icu_to_home(8)
-    model.parameters.times[0].set_icu_to_death(5)
+    # setup basic parameters
+    model = secir.Model(1)
 
-    model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-    model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(mio.Damping(30, 0.3), 0, 0)
+    model.parameters.IncubationTime[secir.AgeGroup(0)] = 5.2
+    model.parameters.SerialInterval[secir.AgeGroup(0)] = 4.2
+    model.parameters.TimeInfectedSymptoms[secir.AgeGroup(0)] = 6
+    model.parameters.TimeInfectedSevere[secir.AgeGroup(0)] = 12
+    model.parameters.TimeInfectedCritical[secir.AgeGroup(0)] = 8
 
-    model.parameters.probabilities[0].set_infection_from_contact(1.0)
-    model.parameters.probabilities[0].set_carrier_infectability(0.67)
-    model.parameters.probabilities[0].set_asymp_per_infectious(0.09)
-    model.parameters.probabilities[0].set_risk_from_symptomatic(0.25)
-    model.parameters.probabilities[0].set_hospitalized_per_infectious(0.2)
-    model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)
-    model.parameters.probabilities[0].set_dead_per_icu(0.3)
+    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.r_[0.5]
+    model.parameters.ContactPatterns.cont_freq_mat[0].add_damping(
+        mio.Damping(np.r_[0.3], t=0.3))
 
-    #two regions with different populations and with some migration between them
-    model_graph = secir.SecirModelGraph1()
-    model.populations.set(100, secir.AgeGroup1.Group0, secir.InfectionType.E)
-    model.populations.set( 50, secir.AgeGroup1.Group0, secir.InfectionType.C)
-    model.populations.set( 50, secir.AgeGroup1.Group0, secir.InfectionType.I)
-    model.populations.set( 20, secir.AgeGroup1.Group0, secir.InfectionType.H)
-    model.populations.set( 10, secir.AgeGroup1.Group0, secir.InfectionType.U)
-    model.populations.set( 10, secir.AgeGroup1.Group0, secir.InfectionType.R)
-    model.populations.set(  0, secir.AgeGroup1.Group0, secir.InfectionType.D)
-    model.populations.set_difference_from_total(10000, secir.AgeGroup1.Group0, secir.InfectionType.S)
+    model.parameters.TransmissionProbabilityOnContact[secir.AgeGroup(0)] = 1.0
+    model.parameters.RelativeTransmissionNoSymptoms[secir.AgeGroup(0)] = 0.67
+    model.parameters.RecoveredPerInfectedNoSymptoms[secir.AgeGroup(0)] = 0.09
+    model.parameters.RiskOfInfectionFromSymptomatic[secir.AgeGroup(0)] = 0.25
+    model.parameters.SeverePerInfectedSymptoms[secir.AgeGroup(0)] = 0.2
+    model.parameters.CriticalPerSevere[secir.AgeGroup(0)] = 0.25
+    model.parameters.DeathsPerCritical[secir.AgeGroup(0)] = 0.3
+
+    # two regions with different populations and with some migration between them
+    graph = secir.ModelGraph()
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedNoSymptoms] = 50
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedSymptoms] = 50
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedSevere] = 20
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedCritical] = 10
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 10
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
+    model.populations.set_difference_from_group_total_AgeGroup((
+        secir.AgeGroup(0),
+        secir.InfectionState.Susceptible),
+        10000)
     model.apply_constraints()
-    model_graph.add_node(model)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.E)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.C)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.I)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.H)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.U)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.R)
-    model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.D)
-    model.populations.set_difference_from_total(2000, secir.AgeGroup1.Group0, secir.InfectionType.S)
+    graph.add_node(id=0, model=model)  # copies the model into the graph
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 0
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedNoSymptoms] = 0
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedSymptoms] = 0
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedSevere] = 0
+    model.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedCritical] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Recovered] = 0
+    model.populations[secir.AgeGroup(0), secir.InfectionState.Dead] = 0
+    model.populations.set_difference_from_group_total_AgeGroup((
+        secir.AgeGroup(0),
+        secir.InfectionState.Susceptible),
+        2000)
     model.apply_constraints()
-    model_graph.add_node(model)
+    graph.add_node(id=1, model=model)
     migration_coefficients = 0.1 * np.ones(8)
-    migration_params = mio.MigrationParams(migration_coefficients)
-    model_graph.add_edge(0, 1, migration_params) #one coefficient per (age group x compartment)
-    model_graph.add_edge(1, 0, migration_params) #directed graph -> add both directions so coefficients can be different
+    migration_params = mio.MigrationParameters(migration_coefficients)
+    # one coefficient per (age group x compartment)
+    graph.add_edge(0, 1, migration_params)
+    # directed graph -> add both directions so coefficients can be different
+    graph.add_edge(1, 0, migration_params)
 
-    #process the result of one run
-    parameter_study.c = 0
-    def handle_result(model, result, node_idx):
-        if node_idx == 0:
-            print("run {}".format(parameter_study.c))
-        print("  node {}".format(node_idx))
-        print("  initial carrier count {:.2G}.".format(model.populations.get(secir.AgeGroup1.Group0, secir.InfectionType.C).value))
-        print("  compartments at t = {}:".format(result.get_time(0)))
-        print("  ", result.get_value(0))
-        print("  compartments at t = {}:".format(result.get_last_time()))
-        print("  ", result.get_last_value())
-        if node_idx == 1:
-            parameter_study.c += 1
+    # process the result of one run
+    def handle_result(graph):
+        print(f'run {handle_result.c}')
+        handle_result.c = handle_result.c + 1
+        for node_idx in range(graph.num_nodes):
+            node = graph.get_node(node_idx)
+            result = node.property.result
+            model = node.property.model
+            print(f"  node {node_idx}")
+            print(
+                "  initial InfectedNoSymptoms count {}.".format(
+                    model.populations
+                    [secir.AgeGroup(0),
+                     secir.InfectionState.InfectedNoSymptoms].value))
+            print(f"  compartments at t = {result.get_time(0)}:")
+            print("  ", result.get_value(0))
+            print(f"  compartments at t = {result.get_last_time()}:")
+            print("  ", result.get_last_value())
+    handle_result.c = 0
 
-    #study with unknown number of undetected carriers
+    # study with unknown number of undetected InfectedNoSymptoms
     carrier_distribution = mio.ParameterDistributionNormal(50, 2000, 200, 100)
-    model_graph.get_node(0).populations.get(secir.AgeGroup1.Group0, secir.InfectionType.C).set_distribution(carrier_distribution)
-    
+    graph.get_node(0).property.populations[secir.AgeGroup(
+        0), secir.InfectionState.InfectedNoSymptoms].set_distribution(carrier_distribution)
+
     t0 = 0
     tmax = 50
-    study = secir.ParameterStudy1(model_graph, t0, tmax, graph_dt = 1.0, num_runs = 3)
+    study = secir.ParameterStudy(graph, t0, tmax, dt=1.0, num_runs=3)
     study.run(handle_result)
 
+
 if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        'migration_parameter_study',
+        description='Example demonstrating setup of ensemble runs of a geographically resolved SECIR model with travel.')
+    args = arg_parser.parse_args()
     parameter_study()

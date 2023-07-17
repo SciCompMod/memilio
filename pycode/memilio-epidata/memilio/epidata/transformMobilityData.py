@@ -18,11 +18,13 @@
 # limitations under the License.
 #############################################################################
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def getMobilityFromFile(directory, mobility_file):
@@ -34,7 +36,8 @@ def getMobilityFromFile(directory, mobility_file):
     @return Mobility matrix data frame.
     """
     mobility_matrix = pd.read_csv(
-        directory + mobility_file + '.txt', sep=' ', header=None)
+        os.path.join(directory + mobility_file + '.txt'),
+        sep=' ', header=None)
 
     return mobility_matrix
 
@@ -82,8 +85,9 @@ def createFederalStatesMobility(directory, mobility_file):
                         axis=1).sum()
 
         mobility_matrix_states = pd.DataFrame(mobility_matrix_states)
-        mobility_matrix_states.to_csv(
-            directory + mobility_file + '_states.txt', sep=' ', header=None, index=False)
+        gd.write_dataframe(
+            mobility_matrix_states, directory, mobility_file + '_states', 'txt',
+            param_dict={'sep': ' ', 'header': None, 'index': False})
         return mobility_matrix_states
 
     else:
@@ -102,8 +106,9 @@ def updateMobility2022(directory, mobility_file):
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
     if (len(mobility_matrix.index) == 401) and (len(mobility_matrix.columns) == 401):
-        mobility_matrix.to_csv(
-            directory + mobility_file + '_dim401.txt', sep=' ', header=None, index=False)
+        gd.write_dataframe(
+            mobility_matrix, directory, mobility_file + '_dim401', 'txt',
+            param_dict={'sep': ' ', 'header': None, 'index': False})
         # merge eisenach
         ids400 = geoger.get_county_ids()
         ids401 = geoger.get_county_ids(merge_eisenach=False)
@@ -116,8 +121,9 @@ def updateMobility2022(directory, mobility_file):
         mobility_matrix_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
                                                                               idx_eisenach_old].values
 
-        mobility_matrix_new.to_csv(
-            directory + mobility_file + '.txt', sep=' ', header=None, index=False)
+        gd.write_dataframe(
+            mobility_matrix_new, directory, mobility_file, 'txt',
+            param_dict={'sep': ' ', 'header': None, 'index': False})
 
         return mobility_matrix_new
 

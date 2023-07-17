@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -112,12 +112,12 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<RectMatrixShape> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("RectMatrixShape");
-        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
-        auto c = obj.expect_element("Columns", Tag<Eigen::Index>{});
+        auto r   = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        auto c   = obj.expect_element("Columns", Tag<Eigen::Index>{});
         return apply(
             io,
             [](auto&& r_, auto&& c_) -> IOResult<RectMatrixShape> {
@@ -215,11 +215,11 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<SquareMatrixShape> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("SquareMatrixShape");
-        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        auto r   = obj.expect_element("Rows", Tag<Eigen::Index>{});
         return apply(
             io,
             [](auto&& r_) -> IOResult<SquareMatrixShape> {
@@ -316,11 +316,11 @@ public:
      * deserialize an object of this class.
      * @see mio::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<ColumnVectorShape> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("ColumnVectorShape");
-        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        auto r   = obj.expect_element("Rows", Tag<Eigen::Index>{});
         return apply(
             io,
             [](auto&& r_) -> IOResult<ColumnVectorShape> {

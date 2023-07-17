@@ -17,17 +17,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import os
 import unittest
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
-import os
-import pandas as pd
-import numpy as np
-
-from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch
+from memilio.epidata import getPopulationData as gpd
+from memilio.epidata import progress_indicator
+
+progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
@@ -42,6 +44,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     test_new_counties = np.zeros((7, 2))
     test_new_counties[:, 0] = [3159, 13071, 13072, 13073, 13074, 13075, 13076]
     test_new_counties[:, 1] = [1, 14, 13, 27, 23, 42, 33]
+
+    test_consistent_counties = np.zeros((5, 2))
+    test_consistent_counties[:, 0] = [1001, 1002, 1003, 1004, 1005]
+    test_consistent_counties[:, 1] = [12, 47, 19, 900, 13]
 
     data = np.zeros((5, 30))
     data[:, 0] = np.arange(1, 6)
@@ -78,7 +84,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     data[:, 1] = [(x+1)*44 for x in range(len(data))]
 
     test_counties = pd.DataFrame(
-        data, columns=['Schlüssel-nummer', 'Bevölkerung2)'])
+        data, columns=[dd.EngEng['idCounty'], dd.EngEng['population']])
 
     columns = [
         'ID_County', 'Population', '<3 years', '3-5 years', '6-14 years',
@@ -123,10 +129,16 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+
     def test_get_new_counties(self):
+        # test merging odf old counties
         test = gpd.get_new_counties(self.test_old_counties)
         self.assertTrue(np.array_equal(test, self.test_new_counties))
-    
+
+        # if no old counties were available nothing should be changed
+        test = gpd.get_new_counties(self.test_consistent_counties)
+        self.assertTrue(np.array_equal(test, self.test_consistent_counties))
+
     @patch('memilio.epidata.getPopulationData.load_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
     def test_get_population(self, mock_data):
@@ -135,8 +147,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             read_data=True, file_format='json', out_folder=self.path,
             no_raw=False, split_gender=False, merge_eisenach=False)
 
-        test_df = pd.read_json(os.path.join(
-            self.path, 'Germany/', 'county_current_population_dim401.json'))
+        test_df = pd.read_json(
+            os.path.join(
+                self.path, 'Germany/', 'county_current_population_dim' +
+                str(len(self.test_counties)) + '.json'))
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
@@ -153,11 +167,12 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
-            test_df.astype('int64'), self.test_current_population_gender_result)
+            test_df.astype('int64'),
+            self.test_current_population_gender_result)
 
     @ patch('pandas.read_excel', return_value=test_counties)
     @ patch('pandas.read_excel', return_value=test_reg_key)
-    @ patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv',
+    @ patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
             return_value=test_zensus)
     def test_load_population_data(
             self, mock_read_excel1, mock_read_excel2, mock_read_csv):
@@ -179,24 +194,6 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             zensus_read, zensus_write, check_dtype=False)
 
         # TODO: How to test hdf5 export?
-
-    @ patch('memilio.epidata.getPopulationData.gd.loadCsv')
-    @ patch('memilio.epidata.getPopulationData.gd.loadExcel')
-    def test_errors(self, mocklexcel, mocklcsv):
-        mocklexcel.side_effect = ValueError
-        mocklcsv.side_effect = ValueError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gpd.load_population_data(self.path)
-        error_message = "Error: The counties file does not exist."
-        self.assertEqual(str(error.exception), error_message)
-
-        mocklexcel.side_effect = None
-        mocklexcel.return_value = self.test_counties.copy()
-        with self.assertRaises(FileNotFoundError) as error:
-            gpd.load_population_data(self.path)
-        error_message = "Error: The zensus file does not exist."
-        self.assertEqual(str(error.exception), error_message)
 
 
 if __name__ == '__main__':

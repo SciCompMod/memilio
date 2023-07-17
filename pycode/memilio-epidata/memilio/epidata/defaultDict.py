@@ -43,14 +43,15 @@ defaultDict = {
     'make_plot': False,
     'out_folder': default_file_path,
     'update_data': False,
-    'start_date': date(2020, 1, 1),
+    'start_date': date(2020, 4, 24),
     'end_date': date.today(),
     'split_berlin': False,
     'impute_dates': False,
     'moving_average': 0,
     'file_format': 'json_timeasstring',
     'no_raw': False,
-    'rep_date': False
+    'rep_date': False,
+    'sanitize_data': 1
 }
 
 # The following dict EngEng makes sure that for all
@@ -72,7 +73,6 @@ EngEng = {
     'idCounty': 'ID_County',
     'county': 'County',
     'ageRKI': 'Age_RKI',
-    'age5': 'Age5',
     'age10': 'Age',
     'unknown': 'unknown',
     'female': 'female',
@@ -95,6 +95,7 @@ EngEng = {
     'vaccPartial': "Vacc_partially",
     'vaccComplete': "Vacc_completed",
     'vaccRefresh': "Vacc_refreshed",
+    'vaccNotComplete': "Vacc_not_completed",
     # test data
     'positiveRate': 'Positive_rate',
     # NPI data
@@ -118,7 +119,6 @@ GerEng = {
     'IdLandkreis': EngEng['idCounty'],
     'Landkreis': EngEng['county'],
     'Altersgruppe': EngEng['ageRKI'],
-    'Altersgruppe2': EngEng['age5'],
     'unbekannt': EngEng['unknown'],
     'W': EngEng['female'],
     'M': EngEng['male'],
@@ -144,12 +144,12 @@ GerEng = {
     'Anzahl': EngEng['number'],
     'Positivenanteil (%)': EngEng['positiveRate'],
     'Anteil positiv': EngEng['positiveRate'],
-    'bundesland': EngEng['state'],
     'ags2': EngEng['idState'],
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
     'm_code': EngEng['npiCode'],
-    'code': EngEng['npiCode']
+    'code': EngEng['npiCode'],
+    'Bundesland_Id': EngEng['idState']
 }
 
 EsEng = {'fecha': EngEng['date'],
@@ -693,4 +693,4 @@ def invert_dict(dict_to_invert):
     @param dict_to_invert Dictionary.
     @return Inverted dictionary.
     """
-    return dict([(val, key) for key, val in dict_to_invert.items()])
+    return {val: key for key, val in dict_to_invert.items()}

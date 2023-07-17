@@ -18,10 +18,19 @@
 * limitations under the License.
 */
 
-#include "templates.h"
-#include "secir/secir.h"
-#include "secir/parameter_studies.h"
-#include "secir/analyze_result.h"
+#include "pybind_util.h"
+#include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
+#include "epidemiology/populations.h"
+#include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
+#include "utils/index.h"
+#include "mobility/graph_simulation.h"
+#include "mobility/metapopulation_mobility_instant.h"
+#include "ode_secir/model.h"
+#include "ode_secir/analyze_result.h"
+#include "ode_secir/parameter_space.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "Eigen/Core"
 #include "pybind11/stl_bind.h"
 #include <vector>
@@ -53,8 +62,6 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const typename Simulation::Model&, double, double, double, size_t>(), py::arg("model"),
-             py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
                       size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
@@ -67,35 +74,55 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def(
-            "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
+        .def("run",
+            [](mio::ParameterStudy<Simulation>& self,
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>, size_t)> handle_result) {
+                self.run(
+                    [](auto&& g) {
+                        return draw_sample(g);
+                    },
+                    [&handle_result](auto&& g, auto&& run_idx) {
+                        //handle_result_function needs to return something
+                        //we don't want to run an unknown python object through parameterstudies, so 
+                        //we just return 0 and ignore the list returned by run().
+                        //So python will behave slightly different than c++
+                        handle_result(std::move(g), run_idx);
+                        return 0; 
+                    });
             },
             py::arg("handle_result_func"))
         .def("run",
              [](mio::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
-                 return self.run();
+                 return self.run([](auto&& g) {
+                     return draw_sample(g);
+                 });
              })
         .def(
             "run_single",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
-                self.run([&handle_result](auto&& r) {
-                    handle_result(std::move(r.nodes()[0].property.get_simulation()));
-                });
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation, size_t)> handle_result) {
+                self.run(
+                    [](auto&& g) {
+                        return draw_sample(g);
+                    },
+                    [&handle_result](auto&& r, auto&& run_idx) {
+                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
+                        return 0;
+                    });
             },
             py::arg("handle_result_func"))
         .def("run_single", [](mio::ParameterStudy<Simulation>& self) {
-            return filter_graph_results(self.run());
+            return filter_graph_results(self.run([](auto&& g) {
+                return draw_sample(g);
+            }));
         });
 }
 
-using Simulation = mio::SecirSimulation<>;
+using Simulation     = mio::osecir::Simulation<>;
 using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
 
 } // namespace
@@ -107,7 +134,7 @@ namespace pymio
 
 //specialization of pretty_name for secir types
 template <>
-std::string pretty_name<mio::InfectionState>()
+std::string pretty_name<mio::osecir::InfectionState>()
 {
     return "InfectionState";
 }
@@ -122,58 +149,62 @@ std::string pretty_name<mio::AgeGroup>()
 PYBIND11_MODULE(_simulation_secir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&)>(
-                                               &mio::interpolate_simulation_result));
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
+
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
     m.def("ensemble_mean", &mio::ensemble_mean);
     m.def("ensemble_percentile", &mio::ensemble_percentile);
 
-    py::enum_<mio::InfectionState>(m, "InfectionState")
-        .value("Susceptible", mio::InfectionState::Susceptible)
-        .value("Exposed", mio::InfectionState::Exposed)
-        .value("Carrier", mio::InfectionState::Carrier)
-        .value("Infected", mio::InfectionState::Infected)
-        .value("Hospitalized", mio::InfectionState::Hospitalized)
-        .value("ICU", mio::InfectionState::ICU)
-        .value("Recovered", mio::InfectionState::Recovered)
-        .value("Dead", mio::InfectionState::Dead)
-        .value("Count", mio::InfectionState::Count)
-        .export_values();
+    pymio::iterable_enum<mio::osecir::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::osecir::InfectionState::Susceptible)
+        .value("Exposed", mio::osecir::InfectionState::Exposed)
+        .value("InfectedNoSymptoms", mio::osecir::InfectionState::InfectedNoSymptoms)
+        .value("InfectedSymptoms", mio::osecir::InfectionState::InfectedSymptoms)
+        .value("InfectedSevere", mio::osecir::InfectionState::InfectedSevere)
+        .value("InfectedCritical", mio::osecir::InfectionState::InfectedCritical)
+        .value("Recovered", mio::osecir::InfectionState::Recovered)
+        .value("Dead", mio::osecir::InfectionState::Dead);
 
-    pymio::bind_Index<mio::InfectionState>(m, "Index_InfectionState");
-    pymio::bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");
-
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
-
-    pymio::bind_MultiIndex<mio::AgeGroup, mio::InfectionState>(m, "Index_Agegroup_InfectionState");
-    pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::InfectionState>(m, "SecirPopulationArray");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
-    pymio::bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
+    pymio::bind_ParameterSet<mio::osecir::ParametersBase>(m, "ParametersBase");
 
-    py::class_<mio::SecirParams, mio::SecirParamsBase>(m, "SecirParams")
+    py::class_<mio::osecir::Parameters, mio::osecir::ParametersBase>(m, "Parameters")
         .def(py::init<mio::AgeGroup>())
-        .def("check_constraints", &mio::SecirParams::check_constraints)
-        .def("apply_constraints", &mio::SecirParams::apply_constraints);
+        .def("check_constraints", &mio::osecir::Parameters::check_constraints)
+        .def("apply_constraints", &mio::osecir::Parameters::apply_constraints);
 
-    pymio::bind_Population<mio::AgeGroup, mio::InfectionState>(m, "SecirPopulation");
-
-    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
-    pymio::bind_CompartmentalModel<SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
-    py::class_<mio::SecirModel, mio::CompartmentalModel<SecirPopulations, mio::SecirParams>>(m, "SecirModel")
+    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
+    pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
+                                                                                                           "ModelBase");
+    py::class_<mio::osecir::Model,
+               mio::CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>>(m,
+                                                                                                                "Model")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
-    pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
+    pymio::bind_Simulation<mio::osecir::Simulation<>>(m, "Simulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
-          "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
-          py::arg("model"));
+    m.def(
+        "simulate",
+        [](double t0, double tmax, double dt, const mio::osecir::Model& model) {
+            return mio::simulate(t0, tmax, dt, model);
+        },
+        "Simulates a Secir Model1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
-    pymio::bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
-    pymio::bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
-    pymio::bind_SecirModelGraph<mio::SecirModel>(m, "SecirModelGraph");
+    pymio::bind_ModelNode<mio::osecir::Model>(m, "ModelNode");
+    pymio::bind_SimulationNode<mio::osecir::Simulation<>>(m, "SimulationNode");
+    pymio::bind_ModelGraph<mio::osecir::Model>(m, "ModelGraph");
     pymio::bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     pymio::bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
@@ -181,12 +212,17 @@ PYBIND11_MODULE(_simulation_secir, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<mio::SecirSimulation<>>(m, "ParameterStudy");
+    bind_ParameterStudy<mio::osecir::Simulation<>>(m, "ParameterStudy");
 
-    m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
-          py::arg("tmax"), py::arg("dev_rel"));
+    m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal, py::arg("model"),
+          py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));
 
-    m.def("draw_sample", &mio::draw_sample, py::arg("model"));
+    m.def(
+        "draw_sample",
+        [](mio::osecir::Model& model) {
+            return mio::osecir::draw_sample(model);
+        },
+        py::arg("model"));
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));

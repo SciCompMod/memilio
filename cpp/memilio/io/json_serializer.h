@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -25,9 +25,9 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/io/io.h"
+#include "memilio/io/serializer_base.h"
 #include "memilio/utils/metaprogramming.h"
 #include "json/json.h"
-#include "boost/optional.hpp"
 #include <fstream>
 #include <utility>
 #include <limits>
@@ -104,32 +104,34 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_
         return Json::Value(Json::UInt(i));
     }
 };
+template <class T>
+using is_64bit_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) == 8)>;
 //signed big ints
-template <>
-struct JsonType<int64_t> : std::true_type {
-    static IOResult<int64_t> transform(const Json::Value& js)
+template <class T>
+struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_signed<T>>>> : std::true_type {
+    static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isInt64()) {
             return success(js.asInt64());
         }
         return failure(StatusCode::InvalidType, "Json value is not a 64 bit integer.");
     }
-    static Json::Value transform(int64_t i)
+    static Json::Value transform(T i)
     {
         return Json::Value(Json::Int64(i));
     }
 };
 //unsigned big ints
-template <>
-struct JsonType<uint64_t> : std::true_type {
-    static IOResult<uint64_t> transform(const Json::Value& js)
+template <class T>
+struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+    static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isUInt64()) {
             return success(js.asUInt64());
         }
         return failure(StatusCode::InvalidType, "Json value is not an unsigned 64bit integer.");
     }
-    static Json::Value transform(uint64_t i)
+    static Json::Value transform(T i)
     {
         return Json::Value(Json::UInt64(i));
     }
@@ -196,68 +198,9 @@ struct JsonType<const char*> : std::true_type {
 /**@}*/
 
 /**
- * Base class for implementations of serialization framework concepts.
- * Stores status and flags.
- */
-class JsonBase
-{
-public:
-    /**
-     * Constructor that sets status and flags.
-     */
-    JsonBase(std::shared_ptr<IOStatus> status, int flags)
-        : m_status(status)
-        , m_flags(flags)
-    {
-        assert(status && "Status must not be null.");
-    }
-
-    /**
-     * Flags that determine the behavior of serialization.
-     * @see mio::IOFlags
-     */
-    int flags() const
-    {
-        return m_flags;
-    }
-
-    /**
-     * Set flags that determine the behavior of serialization.
-     * @see mio::IOFlags
-     */
-    void set_flags(int f)
-    {
-        m_flags = f;
-    }
-
-    /**
-     * The current status of serialization.
-     * Contains errors that occurred.
-     */
-    const IOStatus& status() const
-    {
-        return *m_status;
-    }
-
-    /**
-     * Set the current status of serialization.
-     */
-    void set_error(const IOStatus& status)
-    {
-        if (*m_status) {
-            *m_status = status;
-        }
-    }
-
-protected:
-    std::shared_ptr<IOStatus> m_status;
-    int m_flags;
-};
-
-/**
  * Implementation of the IOObject concept for JSON format.
  */
-class JsonObject : public JsonBase
+class JsonObject : public SerializerBase
 {
 public:
     /**
@@ -266,8 +209,8 @@ public:
      * @param value reference to the json value that will store the data.
      * @param flags flags to determine the behavior of serialization.
      */
-    JsonObject(const std::shared_ptr<IOStatus>& status, Json::Value& value, int flags)
-        : JsonBase{status, flags}
+    JsonObject(Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
+        : SerializerBase{status, flags}
         , m_value{value}
     {
     }
@@ -300,13 +243,9 @@ public:
      * @param name name of the list.
      * @param b iterator to first element in the list.
      * @param e iterator to end of the list.
-     * @{
      */
-    template <class Iter, std::enable_if_t<JsonType<typename Iter::value_type>::value, void*> = nullptr>
+    template <class Iter>
     void add_list(const std::string& name, Iter b, Iter e);
-    template <class Iter, std::enable_if_t<!JsonType<typename Iter::value_type>::value, void*> = nullptr>
-    void add_list(const std::string& name, Iter b, Iter e);
-    /**@}*/
 
     /**
      * retrieve element from the json value.
@@ -339,13 +278,9 @@ public:
      * @param name name of the list.
      * @param tag define type of the list elements for overload resolution.
      * @param return vector of deserialized elements if succesful, error otherwise.
-     * @{
      */
-    template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+    template <class T>
     IOResult<std::vector<T>> expect_list(const std::string& name, Tag<T> tag);
-    template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
-    IOResult<std::vector<T>> expect_list(const std::string& name, Tag<T> tag);
-    /**@}*/
 
     /**
      * The json value that data is stored in.
@@ -362,7 +297,7 @@ private:
 /**
  * Implemenetation of IOContext concept for JSON format.
  */
-class JsonContext : public JsonBase
+class JsonContext : public SerializerBase
 {
 public:
     /**
@@ -372,7 +307,7 @@ public:
      * @param flags flags to determine behavior of serialization.
      */
     JsonContext(const std::shared_ptr<IOStatus>& status, int flags)
-        : JsonBase{status, flags}
+        : SerializerBase{status, flags}
         , m_value{}
     {
     }
@@ -385,7 +320,7 @@ public:
      * @param flags flags to determine behavior of serialization.
      */
     JsonContext(const Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
-        : JsonBase(status, flags)
+        : SerializerBase(status, flags)
         , m_value(value)
     {
     }
@@ -401,7 +336,7 @@ public:
     {
         mio::unused(type);
         m_value = Json::Value(Json::objectValue);
-        return {m_status, m_value, m_flags};
+        return {m_value, m_status, m_flags};
     }
 
     /**
@@ -414,7 +349,10 @@ public:
     JsonObject expect_object(const std::string& type)
     {
         mio::unused(type);
-        return JsonObject(m_status, m_value, m_flags);
+        if (!m_value.isObject()) {
+            *m_status = IOStatus(StatusCode::InvalidType, "Json value must be an object.");
+        }
+        return JsonObject(m_value, m_status, m_flags);
     }
 
     /**
@@ -440,7 +378,7 @@ public:
      * @tparam T the type of value to be serialized.
      * @param io reference JsonContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
     friend void serialize_internal(JsonContext& io, const T& t)
     {
@@ -453,44 +391,61 @@ public:
      * @tparam T the type of value to be deserialized.
      * @param io reference JsonContext.
      * @param t value to be serialized.
-     */ 
+     */
     template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
     friend IOResult<T> deserialize_internal(JsonContext& io, Tag<T>)
     {
         return JsonType<T>::transform(io.m_value);
     }
 
+    /**
+     * json specialization of serialization for containers.
+     * Serialize containers as pure json array without a wrapping object.
+     */
+    template <class Container, std::enable_if_t<conjunction_v<is_container<Container>, negation<JsonType<Container>>,
+                                                              negation<has_serialize<JsonContext, Container>>>,
+                                                void*> = nullptr>
+    friend void serialize_internal(JsonContext& io, const Container& v)
+    {
+        if (io.m_status->is_ok()) {
+            auto array = Json::Value(Json::arrayValue);
+            using std::begin;
+            using std::end;
+            for (auto it = begin(v); it != end(v); ++it) {
+                auto ctxt = JsonContext(io.m_status, io.m_flags);
+                mio::serialize(ctxt, *it);
+                if (io.m_status) {
+                    array.append(std::move(ctxt).value());
+                }
+            }
+            io.m_value = std::move(array);
+        }
+    }
+
+    /**
+     * json specialization of deserialization for containers.
+     * Deserialize containers from pure json arrays without a wrapping object.
+     */
+    template <class Container, std::enable_if_t<conjunction_v<is_container<Container>, negation<JsonType<Container>>,
+                                                              negation<has_deserialize<JsonContext, Container>>>,
+                                                void*> = nullptr>
+    friend IOResult<Container> deserialize_internal(JsonContext& io, Tag<Container>)
+    {
+        const auto& array = io.m_value;
+        if (array.isArray()) {
+            Container v;
+            for (auto&& el : array) {
+                auto ctxt = JsonContext(el, io.m_status, io.m_flags);
+                BOOST_OUTCOME_TRY(val, mio::deserialize(ctxt, Tag<typename Container::value_type>{}));
+                v.insert(v.end(), val);
+            }
+            return success(std::move(v));
+        }
+        return failure(StatusCode::InvalidType, "Json value must be an array.");
+    }
+
 private:
     Json::Value m_value;
-};
-
-/**
- * Main class for (de-)serialization from/into json.
- * Root IOContext for json serialization, so always
- * starts with a status without any errors.
- */
-class JsonSerializer : public JsonContext
-{
-public:
-    /**
-     * Constructor for deserialization, sets the flags and value that contains serialized data.
-     * @param value value that contains serialized data.
-     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
-     */
-    JsonSerializer(const Json::Value& value, int flags = IOF_None)
-        : JsonContext(value, std::make_shared<IOStatus>(), flags)
-    {
-    }
-
-    /**
-     * Constructor for serialization, sets the flags.
-     * Starts with an empty json value that will store the serialized data.
-     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
-     */
-    JsonSerializer(int flags = IOF_None)
-        : JsonSerializer(Json::Value{}, flags)
-    {
-    }
 };
 
 /**
@@ -528,12 +483,12 @@ inline IOResult<void> write_json(const std::string& path, const Json::Value& js_
 template <class T>
 IOResult<Json::Value> serialize_json(const T& t, int flags = IOF_None)
 {
-    JsonSerializer js{flags};
-    serialize(js, t);
-    if (!js.status()) {
-        return failure(js.status());
+    JsonContext ctxt{std::make_shared<IOStatus>(), flags};
+    serialize(ctxt, t);
+    if (!ctxt.status()) {
+        return failure(ctxt.status());
     }
-    return success(js.value());
+    return success(ctxt.value());
 }
 
 /**
@@ -582,8 +537,8 @@ inline IOResult<Json::Value> read_json(const std::string& path)
 template <class T>
 IOResult<T> deserialize_json(const Json::Value& js, Tag<T> tag, int flags = IOF_None)
 {
-    JsonSerializer ctxt{js, flags};
-    return deserialize(ctxt, tag);
+    JsonContext ctxt{js, std::make_shared<IOStatus>(), flags};
+    return deserialize(static_cast<JsonContext&>(ctxt), tag);
 }
 
 /**
@@ -633,23 +588,12 @@ void JsonObject::add_optional(const std::string& name, const T* value)
     }
 }
 
-template <class Iter, std::enable_if_t<JsonType<typename Iter::value_type>::value, void*>>
-void JsonObject::add_list(const std::string& name, Iter b, Iter e)
-{
-    if (m_status->is_ok()) {
-        auto& array = (m_value[name] = Json::Value(Json::arrayValue));
-        for (auto it = b; it < e; ++it) {
-            array.append(JsonType<typename Iter::value_type>::transform(*it));
-        }
-    }
-}
-
-template <class Iter, std::enable_if_t<!JsonType<typename Iter::value_type>::value, void*>>
+template <class Iter>
 void JsonObject::add_list(const std::string& name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
         auto array = Json::Value(Json::arrayValue);
-        for (auto it = b; it < e; ++it) {
+        for (auto it = b; it != e; ++it) {
             auto ctxt = JsonContext(m_status, m_flags);
             mio::serialize(ctxt, *it);
             if (m_status) {
@@ -712,31 +656,7 @@ IOResult<boost::optional<T>> JsonObject::expect_optional(const std::string& name
     return failure(r.error());
 }
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*>>
-IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T> /*tag*/)
-{
-    if (m_status->is_error()) {
-        return failure(*m_status);
-    }
-    const auto& array = m_value[name];
-    if (array.isArray()) {
-        std::vector<T> v;
-        v.reserve(array.size());
-        for (auto&& el : array) {
-            auto r = JsonType<T>::transform(el);
-            if (r) {
-                v.emplace_back(r.value());
-            }
-            else {
-                return failure(r.error().code(), r.error().message() + " (" + name + ")");
-            }
-        }
-        return success(std::move(v));
-    }
-    return failure(StatusCode::KeyNotFound, name);
-}
-
-template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
+template <class T>
 IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T> tag)
 {
     if (m_status->is_error()) {

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -74,6 +74,7 @@ public:
         : m_f(std::forward<F>(f))
         , m_result(t0, y0)
         , m_dt(dt_init)
+        , m_next_dt(dt_init)
         , m_core(core)
     {
     }
@@ -94,15 +95,24 @@ public:
         return m_result;
     }
 
+    /**
+     * @brief returns the time step width determined by the IntegratorCore for the next integration step
+    */
+    double get_dt() const
+    {
+        return m_next_dt;
+    }
+
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
-        m_core= integrator;
+        m_core = integrator;
     }
 
 private:
     DerivFunction m_f;
     TimeSeries<double> m_result;
     double m_dt;
+    double m_next_dt;
     std::shared_ptr<IntegratorCore> m_core;
 };
 

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele, Jan Kleinert
 *
@@ -109,7 +109,7 @@ TEST(TestCompartmentalModel, secir)
 
     using Pa = mio::ParameterSet<IncubationTime, SerialInterval>;
 
-    mio::CompartmentalModel<Po, Pa> model;
+    mio::CompartmentalModel<InfectionType, Po, Pa> model;
 
     /********************
      * Define the flows *

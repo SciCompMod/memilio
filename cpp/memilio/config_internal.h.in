@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
 * Authors: Daniel Abele
 *
@@ -27,5 +27,6 @@
 
 #cmakedefine MEMILIO_HAS_HDF5
 #cmakedefine MEMILIO_HAS_JSONCPP
+#cmakedefine MEMILIO_ENABLE_MPI
 
 #endif
