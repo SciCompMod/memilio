@@ -25,8 +25,8 @@ mio::abm::Person make_test_person(mio::abm::Location& location, mio::abm::AgeGro
 {
     mio::abm::Person p = mio::abm::Person(location, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
-        p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state,
-                                                false, p.get_lastest_protection()));
+        p.add_new_infection(
+            mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age, params, t, infection_state));
     }
     return p;
 }
@@ -37,8 +37,7 @@ mio::abm::Person& add_test_person(mio::abm::World& world, mio::abm::LocationId l
     mio::abm::Person& p = world.add_person(loc_id, age);
     if (infection_state != mio::abm::InfectionState::Susceptible) {
         p.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), age,
-                                                world.get_global_infection_parameters(), t, infection_state, false,
-                                                p.get_lastest_protection()));
+                                                world.get_global_infection_parameters(), t, infection_state));
     }
     return p;
 }

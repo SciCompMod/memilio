@@ -81,17 +81,17 @@ public:
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
-     * @brief Get all Infection%s of the Person.
-     * @return The all Infection%s of the Person.
+     * @brief the latest Infection% of the Person.
+     * @return The latest Infection% of the Person.
      */
-    std::vector<Infection>& get_infections()
+    Infection& get_infection()
     {
-        return m_infections;
+        return m_infections.back();
     }
 
-    const std::vector<Infection>& get_infections() const
+    const Infection& get_infection() const
     {
-        return m_infections;
+        return m_infections.back();
     }
 
     /** 
@@ -357,14 +357,6 @@ public:
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief Get the multiplicative factor on how likely an infection produce high viral load.
-     * @param[in] t TimePoint of check.
-     * @param[in] params GlobalInfectionParameters in the model.
-     * @returns Protection factor for high viral load of the immune system at the given TimePoint.
-     */
-    ScalarType get_high_viral_load_factor(TimePoint t, const GlobalInfectionParameters& params) const;
-
-    /**
      * @brief Add a new vaccination
      * @param[in] v ProtectionType (i.e vaccine) that is taken by the person. 
      * @param[in] t TimePoint of vaccination.
@@ -375,9 +367,9 @@ public:
     }
 
     /**
-     * @brief Get the lastest infection/vaccination from the Person.
+     * @brief Get the latest infection/vaccination and its initial TimePoint of the Person. 
     */
-    std::pair<ProtectionType, TimePoint> get_lastest_protection() const;
+    std::pair<ProtectionType, TimePoint> get_latest_protection() const;
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.

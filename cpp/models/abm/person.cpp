@@ -255,40 +255,32 @@ bool Person::apply_mask_intervention(const Location& target)
     return true;
 }
 
-std::pair<ProtectionType, TimePoint> Person::get_lastest_protection() const
+std::pair<ProtectionType, TimePoint> Person::get_latest_protection() const
 {
-    ProtectionType lastest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time               = TimePoint(0);
+    ProtectionType latest_protection_type = ProtectionType::NoProtection;
+    TimePoint infection_time              = TimePoint(0);
     if (!m_infections.empty()) {
-        lastest_protection_type = ProtectionType::NaturalInfection;
-        infection_time          = m_infections.back().get_init_date();
+        std::cout << m_infections.back().get_init_date().days() << '\n';
+        latest_protection_type = ProtectionType::NaturalInfection;
+        infection_time         = m_infections.back().get_init_date();
     }
     if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
-        lastest_protection_type = m_vaccinations.back().protection_type;
-        infection_time          = m_vaccinations.back().time;
+        std::cout << m_vaccinations.back().time.days() << '\n';
+        latest_protection_type = m_vaccinations.back().protection_type;
+        infection_time         = m_vaccinations.back().time;
     }
-    return std::make_pair(lastest_protection_type, infection_time);
+    return std::make_pair(latest_protection_type, infection_time);
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const
 {
-    auto lastest_protection = get_lastest_protection();
+    auto latest_protection = get_latest_protection();
     // If there is no previous protection or vaccination, return 0.
-    if (lastest_protection.first == ProtectionType::NoProtection) {
+    if (latest_protection.first == ProtectionType::NoProtection) {
         return 0;
     }
-    return params.get<InfectionProtectionFactor>()[{lastest_protection.first, m_age, virus}](
-        t.days() - lastest_protection.second.days());
-}
-
-ScalarType Person::get_high_viral_load_factor(TimePoint t, const GlobalInfectionParameters& params) const
-{
-    auto lastest_protection = get_lastest_protection();
-    // If there is no previous protection or vaccination, return 0.
-    if (lastest_protection.first == ProtectionType::NoProtection) {
-        return 0;
-    }
-    return params.get<HighViralLoadProtectionFactor>()(t.days() - lastest_protection.second.days());
+    return params.get<InfectionProtectionFactor>()[{latest_protection.first, m_age, virus}](
+        t.days() - latest_protection.second.days());
 }
 
 } // namespace abm

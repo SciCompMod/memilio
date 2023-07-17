@@ -258,9 +258,18 @@ TEST(TestPerson, getPersonalProtectiveFactor)
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
-        return mio::linear_interpolation_of_data_set<ScalarType,ScalarType>({{2, 0.91}, {30, 0.81}}, days);
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
+    };
+    params.get<mio::abm::HighViralLoadProtectionFactor>() = [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
+    };
+    params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, person.get_age(),
+                                                      mio::abm::VirusVariant::Wildtype}] =
+        [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
     };
     person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0));
+    auto latest_protection = person.get_latest_protection();
 
     auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
@@ -268,4 +277,47 @@ TEST(TestPerson, getPersonalProtectiveFactor)
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
+
+    t                               = mio::abm::TimePoint(2 * 24 * 60 * 60);
+    auto severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
+        latest_protection.first, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}](
+        t.days() - latest_protection.second.days());
+    ASSERT_NEAR(severity_protection_factor, 0, 0.0001);
+    t                          = mio::abm::TimePoint(15 * 24 * 60 * 60);
+    severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
+        latest_protection.first, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}](
+        t.days() - latest_protection.second.days());
+    ASSERT_NEAR(severity_protection_factor, 0.8635, 0.0001);
+    t                          = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
+        latest_protection.first, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}](
+        t.days() - latest_protection.second.days());
+    ASSERT_NEAR(severity_protection_factor, 0, 0.0001);
+
+    t = mio::abm::TimePoint(2 * 24 * 60 * 60);
+    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
+    t = mio::abm::TimePoint(15 * 24 * 60 * 60);
+    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
+    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
+}
+
+TEST(TestPerson, getLatestProtection)
+{
+    auto location                              = mio::abm::Location(mio::abm::LocationType::School, 0);
+    auto person                                = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
+    mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
+
+    auto t = mio::abm::TimePoint(0);
+    person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, t);
+    auto latest_protection = person.get_latest_protection();
+    ASSERT_EQ(latest_protection.first, mio::abm::ProtectionType::GenericVaccine);
+    ASSERT_EQ(latest_protection.second.days(), t.days());
+
+    t = mio::abm::TimePoint(40 * 24 * 60 * 60);
+    person.add_new_infection(mio::abm::Infection(static_cast<mio::abm::VirusVariant>(0), mio::abm::AgeGroup::Age15to34,
+                                                 params, t, mio::abm::InfectionState::Exposed));
+    latest_protection = person.get_latest_protection();
+    ASSERT_EQ(latest_protection.first, mio::abm::ProtectionType::NaturalInfection);
+    ASSERT_EQ(latest_protection.second.days(), t.days());
 }

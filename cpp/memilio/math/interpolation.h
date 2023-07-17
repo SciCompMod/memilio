@@ -19,7 +19,6 @@
 */
 #ifndef INTERPOLATION_H_
 #define INTERPOLATION_H_
-#include <iostream>
 #include <vector>
 
 namespace mio
@@ -64,8 +63,7 @@ Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>>& vector, c
     while ((counter < copy_vector.size() - 1) && (copy_vector[counter].first < node)) {
         counter++;
     }
-    std::cout << "Counter: " << counter << "\n";
-    std::cout << "Node: " << node << "\n";
+    
     // If the current days interval are between two identifiable points in the dataset.
     if (node <= copy_vector[counter].first && counter > 0) {
         return copy_vector[counter - 1].second + (copy_vector[counter - 1].second - copy_vector[counter].second) /

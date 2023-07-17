@@ -266,15 +266,16 @@ using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
 
 /**
  * @brief Personal protection factor after infection and vaccination, which depends on type of vaccine
- * age group and virus variant.  
+ * age group and virus variant. Its value is between 0 and 1. 
  */
 struct InfectionProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count},
+                    [](ScalarType /*days*/) -> ScalarType {
+                        return 0;
+                    });
     }
     static std::string name()
     {
@@ -284,15 +285,16 @@ struct InfectionProtectionFactor {
 
 /**
  * @brief Personal protective factor against severe symptoms after infection and vaccination, which depends on type of vaccine
- * age group and virus variant.  
+ * age group and virus variant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
     using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
-            return 0;
-        });
+        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count},
+                    [](ScalarType /*days*/) -> ScalarType {
+                        return 0;
+                    });
     }
     static std::string name()
     {
@@ -301,7 +303,7 @@ struct SeverityProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against high viral load.
+ * @brief Personal protective factor against high viral load. Its value is between 0 and 1.
  */
 struct HighViralLoadProtectionFactor {
     using Type = InputFunctionForProtectionLevel;
