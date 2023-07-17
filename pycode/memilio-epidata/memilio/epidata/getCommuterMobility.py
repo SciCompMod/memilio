@@ -202,9 +202,11 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-
-    population = gPd.get_population_data(
-        out_folder=out_folder, merge_eisenach=True, read_data=read_data)
+    if read_data:
+        population = pd.read_json(directory+'county_current_population.json')
+    else:
+        population = gPd.get_population_data(
+            out_folder=out_folder, merge_eisenach=True, read_data=read_data)
 
     countypop_list = list(population[dd.EngEng["population"]])
 
@@ -453,33 +455,34 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
 
+
     # this is neither a very elegant nor a very general way to merge...
     # better options to be searched for!
-    merge_id = 16063
-    new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
-    old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
+    if 16056 in countykey_list:
+        merge_id = 16063
+        new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
+        old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
 
-    mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx,
-                                                                :] + mat_commuter_migration[old_idx, :]
-    mat_commuter_migration[:, new_idx] = mat_commuter_migration[:,
-                                                                new_idx] + mat_commuter_migration[:, old_idx]
-    mat_commuter_migration[new_idx, new_idx] = 0
+        mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx,
+                                                                    :] + mat_commuter_migration[old_idx, :]
+        mat_commuter_migration[:, new_idx] = mat_commuter_migration[:,
+                                                                    new_idx] + mat_commuter_migration[:, old_idx]
+        mat_commuter_migration[new_idx, new_idx] = 0
 
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
+        mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
+        mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
 
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(
         data=mat_commuter_migration, columns=countykey_list)
     df_commuter_migration.index = countykey_list
     commuter_sanity_checks(df_commuter_migration)
-    filename = 'migration_bfa_' + \
-        str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
+    filename = 'migration_bfa_' + str(ref_year)
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
     directory = directory.split('pydata')[0] + 'mobility/'
     gd.check_dir(directory)
     gd.write_dataframe(
-        df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
+        df_commuter_migration, directory,
         'commuter_migration_scaled_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 
@@ -531,8 +534,8 @@ def get_neighbors_mobility(
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     try:
-        commuter = gd.get_file(os.path.join(
-            directory, "migration_bfa_"+str(ref_year)+".txt"), None, True)
+        commuter = pd.read_csv(os.path.join(
+            directory, "migration_bfa_"+str(ref_year)+".txt"), sep=' ')
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)

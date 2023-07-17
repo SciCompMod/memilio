@@ -298,7 +298,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         if df_pop[age_cols].sum().sum() == 83155031:
             warnings.warn('Using data of 2020. Newer data is available.')
         else:
-            raise gd.DataError('')
+            raise gd.DataError('Total Population does not match expatation.')
 
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach)

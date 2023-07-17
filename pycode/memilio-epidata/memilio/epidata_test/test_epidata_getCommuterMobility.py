@@ -17,9 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-
+import os
+import json
 import collections
 import unittest
+import pandas as pd
 from unittest.mock import patch
 
 from pyfakefs import fake_filesystem_unittest
@@ -32,7 +34,10 @@ progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class TestCommuterMigration(fake_filesystem_unittest.TestCase):
+
     path = '/home/CMData/'
+
+    here = os.path.dirname(os.path.abspath(__file__))
 
     test_govkey_list = [
         '01', '02', '031', '032', '033', '034', '04', '051', '053', '055',
@@ -61,6 +66,10 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
          '05570'],
         ['05711', '05754', '05758', '05762', '05766', '05770', '05774'])
 
+    filename = os.path.join(
+        here, 'test_data', 'TestSetPopulationFinal.json')
+    with open(filename) as file_object:
+        df_pop = pd.DataFrame(json.load(file_object))
     def setUp(self):
         self.setUpPyfakefs()
 
@@ -110,8 +119,9 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         Errorcall = ('Error. Number of government regions wrong.')
         mock_print.assert_called_with(Errorcall)
 
+    @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
-    def test_commuter_data(self, mock_input):
+    def test_commuter_data(self, mock_input, mock_popul):
         """! Tests migration data by some randomly chosen tests.
         """
 
@@ -142,15 +152,16 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_to = 1053
         self.assertEqual(df_commuter_migration.loc[city_from, city_to], 29)
 
+    @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
     @patch('builtins.print')
-    def test_get_neighbors_mobility(self, mock_print, mock_input):
+    def test_get_neighbors_mobility(self, mock_print, mock_input, mock_popul):
 
         testcountyid = 1051
         # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            tol_comb='or', out_folder=self.path)
         self.assertEqual(len(countykey_list), 398)
         self.assertEqual(271, commuter_all[0])
         self.assertEqual(2234, commuter_all[9])
@@ -160,7 +171,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            tol_comb='or', out_folder=self.path)
         self.assertEqual(len(countykey_list), 393)
         self.assertEqual(70, commuter_all[0])
         self.assertEqual(892, commuter_all[9])
@@ -169,7 +180,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             testcountyid, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder=self.path)
+            tol_comb='or', out_folder=self.path)
         self.assertEqual(len(countykey_list), 378)
         self.assertEqual(201, commuter_all[0])
         self.assertEqual(1342, commuter_all[9])

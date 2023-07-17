@@ -820,8 +820,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             # commuter inflow from other counties as first weight to distribute
             # vaccinations from vaccination county to extrapolated home counties
             neighbors_mobility = gcm.get_neighbors_mobility_all(
-                direction='in', abs_tol=10, merge_eisenach=True,
-                out_folder=out_folder)
+                direction='in', abs_tol=10, out_folder=out_folder)
             df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(
                 df_data_agevacc_county_cs, unique_age_groups_old,
                 vacc_column_names, population_old_ages, neighbors_mobility)
