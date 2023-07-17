@@ -27,9 +27,9 @@ namespace benchmark
 
 using FlowModel = osecirvvs::Model;
 
-// the following is taken from
+// For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
+// For more details see the original implementation in:
 // https://github.com/DLR-SC/memilio/blob/13555a6b23177d2d4633c393903461a27ce5762b/cpp/models/ode_secirvvs/model.h
-// (before adding flows to the model definitions)
 
 class FlowlessModel : public CompartmentalModel<osecirvvs::InfectionState,
                                                 Populations<AgeGroup, osecirvvs::InfectionState>, osecirvvs::Parameters>
