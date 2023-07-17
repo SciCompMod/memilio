@@ -458,7 +458,7 @@ def commuter_sanity_checks(df):
 
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        out_folder=dd.defaultDict['out_folder']):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -485,12 +485,8 @@ def get_neighbors_mobility(
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     try:
-        if merge_eisenach:
-            commuter = pd.read_json(os.path.join(
-                directory, "migration_bfa_2020_dim400.json"))
-        else:
-            commuter = pd.read_json(os.path.join(
-                directory, "migration_bfa_2020_dim401.json"))
+        commuter = pd.read_csv(os.path.join(
+            directory, "migration_bfa_2020.txt"), sep=' ')
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
@@ -517,7 +513,7 @@ def get_neighbors_mobility(
 
 def get_neighbors_mobility_all(
         direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder']):
+        out_folder=dd.defaultDict['out_folder']):
     '''! Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -539,14 +535,14 @@ def get_neighbors_mobility_all(
     '''
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
-    countyids = geoger.get_county_ids(merge_eisenach=merge_eisenach)
+    countyids = geoger.get_county_ids()
     neighbors_table = []
     for id in countyids:
         neighbors_table.append(
             get_neighbors_mobility(
                 id, direction=direction, abs_tol=abs_tol,
                 rel_tol=rel_tol, tol_comb=tol_comb,
-                merge_eisenach=merge_eisenach,
+                
                 out_folder=out_folder))
 
     return dict(zip(countyids, neighbors_table))
@@ -570,7 +566,7 @@ def main():
     arg_dict_commuter = {**arg_dict, "setup_dict": setup_dict}
 
     get_neighbors_mobility(
-        1001, abs_tol=0, rel_tol=0, tol_comb='or', merge_eisenach=True,
+        1001, abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'])
 
     get_commuter_data(**arg_dict_commuter)
