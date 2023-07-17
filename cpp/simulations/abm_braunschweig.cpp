@@ -172,10 +172,10 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t person_id          = row[index["puid"]];
         uint32_t age                = row[index["age"]]; // TODO
         uint32_t target_location_id = row[index["loc_id_end"]];
-        uint32_t start_location_id  = row[index["loc_id_start"]];
-        uint32_t home_id            = row[index["huid"]];
-        uint32_t activity_end       = row[index["activity_end"]];
-        uint32_t trip_start         = row[index["start_time"]];
+        // uint32_t start_location_id  = row[index["loc_id_start"]];
+        uint32_t home_id      = row[index["huid"]];
+        uint32_t activity_end = row[index["activity_end"]];
+        uint32_t trip_start   = row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
@@ -208,9 +208,9 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             }
             it_person->second.set_assigned_location(location);
         }
-        world.get_trip_list().add_trip(
-            mio::abm::Trip(it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
-                           locations.find(target_location_id)->second, locations.find(start_location_id)->second));
+        world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                                                      locations.find(target_location_id)->second));
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
@@ -541,7 +541,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "../../data/mobility/bs.csv");
+    create_world_from_data(world, "C:/Users/korf_sa/Documents/rep/data/mobility/bs.csv");
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
