@@ -47,7 +47,7 @@ void Simulation::advance(ScalarType tmax)
         // compute flows:
         m_model->flows_current_timestep(m_dt);
 
-        // compute remaining compartments
+        // compute remaining compartments:
         m_model->other_compartments_current_timestep_direct();
 
         // compute m_forceofinfection (only used for calculation of S and sigma_S^E in the next timestep!):

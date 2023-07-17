@@ -188,11 +188,10 @@ public:
     void other_compartments_current_timestep_initialization(ScalarType dt);
 
     /**
-     * @brief Sets all values of remaining compartments (compartments apart from S) for the current last timestep in m_populations directly from flows.
+     * @brief Sets all values of remaining compartments (all compartments apart from S) for the current last timestep in m_populations via sum of flows.
      *
      * New values are stored in m_populations. Most values are computed via the function get_size_of_compartments().
      * 
-     * @param[in] dt Time discretization step size.
      */
     void other_compartments_current_timestep_direct();
 
