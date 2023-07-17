@@ -59,7 +59,7 @@ Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>>& vector, c
     sort(copy_vector.begin(), copy_vector.end());
 
     // Find the corresponding section of the node in the data set
-    size_t counter = 0;
+    std::size_t counter = 0;
     while ((counter < copy_vector.size() - 1) && (copy_vector[counter].first < node)) {
         counter++;
     }
