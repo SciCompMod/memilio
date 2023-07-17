@@ -18,13 +18,14 @@
 # limitations under the License.
 #############################################################################
 import os
-
+from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries as mdfs
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist
 
@@ -207,6 +208,7 @@ def analyze_npi_data(
         df_npis = df_npis.drop('Unnamed: 0', axis=1)
     except KeyError:
         pass
+    df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
     # merge subcodes of considered npis (Do we want this? To discuss...)
         # get code levels (main/subcodes) and position of main codes
@@ -342,11 +344,11 @@ def analyze_npi_data(
                 npis_corr,
                 corr_pairwdist,
                 method)
-            # # plot dendrogram
-            # plt.figure()
-            # plt.title(method)
-            # hierarchy.dendrogram(cluster_hierarch)
-            # plt.show()
+            # plot dendrogram
+            plt.figure()
+            plt.title(method)
+            hierarchy.dendrogram(cluster_hierarch)
+            plt.show()
             max_coph_dist = coph_dist_mat.max()
             flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
@@ -358,11 +360,11 @@ def analyze_npi_data(
                 abs(npis_corr),
                 corr_pairwdist,
                 method)
-            # # plot dendrogram
-            # plt.figure()
-            # plt.title(method)
-            # hierarchy.dendrogram(cluster_hierarch)
-            # plt.show()
+            # plot dendrogram
+            plt.figure()
+            plt.title(method)
+            hierarchy.dendrogram(cluster_hierarch)
+            plt.show()
             max_coph_dist = coph_dist_mat.max()
             flatten_hierarch_clustering(
                 npis_corr, cluster_hierarch,
@@ -375,11 +377,11 @@ def analyze_npi_data(
             npis_corr,  # same result as abs(npis_corr)
             corr_pairwdist,
             method)
-        # # plot dendrogram
-        # plt.figure()
-        # plt.title(method)
-        # hierarchy.dendrogram(cluster_hierarch)
-        # plt.show()
+        # plot dendrogram
+        plt.figure()
+        plt.title(method)
+        hierarchy.dendrogram(cluster_hierarch)
+        plt.show()
         max_coph_dist = coph_dist_mat.max()
         npi_idx_to_cluster_idx = flatten_hierarch_clustering(
             npis_corr, cluster_hierarch,
@@ -476,6 +478,7 @@ def analyze_npi_data(
                                     'Counties implementing NPI main categories',
                                     'Date', 'Number', "Counties_NPI_main_" +
                                     str(j) + "_of_"+str(num_images))
+                plt.tight_layout()
                 j += 1
 
 
