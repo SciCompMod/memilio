@@ -38,7 +38,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     here = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_popul_export.json')
+        here, 'test_data', 'TestSetPopulationExport.json')
     with open(filename) as file_object:
         df_pop = pd.DataFrame(json.load(file_object))
 

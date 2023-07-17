@@ -48,7 +48,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     # load test data for read
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_read.json')
+        here, 'test_data', 'TestSetCaseRead.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object = json.load(file_object)
@@ -114,7 +114,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from github
     # (https://github.com/robert-koch-institut/SARS-CoV-2-Infektionen_in_Deutschland)
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_github.json')
+        here, 'test_data', 'TestSetCaseGithub.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object_github = json.load(file_object)
@@ -125,7 +125,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from arcgis
     # (https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about)
     filename = os.path.join(
-        here, 'test_data', 'test_epidata_getCaseData_data_arcgis.json')
+        here, 'test_data', 'TestSetCaseArcgis.json')
     # Load JSON file data to a python dict object.
     with open(filename) as file_object:
         dict_object_arcgis = json.load(file_object)
