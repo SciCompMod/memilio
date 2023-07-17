@@ -185,7 +185,11 @@ struct RecoveredToSusceptible {
         return "RecoveredToSusceptible";
     }
 };
-
+/**
+ * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+ * Section 3.3.1 or see also supplementary materials Fig. S5.
+*/
 struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
@@ -206,6 +210,10 @@ struct ViralLoadDistributions {
     }
 };
 
+/**
+ * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+*/
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
