@@ -25,6 +25,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
+#include "memilio/io/result_io.h"
 
 int main()
 {
@@ -87,10 +88,9 @@ int main()
     // print it
     mio::lsecir::print_TimeSeries(populations, model.get_heading_CompartmentsBase());
 
-    /*
-    std::vector<mio::TimeSeries<double>> results_from_sim = {result};
-    std::vector<int> ids                                  = {1};
-    auto save_result_status =
-    mio::save_result(results_from_sim, ids, (int)(size_t)InfState.get_count(), "test_result.h5");
-    */
+    bool save_result = false;
+    if (save_result) {
+        auto save_result_status_subcompartments = mio::save_result({result}, {0}, 1, "result_lct_subcompartments.h5");
+        auto save_result_status                 = mio::save_result({populations}, {0}, 1, "result_lct.h5");
+    }
 }
