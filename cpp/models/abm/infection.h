@@ -143,12 +143,18 @@ private:
     TimePoint draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
                                              InfectionState init_state);
 
+    /**
+     * @return the time a person is infected.
+    */
+    void get_time_infected();
+
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.
     ViralLoad m_viral_load; ///< ViralLoad of the Infection.
     ScalarType m_log_norm_alpha,
         m_log_norm_beta; ///< Parameters for the infectivity mapping, which is modelled through an invlogit function.
     bool m_detected; ///< Whether an Infection is detected or not.
+    TimeSpan m_time_is_infected;
 };
 
 } // namespace abm
