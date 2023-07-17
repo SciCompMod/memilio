@@ -67,6 +67,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    int migrations = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_enhanced_migration_rules;
@@ -88,39 +89,50 @@ void World::migration(TimePoint t, TimeSpan dt)
     for (auto& person : m_persons) {
         for (auto rule : m_enhanced_migration_rules) {
             //check if transition rule can be applied
-            auto target_type      = rule.first(*person, t, dt, m_migration_parameters);
-            auto& target_location = find_location(target_type, *person);
-            auto current_location = person->get_location();
-            if (m_testing_strategy.run_strategy(*person, target_location, t)) {
-                if (target_location != current_location &&
-                    target_location.get_number_persons() < target_location.get_capacity().persons) {
-                    bool wears_mask = person->apply_mask_intervention(target_location);
-                    if (wears_mask) {
-                        person->migrate_to(target_location);
+            auto target_type = rule.first(*person, t, dt, m_migration_parameters);
+            if (person->get_assigned_location_index(target_type) != INVALID_LOCATION_INDEX) {
+                auto& target_location = find_location(target_type, *person);
+                auto current_location = person->get_location();
+                if (m_testing_strategy.run_strategy(*person, target_location, t)) {
+                    if (target_location != current_location &&
+                        target_location.get_number_persons() < target_location.get_capacity().persons) {
+                        bool wears_mask = person->apply_mask_intervention(target_location);
+                        if (wears_mask) {
+                            person->migrate_to(target_location);
+                            migrations++;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
     }
+
     // check if a person makes a trip
-    size_t num_trips = m_trip_list.num_trips();
+    bool weekend         = t.is_weekend();
+    size_t num_trips     = m_trip_list.num_trips(weekend);
+    if(t.hour_of_day() == 0){
+        m_trip_list.reset_index();
+    }
+
     if (num_trips != 0) {
-        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
-            auto& trip            = m_trip_list.get_next_trip();
+        while (m_trip_list.get_current_index() < num_trips &&
+               m_trip_list.get_next_trip_time(weekend).hour_of_day() < (t + dt).hour_of_day()) {
+            auto& trip            = m_trip_list.get_next_trip(weekend);
             auto& person          = m_persons[trip.person_id];
             auto current_location = person->get_location();
-            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead &&
-                current_location == get_individualized_location(trip.migration_origin)) {
+            if (!person->is_in_quarantine() && person->get_infection_state(t) != InfectionState::Dead) {
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
                     person->migrate_to(target_location);
+                    migrations++;
                 }
             }
             m_trip_list.increase_index();
         }
     }
+    printf("%d migrations\n", migrations);
 }
 
 void World::begin_step(TimePoint t, TimeSpan dt)
