@@ -48,6 +48,7 @@ using Flows = TypeChart<
     Flow<I, I::InfectedSymptomsNaiveConfirmed,              I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedSevereNaive,                         I::InfectedCriticalNaive>,
     Flow<I, I::InfectedSevereNaive,                         I::SusceptibleImprovedImmunity>, 
+    Flow<I, I::InfectedSevereNaive,                         I::DeadNaive>,
     Flow<I, I::InfectedCriticalNaive,                       I::DeadNaive>,
     Flow<I, I::InfectedCriticalNaive,                       I::SusceptibleImprovedImmunity>,
     //partial immunity
@@ -63,6 +64,7 @@ using Flows = TypeChart<
     Flow<I, I::InfectedSymptomsPartialImmunityConfirmed,    I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedSeverePartialImmunity,               I::InfectedCriticalPartialImmunity>,
     Flow<I, I::InfectedSeverePartialImmunity,               I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSeverePartialImmunity,               I::DeadPartialImmunity>,
     Flow<I, I::InfectedCriticalPartialImmunity,             I::DeadPartialImmunity>,
     Flow<I, I::InfectedCriticalPartialImmunity,             I::SusceptibleImprovedImmunity>,
     //improved immunity
@@ -78,6 +80,7 @@ using Flows = TypeChart<
     Flow<I, I::InfectedSymptomsImprovedImmunityConfirmed,   I::SusceptibleImprovedImmunity>,
     Flow<I, I::InfectedSevereImprovedImmunity,              I::InfectedCriticalImprovedImmunity>,
     Flow<I, I::InfectedSevereImprovedImmunity,              I::SusceptibleImprovedImmunity>,
+    Flow<I, I::InfectedSevereImprovedImmunity,              I::DeadImprovedImmunity>,
     Flow<I, I::InfectedCriticalImprovedImmunity,            I::DeadImprovedImmunity>,
     Flow<I, I::InfectedCriticalImprovedImmunity,            I::SusceptibleImprovedImmunity>>;
 // clang-format on
@@ -258,7 +261,7 @@ public:
                 smoother_cosine(icu_occupancy, 0.90 * params.get<ICUCapacity>(), params.get<ICUCapacity>(),
                                 params.get<CriticalPerSevere>()[i], 0);
 
-            // double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
+            double deathsPerSevereAdjusted = params.get<CriticalPerSevere>()[i] - criticalPerSevereAdjusted;
 
             /**** path of immune-naive ***/
             // Exposed
@@ -298,6 +301,9 @@ public:
 
             flows[get_flow_index<InfectionState::InfectedSevereNaive, InfectionState::SusceptibleImprovedImmunity>(
                 {i})] = (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
+
+            flows[get_flow_index<InfectionState::InfectedSevereNaive, InfectionState::DeadNaive>({i})] =
+                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevNi];
 
             // InfectedCritical
             flows[get_flow_index<InfectionState::InfectedCriticalNaive, InfectionState::DeadNaive>({i})] =
@@ -367,6 +373,11 @@ public:
                 (1 - (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
                          params.get<CriticalPerSevere>()[i]) /
                 params.get<TimeInfectedSevere>()[i] * y[ISevPIi];
+
+            flows[get_flow_index<InfectionState::InfectedSeverePartialImmunity, InfectionState::DeadPartialImmunity>(
+                {i})] =
+                (reducInfectedSevereCriticalDeadPartialImmunity / reducInfectedSevereCriticalDeadPartialImmunity) *
+                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevPIi];
 
             // InfectedCritical
             flows[get_flow_index<InfectionState::InfectedCriticalPartialImmunity, InfectionState::DeadPartialImmunity>(
@@ -442,6 +453,11 @@ public:
                  (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
                      params.get<CriticalPerSevere>()[i]) /
                 params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
+
+            flows[get_flow_index<InfectionState::InfectedSevereImprovedImmunity, InfectionState::DeadImprovedImmunity>(
+                {i})] =
+                (reducInfectedSevereCriticalDeadImprovedImmunity / reducInfectedSevereCriticalDeadImprovedImmunity) *
+                deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevIIi];
 
             // InfectedCritical
             flows[get_flow_index<InfectionState::InfectedCriticalImprovedImmunity,
