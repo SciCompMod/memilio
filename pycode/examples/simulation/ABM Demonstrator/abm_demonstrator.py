@@ -63,8 +63,9 @@ def set_infection_parameters():
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age0to4,
                                     VaccinationState.Unvaccinated] = 6
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)   
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4, -7.0, -7.0, 1.0, 1.0)
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age0to4, -7.0, -7.0, 1.0, 1.0)
 
     # AgeGroup 5-14
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age5to14,
@@ -86,8 +87,9 @@ def set_infection_parameters():
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age5to14,
                                     VaccinationState.Unvaccinated] = 6
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)   
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14, -7.0, -7.0, 1.0, 1.0)
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age5to14, -7.0, -7.0, 1.0, 1.0)
 
     # AgeGroup 15-34
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age15to34,
@@ -109,8 +111,9 @@ def set_infection_parameters():
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age15to34,
                                     VaccinationState.Unvaccinated] = 6
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)   
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34, -7.0, -7.0, 1.0, 1.0)
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age15to34, -7.0, -7.0, 1.0, 1.0)
 
     # AgeGroup 35-59
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age35to59,
@@ -132,8 +135,9 @@ def set_infection_parameters():
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age35to59,
                                     VaccinationState.Unvaccinated] = 16.5
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)   
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59, -7.0, -7.0, 1.0, 1.0)
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age35to59, -7.0, -7.0, 1.0, 1.0)
 
     # AgeGroup 60-79
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age60to79,
@@ -155,9 +159,9 @@ def set_infection_parameters():
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age60to79,
                                     VaccinationState.Unvaccinated] = 16.5
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)    
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79, -7.0, -7.0, 1.0, 1.0)
-    
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79, -7.0, -7.0, 1.0, 1.0)
 
     # AgeGroup 80+
     infection_params.IncubationPeriod[VirusVariant.Wildtype, AgeGroup.Age80plus,
@@ -177,10 +181,11 @@ def set_infection_parameters():
     infection_params.CriticalToRecovered[VirusVariant.Wildtype, AgeGroup.Age80plus,
                                          VaccinationState.Unvaccinated] = 12.5
     infection_params.CriticalToDead[VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                    VaccinationState.Unvaccinated] = 11    
+                                    VaccinationState.Unvaccinated] = 11
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus,
-                                      VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)    
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus, -7.0, -7.0, 1.0, 1.0)
+                                  VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)
+    abm.set_infectivity_parameters(
+        infection_params, VirusVariant.Wildtype, AgeGroup.Age80plus, -7.0, -7.0, 1.0, 1.0)
 
     return infection_params
 
@@ -540,25 +545,27 @@ def write_results_to_file(path, log):
             f.write('\n')
     f.close()
 
+
 def convert_infection_state_to_string(infection_state):
-    if(infection_state == abm.InfectionState.Susceptible):
+    if (infection_state == abm.InfectionState.Susceptible):
         return "S"
-    elif(infection_state == abm.InfectionState.Exposed):
+    elif (infection_state == abm.InfectionState.Exposed):
         return "E"
-    elif(infection_state == abm.InfectionState.InfectedNoSymptoms):
+    elif (infection_state == abm.InfectionState.InfectedNoSymptoms):
         return "I_ns"
-    elif(infection_state == abm.InfectionState.InfectedSymptoms):
+    elif (infection_state == abm.InfectionState.InfectedSymptoms):
         return "I_sy"
-    elif(infection_state == abm.InfectionState.InfectedSevere):
+    elif (infection_state == abm.InfectionState.InfectedSevere):
         return "I_sev"
-    elif(infection_state == abm.InfectionState.InfectedCritical):
+    elif (infection_state == abm.InfectionState.InfectedCritical):
         return "I_cri"
-    elif(infection_state == abm.InfectionState.Recovered):
+    elif (infection_state == abm.InfectionState.Recovered):
         return "R"
-    elif(infection_state == abm.InfectionState.Dead):
+    elif (infection_state == abm.InfectionState.Dead):
         return "D"
     else:
         raise Exception("Infection state not found")
+
 
 def write_infection_paths_to_file(path, log):
     agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
@@ -566,10 +573,12 @@ def write_infection_paths_to_file(path, log):
         for id in agent_ids:
             line = str(id) + " "
             for t in range(len(log[2])):
-                line += convert_infection_state_to_string(log[2][t][id][3]) + " "
+                line += convert_infection_state_to_string(
+                    log[2][t][id][3]) + " "
             f.write(line)
             f.write('\n')
     f.close()
+
 
 def write_location_mapping_to_file(path, mapping):
     with open(path, 'w') as f:
