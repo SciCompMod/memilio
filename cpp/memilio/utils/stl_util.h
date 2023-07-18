@@ -42,7 +42,7 @@ namespace mio
  * @param out Any std::ostream.
  * @param width Minimum width of the output.
  * @param precision The exact number of decimals (used only for numbers).
- * @param fill The character used for padding.
+ * @param fill [Default: A space ' '] The character used for padding.
  * @return Returns a reference to out.
  */
 inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t precision, char fill = ' ')
