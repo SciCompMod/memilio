@@ -446,14 +446,15 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-     * All entries in the table are space separated with at least one space. The first row of the table starts with
+     * All entries in the table are spaced separatedly with at least one space. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
      * includes the decimals and decimal point. If a number or column label is too long, they will not be cut off, but
      * the table will no longer look nicely formatted.
      * If the column_labels vector is too short, the default column label "#i" is used for the i-th column
-     * (starting at 1, as "Time" is used for column 0). Excess column_labels are ignored.
+     * (starting at 1, as "Time" is used for column 0). Labels in the column_labels vector that go beyond the TimeSeries column
+     * numbers are ignored.
      *
      * @param column_labels Vector of custom labels for each column.
      * @param width The number of characters reserved for each number.
