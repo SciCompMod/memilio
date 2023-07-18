@@ -154,7 +154,7 @@ public:
                 criticalPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
             flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
                 (1 - params.get<CriticalPerSevere>()[i]) / params.get<TimeInfectedSevere>()[i] * y[ISevi];
-            flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::Recovered>({i})] =
+            flows[get_flow_index<InfectionState::InfectedSevere, InfectionState::Dead>({i})] =
                 deathsPerSevereAdjusted / params.get<TimeInfectedSevere>()[i] * y[ISevi];
 
             // InfectedCritical -> Dead / Recovered
