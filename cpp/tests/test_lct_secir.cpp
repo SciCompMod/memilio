@@ -95,7 +95,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     // Initialize ODE model with one single age group
     mio::osecir::Model model_ode(1);
 
-    //Set population
+    // Set population
     model_ode.populations.set_total(init.sum());
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
         init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
@@ -153,7 +153,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     }
 }
 
-//SetUp for comparing with previous run
+// SetUp for comparing with previous run
 class ModelTestLCTSecir : public testing::Test
 {
 protected:
