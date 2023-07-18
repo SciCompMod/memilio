@@ -156,7 +156,7 @@ def set_infection_parameters():
                                     VaccinationState.Unvaccinated] = 16.5
     abm.set_viral_load_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79,
                                       VaccinationState.Unvaccinated, 8.1, 8.1, 2.0, 2.0, -0.17, -0.17)    
-    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to70, -7.0, -7.0, 1.0, 1.0)
+    abm.set_infectivity_parameters(infection_params, VirusVariant.Wildtype, AgeGroup.Age60to79, -7.0, -7.0, 1.0, 1.0)
     
 
     # AgeGroup 80+
@@ -540,6 +540,36 @@ def write_results_to_file(path, log):
             f.write('\n')
     f.close()
 
+def convert_infection_state_to_string(infection_state):
+    if(infection_state == abm.InfectionState.Susceptible):
+        return "S"
+    elif(infection_state == abm.InfectionState.Exposed):
+        return "E"
+    elif(infection_state == abm.InfectionState.InfectedNoSymptoms):
+        return "I_ns"
+    elif(infection_state == abm.InfectionState.InfectedSymptoms):
+        return "I_sy"
+    elif(infection_state == abm.InfectionState.InfectedSevere):
+        return "I_sev"
+    elif(infection_state == abm.InfectionState.InfectedCritical):
+        return "I_cri"
+    elif(infection_state == abm.InfectionState.Recovered):
+        return "R"
+    elif(infection_state == abm.InfectionState.Dead):
+        return "D"
+    else:
+        raise Exception("Infection state not found")
+
+def write_infection_paths_to_file(path, log):
+    agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
+    with open(path, 'w') as f:
+        for id in agent_ids:
+            line = str(id) + " "
+            for t in range(len(log[2])):
+                line += convert_infection_state_to_string(log[2][t][id][3]) + " "
+            f.write(line)
+            f.write('\n')
+    f.close()
 
 def write_location_mapping_to_file(path, mapping):
     with open(path, 'w') as f:
@@ -560,8 +590,8 @@ def set_sim_result_at_start(sim):
 
 def run_abm_simulation():
 
-    input_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList_modified.txt'
-    output_path = 'C:/Users/bick_ju/Documents/INSIDe/Demonstrator/INSIDeDemonstrator/output/'
+    input_path = '/INSIDe_Demonstrator_AreaList_modified.txt'
+    output_path = '/output/'
     # set seed for fixed model initialization (locations and initial infection states)
     np.random.seed(0)
     # starting time point
@@ -595,6 +625,8 @@ def run_abm_simulation():
     # write location mapping to txt file
     write_location_mapping_to_file(
         output_path + 'location_mapping.txt', mapping)
+    # write infection paths per agent to file
+    write_infection_paths_to_file(output_path + 'infection_paths.txt', log)
 
     # print compartment values to csv
     # only used for validation purposes
