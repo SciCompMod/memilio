@@ -1050,7 +1050,7 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[indx_agegroup], 0.5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[indx_agegroup], 0.0, 1e-14);
 
     model.parameters.set<mio::osecirvvs::RelativeTransmissionNoSymptoms>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
@@ -1090,32 +1090,32 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 
     model.parameters.set<mio::osecirvvs::ReducExposedPartialImmunity>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::ReducExposedImprovedImmunity>(-0.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>(0.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>(-4);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
     EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity>()[indx_agegroup],
-              0);
+              1);
 
-    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(-0);
+    model.parameters.set<mio::osecirvvs::ReducTimeInfectedMild>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[indx_agegroup], 0);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild>()[indx_agegroup], 1);
 
     model.parameters.set<mio::osecirvvs::BaseInfectiousnessB117>(-0.5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

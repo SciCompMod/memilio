@@ -689,8 +689,8 @@ public:
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->get<TransmissionProbabilityOnContact>()[i], 0.5);
-                this->get<TransmissionProbabilityOnContact>()[i] = 0.5;
+                    this->get<TransmissionProbabilityOnContact>()[i], 0.0);
+                this->get<TransmissionProbabilityOnContact>()[i] = 0.0;
                 corrected                                        = true;
             }
 
@@ -755,53 +755,53 @@ public:
             if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducExposedPartialImmunity>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducExposedPartialImmunity changed from {:0.4f} to {:d}",
-                            this->get<ReducExposedPartialImmunity>()[i], 0);
-                this->get<ReducExposedPartialImmunity>()[i] = 0;
+                            this->get<ReducExposedPartialImmunity>()[i], 1);
+                this->get<ReducExposedPartialImmunity>()[i] = 1;
                 corrected                                   = true;
             }
             if (this->get<ReducExposedImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducExposedImprovedImmunity>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducExposedImprovedImmunity changed from {:0.4f} to {:d}",
-                            this->get<ReducExposedImprovedImmunity>()[i], 0);
-                this->get<ReducExposedImprovedImmunity>()[i] = 0;
+                            this->get<ReducExposedImprovedImmunity>()[i], 1);
+                this->get<ReducExposedImprovedImmunity>()[i] = 1;
                 corrected                                    = true;
             }
             if (this->get<ReducInfectedSymptomsPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsPartialImmunity>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter ReducInfectedSymptomsPartialImmunity changed from {:0.4f} to {:d}",
-                    this->get<ReducInfectedSymptomsPartialImmunity>()[i], 0);
-                this->get<ReducInfectedSymptomsPartialImmunity>()[i] = 0;
+                    this->get<ReducInfectedSymptomsPartialImmunity>()[i], 1);
+                this->get<ReducInfectedSymptomsPartialImmunity>()[i] = 1;
                 corrected                                            = true;
             }
             if (this->get<ReducInfectedSymptomsImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsImprovedImmunity>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter ReducInfectedSymptomsImprovedImmunity changed from {:0.4f} to {:d}",
-                    this->get<ReducInfectedSymptomsImprovedImmunity>()[i], 0);
-                this->get<ReducInfectedSymptomsImprovedImmunity>()[i] = 0;
+                    this->get<ReducInfectedSymptomsImprovedImmunity>()[i], 1.0);
+                this->get<ReducInfectedSymptomsImprovedImmunity>()[i] = 1.0;
                 corrected                                             = true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducInfectedSevereCriticalDeadPartialImmunity changed from "
                             "{:0.4f} to {:d}",
-                            this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i], 0);
-                this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] = 0;
+                            this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i], 1.0);
+                this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] = 1.0;
                 corrected                                                      = true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducInfectedSevereCriticalDeadImprovedImmunity changed from "
                             "{:0.4f} to {:d}",
-                            this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i], 0);
-                this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] = 0;
+                            this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i], 1.0);
+                this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] = 1.0;
                 corrected                                                       = true;
             }
             if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducTimeInfectedMild changed from {:0.4f} to {:d}",
-                            this->get<ReducTimeInfectedMild>()[i], 0);
-                this->get<ReducTimeInfectedMild>()[i] = 0;
+                            this->get<ReducTimeInfectedMild>()[i], 1.0);
+                this->get<ReducTimeInfectedMild>()[i] = 1.0;
                 corrected                             = true;
             }
             if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {

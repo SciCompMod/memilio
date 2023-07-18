@@ -426,8 +426,8 @@ public:
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->get<TransmissionProbabilityOnContact>()[i], 0.5);
-                this->get<TransmissionProbabilityOnContact>()[i] = 0.5;
+                    this->get<TransmissionProbabilityOnContact>()[i], 0.0);
+                this->get<TransmissionProbabilityOnContact>()[i] = 0.0;
                 corrected                                        = true;
             }
 

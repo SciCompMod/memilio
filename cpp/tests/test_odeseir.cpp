@@ -175,7 +175,7 @@ TEST(TestSeir, apply_constraints_parameters)
 
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>(), 0.5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::oseir::TransmissionProbabilityOnContact>(), 0.0, 1e-14);
 
     mio::set_log_level(mio::LogLevel::warn);
 }

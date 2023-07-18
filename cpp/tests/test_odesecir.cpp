@@ -916,7 +916,7 @@ TEST(Secir, apply_constraints_parameters)
 
     model.parameters.set<mio::osecir::TransmissionProbabilityOnContact>(2.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[indx_agegroup], 0.5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[indx_agegroup], 0.0, 1e-14);
 
     model.parameters.set<mio::osecir::RelativeTransmissionNoSymptoms>(-1.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
