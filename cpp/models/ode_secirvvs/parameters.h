@@ -623,23 +623,23 @@ public:
 
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
-     * @return Returns 1 if one ore more constraint was corrected, 0 otherwise.  
+     * @return Returns true if one ore more constraint was corrected, false otherwise.  
      */
-    int apply_constraints()
+    bool apply_constraints()
     {
-        int corrected = 0;
+        int corrected = false;
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_warning("Constraint check: Parameter Seasonality changed from {:0.4f} to {:d}",
                         this->get<Seasonality>(), 0);
             this->set<Seasonality>(0);
-            corrected = 1;
+            corrected = true;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
             log_warning("Constraint check: Parameter ICUCapacity changed from {:0.4f} to {:d}",
                         this->get<ICUCapacity>(), 0);
             this->set<ICUCapacity>(0);
-            corrected = 1;
+            corrected = true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -648,41 +648,41 @@ public:
                 log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
                             this->get<IncubationTime>()[i], 2.0);
                 this->get<IncubationTime>()[i] = 2.0;
-                corrected                      = 1;
+                corrected                      = true;
             }
 
             if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
                             this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
                 this->get<SerialInterval>()[i] = 0.5 * this->get<IncubationTime>()[i] + 0.5;
-                corrected                      = 1;
+                corrected                      = true;
             }
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
                             this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
                 this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - 0.5;
-                corrected                      = 1;
+                corrected                      = true;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
                 log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}",
                             this->get<TimeInfectedSymptoms>()[i], 1.0);
                 this->get<TimeInfectedSymptoms>()[i] = 1.0;
-                corrected                            = 1;
+                corrected                            = true;
             }
 
             if (this->get<TimeInfectedSevere>()[i] < 1.0) {
                 log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}",
                             this->get<TimeInfectedSevere>()[i], 1.0);
                 this->get<TimeInfectedSevere>()[i] = 1.0;
-                corrected                          = 1;
+                corrected                          = true;
             }
 
             if (this->get<TimeInfectedCritical>()[i] < 1.0) {
                 log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}",
                             this->get<TimeInfectedCritical>()[i], 1.0);
                 this->get<TimeInfectedCritical>()[i] = 1.0;
-                corrected                            = 1;
+                corrected                            = true;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
@@ -691,14 +691,14 @@ public:
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
                     this->get<TransmissionProbabilityOnContact>()[i], 0.5);
                 this->get<TransmissionProbabilityOnContact>()[i] = 0.5;
-                corrected                                        = 1;
+                corrected                                        = true;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms changed from {:0.4f} to {:d} ",
                             this->get<RelativeTransmissionNoSymptoms>()[i], 0);
                 this->get<RelativeTransmissionNoSymptoms>()[i] = 0;
-                corrected                                      = 1;
+                corrected                                      = true;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
@@ -706,7 +706,7 @@ public:
                 log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms changed from {:0.4f} to {:d} ",
                             this->get<RecoveredPerInfectedNoSymptoms>()[i], 0);
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] = 0;
-                corrected                                      = 1;
+                corrected                                      = true;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
@@ -714,42 +714,42 @@ public:
                 log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic changed from {:0.4f} to {:d}",
                             this->get<RiskOfInfectionFromSymptomatic>()[i], 0);
                 this->get<RiskOfInfectionFromSymptomatic>()[i] = 0;
-                corrected                                      = 1;
+                corrected                                      = true;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
                             this->get<SeverePerInfectedSymptoms>()[i], 0);
                 this->get<SeverePerInfectedSymptoms>()[i] = 0;
-                corrected                                 = 1;
+                corrected                                 = true;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter CriticalPerSevere changed from {:0.4f} to {:d}",
                             this->get<CriticalPerSevere>()[i], 0);
                 this->get<CriticalPerSevere>()[i] = 0;
-                corrected                         = 1;
+                corrected                         = true;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {:0.4f} to {:d}",
                             this->get<DeathsPerCritical>()[i], 0);
                 this->get<DeathsPerCritical>()[i] = 0;
-                corrected                         = 1;
+                corrected                         = true;
             }
 
             if (this->get<DaysUntilEffectivePartialImmunity>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {:0.4f} to {:d}",
                             this->get<DaysUntilEffectivePartialImmunity>()[i], 0);
                 this->get<DaysUntilEffectivePartialImmunity>()[i] = 0;
-                corrected                                         = 1;
+                corrected                                         = true;
             }
             if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
                 log_warning(
                     "Constraint check: Parameter DaysUntilEffectiveImprovedImmunity changed from {:0.4f} to {:d}",
                     this->get<DaysUntilEffectiveImprovedImmunity>()[i], 0);
                 this->get<DaysUntilEffectiveImprovedImmunity>()[i] = 0;
-                corrected                                          = 1;
+                corrected                                          = true;
             }
 
             if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
@@ -757,14 +757,14 @@ public:
                 log_warning("Constraint check: Parameter ReducExposedPartialImmunity changed from {:0.4f} to {:d}",
                             this->get<ReducExposedPartialImmunity>()[i], 0);
                 this->get<ReducExposedPartialImmunity>()[i] = 0;
-                corrected                                   = 1;
+                corrected                                   = true;
             }
             if (this->get<ReducExposedImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducExposedImprovedImmunity>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducExposedImprovedImmunity changed from {:0.4f} to {:d}",
                             this->get<ReducExposedImprovedImmunity>()[i], 0);
                 this->get<ReducExposedImprovedImmunity>()[i] = 0;
-                corrected                                    = 1;
+                corrected                                    = true;
             }
             if (this->get<ReducInfectedSymptomsPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsPartialImmunity>()[i] > 1.0) {
@@ -772,7 +772,7 @@ public:
                     "Constraint check: Parameter ReducInfectedSymptomsPartialImmunity changed from {:0.4f} to {:d}",
                     this->get<ReducInfectedSymptomsPartialImmunity>()[i], 0);
                 this->get<ReducInfectedSymptomsPartialImmunity>()[i] = 0;
-                corrected                                            = 1;
+                corrected                                            = true;
             }
             if (this->get<ReducInfectedSymptomsImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsImprovedImmunity>()[i] > 1.0) {
@@ -780,7 +780,7 @@ public:
                     "Constraint check: Parameter ReducInfectedSymptomsImprovedImmunity changed from {:0.4f} to {:d}",
                     this->get<ReducInfectedSymptomsImprovedImmunity>()[i], 0);
                 this->get<ReducInfectedSymptomsImprovedImmunity>()[i] = 0;
-                corrected                                             = 1;
+                corrected                                             = true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] > 1.0) {
@@ -788,7 +788,7 @@ public:
                             "{:0.4f} to {:d}",
                             this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i], 0);
                 this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] = 0;
-                corrected                                                      = 1;
+                corrected                                                      = true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] > 1.0) {
@@ -796,31 +796,31 @@ public:
                             "{:0.4f} to {:d}",
                             this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i], 0);
                 this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] = 0;
-                corrected                                                       = 1;
+                corrected                                                       = true;
             }
             if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter ReducTimeInfectedMild changed from {:0.4f} to {:d}",
                             this->get<ReducTimeInfectedMild>()[i], 0);
                 this->get<ReducTimeInfectedMild>()[i] = 0;
-                corrected                             = 1;
+                corrected                             = true;
             }
             if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter BaseInfectiousnessB117 changed from {:0.4f} to {:d}",
                             this->get<BaseInfectiousnessB117>()[i], 0);
                 this->get<BaseInfectiousnessB117>()[i] = 0;
-                corrected                              = 1;
+                corrected                              = true;
             }
             if (this->get<BaseInfectiousnessB161>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter BaseInfectiousnessB161 changed from {:0.4f} to {:d}",
                             this->get<BaseInfectiousnessB161>()[i], 0);
                 this->get<BaseInfectiousnessB161>()[i] = 0;
-                corrected                              = 1;
+                corrected                              = true;
             }
             if (this->get<VaccinationGap>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter VaccinationGap changed from {:0.4f} to {:d}",
                             this->get<VaccinationGap>()[i], 0);
                 this->get<VaccinationGap>()[i] = 0;
-                corrected                      = 1;
+                corrected                      = true;
             }
         }
         return corrected;
@@ -829,18 +829,18 @@ public:
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.    
+     * @return Returns true if one constraint is not satisfied, otherwise false.    
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_error("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
-            return 1;
+            return true;
         }
 
         if (this->get<ICUCapacity>() < 0.0) {
             log_error("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
-            return 1;
+            return true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
@@ -848,145 +848,145 @@ public:
             if (this->get<IncubationTime>()[i] < 2.0) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
                           this->get<IncubationTime>()[i], 2.0);
-                return 1;
+                return true;
             }
 
             if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                return 1;
+                return true;
             }
             else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
                           this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                return 1;
+                return true;
             }
 
             if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSymptoms>()[i], 1.0);
-                return 1;
+                return true;
             }
 
             if (this->get<TimeInfectedSevere>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedSevere>()[i], 1.0);
-                return 1;
+                return true;
             }
 
             if (this->get<TimeInfectedCritical>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
                           this->get<TimeInfectedCritical>()[i], 1.0);
-                return 1;
+                return true;
             }
 
             if (this->get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
                 log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
-                return 1;
+                return true;
             }
 
             if (this->get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
                 this->get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
                           1);
-                return 1;
+                return true;
             }
 
             if (this->get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->get<SeverePerInfectedSymptoms>()[i] > 1.0) {
                 log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<CriticalPerSevere>()[i] < 0.0 || this->get<CriticalPerSevere>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<DeathsPerCritical>()[i] < 0.0 || this->get<DeathsPerCritical>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
 
             if (this->get<VaccinationGap>()[i] < 1) {
                 log_error("Constraint check: Parameter VaccinationGap smaller {:d}", 1);
-                return 1;
+                return true;
             }
 
             if (this->get<DaysUntilEffectivePartialImmunity>()[i] < 0.0) {
                 log_error("Constraint check: Parameter DaysUntilEffectivePartialImmunity smaller {:d}", 0);
-                return 1;
+                return true;
             }
             if (this->get<DaysUntilEffectiveImprovedImmunity>()[i] < 0.0) {
                 log_error("Constraint check: Parameter DaysUntilEffectiveImprovedImmunity smaller {:d}", 0);
-                return 1;
+                return true;
             }
 
             if (this->get<ReducExposedPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducExposedPartialImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducExposedPartialImmunity smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
             if (this->get<ReducExposedImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducExposedImprovedImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducExposedImprovedImmunity smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
             if (this->get<ReducInfectedSymptomsPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsPartialImmunity>()[i] > 1.0) {
                 log_error(
                     "Constraint check: Parameter ReducInfectedSymptomsPartialImmunity smaller {:d} or larger {:d}", 0,
                     1);
-                return 1;
+                return true;
             }
             if (this->get<ReducInfectedSymptomsImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSymptomsImprovedImmunity>()[i] > 1.0) {
                 log_error(
                     "Constraint check: Parameter ReducInfectedSymptomsImprovedImmunity smaller {:d} or larger {:d}", 0,
                     1);
-                return 1;
+                return true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadPartialImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadPartialImmunity smaller {:d} or "
                           "larger {:d}",
                           0, 1);
-                return 1;
+                return true;
             }
             if (this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] <= 0.0 ||
                 this->get<ReducInfectedSevereCriticalDeadImprovedImmunity>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducInfectedSevereCriticalDeadImprovedImmunity smaller {:d} or "
                           "larger {:d}",
                           0, 1);
-                return 1;
+                return true;
             }
             if (this->get<ReducTimeInfectedMild>()[i] <= 0.0 || this->get<ReducTimeInfectedMild>()[i] > 1.0) {
                 log_error("Constraint check: Parameter ReducTimeInfectedMild smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
             if (this->get<BaseInfectiousnessB117>()[i] < 0.0) {
                 log_error("Constraint check: Parameter BaseInfectiousnessB117 smaller {:d}", 0);
-                return 1;
+                return true;
             }
             if (this->get<BaseInfectiousnessB161>()[i] < 0.0) {
                 log_error("Constraint check: Parameter BaseInfectiousnessB161 smaller {:d}", 0);
-                return 1;
+                return true;
             }
         }
-        return 0;
+        return false;
     }
 
 private:

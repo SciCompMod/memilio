@@ -110,29 +110,29 @@ public:
 
     /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
-     * @return Returns 1 if one ore more constraint was corrected, 0 otherwise.  
+     * @return Returns true if one ore more constraint was corrected, false otherwise.  
      */
-    int apply_constraints()
+    bool apply_constraints()
     {
-        int corrected = 0;
+        int corrected = false;
         if (this->get<TimeExposed>() <= 0.0) {
             log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}",
                         this->get<TimeExposed>(), 1.0);
             this->get<TimeExposed>() = 1.0;
-            corrected                = 1;
+            corrected                = true;
         }
         if (this->get<TimeInfected>() <= 0.0) {
             log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}",
                         this->get<TimeInfected>(), 1.0);
             this->get<TimeInfected>() = 1.0;
-            corrected                 = 1;
+            corrected                 = true;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
                         this->get<TransmissionProbabilityOnContact>(), 0.5);
             this->get<TransmissionProbabilityOnContact>() = 0.5;
-            corrected                                     = 1;
+            corrected                                     = true;
         }
         return corrected;
     }
@@ -140,28 +140,28 @@ public:
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
      * if constraints are not satisfied.
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.   
      */
-    int check_constraints() const
+    bool check_constraints() const
     {
         if (this->get<TimeExposed>() <= 0.0) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
                       this->get<TimeExposed>(), 0.0);
-            return 1;
+            return true;
         }
         if (this->get<TimeInfected>() <= 0.0) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
                       this->get<TimeInfected>(), 0.0);
-            return 1;
+            return true;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
             this->get<TransmissionProbabilityOnContact>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
                 this->get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
 
 private:
