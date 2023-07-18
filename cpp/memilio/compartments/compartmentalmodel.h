@@ -173,7 +173,7 @@ namespace details
 
 // Function declaration used to remove OmittedTag from the type list of a tuple.
 // First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
-// Tag == OmittedTag, of type tuple<>. This list is then concatonated, effectively removing OmittedTag.
+// Tag == OmittedTag, of type tuple<>. This list is then concatenated, effectively removing OmittedTag.
 template <class OmittedTag, class... Tags>
 decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
                                                                std::tuple<Tags>>::type>()...))
