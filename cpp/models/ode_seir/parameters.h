@@ -115,13 +115,15 @@ public:
     bool apply_constraints()
     {
         int corrected = false;
-        if (this->get<TimeExposed>() <= 0.0) {
+
+        //
+        if (this->get<TimeExposed>() < 1.0) {
             log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}",
                         this->get<TimeExposed>(), 1.0);
             this->get<TimeExposed>() = 1.0;
             corrected                = true;
         }
-        if (this->get<TimeInfected>() <= 0.0) {
+        if (this->get<TimeInfected>() < 1.0) {
             log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}",
                         this->get<TimeInfected>(), 1.0);
             this->get<TimeInfected>() = 1.0;
@@ -144,12 +146,12 @@ public:
      */
     bool check_constraints() const
     {
-        if (this->get<TimeExposed>() <= 0.0) {
+        if (this->get<TimeExposed>() < 1.0) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
                       this->get<TimeExposed>(), 0.0);
             return true;
         }
-        if (this->get<TimeInfected>() <= 0.0) {
+        if (this->get<TimeInfected>() < 1.0) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
                       this->get<TimeInfected>(), 0.0);
             return true;
