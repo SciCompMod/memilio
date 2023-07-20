@@ -42,13 +42,6 @@ namespace isecir
  * @brief Function depending on the state age, i.e. the time time already spent in some #InfectionState.
  */
 struct StateAgeFunction {
-    /**
-    * @brief Default constructor of the class. Default for m_parameter is 1.0 (relatively random.)
-    */
-    StateAgeFunction()
-        : m_parameter{1.0}
-    {
-    }
 
     /**
      * @brief Constructs a new StateAgeFunction object
@@ -186,14 +179,6 @@ protected:
 struct ExponentialDecay : public StateAgeFunction {
 
     /**
-    * @brief Default constructor of the class.
-    */
-    ExponentialDecay()
-        : StateAgeFunction()
-    {
-    }
-
-    /**
      * @brief Constructs a new ExponentialDecay object
      * 
      * @param init_parameter specifies the initial function parameter of the function.
@@ -232,14 +217,6 @@ protected:
  * @brief Class that defines an smoother cosine function depending on the state age.
  */
 struct SmootherCosine : public StateAgeFunction {
-
-    /**
-    * @brief Default constructor of the class.
-    */
-    SmootherCosine()
-        : StateAgeFunction()
-    {
-    }
 
     /**
      * @brief Constructs a new SmootherCosine object
@@ -288,14 +265,6 @@ protected:
  * @brief Class that defines a constant function.
  */
 struct ConstantFunction : public StateAgeFunction {
-
-    /**
-    * @brief Default constructor of the class.
-    */
-    ConstantFunction()
-        : StateAgeFunction()
-    {
-    }
 
     /**
      * @brief Constructs a new ConstantFunction object
@@ -348,17 +317,6 @@ protected:
  * @brief Wrapper for StateAgeFunction that allows to set a StateAgeFunction from outside. 
  */
 struct StateAgeFunctionWrapper {
-
-    /**
-    * @brief Default constructor of the class. Sets m_function to constant function 1 as default.
-    */
-    StateAgeFunctionWrapper()
-        : m_function{}
-    {
-        // Set m_function to a default function, choose constant function 1
-        ExponentialDecay expdecay(0);
-        m_function = expdecay.clone();
-    }
 
     /**
      * @brief Constructs a new StateAgeFunctionWrapper object
@@ -482,8 +440,7 @@ struct TransitionDistributions {
     static Type get_default()
     {
         SmootherCosine smoothcos(2.0);
-        StateAgeFunctionWrapper delaydistribution;
-        delaydistribution.set_state_age_function(smoothcos);
+        StateAgeFunctionWrapper delaydistribution(smoothcos);
         return std::vector<StateAgeFunctionWrapper>((int)InfectionTransition::Count, delaydistribution);
     }
 
@@ -540,7 +497,8 @@ struct TransmissionProbabilityOnContact {
     using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return StateAgeFunctionWrapper();
+        ConstantFunction constfunc(1.0);
+        return StateAgeFunctionWrapper(constfunc);
     }
     static std::string name()
     {
@@ -555,7 +513,8 @@ struct RelativeTransmissionNoSymptoms {
     using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return StateAgeFunctionWrapper();
+        ConstantFunction constfunc(1.0);
+        return StateAgeFunctionWrapper(constfunc);
     }
     static std::string name()
     {
@@ -570,7 +529,8 @@ struct RiskOfInfectionFromSymptomatic {
     using Type = StateAgeFunctionWrapper;
     static Type get_default()
     {
-        return StateAgeFunctionWrapper();
+        ConstantFunction constfunc(1.0);
+        return StateAgeFunctionWrapper(constfunc);
     }
     static std::string name()
     {
