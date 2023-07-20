@@ -39,24 +39,24 @@ namespace isecir
 * Define Parameters of the IDE-SECIHURD model *
 **********************************************/
 /**
- * @brief Function depending on the state age, i.e. the time time already spent in some InfectionState.
+ * @brief Function depending on the state age, i.e. the time time already spent in some #InfectionState.
  */
 struct StateAgeFunction {
     /**
-    * @brief Default constructor of the class. Default for m_funcparam is 1.0 (relatively random.)
+    * @brief Default constructor of the class. Default for m_parameter is 1.0 (relatively random.)
     */
     StateAgeFunction()
-        : m_funcparam{1.0}
+        : m_parameter{1.0}
     {
     }
 
     /**
      * @brief Constructs a new StateAgeFunction object
      * 
-     * @param init_funcparam specifies the initial function parameter of the function.
+     * @param init_parameter specifies the initial function parameter of the function.
      */
-    StateAgeFunction(ScalarType init_funcparam)
-        : m_funcparam{init_funcparam}
+    StateAgeFunction(ScalarType init_parameter)
+        : m_parameter{init_parameter}
     {
     }
 
@@ -90,7 +90,7 @@ struct StateAgeFunction {
      */
     bool operator==(const StateAgeFunction& other) const
     {
-        return (typeid(*this).name() == typeid(other).name() && m_funcparam == other.get_funcparam());
+        return (typeid(*this).name() == typeid(other).name() && m_parameter == other.get_parameter());
     }
 
     /**
@@ -98,43 +98,46 @@ struct StateAgeFunction {
      *
      * The defined function ususally depends on some function parameter.
      * 
-     * @param state_age Time at which the function is evaluated.
+     * @param[in] state_age Time at which the function is evaluated.
      */
     virtual ScalarType eval(ScalarType state_age) = 0;
 
     /**
-     * @brief Get the m_funcparam object
+     * @brief Get the m_parameter object
      * 
-     * Can be used to access the m_funcparam object, which specifies the used function.
+     * Can be used to access the m_parameter object, which specifies the used function.
      * 
      * @return ScalarType 
      */
-    ScalarType get_funcparam() const
+    ScalarType get_parameter() const
     {
-        return m_funcparam;
+        return m_parameter;
     }
 
     /**
-     * @brief Set the m_funcparam object.
+     * @brief Set the m_parameter object.
      * 
-     * Can be used to set the m_funcparam object, which specifies the used function.
-     */
-    void set_funcparam(ScalarType new_funcparam)
-    {
-        m_funcparam = new_funcparam;
-    }
-
-    /**
-     * @brief Computes max_support of Function depending on time step size dt and some tolerance tol. 
-     * 
-     * This is a basic version to determine the max_support which evaluates Function at every time step 
-     * until it reaches max_support.
-     * For some specific StateAgeFunction%s there is a more efficient way to determine the max_support
-     * which is why this member function is virtual and can be overridden (e.g. SmootherCosine).
-     * Max_support is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
+     * Can be used to set the m_parameter object, which specifies the used function.
      *
-     * @param dt Time step size. 
-     * @param tol Tolerance defining when 
+     *@param[in] new_parameter New paramter for StateAgeFunction.
+     */
+    void set_parameter(ScalarType new_parameter)
+    {
+        m_parameter = new_parameter;
+    }
+
+    /**
+     * @brief Computes maximum support of the function depending on time step size dt and some tolerance tol. 
+     * 
+     * This is a basic version to determine the maximum support of a monotonously decreasing function,
+     * evaluating the function at each time point until it reaches the boundaries of the support.
+     *
+     * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
+     * support which is why this member function is virtual and can be overridden (see, e.g., SmootherCosine).
+     * The maximum support is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
      * @return ScalarType max_support
      */
     virtual ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10)
@@ -169,11 +172,12 @@ struct StateAgeFunction {
     }
 
 protected:
-    // pure virtual function that implements cloning
+    /**
+     * @brief Pure virtual method that implements cloning.
+     */
     virtual StateAgeFunction* clone_impl() const = 0;
 
-    // specifies Function
-    ScalarType m_funcparam{};
+    ScalarType m_parameter; ///< Parameter for function in derived class
 };
 
 /**
@@ -192,24 +196,24 @@ struct ExponentialDecay : public StateAgeFunction {
     /**
      * @brief Constructs a new ExponentialDecay object
      * 
-     * @param init_funcparam specifies the initial function parameter of the function.
+     * @param init_parameter specifies the initial function parameter of the function.
      */
-    ExponentialDecay(ScalarType init_funcparam)
-        : StateAgeFunction(init_funcparam)
+    ExponentialDecay(ScalarType init_parameter)
+        : StateAgeFunction(init_parameter)
     {
     }
 
     /**
      * @brief Defines exponential decay function depending on state_age.
      *
-     * The parameter m_funcparam defines how fast the exponential function decays.
+     * m_parameter defines how fast the exponential function decays.
      * 
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return std::exp(-m_funcparam * state_age);
+        return std::exp(-m_parameter * state_age);
     }
 
 protected:
@@ -240,24 +244,24 @@ struct SmootherCosine : public StateAgeFunction {
     /**
      * @brief Constructs a new SmootherCosine object
      * 
-     * @param[in] init_funcparam specifies the initial function parameter of the function.
+     * @param[in] init_parameter specifies the initial parameter of the function.
      */
-    SmootherCosine(ScalarType init_funcparam)
-        : StateAgeFunction(init_funcparam)
+    SmootherCosine(ScalarType init_parameter)
+        : StateAgeFunction(init_parameter)
     {
     }
 
     /**
      * @brief Defines smoother cosine function depending on state_age.
      *
-     * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
+     * Used function goes through points (0,1) and (m_parameter,0) and is interpolated in between using a smoothed cosine function.
      * 
      * @param[in] state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
-        return smoother_cosine(state_age, 0.0, m_funcparam, 1.0, 0.0);
+        return smoother_cosine(state_age, 0.0, m_parameter, 1.0, 0.0);
     }
 
     ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
@@ -265,7 +269,7 @@ struct SmootherCosine : public StateAgeFunction {
         unused(dt);
         unused(tol);
 
-        return m_funcparam;
+        return m_parameter;
     }
 
 protected:
@@ -296,33 +300,28 @@ struct ConstantFunction : public StateAgeFunction {
     /**
      * @brief Constructs a new ConstantFunction object
      * 
-     * @param init_funcparam specifies value of the constant function.
+     * @param init_parameter specifies value of the constant function.
      */
-    ConstantFunction(ScalarType init_funcparam)
-        : StateAgeFunction(init_funcparam)
+    ConstantFunction(ScalarType init_parameter)
+        : StateAgeFunction(init_parameter)
     {
     }
 
     /**
      * @brief Defines smoother cosine function depending on state_age.
      *
-     * Used function goes through points (0,1) and (m_funcparam,0) and is interpolated in between using a smoothed cosine function.
+     * Used function goes through points (0,1) and (m_parameter,0) and is interpolated in between using a smoothed cosine function.
      * 
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType eval(ScalarType state_age) override
+    ScalarType eval(ScalarType /*state_age*/) override
     {
-        unused(state_age);
-
-        return m_funcparam;
+        return m_parameter;
     }
 
-    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
+    ScalarType get_max_support(ScalarType /*dt*/, ScalarType /*tol*/) override
     {
-        unused(dt);
-        unused(tol);
-
         // In case of a ConstantFunction we would have max_support = infinity
         // This type of function is not suited to be a TransitionDistribution
         // Raise error and return -1
@@ -409,7 +408,7 @@ struct StateAgeFunctionWrapper {
     bool operator==(const StateAgeFunctionWrapper& other) const
     {
         return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
-                m_function->get_funcparam() == other.get_funcparam());
+                m_function->get_parameter() == other.get_parameter());
     }
 
     /**
@@ -444,22 +443,23 @@ struct StateAgeFunctionWrapper {
     }
 
     /**
-     * @brief Get the m_funcparam object of m_function.
+     * @brief Get the m_parameter object of m_function.
      * 
      * @return ScalarType 
      */
-    ScalarType get_funcparam() const
+    ScalarType get_parameter() const
     {
-        return m_function->get_funcparam();
+        return m_function->get_parameter();
     }
 
     /**
-     * @brief Set the m_funcparam object of m_function. 
-     * @param[in] new_funcparam that determines new function parameter
+     * @brief Set the m_parameter object of m_function. 
+     * 
+     * @param[in] new_parameter that determines new function parameter
      */
-    void set_funcparam(ScalarType new_funcparam)
+    void set_parameter(ScalarType new_parameter)
     {
-        m_function->set_funcparam(new_funcparam);
+        m_function->set_parameter(new_parameter);
     }
 
     ScalarType get_max_support(ScalarType dt) const
@@ -468,13 +468,13 @@ struct StateAgeFunctionWrapper {
     }
 
 private:
-    std::unique_ptr<StateAgeFunction> m_function;
+    std::unique_ptr<StateAgeFunction> m_function; ///< Stores StateAgeFunction that is used in Wrapper.
 };
 
 /**
- * @brief Transition distribution for each transition in InfectionTransition.
+ * @brief Transition distribution for each transition in #InfectionTransition.
  *
- * As a default we use SmootherCosine functions for all transitions with funcparam=2.
+ * As a default we use SmootherCosine functions for all transitions with m_parameter=2.
  */
 struct TransitionDistributions {
 
@@ -497,7 +497,7 @@ struct TransitionDistributions {
  * @brief Defines the probability for each possible transition to take this flow/transition.
  */
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in InfectionTransition. 
+    /*For consistency, also define TransitionProbabilities for each transition in #InfectionTransition. 
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = std::vector<ScalarType>;
     static Type get_default()
@@ -605,8 +605,8 @@ public:
             if (this->get<TransmissionProbabilityOnContact>().eval(i) < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
-                          "time point i = 0,...20",
-                          0, 1);
+                          "time {:d}",
+                          0, 1, i);
                 return 1;
             }
         }
@@ -615,8 +615,8 @@ public:
             if (this->get<RelativeTransmissionNoSymptoms>().eval(i) < 0.0 ||
                 this->get<RelativeTransmissionNoSymptoms>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
-                          "time point i = 0,...20",
-                          0, 1);
+                          "time {:d}",
+                          0, 1, i);
                 return 1;
             }
         }
@@ -625,8 +625,8 @@ public:
             if (this->get<RiskOfInfectionFromSymptomatic>().eval(i) < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>().eval(i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
-                          "time point i = 0,...20",
-                          0, 1);
+                          "time {:d}",
+                          0, 1, i);
                 return 1;
             }
         }

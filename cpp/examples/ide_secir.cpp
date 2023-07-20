@@ -73,8 +73,8 @@ int main()
     mio::isecir::StateAgeFunctionWrapper delaydistribution;
     delaydistribution.set_state_age_function(smoothcos);
     std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_funcparam(3.0);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_funcparam(4.0);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);

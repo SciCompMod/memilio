@@ -355,7 +355,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     mio::isecir::StateAgeFunctionWrapper delaydistribution;
     delaydistribution.set_state_age_function(expdecay);
     std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(3.0);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // Set probabilties so that all indiviudal go from Susceptible to InfectedCritical with probability 1, from there they move
@@ -458,7 +458,7 @@ TEST(IdeSecir, compareEquilibria)
     mio::isecir::StateAgeFunctionWrapper delaydistribution2;
     delaydistribution2.set_state_age_function(smoothcos);
     std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
-    vec_delaydistrib2[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(7.0);
+    vec_delaydistrib2[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(7.0);
     model2.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib2);
 
     // All remaining parameters are equal for both models.
