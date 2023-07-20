@@ -33,6 +33,8 @@ template <class ABMGraph, class ODEGraph, class ABM, class MigrationEdgeHybrid, 
 class HybridGraph
 {
 public:
+    using HybridEdge = Edge<MigrationEdgeHybrid>;
+
     HybridGraph(const ABMGraph& abm_graph, const ODEGraph& ode_graph, const SetupABMFromOdeFct& setup_func,
                 std::vector<std::vector<double>> household_distributions = {})
         : m_abm_graph(abm_graph)
@@ -84,7 +86,7 @@ public:
         auto start_idx = edge.start_node_idx;
         auto end_idx   = edge.end_node_idx;
         auto iter      = std::find_if(m_abm_graph.nodes().begin(), m_abm_graph.nodes().end(),
-                                      [start_idx](const Node<ABMGraph::NodeProperty>& node) {
+                                      [start_idx](const Node<typename ABMGraph::NodeProperty>& node) {
                                      return node.id == start_idx;
                                  });
         if (iter != m_abm_graph.nodes().end()) {
@@ -92,7 +94,7 @@ public:
         }
         else {
             iter = std::find_if(m_abm_graph.nodes().begin(), m_abm_graph.nodes().end(),
-                                [end_idx](const Node<ABMGraph::NodeProperty>& node) {
+                                [end_idx](const Node<typename ABMGraph::NodeProperty>& node) {
                                     return node.id == end_idx;
                                 });
             if (iter != m_abm_graph.nodes().end()) {
@@ -109,7 +111,7 @@ public:
         auto start_idx = edge.start_node_idx;
         auto end_idx   = edge.end_node_idx;
         auto iter      = std::find_if(m_ode_graph.nodes().begin(), m_ode_graph.nodes().end(),
-                                      [start_idx](const Node<ODEGraph::NodeProperty>& node) {
+                                      [start_idx](const Node<typename ODEGraph::NodeProperty>& node) {
                                      return node.id == start_idx;
                                  });
         if (iter != m_ode_graph.nodes().end()) {
@@ -117,7 +119,7 @@ public:
         }
         else {
             iter = std::find_if(m_ode_graph.nodes().begin(), m_ode_graph.nodes().end(),
-                                [end_idx](const Node<ODEGraph::NodeProperty>& node) {
+                                [end_idx](const Node<typename ODEGraph::NodeProperty>& node) {
                                     return node.id == end_idx;
                                 });
             if (iter != m_ode_graph.nodes().end()) {
@@ -133,7 +135,7 @@ private:
     ABMGraph m_abm_graph;
     ODEGraph m_ode_graph;
     std::vector<Node<typename ABMGraph::NodeProperty>> m_abm_nodes_to_ode_nodes;
-    std::vector<Edge<MigrationEdgeHybrid>> m_hybrid_edges;
+    std::vector<HybridEdge> m_hybrid_edges;
 };
 
 } // namespace mio

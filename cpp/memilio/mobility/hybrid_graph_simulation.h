@@ -38,7 +38,7 @@ class HybridGraphSimulation
     using edge_function_ode    = std::function<void(double, double, typename HybridGraph::ODEGraph::EdgeProperty&,
                                                  typename HybridGraph::ODEGraph::NodeProperty&,
                                                  typename HybridGraph::ODEGraph::NodeProperty&)>;
-    using edge_function_hybrid = std::function<void(Timepoint, Timespan, typename HybridGraph::MigrationEdgeHybrid&,
+    using edge_function_hybrid = std::function<void(Timepoint, Timespan, typename HybridGraph::HybridEdge&,
                                                     typename HybridGraph::ABMGraph::NodeProperty&,
                                                     typename HybridGraph::ODEGraph::NodeProperty&)>;
 
@@ -114,15 +114,14 @@ class HybridGraphSimulation
 
             //advance hybrid edges
             for (auto& hybrid_edge : m_graph.hybrid_edges()) {
-                m_edge_func_hybrid(m_t_abm, m_dt_abm, hybrid_edge.property,
-                                   m_graph.get_abm_node_from_hybrid_edge(hybrid_edge),
+                m_edge_func_hybrid(m_t_ode, m_dt_ode, hybrid_edge, m_graph.get_abm_node_from_hybrid_edge(hybrid_edge),
                                    m_graph.get_ode_node_from_hybrid_edge(hybrid_edge));
             }
         }
 
         //store results for abm nodes for last timepoint
         for (auto& abm_node : m_graph.get_abm_graph().nodes()) {
-            n.property.end_simulation(t_max);
+            abm_node.property.end_simulation(t_max);
         }
     }
 

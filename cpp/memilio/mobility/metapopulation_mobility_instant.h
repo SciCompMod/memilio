@@ -32,7 +32,6 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
 #include "models/abm/time.h"
-//#include "models/abm/simulation.h"
 #include "models/graph_abm/graph_simulation.h"
 
 #include "boost/filesystem.hpp"
