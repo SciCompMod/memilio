@@ -67,9 +67,9 @@ protected:
         model = new mio::isecir::Model(std::move(init), N, Dead_before);
 
         // Set working parameters.
-        mio::isecir::SmootherCosine smoothcos(2.0);
-        mio::isecir::StateAgeFunctionWrapper delaydistribution(smoothcos);
-        std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+        mio::SmootherCosine smoothcos(2.0);
+        mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+        std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
 
         std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
         vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
@@ -80,8 +80,8 @@ protected:
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
         model->parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        mio::isecir::ExponentialDecay expdecay(0.5);
-        mio::isecir::StateAgeFunctionWrapper prob(expdecay);
+        mio::ExponentialDecay expdecay(0.5);
+        mio::StateAgeFunctionWrapper prob(expdecay);
         model->parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
         model->parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
         model->parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -194,9 +194,9 @@ TEST(IdeSecir, checkSimulationFunctions)
     // In our example we use m_max_support = 2 for all DelayDistribution%s
     // For all TransitionDistribution%s we use a SmootherCosine Function with funcparam=2.
     // In this case, funcparam is equal to the max_support.
-    mio::isecir::SmootherCosine smoothcos(2.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
@@ -208,8 +208,8 @@ TEST(IdeSecir, checkSimulationFunctions)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::SmootherCosine smoothcos_prob(2.0);
-    mio::isecir::StateAgeFunctionWrapper prob(smoothcos_prob);
+    mio::SmootherCosine smoothcos_prob(2.0);
+    mio::StateAgeFunctionWrapper prob(smoothcos_prob);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -278,20 +278,20 @@ TEST(IdeSecir, checkStateAgeFunctionWrapper)
 
     // Check that StateAgeFunctions are only considered equal if they are of the same derived
     // class and have the same funcparam
-    mio::isecir::ExponentialDecay expdecay(0.5);
-    mio::isecir::ExponentialDecay expdecay2(0.5);
-    mio::isecir::ExponentialDecay expdecay3(1.0);
-    mio::isecir::SmootherCosine smoothcos(0.5);
+    mio::ExponentialDecay expdecay(0.5);
+    mio::ExponentialDecay expdecay2(0.5);
+    mio::ExponentialDecay expdecay3(1.0);
+    mio::SmootherCosine smoothcos(0.5);
 
     EXPECT_TRUE(expdecay == expdecay2);
     EXPECT_FALSE(expdecay == expdecay3);
     EXPECT_FALSE(expdecay == smoothcos);
 
     // Check that it also holds when a StateAgeFunctionWrapper is set with the respective functions
-    mio::isecir::StateAgeFunctionWrapper prob(expdecay);
-    mio::isecir::StateAgeFunctionWrapper prob2(expdecay2);
-    mio::isecir::StateAgeFunctionWrapper prob3(expdecay3);
-    mio::isecir::StateAgeFunctionWrapper prob4(smoothcos);
+    mio::StateAgeFunctionWrapper prob(expdecay);
+    mio::StateAgeFunctionWrapper prob2(expdecay2);
+    mio::StateAgeFunctionWrapper prob3(expdecay3);
+    mio::StateAgeFunctionWrapper prob4(smoothcos);
 
     EXPECT_TRUE(prob == prob2);
     EXPECT_FALSE(prob == prob3);
@@ -347,9 +347,9 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     // Set working parameters.
     // All TransitionDistribution%s are ExponentialDecay functions.
     // For all transitions we have funcparam=2 except for InfectedCriticalToRecovered where we set funcparam=3.
-    mio::isecir::ExponentialDecay expdecay(4.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution(expdecay);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::ExponentialDecay expdecay(4.0);
+    mio::StateAgeFunctionWrapper delaydistribution(expdecay);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
@@ -367,8 +367,8 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ExponentialDecay expdecay2(0.5);
-    mio::isecir::StateAgeFunctionWrapper prob(expdecay2);
+    mio::ExponentialDecay expdecay2(0.5);
+    mio::StateAgeFunctionWrapper prob(expdecay2);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
@@ -440,16 +440,16 @@ TEST(IdeSecir, compareEquilibria)
 
     // For model
     // All TransitionDistribution%s have funcparam=2
-    mio::isecir::SmootherCosine smoothcos(2.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
     // For model2
     // All TransitionDistribution%s have funcparam=2 except fpr InfectedCriticalToRecovered wehre we set funcparam=7
-    mio::isecir::SmootherCosine smoothcos2(2.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution2(smoothcos);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
+    mio::SmootherCosine smoothcos2(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution2(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
     vec_delaydistrib2[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(7.0);
     model2.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib2);
 
@@ -470,8 +470,8 @@ TEST(IdeSecir, compareEquilibria)
     model.parameters.get<mio::isecir::ContactPatterns>()  = mio::UncertainContactMatrix(contact_matrix);
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ExponentialDecay expdecay(0.5);
-    mio::isecir::StateAgeFunctionWrapper prob(expdecay);
+    mio::ExponentialDecay expdecay(0.5);
+    mio::StateAgeFunctionWrapper prob(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);

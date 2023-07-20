@@ -69,9 +69,9 @@ int main()
     // model.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Set working parameters
-    mio::isecir::SmootherCosine smoothcos(2.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(3.0);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(4.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
@@ -85,8 +85,8 @@ int main()
     contact_matrix[0]                                    = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::isecir::ExponentialDecay expdecay(0.5);
-    mio::isecir::StateAgeFunctionWrapper prob(expdecay);
+    mio::ExponentialDecay expdecay(0.5);
+    mio::StateAgeFunctionWrapper prob(expdecay);
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob);
     model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob);
