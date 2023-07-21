@@ -489,9 +489,9 @@ struct StateAgeFunctionWrapper {
         m_function->set_parameter(new_parameter);
     }
 
-    ScalarType get_support_max(ScalarType dt) const
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) const
     {
-        return m_function->get_support_max(dt);
+        return m_function->get_support_max(dt, tol);
     }
 
 private:
