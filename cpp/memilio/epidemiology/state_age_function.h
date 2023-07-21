@@ -119,7 +119,7 @@ struct StateAgeFunction {
      * 
      * Can be used to set the m_parameter object, which specifies the used function.
      *
-     *@param[in] new_parameter New paramter for StateAgeFunction.
+     *@param[in] new_parameter New parameter for StateAgeFunction.
      */
     void set_parameter(ScalarType new_parameter)
     {
@@ -127,7 +127,7 @@ struct StateAgeFunction {
     }
 
     /**
-     * @brief Computes maximum support of the function depending on time step size dt and some tolerance tol. 
+     * @brief Computes the maximum support of the function depending on time step size dt and some tolerance tol. 
      * 
      * This is a basic version to determine the maximum support of a monotonously decreasing function,
      * evaluating the function at each time point until it reaches the boundaries of the support.
@@ -254,8 +254,10 @@ struct SmootherCosine : public StateAgeFunction {
         return smoother_cosine(state_age, 0.0, m_parameter, 1.0, 0.0);
     }
 
-    ScalarType get_max_support(ScalarType /*dt*/, ScalarType /*tol*/) override
+    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
     {
+        unused(dt);
+        unused(tol);
         return m_parameter;
     }
 
@@ -294,16 +296,20 @@ struct ConstantFunction : public StateAgeFunction {
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
-    ScalarType eval(ScalarType /*state_age*/) override
+    ScalarType eval(ScalarType state_age) override
     {
+        unused(state_age);
         return m_parameter;
     }
 
-    ScalarType get_max_support(ScalarType /*dt*/, ScalarType /*tol*/) override
+    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
     {
         // In case of a ConstantFunction we would have max_support = infinity
         // This type of function is not suited to be a TransitionDistribution
         // Raise error and return -1
+
+        unused(dt);
+        unused(tol);
 
         log_error("This function is not suited to be a TransitionDistribution and getting the max_support doesn't make "
                   "sense.");

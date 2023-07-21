@@ -48,6 +48,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
+    test_state_age_function.cpp
     distributions_helpers.h
     distributions_helpers.cpp
     actions.h
