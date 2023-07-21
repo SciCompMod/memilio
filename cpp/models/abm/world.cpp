@@ -109,11 +109,8 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend         = t.is_weekend();
-    size_t num_trips     = m_trip_list.num_trips(weekend);
-    if(t.hour_of_day() == 0){
-        m_trip_list.reset_index();
-    }
+    bool weekend     = t.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
 
     if (num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
@@ -133,6 +130,9 @@ void World::migration(TimePoint t, TimeSpan dt)
         }
     }
     printf("%d migrations\n", migrations);
+    if (t.days() < (t + dt).days()) {
+        m_trip_list.reset_index();
+    }
 }
 
 void World::begin_step(TimePoint t, TimeSpan dt)
