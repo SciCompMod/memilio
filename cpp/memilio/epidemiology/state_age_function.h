@@ -25,6 +25,7 @@
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/smoother.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 
 namespace mio
@@ -55,19 +56,20 @@ namespace mio
  * For some derived classes there is a more efficient way (see e.g., SmootherCosine) to do this which is 
  * why it can be overridden. The base class implementation uses the fact that the StateAgeFunction is monotonously 
  * decreasing. This is no limitation as the support is only needed for StateAgeFunctions of Type a) as given above.
- * For classes of type b) a dummy implementation logging an error for get_support_max() should be implemented.
+ * For classes of type b) a dummy implementation logging an error and returnung -2 for get_support_max() should be implemented.
  *
- * See ExponentialDecay, SmootherCosine, and ConstantFunction for examples of derived classes.
+ * See ExponentialDecay, SmootherCosine and ConstantFunction for examples of derived classes.
  */
 struct StateAgeFunction {
 
     /**
      * @brief Constructs a new StateAgeFunction object
      * 
-     * @param[in] init_parameter specifies the initial function parameter of the function.
+     * @param[in] init_parameter Specifies the initial function parameter of the function.
      */
     StateAgeFunction(ScalarType init_parameter)
         : m_parameter{init_parameter}
+        , m_support_max{-1.} // initialize support as not set
     {
     }
 
@@ -155,11 +157,15 @@ struct StateAgeFunction {
     {
         ScalarType support_max = 0;
 
-        while (eval(support_max) >= tol) {
-            support_max += dt;
-        }
+        if (!floating_point_equal(m_tol_support, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+            while (eval(support_max) >= tol) {
+                support_max += dt;
+            }
 
-        return support_max;
+            m_support_max = support_max;
+        }
+        std::cout << "max supp " << m_support_max << "\n";
+        return m_support_max;
     }
 
     /**
@@ -190,7 +196,9 @@ protected:
      */
     virtual StateAgeFunction* clone_impl() const = 0;
 
-    ScalarType m_parameter; ///< Parameter for function in derived class
+    ScalarType m_parameter; ///< Parameter for function in derived class.
+    ScalarType m_support_max; ///< Maximum of the support of the function.
+    ScalarType m_tol_support; ///< Tolerance for computation of the support.
 };
 
 /**************************************
@@ -217,6 +225,7 @@ struct ExponentialDecay : public StateAgeFunction {
      *
      * m_parameter defines how fast the exponential function decays.
      * 
+     * @param[in] state_age time at which the function should be evaluated
      * @param[in] state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
@@ -336,15 +345,15 @@ struct ConstantFunction : public StateAgeFunction {
     {
         // In case of a ConstantFunction we would have support_max = infinity
         // This type of function is not suited to be a TransitionDistribution
-        // Raise error and return -1
+        // Log error and return -2.
 
         unused(dt);
         unused(tol);
 
-        log_error("This function is not suited to be a TransitionDistribution and getting the support_max doesn't make "
-                  "sense.");
+        log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
+                  "of type b); see documentation of StateAgeFunction Base class.");
 
-        return -1;
+        return (ScalarType)(-2);
     }
 
 protected:

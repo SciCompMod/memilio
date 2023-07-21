@@ -65,22 +65,45 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos5.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos5.get_parameter());
     EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos5.get_support_max(dt));
+
+    // also test the constructor of ExponentialDecay and ConstantFunction
+    // copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes
+    mio::ExponentialDecay expdecay(1.0);
+    EXPECT_EQ(expdecay.get_parameter(), 1.0);
+    EXPECT_NEAR(expdecay.get_support_max(dt), 23.5, 1e-14);
+
+    mio::ConstantFunction constfunc(1.0);
+    EXPECT_EQ(constfunc.get_parameter(), 1.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
 }
 
-TEST(TestStateAgeFunction, testSettersAndGetters)
+TEST(TestStateAgeFunction, testSettersAndGettersForParameter)
 {
-    ScalarType dt               = 0.5;
     ScalarType testvalue_before = 1.0;
     ScalarType testvalue_after  = 2.0;
 
+    // test get and set for function parameter
+    // only for SmootherCosine as set_parameter and get_parameter are equal for all derived classes
     mio::SmootherCosine smoothcos(testvalue_before);
-
     EXPECT_EQ(smoothcos.get_parameter(), testvalue_before);
-    EXPECT_EQ(smoothcos.get_support_max(dt), testvalue_before);
 
     smoothcos.set_parameter(testvalue_after);
     EXPECT_EQ(smoothcos.get_parameter(), testvalue_after);
-    EXPECT_EQ(smoothcos.get_support_max(dt), testvalue_after);
+}
+
+TEST(TestStateAgeFunction, testGetSupportMax)
+{
+    ScalarType dt = 0.5;
+
+    // test get_support_max for all derived classes as this method can be overridden
+    mio::ExponentialDecay expdecay(1.0);
+    EXPECT_NEAR(expdecay.get_support_max(dt), 23.5, 1e-14);
+
+    mio::SmootherCosine smoothcos(1.0);
+    EXPECT_NEAR(smoothcos.get_support_max(dt), 1.0, 1e-14);
+
+    mio::ConstantFunction constfunc(1.0);
+    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
@@ -116,10 +139,25 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper5.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper5.get_parameter());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper5.get_support_max(dt));
+
+    // Also test the constructor of StateAgeFunctionWrapper initialized with ExponentialDecay and ConstantFunction.
+    // This way we can be sure that clone_impl works for all derived classes of StateAgeFunction.
+    mio::ExponentialDecay expdecay(1.0);
+    mio::StateAgeFunctionWrapper wrapper_exp(expdecay);
+    EXPECT_NEAR(wrapper_exp.get_parameter(), 1.0, 1e-14);
+    EXPECT_NEAR(wrapper_exp.get_support_max(dt), 23.5, 1e-14);
+
+    mio::ConstantFunction constfunc(1.0);
+    mio::StateAgeFunctionWrapper wrapper_const(constfunc);
+    EXPECT_NEAR(wrapper_const.get_parameter(), 1.0, 1e-14);
+    EXPECT_NEAR(wrapper_const.get_support_max(dt), -2.0, 1e-14);
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
 {
+    // test only for SmootherCosine since we have checked set_parameter and get_parameter
+    // as well as get_support_max for all derived classes in previous test
+
     ScalarType testvalue_before = 1.0;
     ScalarType testvalue_after  = 2.0;
     ScalarType dt               = 0.5;
