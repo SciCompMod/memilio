@@ -24,15 +24,16 @@
 
 namespace mio
 {
-template <class Agent, class AbmToOdeConversion, class OdeToAbmConversion>
+template <class Agent, class AbmToOdeConversion, class OdeToAbmConversion, class OdeToAbmMapping>
 class MigrationEdgeHybrid
 {
 public:
     //used if start node is abm node, because then we do not need MigrationParameters
     MigrationEdgeHybrid(const AbmToOdeConversion& abm_to_ode_fct, const OdeToAbmConversion& ode_to_abm_fct,
-                        size_t num_compartments)
+                        const OdeToAbmMapping& ode_to_abm_mapping, size_t num_compartments)
         : m_abm_to_ode_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
+        , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_migrated_compartments(num_compartments)
         , m_start_node_is_abm(true)
     {
@@ -40,33 +41,35 @@ public:
 
     //constructors with parameters are used if start node is ode node
     MigrationEdgeHybrid(const MigrationParameters& params, const AbmToOdeConversion& abm_to_ode_fct,
-                        const OdeToAbmConversion& ode_to_abm_fct)
+                        const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(params)
         , m_migrated_compartments(params.get_coefficients().get_shape().rows())
         , m_abm_to_ode_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
+        , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_start_node_is_abm(false)
     {
     }
 
     MigrationEdgeHybrid(const Eigen::VectorXd& coeffs, const AbmToOdeConversion& abm_to_ode_fct,
-                        const OdeToAbmConversion& ode_to_abm_fct)
+                        const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(coeffs)
         , m_migrated_compartments(coeffs.rows())
         , m_abm_to_ode_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
+        , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_start_node_is_abm(false)
     {
     }
 
     /**
-             * @brief compute migration between an abm node and an ode node.
-             * For the abm node, migration is based on agents' migration rules and for an ode node,
-             * migration is based on coefficients. Migrations are deleted from the start node and added to the target node.
-             * @param[in] t time of migration
-             * @param[in, out] node_abm abm node. Can be start or target node.
-             * @param[in, out] node_ode ode node. Can be start or target node.
-            */
+     * @brief compute migration between an abm node and an ode node.
+     * For the abm node, migration is based on agents' migration rules and for an ode node,
+     * migration is based on coefficients. Migrations are deleted from the start node and added to the target node.
+     * @param[in] t time of migration
+     * @param[in, out] node_abm abm node. Can be start or target node.
+     * @param[in, out] node_ode ode node. Can be start or target node.
+    */
     template <class NodeAbm, class NodeOde>
     void apply_migration(double t, double dt, NodeAbm& node_abm, NodeOde& node_ode, NodeAbm& abm_node_to_ode_node)
     {
@@ -80,6 +83,7 @@ public:
                 while (person_iter < persons_to_migrate.size()) {
                     //get the persons that want to go to the target node
                     if ((persons_to_migrate[person_iter]->get_location()).get_world_id() == node_ode.id) {
+                        //agents a removed from start node world and added to migrated agents
                         m_migrated_agents.push_back(std::move(persons_to_migrate[person_iter]));
                         node_abm.get_simulation().get_graph_world().get_persons_to_migrate().erase(
                             node_abm.get_simulation().get_graph_world().get_persons_to_migrate().begin() + person_iter);
@@ -87,16 +91,21 @@ public:
                     }
                     ++person_iter;
                 }
+                //convert migrating agents to ode compartments
                 m_migrated_compartments.add_time_point(t, m_abm_to_ode_fct(m_migrated_agents));
+                //add migrating compartments to ode node
                 node_ode.get_result().get_last_value() += m_migrated_compartments.get_last_value();
             }
             //agents return from ode node
             else {
+                //returning compartments with euler step
                 auto total =
                     find_value_reverse(node_ode.get_result(), m_migrated_compartments.get_last_time(), 1e-10, 1e-10);
                 calculate_migration_returns(m_migrated_compartments.get_last_value(), node_ode.get_simulation(), *total,
                                             m_migrated_compartments.get_last_time(), dt);
-
+                //the lower-order return calculation may in rare cases produce negative compartments,
+                //especially at the beginning of the simulation.
+                //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
                 Eigen::VectorXd remaining_after_return =
                     (node_ode.get_result().get_last_value() - m_migrated_compartments.get_last_value()).eval();
                 for (Eigen::Index j = 0; j < node_ode.get_result().get_last_value().size(); ++j) {
@@ -115,24 +124,66 @@ public:
                         m_migrated_compartments.get_last_value()(j) += remaining_after_return(j);
                     }
                 }
+                //substract returning compartments from ode nodes
                 node_ode.get_result().get_last_value() -= m_migrated_compartments.get_last_value();
+                //convert return compartments to agents by setting migrated agents' status and location
                 m_ode_to_abm_fct(m_migrated_compartments.get_last_value(), m_migrated_agents);
+                //add returning agents to abm node and remove them from migrated agents
                 while (m_migrated_agents.size() > 0) {
                     node_abm.get_simulation().get_graph_world().add_existing_person(std::move(m_migrated_agents[0]));
                     m_migrated_agents.erase(m_migrated_agents.begin());
                 }
+                //remove returned compartments
                 m_migrated_compartments.remove_time_point(m_migrated_compartments.get_last_time());
+            }
+        }
+        //start node is ode
+        else {
+            if (m_migrated_compartments.get_num_time_points() == 0) {
+                //update agents status and location
+                m_ode_to_abm_fct(node_ode.get_result().get_last_value(),
+                                 abm_node_to_ode_node.property.get_simulation().get_graph_world().get_persons());
+
+                if ((m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
+                    m_migrated_compartments.add_time_point(
+                        t,
+                        (node_ode.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
+                         get_migration_factors(node_ode, t, node_ode.get_last_state()).array())
+                            .matrix());
+                    m_ode_to_abm_mapping(m_migrated_compartments.get_last_value(),
+                                         abm_node_to_ode_node.property.get_simulation().get_graph_world().get_persons(),
+                                         m_migrated_agents);
+                    while (m_migrated_agents.size() > 0) {
+                        auto& target_location = node_abm.get_simulation().get_graph_world().find_location(
+                            (m_migrated_agents[0]->get_location()).get_type(), *m_migrated_agents[0]);
+                        //let person migrate to location in target world
+                        m_migrated_agents[0]->migrate_to_other_world(target_location, true);
+                        //add person to abm node
+                        node_abm.get_simulation().get_graph_world().add_existing_person(
+                            std::move(m_migrated_agents[0]));
+                        m_migrated_agents.erase(m_migrated_agents.begin());
+                    }
+                }
+            }
+            //agents should return
+            else {
             }
         }
     }
 
 private:
-    boost::optional<MigrationParameters> m_parameters;
-    boost::optional<std::vector<std::unique_ptr<Agent>>> m_migrated_agents;
-    TimeSeries<double> m_migrated_compartments;
-    bool m_start_node_is_abm;
-    AbmToOdeConversion m_abm_to_ode_fct;
-    OdeToAbmConversion m_ode_to_abm_fct;
+    boost::optional<MigrationParameters>
+        m_parameters; ///< Parameters to calculated migrating compartments is start node is ode node
+    boost::optional<std::vector<std::unique_ptr<Agent>>>
+        m_migrated_agents; ///< Agents that have migrated to target node
+    TimeSeries<double> m_migrated_compartments; ///< compartments that have migrated to target node
+    bool m_start_node_is_abm; ///< whether node from is an abm node
+    AbmToOdeConversion m_abm_to_ode_fct; ///< Gets a vector with agents and returns the corresponding compartments
+    OdeToAbmConversion
+        m_ode_to_abm_fct; ///< Gets an ode node and the corresponding abm node. Updates the agents from the abm node (status and location).
+    OdeToAbmMapping
+        m_ode_to_abm_mapping; ///< Gets the migrating compartments and the abm node from which they should migrate. Picks agents according to migrating compartments from abm node,
+    ///< deletes them from abm node, sets their target location and adds them to m_migrated_agets
 };
 
 } // namespace mio
