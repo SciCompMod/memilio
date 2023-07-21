@@ -191,9 +191,9 @@ TEST(IdeSecir, checkSimulationFunctions)
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // Set working parameters.
-    // In our example we use m_max_support = 2 for all DelayDistribution%s
+    // In our example we use m_support_max = 2 for all DelayDistribution%s
     // For all TransitionDistribution%s we use a SmootherCosine Function with funcparam=2.
-    // In this case, funcparam is equal to the max_support.
+    // In this case, funcparam is equal to the support_max.
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
@@ -327,9 +327,9 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
 }
 
 // The idea of this test is to confirm that the equilibrium of the compartments
-// (after simulation for a long enough time) does not change if we have a different m_max_support
+// (after simulation for a long enough time) does not change if we have a different m_support_max
 // for the TransitionDistribution describing the transition from InfectedCritical To Recovered.
-// We also check whether the equilibirum is reached earlier if m_max_support is chosen smaller.
+// We also check whether the equilibirum is reached earlier if m_support_max is chosen smaller.
 TEST(IdeSecir, compareEquilibria)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -369,7 +369,7 @@ TEST(IdeSecir, compareEquilibria)
     mio::isecir::Model model2(std::move(init2), N, Dead_before);
 
     // Set working parameters.
-    // Here we set the max_support for the TransitionDistribution%s differently for both models.
+    // Here we set the support_max for the TransitionDistribution%s differently for both models.
     // In both models, all TransitionDistribution%s are SmootherCosineFunctions
 
     // For model
@@ -433,7 +433,7 @@ TEST(IdeSecir, compareEquilibria)
     }
 
     // Compute at what time the equilibrium was reached and check whether that time point is smaller for model than for model2
-    // (as we have a smaller max_support in model than in model2)
+    // (as we have a smaller support_max in model than in model2)
     ScalarType equilibrium_time{};
     ScalarType equilibrium_time2{};
     for (int t = 0; t < secihurd_simulated.get_num_time_points() - 1; t++) {

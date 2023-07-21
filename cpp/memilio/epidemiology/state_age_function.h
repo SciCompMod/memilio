@@ -36,24 +36,35 @@ namespace mio
 /**
  * @brief A generic function depending on the state age, i.e. the time already spent in some #InfectionState.
  * This is an abstract class and cannot be instantiated on its own.
+ *
+ * By construction, StateAgeFunction%s S(x) are only defined for non-negative values x>=0 with S(0)>=0. In order to
+ * approximate the support (size) of a StateAgeFunction it is thus sufficient to evaluate the function for positive x.
+ *
+ * Derived StateAgeFunctions can be used for two types of functionality. 
+ *  a) Monotonously decreasing functions describing the share of individuals that have not yet transitioned to the next
+ *     #InfectionState. These functions are denoted as #TransitionDistributions since 1 - TransitionDistribution 
+ *     represents a cumulative distribution function.
+ *  b) Arbitrary non-negative functions used for parameters such as TransmissionProbabilityOnContact.
  * 
  * Derived classes must implement the eval method which implements the actual function that is evaluated at some state age.
- * This function can depend on one parameter. 
+ * This function can depend on one parameter.
  *
  * The derived classes must also implement the clone_impl method which allows to deepcopy the derived class.
  * 
- * The get_max_support method is virtual and implements a basic version to determine the maximum support. 
+ * The get_support_max method is virtual and implements a basic version to determine the maximum of the support. 
  * For some derived classes there is a more efficient way (see e.g., SmootherCosine) to do this which is 
- * why it can be overridden. 
+ * why it can be overridden. The base class implementation uses the fact that the StateAgeFunction is monotonously 
+ * decreasing. This is no limitation as the support is only needed for StateAgeFunctions of Type a) as given above.
+ * For classes of type b) a dummy implementation logging an error for get_support_max() should be implemented.
  *
- * See below for examples of derived classes.
+ * See ExponentialDecay, SmootherCosine, and ConstantFunction for examples of derived classes.
  */
 struct StateAgeFunction {
 
     /**
      * @brief Constructs a new StateAgeFunction object
      * 
-     * @param init_parameter specifies the initial function parameter of the function.
+     * @param[in] init_parameter specifies the initial function parameter of the function.
      */
     StateAgeFunction(ScalarType init_parameter)
         : m_parameter{init_parameter}
@@ -127,28 +138,28 @@ struct StateAgeFunction {
     }
 
     /**
-     * @brief Computes the maximum support of the function depending on time step size dt and some tolerance tol. 
+     * @brief Computes the maximum of the support of the function using the time step size dt and some tolerance tol. 
      * 
-     * This is a basic version to determine the maximum support of a monotonously decreasing function,
+     * This is a basic version to determine the maximum of the support of a monotonously decreasing function,
      * evaluating the function at each time point until it reaches the boundaries of the support.
      *
      * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
      * support which is why this member function is virtual and can be overridden (see, e.g., SmootherCosine).
-     * The maximum support is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
+     * The maximum of the support is only needed for StateAgeFunction%s that are used as TransitionDistribution%s. 
      *
-     * @param[in] dt Time step size. 
+     * @param[in] dt Time step size at which function will be evaluated. 
      * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
-     * @return ScalarType max_support
+     * @return ScalarType support_max
      */
-    virtual ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10)
+    virtual ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10)
     {
-        ScalarType max_support = 0;
+        ScalarType support_max = 0;
 
-        while (eval(max_support) >= tol) {
-            max_support += dt;
+        while (eval(support_max) >= tol) {
+            support_max += dt;
         }
 
-        return max_support;
+        return support_max;
     }
 
     /**
@@ -194,7 +205,7 @@ struct ExponentialDecay : public StateAgeFunction {
     /**
      * @brief Constructs a new ExponentialDecay object
      * 
-     * @param init_parameter specifies the initial function parameter of the function.
+     * @param[in] init_parameter specifies the initial function parameter of the function.
      */
     ExponentialDecay(ScalarType init_parameter)
         : StateAgeFunction(init_parameter)
@@ -206,7 +217,7 @@ struct ExponentialDecay : public StateAgeFunction {
      *
      * m_parameter defines how fast the exponential function decays.
      * 
-     * @param state_age time at which the function should be evaluated
+     * @param[in] state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
@@ -254,7 +265,16 @@ struct SmootherCosine : public StateAgeFunction {
         return smoother_cosine(state_age, 0.0, m_parameter, 1.0, 0.0);
     }
 
-    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
+    /**
+     * @brief Computes the maximum of the support of the function. 
+     * 
+     * For SmootherCosine, the maximum of the support is equal to the function parameter.
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType support_max
+     */
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
     {
         unused(dt);
         unused(tol);
@@ -289,10 +309,10 @@ struct ConstantFunction : public StateAgeFunction {
     }
 
     /**
-     * @brief Defines smoother cosine function depending on state_age.
+     * @brief Defines constant function.
      *
-     * Used function goes through points (0,1) and (m_parameter,0) and is interpolated in between using a smoothed cosine function.
-     * 
+     *  The function parameter defines the value of the function. 
+     *
      * @param state_age time at which the function should be evaluated
      * @return ScalarType evaluation of the function at state_age. 
      */
@@ -302,16 +322,26 @@ struct ConstantFunction : public StateAgeFunction {
         return m_parameter;
     }
 
-    ScalarType get_max_support(ScalarType dt, ScalarType tol = 1e-10) override
+    /**
+     * @brief Computes the maximum of the support of the function. 
+     * 
+     * For ConstantFunction the maximum of the support would be infinity. This is why we do not want to use it 
+     * as a TransitionDistribution and getting the maximum of the support doe not make sense. 
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType support_max
+     */
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
     {
-        // In case of a ConstantFunction we would have max_support = infinity
+        // In case of a ConstantFunction we would have support_max = infinity
         // This type of function is not suited to be a TransitionDistribution
         // Raise error and return -1
 
         unused(dt);
         unused(tol);
 
-        log_error("This function is not suited to be a TransitionDistribution and getting the max_support doesn't make "
+        log_error("This function is not suited to be a TransitionDistribution and getting the support_max doesn't make "
                   "sense.");
 
         return -1;
@@ -443,16 +473,16 @@ struct StateAgeFunctionWrapper {
     /**
      * @brief Set the m_parameter object of m_function. 
      * 
-     * @param[in] new_parameter that determines new function parameter
+     * @param[in] new_parameter New parameter for StateAgeFunction.
      */
     void set_parameter(ScalarType new_parameter)
     {
         m_function->set_parameter(new_parameter);
     }
 
-    ScalarType get_max_support(ScalarType dt) const
+    ScalarType get_support_max(ScalarType dt) const
     {
-        return m_function->get_max_support(dt);
+        return m_function->get_support_max(dt);
     }
 
 private:

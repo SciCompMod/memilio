@@ -122,11 +122,11 @@ void Model::compute_flow(int idx_InfectionTransitions, Eigen::Index idx_Incoming
     Since we are using a backwards difference scheme to compute the derivative, we have that the
     derivative of TransitionDistribution(m_dt*i) = 0 for all i >= k+1.
 
-    Hence calc_time_index goes until std::ceil(max_support/m_dt) since for std::ceil(max_support/m_dt)+1 all terms are already zero. 
+    Hence calc_time_index goes until std::ceil(support_max/m_dt) since for std::ceil(support_max/m_dt)+1 all terms are already zero. 
     This needs to be adjusted if we are changing the finite difference scheme */
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(
-        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_max_support(dt) / dt);
+        parameters.get<TransitionDistributions>()[idx_InfectionTransitions].get_support_max(dt) / dt);
 
     Eigen::Index num_time_points = m_transitions.get_num_time_points();
 
@@ -196,17 +196,17 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
     // determine the relevant calculation area = union of the supports of the relevant transition distributions
     ScalarType calc_time = std::max(
         {parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-             .get_max_support(dt),
+             .get_support_max(dt),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-             .get_max_support(dt),
+             .get_support_max(dt),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-             .get_max_support(dt),
+             .get_support_max(dt),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-             .get_max_support(dt)});
+             .get_support_max(dt)});
 
     // corresponding index
     /* need calc_time_index timesteps in sum,
-     subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of max_support)*/
+     subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max)*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
     Eigen::Index num_time_points;
@@ -262,8 +262,8 @@ void Model::compute_compartment(Eigen::Index idx_InfectionState, Eigen::Index id
 
     // determine relevant calculation area and corresponding index
     ScalarType calc_time =
-        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_max_support(dt),
-                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_max_support(dt));
+        std::max(parameters.get<TransitionDistributions>()[idx_TransitionDistribution1].get_support_max(dt),
+                 parameters.get<TransitionDistributions>()[idx_TransitionDistribution2].get_support_max(dt));
 
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 

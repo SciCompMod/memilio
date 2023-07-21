@@ -40,31 +40,31 @@ TEST(TestStateAgeFunction, testSpecialMember)
 
     // constructor
     EXPECT_EQ(smoothcos.get_parameter(), 1.0);
-    EXPECT_EQ(smoothcos.get_max_support(dt), 1.0);
+    EXPECT_EQ(smoothcos.get_support_max(dt), 1.0);
 
     // copy
     mio::SmootherCosine smoothcos2(smoothcos);
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos2.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos2.get_parameter());
-    EXPECT_EQ(smoothcos.get_max_support(dt), smoothcos2.get_max_support(dt));
+    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos2.get_support_max(dt));
 
     // move
     mio::SmootherCosine smoothcos3(std::move(smoothcos2));
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos3.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos3.get_parameter());
-    EXPECT_EQ(smoothcos.get_max_support(dt), smoothcos3.get_max_support(dt));
+    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos3.get_support_max(dt));
 
     // copy assignment
     mio::SmootherCosine smoothcos4 = smoothcos3;
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos4.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos4.get_parameter());
-    EXPECT_EQ(smoothcos.get_max_support(dt), smoothcos4.get_max_support(dt));
+    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos4.get_support_max(dt));
 
     // move assignment
     mio::SmootherCosine smoothcos5 = std::move(smoothcos4);
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos5.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos5.get_parameter());
-    EXPECT_EQ(smoothcos.get_max_support(dt), smoothcos5.get_max_support(dt));
+    EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos5.get_support_max(dt));
 }
 
 TEST(TestStateAgeFunction, testSettersAndGetters)
@@ -76,11 +76,11 @@ TEST(TestStateAgeFunction, testSettersAndGetters)
     mio::SmootherCosine smoothcos(testvalue_before);
 
     EXPECT_EQ(smoothcos.get_parameter(), testvalue_before);
-    EXPECT_EQ(smoothcos.get_max_support(dt), testvalue_before);
+    EXPECT_EQ(smoothcos.get_support_max(dt), testvalue_before);
 
     smoothcos.set_parameter(testvalue_after);
     EXPECT_EQ(smoothcos.get_parameter(), testvalue_after);
-    EXPECT_EQ(smoothcos.get_max_support(dt), testvalue_after);
+    EXPECT_EQ(smoothcos.get_support_max(dt), testvalue_after);
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
@@ -91,31 +91,31 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
 
     // constructor
     EXPECT_EQ(wrapper.get_parameter(), 1.0);
-    EXPECT_EQ(wrapper.get_max_support(dt), 1.0);
+    EXPECT_EQ(wrapper.get_support_max(dt), 1.0);
 
     // copy
     mio::StateAgeFunctionWrapper wrapper2(wrapper);
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper2.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper2.get_parameter());
-    EXPECT_EQ(wrapper.get_max_support(dt), wrapper2.get_max_support(dt));
+    EXPECT_EQ(wrapper.get_support_max(dt), wrapper2.get_support_max(dt));
 
     // move
     mio::StateAgeFunctionWrapper wrapper3(std::move(wrapper2));
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper3.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper3.get_parameter());
-    EXPECT_EQ(wrapper.get_max_support(dt), wrapper3.get_max_support(dt));
+    EXPECT_EQ(wrapper.get_support_max(dt), wrapper3.get_support_max(dt));
 
     // copy assignment
     mio::StateAgeFunctionWrapper wrapper4 = wrapper3;
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper4.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper4.get_parameter());
-    EXPECT_EQ(wrapper.get_max_support(dt), wrapper4.get_max_support(dt));
+    EXPECT_EQ(wrapper.get_support_max(dt), wrapper4.get_support_max(dt));
 
     // move assignment
     mio::StateAgeFunctionWrapper wrapper5 = std::move(wrapper4);
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper5.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper5.get_parameter());
-    EXPECT_EQ(wrapper.get_max_support(dt), wrapper5.get_max_support(dt));
+    EXPECT_EQ(wrapper.get_support_max(dt), wrapper5.get_support_max(dt));
 }
 
 TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
@@ -128,11 +128,11 @@ TEST(TestStateAgeFunction, testSAFWrapperSettersAndGetters)
     mio::StateAgeFunctionWrapper wrapper(smoothcos);
 
     EXPECT_EQ(wrapper.get_parameter(), testvalue_before);
-    EXPECT_EQ(wrapper.get_max_support(dt), testvalue_before);
+    EXPECT_EQ(wrapper.get_support_max(dt), testvalue_before);
 
     wrapper.set_parameter(testvalue_after);
     EXPECT_EQ(wrapper.get_parameter(), testvalue_after);
-    EXPECT_EQ(wrapper.get_max_support(dt), testvalue_after);
+    EXPECT_EQ(wrapper.get_support_max(dt), testvalue_after);
 }
 
 TEST(TestStateAgeFunction, testComparisonOperator)

@@ -166,60 +166,66 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
-     * @return Returns 1 if one constraint is not satisfied, otherwise 0.
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error.
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
-    int check_constraints() const
+    bool check_constraints(ScalarType dt) const
     {
-        for (int i = 0; i < 20; i++) {
-            std::cout << this->get<TransmissionProbabilityOnContact>().eval(i) << "\n";
-            if (this->get<TransmissionProbabilityOnContact>().eval(i) < 0.0 ||
-                this->get<TransmissionProbabilityOnContact>().eval(i) > 1.0) {
+        size_t check_eval_min = 50; // parameter defining minimal window on x-axis
+        for (size_t i = 0;
+             i < std::min(check_eval_min, (size_t)this->get<TransmissionProbabilityOnContact>().get_support_max(dt));
+             i++) {
+            if (this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) < 0.0 ||
+                this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
-                return 1;
+                return true;
             }
         }
 
-        for (int i = 0; i < 20; i++) {
-            if (this->get<RelativeTransmissionNoSymptoms>().eval(i) < 0.0 ||
-                this->get<RelativeTransmissionNoSymptoms>().eval(i) > 1.0) {
+        for (size_t i = 0;
+             i < std::min(check_eval_min, (size_t)this->get<RelativeTransmissionNoSymptoms>().get_support_max(dt));
+             i++) {
+            if (this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) < 0.0 ||
+                this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
-                return 1;
+                return true;
             }
         }
 
-        for (int i = 0; i < 20; i++) {
-            if (this->get<RiskOfInfectionFromSymptomatic>().eval(i) < 0.0 ||
-                this->get<RiskOfInfectionFromSymptomatic>().eval(i) > 1.0) {
+        for (size_t i = 0;
+             i < std::min(check_eval_min, (size_t)this->get<RiskOfInfectionFromSymptomatic>().get_support_max(dt));
+             i++) {
+            if (this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) < 0.0 ||
+                this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
-                return 1;
+                return true;
             }
         }
 
-        for (int i = 0; i < (int)InfectionTransition::Count; i++) {
+        for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
             if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
                 log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
-                return 1;
+                return true;
             }
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed] != 1.0) {
             log_error("Constraint check: Parameter transitiion probability for SusceptibleToExposed unequal to {:d}",
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms] != 1.0) {
             log_error(
                 "Constraint check: Parameter transitiion probability for ExposedToInfectedNoSymptoms unequal to {:d}",
                 1);
-            return 1;
+            return true;
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
@@ -228,7 +234,7 @@ public:
             log_error("Constraint check: Sum of transitiion probability for InfectedNoSymptomsToInfectedSymptoms and "
                       "InfectedNoSymptomsToRecovered unequal to {:d}",
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
@@ -237,7 +243,7 @@ public:
             log_error("Constraint check: Sum of transitiion probability for InfectedSymptomsToInfectedSevere and "
                       "InfectedSymptomsToRecovered unequal to {:d}",
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
@@ -246,7 +252,7 @@ public:
             log_error("Constraint check: Sum of transitiion probability for InfectedSevereToInfectedCritical and "
                       "InfectedSevereToRecovered unequal to {:d}",
                       1);
-            return 1;
+            return true;
         }
 
         if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
@@ -255,10 +261,10 @@ public:
             log_error("Constraint check: Sum of transitiion probability for InfectedCriticalToDead and "
                       "InfectedCriticalToRecovered unequal to {:d}",
                       1);
-            return 1;
+            return true;
         }
 
-        return 0;
+        return false;
     }
 
     /**

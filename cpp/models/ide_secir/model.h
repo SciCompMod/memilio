@@ -72,32 +72,32 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-        ScalarType max_support = std::max(
+        ScalarType support_max = std::max(
             {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_max_support(dt),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_max_support(dt)});
+                 .get_support_max(dt)});
 
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(max_support / dt)) {
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
 
-        parameters.check_constraints();
+        parameters.check_constraints(dt);
     }
 
     /**
