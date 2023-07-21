@@ -261,6 +261,17 @@ public:
         return 0;
     }
 
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
+
 private:
     Parameters(ParametersBase&& base)
         : ParametersBase(std::move(base))
