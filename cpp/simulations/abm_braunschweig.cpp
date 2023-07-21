@@ -154,6 +154,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::map<uint32_t, mio::abm::Person&> persons      = {};
 
     int number_persons = 0;
+    int number_lines   = 0;
+    int number_trips   = 0;
 
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
@@ -172,10 +174,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t person_id          = row[index["puid"]];
         uint32_t age                = row[index["age"]]; // TODO
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
-        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
         uint32_t home_id            = row[index["huid"]];
         uint32_t activity_end       = row[index["activity_end"]];
-        uint32_t trip_start         = row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
@@ -208,9 +208,37 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             }
             it_person->second.set_assigned_location(location);
         }
-        world.get_trip_list().add_trip(
-            mio::abm::Trip(it_person->second.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
-                           locations.find(target_location_id)->second, locations.find(start_location_id)->second));
+        number_lines++;
+    }
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    while (std::getline(fin, line) && number_trips < number_lines) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id          = row[index["puid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
+        uint32_t trip_start         = row[index["start_time"]];
+
+        auto person          = persons.find(person_id)->second;
+        auto target_location = locations.find(target_location_id)->second;
+        auto start_location  = locations.find(start_location_id)->second;
+
+        if (locations.find(start_location_id) == locations.end()) {
+            // For trips where the start location is not known use Home instead
+            start_location = {person.get_assigned_location_index(mio::abm::LocationType::Home),
+                              mio::abm::LocationType::Home};
+        }
+        world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                                                      target_location, start_location));
+        number_trips++;
     }
     world.get_trip_list().use_weekday_trips_on_weekend();
 }
