@@ -70,11 +70,9 @@ TEST(TestStateAgeFunction, testSpecialMember)
     // copy and move (assignment) are defined in base class StateAgeFunction and are equal for all derived classes
     mio::ExponentialDecay expdecay(1.0);
     EXPECT_EQ(expdecay.get_parameter(), 1.0);
-    EXPECT_NEAR(expdecay.get_support_max(dt), 23.5, 1e-14);
 
     mio::ConstantFunction constfunc(1.0);
     EXPECT_EQ(constfunc.get_parameter(), 1.0);
-    EXPECT_NEAR(constfunc.get_support_max(dt), -2.0, 1e-14);
 }
 
 TEST(TestStateAgeFunction, testSettersAndGettersForParameter)

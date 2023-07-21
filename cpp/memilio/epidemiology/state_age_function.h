@@ -56,7 +56,7 @@ namespace mio
  * For some derived classes there is a more efficient way (see e.g., SmootherCosine) to do this which is 
  * why it can be overridden. The base class implementation uses the fact that the StateAgeFunction is monotonously 
  * decreasing. This is no limitation as the support is only needed for StateAgeFunctions of Type a) as given above.
- * For classes of type b) a dummy implementation logging an error and returnung -2 for get_support_max() should be implemented.
+ * For classes of type b) a dummy implementation logging an error and returning -2 for get_support_max() should be implemented.
  *
  * See ExponentialDecay, SmootherCosine and ConstantFunction for examples of derived classes.
  */
@@ -69,7 +69,8 @@ struct StateAgeFunction {
      */
     StateAgeFunction(ScalarType init_parameter)
         : m_parameter{init_parameter}
-        , m_support_max{-1.} // initialize support as not set
+        , m_support_max{-1.} // initialize support maximum as not set
+        , m_support_tol{-1.} // initialize support tolerance as not set
     {
     }
 
@@ -157,14 +158,15 @@ struct StateAgeFunction {
     {
         ScalarType support_max = 0;
 
-        if (!floating_point_equal(m_tol_support, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+        if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
             while (eval(support_max) >= tol) {
                 support_max += dt;
             }
 
             m_support_max = support_max;
+            m_support_tol = tol;
         }
-        std::cout << "max supp " << m_support_max << "\n";
+
         return m_support_max;
     }
 
@@ -198,7 +200,7 @@ protected:
 
     ScalarType m_parameter; ///< Parameter for function in derived class.
     ScalarType m_support_max; ///< Maximum of the support of the function.
-    ScalarType m_tol_support; ///< Tolerance for computation of the support.
+    ScalarType m_support_tol; ///< Tolerance for computation of the support.
 };
 
 /**************************************
@@ -213,7 +215,7 @@ struct ExponentialDecay : public StateAgeFunction {
     /**
      * @brief Constructs a new ExponentialDecay object
      * 
-     * @param[in] init_parameter specifies the initial function parameter of the function.
+     * @param[in] init_parameter Specifies the initial function parameter of the function.
      */
     ExponentialDecay(ScalarType init_parameter)
         : StateAgeFunction(init_parameter)
@@ -225,9 +227,8 @@ struct ExponentialDecay : public StateAgeFunction {
      *
      * m_parameter defines how fast the exponential function decays.
      * 
-     * @param[in] state_age time at which the function should be evaluated
-     * @param[in] state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the function at state_age. 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
@@ -238,7 +239,7 @@ protected:
     /**
      * @brief Implements clone for ExponentialDecay.
      * 
-     * @return StateAgeFunction* 
+     * @return Pointer to StateAgeFunction.
      */
     StateAgeFunction* clone_impl() const override
     {
@@ -247,7 +248,7 @@ protected:
 };
 
 /**
- * @brief Class that defines an smoother cosine function depending on the state age.
+ * @brief Class that defines an smoother_cosine function depending on the state age.
  */
 struct SmootherCosine : public StateAgeFunction {
 
@@ -266,8 +267,8 @@ struct SmootherCosine : public StateAgeFunction {
      *
      * Used function goes through points (0,1) and (m_parameter,0) and is interpolated in between using a smoothed cosine function.
      * 
-     * @param[in] state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the function at state_age. 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
@@ -322,8 +323,8 @@ struct ConstantFunction : public StateAgeFunction {
      *
      *  The function parameter defines the value of the function. 
      *
-     * @param state_age time at which the function should be evaluated
-     * @return ScalarType evaluation of the function at state_age. 
+     * @param state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) override
     {
@@ -462,7 +463,7 @@ struct StateAgeFunctionWrapper {
      * @brief Accesses eval of m_function.
      *
      * @param[in] state_age Time at which the function is evaluated.
-     * @return ScalarType evaluation of the function at state_age. 
+     * @return Evaluation of the function at state_age. 
      */
     ScalarType eval(ScalarType state_age) const
     {
