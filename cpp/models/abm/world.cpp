@@ -109,9 +109,9 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend         = t.is_weekend();
-    size_t num_trips     = m_trip_list.num_trips(weekend);
-    if(t.hour_of_day() == 0){
+    bool weekend     = t.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
+    if (t.hour_of_day() == 0) {
         m_trip_list.reset_index();
     }
 
@@ -167,6 +167,13 @@ const Location& World::get_individualized_location(LocationId id) const
 Location& World::get_individualized_location(LocationId id)
 {
     return *m_locations[id.index];
+}
+
+const Location& World::find_location(LocationType type, const Person& person) const
+{
+    auto index = person.get_assigned_location_index(type);
+    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
+    return get_individualized_location({index, type});
 }
 
 Location& World::find_location(LocationType type, const Person& person)

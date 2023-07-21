@@ -559,6 +559,32 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     return sim;
 }
 
+struct LogLocationInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type location_information{};
+        for (auto&& location : sim.get_world().get_locations()) {
+            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
+        }
+        return location_information;
+    }
+};
+
+struct LogPersonInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type person_information{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            person_information.push_back(std::make_tuple(
+                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_age()));
+        }
+        return person_information;
+    }
+};
+
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
@@ -574,13 +600,15 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
 
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
+        //output object
+        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
             loc_ids.push_back(location.get_index());
         }
         // Advance the world to tmax
-        sim.advance(tmax);
+        sim.advance(tmax, history);
         // TODO: update result of the simulation to be a vector of location result.
         auto temp_sim_result = std::vector<mio::TimeSeries<ScalarType>>{sim.get_result()};
         // Push result of the simulation back to the result vector

@@ -329,6 +329,24 @@ public:
      */
     const TimeSeries<ScalarType>& get_subpopulations() const;
 
+    /**
+     * @brief Get the geographical location of the Location.
+     * @return The geographical location of the Location.
+     */
+    GeographicalLocation get_geographical_location() const
+    {
+        return m_geographical_location;
+    }
+
+    /**
+     * @brief Set the geographical location of the Location.
+     * @param[in] location The geographical location of the Location.
+     */
+    void set_geographical_location(GeographicalLocation location)
+    {
+        m_geographical_location = location;
+    }
+
 private:
     LocationId m_id; ///< Id of the Location including type and index.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
@@ -340,6 +358,7 @@ private:
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
+    GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
 };
 
 } // namespace abm
