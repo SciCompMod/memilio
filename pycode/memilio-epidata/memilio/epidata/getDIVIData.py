@@ -86,34 +86,17 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         print("Warning: First data available on 2020-04-24. "
-              "You asked for " + start_date.strftime("%Y-%m-%d") + ". Changed it to 2020-04-24.")
+              "You asked for " + start_date.strftime("%Y-%m-%d") +
+              ". Changed it to 2020-04-24.")
         start_date = date(2020, 4, 24)
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
-
-    if read_data:
-        # read json file for already downloaded data
-        file_in = os.path.join(directory, filename + ".json")
-
-        try:
-            df_raw = pd.read_json(file_in)
-        # pandas>1.5 raise FileNotFoundError instead of ValueError
-        except (ValueError, FileNotFoundError):
-            raise FileNotFoundError("Error: The file: " + file_in +
-                                    " does not exist. Call program without"
-                                    " -r flag to get it.")
-    else:
-        try:
-            df_raw = gd.loadCsv(
-                'zeitreihe-tagesdaten',
-                apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
-                extension='.csv')
-        except FileNotFoundError as err:
-            raise FileNotFoundError(
-                "Error: Download link for Divi data has changed.") from err
+    url = "https://diviexchange.blob.core.windows.net/%24web/zeitreihe-tagesdaten.csv"
+    path = os.path.join(directory + filename + ".json")
+    df_raw = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
     if not df_raw.empty:
         if not no_raw:
@@ -125,8 +108,16 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df[dd.EngEng['date']] = pd.to_datetime(
-        df[dd.EngEng['date']], format='ISO8601')
+    try:
+        df[dd.EngEng['date']] = pd.to_datetime(
+            df[dd.EngEng['date']], format="ISO8601")
+    except ValueError:
+        try:
+            df[dd.EngEng['date']] = pd.to_datetime(
+                df[dd.EngEng['date']], format="%Y-%m-%d %H:%M:%S")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)

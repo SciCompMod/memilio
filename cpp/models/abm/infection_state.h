@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_STATE_H
-#define EPI_ABM_STATE_H
+#ifndef EPI_ABM_INFECTION_STATE_H
+#define EPI_ABM_INFECTION_STATE_H
 
 #include <cstdint>
 
@@ -35,25 +35,12 @@ enum class InfectionState : std::uint32_t
 {
     Susceptible = 0,
     Exposed,
-    Carrier,
-    Infected,
-    Infected_Severe,
-    Infected_Critical,
-    Recovered_Carrier,
-    Recovered_Infected,
+    InfectedNoSymptoms,
+    InfectedSymptoms,
+    InfectedSevere,
+    InfectedCritical,
+    Recovered,
     Dead,
-
-    Count //last!!
-};
-
-/**
- * vaccination state in ABM.
- * can be used as 0-based index.
- */
-enum class VaccinationState : std::uint32_t
-{
-    Unvaccinated = 0,
-    Vaccinated,
 
     Count //last!!
 };

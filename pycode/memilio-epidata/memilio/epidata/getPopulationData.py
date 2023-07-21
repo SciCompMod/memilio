@@ -167,65 +167,18 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     filename_zensus = 'zensus'
     filename_reg_key = 'reg_key'
 
-    if read_data:
+    url_zensus = 'https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv'
+    url_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
+        '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
+    path_zensus = os.path.join(directory, filename_zensus + ".json")
+    path_reg_key = os.path.join(directory, filename_zensus + ".json")
+    zensus = gd.get_file(
+        path_zensus, url_zensus, read_data, param_dict={}, interactive=True)
+    reg_key = gd.get_file(path_reg_key, url_reg_key, read_data, param_dict={
+        "engine": None, "sheet_name": 'Tabelle_1A', "header": 12}, interactive=True)
+    counties = geoger.get_official_county_table()
 
-        # Read counties File
-        file_in = os.path.join(directory, filename_counties + ".json")
-        try:
-            counties = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-
-        # Read Zensus File
-        file_in = os.path.join(directory, filename_zensus + ".json")
-        try:
-            zensus = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-
-        # Read reg_key File
-        file_in = os.path.join(directory, filename_reg_key + ".json")
-        try:
-            reg_key = pd.read_json(file_in)
-        except FileNotFoundError:
-            error_message = "Error: The file: " + file_in + \
-                "could not be read. Call program without -r flag to get it."
-            raise FileNotFoundError(error_message)
-    else:
-        try:
-            counties = geoger.get_official_county_table()
-        except FileNotFoundError:
-            error_message = "Error: The counties file does not exist."
-            raise FileNotFoundError(error_message)
-
-        # Download zensus
-
-        try:
-            # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
-            # utf_8_sig can identify those bytes as one sign and display it correctly
-            zensus = gd.loadCsv(
-                "abad92e8eead46a4b0d252ee9438eb53_1",
-                param_dict={"encoding": 'utf_8_sig'})
-        except FileNotFoundError:
-            error_message = "Error: The zensus file does not exist."
-            raise FileNotFoundError(error_message)
-
-        # Download reg_key
-
-        try:
-            path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                           '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-            # read tables
-            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='', param_dict={
-                                   "engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
-        except FileNotFoundError:
-            error_message = "Error: The reg-key file does not exist."
-            raise FileNotFoundError(error_message)
-
+    if not read_data:
         if not no_raw:
             if not counties.empty:
                 gd.write_dataframe(counties, directory,
@@ -297,14 +250,16 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """
     directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
-    new_data_file = os.path.join(directory, filename)
-    new_data_avail = os.path.isfile(new_data_file + '.xlsx')
+    new_data_file = os.path.join(directory, filename+'.xlsx')
+    new_data_avail = os.path.isfile(new_data_file)
 
     if new_data_avail:
         print('Information: Using new population data file ' + filename)
-        df_pop_raw = gd.loadExcel(
-            new_data_file, apiUrl='', extension='.xlsx',
-            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4})
+        df_pop_raw = gd.get_file(
+            new_data_file, url='', read_data=True,
+            param_dict={"engine": "openpyxl",
+                        "sheet_name": filename, "header": 4},
+            interactive=False)
         column_names = list(df_pop_raw.columns)
         # rename columns
         rename_columns = {
