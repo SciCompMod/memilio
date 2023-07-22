@@ -168,9 +168,10 @@ public:
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error.
+     * @param dt Time step size which is used to get model specific StateAgeFunction%s support.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
-    bool check_constraints(ScalarType dt) const
+    bool check_constraints(ScalarType dt = 0.1) const
     {
         size_t check_eval_min = 50; // parameter defining minimal window on x-axis
         for (size_t i = 0;
@@ -211,7 +212,8 @@ public:
 
         for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
             if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
-                log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0,
+                          1);
                 return true;
             }
         }
@@ -272,11 +274,11 @@ public:
         }
 
         for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
-            if (floating_point_less(this->.get<TransitionDistributions>()[i].get_support_max(10), 0.0, 1e-14)) {
+            if (floating_point_less(this->get<TransitionDistributions>()[i].get_support_max(10), 0.0, 1e-14)) {
                 log_error("Constraint check: One parameter in TransitionDistributions has invalid support.");
                 return true;
             }
-        }        
+        }
 
         return false;
     }
