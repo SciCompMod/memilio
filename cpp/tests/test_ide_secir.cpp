@@ -24,6 +24,7 @@
 #include "ide_secir/model.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
+#include "memilio/epidemiology/state_age_function.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
@@ -241,6 +242,149 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
+TEST(IdeSecir, testValueConstraints)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType tmax        = 30;
+    ScalarType N           = 10000;
+    ScalarType Dead_before = 10;
+    ScalarType dt          = 1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    mio::TimeSeries<ScalarType> init(num_transitions);
+
+    // add time points for initialization for transitions
+    Vec vec_init(num_transitions);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 10.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
+    // add initial time point to time series
+    init.add_time_point(-12, vec_init);
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize two models.
+    mio::isecir::Model model(std::move(init), N, Dead_before);
+
+    // Deactivate temporarilylog output for next tests.
+    mio::set_log_level(mio::LogLevel::off);    
+
+    // Set wrong parameters and use check constraints.
+
+    // Create invalid and valid function and first set invalid function for all parameters.
+    // Go same order as in check_constraints().
+    mio::ConstantFunction constant_func_neg(-1);
+    mio::StateAgeFunctionWrapper prob_neg(constant_func);
+    mio::ConstantFunction constant_func_pos(1);
+    mio::StateAgeFunctionWrapper prob_pos(constant_func);    
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob_neg);
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob_neg);
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob_neg);
+        
+    // Warn, i.e., return true for wrong TransmissionProbabilityOnContact.
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Warn, i.e., return true for wrong RelativeTransmissionNoSymptoms.
+    model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob_pos);    
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Warn, i.e., return true for wrong RiskOfInfectionFromSymptomatic.
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob_pos);    
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check) 
+    // correct wrong parameter so that next check can go through.
+    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob_pos);    
+
+    // Set wrong values for InfectionTransitions, one after the other.
+    std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] = 0.2;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 1.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)]        = -0.6;
+    model.parameters.set<mio::isecir::TransitionProbabilities>(vec_prob);
+    // Check all, stop at InfectedCriticalToDead.
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check SusceptibleToExposed.
+    model.parameters.get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedCriticalToDead] = 0.6;
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check ExposedToInfectedNoSymptoms.
+    model.parameters.get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::SusceptibleToExposed] = 1.0;
+    model.parameters.get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::ExposedToInfectedNoSymptoms] =
+        -1.0;
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check sum InfectedNoSymptomsToInfectedSymptoms + InfectedNoSymptomsToRecovered.
+    model.parameters.get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::ExposedToInfectedNoSymptoms] =
+        1.0;
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedNoSymptomsToRecovered] = 0.9;
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check sum InfectedSymptomsToInfectedSevere + InfectedSymptomsToRecovered.
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedNoSymptomsToRecovered] = 1.0;
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] = 0.2;
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check sum InfectedSevereToInfectedCritical + InfectedCriticalToRecovered.
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] = 1.0;
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedSevereToRecovered] = 0.4;        
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)
+
+    // Check sum InfectedCriticalToDead + InfectedSevereToRecovered.
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedSevereToRecovered] = 0.0;     
+    model.parameters
+        .get<mio::isecir::TransitionProbabilities>[(int)InfectionTransition::InfectedCriticalToDead] = 0.59;                
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)    
+
+    // Set wrong function type with unlimited support.
+    mio::ConstantFunction const_func(1.0);
+    mio::StateAgeFunctionWrapper delaydistribution(const_func);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);    
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_TRUE(constraint_check)    
+
+    // Check all parameter are correct.
+    mio::ConstantFunction const_func(1.0);
+    mio::StateAgeFunctionWrapper delaydistribution(const_func);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);    
+    auto constraint_check = model.parameters.check_constraints();
+    EXPECT_FALSE(constraint_check)        
+
+    // Reactive log output.
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
 // The idea of this test is to check whether the proportion between Recovered and Dead is as expected
 // (after simulation for a long enough time, i.e. when the equlibrium is reached).
 TEST(IdeSecir, checkProportionRecoveredDeath)
@@ -287,7 +431,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(3.0);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
 
-    // Set probabilties so that all indiviudal go from Susceptible to InfectedCritical with probability 1, from there they move
+    // Set probabilities so that all individuals go from Susceptible to InfectedCritical with probability 1, from there they move
     // to Recovered or Dead with probability 0.5, respectively.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
@@ -388,7 +532,7 @@ TEST(IdeSecir, compareEquilibria)
     model2.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib2);
 
     // All remaining parameters are equal for both models.
-    // Set probabilties so that all indiviudal go from Susceptible to InfectedCritical with probability 1, from there they move
+    // Set probabilities so that all individuals go from Susceptible to InfectedCritical with probability 1, from there they move
     // to Recovered or Dead with probability 0.5, respectively.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
@@ -452,7 +596,7 @@ TEST(IdeSecir, compareEquilibria)
     EXPECT_TRUE(equilibrium_time <= equilibrium_time2);
 }
 
-TEST(IdeSecir, infection_transitions)
+TEST(IdeSecir, checkInfectionTransitions)
 {
     EXPECT_EQ(mio::isecir::InfectionTransitionsMap.size(), mio::isecir::InfectionTransitionsCount);
 

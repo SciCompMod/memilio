@@ -48,6 +48,11 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos2.get_parameter());
     EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos2.get_support_max(dt));
 
+    // check copy is true copy, not reference
+    smoothcos.set_parameter(2.0);
+    EXPECT_NE(smoothcos.get_parameter(), smoothcos2.get_parameter());
+    smoothcos.set_parameter(1.0);
+
     // move
     mio::SmootherCosine smoothcos3(std::move(smoothcos2));
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos3.get_state_age_function_type());
@@ -59,6 +64,11 @@ TEST(TestStateAgeFunction, testSpecialMember)
     EXPECT_EQ(smoothcos.get_state_age_function_type(), smoothcos4.get_state_age_function_type());
     EXPECT_EQ(smoothcos.get_parameter(), smoothcos4.get_parameter());
     EXPECT_EQ(smoothcos.get_support_max(dt), smoothcos4.get_support_max(dt));
+
+    // check copy is true copy, not reference
+    smoothcos.set_parameter(2.0);
+    EXPECT_NE(smoothcos.get_parameter(), smoothcos4.get_parameter());
+    smoothcos.set_parameter(1.0);
 
     // move assignment
     mio::SmootherCosine smoothcos5 = std::move(smoothcos4);
@@ -120,6 +130,11 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_parameter(), wrapper2.get_parameter());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper2.get_support_max(dt));
 
+    // test true copy, not reference
+    wrapper.set_parameter(2.0);
+    EXPECT_NE(wrapper.get_parameter(), wrapper2.get_parameter());
+    wrapper.set_parameter(1.0);
+
     // move
     mio::StateAgeFunctionWrapper wrapper3(std::move(wrapper2));
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper3.get_state_age_function_type());
@@ -131,6 +146,11 @@ TEST(TestStateAgeFunction, testSAFWrapperSpecialMember)
     EXPECT_EQ(wrapper.get_state_age_function_type(), wrapper4.get_state_age_function_type());
     EXPECT_EQ(wrapper.get_parameter(), wrapper4.get_parameter());
     EXPECT_EQ(wrapper.get_support_max(dt), wrapper4.get_support_max(dt));
+
+    // test true copy, not reference
+    wrapper.set_parameter(2.0);
+    EXPECT_NE(wrapper.get_parameter(), wrapper4.get_parameter());
+    wrapper.set_parameter(1.0);    
 
     // move assignment
     mio::StateAgeFunctionWrapper wrapper5 = std::move(wrapper4);

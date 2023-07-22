@@ -21,6 +21,7 @@
 #define IDE_SECIR_PARAMS_H
 
 #include "memilio/config.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/utils/parameter_set.h"
 #include "ide_secir/infection_state.h"
 #include "memilio/math/eigen.h"
@@ -210,59 +211,72 @@ public:
 
         for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
             if (this->get<TransitionProbabilities>()[i] < 0.0 || this->get<TransitionProbabilities>()[i] > 1.0) {
-                log_error("Constraint check: One parameter TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed] != 1.0) {
-            log_error("Constraint check: Parameter transitiion probability for SusceptibleToExposed unequal to {:d}",
-                      1);
+        if (!floating_point_equal(this->get<TransitionProbabilities>()[(int)InfectionTransition::SusceptibleToExposed],
+                                  1.0, 1e-14)) {
+            log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}", 1);
             return true;
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms] != 1.0) {
+        if (!floating_point_equal(
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms], 1.0,
+                1e-14)) {
             log_error(
-                "Constraint check: Parameter transitiion probability for ExposedToInfectedNoSymptoms unequal to {:d}",
+                "Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal to {:d}",
                 1);
             return true;
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered] !=
-            1.0) {
-            log_error("Constraint check: Sum of transitiion probability for InfectedNoSymptomsToInfectedSymptoms and "
-                      "InfectedNoSymptomsToRecovered unequal to {:d}",
+        if (!floating_point_equal(
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] +
+                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                1.0, 1e-14)) {
+            log_error("Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
+                      "InfectedNoSymptomsToRecovered not equal to {:d}",
                       1);
             return true;
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered] !=
-            1.0) {
-            log_error("Constraint check: Sum of transitiion probability for InfectedSymptomsToInfectedSevere and "
-                      "InfectedSymptomsToRecovered unequal to {:d}",
+        if (!floating_point_equal(
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] +
+                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSymptomsToRecovered],
+                1.0, 1e-14)) {
+            log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
+                      "InfectedSymptomsToRecovered not equal to {:d}",
                       1);
             return true;
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered] !=
-            1.0) {
-            log_error("Constraint check: Sum of transitiion probability for InfectedSevereToInfectedCritical and "
-                      "InfectedSevereToRecovered unequal to {:d}",
+        if (!floating_point_equal(
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToInfectedCritical] +
+                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedSevereToRecovered],
+                1.0, 1e-14)) {
+            log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
+                      "InfectedSevereToRecovered not equal to {:d}",
                       1);
             return true;
         }
 
-        if (this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
-                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered] !=
-            1.0) {
-            log_error("Constraint check: Sum of transitiion probability for InfectedCriticalToDead and "
-                      "InfectedCriticalToRecovered unequal to {:d}",
+        if (!floating_point_equal(
+                this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToDead] +
+                    this->get<TransitionProbabilities>()[(int)InfectionTransition::InfectedCriticalToRecovered],
+                1.0, 1e-14)) {
+            log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
+                      "InfectedCriticalToRecovered not equal to {:d}",
                       1);
             return true;
         }
+
+        for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
+            if (floating_point_less(this->.get<TransitionDistributions>()[i].get_support_max(10), 0.0, 1e-14)) {
+                log_error("Constraint check: One parameter in TransitionDistributions has invalid support.");
+                return true;
+            }
+        }        
 
         return false;
     }
