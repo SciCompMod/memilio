@@ -192,7 +192,7 @@ public:
 };
 
 //forward declaration, see below.
-template <class Base = mio::Simulation<Model>>
+template <typename FP=double, class Base = mio::Simulation<Model<FP>>>
 class Simulation;
 
 /**
@@ -202,14 +202,14 @@ class Simulation;
  * @param y current value of compartments.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
-template <class Base = mio::Simulation<Model>>
-double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
+template <typename FP=double, class Base = mio::Simulation<Model<FP>,FP>>
+double get_infections_relative(const Simulation<FP,Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
 /**
  * specialization of compartment model simulation for secir models.
  * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
  */
-template <class Base>
+template <typename FP, class Base>
 class Simulation : public Base
 {
 public:
@@ -219,7 +219,7 @@ public:
      * @param t0 start time
      * @param dt time steps
      */
-    Simulation(Model const& model, double t0 = 0., double dt = 0.1)
+    Simulation(Model<FP> const& model, double t0 = 0., double dt = 0.1)
         : Base(model, t0, dt)
         , m_t_last_npi_check(t0)
     {
@@ -285,7 +285,8 @@ private:
  * @param model secir model to simulate.
  * @param integrator optional integrator, uses rk45 if nullptr.
  */
-inline auto simulate(double t0, double tmax, double dt, const Model& model,
+template<typename FP=double>
+inline auto simulate(double t0, double tmax, double dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     return mio::simulate<Model, double, Simulation<>>(t0, tmax, dt, model, integrator);
