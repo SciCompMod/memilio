@@ -400,9 +400,10 @@ class Simulation;
 * @param model the compartment model with initial values.
 * @param t current simulation time.
 * @param y current value of compartments.
+* @tparam FP floating point type, e.g., double
 * @tparam Base simulation type that uses a secir compartment model. see Simulation.
 */
-template <class Base = mio::Simulation<Model>>
+template <typename FP=double, class Base = mio::Simulation<Model<FP>,FP>>
 double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
 /**
@@ -577,7 +578,8 @@ private:
 * @param model secir model to simulate.
 * @param integrator optional integrator, uses rk45 if nullptr.
 */
-inline auto simulate(double t0, double tmax, double dt, const Model& model,
+template<typename FP=double>
+inline auto simulate(double t0, double tmax, double dt, const Model<FP>& model,
                      std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     return mio::simulate<Model, double, Simulation<>>(t0, tmax, dt, model, integrator);
@@ -611,9 +613,10 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 * @param t current simulation time.
 * @param y current value of compartments.
 * @return vector expression, same size as y, with migration factors per compartment.
+* @tparam FP floating point type, e.g., double
 * @tparam Base simulation type that uses a secir compartment model. see Simulation.
 */
-template <class Base = mio::Simulation<Model>>
+template <typename FP,class Base = mio::Simulation<Model<FP>,FP>>
 auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     auto& params = sim.get_model().parameters;
