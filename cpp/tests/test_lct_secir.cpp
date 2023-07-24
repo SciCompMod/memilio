@@ -153,6 +153,73 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     }
 }
 
+// test if the right hand side of the model is working
+TEST(TestLCTSecir, testEvalRightHandSide)
+{ // Setup model
+
+    /* Number of subcompartments, chose more than one subcompartment for all compartments except S, R, D
+    so that the function is correct for all selections */
+    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 2;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 2;
+    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+
+    // define initial population distribution in infection states, one entry per subcompartment
+    Eigen::VectorXd init(InfState.get_count());
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 750;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 30;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 20;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 20;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 10;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 10;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 30;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms) + 1]   = 20;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 40;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere) + 1]     = 10;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 10;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical) + 1]   = 20;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 20;
+    init[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 10;
+
+    // initialize model
+    mio::lsecir::Model model(std::move(init), InfState);
+
+    // Set parameters of the model
+    model.parameters.set<mio::lsecir::TimeExposed>(2 * 4.2 - 5.2);
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>() = 2 * (5.2 - 4.2);
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()   = 5.8;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()     = 9.5;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()   = 7.1;
+
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
+
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>() = 0.09;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()      = 0.2;
+    model.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
+    model.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
+
+    // compare the result of eval_right_hand_side with a hand calculated result
+    size_t num_subcompartments = model.infectionStates.get_count();
+    Eigen::VectorXd dydt(num_subcompartments);
+    model.eval_right_hand_side(model.get_initial_values(), 0, dydt);
+
+    Eigen::VectorXd compare(num_subcompartments);
+    compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
+        1.6901;
+
+    for (size_t i = 0; i < num_subcompartments; i++) {
+        ASSERT_NEAR(compare[i], dydt[i], 1e-3);
+    }
+}
+
 // SetUp for comparing with previous run
 class ModelTestLCTSecir : public testing::Test
 {

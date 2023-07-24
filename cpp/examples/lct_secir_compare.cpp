@@ -32,7 +32,9 @@
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
 int main()
-{
+{ /* Runs a simulation with comparable parameters and initial data for a LCT SECIR model and an ODE model. 
+    Results are automatically stored in hdf5 files.*/
+    bool print      = true;
     ScalarType t0   = 0;
     ScalarType tmax = 20;
     ScalarType dt   = 0.1;
@@ -100,7 +102,11 @@ int main()
     // Save result in HDF5 file
     auto save_result_status_subcompartments = mio::save_result({result_lct}, {0}, 1, "result_lct_subcompartments.h5");
     auto save_result_status_lct             = mio::save_result({populations_lct}, {0}, 1, "result_lct.h5");
+    if (print) {
+        mio::lsecir::print_TimeSeries(populations_lct, model_lct.get_heading_CompartmentsBase());
+    }
 
+    // ---Perform simulation for the ODE SECIR model.---
     // Initialize ODE model with one single age group
     mio::osecir::Model model_ode(1);
 
@@ -159,4 +165,7 @@ int main()
 
     // Save result in HDF5 file
     auto save_result_status_ode = mio::save_result({result_ode}, {0}, 1, "result_ode.h5");
+    if (print) {
+        mio::lsecir::print_TimeSeries(result_ode, "S | E | C | I | H | U | R | D");
+    }
 }
