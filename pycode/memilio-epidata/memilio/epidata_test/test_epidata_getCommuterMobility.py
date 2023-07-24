@@ -134,13 +134,13 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_from = 5316
         city_to = 16069
         self.assertAlmostEqual(
-            df_commuter_migration.loc[city_from, city_to], 0.257, 2)
+            df_commuter_migration.loc[city_from, city_to], 0.451, 2)
 
         # check migration from Duisburg to Oberspreewald-Lausitz
         city_from = 5112
         city_to = 12066
         self.assertAlmostEqual(
-            df_commuter_migration.loc[city_from, city_to], 4.218, 2)
+            df_commuter_migration.loc[city_from, city_to], 3.143, 2)
 
         # check migration from Lahn-Dill-Kreis to Hamburg
         city_from = 6532

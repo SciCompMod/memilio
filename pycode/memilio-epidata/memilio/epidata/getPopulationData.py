@@ -39,7 +39,17 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def read_population_data(username, password, read_data, directory):
-    '''Reads Population data either from regionalstatistik.de or from directory'''
+    '''! Reads Population data either from regionalstatistik.de or from directory
+
+    A request is made using the twill package. Username and Password are required to
+    sign in on regionalstatistik.de. After the sign twill navigates to the file to download.
+
+    @param username Username to sign in at regionalstatistik.de. 
+    @param password Password to sign in at regionalstatistik.de.
+    @param read_data False or True. Defines if data is read from file or downloaded.
+    @param directory Path to folder where data is read from.
+    @return DataFrame
+    '''
 
     filename = '12411-02-03-4'
     if not read_data:
@@ -82,7 +92,16 @@ def read_population_data(username, password, read_data, directory):
 
 
 def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
-    '''Writes population dataframe into diretory with new column names and age groups'''
+    '''! Writes population dataframe into directory with new column names and age groups
+    
+    @param df_pop Population data DataFrame to be exported
+    @param directory Directory where data is written to.
+    @param file_format File format which is used for writing the data.
+    @param merge_eisenach Defines whether the counties 'Wartburgkreis'
+        and 'Eisenach' are listed separately or
+        combined as one entity 'Wartburgkreis'.
+    @return exported DataFrame
+    '''
 
     new_cols = [
         dd.EngEng['idCounty'],
@@ -148,7 +167,14 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    '''Creates new dataframe and copies values of counties from old dataframe'''
+    '''! Creates new dataframe and copies values of counties from old dataframe
+    
+    @param df_pop_raw old DataFrame
+    @param counties List of counties to be assigned in new DataFrame
+    @param age_cols Age groups in old DataFrame
+    @param idCountyidx indexes in old DataFrame where data of corresponding county starts
+    @return new DataFrame
+    '''
 
     new_cols = {dd.EngEng['idCounty']: counties[:, 1],
                 dd.EngEng['county']: counties[:, 0]}
@@ -211,8 +237,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
                         merge_eisenach=True,
-                        username=None,
-                        password=None):
+                        username='RE009937',
+                        password='sebhaw-Cewbu5-bertam'):
     """! Download age-stratified population data for the German counties.
 
     The data we use is:
@@ -245,6 +271,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     @param merge_eisenach [Default: True] or False. Defines whether the
         counties 'Wartburgkreis' and 'Eisenach' are listed separately or
         combined as one entity 'Wartburgkreis'.
+    @param username Username to sign in at regionalstatistik.de. 
+    @param password Password to sign in at regionalstatistik.de.
     @return DataFrame with adjusted population data for all ages to current level.
     """
 
