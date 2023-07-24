@@ -242,6 +242,8 @@ TEST(IdeSecir, checkSimulationFunctions)
     }
 }
 
+// a) Test if check_constraints() function correctly reports wrongly set parameters.
+// b) Test if check_constraints() does not complain if parameters are set within correct ranges.
 TEST(IdeSecir, testValueConstraints)
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -252,10 +254,10 @@ TEST(IdeSecir, testValueConstraints)
 
     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
-    // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
+    // Create TimeSeries with num_transitions elements where transitions needed for simulation will be stored.
     mio::TimeSeries<ScalarType> init(num_transitions);
 
-    // add time points for initialization for transitions
+    // Add time points for initialization for transitions.
     Vec vec_init(num_transitions);
     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 10.0;
@@ -267,16 +269,16 @@ TEST(IdeSecir, testValueConstraints)
     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 0.0;
     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 0.0;
-    // add initial time point to time series
+    // Add initial time point to time series.
     init.add_time_point(-12, vec_init);
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-    // Initialize two models.
+    // Initialize a model.
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
-    // Deactivate temporarilylog output for next tests.
+    // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
     // Set wrong parameters and use check constraints.
@@ -295,22 +297,25 @@ TEST(IdeSecir, testValueConstraints)
     auto constraint_check = model.parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Warn, i.e., return true for wrong RelativeTransmissionNoSymptoms.
+    // Correct wrong parameter so that next check can go through.
     model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob_pos);
+    // Warn, i.e., return true for wrong RelativeTransmissionNoSymptoms.
     constraint_check = model.parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // Warn, i.e., return true for wrong RiskOfInfectionFromSymptomatic.
+    // Correct wrong parameter so that next check can go through.
     model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob_pos);
+    // Warn, i.e., return true for wrong RiskOfInfectionFromSymptomatic.
     constraint_check = model.parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
-    // correct wrong parameter so that next check can go through.
-    model.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(prob_pos);
+
+    // Correct wrong parameter so that next check can go through.
+    model.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(prob_pos);
 
     // Set wrong values for InfectionTransitions, one after the other.
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 1);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]          = 0.2;
-    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 1.0;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered)] = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSymptomsToRecovered)]   = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedSevereToRecovered)]     = 0.0;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToRecovered)]   = 0.4;
@@ -345,7 +350,7 @@ TEST(IdeSecir, testValueConstraints)
 
     // Check sum InfectedSymptomsToInfectedSevere + InfectedSymptomsToRecovered.
     model.parameters.get<mio::isecir::TransitionProbabilities>()[(
-        int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]    = 1.0;
+        int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]    = 0.0;
     model.parameters.get<mio::isecir::TransitionProbabilities>()[(
         int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere] = 0.2;
     constraint_check                                                            = model.parameters.check_constraints();
@@ -381,13 +386,9 @@ TEST(IdeSecir, testValueConstraints)
     constraint_check = model.parameters.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    // from here on: DEBUG!
-    // Reactive log output.
-    mio::set_log_level(mio::LogLevel::warn);
-
     // Check all parameter are correct.
     mio::ExponentialDecay expdecay(4.0);
-    mio::StateAgeFunctionWrapper delaydistribution2(const_func);
+    mio::StateAgeFunctionWrapper delaydistribution2(expdecay);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
     model.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib2);
     constraint_check = model.parameters.check_constraints();

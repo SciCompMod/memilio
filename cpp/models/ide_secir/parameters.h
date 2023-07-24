@@ -179,7 +179,7 @@ public:
              i++) {
             if (this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
                 return true;
@@ -191,7 +191,7 @@ public:
              i++) {
             if (this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) < 0.0 ||
                 this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
                 return true;
@@ -203,7 +203,7 @@ public:
              i++) {
             if (this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) > 1.0) {
-                log_error("Constraint check: TransmissionProbabilityOnContact(i) smaller {:d} or larger {:d} at some "
+                log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
                           "time {:d}",
                           0, 1, i);
                 return true;
