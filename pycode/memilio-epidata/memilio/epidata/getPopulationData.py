@@ -334,7 +334,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     df_pop = assign_population_data(
         df_pop_raw, counties, age_cols, idCounty_idx)
 
-    test_total_population()
+    test_total_population(df_pop, age_cols)
 
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach)
