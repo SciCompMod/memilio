@@ -2,6 +2,9 @@
 #include "ode_seir/parameters.h"
 #include "parameters.h"
 
+namespace mio
+{
+
 ScalarType get_reproduction_number(Eigen::Index timept, ScalarType coeffStoE, ScalarType TimeInfected,
                                    mio::TimeSeries<ScalarType> y)
 { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
@@ -18,3 +21,5 @@ Eigen::VectorXd get_reproduction_numbers(ScalarType coeffStoE, ScalarType TimeIn
     }
     return temp;
 }
+
+} // namespace mio
