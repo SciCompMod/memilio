@@ -99,6 +99,7 @@ class ProgressIndicator:
             If False, resume default behaviour.
         """
         ProgressIndicator._disabled = disable
+        print('#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n#öüä\n')
 
     @staticmethod
     def _console_setup():
