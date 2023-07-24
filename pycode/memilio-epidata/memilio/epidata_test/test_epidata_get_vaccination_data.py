@@ -31,8 +31,6 @@ from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import progress_indicator
 
-progress_indicator.ProgressIndicator.disable_indicators(True)
-
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     maxDiff = None
@@ -109,6 +107,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)

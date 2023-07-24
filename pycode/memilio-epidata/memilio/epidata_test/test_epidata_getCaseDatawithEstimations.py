@@ -32,8 +32,6 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 from memilio.epidata import progress_indicator
 
-progress_indicator.ProgressIndicator.disable_indicators(True)
-
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     path = '/home/CaseEstimationData'
@@ -161,6 +159,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def write_case_data(self, out_folder):
 

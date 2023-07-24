@@ -29,8 +29,6 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import progress_indicator
 
-progress_indicator.ProgressIndicator.disable_indicators(True)
-
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
@@ -44,6 +42,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def test_export_population_data(self):
 
