@@ -259,7 +259,8 @@ private:
         {
         }
 
-        /// @brief Stand-in for model.eval_right_hand_side(...), that calculates the derivative of flows.
+        /// @brief Stand-in function for model.eval_right_hand_side(...), which computes the rate of change for the
+        //  flows in the compartment model.
         inline void right_hand_side(const Model& model, Eigen::Ref<const Eigen::VectorXd>,
                                     Eigen::Ref<const Eigen::VectorXd> flows, double t,
                                     Eigen::Ref<Eigen::VectorXd> dflows_dt)
