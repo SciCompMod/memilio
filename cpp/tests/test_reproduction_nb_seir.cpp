@@ -48,7 +48,7 @@ TEST(ReproductionNumberTest, AllNumbersCalculation)
 
     mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
 
-    auto reproduction_numbers = getReproductionNumbers(coeffStoE, TimeInfected, result);
+    auto reproduction_numbers = get_reproduction_numbers(coeffStoE, TimeInfected, result);
 
     for (Eigen::Index i = 0; i < reproduction_numbers.size(); i++) {
         EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);

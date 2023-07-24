@@ -2,13 +2,13 @@
 #include "ode_seir/parameters.h"
 #include "parameters.h"
 
-ScalarType getReproductionNumber(Eigen::Index timept, ScalarType coeffStoE, ScalarType TimeInfected,
-                                 mio::TimeSeries<ScalarType> y)
+ScalarType get_reproduction_number(Eigen::Index timept, ScalarType coeffStoE, ScalarType TimeInfected,
+                                   mio::TimeSeries<ScalarType> y)
 { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
     return y.get_value(timept)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
 }
 
-Eigen::VectorXd getReproductionNumbers(ScalarType coeffStoE, ScalarType TimeInfected, mio::TimeSeries<ScalarType> y)
+Eigen::VectorXd get_reproduction_numbers(ScalarType coeffStoE, ScalarType TimeInfected, mio::TimeSeries<ScalarType> y)
 {
     auto num_time_points = y.get_num_time_points();
     Eigen::VectorXd temp(num_time_points);

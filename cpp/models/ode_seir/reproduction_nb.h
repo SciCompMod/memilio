@@ -7,6 +7,11 @@
 #include "ode_seir/parameters.h"
 #include "parameters.h"
 
+namespace mio
+{
 
-double getReproductionNumber(Eigen::Index timept, double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
-Eigen::VectorXd getReproductionNumbers(double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
+double get_reproduction_number(Eigen::Index timept, double coeffStoE, double TimeInfected,
+                               mio::TimeSeries<ScalarType> y);
+Eigen::VectorXd get_reproduction_numbers(double coeffStoE, double TimeInfected, mio::TimeSeries<ScalarType> y);
+
+} // namespace mio
