@@ -455,7 +455,6 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
         str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
 
-
     # this is neither a very elegant nor a very general way to merge...
     # better options to be searched for!
     if 16056 in countykey_list:
@@ -469,8 +468,10 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                                                                     new_idx] + mat_commuter_migration[:, old_idx]
         mat_commuter_migration[new_idx, new_idx] = 0
 
-        mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
-        mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
+        mat_commuter_migration = np.delete(
+            mat_commuter_migration, old_idx, axis=0)
+        mat_commuter_migration = np.delete(
+            mat_commuter_migration, old_idx, axis=1)
 
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(

@@ -70,6 +70,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         here, 'test_data', 'TestSetPopulationFinal.json')
     with open(filename) as file_object:
         df_pop = pd.DataFrame(json.load(file_object))
+
     def setUp(self):
         self.setUpPyfakefs()
 
