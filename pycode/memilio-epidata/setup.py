@@ -73,7 +73,7 @@ setup(
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
-        'pandas>=1.2.2, <2.0.2',
+        'pandas>=1.2.2, <2.0',  # pandas 2.0 causes an error at read_excel in the Epidata-CI
         'matplotlib',
         'tables',
         'numpy>=1.22',  # smaller numpy versions cause a security issue

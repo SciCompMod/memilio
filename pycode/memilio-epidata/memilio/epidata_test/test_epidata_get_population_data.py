@@ -40,6 +40,11 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     with open(filename) as file_object:
         df_pop = pd.DataFrame(json.load(file_object))
 
+    filename = os.path.join(
+        here, 'test_data', 'TestSetPopulationRaw.json')
+    with open(filename) as file_object:
+        df_pop_raw = pd.DataFrame(json.load(file_object))
+
     def setUp(self):
         self.setUpPyfakefs()
         progress_indicator.ProgressIndicator.disable_indicators(True)
@@ -68,6 +73,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as error:
             df = gpd.read_population_data(
                 username='', password='', read_data=True, directory=directory)
+
+    @patch('memilio.epidata.getPopulationData.read_population_data',
+           return_value=df_pop_raw)
+    @patch('memilio.epidata.getPopulationData.assign_population_data', return_value=df_pop)
+    @patch('memilio.epidata.getPopulationData.test_total_population')
+    def test_get_population_data_full(self, mock_test, mock_export, mock_download):
+        # should not raise any errors
+        gpd.get_population_data(out_folder=self.path)
 
 
 if __name__ == '__main__':

@@ -93,7 +93,7 @@ def read_population_data(username, password, read_data, directory):
 
 def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
     '''! Writes population dataframe into directory with new column names and age groups
-    
+
     @param df_pop Population data DataFrame to be exported
     @param directory Directory where data is written to.
     @param file_format File format which is used for writing the data.
@@ -168,7 +168,7 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
     '''! Creates new dataframe and copies values of counties from old dataframe
-    
+
     @param df_pop_raw old DataFrame
     @param counties List of counties to be assigned in new DataFrame
     @param age_cols Age groups in old DataFrame
@@ -230,6 +230,18 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
                 'found which could not be assigned.')
 
     return df_pop
+
+
+def test_total_population(df_pop, age_cols):
+    """! Tests if total population matches axpectation
+    @param df_pop Population Dataframe with all counties
+    @param age_cols All age groups in DataFrame"""
+
+    if df_pop[age_cols].sum().sum() != 83237124:
+        if df_pop[age_cols].sum().sum() == 83155031:
+            warnings.warn('Using data of 2020. Newer data is available.')
+        else:
+            raise gd.DataError('Total Population does not match expatation.')
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
@@ -322,11 +334,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     df_pop = assign_population_data(
         df_pop_raw, counties, age_cols, idCounty_idx)
 
-    if df_pop[age_cols].sum().sum() != 83237124:
-        if df_pop[age_cols].sum().sum() == 83155031:
-            warnings.warn('Using data of 2020. Newer data is available.')
-        else:
-            raise gd.DataError('Total Population does not match expatation.')
+    test_total_population()
 
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach)
