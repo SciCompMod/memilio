@@ -531,11 +531,11 @@ def get_neighbors_mobility(
         commuters from and to the neighbors.
     '''
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany/mobility/')
     gd.check_dir(directory)
     try:
         commuter = pd.read_csv(os.path.join(
-            directory, "migration_bfa_"+str(ref_year)+".txt"), sep=' ')
+            directory, "commuter_migration_scaled_"+str(ref_year)+".txt"), sep=' ')
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
@@ -588,7 +588,7 @@ def get_neighbors_mobility_all(
     gd.check_dir(directory)
     countyids = geoger.get_county_ids()
     neighbors_table = []
-    # TODO:
+    # TODO: performance has to be improved
     for id in countyids:
         neighbors_table.append(
             get_neighbors_mobility(

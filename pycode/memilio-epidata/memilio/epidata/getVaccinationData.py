@@ -797,7 +797,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs.loc[df_data_agevacc_county_cs[dd.EngEng["idState"]]
                                       == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
 
-    with progress_indicator.Spinner(message='Sanitizing') as spinner:
+    with progress_indicator.Spinner(message='Sanitizing' + ' disable = ' + str(progress_indicator.ProgressIndicator._disabled)) as spinner: # only for CI test
         if sanitize_data == 1 or sanitize_data == 2:
 
             if sanitize_data == 1:
