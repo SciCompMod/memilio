@@ -20,7 +20,7 @@
 import io
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import numpy as np
 import pandas as pd
@@ -29,8 +29,6 @@ from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseDatawithEstimations as gcdwe
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-
-from memilio.epidata import progress_indicator
 
 
 class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
@@ -159,7 +157,6 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def write_case_data(self, out_folder):
 
