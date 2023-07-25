@@ -364,6 +364,8 @@ public:
      */
     bool apply_constraints()
     {
+        double tol_times = 1e-4; // accepted tolerance for compartment stays
+
         int corrected = false;
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
             log_warning("Constraint check: Parameter Seasonality changed from {:0.4f} to {:d}",
@@ -381,44 +383,50 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2.0) {
+            if (this->get<IncubationTime>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
-                            this->get<IncubationTime>()[i], 2.0);
-                this->get<IncubationTime>()[i] = 2.0;
+                            this->get<IncubationTime>()[i], tol_times);
+                this->get<IncubationTime>()[i] = tol_times;
                 corrected                      = true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
+            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + tol_times) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
-                this->get<SerialInterval>()[i] = 0.5 * this->get<IncubationTime>()[i] + 0.5;
+                            this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + tol_times / 2);
+                this->get<SerialInterval>()[i] = 0.5 * this->get<IncubationTime>()[i] + tol_times / 2;
                 corrected                      = true;
             }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
+            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - tol_times / 2) {
                 log_warning("Constraint check: Parameter SerialInterval changed from {:.4f} to {:.4f}",
-                            this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
-                this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - 0.5;
+                            this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - tol_times / 2);
+                this->get<SerialInterval>()[i] = this->get<IncubationTime>()[i] - tol_times / 2;
                 corrected                      = true;
             }
 
-            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedSymptoms>()[i], 1.0);
-                this->get<TimeInfectedSymptoms>()[i] = 1.0;
+            if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedSymptoms>()[i], tol_times);
+                this->get<TimeInfectedSymptoms>()[i] = tol_times;
                 corrected                            = true;
             }
 
-            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedSevere>()[i], 1.0);
-                this->get<TimeInfectedSevere>()[i] = 1.0;
+            if (this->get<TimeInfectedSevere>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}. Please note "
+                            "that unreasonably small compartment stays lead to massively increased run time. Consider "
+                            "to cancel and reset parameters.",
+                            this->get<TimeInfectedSevere>()[i], tol_times);
+                this->get<TimeInfectedSevere>()[i] = tol_times;
                 corrected                          = true;
             }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
-                log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}",
-                            this->get<TimeInfectedCritical>()[i], 1.0);
-                this->get<TimeInfectedCritical>()[i] = 1.0;
+            if (this->get<TimeInfectedCritical>()[i] < tol_times) {
+                log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}. Please "
+                            "note that unreasonably small compartment stays lead to massively increased run time. "
+                            "Consider to cancel and reset parameters.",
+                            this->get<TimeInfectedCritical>()[i], tol_times);
+                this->get<TimeInfectedCritical>()[i] = tol_times;
                 corrected                            = true;
             }
 
@@ -495,40 +503,48 @@ public:
             return true;
         }
 
+        double tol_times = 1e-4; // accepted tolerance for compartment stays
+
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < 2.0) {
+            if (this->get<IncubationTime>()[i] < tol_times) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
                           this->get<IncubationTime>()[i], 2.0);
                 return true;
             }
 
-            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + 1.0) {
+            if (2 * this->get<SerialInterval>()[i] < this->get<IncubationTime>()[i] + tol_times) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + 0.5);
+                          this->get<SerialInterval>()[i], 0.5 * this->get<IncubationTime>()[i] + tol_times / 2);
                 return true;
             }
-            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - 0.5) {
+            else if (this->get<SerialInterval>()[i] > this->get<IncubationTime>()[i] - tol_times / 2) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - 0.5);
+                          this->get<SerialInterval>()[i], this->get<IncubationTime>()[i] - tol_times / 2);
                 return true;
             }
 
-            if (this->get<TimeInfectedSymptoms>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSymptoms>()[i], 1.0);
+            if (this->get<TimeInfectedSymptoms>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedSymptoms>()[i], tol_times);
                 return true;
             }
 
-            if (this->get<TimeInfectedSevere>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedSevere>()[i], 1.0);
+            if (this->get<TimeInfectedSevere>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedSevere>()[i], tol_times);
                 return true;
             }
 
-            if (this->get<TimeInfectedCritical>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
-                          this->get<TimeInfectedCritical>()[i], 1.0);
+            if (this->get<TimeInfectedCritical>()[i] < tol_times) {
+                log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}. Please "
+                          "note that unreasonably small compartment stays lead to massively increased run time. "
+                          "Consider to cancel and reset parameters.",
+                          this->get<TimeInfectedCritical>()[i], tol_times);
                 return true;
             }
 

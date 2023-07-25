@@ -167,11 +167,11 @@ TEST(TestSeir, apply_constraints_parameters)
     mio::set_log_level(mio::LogLevel::off);
     model.parameters.set<mio::oseir::TimeExposed>(-5.2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed>(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeExposed>(), 1e-4);
 
-    model.parameters.set<mio::oseir::TimeInfected>(0);
+    model.parameters.set<mio::oseir::TimeInfected>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected>(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseir::TimeInfected>(), 1e-4);
 
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

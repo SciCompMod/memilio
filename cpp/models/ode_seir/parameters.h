@@ -117,16 +117,20 @@ public:
         int corrected = false;
 
         //
-        if (this->get<TimeExposed>() < 1.0) {
-            log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}",
-                        this->get<TimeExposed>(), 1.0);
-            this->get<TimeExposed>() = 1.0;
+        if (this->get<TimeExposed>() < 1e-4) {
+            log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->get<TimeExposed>(), 1e-4);
+            this->get<TimeExposed>() = 1e-4;
             corrected                = true;
         }
-        if (this->get<TimeInfected>() < 1.0) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}",
-                        this->get<TimeInfected>(), 1.0);
-            this->get<TimeInfected>() = 1.0;
+        if (this->get<TimeInfected>() < 1e-4) {
+            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->get<TimeInfected>(), 1e-4);
+            this->get<TimeInfected>() = 1e-4;
             corrected                 = true;
         }
         if (this->get<TransmissionProbabilityOnContact>() < 0.0 ||
@@ -146,13 +150,17 @@ public:
      */
     bool check_constraints() const
     {
-        if (this->get<TimeExposed>() < 1.0) {
-            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}",
+        if (this->get<TimeExposed>() < 1e-4) {
+            log_error("Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                      "and reset parameters.",
                       this->get<TimeExposed>(), 0.0);
             return true;
         }
-        if (this->get<TimeInfected>() < 1.0) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
+        if (this->get<TimeInfected>() < 1e-4) {
+            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                      "and reset parameters.",
                       this->get<TimeInfected>(), 0.0);
             return true;
         }

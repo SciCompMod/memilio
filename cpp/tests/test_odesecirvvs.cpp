@@ -1026,27 +1026,27 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 
     model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 2);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 1e-4);
 
     model.parameters.set<mio::osecirvvs::SerialInterval>(1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 1.5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
 
     model.parameters.set<mio::osecirvvs::SerialInterval>(5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 1.5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
 
-    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(0);
+    model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[indx_agegroup], 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms>()[indx_agegroup], 1e-4);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSevere>(-1);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[indx_agegroup], 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedSevere>()[indx_agegroup], 1e-4);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedCritical>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[indx_agegroup], 1);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[indx_agegroup], 1e-4);
 
     model.parameters.set<mio::osecirvvs::TransmissionProbabilityOnContact>(2.0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
