@@ -6,7 +6,7 @@ Please **briefly list the changes** made, additional Information and what the Re
 
 ## Merge Request - Guideline Checklist
 
-Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow) and use the **draft** feature before a Pull Request if it's not ready to review.
+Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
 ### Checks by code author
 
