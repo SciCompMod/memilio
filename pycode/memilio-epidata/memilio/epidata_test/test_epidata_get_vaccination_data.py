@@ -18,7 +18,7 @@
 # limitations under the License.
 ######################################################################
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
