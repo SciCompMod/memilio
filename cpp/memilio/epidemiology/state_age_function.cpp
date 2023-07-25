@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,24 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_UTILS_EIGEN_H
-#define EPI_UTILS_EIGEN_H
 
-#include "memilio/utils/compiler_diagnostics.h"
+namespace mio
+{
 
-/* this file wraps includes from eigen3 library to disable warnings. */
-
-//C4996: some std functions that have been deprecated in c++17; maybe fixed in new eigen versions? 
-MSVC_WARNING_DISABLE_PUSH(4996)
-
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wint-in-bool-context")
-GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
-
-#include <Eigen/Core>
-
-GCC_CLANG_DIAGNOSTIC(pop)
-
-MSVC_WARNING_POP()
-
-#endif //EPI_UTILS_EIGEN_H
+} // namespace mio

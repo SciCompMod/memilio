@@ -111,10 +111,10 @@ public:
 
     Location(const Location& other)
         : m_id(other.m_id)
-        , m_agegroups(other.m_agegroups)
+        , m_num_agegroups(other.m_num_agegroups)
         , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
         , m_parameters(other.m_parameters)
-        , m_cells(other.m_cells.size(), other.m_agegroups)
+        , m_cells(other.m_cells.size(), other.m_num_agegroups)
         , m_required_mask(other.m_required_mask)
         , m_npi_active(other.m_npi_active)
     {
@@ -173,7 +173,7 @@ public:
      * @brief A Person interacts with the population at this Location and may become infected.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
-     * @param[in] params Parameters of the simulation.
+     * @param[in] params Parameters of the Model.
      */
     void interact(Person& person, TimePoint t, TimeSpan dt, const Parameters& params) const;
 
@@ -371,7 +371,7 @@ public:
 
 private:
     LocationId m_id; ///< Id of the Location including type and index.
-    size_t m_agegroups; ///< The number of age groups in the model.
+    size_t m_num_agegroups; ///< The number of age groups in the model.
     bool m_capacity_adapted_transmission_risk; /**< If true considers the LocationCapacity for the computation of the 
     transmission risk.*/
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.

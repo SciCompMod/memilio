@@ -32,7 +32,7 @@ namespace abm
 
 Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     : m_id(loc_id)
-    , m_agegroups(num_agegroups)
+    , m_num_agegroups(num_agegroups)
     , m_capacity_adapted_transmission_risk(false)
     , m_parameters(num_agegroups)
     , m_cells(num_cells, num_agegroups)
@@ -45,7 +45,7 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
 {
     ScalarType prob = 0;
-    for (uint32_t age_transmitter = 0; age_transmitter != m_agegroups; ++age_transmitter) {
+    for (uint32_t age_transmitter = 0; age_transmitter != m_num_agegroups; ++age_transmitter) {
         prob += m_cells[cell_index].m_cached_exposure_rate_contacts[{virus, static_cast<AgeGroup>(age_transmitter)}] *
                 m_parameters.get<ContactRates>()[{age_receiver, static_cast<AgeGroup>(age_transmitter)}];
     }
@@ -92,7 +92,7 @@ void Location::cache_exposure_rates(TimePoint t, TimeSpan dt)
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     for (auto& cell : m_cells) {
-        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup(m_agegroups)}, 0.};
+        cell.m_cached_exposure_rate_contacts = {{VirusVariant::Count, AgeGroup(m_num_agegroups)}, 0.};
         cell.m_cached_exposure_rate_air      = {{VirusVariant::Count}, 0.};
         for (auto&& p : cell.m_persons) {
             if (p->is_infected(t)) {

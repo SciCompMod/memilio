@@ -64,7 +64,7 @@ void set_school_closure(TimePoint t_begin, double p, Parameters& params);
  * and a Damping of 1 means that no social events are happening.
  * @param[in] t_begin Begin of the intervention.
  * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
- * @param[in,out] params Simulation parameters.
+ * @param[in,out] params Simulation parameters that include Damping.
  */
 void close_social_events(TimePoint t_begin, double p, Parameters& params);
 

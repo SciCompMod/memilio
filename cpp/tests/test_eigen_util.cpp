@@ -68,7 +68,7 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
 {
     TypeParam A(2, 3), B(1, 6), C(3, 2), D(6, 1);
     A << 0, 1, 2, 3, 4, 5;
-    IF_CONSTEXPR(TypeParam::IsRowMajor)
+    if constexpr (TypeParam::IsRowMajor)
     {
         B << 0, 1, 2, 3, 4, 5;
         C << 0, 1, 2, 3, 4, 5;

@@ -109,7 +109,7 @@ private:
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
      * subsequent #InfectionState%s.
      * @param[in] age AgeGroup of the Person.
-     * @param[in] params Parameters of the simulation.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.
@@ -120,7 +120,7 @@ private:
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
      * @param[in] age AgeGroup of the Person.
-     * @param[in] params Parameters of the simulation.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
      */

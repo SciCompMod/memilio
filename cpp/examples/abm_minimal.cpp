@@ -54,7 +54,8 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 
 int main()
 {
-    // Assign the name to general age group.
+    // This is a minimal example with children and adults < 60 year old. 
+    // We divided them into 4 different age groups, which is defined as follows:
     const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
     const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
     const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);

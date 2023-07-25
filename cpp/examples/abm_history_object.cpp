@@ -59,7 +59,8 @@ void write_log_to_file(const T& history)
 
 int main()
 {
-    // Assign the names to general age groups.
+    // This is a minimal example with children and adults < 60y. 
+    // We divided them into 4 different age groups, which is defined as follows:
     const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
     const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
     const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
