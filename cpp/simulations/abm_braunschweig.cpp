@@ -581,19 +581,19 @@ struct LogLocationInformation : mio::LogOnce {
     }
 };
 
-struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
-            person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-                person.get_age()));
-        }
-        return person_information;
-    }
-};
+// struct LogPersonInformation : mio::LogOnce {
+//     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+//     static Type log(const mio::abm::Simulation& sim)
+//     {
+//         Type person_information{};
+//         for (auto&& person : sim.get_world().get_persons()) {
+//             person_information.push_back(std::make_tuple(
+//                 person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+//                 person.get_age()));
+//         }
+//         return person_information;
+//     }
+// };
 
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
@@ -611,7 +611,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         //output object
-        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
+        mio::History<mio::DataWriterToMemory, LogLocationInformation> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
