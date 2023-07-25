@@ -68,14 +68,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters
-                    .template get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, age_group}];
-            });
-            param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters
-                    .template get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, age_group}];
-            });
-            param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters
                     .template get<InfectedNoSymptomsToSymptoms>()[{VirusVariant::Wildtype, age_group}];
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
@@ -106,15 +98,6 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             });
             param_percentil(node, [age_group](auto&& model) -> auto& {
                 return model.parameters.template get<DetectInfection>()[{VirusVariant::Wildtype, age_group}];
-            });
-            param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<MaskProtection>()[{VirusVariant::Wildtype, age_group}];
-            });
-            param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<MaximumContacts>()[{VirusVariant::Wildtype, age_group}];
-            });
-            param_percentil(node, [age_group](auto&& model) -> auto& {
-                return model.parameters.template get<ContactRates>()[{VirusVariant::Wildtype, age_group}];
             });
         }
         for (size_t run = 0; run < num_runs; run++) {

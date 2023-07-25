@@ -21,7 +21,7 @@
 
 TEST(TestWorld, init)
 {
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     EXPECT_EQ(world.get_locations().size(), 1);
     EXPECT_EQ(world.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
@@ -30,7 +30,7 @@ TEST(TestWorld, init)
 
 TEST(TestWorld, addLocation)
 {
-    auto world      = mio::abm::World(6);
+    auto world      = mio::abm::World(NUM_AGE_GROUPS);
     auto school_id1 = world.add_location(mio::abm::LocationType::School);
     auto school_id2 = world.add_location(mio::abm::LocationType::School);
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
@@ -60,7 +60,7 @@ TEST(TestWorld, addLocation)
 
 TEST(TestWorld, addPerson)
 {
-    auto world    = mio::abm::World(6);
+    auto world    = mio::abm::World(NUM_AGE_GROUPS);
     auto location = world.add_location(mio::abm::LocationType::School);
 
     auto& p1 = world.add_person(location, AGE_GROUP_15_TO_34);
@@ -74,7 +74,7 @@ TEST(TestWorld, addPerson)
 TEST(TestWorld, getSubpopulationCombined)
 {
     auto t       = mio::abm::TimePoint(0);
-    auto world   = mio::abm::World(6);
+    auto world   = mio::abm::World(NUM_AGE_GROUPS);
     auto school1 = world.add_location(mio::abm::LocationType::School);
     auto school2 = world.add_location(mio::abm::LocationType::School);
     auto school3 = world.add_location(mio::abm::LocationType::School);
@@ -93,7 +93,7 @@ TEST(TestWorld, getSubpopulationCombined)
 
 TEST(TestWorld, findLocation)
 {
-    auto world     = mio::abm::World(6);
+    auto world     = mio::abm::World(NUM_AGE_GROUPS);
     auto home_id   = world.add_location(mio::abm::LocationType::Home);
     auto school_id = world.add_location(mio::abm::LocationType::School);
     auto work_id   = world.add_location(mio::abm::LocationType::Work);
@@ -116,7 +116,7 @@ TEST(TestWorld, evolveStateTransition)
 
     auto t     = mio::abm::TimePoint(0);
     auto dt    = mio::abm::hours(1);
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     //setup so p1 and p3 don't transition
     world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
@@ -161,8 +161,8 @@ TEST(TestWorld, evolveMigration)
     {
         auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt    = mio::abm::hours(1);
-        auto world = mio::abm::World(6);
-        //setup so p1 doesn't transition
+        auto world = mio::abm::World(NUM_AGE_GROUPS);
+        //setup so p1 doesn't do transition
         world.parameters
             .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
             2 * dt.days();
@@ -216,7 +216,7 @@ TEST(TestWorld, evolveMigration)
     {
         auto t     = mio::abm::TimePoint(0) + mio::abm::hours(8);
         auto dt    = mio::abm::hours(2);
-        auto world = mio::abm::World(6);
+        auto world = mio::abm::World(NUM_AGE_GROUPS);
         //setup so p1-p5 don't transition
         world.parameters
             .get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
@@ -289,7 +289,7 @@ TEST(TestWorld, evolveMigration)
     {
         auto t     = mio::abm::TimePoint(0);
         auto dt    = mio::abm::days(1);
-        auto world = mio::abm::World(6);
+        auto world = mio::abm::World(NUM_AGE_GROUPS);
 
         // Time to go from severe to critical infection is 1 day (dt).
         world.parameters.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_60_TO_79}] =
@@ -338,7 +338,7 @@ TEST(TestWorld, evolveMigration)
 
 TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 {
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
     // make sure the infected person stay in Infected long enough
     world.parameters.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant(0), AGE_GROUP_15_TO_34}] =
         100;
@@ -388,7 +388,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
 
 TEST(TestWorld, copyWorld)
 {
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     world.parameters.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 4.;
 

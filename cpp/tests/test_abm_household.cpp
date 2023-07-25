@@ -24,17 +24,17 @@
 
 TEST(TestHouseholds, test_add_household_to_world)
 {
-    auto member1 = mio::abm::HouseholdMember(6);
+    auto member1 = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
     member1.set_age_weight(AGE_GROUP_0_TO_4, 1);
 
-    auto member2 = mio::abm::HouseholdMember(6);
+    auto member2 = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
     member2.set_age_weight(AGE_GROUP_5_TO_14, 1);
 
     auto household = mio::abm::Household();
     household.add_members(member1, 2);
     household.add_members(member2, 2);
 
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     add_household_to_world(world, household);
     auto persons = world.get_persons();
@@ -56,10 +56,10 @@ TEST(TestHouseholds, test_add_household_to_world)
 TEST(TestHouseholds, test_add_household_group_to_world)
 {
 
-    auto member1 = mio::abm::HouseholdMember(6);
+    auto member1 = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
     member1.set_age_weight(AGE_GROUP_35_TO_59, 1);
 
-    auto member2 = mio::abm::HouseholdMember(6);
+    auto member2 = mio::abm::HouseholdMember(NUM_AGE_GROUPS);
     member2.set_age_weight(AGE_GROUP_5_TO_14, 1);
 
     auto household_group = mio::abm::HouseholdGroup();
@@ -74,7 +74,7 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     household2.add_members(member2, 2);
     household_group.add_households(household2, 10);
 
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
 
     add_household_group_to_world(world, household_group);
     auto persons = world.get_persons();

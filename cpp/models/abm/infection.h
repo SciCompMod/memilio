@@ -53,7 +53,7 @@ public:
      * @brief Create an Infection for a single Person.
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup to determine the ViralLoad course.
-     * @param[in] params Parameters of the simulation.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
      * @param[in] detected [Default: false] If the Infection is detected.
@@ -130,7 +130,7 @@ private:
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
      * @param[in] age AgeGroup of the person.
-     * @param[in] params Parameters of the simulation.
+     * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state InfectionState at time of initializing the Infection.
      * @return The starting date of the Infection.

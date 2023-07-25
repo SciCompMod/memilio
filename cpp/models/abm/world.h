@@ -54,7 +54,7 @@ public:
 
     /**
      * @brief Create a World.
-     * @param[in] num_agegroups The number of age groups in the simulated world.
+     * @param[in] num_agegroups The number of AgeGroup%s in the simulated World.
      */
     World(size_t num_agegroups)
         : parameters(num_agegroups)
@@ -107,7 +107,7 @@ public:
     {
         auto obj = io.create_object("World");
         obj.add_element("NumAgeGroups", parameters.get_num_groups());
-        // obj.add_list("Locations", get_locations().begin(), get_locations().end());
+        //obj.add_list("Locations", get_locations().begin(), get_locations().end());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
         for (size_t i = 0; i < trip_list.num_trips(); i++) {

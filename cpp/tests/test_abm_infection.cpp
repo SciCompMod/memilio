@@ -21,7 +21,7 @@
 
 TEST(TestInfection, init)
 {
-    auto params             = mio::abm::Parameters(6);
+    auto params             = mio::abm::Parameters(NUM_AGE_GROUPS);
     auto virus_variant_test = mio::abm::VirusVariant::Wildtype;
     auto age_group_test     = AGE_GROUP_15_TO_34;
 
@@ -57,7 +57,7 @@ TEST(TestInfection, init)
 
 TEST(TestInfection, getInfectionState)
 {
-    auto params    = mio::abm::Parameters(6);
+    auto params    = mio::abm::Parameters(NUM_AGE_GROUPS);
     auto t         = mio::abm::TimePoint(0);
     auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34, params, t,
                                          mio::abm::InfectionState::Exposed, true);

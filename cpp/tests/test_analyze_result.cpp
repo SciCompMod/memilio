@@ -372,7 +372,7 @@ TEST(TestEnsemblePercentile, basic)
     ASSERT_EQ(q4[1][0][0], 0.3);
 }
 
-TEST(TestEnsembleParamsPercentile, osecir_basic)
+TEST(TestEnsembleParamsPercentile, graph_osecir_basic)
 {
     mio::osecir::Model model(2);
     mio::osecir::Model model2(2);
@@ -469,10 +469,11 @@ TEST(TestEnsembleParamsPercentile, osecir_basic)
               14);
 }
 
-TEST(TestEnsembleParamsPercentile, abm_basic)
+TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 {
-    auto world1 = mio::abm::World(6);
-    auto world2 = mio::abm::World(6);
+    size_t num_age_groups = 6;
+    auto world1 = mio::abm::World(num_age_groups);
+    auto world2 = mio::abm::World(num_age_groups);
 
     world1.parameters.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
         0.1;

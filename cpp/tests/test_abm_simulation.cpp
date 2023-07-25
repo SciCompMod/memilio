@@ -30,7 +30,7 @@ struct LogTimePoint : mio::LogAlways {
 
 TEST(TestSimulation, advance_random)
 {
-    auto world     = mio::abm::World(6);
+    auto world     = mio::abm::World(NUM_AGE_GROUPS);
     auto location1 = world.add_location(mio::abm::LocationType::School);
     auto location2 = world.add_location(mio::abm::LocationType::School);
     auto& p1       = world.add_person(location1, AGE_GROUP_5_TO_14);
@@ -74,7 +74,7 @@ TEST(TestDiscreteDistribution, generate)
 
 TEST(TestSimulation, advance_subpopulation)
 {
-    auto world       = mio::abm::World(6);
+    auto world       = mio::abm::World(NUM_AGE_GROUPS);
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
     auto& person1 = add_test_person(world, location_id, AGE_GROUP_5_TO_14, mio::abm::InfectionState::InfectedSymptoms);
@@ -98,7 +98,7 @@ TEST(TestSimulation, advance_subpopulation)
 
 TEST(TestSimulation, initializeSubpopulation)
 {
-    auto world  = mio::abm::World(6);
+    auto world  = mio::abm::World(NUM_AGE_GROUPS);
     auto loc_id = world.add_location(mio::abm::LocationType::PublicTransport, 3);
     auto loc    = world.get_individualized_location(loc_id);
     ASSERT_EQ(loc.get_subpopulations().get_num_time_points(), 0);
@@ -113,7 +113,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 {
 
     auto t     = mio::abm::TimePoint(0);
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(world));
 
     auto t_test = mio::abm::days(7);
@@ -126,7 +126,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
 TEST(TestSimulation, advanceWithHistory)
 {
 
-    auto world = mio::abm::World(6);
+    auto world = mio::abm::World(NUM_AGE_GROUPS);
     auto sim   = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     mio::HistoryWithMemoryWriter<LogTimePoint> history;
 

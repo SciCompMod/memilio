@@ -30,12 +30,13 @@
 #include <memory>
 
 // Assign the name to general age group.
-const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
-const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
-const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
-const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
-const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(4);
-const auto AGE_GROUP_80_PLUS  = mio::AgeGroup(5);
+const auto NUM_AGE_GROUPS     = 6;
+const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(NUM_AGE_GROUPS - 6);
+const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(NUM_AGE_GROUPS - 5);
+const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(NUM_AGE_GROUPS - 4);
+const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(NUM_AGE_GROUPS - 3);
+const auto AGE_GROUP_60_TO_79 = mio::AgeGroup(NUM_AGE_GROUPS - 2);
+const auto AGE_GROUP_80_PLUS  = mio::AgeGroup(NUM_AGE_GROUPS - 1);
 
 /**
  * mock of the generator function of DistributionAdapter<DistT>.
@@ -99,7 +100,7 @@ struct ScopedMockDistribution {
 mio::abm::Person make_test_person(mio::abm::Location& location, mio::AgeGroup age = AGE_GROUP_15_TO_34,
                                   mio::abm::InfectionState infection_state = mio::abm::InfectionState::Susceptible,
                                   mio::abm::TimePoint t                    = mio::abm::TimePoint(0),
-                                  mio::abm::Parameters params              = mio::abm::Parameters(6));
+                                  mio::abm::Parameters params              = mio::abm::Parameters(NUM_AGE_GROUPS));
 
 /**
  * @brief Add a Person to the World. Intended for simple use in tests.

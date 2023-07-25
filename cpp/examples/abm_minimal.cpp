@@ -54,12 +54,13 @@ void write_results_to_file(const mio::abm::Simulation& sim)
 
 int main()
 {
-    // This is a minimal example with children and adults < 60 year old. 
+    // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which is defined as follows:
-    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(0);
-    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(1);
-    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(2);
-    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(3);
+    size_t num_age_groups         = 4;
+    const auto AGE_GROUP_0_TO_4   = mio::AgeGroup(num_age_groups - 4);
+    const auto AGE_GROUP_5_TO_14  = mio::AgeGroup(num_age_groups - 3);
+    const auto AGE_GROUP_15_TO_34 = mio::AgeGroup(num_age_groups - 2);
+    const auto AGE_GROUP_35_TO_59 = mio::AgeGroup(num_age_groups - 1);
 
     // Create the world with 4 age groups.
     auto world = mio::abm::World(4);
@@ -79,11 +80,11 @@ int main()
     int n_households = 3;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
-    auto child = mio::abm::HouseholdMember(6); // A child is 50/50% 0-4 or 5-14.
+    auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(AGE_GROUP_0_TO_4, 1);
     child.set_age_weight(AGE_GROUP_0_TO_4, 1);
 
-    auto parent = mio::abm::HouseholdMember(6); // A parent is 50/50% 15-34 or 35-59.
+    auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
     parent.set_age_weight(AGE_GROUP_15_TO_34, 1);
     parent.set_age_weight(AGE_GROUP_35_TO_59, 1);
 

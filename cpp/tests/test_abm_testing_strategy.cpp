@@ -21,8 +21,8 @@
 
 TEST(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 {
-    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    auto home   = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    auto work   = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
     auto person = make_test_person(home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
@@ -89,8 +89,8 @@ TEST(TestTestingScheme, runScheme)
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
     testing_scheme.add_testing_criteria(testing_criteria2);
 
-    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0, 6);
-    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0, 6);
+    auto loc_home = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    auto loc_work = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
     auto person1  = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::InfectedNoSymptoms);
     auto person2  = make_test_person(loc_home, AGE_GROUP_15_TO_34, mio::abm::InfectionState::Recovered);
 

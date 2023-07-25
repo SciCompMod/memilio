@@ -54,30 +54,6 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({VirusVariant::Count, size}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedNoSymptoms";
-    }
-};
-
-struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type({VirusVariant::Count, size}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedSymptoms";
-    }
-};
-
 struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -529,13 +505,12 @@ struct AgeGroupGotoWork {
 };
 
 using ParametersBase =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
-                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
-                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection, LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
-                 AgeGroupGotoSchool, AgeGroupGotoWork>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection, LockdownDate, SocialEventRate,
+                 BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum,
+                 GotoSchoolTimeMinimum, GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork>;
 
 /**
  * @brief Parameters of the simulation that are the same everywhere within the World.
@@ -568,20 +543,6 @@ public:
 
             if (this->get<IncubationPeriod>()[{VirusVariant::Wildtype, i}] < 0) {
                 log_error("Constraint check: Parameter IncubationPeriod of age group {:.0f} smaller than {:.4f}",
-                          (size_t)i, 0);
-                return 1;
-            }
-
-            if (this->get<SusceptibleToExposedByInfectedNoSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedNoSymptoms of age group {:.0f} "
-                          "smaller than {:d} ",
-                          (size_t)i, 0);
-                return 1;
-            }
-
-            if (this->get<SusceptibleToExposedByInfectedSymptoms>()[{VirusVariant::Wildtype, i}] < 0.0) {
-                log_error("Constraint check: Parameter SusceptibleToExposedByInfectedSymptoms of age group {:.0f} "
-                          "smaller than {:d}",
                           (size_t)i, 0);
                 return 1;
             }
