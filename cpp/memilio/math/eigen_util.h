@@ -195,7 +195,7 @@ auto max(const Eigen::MatrixBase<A>& a, B&& b)
 template <class Rng, class F>
 auto map(const Rng& v, F f)
 {
-    using Result = std::result_of_t<F(const typename Rng::value_type&)>;
+    using Result = std::invoke_result_t<F, const typename Rng::value_type&>;
     using Scalar = std::decay_t<Result>;
     using Array  = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
     return Array::NullaryExpr(v.size(), [f, &v](Eigen::Index i) -> Scalar {

@@ -169,6 +169,13 @@ Location& World::get_individualized_location(LocationId id)
     return *m_locations[id.index];
 }
 
+const Location& World::find_location(LocationType type, const Person& person) const
+{
+    auto index = person.get_assigned_location_index(type);
+    assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
+    return get_individualized_location({index, type});
+}
+
 Location& World::find_location(LocationType type, const Person& person)
 {
     auto index = person.get_assigned_location_index(type);

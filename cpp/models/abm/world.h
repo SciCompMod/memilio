@@ -132,6 +132,8 @@ public:
      * @param[in] person The Person.
      * @return Reference to the assigned Location.
      */
+    const Location& find_location(LocationType type, const Person& person) const;
+
     Location& find_location(LocationType type, const Person& person);
 
     /** 
