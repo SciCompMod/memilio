@@ -69,6 +69,11 @@ struct LocationId {
     }
 };
 
+struct GeographicalLocation {
+    double latitude;
+    double longitude;
+};
+
 } // namespace abm
 } // namespace mio
 
