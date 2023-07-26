@@ -211,8 +211,8 @@ private:
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
-    m_movement_data
-        std::vector<mio::abm::movement_data>{}; ///< Movement data for the migration of Person%s for one timestep.
+    std::vector<mio::abm::movement_data>
+        m_movement_data; ///< Movement data for the migration of Person%s for one timestep.
 };
 
 } // namespace abm

@@ -62,7 +62,4 @@ enum ActivityType : uint32_t
 } // namespace abm
 } // namespace mio
 
-} // namespace abm
-} // namespace mio
-
 #endif //ABM_MOVEMENT_DATA_H

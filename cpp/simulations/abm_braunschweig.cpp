@@ -74,7 +74,7 @@ void split_line(std::string string, std::vector<int32_t>* row)
     });
 }
 
-mio::abm::LocationType get_location_type(ActivityType acitivity_end)
+mio::abm::LocationType get_location_type(mio::abm::ActivityType acitivity_end)
 {
     mio::abm::LocationType type;
     switch (acitivity_end) {
@@ -212,7 +212,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
         if (it_location == locations.end()) {
             location = world.add_location(
-                get_location_type(activity_end),
+                get_location_type(mio::abm::ActivityType(activity_end)),
                 1); //Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
@@ -604,13 +604,12 @@ struct LogMovementData : mio::LogAlways {
     static Type log(const mio::abm::Simulation& sim)
     {
         Type movement_data{};
-
+        mio::unused(sim);
         return movement_data;
     }
-}
+};
 
-mio::IOResult<void>
-run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation

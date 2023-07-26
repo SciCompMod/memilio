@@ -24,6 +24,7 @@
 #include "abm/location.h"
 #include "abm/infection.h"
 #include "abm/location_type.h"
+#include "abm/movement_data.h"
 
 #include "memilio/math/eigen.h"
 #include <array>
@@ -45,10 +46,10 @@ struct Trip {
     LocationId migration_origin; ///< Location where the Person starts the Trip.
     std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
-    uint32_t trip_mode =
-        6; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
-    uint32_t activity_type =
-        8; ///< Type of activity. 1:Workplace, 2:Education, 3:Shopping, 4:Leisure, 5:Private Matters, 6:Other Activity, 7:Home, 8:Unknown Activity
+    TransportMode
+        trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
+    ActivityType
+        activity_type; ///< Type of activity. 1:Workplace, 2:Education, 3:Shopping, 4:Leisure, 5:Private Matters, 6:Other Activity, 7:Home, 8:Unknown Activity
 
     /**
      * @brief Construct a new Trip.
@@ -58,21 +59,29 @@ struct Trip {
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
      */
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin, uint32_t trip_mode,
-         uint32_t activity_type, const std::vector<uint32_t>& input_cells = {})
+    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin, TransportMode mode_of_transport,
+         ActivityType type_of_activity, const std::vector<uint32_t>& input_cells = {})
+        : person_id(id)
+        , time(time_new)
+        , migration_destination(destination)
+        , migration_origin(origin)
+        , cells(input_cells)
+        , trip_mode(mode_of_transport)
+        , activity_type(type_of_activity)
     {
-        person_id             = id;
-        time                  = time_new;
-        migration_destination = destination;
-        migration_origin      = origin;
-        cells                 = input_cells;
-        trip_mode             = trip_mode;
-        activity_type         = activity_type;
     }
 
     Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, destination, destination, mio::abm::TransportMode::Unknown,
+               mio::abm::ActivityType::UnknownActivity, input_cells)
     {
-        Trip(id, time_new, destination, destination, 6, 8, input_cells);
+    }
+
+    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
+         const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, destination, origin, mio::abm::TransportMode::Unknown,
+               mio::abm::ActivityType::UnknownActivity, input_cells)
+    {
     }
 };
 

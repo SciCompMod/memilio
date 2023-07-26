@@ -101,15 +101,6 @@ void World::migration(TimePoint t, TimeSpan dt)
                         bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
                             person->migrate_to(target_location);
-                            m_movement_data.push_back({
-                                person->get_id(),
-                                current_location.get_id(),
-                                target_location.get_id(),
-                                t,
-                                t + dt,
-                                6,
-                                8,
-                            });
                             migrations++;
                         }
                         break;
