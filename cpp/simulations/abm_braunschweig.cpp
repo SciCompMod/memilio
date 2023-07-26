@@ -158,9 +158,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     std::map<uint32_t, mio::abm::Person&> persons      = {};
 
     // For the world we need: One Hospital, One ICU, One Home for each unique householdID, One Person for each person_id with respective age and home_id
-    // int number_persons = 0;
-    // int number_lines   = 0;
-    // int number_trips   = 0;
 
     // We assume that no person goes to an hospitla, altough e.g. "Sonstiges" could be a hospital
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
@@ -172,6 +169,8 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     // First we create the persons and their homes and also the locations
     int number_of_persons = 0;
+    int number_lines      = 0;
+    int number_trips      = 0;
     while (std::getline(fin, line) && number_of_persons < max_number_persons) {
         row.clear();
 
@@ -184,7 +183,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         uint32_t activity_end       = row[index["activity_end"]];
-        uint32_t trip_start         = row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
@@ -215,14 +213,40 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
                 1); //Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
+        number_lines++;
+    }
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    while (std::getline(fin, line) && number_trips < number_lines) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t person_id          = row[index["puid"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
+        uint32_t trip_start         = row[index["start_time"]];
 
         // Add the trip to the trip list person and location must exist at this point
-        auto person      = persons.find(person_id)->second;
-        auto location_id = locations.find(target_location_id)->second;
+        auto person          = persons.find(person_id)->second;
+        auto target_location = locations.find(target_location_id)->second;
+        auto start_location  = locations.find(start_location_id)->second;
+
         person.set_assigned_location(
-            location_id); //This assumes that we only have in each tripchain only one location type for each person
-        world.get_trip_list().add_trip(
-            mio::abm::Trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start), location_id));
+            target_location); //This assumes that we only have in each tripchain only one location type for each person
+        if (locations.find(start_location_id) == locations.end()) {
+            // For trips where the start location is not known use Home instead
+            start_location = {person.get_assigned_location_index(mio::abm::LocationType::Home),
+                              mio::abm::LocationType::Home};
+        }
+        world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                                                      target_location, start_location));
+        number_trips++;
     }
 
     world.get_trip_list().use_weekday_trips_on_weekend();
@@ -554,7 +578,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/bs.csv");
+    create_world_from_data(world, "../../data/mobility/bs.csv");
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
