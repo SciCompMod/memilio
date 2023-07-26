@@ -70,11 +70,19 @@ ScalarType Infection::get_viral_load(TimePoint t) const
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed)
+    auto time_shift = (m_infection_course[1].first - m_infection_course[0].first) - minutes(1872);
+    if (m_viral_load.start_date >= t || get_infection_state(TimePoint(0) + time_shift) == InfectionState::Exposed)
         return 0;
-    auto scaled_time = TimePoint(0) + days((m_viral_load.end_date - m_viral_load.start_date).days() /
-                                           m_time_is_infected.days() * t.days());
-    return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(scaled_time))));
+    auto scaled_time       = TimePoint(0) + seconds((m_viral_load.end_date - m_viral_load.start_date).seconds() /
+                                                        m_time_is_infected.seconds() * t.seconds() -
+                                                    time_shift.seconds());
+    ScalarType infectivity = 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(scaled_time))));
+    if (m_infection_course[3].second == InfectionState::InfectedSevere) {
+        return infectivity;
+    }
+    else {
+        return 0.75 * infectivity;
+    }
 }
 
 VirusVariant Infection::get_virus_variant() const
