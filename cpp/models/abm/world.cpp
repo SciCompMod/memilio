@@ -67,6 +67,7 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    //TODO: this function needs a refactor
     int migrations = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
@@ -86,6 +87,7 @@ void World::migration(TimePoint t, TimeSpan dt)
             m_enhanced_migration_rules.push_back(rule);
         }
     }
+
     for (auto& person : m_persons) {
         for (auto rule : m_enhanced_migration_rules) {
             //check if transition rule can be applied
@@ -99,6 +101,15 @@ void World::migration(TimePoint t, TimeSpan dt)
                         bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
                             person->migrate_to(target_location);
+                            m_movement_data.push_back({
+                                person->get_id(),
+                                current_location.get_id(),
+                                target_location.get_id(),
+                                t,
+                                t + dt,
+                                6,
+                                8,
+                            });
                             migrations++;
                         }
                         break;

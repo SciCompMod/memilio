@@ -7,6 +7,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
+#include "abm/movement_data.h"
 
 namespace fs = boost::filesystem;
 
@@ -73,27 +74,30 @@ void split_line(std::string string, std::vector<int32_t>* row)
     });
 }
 
-mio::abm::LocationType get_location_type(uint32_t acitivity_end)
+mio::abm::LocationType get_location_type(ActivityType acitivity_end)
 {
     mio::abm::LocationType type;
     switch (acitivity_end) {
-    case 1:
+    case mio::abm::ActivityType::Workplace:
         type = mio::abm::LocationType::Work;
         break;
-    case 2:
+    case mio::abm::ActivityType::Education:
         type = mio::abm::LocationType::School;
         break;
-    case 3:
+    case mio::abm::ActivityType::Shopping:
         type = mio::abm::LocationType::BasicsShop;
         break;
-    case 4:
+    case mio::abm::ActivityType::Leisure:
         type = mio::abm::LocationType::SocialEvent; // Freizeit
         break;
-    case 5:
+    case mio::abm::ActivityType::PrivateMatters:
         type = mio::abm::LocationType::BasicsShop; // Private Erledigung
         break;
-    case 6:
+    case mio::abm::ActivityType::OtherActivity:
         type = mio::abm::LocationType::SocialEvent; // Sonstiges
+        break;
+    case mio::abm::ActivityType::Home:
+        type = mio::abm::LocationType::Home;
         break;
     default:
         type = mio::abm::LocationType::Home;
@@ -581,21 +585,32 @@ struct LogLocationInformation : mio::LogOnce {
     }
 };
 
-// struct LogPersonInformation : mio::LogOnce {
-//     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
-//     static Type log(const mio::abm::Simulation& sim)
-//     {
-//         Type person_information{};
-//         for (auto&& person : sim.get_world().get_persons()) {
-//             person_information.push_back(std::make_tuple(
-//                 person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-//                 person.get_age()));
-//         }
-//         return person_information;
-//     }
-// };
+struct LogPersonInformation : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type person_information{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            person_information.push_back(std::make_tuple(
+                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
+                person.get_age()));
+        }
+        return person_information;
+    }
+};
 
-mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+struct LogMovementData : mio::LogAlways {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type movement_data{};
+
+        return movement_data;
+    }
+}
+
+mio::IOResult<void>
+run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
@@ -611,7 +626,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         //output object
-        mio::History<mio::DataWriterToMemory, LogLocationInformation> history;
+        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {
@@ -662,7 +677,6 @@ int main(int argc, char** argv)
         printf("abm_example <num_runs> <result_dir>\n");
         printf("\tRun the simulation for <num_runs> time(s).\n");
         printf("\tStore the results in <result_dir>.\n");
-        // return 0;
     }
 
     // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging

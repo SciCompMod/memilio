@@ -28,6 +28,7 @@
 #include "abm/testing_strategy.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
+#include "abm/movement_data.h"
 
 #include <vector>
 #include <memory>
@@ -210,6 +211,8 @@ private:
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.
+    m_movement_data
+        std::vector<mio::abm::movement_data>{}; ///< Movement data for the migration of Person%s for one timestep.
 };
 
 } // namespace abm
