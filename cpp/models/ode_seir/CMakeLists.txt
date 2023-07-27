@@ -3,8 +3,6 @@ add_library(ode_seir
     model.h
     model.cpp
     parameters.h
-    reproduction_nb.h
-    reproduction_nb.cpp
 )
 target_link_libraries(ode_seir PUBLIC memilio)
 target_include_directories(ode_seir PUBLIC
