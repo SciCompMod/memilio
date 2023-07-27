@@ -21,6 +21,7 @@
 #define PYMIO_PARAMETER_SET_H
 
 #include "memilio/utils/parameter_set.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 
@@ -30,13 +31,16 @@ namespace pymio
 template <class ParameterSet>
 auto bind_ParameterSet(pybind11::module& m, std::string const& name)
 {
-    pybind11::class_<ParameterSet> c(m, name.c_str());
+    decltype(auto) c = pymio::bind_class<ParameterSet>(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {
         using Tag = decltype(t);
 
         //CAUTION: This requires ParameterTag::name() to be unique within the ParameterSet
         c.def_property(
-            Tag::name().c_str(), [](const ParameterSet& self) -> auto& { return self.template get<Tag>(); },
+            Tag::name().c_str(),
+            [](const ParameterSet& self) -> auto& {
+                return self.template get<Tag>();
+            },
             [](ParameterSet& self, typename Tag::Type const& v) {
                 self.template get<Tag>() = v;
             },

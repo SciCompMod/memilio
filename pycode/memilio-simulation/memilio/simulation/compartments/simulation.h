@@ -21,6 +21,7 @@
 #define PYMIO_SIMULATION_H
 
 #include "memilio/compartments/simulation.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 
@@ -33,7 +34,7 @@ namespace pymio
 template <class Simulation>
 void bind_Simulation(pybind11::module& m, std::string const& name)
 {
-    pybind11::class_<Simulation>(m, name.c_str())
+    pymio::bind_class<Simulation>(m, name.c_str())
         .def(pybind11::init<const typename Simulation::Model&, double, double>(), pybind11::arg("model"),
              pybind11::arg("t0") = 0, pybind11::arg("dt") = 0.1)
         .def_property_readonly("result", pybind11::overload_cast<>(&Simulation::get_result, pybind11::const_),

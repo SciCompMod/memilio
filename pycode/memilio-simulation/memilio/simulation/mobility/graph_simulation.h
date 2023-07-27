@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/graph_simulation.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 
@@ -35,7 +36,7 @@ template <class Graph>
 void bind_GraphSimulation(pybind11::module& m, std::string const& name)
 {
     using GS = mio::GraphSimulation<Graph>;
-    pybind11::class_<GS>(m, name.c_str())
+    pymio::bind_class<GS>(m, name.c_str())
         .def(pybind11::init([](Graph& graph, double t0, double dt) {
                  return std::make_unique<GS>(mio::make_migration_sim(t0, dt, std::move(graph)));
              }),

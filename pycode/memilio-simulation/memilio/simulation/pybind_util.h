@@ -30,7 +30,7 @@
 namespace pymio
 {
 
-//bind class and add pickling based on memilio serialization framework
+// bind class and add pickling based on memilio serialization framework
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 {
@@ -123,7 +123,7 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    bind_class<Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__",
             [](Iterator& self) -> auto&& {
@@ -137,7 +137,7 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    pybind11::class_<Range>(m, class_name.c_str())
+    bind_class<Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {
@@ -165,7 +165,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
     //not meant to be used directly by users, so name starts with _
     struct Values {
     };
-    pybind11::class_<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
+    bind_class<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__",
              [](Values& /*self*/) {
                  return E(0);

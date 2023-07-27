@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/graph.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 
@@ -32,7 +33,7 @@ template <class Simulation>
 void bind_MigrationGraph(pybind11::module& m, std::string const& name)
 {
     using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
-    pybind11::class_<G>(m, name.c_str())
+    pymio::bind_class<G>(m, name.c_str())
         .def(pybind11::init<>())
         .def(
             "add_node",
@@ -88,7 +89,7 @@ void bind_migration_edge(pybind11::module& m, std::string const& name);
 template <typename Model>
 void bind_ModelNode(pybind11::module& m, std::string const& name)
 {
-    pybind11::class_<mio::Node<Model>>(m, name.c_str())
+    pymio::bind_class<mio::Node<Model>>(m, name.c_str())
         .def_property_readonly("id",
                                [](const mio::Node<Model>& self) {
                                    return self.id;
@@ -104,7 +105,7 @@ void bind_ModelNode(pybind11::module& m, std::string const& name)
 template <typename Simulation>
 void bind_SimulationNode(pybind11::module& m, std::string const& name)
 {
-    pybind11::class_<mio::Node<mio::SimulationNode<Simulation>>>(m, name.c_str())
+    pymio::bind_class<mio::Node<mio::SimulationNode<Simulation>>>(m, name.c_str())
         .def_property_readonly("id",
                                [](const mio::Node<Simulation>& self) {
                                    return self.id;
@@ -124,7 +125,7 @@ template <class Model>
 void bind_ModelGraph(pybind11::module& m, std::string const& name)
 {
     using G = mio::Graph<Model, mio::MigrationParameters>;
-    pybind11::class_<G>(m, name.c_str())
+    pymio::bind_class<G>(m, name.c_str())
         .def(pybind11::init<>())
         .def("add_node", &G::template add_node<const Model&>, pybind11::arg("id"), pybind11::arg("model"),
              pybind11::return_value_policy::reference_internal)
