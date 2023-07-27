@@ -135,6 +135,25 @@ void World::migration(TimePoint t, TimeSpan dt)
     }
 }
 
+void World::move_persons_to_start_location(const TimePoint& t0)
+{
+    bool weekend     = t0.is_weekend();
+    size_t num_trips = m_trip_list.num_trips(weekend);
+
+    if (num_trips != 0) {
+        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time(weekend) < t0) {
+            auto& trip            = m_trip_list.get_next_trip(weekend);
+            auto& person          = m_persons[trip.person_id];
+            if (!person->is_in_quarantine() && person->get_infection_state(t0) != InfectionState::Dead) {
+                auto& target_location = get_individualized_location(trip.migration_destination);
+                person->apply_mask_intervention(target_location);
+                person->migrate_to(target_location);
+            }
+            m_trip_list.increase_index();
+        }
+    }
+}
+
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     for (auto& location : m_locations) {

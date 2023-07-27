@@ -210,7 +210,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         if (it_location == locations.end()) {
             location = world.add_location(
                 get_location_type(activity_end),
-                1); //Assume one place has one activity, this may be untrue but not important for now(?)
+                1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
         number_lines++;
@@ -564,8 +564,8 @@ void set_parameters(mio::abm::GlobalInfectionParameters infection_params)
 
 /**
  * Create a sampled simulation with start time t0.
- * @param t0 the start time of the simulation
-*/
+ * @param t0 The start time of the Simulation.
+ */
 mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 {
     // Assumed percentage of infection state at the beginning of the simulation.
@@ -580,6 +580,9 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     // Create the world object from statistical data.
     create_world_from_data(world, "../../data/mobility/bs.csv");
     world.use_migration_rules(false);
+
+    // Move persons to starting locations
+    world.move_persons_to_start_location(t0);
 
     // Assign an infection state to each person.
     assign_infection_state(world, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
