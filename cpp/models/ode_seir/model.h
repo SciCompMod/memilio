@@ -23,6 +23,7 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 
@@ -63,6 +64,29 @@ public:
         dydt[(size_t)InfectionState::Recovered] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
+
+    ScalarType get_reproduction_number(Eigen::Index timept, mio::TimeSeries<ScalarType> y)
+    { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
+        ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
+
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timept)(0,0)*
+                                this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
+                                this->populations.get_total();
+
+        return y.get_value(timept)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+    }
+
+    Eigen::VectorXd get_reproduction_numbers(mio::TimeSeries<ScalarType> y)
+    {
+        auto num_time_points = y.get_num_time_points();
+        Eigen::VectorXd temp(num_time_points);
+        for (int i = 0; i < num_time_points; i++) {
+            temp[i] = get_reproduction_number(i, y);
+        }
+        return temp;
+    }
+
+
     
 };
 
