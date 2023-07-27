@@ -204,6 +204,12 @@ class Simulation;
 template <class Base = mio::Simulation<Model>>
 double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
+template <class Base = mio::Simulation<Model>>
+double get_reproduction_number(const Simulation<Base>& model, Eigen::Index timept);
+
+template <class Base = mio::Simulation<Model>>
+double get_reproduction_numbers(const Simulation<Base>& model);
+
 /**
  * specialization of compartment model simulation for secir models.
  * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
@@ -301,6 +307,79 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
     return inf_rel;
+}
+
+//see declaration above
+template <class Base>
+double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
+{
+    //Get the contact patterns
+    mio::ContactMatrixGroup& contact_matrix = sim.get_model().parameters.template get<mio::osecir::ContactPatterns>();
+
+    Eigen::VectorXd susceptibles_at_t((size_t)sim.get_model().parameters.get_num_groups());
+
+    // get susceptibles in different groups at time t
+    for (size_t agegrp = 0; agegrp < (size_t)sim.get_model().parameters.get_num_groups(); agegrp++) {
+        susceptibles_at_t[agegrp] = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
+                                                        (int)mio::osecir::InfectionState::Count * agegrp];
+    }
+
+
+
+    //get population-sizes in the agegroups N_j
+
+    Eigen::VectorXd population_agegroups((size_t)sim.get_model().parameters.get_num_groups());
+    for (size_t agegrp = 0; agegrp < (size_t)sim.get_model().parameters.get_num_groups(); agegrp++) {
+        for (size_t infectionstate = 0; infectionstate < (size_t)mio::osecir::InfectionState::Count; infectionstate++)
+            population_agegroups[agegrp] +=
+                sim.get_result().get_value(timept)[infectionstate + (int)mio::osecir::InfectionState::Count * agegrp];
+    }
+
+    mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>::InternalArrayType beta =
+        sim.get_model().parameters.template get<mio::osecir::RiskOfInfectionFromSymptomatic>().array();
+
+    //Contact matrix phi_{i,j}
+
+    //T_{I_j} = time in compartment infected = TimeInfectedSymptoms 
+    //T_{C_j} = time in compartment Carrier = IncubationTime 
+    //p_i = TransmissionProbabilityonContact
+    //beta = model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>().array() 
+
+    Eigen::MatrixXd eigenvalue_block((size_t)sim.get_model().parameters.get_num_groups(), (size_t)sim.get_model().parameters.get_num_groups());
+    //Initialize eigenvalue_block
+    for (int i = 0; i < eigenvalue_block.rows(); i++) {
+        for (int j = 0; j < eigenvalue_block.cols(); j++) {
+            eigenvalue_block(i, j) = susceptibles_at_t[i] *
+                                     sim.get_model().parameters.template get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] *
+                                     contact_matrix.get_matrix_at(timept)(i, j) * 1 / (population_agegroups[i]) *
+                                     (sim.get_model().parameters.template get<mio::osecir::IncubationTime>()[(mio::AgeGroup)j] +
+                                      beta[j] * sim.get_model().parameters.template get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)j]);
+        }
+    }
+
+    Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+
+    ces.compute(eigenvalue_block);
+    const Eigen::VectorXcd tempvector = ces.eigenvalues();
+
+    Eigen::VectorXd tempvector1;
+    tempvector1.resize(tempvector.size());
+    //Do this later with some iterator
+    for (int i = 0; i < tempvector.size(); i++) {
+        tempvector1[i] = std::abs(tempvector[i]);
+    }
+    return tempvector1.maxCoeff();
+}
+
+//see declaration above
+template <class Base>
+Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
+{
+    Eigen::VectorXd temp(sim.get_result().get_num_time_points()); 
+    for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
+        temp[i] = get_reproduction_number(sim, (Eigen::Index)i);
+    }
+    return temp;
 }
 
 /**
