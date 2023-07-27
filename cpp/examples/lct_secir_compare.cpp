@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 
+#include "boost/filesystem/operations.hpp"
 #include "lct_secir/model.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/simulation.h"
@@ -28,47 +29,54 @@
 #include "memilio/io/result_io.h"
 
 #include "ode_secir/model.h"
+#include <string>
 #include <vector>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include "memilio/io/io.h"
+#include "boost/filesystem.hpp"
 
 int main()
 { /* Runs a simulation with comparable parameters and initial data for a LCT SECIR model and an ODE model. 
     Results are automatically stored in hdf5 files.*/
-    bool print      = true;
+    bool print = true;
+    bool save  = true;
+
     ScalarType t0   = 0;
     ScalarType tmax = 20;
     ScalarType dt   = 0.1;
+    Eigen::VectorXd init((int)mio::osecir::InfectionState::Count);
+    init << 7500, 90, 50, 70, 18, 8, 0, 0;
+    init = init * (10000 / init.sum());
 
     // ---Perform simulation for the LCT SECIR model.---
     // Set vector that specifies the number of subcompartments
     std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 5;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 5;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 5;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 20;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 20;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 20;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 20;
+    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 20;
     mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
 
     // define initial population distribution in infection states, one entry per Subcompartment
     Eigen::VectorXd init_lct(InfState.get_count());
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Susceptible)]            = 7500;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed)]                = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 1]            = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 2]            = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 3]            = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Exposed) + 4]            = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)]     = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 1] = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 2] = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 3] = 50;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedNoSymptoms) + 4] = 50;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms)]       = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms) + 1]   = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms) + 2]   = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms) + 3]   = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSymptoms) + 4]   = 100;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedSevere)]         = 500;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::InfectedCritical)]       = 300;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Recovered)]              = 200;
-    init_lct[InfState.get_firstindex(mio::lsecir::InfectionStateBase::Dead)]                   = 100;
+    // if jumpstart is true, lct model will be initialized just with individuals in the first subcompartments
+    bool jumpstart = false;
+    if (jumpstart) {
+        for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
+            init_lct[InfState.get_firstindex(i)] = init[i];
+            for (int j = InfState.get_firstindex(i) + 1; j < InfState.get_firstindex(i) + InfState.get_number(i); j++) {
+                init_lct[j] = 0;
+            }
+        }
+    }
+    else {
+        for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
+            for (int j = InfState.get_firstindex(i); j < InfState.get_firstindex(i) + InfState.get_number(i); j++) {
+                init_lct[j] = init[i] / InfState.get_number(i);
+            }
+        }
+    }
 
     // initialize model
     mio::lsecir::Model model_lct(std::move(init_lct), InfState);
@@ -83,7 +91,7 @@ int main()
     model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 9));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 0.7;
     model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.25;
@@ -92,16 +100,19 @@ int main()
     model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()              = 0.25;
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()              = 0.3;
 
-    // perform simulation
+    // Perform simulation.
     mio::TimeSeries<ScalarType> result_lct = mio::lsecir::simulate(
         t0, tmax, dt, model_lct,
         std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
-    // calculate the distribution in Infectionstates without subcompartments of the result
+    // Calculate the distribution in Infectionstates without subcompartments of the result.
     mio::TimeSeries<ScalarType> populations_lct = model_lct.calculate_populations(result_lct);
 
     // Save result in HDF5 file
-    auto save_result_status_subcompartments = mio::save_result({result_lct}, {0}, 1, "result_lct_subcompartments.h5");
-    auto save_result_status_lct             = mio::save_result({populations_lct}, {0}, 1, "result_lct.h5");
+    if (save) {
+        auto save_result_status_subcompartments =
+            mio::save_result({result_lct}, {0}, 1, "result_lct_subcompartments.h5");
+        auto save_result_status_lct = mio::save_result({populations_lct}, {0}, 1, "result_lct.h5");
+    }
     if (print) {
         mio::lsecir::print_TimeSeries(populations_lct, model_lct.get_heading_CompartmentsBase());
     }
@@ -110,28 +121,24 @@ int main()
     // Initialize ODE model with one single age group
     mio::osecir::Model model_ode(1);
 
-    // Initial population for ODE model fitting to initial condition of lct model
-    Eigen::VectorXd init_ode((int)mio::osecir::InfectionState::Count);
-    init_ode << 7500, 500, 400, 500, 500, 300, 200, 100;
-
     //Set population
-    model_ode.populations.set_total(init_ode.sum());
+    model_ode.populations.set_total(init.sum());
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedNoSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSymptoms)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSevere)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedSevere)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedCritical)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::InfectedCritical)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::Recovered)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::Recovered)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] =
-        init_ode[Eigen::Index(mio::lsecir::InfectionStateBase::Dead)];
+        init[Eigen::Index(mio::lsecir::InfectionStateBase::Dead)];
     model_ode.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
-                                                    init_ode.sum());
+                                                    init.sum());
 
     // set parameters fitting to these of the lct model
     // no restrictions by additional parameters
@@ -149,7 +156,7 @@ int main()
     model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0] = 7.1;
 
     mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns>();
-    contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 9));
 
     model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0] = 0.05;
     model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]   = 0.7;
@@ -164,7 +171,9 @@ int main()
                  std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Save result in HDF5 file
-    auto save_result_status_ode = mio::save_result({result_ode}, {0}, 1, "result_ode.h5");
+    if (save) {
+        auto save_result_status_ode = mio::save_result({result_ode}, {0}, 1, "result_ode.h5");
+    }
     if (print) {
         mio::lsecir::print_TimeSeries(result_ode, "S | E | C | I | H | U | R | D");
     }
