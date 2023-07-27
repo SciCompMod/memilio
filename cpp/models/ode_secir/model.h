@@ -204,12 +204,6 @@ class Simulation;
 template <class Base = mio::Simulation<Model>>
 double get_infections_relative(const Simulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
-template <class Base = mio::Simulation<Model>>
-double get_reproduction_number(const Simulation<Base>& model, Eigen::Index timept);
-
-template <class Base = mio::Simulation<Model>>
-double get_reproduction_numbers(const Simulation<Base>& model);
-
 /**
  * specialization of compartment model simulation for secir models.
  * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!

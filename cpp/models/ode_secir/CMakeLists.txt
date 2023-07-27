@@ -9,8 +9,6 @@ add_library(ode_secir
     parameters_io.cpp
     model.h
     model.cpp
-    reproduction_nb_secir.h
-    reproduction_nb_secir.cpp
 )
 target_link_libraries(ode_secir PUBLIC memilio)
 target_include_directories(ode_secir PUBLIC
