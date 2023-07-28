@@ -138,6 +138,7 @@ if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '
 figs_path = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'figs_bs_data')
 
+# check whether first start location is the last end location
 first_trip = bd[['personID','loc_id_start']][bd['tripChain']==1].sort_values(by=['personID']).reset_index(drop=True)
 last_trip = bd[['personID', 'tripChain', 'loc_id_end', 'ActivityAfter']].sort_values(by=['personID', 'tripChain']).drop_duplicates(subset=['personID'], keep='last').reset_index(drop=True)
 first_trip['loc_id_start'].compare(last_trip['loc_id_end'])
