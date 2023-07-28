@@ -84,9 +84,84 @@ IOResult<void> read_confirmed_cases_data(
      * @param day Specifies day at which the data is read
      * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+template<typename FP=double>
+IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
-                                        const std::vector<double>& scaling_factor_inf);
+                                        const std::vector<double>& scaling_factor_inf)
+{
+
+    std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
+    assert(scaling_factor_inf.size() == age_ranges.size());
+
+    std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
+    std::vector<std::vector<int>> t_Exposed{model.size()};
+    std::vector<std::vector<int>> t_InfectedSymptoms{model.size()};
+    std::vector<std::vector<int>> t_InfectedSevere{model.size()};
+    std::vector<std::vector<int>> t_InfectedCritical{model.size()};
+
+    std::vector<std::vector<double>> mu_C_R{model.size()};
+    std::vector<std::vector<double>> mu_I_H{model.size()};
+    std::vector<std::vector<double>> mu_H_U{model.size()};
+    std::vector<std::vector<double>> mu_U_D{model.size()};
+
+    for (size_t county = 0; county < model.size(); county++) {
+        for (size_t group = 0; group < age_ranges.size(); group++) {
+
+            t_InfectedNoSymptoms[county].push_back(
+                static_cast<int>(std::round(2 * (model[county].parameters.template get<IncubationTime>()[(AgeGroup)group] -
+                                                 model[county].parameters.template get<SerialInterval>()[(AgeGroup)group]))));
+            t_Exposed[county].push_back(
+                static_cast<int>(std::round(2 * model[county].parameters.template get<SerialInterval>()[(AgeGroup)group] -
+                                            model[county].parameters.template get<IncubationTime>()[(AgeGroup)group])));
+            t_InfectedSymptoms[county].push_back(
+                static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedSymptoms>()[(AgeGroup)group])));
+            t_InfectedSevere[county].push_back(
+                static_cast<int>(std::round(model[county].parameters.template get<TimeInfectedSevere>()[(AgeGroup)group])));
+            t_InfectedCritical[county].push_back(static_cast<int>(
+                std::round(model[county].parameters.template get<TimeInfectedCritical>()[(AgeGroup)group])));
+
+            mu_C_R[county].push_back(model[county].parameters.template get<RecoveredPerInfectedNoSymptoms>()[(AgeGroup)group]);
+            mu_I_H[county].push_back(model[county].parameters.template get<SeverePerInfectedSymptoms>()[(AgeGroup)group]);
+            mu_H_U[county].push_back(model[county].parameters.template get<CriticalPerSevere>()[(AgeGroup)group]);
+            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerCritical>()[(AgeGroup)group]);
+        }
+    }
+    std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_Exposed(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_InfectedNoSymptoms(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_InfectedSevere(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+    std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data(path, region, date, num_Exposed, num_InfectedNoSymptoms,
+                                                num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
+                                                t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
+                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+
+    for (size_t county = 0; county < model.size(); county++) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+            size_t num_groups = (size_t)model[county].parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; i++) {
+                model[county].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
+                    num_InfectedNoSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
+                    num_InfectedSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
+                    num_InfectedSevere[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[county][i];
+            }
+        }
+        else {
+            log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                        std::to_string(region[county]) + ". Population data has not been set.");
+        }
+    }
+    return success();
+}
 
 /**
      * @brief reads number of ICU patients from DIVI register into Parameters
@@ -110,8 +185,34 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
      * @param day Specifies day at which the data is read
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
-IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu);
+template<typename FP=double>
+IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
+                             Date date, double scaling_factor_icu)
+{
+    std::vector<double> sum_mu_I_U(vregion.size(), 0);
+    std::vector<std::vector<double>> mu_I_U{model.size()};
+    for (size_t region = 0; region < vregion.size(); region++) {
+        auto num_groups = model[region].parameters.get_num_groups();
+        for (auto i = AgeGroup(0); i < num_groups; i++) {
+            sum_mu_I_U[region] += model[region].parameters.template get<CriticalPerSevere>()[i] *
+                                  model[region].parameters.template get<SeverePerInfectedSymptoms>()[i];
+            mu_I_U[region].push_back(model[region].parameters.template get<CriticalPerSevere>()[i] *
+                                     model[region].parameters.template get<SeverePerInfectedSymptoms>()[i]);
+        }
+    }
+    std::vector<double> num_icu(model.size(), 0.0);
+    BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
+
+    for (size_t region = 0; region < vregion.size(); region++) {
+        auto num_groups = model[region].parameters.get_num_groups();
+        for (auto i = AgeGroup(0); i < num_groups; i++) {
+            model[region].populations[{i, InfectionState::InfectedCritical}] =
+                scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
+        }
+    }
+
+    return success();
+}
 
 /**
      * @brief reads population data from census data
@@ -127,7 +228,29 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::strin
      * @param path Path to RKI file
      * @param vregion vector of keys of the regions of interest
      */
-IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion);
+template<typename FP=double>
+IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion)
+{
+    BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
+
+    for (size_t region = 0; region < vregion.size(); region++) {
+        if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+            auto num_groups = model[region].parameters.get_num_groups();
+            for (auto i = AgeGroup(0); i < num_groups; i++) {
+                model[region].populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
+                                                                                    num_population[region][size_t(i)]);
+            }
+        }
+        else {
+            log_warning("No population data available for region " + std::to_string(region) +
+                        ". Population data has not been set.");
+        }
+    }
+
+    return success();
+}
+
+
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5

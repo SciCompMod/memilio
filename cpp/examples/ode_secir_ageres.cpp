@@ -44,7 +44,7 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    mio::osecir::Model model(3);
+    mio::osecir::Model<double> model(3);
     auto nb_groups = model.parameters.get_num_groups();
     double fact    = 1.0 / (double)(size_t)nb_groups;
 
