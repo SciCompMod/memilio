@@ -6,7 +6,7 @@ import os
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/pycode/memilio-epidata/memilio/epidata/bs.csv', header=None, skiprows=1)
+bd = pd.read_csv(r'data/mobility/bs.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
@@ -20,87 +20,87 @@ dict_leisure = {1: 'work', 2: 'education', 3: 'Shopping', 4: 'free time',
 dict_vehicle = {1: 'bicyle', 2: 'car_driver',
                 3: 'car_codriver', 4: 'public transport', 5: 'walk'}
 
-# check if people do the same trip more than once
-trips = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime']]
-duplicate_trips = trips.duplicated()
-if (duplicate_trips.any()):
-    print('Error: The Person does the same trip more than once. Number of duplicate trips: ' + str(duplicate_trips[duplicate_trips==True].size))
-    if (~bd[['tripID']].duplicated().any()):
-        print('There are no duplicate TripIDs. There are multiple TripIDs for the same Trip. \n')
-activities_after_duplicate_trips  = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime', 'ActivityAfter']].loc[trips.duplicated(keep=False)]
-if (~activities_after_duplicate_trips.duplicated(keep=False).all()):
-    print('Error: Multiple activities after the same trip. \n')
+# # check if people do the same trip more than once
+# trips = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime']]
+# duplicate_trips = trips.duplicated()
+# if (duplicate_trips.any()):
+#     print('Error: The Person does the same trip more than once. Number of duplicate trips: ' + str(duplicate_trips[duplicate_trips==True].size))
+#     if (~bd[['tripID']].duplicated().any()):
+#         print('There are no duplicate TripIDs. There are multiple TripIDs for the same Trip. \n')
+# activities_after_duplicate_trips  = bd[['personID', 'loc_id_start', 'loc_id_end', 'startTime', 'ActivityAfter']].loc[trips.duplicated(keep=False)]
+# if (~activities_after_duplicate_trips.duplicated(keep=False).all()):
+#     print('Error: Multiple activities after the same trip. \n')
 
-# check if persons have more than one home
-person_homes = bd[['personID', 'loc_id_end', 'ActivityAfter']].loc[bd['ActivityAfter']==7]
-person_homes = person_homes.drop_duplicates().groupby(['personID']).size().reset_index(name='counts')
-person_homes.drop(person_homes.loc[person_homes['counts']<2].index, inplace=True)
-if(person_homes.size > 0):
-    print('Error: There are people that have more than one home. \n')
+# # check if persons have more than one home
+# person_homes = bd[['personID', 'loc_id_end', 'ActivityAfter']].loc[bd['ActivityAfter']==7]
+# person_homes = person_homes.drop_duplicates().groupby(['personID']).size().reset_index(name='counts')
+# person_homes.drop(person_homes.loc[person_homes['counts']<2].index, inplace=True)
+# if(person_homes.size > 0):
+#     print('Error: There are people that have more than one home. \n')
 
-# check if the proportion of single-person-households is too high
-households = bd[['personID', 'hhID']].drop_duplicates().groupby(['hhID']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
+# # check if the proportion of single-person-households is too high
+# households = bd[['personID', 'hhID']].drop_duplicates().groupby(['hhID']).size().reset_index(name='counts').sort_values(by=['counts'], ascending=False, ignore_index=True)
 
-if households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size >= 0.4:
-    print("Error: The proportion of single-person-households is too high: " + 
-          str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
+# if households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size >= 0.4:
+#     print("Error: The proportion of single-person-households is too high: " + 
+#           str(households.drop(households.loc[households['counts']>1].index).size / bd[['personID']].drop_duplicates().size))
 
-# check if there are invalid entries
-if not bd['idTrafficZone'].ge(30000000).all():
-    print('Error: There is an entry in "tripID" that is not assignable. \n')
-    # number of entries that are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripID'].ge(30000000)].size) + '. \n')
-if not bd['personID'].ge(100000000).all():
-    print('Error: There is an entry in "personID" that is not assignable. \n')
-    # number of entries that are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['personID'].ge(100000000)].size) + '. \n')
-if not bd['tripChain'].between(1, 100).all():
-    print('Error: There is an entry in "tripChain" that is not assignable. \n')
-    # number of entries that are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripChain'].between(1, 100)].size) + '. \n')
-    # max assigned value
-    print('Max assigned value: ' + str(bd['tripChain'].max()) + '. \n')
-if not bd['countyStart'].ge(30000000).all():
-    print('Error: There is an entry in "countyStart" that is not assignable. \n')
-    # which ones are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyStart'].ge(30000000)].size) + '. \n')
-if not bd['countyEnd'].ge(30000000).all():
-    print('Error: There is an entry in "countyEnd" that is not assignable. \n')
-    # which ones are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyEnd'].ge(30000000)].size) + '. \n')
-if not bd['hhID'].ge(100000000).all():
-    print('Error: There is an entry in "hhID" that is not assignable. \n')
-if not bd['tripChainID'].between(-1, -1).all():
-    print('Error: There is an entry in "tripChainID" that is not assignable. \n')
-if not bd['vehicleChoice'].between(1, 5).all():
-    print('Error: There is an entry in "vehicleChoice" that is not assignable. \n')
-    #print number of entries that are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['vehicleChoice'].between(1, 5)].size) + '. \n')
-if not bd['ActivityAfter'].between(0, 7).all():
-    print('Error: There is an entry in "ActivityAfter" that is not assignable. \n')
-    #print number of entries that are not assignable
-    print('Number of entries that are not assignable: ' + str(bd.loc[~bd['ActivityAfter'].between(0, 7)].size) + '. \n')
+# # check if there are invalid entries
+# if not bd['idTrafficZone'].ge(30000000).all():
+#     print('Error: There is an entry in "tripID" that is not assignable. \n')
+#     # number of entries that are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripID'].ge(30000000)].size) + '. \n')
+# if not bd['personID'].ge(100000000).all():
+#     print('Error: There is an entry in "personID" that is not assignable. \n')
+#     # number of entries that are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['personID'].ge(100000000)].size) + '. \n')
+# if not bd['tripChain'].between(1, 100).all():
+#     print('Error: There is an entry in "tripChain" that is not assignable. \n')
+#     # number of entries that are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['tripChain'].between(1, 100)].size) + '. \n')
+#     # max assigned value
+#     print('Max assigned value: ' + str(bd['tripChain'].max()) + '. \n')
+# if not bd['countyStart'].ge(30000000).all():
+#     print('Error: There is an entry in "countyStart" that is not assignable. \n')
+#     # which ones are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyStart'].ge(30000000)].size) + '. \n')
+# if not bd['countyEnd'].ge(30000000).all():
+#     print('Error: There is an entry in "countyEnd" that is not assignable. \n')
+#     # which ones are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['countyEnd'].ge(30000000)].size) + '. \n')
+# if not bd['hhID'].ge(100000000).all():
+#     print('Error: There is an entry in "hhID" that is not assignable. \n')
+# if not bd['tripChainID'].between(-1, -1).all():
+#     print('Error: There is an entry in "tripChainID" that is not assignable. \n')
+# if not bd['vehicleChoice'].between(1, 5).all():
+#     print('Error: There is an entry in "vehicleChoice" that is not assignable. \n')
+#     #print number of entries that are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['vehicleChoice'].between(1, 5)].size) + '. \n')
+# if not bd['ActivityAfter'].between(0, 7).all():
+#     print('Error: There is an entry in "ActivityAfter" that is not assignable. \n')
+#     #print number of entries that are not assignable
+#     print('Number of entries that are not assignable: ' + str(bd.loc[~bd['ActivityAfter'].between(0, 7)].size) + '. \n')
 
-# check if there are empty cells
-for header in bd.columns:
-    if (bd[header].isna().any()):
-        print('Error: ' + str(len(bd[bd[header].isna()])) + ' empty entries in column' + str(header) + '. \n')
+# # check if there are empty cells
+# for header in bd.columns:
+#     if (bd[header].isna().any()):
+#         print('Error: ' + str(len(bd[bd[header].isna()])) + ' empty entries in column' + str(header) + '. \n')
 
-# check age groups with schools
-number_of_people = bd[['personID']].drop_duplicates().size
-print(str(number_of_people) + 'are people. \n')
+# # check age groups with schools
+# number_of_people = bd[['personID']].drop_duplicates().size
+# print(str(number_of_people) + ' are people. \n')
 
-number_of_trips = bd[['tripID']].drop_duplicates().size
-print(str(number_of_trips) + ' trips. \n')
+# number_of_trips = bd[['tripID']].drop_duplicates().size
+# print(str(number_of_trips) + ' trips. \n')
 
-students = bd[['personID', 'loc_id_end', 'age']].loc[bd['ActivityAfter']==2]
-print('Minimal age of people going to school: ' + str(students['age'].min()) + '. Maximal age of people going to school: ' + str(students['age'].max()) + '.\n')
-print(str(students.loc[students['age'] > 20].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
+# students = bd[['personID', 'loc_id_end', 'age']].loc[bd['ActivityAfter']==2]
+# print('Minimal age of people going to school: ' + str(students['age'].min()) + '. Maximal age of people going to school: ' + str(students['age'].max()) + '.\n')
+# print(str(students.loc[students['age'] > 20].size) + ' persons of ' + str(students.size) + ' people going to school are in a higher age group than 10. \n')
 
-children = bd[['personID','ActivityAfter']].loc[bd['age']<=20]
-number_of_children = children['personID'].drop_duplicates().size
-number_of_children_school = children[children['ActivityAfter'] == 2]['personID'].drop_duplicates().size
-print(str(number_of_children - number_of_children_school) + ' of ' + str(number_of_children) + ' children do not go to school. \n')
+# children = bd[['personID','ActivityAfter']].loc[bd['age']<=20]
+# number_of_children = children['personID'].drop_duplicates().size
+# number_of_children_school = children[children['ActivityAfter'] == 2]['personID'].drop_duplicates().size
+# print(str(number_of_children - number_of_children_school) + ' of ' + str(number_of_children) + ' children do not go to school. \n')
 
 
 
@@ -113,6 +113,21 @@ print(str(number_of_children - number_of_children_school) + ' of ' + str(number_
 
 
 ####### visual check on values in data frame #######
+
+first_trip = bd[['loc_id_start']][bd['tripChain']==1]
+last_trip = bd[['personID', 'tripChain', 'loc_id_end']].sort_values(by=['personID', 'tripChain'])
+last_trip.drop_duplicates(subset=['personID'], inplace=True, keep='last')
+first_trip.compare(last_trip)
+
+
+
+# persons = bd[['personID']].drop_duplicates()
+# for person in persons.iterrows():
+#     trip = bd[['personID', 'tripChain', 'loc_id_end']][bd[['personID']]==person[1]].max()
+# last_trip = bd[['personID', 'tripChain']].groupby('personID', group_keys=False).apply(lambda x: max(x))
+# last_trip = bd[['loc_id_end']][~bd['personID'].duplicated(keep='last')]
+
+
 
 def get_trip_chain_activity_after(person_id):
     bd_persons_trip_chain_activity_after = bd.loc[bd['personID'] == person_id, [
@@ -469,6 +484,8 @@ bd_age_duration.plot(kind='scatter', x='age', y='travelTime')
 plt.plot(np.unique(bd_age_duration['age']), np.poly1d(np.polyfit(
     bd_age_duration['age'], bd_age_duration['travelTime'], 1))(np.unique(bd_age_duration['age'])))
 plt.show()
+
+
 
 
 x = 42
