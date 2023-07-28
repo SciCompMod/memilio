@@ -145,10 +145,6 @@ compare_first_and_last_trip = first_trip['loc_id_start'].compare(last_trip['loc_
 print("Number of persons where first start location is not the last end location: " + str(compare_first_and_last_trip.size)+ ".")
 
 # check what persons are doing which only do one trip
-bd_persons_one_trip = bd[['personID', 'tripChain']].drop_duplicates().groupby(['personID']).size().reset_index(name='counts')
-bd_persons_one_trip = bd_persons_one_trip.loc[bd_persons_one_trip['counts']==1]
-bd_persons_one_trip = bd_persons_one_trip.merge(bd[['personID', 'tripChain', 'ActivityAfter']], on=['personID', 'tripChain'], how='left')
-bd_persons_one_trip['ActivityAfter'] = bd_persons_one_trip['ActivityAfter'].map(dict_leisure)
 location_types = last_trip.groupby(['ActivityAfter']).size()
 
 location_types.plot(kind='bar')
