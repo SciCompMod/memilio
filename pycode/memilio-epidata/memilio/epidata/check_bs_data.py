@@ -6,7 +6,7 @@ import os
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv(r'data/mobility/bs.csv', header=None, skiprows=1)
+bd = pd.read_csv('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/pycode/memilio-epidata/memilio/epidata/bs.csv', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
@@ -87,8 +87,8 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 #         print('Error: ' + str(len(bd[bd[header].isna()])) + ' empty entries in column' + str(header) + '. \n')
 
 # # check age groups with schools
-# number_of_people = bd[['personID']].drop_duplicates().size
-# print(str(number_of_people) + ' are people. \n')
+number_of_people = bd[['personID']].drop_duplicates().size
+print(str(number_of_people) + ' are people. \n')
 
 # number_of_trips = bd[['tripID']].drop_duplicates().size
 # print(str(number_of_trips) + ' trips. \n')
@@ -141,8 +141,14 @@ figs_path = os.path.join(os.path.dirname(
 # check whether first start location is the last end location
 first_trip = bd[['personID','loc_id_start']][bd['tripChain']==1].sort_values(by=['personID']).reset_index(drop=True)
 last_trip = bd[['personID', 'tripChain', 'loc_id_end', 'ActivityAfter']].sort_values(by=['personID', 'tripChain']).drop_duplicates(subset=['personID'], keep='last').reset_index(drop=True)
-first_trip['loc_id_start'].compare(last_trip['loc_id_end'])
+compare_first_and_last_trip = first_trip['loc_id_start'].compare(last_trip['loc_id_end'])
+print("Number of persons where first start location is not the last end location: " + str(compare_first_and_last_trip.size)+ ".")
 
+# check what persons are doing which only do one trip
+bd_persons_one_trip = bd[['personID', 'tripChain']].drop_duplicates().groupby(['personID']).size().reset_index(name='counts')
+bd_persons_one_trip = bd_persons_one_trip.loc[bd_persons_one_trip['counts']==1]
+bd_persons_one_trip = bd_persons_one_trip.merge(bd[['personID', 'tripChain', 'ActivityAfter']], on=['personID', 'tripChain'], how='left')
+bd_persons_one_trip['ActivityAfter'] = bd_persons_one_trip['ActivityAfter'].map(dict_leisure)
 location_types = last_trip.groupby(['ActivityAfter']).size()
 
 location_types.plot(kind='bar')
