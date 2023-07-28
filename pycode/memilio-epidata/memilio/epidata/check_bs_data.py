@@ -114,21 +114,6 @@ dict_vehicle = {1: 'bicyle', 2: 'car_driver',
 
 ####### visual check on values in data frame #######
 
-first_trip = bd[['loc_id_start']][bd['tripChain']==1]
-last_trip = bd[['personID', 'tripChain', 'loc_id_end']].sort_values(by=['personID', 'tripChain'])
-last_trip.drop_duplicates(subset=['personID'], inplace=True, keep='last')
-first_trip.compare(last_trip)
-
-
-
-# persons = bd[['personID']].drop_duplicates()
-# for person in persons.iterrows():
-#     trip = bd[['personID', 'tripChain', 'loc_id_end']][bd[['personID']]==person[1]].max()
-# last_trip = bd[['personID', 'tripChain']].groupby('personID', group_keys=False).apply(lambda x: max(x))
-# last_trip = bd[['loc_id_end']][~bd['personID'].duplicated(keep='last')]
-
-
-
 def get_trip_chain_activity_after(person_id):
     bd_persons_trip_chain_activity_after = bd.loc[bd['personID'] == person_id, [
         'tripChain', 'ActivityAfter']]
@@ -152,6 +137,17 @@ if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '
         os.path.abspath(__file__)), 'figs_bs_data'))
 figs_path = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'figs_bs_data')
+
+first_trip = bd[['personID','loc_id_start']][bd['tripChain']==1].sort_values(by=['personID']).reset_index(drop=True)
+last_trip = bd[['personID', 'tripChain', 'loc_id_end', 'ActivityAfter']].sort_values(by=['personID', 'tripChain']).drop_duplicates(subset=['personID'], keep='last').reset_index(drop=True)
+first_trip['loc_id_start'].compare(last_trip['loc_id_end'])
+
+location_types = last_trip.groupby(['ActivityAfter']).size()
+
+location_types.plot(kind='bar')
+plt.xlabel('Activity')
+plt.ylabel('Number of persons')
+plt.savefig(os.path.join(figs_path, 'last_activity_of_day.png'), dpi=300)
 
 # probably the traffic zones that are in braunschweig because in idTrafficzones the people of bs are located
 bd_tz_bs = bd.groupby(['idTrafficZone']).size().reset_index(
