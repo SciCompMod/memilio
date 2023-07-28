@@ -6,7 +6,7 @@ import os
 
 
 ####### minimal sanity check on data #######
-bd = pd.read_csv('/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/pycode/memilio-epidata/memilio/epidata/bs.csv', header=None, skiprows=1)
+bd = pd.read_csv('', header=None, skiprows=1)
 
 # setup dictionary for the leisure activities, and vehicle choice and column names
 bd.rename(
