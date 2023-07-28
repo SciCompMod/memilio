@@ -600,8 +600,128 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
     return success();
 }
 
-IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string& path, Date date,
-                                    const std::vector<int>& vregion, int num_days);
+template<typename FP=double>
+IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::string& path, Date date,
+                                    const std::vector<int>& vregion, int num_days)
+{
+    BOOST_OUTCOME_TRY(vacc_data, read_vaccination_data(path));
+
+    auto num_groups = model[0].parameters.get_num_groups();
+
+    auto days_until_effective1 = (int)(double)model[0].parameters.template get<DaysUntilEffectivePartialImmunity>()[AgeGroup(0)];
+    auto days_until_effective2 =
+        (int)(double)model[0].parameters.template get<DaysUntilEffectiveImprovedImmunity>()[AgeGroup(0)];
+    auto vaccination_distance = (int)(double)model[0].parameters.template get<VaccinationGap>()[AgeGroup(0)];
+
+    // iterate over regions (e.g., counties)
+    for (size_t i = 0; i < model.size(); ++i) {
+        // iterate over age groups in region
+        for (auto g = AgeGroup(0); g < num_groups; ++g) {
+
+            model[i].parameters.template get<DailyFirstVaccination>().resize(SimulationDay(num_days + 1));
+            model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days + 1));
+            for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
+                model[i].parameters.template get<DailyFirstVaccination>()[{g, d}] = 0.0;
+                model[i].parameters.template get<DailyFullVaccination>()[{g, d}]  = 0.0;
+            }
+        }
+    }
+
+    auto max_date_entry = std::max_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    if (max_date_entry == vacc_data.end()) {
+        return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
+    }
+    auto max_date = max_date_entry->date;
+
+    for (auto&& vacc_data_entry : vacc_data) {
+        auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
+            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(r)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::StateId(r)) ||
+                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::DistrictId(r));
+        });
+        auto date_df = vacc_data_entry.date;
+        if (it != vregion.end()) {
+            auto region_idx = size_t(it - vregion.begin());
+            auto age        = vacc_data_entry.age_group;
+
+            for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
+                int days_plus;
+                // In the following, second dose means previous 'full immunization', now 'Grundimmunisierung'.
+                // ---
+                // date: start_date of the simulation (Input from IO call read_input_data_county_vaccmodel())
+                // d: day of simulation, counted from 0 to num_days (for which we need (approximated) vaccination numbers)
+                // root[i]["Vacc_completed"]: accumulated number of total second doses up to day date_df;
+                //                               taken from input dataframe, single value, per county and age group
+                // ----
+                // An averaged distance between first and second doses (vaccination_distance) is assumed in the following
+                // and the first doses are computed based on the second doses given 'vaccination_distance' days later.
+                // ----
+                // a person whose second dose is reported at start_date + simulation_day - days_until_effective1 + vaccination_distance
+                // had the first dose on start_date + simulation_day - days_until_effective1. Furthermore, he/she has the full protection
+                // of the first dose at day X = start_date + simulation_day
+                // Storing its value in get<DailyFirstVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyFirstVaccination>() at d and d-1) of
+                // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
+                auto offset_first_date =
+                    offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
+                if (max_date >= offset_first_date) {
+                    // Option 1: considered offset_first_date is available in input data frame
+                    if (date_df == offset_first_date) {
+                        model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] =
+                            vacc_data_entry.num_vaccinations_completed;
+                    }
+                }
+                else { // offset_first_date > max_date
+                    // Option 2: considered offset_first_date is NOT available in input data frame
+                    // Here, a constant number of first and second doses is assumed, i.e.,
+                    // the the number of vaccinationes at day d (N days after max_date) will be:
+                    // total number of vaccinations up to day max_date + N * number of vaccinations ON max_date
+                    // (where the latter is computed as the difference between the total number at max_date and max_date-1)
+                    days_plus = get_offset_in_days(offset_first_date, max_date);
+                    if (date_df == offset_date_by_days(max_date, -1)) {
+                        model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
+                    }
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
+                    }
+                }
+
+                // a person whose second dose is reported at start_date + simulation_day - days_until_effective2
+                // has the full protection of the second dose at day X = start_date + simulation_day
+                // Storing its value in get<DailyFullVaccination>() will eventually (in the simulation)
+                // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
+                // N susceptible, partially vaccinated individuals to 'SusceptibleImprovedImmunity' state at day d; see secir_vaccinated.h
+                auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
+                if (max_date >= offset_full_date) {
+                    // Option 1: considered offset_full_date is available in input data frame
+                    if (date_df == offset_full_date) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
+                            vacc_data_entry.num_vaccinations_completed;
+                    }
+                }
+                else { // offset_full_date > max_full_date
+                    // Option 2: considered offset_full_date is NOT available in input data frame
+                    days_plus = get_offset_in_days(offset_full_date, max_date);
+                    if (date_df == offset_date_by_days(max_date, -1)) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
+                    }
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
+                    }
+                }
+            }
+        }
+    }
+    return success();
+}
+
+
 } // namespace details
 
 #ifdef MEMILIO_HAS_HDF5

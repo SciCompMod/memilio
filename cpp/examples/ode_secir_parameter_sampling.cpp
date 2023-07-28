@@ -73,31 +73,31 @@ int main()
     /*
      * Contact frequency and dampings variable element
      */
-    mio::osecir::Model model(3);
+    mio::osecir::Model<double> model(3);
     auto& params = model.parameters;
 
     mio::AgeGroup nb_groups = params.get_num_groups();
     mio::ContactMatrixGroup cm_group{
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
-    params.get<mio::osecir::ContactPatterns>() = cm_group;
+    params.get<mio::osecir::ContactPatterns<double>>() = cm_group;
 
     double t0   = 0;
     double tmax = 100;
 
-    params.get<mio::osecir::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
-        mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(30.),
+    params.get<mio::osecir::ContactPatterns<double>>().get_dampings().push_back(mio::DampingSampling<double>(
+        mio::UncertainValue<double>(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(30.),
         std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));
-    params.get<mio::osecir::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
+    params.get<mio::osecir::ContactPatterns<double>>().get_dampings()[0].get_value().set_distribution(
         mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.2));
 
-    params.get<mio::osecir::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
-        mio::UncertainValue(0.3), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(10.),
+    params.get<mio::osecir::ContactPatterns<double>>().get_dampings().push_back(mio::DampingSampling<double>(
+        mio::UncertainValue<double>(0.3), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(10.),
         std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));
-    params.get<mio::osecir::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
+    params.get<mio::osecir::ContactPatterns<double>>().get_dampings()[0].get_value().set_distribution(
         mio::ParameterDistributionNormal(0.0, 1.0, 0.4, 0.05));
 
     draw_sample(model);
-    auto& cfmat_sample = params.get<mio::osecir::ContactPatterns>().get_cont_freq_mat();
+    auto& cfmat_sample = params.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 
