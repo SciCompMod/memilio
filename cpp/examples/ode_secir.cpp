@@ -36,9 +36,9 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
 
-    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.template set<mio::osecir::StartDay>(60);
     model.parameters.set<mio::osecir::Seasonality>(0.2);
 
     model.parameters.get<mio::osecir::IncubationTime>()       = 5.2;

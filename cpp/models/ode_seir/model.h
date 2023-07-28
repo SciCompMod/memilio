@@ -35,9 +35,9 @@ namespace oseir
     * define the model *
     ********************/
 template<typename FP=double>
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters<FP>>
+class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters<FP>,FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>,FP>;
 
 public:
     Model()

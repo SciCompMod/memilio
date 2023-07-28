@@ -434,7 +434,8 @@ void create_assign_locations(mio::abm::World& world)
 /**
  * Assign an infection state to each person.
  */
-void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, double exposed_prob,
+template<typename FP=double>
+void assign_infection_state(mio::abm::World<FP>& world, mio::abm::TimePoint t, double exposed_prob,
                             double infected_no_symptoms_prob, double infected_symptoms_prob, double recovered_prob)
 {
     auto persons = world.get_persons();
@@ -442,7 +443,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
         auto infection_state =
             determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection<FP>(mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          world.get_global_infection_parameters(), t, infection_state));
     }
 }

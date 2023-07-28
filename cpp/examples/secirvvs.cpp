@@ -31,7 +31,7 @@ int main()
 
     mio::log_info("Simulating SECIRVVS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osecirvvs::Model model(1);
+    mio::osecirvvs::Model<double> model(1);
 
     for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
         model.populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]                                = 10;

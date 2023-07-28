@@ -40,7 +40,8 @@ namespace osecirvvs
      * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
      * @param[inout] model Model including contact patterns for alle age groups
      */
-void draw_sample_demographics(Model& model);
+template<typename FP=double>
+void draw_sample_demographics(Model<FP>& model);
 
 /**
      * draws a sample from the specified distributions for all parameters related to the infection.

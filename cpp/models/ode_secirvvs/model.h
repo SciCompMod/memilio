@@ -655,7 +655,8 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     return factors;
 }
 
-template <class Base = mio::Simulation<Model>>
+
+template <typename FP=double, class Base = mio::Simulation<Model<FP>,FP>>
 auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
 {
     auto& model       = sim.get_model();

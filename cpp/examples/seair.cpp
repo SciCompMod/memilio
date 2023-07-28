@@ -43,7 +43,7 @@ int main()
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
 
-    mio::oseair::Model model;
+    mio::oseair::Model<double> model;
     const double N = 327167434;// total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
