@@ -8,6 +8,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "abm/movement_data.h"
+#include "abm/common_abm_loggers.h"
 
 namespace fs = boost::filesystem;
 
@@ -580,40 +581,6 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto sim = mio::abm::Simulation(t0, std::move(world));
     return sim;
 }
-
-struct LogLocationInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, mio::abm::GeographicalLocation>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type location_information{};
-        for (auto&& location : sim.get_world().get_locations()) {
-            location_information.push_back(std::make_tuple(location.get_index(), location.get_geographical_location()));
-        }
-        return location_information;
-    }
-};
-
-struct LogPersonInformation : mio::LogOnce {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::AgeGroup>>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Type person_information{};
-        for (auto&& person : sim.get_world().get_persons()) {
-            person_information.push_back(std::make_tuple(
-                person.get_person_id(), sim.get_world().find_location(mio::abm::LocationType::Home, person).get_index(),
-                person.get_age()));
-        }
-        return person_information;
-    }
-};
-
-struct LogMovementData : mio::LogAlways {
-    using Type = std::vector<mio::abm::movement_data>;
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        return sim.get_world().get_movement_data();
-    }
-};
 
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
