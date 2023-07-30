@@ -572,7 +572,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/cpp/simulations/bs.csv");
+    create_world_from_data(world, "");
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
