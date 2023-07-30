@@ -21,20 +21,12 @@
 #ifndef ABM_MOVEMENT_DATA_H
 #define ABM_MOVEMENT_DATA_H
 
+#include "abm/time.h"
+
 namespace mio
 {
 namespace abm
 {
-struct movement_data {
-    uint32_t agent_id;
-    uint32_t from_id;
-    uint32_t to_id;
-    uint32_t start_time;
-    uint32_t end_time;
-    uint32_t transport_mode;
-    uint32_t activity_type;
-    mio::abm::InfectionState infection_state;
-};
 
 enum TransportMode : uint32_t
 {
@@ -57,6 +49,17 @@ enum ActivityType : uint32_t
     OtherActivity,
     Home,
     UnknownActivity
+};
+
+struct movement_data {
+    uint32_t agent_id;
+    uint32_t from_id;
+    uint32_t to_id;
+    mio::abm::TimePoint start_time;
+    mio::abm::TimePoint end_time;
+    mio::abm::TransportMode transport_mode;
+    mio::abm::ActivityType activity_type;
+    mio::abm::InfectionState infection_state;
 };
 
 } // namespace abm

@@ -180,12 +180,18 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id          = row[index["puid"]];
-        uint32_t age                = row[index["age"]];
-        uint32_t home_id            = row[index["huid"]];
-        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
-        uint32_t activity_end       = row[index["activity_end"]];
-        uint32_t trip_start         = row[index["start_time"]];
+        uint32_t person_id                     = row[index["puid"]];
+        uint32_t age                           = row[index["age"]];
+        uint32_t home_id                       = row[index["huid"]];
+        uint32_t target_location_id            = std::abs(row[index["loc_id_end"]]);
+        uint32_t origin_location_id            = std::abs(row[index["loc_id_start"]]);
+        mio::abm::TransportMode transport_mode = mio::abm::TransportMode(
+            row[index["travel_mode"]] -
+            1); // 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
+        mio::abm::ActivityType activity_end = mio::abm::ActivityType(
+            row[index["activity_end"]] -
+            1); // 1:Workplace, 2:Education, 3:Shopping, 4:Leisure, 5:Private Matters, 6:Other Activity, 7:Home, 8:Unknown Activity
+        uint32_t trip_start = row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
@@ -218,12 +224,14 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         }
 
         // Add the trip to the trip list person and location must exist at this point
-        auto person      = persons.find(person_id)->second;
-        auto location_id = locations.find(target_location_id)->second;
+        auto person          = persons.find(person_id)->second;
+        auto target_location = locations.find(target_location_id)->second;
+        auto origin_location = locations.find(origin_location_id)->second;
         person.set_assigned_location(
-            location_id); //This assumes that we only have in each tripchain only one location type for each person
-        world.get_trip_list().add_trip(
-            mio::abm::Trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(trip_start), location_id));
+            target_location); //This assumes that we only have in each tripchain only one location type for each person
+        world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
+                                                      mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
+                                                      target_location, origin_location, transport_mode, activity_end));
     }
 
     world.get_trip_list().use_weekday_trips_on_weekend();
@@ -600,12 +608,10 @@ struct LogPersonInformation : mio::LogOnce {
 };
 
 struct LogMovementData : mio::LogAlways {
-    using Type = std::vector<std::tuple<uint32_t, uint32_t>>;
+    using Type = std::vector<mio::abm::movement_data>;
     static Type log(const mio::abm::Simulation& sim)
     {
-        Type movement_data{};
-        mio::unused(sim);
-        return movement_data;
+        return sim.get_world().get_movement_data();
     }
 };
 
@@ -625,7 +631,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
         // Create the sampled simulation with start time t0.
         auto sim = create_sampled_simulation(t0);
         //output object
-        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation> history;
+        mio::History<mio::DataWriterToMemory, LogLocationInformation, LogPersonInformation, LogMovementData> history;
         // Collect the id of location in world.
         std::vector<int> loc_ids;
         for (auto& location : sim.get_world().get_locations()) {

@@ -100,7 +100,12 @@ void World::migration(TimePoint t, TimeSpan dt)
                         target_location.get_number_persons() < target_location.get_capacity().persons) {
                         bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
+                            m_movement_data.push_back({person->get_person_id(), current_location.get_index(),
+                                                       target_location.get_index(), t, t + dt,
+                                                       mio::abm::TransportMode::Unknown, mio::abm::UnknownActivity,
+                                                       person->get_infection_state(t)});
                             person->migrate_to(target_location);
+
                             migrations++;
                         }
                         break;
@@ -127,6 +132,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto& target_location = get_individualized_location(trip.migration_destination);
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
+                    m_movement_data.push_back({person->get_person_id(), current_location.get_index(),
+                                               target_location.get_index(), t, t + dt, trip.trip_mode,
+                                               trip.activity_type, person->get_infection_state(t)});
                     person->migrate_to(target_location);
                     migrations++;
                 }
@@ -142,6 +150,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     for (auto& location : m_locations) {
         location->cache_exposure_rates(t, dt);
     }
+    m_movement_data.clear();
 }
 
 void World::end_step(TimePoint t, TimeSpan dt)
@@ -270,6 +279,16 @@ TestingStrategy& World::get_testing_strategy()
 const TestingStrategy& World::get_testing_strategy() const
 {
     return m_testing_strategy;
+}
+
+std::vector<movement_data>& World::get_movement_data()
+{
+    return m_movement_data;
+}
+
+const std::vector<movement_data>& World::get_movement_data() const
+{
+    return m_movement_data;
 }
 
 } // namespace abm
