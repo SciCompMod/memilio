@@ -60,7 +60,7 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
     }
 }
 
-void split_line(std::string string, std::vector<int32_t>* row)
+void split_line(std::string string, std::vector<double>* row)
 {
     std::vector<std::string> strings;
 
@@ -71,7 +71,12 @@ void split_line(std::string string, std::vector<int32_t>* row)
     } // Temporary fix to handle empty cells.
     boost::split(strings, string, boost::is_any_of(","));
     std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        return std::stoi(s);
+        if (s.rfind('.') != std::string::npos) {
+            return std::stod(s);
+        }
+        else {
+            return (double)std::stoi(s);
+        }
     });
 }
 
@@ -142,7 +147,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     // Open an existing file
     fin.open(filename, std::ios::in);
-    std::vector<int32_t> row;
+    std::vector<double> row;
     std::vector<std::string> row_string;
     std::string line;
 
@@ -181,11 +186,12 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id                     = row[index["puid"]];
-        uint32_t age                           = row[index["age"]];
-        uint32_t home_id                       = row[index["huid"]];
-        uint32_t target_location_id            = std::abs(row[index["loc_id_end"]]);
-        uint32_t origin_location_id            = std::abs(row[index["loc_id_start"]]);
+        uint32_t person_id                     = (int)row[index["puid"]];
+        uint32_t age                           = (int)row[index["age"]];
+        uint32_t home_id                       = (int)row[index["huid"]];
+        uint32_t target_location_id            = (int)std::abs(row[index["loc_id_end"]]);
+        uint32_t origin_location_id            = (int)std::abs(row[index["loc_id_start"]]);
+        mio::abm::GeographicalLocation geo_loc = {std::abs(row[index["lon_start"]]), std::abs(row[index["lat_start"]])};
         mio::abm::TransportMode transport_mode = mio::abm::TransportMode(
             row[index["travel_mode"]] -
             1); // 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
@@ -198,6 +204,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
             home = world.add_location(mio::abm::LocationType::Home, 1);
+            world.get_individualized_location(home).set_geographical_location(geo_loc);
             locations.insert({home_id, home});
         }
         else {
@@ -221,6 +228,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             location = world.add_location(
                 get_location_type(mio::abm::ActivityType(activity_end)),
                 1); //Assume one place has one activity, this may be untrue but not important for now(?)
+            world.get_individualized_location(location).set_geographical_location(geo_loc);
             locations.insert({target_location_id, location});
         }
 
