@@ -283,6 +283,7 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_python
           files: ./coverage_python/**,./coverage.info
           verbose: true
