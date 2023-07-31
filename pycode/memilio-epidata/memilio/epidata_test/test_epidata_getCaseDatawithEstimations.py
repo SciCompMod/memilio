@@ -579,8 +579,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 1)
 
         df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
-                            sheet_name='COVID_Todesfälle', header=0,
-                            engine='openpyxl')
+                           sheet_name='COVID_Todesfälle', header=0,
+                           engine='openpyxl')
         towrite = io.BytesIO()
         df.to_excel(towrite, index=False)
         towrite.seek(0)
