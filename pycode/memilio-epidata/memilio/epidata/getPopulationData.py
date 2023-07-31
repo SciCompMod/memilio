@@ -167,7 +167,11 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    '''! Creates new dataframe and copies values of counties from old dataframe
+    '''! Assigns population data of all counties of old dataframe in new created dataframe
+
+    In df_pop_raw there might be additional information like federal states, 
+    governing regions etc. which is not necessary for the dataframe.
+    Also checks for incomplete data.    
 
     @param df_pop_raw old DataFrame
     @param counties List of counties to be assigned in new DataFrame
@@ -233,15 +237,18 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
 
 
 def test_total_population(df_pop, age_cols):
-    """! Tests if total population matches axpectation
+    """! Tests if total population matches expectation
     @param df_pop Population Dataframe with all counties
     @param age_cols All age groups in DataFrame"""
 
-    if df_pop[age_cols].sum().sum() != 83237124:
-        if df_pop[age_cols].sum().sum() == 83155031:
+    total_sum_2020 = 83155031
+    total_sum_2021 = 83237124
+
+    if df_pop[age_cols].sum().sum() != total_sum_2021:
+        if df_pop[age_cols].sum().sum() == total_sum_2020:
             warnings.warn('Using data of 2020. Newer data is available.')
         else:
-            raise gd.DataError('Total Population does not match expatation.')
+            raise gd.DataError('Total Population does not match expectation.')
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
