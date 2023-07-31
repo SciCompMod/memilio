@@ -568,7 +568,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             [deaths_estimated].item(),
             np.round(43 * 2. / 9.))
 
-    def test_download_weekly(self):
+    @patch('requests.get')
+    def test_download_weekly(self, mock_request):
         directory = os.path.join(self.path, 'Germany/')
         gd.check_dir(directory)
 
@@ -577,15 +578,14 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        with patch('requests.get') as mock_request:
-            df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
-                               sheet_name='COVID_Todesfälle', header=0,
-                               engine='openpyxl')
-            towrite = io.BytesIO()
-            df.to_excel(towrite, index=False)
-            towrite.seek(0)
-            mock_request.return_value.content = towrite.read()
-            gcdwe.download_weekly_deaths_numbers(directory)
+        df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
+                            sheet_name='COVID_Todesfälle', header=0,
+                            engine='openpyxl')
+        towrite = io.BytesIO()
+        df.to_excel(towrite, index=False)
+        towrite.seek(0)
+        mock_request.return_value.content = towrite.read()
+        gcdwe.download_weekly_deaths_numbers(directory)
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
