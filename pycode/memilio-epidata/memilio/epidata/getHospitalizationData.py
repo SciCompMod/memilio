@@ -36,6 +36,8 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 def hospit_sanity_checks(df):
     """! Checks the sanity of the hospitalization_data dataframe
@@ -180,16 +182,16 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
     if not no_raw:
         gd.write_dataframe(df_raw, directory, filename, file_format)
-    df_data = df_raw.copy()
+    df_data = df_raw[:]
     # drop unwanted columns and rows, rename and sort dataframe
     df_data.rename(dd.GerEng, axis=1, inplace=True)
     df_data.rename(columns={'Datum': dd.EngEng['date']}, inplace=True)
-    df_data = df_data.drop(columns=['State', '7T_Hospitalisierung_Inzidenz'])
-    df_data = df_data.sort_values(
+    df_data.drop(columns=['State', '7T_Hospitalisierung_Inzidenz'], inplace = True)
+    df_data.sort_values(
         by=[dd.EngEng['date'],
             dd.EngEng['idState'],
-            dd.EngEng['ageRKI']]).reset_index(
-        drop=True)
+            dd.EngEng['ageRKI']], inplace = True)
+    df_data.reset_index(drop=True, inplace = True)
     # impute 6 days before min_date to split up the seven day cases
     df_data = mdfs.impute_and_reduce_df(
         df_old=df_data,
@@ -209,14 +211,13 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
         df_age = df_data[df_data[dd.EngEng['ageRKI']] == age]
         for stateid in df_data[dd.EngEng['idState']].unique():
             df_age_stateid = df_age[df_age[dd.EngEng['idState']]
-                                    == stateid].copy()
+                                    == stateid]
             # get hospitalizations per day from incidence
             seven_days_values = df_age_stateid['7T_Hospitalisierung_Faelle'].values
             daily_values = get_hospitailzations_per_day(seven_days_values)
             # save data in dataframe
             df_age_stateid['hospitalized'] = daily_values
-            df_age_stateid = df_age_stateid.drop(
-                ['7T_Hospitalisierung_Faelle'], axis=1)
+            df_age_stateid.drop(['7T_Hospitalisierung_Faelle'], axis=1, inplace = True)
             df_daily = pd.concat(
                 [df_daily.reset_index(drop=True),
                  df_age_stateid.reset_index(drop=True)],

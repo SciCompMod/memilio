@@ -38,7 +38,7 @@ def impute_and_reduce_df(
     Extracts Dates between min and max date.
 
     @param df_old old pandas dataframe
-    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county oder federal state IDs)
+    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county or federal state IDs)
     @param mod_cols List of columns for which the imputation and/or moving average is conducted (e.g., Confirmed or ICU)
     @param impute [Default: 'forward'] imputes either based on older values ('forward') or zeros ('zeros')
     @param moving_average [Default: 0, no averaging] Number of days over which to compute the moving average
@@ -62,7 +62,7 @@ def impute_and_reduce_df(
 
     # remove 'index' column if available
     try:
-        df_new = df_new.drop(columns='index')
+        df_new.drop(columns='index', inplace= True)
     except KeyError:
         pass
 
@@ -99,12 +99,8 @@ def impute_and_reduce_df(
 
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
-        df_local = df_old.copy()
-        counter = 0
         # filter df
-        while counter < len(ids):
-            df_local = df_local[df_local[group_by[counter]] == ids[counter]]
-            counter += 1
+        df_local = df_old[(df_old[group_by]==ids).all(axis=1)]
 
         # create missing dates
         df_local.index = df_local.Date
@@ -126,16 +122,14 @@ def impute_and_reduce_df(
 
             if impute == 'zeros':
                 # impute zeros at missing dates
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, inplace=True)
+                df_local_new.fillna(values, inplace=True)
             else:
                 # fill values of missing dates based on last entry
                 df_local_new.fillna(method='ffill', inplace=True)
                 # fill value of the first date, if it doesn't exist yet
                 # has to be conducted in second step to not impute 'value'
                 # at first missing value if start is present
-                for keys, vals in values.items():
-                    df_local_new[keys].fillna(vals, limit=1, inplace=True)
+                df_local_new.fillna(values, limit = 1, inplace=True)
                 # fill remaining values (between first date and first
                 # reported date of the df_local)
                 df_local_new.fillna(method='ffill', inplace=True)
