@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import io
+import json
 import os
 import unittest
 from unittest.mock import patch
@@ -154,6 +154,24 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         "cases_all_germany", "cases_all_gender", "cases_all_age",
         "cases_all_state", "cases_all_state_gender", "cases_all_state_age",
         "cases_all_county", "cases_all_county_gender", "cases_all_county_age"]
+    
+    here = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(
+        here, 'test_data', 'TestSetCaseEstimationsDeaths.json')
+    with open(filename) as file_object:
+        df_deaths = pd.DataFrame(json.load(file_object))
+    
+    filename = os.path.join(
+        here, 'test_data', 'TestSetCaseEstimationsDeathsWeekly.json')
+    with open(filename) as file_object:
+        df_deaths_weekly = pd.DataFrame(json.load(file_object))
+
+    filename = os.path.join(
+        here, 'test_data', 'TestSetCaseEstimationsDeathsWeeklyGender.json')
+    with open(filename) as file_object:
+        df_deaths_weekly_gender = pd.DataFrame(json.load(file_object))
+    
+    df_dict = {'COVID_Todesfälle':df_deaths, 'COVID_Todesfälle_KW_AG10':df_deaths_weekly, 'COVID_Todesfälle_KW_AG20_G':df_deaths_weekly_gender}
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -182,52 +200,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
 
-    def write_weekly_deaths_xlsx_data(
-            self, out_folder, file_name='Cases_deaths_weekly.xlsx'):
-        sheet1 = pd.DataFrame(
-            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
-             'Sterbewoche': ['1', '3', '10', '51'],
-             'Anzahl verstorbene COVID-19 Fälle': ['0', '<4', '18', '3000']})
-        sheet2 = pd.DataFrame(
-            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
-             'Sterbewoche': ['1', '3', '10', '51'],
-             'AG 0-9 Jahre': ['0', '<4', '30', '10'],
-             'AG 10-19 Jahre': ['0', '<4', '30', '10'],
-             'AG 20-29 Jahre': ['0', '<4', '30', '10'],
-             'AG 30-39 Jahre': ['0', '<4', '30', '10'],
-             'AG 40-49 Jahre': ['0', '<4', '30', '10'],
-             'AG 50-59 Jahre': ['0', '<4', '30', '10'],
-             'AG 60-69 Jahre': ['0', '<4', '30', '10'],
-             'AG 70-79 Jahre': ['0', '<4', '30', '10'],
-             'AG 80-89 Jahre': ['0', '<4', '30', '10'],
-             'AG 90+ Jahre': ['0', '<4', '30', '10']})
-        sheet3 = pd.DataFrame(
-            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
-             'Sterbewoche': ['1', '3', '10', '51'],
-             'Männer, AG 0-19 Jahre': ['0', '<4', '30', '10'],
-             'Männer, AG 20-39 Jahre': ['0', '<4', '30', '10'],
-             'Männer, AG 40-59 Jahre': ['0', '<4', '30', '10'],
-             'Männer, AG 60-79 Jahre': ['0', '<4', '30', '10'],
-             'Männer, AG 80+ Jahre': ['0', '<4', '30', '10'],
-             'Frauen, AG 0-19 Jahre': ['0', '<4', '30', '10'],
-             'Frauen, AG 20-39 Jahre': ['0', '<4', '30', '10'],
-             'Frauen, AG 40-59 Jahre': ['0', '<4', '30', '10'],
-             'Frauen, AG 60-79 Jahre': ['0', '<4', '30', '10'],
-             'Frauen, AG 80+ Jahre': ['0', '<4', '30', '10']})
-
-        income_sheets = {'COVID_Todesfälle': sheet1,
-                         'COVID_Todesfälle_KW_AG10': sheet2,
-                         'COVID_Todesfälle_KW_AG20_G': sheet3}
-        path = os.path.join(out_folder, file_name)
-        dummy = pd.ExcelWriter(path)
-
-        for sheet_name in income_sheets.keys():
-            income_sheets[sheet_name].to_excel(
-                dummy, sheet_name=sheet_name, index=False)
-
-        dummy.close()
-
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
     def test_get_case_data_with_estimations(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
@@ -247,17 +220,12 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         self.write_case_data(directory)
         self.write_jh_data(directory)
-        self.write_weekly_deaths_xlsx_data(directory)
-
-        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
-                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
-                                                                         engine='openpyxl')
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(
             len(os.listdir(directory)),
-            2 + len(self.case_files_to_change))
+            1 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
@@ -267,10 +235,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        # 1 jh-file, 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        # 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
         self.assertEqual(
             len(os.listdir(directory)),
-            1 + 2 * len(self.case_files_to_change) + 4)
+            2 * len(self.case_files_to_change) + 4)
 
         f_read = os.path.join(directory, "cases_all_germany_estimated.json")
         df = pd.read_json(f_read)
@@ -348,7 +316,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             [deaths_estimated].item(),
             np.round(43 * 2. / 9.))
 
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
     def test_get_case_data_with_estimations_age_data(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
@@ -368,17 +336,12 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         self.write_case_data(directory)
         self.write_jh_data(directory)
-        self.write_weekly_deaths_xlsx_data(directory)
-
-        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
-                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
-                                                                         engine='openpyxl')
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(
             len(os.listdir(directory)),
-            2 + len(self.case_files_to_change))
+            1 + len(self.case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
@@ -388,10 +351,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        # 1 jh-file, 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        # 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
         self.assertEqual(
             len(os.listdir(directory)),
-            1 + 2 * len(self.case_files_to_change) + 4)
+            2 * len(self.case_files_to_change) + 4)
 
         f_read = os.path.join(directory, "cases_all_age_estimated.json")
         df = pd.read_json(f_read)
@@ -432,7 +395,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getCaseDatawithEstimations.gcd.get_case_data')
     @patch('memilio.epidata.getCaseDatawithEstimations.gjd.get_jh_data')
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
     def test_get_case_data_with_estimations_download(
             self,
             mock_download_weekly_deaths_numbers, mock_get_jh_data, mock_get_case_data):
@@ -452,11 +415,6 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         mock_get_case_data.side_effect = self.write_case_data(directory)
         mock_get_jh_data.side_effect = self.write_jh_data(directory)
-        mock_download_weekly_deaths_numbers.side_effect = self.write_weekly_deaths_xlsx_data(
-            directory)
-        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
-                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
-                                                                         engine='openpyxl')
 
         # write files which should be read in by program
 
@@ -491,7 +449,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(
             len(os.listdir(directory)),
-            2 + len(case_files_to_change))
+            1 + len(case_files_to_change))
 
         gcdwe.get_case_data_with_estimations(
             read_data=read_data, file_format=file_format,
@@ -503,7 +461,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(
             len(os.listdir(directory)),
-            1 + 2 * len(case_files_to_change) + 4)
+            2 * len(case_files_to_change) + 4)
 
         confirmed = dd.EngEng['confirmed']
         recovered = dd.EngEng['recovered']
