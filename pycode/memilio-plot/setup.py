@@ -65,7 +65,7 @@ setup(
         # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'matplotlib',
-        'numpy>=1.22',  # smaller numpy versions cause a security issue
+        'numpy>=1.22,<1.25',  # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
         'openpyxl',
         'xlrd',
         'requests',
@@ -79,9 +79,10 @@ setup(
     ],
     extras_require={
         'dev': [
-            # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
-            'pyfakefs>=4.2.1',
+            # first support of python 3.11
+            'pyfakefs>=4.6',
             'coverage>=7.0.1',
+            # pylint 2.16 creates problem with wrapt package version
             'pylint>=2.13.0,<2.16',
             'pylint_json2html==0.4.0',
         ],

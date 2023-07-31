@@ -13,18 +13,17 @@ setup(
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     install_requires=[
-        'numpy',
         # smaller pandas versions contain a bug that sometimes prevents reading
         # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'progress',
-        'numpy>=1.22',  # smaller numpy versions cause a security issue
+        'numpy>=1.22,<1.25',  # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
         'tensorflow',
         'matplotlib',
         'scikit-learn', ],
     extras_require={'dev': [
-        # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
-        'pyfakefs>=4.2.1',
-        'coverage',
+        # first support of python 3.11
+        'pyfakefs>=4.6',
+        'coverage>=7.0.1',
     ], },
     long_description='', test_suite='memilio.surrogatemodel_test',)
