@@ -186,11 +186,11 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         split_line(line, &row);
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-        uint32_t person_id                     = (int)row[index["puid"]];
-        uint32_t age                           = (int)row[index["age"]];
-        uint32_t home_id                       = (int)row[index["huid"]];
-        uint32_t target_location_id            = (int)std::abs(row[index["loc_id_end"]]);
-        uint32_t origin_location_id            = (int)std::abs(row[index["loc_id_start"]]);
+        uint32_t person_id          = (int)row[index["puid"]];
+        uint32_t age                = (int)row[index["age"]];
+        uint32_t home_id            = (int)row[index["huid"]];
+        uint32_t target_location_id = (int)std::abs(row[index["loc_id_end"]]);
+        // uint32_t origin_location_id            = (int)std::abs(row[index["loc_id_start"]]);
         mio::abm::GeographicalLocation geo_loc = {std::abs(row[index["lon_start"]]), std::abs(row[index["lat_start"]])};
         mio::abm::TransportMode transport_mode = mio::abm::TransportMode(
             row[index["travel_mode"]] -
@@ -235,12 +235,12 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         // Add the trip to the trip list person and location must exist at this point
         auto person          = persons.find(person_id)->second;
         auto target_location = locations.find(target_location_id)->second;
-        auto origin_location = locations.find(origin_location_id)->second;
+        // auto origin_location = locations.find(origin_location_id)->second;
         person.set_assigned_location(
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
                                                       mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
-                                                      target_location, origin_location, transport_mode, activity_end));
+                                                      target_location, target_location, transport_mode, activity_end));
     }
 
     world.get_trip_list().use_weekday_trips_on_weekend();
@@ -572,7 +572,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     auto world = mio::abm::World(infection_params);
 
     // Create the world object from statistical data.
-    create_world_from_data(world, "");
+    create_world_from_data(world, "C:/Users/korf_sa/Documents/rep/cpp/simulations/bs_niedersachsen.csv");
     world.use_migration_rules(false);
 
     // Assign an infection state to each person.
@@ -593,7 +593,51 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
 template <typename T>
 void write_log_to_file(const T& history)
 {
-    mio::unused(history);
+    auto logg          = history.get_log();
+    auto loc_id        = std::get<0>(logg)[0];
+    auto agent_id      = std::get<1>(logg)[0];
+    auto movement_data = std::get<2>(logg);
+    // Write lo to a text file.
+    std::ofstream myfile("locations_lookup.txt");
+    myfile << "location_id, latitude, longitude\n";
+    for (auto loc_id_index = 0; loc_id_index < loc_id.size(); ++loc_id_index) {
+        auto id           = std::get<0>(loc_id[loc_id_index]);
+        auto id_longitute = std::get<1>(loc_id[loc_id_index]).longitude;
+        auto id_latitude  = std::get<1>(loc_id[loc_id_index]).latitude;
+        myfile << id << ", " << id_longitute << ", " << id_latitude << "\n";
+    }
+    myfile.close();
+
+    std::ofstream myfile2("agents_lookup.txt");
+    myfile2 << "agent_id, home_id, age\n";
+    for (auto agent_id_index = 0; agent_id_index < agent_id.size(); ++agent_id_index) {
+        auto id      = std::get<0>(agent_id[agent_id_index]);
+        auto home_id = std::get<1>(agent_id[agent_id_index]);
+        auto age     = (int)std::get<2>(agent_id[agent_id_index]);
+        myfile2 << id << ", " << home_id << ", " << age << "\n";
+    }
+    myfile2.close();
+
+    std::ofstream myfile3("movement_data.txt");
+    myfile3 << "trip_id, agent_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
+               "infection_state \n";
+    int trips_id = 0;
+    for (auto movement_data_index = 0; movement_data_index < movement_data.size(); ++movement_data_index) {
+        for (auto trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
+            auto start_location  = movement_data[movement_data_index][trip_index].from_id;
+            auto end_location    = movement_data[movement_data_index][trip_index].to_id;
+            auto start_time      = movement_data[movement_data_index][trip_index].start_time.seconds();
+            auto end_time        = movement_data[movement_data_index][trip_index].end_time.seconds();
+            auto transport_mode  = (int)movement_data[movement_data_index][trip_index].transport_mode;
+            auto activity        = (int)movement_data[movement_data_index][trip_index].activity_type;
+            auto infection_state = (int)movement_data[movement_data_index][trip_index].infection_state;
+            myfile3 << trips_id << ", " << start_location << " , " << end_location << " , " << start_time << " , "
+                    << end_time << " , " << transport_mode << " , " << activity << " , " << infection_state << "\n";
+            trips_id++;
+        }
+        myfile3 << "timestep Nr.:" << movement_data_index << "\n";
+    }
+    myfile3.close();
 }
 
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
