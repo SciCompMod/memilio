@@ -44,7 +44,8 @@ struct Trip {
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
     TransportMode
         trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
@@ -139,7 +140,7 @@ public:
      */
     size_t num_trips(bool weekend = false) const
     {
-        return weekend ? m_trips_weekday.size() : m_trips_weekend.size();
+        return !weekend ? m_trips_weekday.size() : m_trips_weekend.size();
     }
 
     /**
