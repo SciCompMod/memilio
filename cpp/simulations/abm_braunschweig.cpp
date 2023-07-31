@@ -600,7 +600,7 @@ void write_log_to_file(const T& history)
     // Write lo to a text file.
     std::ofstream myfile("locations_lookup.txt");
     myfile << "location_id, latitude, longitude\n";
-    for (auto loc_id_index = 0; loc_id_index < loc_id.size(); ++loc_id_index) {
+    for (uint32_t loc_id_index = 0; loc_id_index < loc_id.size(); ++loc_id_index) {
         auto id           = std::get<0>(loc_id[loc_id_index]);
         auto id_longitute = std::get<1>(loc_id[loc_id_index]).longitude;
         auto id_latitude  = std::get<1>(loc_id[loc_id_index]).latitude;
@@ -610,7 +610,7 @@ void write_log_to_file(const T& history)
 
     std::ofstream myfile2("agents_lookup.txt");
     myfile2 << "agent_id, home_id, age\n";
-    for (auto agent_id_index = 0; agent_id_index < agent_id.size(); ++agent_id_index) {
+    for (uint32_t agent_id_index = 0; agent_id_index < agent_id.size(); ++agent_id_index) {
         auto id      = std::get<0>(agent_id[agent_id_index]);
         auto home_id = std::get<1>(agent_id[agent_id_index]);
         auto age     = (int)std::get<2>(agent_id[agent_id_index]);
@@ -622,8 +622,8 @@ void write_log_to_file(const T& history)
     myfile3 << "trip_id, agent_id, start_location, end_location, start_time, end_time, transport_mode, activity, "
                "infection_state \n";
     int trips_id = 0;
-    for (auto movement_data_index = 0; movement_data_index < movement_data.size(); ++movement_data_index) {
-        for (auto trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
+    for (uint32_t movement_data_index = 0; movement_data_index < movement_data.size(); ++movement_data_index) {
+        for (uint32_t trip_index = 0; trip_index < movement_data[movement_data_index].size(); trip_index++) {
             auto start_location  = movement_data[movement_data_index][trip_index].from_id;
             auto end_location    = movement_data[movement_data_index][trip_index].to_id;
             auto start_time      = movement_data[movement_data_index][trip_index].start_time.seconds();
