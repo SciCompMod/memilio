@@ -17,7 +17,8 @@ setup(
         # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'progress',
-        'numpy>=1.22,<1.25',  # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+        # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+        'numpy>=1.22,<1.25',
         'tensorflow',
         'matplotlib',
         'scikit-learn', ],

@@ -26,7 +26,8 @@ setup(
     install_requires=[],
     extras_require={
         'dev': [
-            'numpy>=1.22,<1.25',  # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
-        ], 
+            # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+            'numpy>=1.22,<1.25',
+        ],
     },
     long_description='', test_suite='memilio.simulation_test',)
