@@ -590,6 +590,12 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
     return sim;
 }
 
+template <typename T>
+void write_log_to_file(const T& history)
+{
+    mio::unused(history);
+}
+
 mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
@@ -623,6 +629,7 @@ mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_s
             auto result_dir_run = result_dir / ("abm_result_run_" + std::to_string(run_idx) + ".h5");
             BOOST_OUTCOME_TRY(save_result(ensemble_results.back(), loc_ids, 1, result_dir_run.string()));
         }
+        write_log_to_file(history);
         ++run_idx;
     }
     BOOST_OUTCOME_TRY(save_result_result);
