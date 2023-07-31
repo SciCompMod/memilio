@@ -130,6 +130,7 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
             v = uniform_dist();
             if (v < 0.5) { // TODO: subject to change
                 time_period = days(params.get<InfectedNoSymptomsToSymptoms>()[{
+                    //Todo:e.g. is this timelength
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 next_state  = InfectionState::InfectedSymptoms;
             }
