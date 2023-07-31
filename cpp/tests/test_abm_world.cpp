@@ -290,10 +290,10 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p2.get_location(), event);
         EXPECT_EQ(p3.get_location(), hospital);
         EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), home);
-        EXPECT_EQ(event.get_number_persons(), 1);
+        EXPECT_EQ(p5.get_location(), event_id);
+        EXPECT_EQ(event.get_number_persons(), 2);
         EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 2);
+        EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
     }
 
