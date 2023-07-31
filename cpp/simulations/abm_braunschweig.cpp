@@ -198,7 +198,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         mio::abm::ActivityType activity_end = mio::abm::ActivityType(
             row[index["activity_end"]] -
             1); // 1:Workplace, 2:Education, 3:Shopping, 4:Leisure, 5:Private Matters, 6:Other Activity, 7:Home, 8:Unknown Activity
-        uint32_t trip_start = row[index["start_time"]];
+        uint32_t trip_start = (int)row[index["start_time"]];
 
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
