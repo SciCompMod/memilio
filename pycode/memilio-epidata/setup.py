@@ -83,7 +83,7 @@ setup(
         'pyxlsb',
         'wget',
         'twill',
-        'python-magic==0.4.13'  # fails for other version
+        'python-magic==0.4.14'  # fails for other version
     ],
     extras_require={
         'dev': [
