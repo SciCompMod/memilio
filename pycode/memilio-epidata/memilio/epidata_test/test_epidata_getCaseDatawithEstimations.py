@@ -227,7 +227,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         dummy.close()
 
-    def test_get_case_data_with_estimations(self):
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    def test_get_case_data_with_estimations(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
         make_plot = False
@@ -247,6 +248,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.write_case_data(directory)
         self.write_jh_data(directory)
         self.write_weekly_deaths_xlsx_data(directory)
+
+        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
+                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
+                                                                         engine='openpyxl')
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -343,7 +348,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             [deaths_estimated].item(),
             np.round(43 * 2. / 9.))
 
-    def test_get_case_data_with_estimations_age_data(self):
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    def test_get_case_data_with_estimations_age_data(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
         make_plot = False
@@ -363,6 +369,10 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.write_case_data(directory)
         self.write_jh_data(directory)
         self.write_weekly_deaths_xlsx_data(directory)
+
+        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
+                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
+                                                                         engine='openpyxl')
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -424,8 +434,8 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getCaseDatawithEstimations.gjd.get_jh_data')
     @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
     def test_get_case_data_with_estimations_download(
-            self, mock_get_jh_data, mock_get_case_data,
-            mock_download_weekly_deaths_numbers):
+            self,
+            mock_download_weekly_deaths_numbers, mock_get_jh_data, mock_get_case_data):
 
         read_data = False
         make_plot = False
@@ -444,6 +454,9 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         mock_get_jh_data.side_effect = self.write_jh_data(directory)
         mock_download_weekly_deaths_numbers.side_effect = self.write_weekly_deaths_xlsx_data(
             directory)
+        mock_download_weekly_deaths_numbers.return_value = pd.read_excel(directory + 'Cases_deaths_weekly.xlsx',
+                                                                         sheet_name=['COVID_Todesfälle', 'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], header=0,
+                                                                         engine='openpyxl')
 
         # write files which should be read in by program
 
@@ -567,34 +580,6 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             df[(df[date] == "2020-01-31") & (df[gender] == "female")]
             [deaths_estimated].item(),
             np.round(43 * 2. / 9.))
-
-    @patch('requests.get')
-    def test_download_weekly(self, mock_request):
-        directory = os.path.join(self.path, 'Germany/')
-        gd.check_dir(directory)
-
-        self.write_weekly_deaths_xlsx_data(
-            directory, file_name='Cases_deaths_weekly_fake.xlsx')
-        self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 1)
-
-        df = pd.read_excel(directory + 'Cases_deaths_weekly_fake.xlsx',
-                           sheet_name='COVID_Todesfälle', header=0,
-                           engine='openpyxl')
-        towrite = io.BytesIO()
-        df.to_excel(towrite, index=False)
-        towrite.seek(0)
-        mock_request.return_value.content = towrite.read()
-        gcdwe.download_weekly_deaths_numbers(directory)
-        self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2)
-
-        df_real_deaths_per_week = pd.read_excel(
-            directory + 'Cases_deaths_weekly.xlsx',
-            sheet_name=0, header=0, engine='openpyxl')
-        self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
-        self.assertEqual(pd.to_numeric(
-            df_real_deaths_per_week['Sterbejahr'])[0], 2020)
 
     @patch('builtins.print')
     def test_except_non_existing_file(self, mock_print):

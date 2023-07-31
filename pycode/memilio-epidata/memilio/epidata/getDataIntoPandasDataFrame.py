@@ -214,9 +214,16 @@ def get_file(
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
     except AttributeError:
-        for i in range(len(df)):
-            if df[i].empty:
-                raise DataError("Error: Dataframe is empty.")
+        if isinstance(df, list):
+            for i in range(len(df)):
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        elif isinstance(df, dict):
+            for i in df.keys():
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
