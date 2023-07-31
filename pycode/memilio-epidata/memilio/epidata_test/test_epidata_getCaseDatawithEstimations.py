@@ -154,13 +154,13 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         "cases_all_germany", "cases_all_gender", "cases_all_age",
         "cases_all_state", "cases_all_state_gender", "cases_all_state_age",
         "cases_all_county", "cases_all_county_gender", "cases_all_county_age"]
-    
+
     here = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(
         here, 'test_data', 'TestSetCaseEstimationsDeaths.json')
     with open(filename) as file_object:
         df_deaths = pd.DataFrame(json.load(file_object))
-    
+
     filename = os.path.join(
         here, 'test_data', 'TestSetCaseEstimationsDeathsWeekly.json')
     with open(filename) as file_object:
@@ -170,8 +170,9 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         here, 'test_data', 'TestSetCaseEstimationsDeathsWeeklyGender.json')
     with open(filename) as file_object:
         df_deaths_weekly_gender = pd.DataFrame(json.load(file_object))
-    
-    df_dict = {'COVID_Todesfälle':df_deaths, 'COVID_Todesfälle_KW_AG10':df_deaths_weekly, 'COVID_Todesfälle_KW_AG20_G':df_deaths_weekly_gender}
+
+    df_dict = {'COVID_Todesfälle': df_deaths, 'COVID_Todesfälle_KW_AG10': df_deaths_weekly,
+               'COVID_Todesfälle_KW_AG20_G': df_deaths_weekly_gender}
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -200,7 +201,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
 
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value=df_dict)
     def test_get_case_data_with_estimations(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
@@ -316,7 +317,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             [deaths_estimated].item(),
             np.round(43 * 2. / 9.))
 
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value=df_dict)
     def test_get_case_data_with_estimations_age_data(self, mock_download_weekly_deaths_numbers):
 
         read_data = True
@@ -395,7 +396,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getCaseDatawithEstimations.gcd.get_case_data')
     @patch('memilio.epidata.getCaseDatawithEstimations.gjd.get_jh_data')
-    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value = df_dict)
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers', return_value=df_dict)
     def test_get_case_data_with_estimations_download(
             self,
             mock_download_weekly_deaths_numbers, mock_get_jh_data, mock_get_case_data):
