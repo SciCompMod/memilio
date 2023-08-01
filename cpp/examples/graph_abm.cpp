@@ -183,7 +183,7 @@ int main()
         //assign hospital and ICU
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
-        //assign work and school dependent on person's age
+        // Assign work and school dependent on Person's AgeGroup.
         if (person.get_age() == mio::abm::AgeGroup::Age5to14) {
             person.set_assigned_location(school);
         }

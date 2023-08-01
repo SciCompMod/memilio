@@ -81,6 +81,29 @@ public:
         return make_range(begin(m_hybrid_edges), end(m_hybrid_edges));
     }
 
+    std::vector<Node<typename ODEGraph::NodeProperty>&> get_hybrid_ode_nodes()
+    {
+        std::vector<Node<ODEGraph::NodeProperty>&> hybrid_ode_nodes;
+        for (auto& edge : m_hybrid_edges) {
+            hybrid_ode_nodes.push_back(get_ode_node_from_hybrid_edge(edge));
+        }
+        return hybrid_ode_nodes;
+    }
+
+    Node<typename ABMGraph::NodeProperty>& get_abm_node_to_ode_node(Node<typename ODEGraph::NodeProperty>& ode_node)
+    {
+        auto iter = std::find_if(m_abm_nodes_to_ode_nodes.begin(), m_abm_nodes_to_ode_nodes.end(),
+                                 [ode_node.id](const Node<typename ABMGraph::NodeProperty>& node) {
+                                     return node.id == ode_node.id;
+                                 });
+        if (iter != m - m_abm_nodes_to_ode_nodes.end()) {
+            return *iter;
+        }
+        else {
+            mio::log_error("No abm node to ode node exists.");
+        }
+    }
+
     Node<typename ABMGraph::NodeProperty>& get_abm_node_from_hybrid_edge(Edge<MigrationEdgeHybrid>& edge)
     {
         auto start_idx = edge.start_node_idx;
@@ -140,4 +163,4 @@ private:
 
 } // namespace mio
 
-#endif //HYBRID_GRAPH_H
+#endif //MIO_HYBRID_GRAPH_H
