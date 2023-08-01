@@ -42,6 +42,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
     """! Checks if all counties are mentioned in the case data set
@@ -246,8 +249,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         df.loc[df.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
         # get rid of unnecessary columns
-        df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
-                      "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1)
+        df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
+                "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1, inplace=True)
 
         # merge Berlin counties
         if not split_berlin:
@@ -269,8 +272,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
                            {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]
-                          : [k for k, v in dd.State.items()]},
+                      [IdBundesland], {dd.EngEng["idState"]                                       : [k for k, v in dd.State.items()]},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],
@@ -333,10 +335,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
             # cumulative sum over columns defined in dict_files
             if dict_files[file][2] == None:
-                df_local_cs = df_local.cumsum().reset_index(drop=False)
+                df_local_cs = df_local.cumsum()
+                df_local_cs.reset_index(drop=False, inplace=True)
             else:
                 df_local_cs = df_local.groupby(level=[dict_files[file][0].index(
-                    level_index) for level_index in dict_files[file][2]]).cumsum().reset_index()
+                    level_index) for level_index in dict_files[file][2]]).cumsum()
+                df_local_cs.reset_index(drop=False, inplace=True)
 
             if impute_dates or moving_average > 0:
                 df_local_cs = mdfs.impute_and_reduce_df(

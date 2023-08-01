@@ -62,7 +62,7 @@ def impute_and_reduce_df(
 
     # remove 'index' column if available
     try:
-        df_new.drop(columns='index', inplace= True)
+        df_new.drop(columns='index', inplace=True)
     except KeyError:
         pass
 
@@ -100,7 +100,7 @@ def impute_and_reduce_df(
     # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         # filter df
-        df_local = df_old[(df_old[group_by]==ids).all(axis=1)]
+        df_local = df_old[(df_old[group_by] == ids).all(axis=1)]
 
         # create missing dates
         df_local.index = df_local.Date
@@ -129,7 +129,7 @@ def impute_and_reduce_df(
                 # fill value of the first date, if it doesn't exist yet
                 # has to be conducted in second step to not impute 'value'
                 # at first missing value if start is present
-                df_local_new.fillna(values, limit = 1, inplace=True)
+                df_local_new.fillna(values, limit=1, inplace=True)
                 # fill remaining values (between first date and first
                 # reported date of the df_local)
                 df_local_new.fillna(method='ffill', inplace=True)

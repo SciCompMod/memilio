@@ -164,7 +164,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
          dd.EngEng["state"],
          dd.EngEng["date"]]).agg(
         {dd.EngEng["ICU"]: sum, dd.EngEng["ICU_ventilated"]: sum})
-    df_states.reset_index(inplace = True)
+    df_states.reset_index(inplace=True)
     df_states.sort_index(axis=1, inplace=True)
 
     filename = "state_divi"
@@ -173,7 +173,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     # write data for germany to file
     df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
-    df_ger.reset_index(inplace = True)
+    df_ger.reset_index(inplace=True)
     df_ger.sort_index(axis=1, inplace=True)
 
     filename = "germany_divi"
