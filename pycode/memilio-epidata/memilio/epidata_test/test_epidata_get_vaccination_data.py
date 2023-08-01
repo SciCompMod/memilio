@@ -20,6 +20,8 @@
 import unittest
 from unittest.mock import patch
 
+import os
+import json
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
@@ -29,13 +31,13 @@ from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import modifyDataframeSeries as mdfs
 from memilio.epidata import progress_indicator
 
-progress_indicator.ProgressIndicator.disable_indicators(True)
-
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     maxDiff = None
 
     path = '/home/VaccinationData'
+
+    here = os.path.dirname(os.path.abspath(__file__))
 
     col_names_vacc_data = [
         'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
@@ -98,19 +100,27 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
          'Impfschutz': int, 'Anzahl': int})
 
+    filename = os.path.join(
+        here, 'test_data', 'TestSetPopulationFinal.json')
+    with open(filename) as file_object:
+        df_pop = pd.DataFrame(json.load(file_object))
+
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
+    @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
-    def test_get_vaccination_data_alternative_ages(self, mockin, mockv):
+    def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
+    @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('builtins.input', return_value='y')
-    def test_get_standard_vaccination_sanitize_3(self, mockin, mockv):
+    def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
