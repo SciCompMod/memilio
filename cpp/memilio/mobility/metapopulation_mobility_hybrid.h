@@ -25,12 +25,12 @@
 namespace mio
 {
 template <class Agent, class AbmToOdeConversion, class OdeToAbmConversion, class OdeToAbmMapping>
-class MigrationEdgeHybrid
+class MobilityEdgeHybrid
 {
 public:
     //used if start node is abm node, because then we do not need MigrationParameters
-    MigrationEdgeHybrid(const AbmToOdeConversion& abm_to_ode_fct, const OdeToAbmConversion& ode_to_abm_fct,
-                        const OdeToAbmMapping& ode_to_abm_mapping, size_t num_compartments)
+    MobilityEdgeHybrid(const AbmToOdeConversion& abm_to_ode_fct, const OdeToAbmConversion& ode_to_abm_fct,
+                       const OdeToAbmMapping& ode_to_abm_mapping, size_t num_compartments)
         : m_agents_to_compartments_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
         , m_ode_to_abm_mapping(ode_to_abm_mapping)
@@ -40,8 +40,8 @@ public:
     }
 
     //constructors with parameters are used if start node is ode node
-    MigrationEdgeHybrid(const MigrationParameters& params, const AbmToOdeConversion& abm_to_ode_fct,
-                        const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
+    MobilityEdgeHybrid(const MigrationParameters& params, const AbmToOdeConversion& abm_to_ode_fct,
+                       const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(params)
         , m_migrated_compartments(params.get_coefficients().get_shape().rows())
         , m_agents_to_compartments_fct(abm_to_ode_fct)
@@ -51,8 +51,8 @@ public:
     {
     }
 
-    MigrationEdgeHybrid(const Eigen::VectorXd& coeffs, const AbmToOdeConversion& abm_to_ode_fct,
-                        const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
+    MobilityEdgeHybrid(const Eigen::VectorXd& coeffs, const AbmToOdeConversion& abm_to_ode_fct,
+                       const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(coeffs)
         , m_migrated_compartments(coeffs.rows())
         , m_agents_to_compartments_fct(abm_to_ode_fct)
@@ -221,10 +221,10 @@ private:
 
 /**
  * edge functor for hybrid migration simulation.
- * @see MigrationEdgeHybrid::apply_migration
+ * @see MobilityEdgeHybrid::apply_migration
  */
 template <class NodeOde, class NodeAbm, class... EdgeParams>
-void apply_migration(double t, double dt, MigrationEdgeHybrid<EdgeParams...>& migrationEdge, NodeOde& node_from,
+void apply_migration(double t, double dt, MobilityEdgeHybrid<EdgeParams...>& migrationEdge, NodeOde& node_from,
                      NodeAbm& node_to, NodeAbm& abm_to_ode_node)
 {
     migrationEdge.apply_migration(t, dt, node_from, node_to, abm_to_ode_node);

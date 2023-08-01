@@ -29,11 +29,11 @@ namespace mio
 /**
  * @brief generic hybrid graph structure
  */
-template <class ABMGraph, class ODEGraph, class ABM, class MigrationEdgeHybrid, class SetupABMFromOdeFct>
+template <class ABMGraph, class ODEGraph, class ABM, class MobilityEdgeHybrid, class SetupABMFromOdeFct>
 class HybridGraph
 {
 public:
-    using HybridEdge = Edge<MigrationEdgeHybrid>;
+    using HybridEdge = Edge<MobilityEdgeHybrid>;
 
     HybridGraph(const ABMGraph& abm_graph, const ODEGraph& ode_graph, const SetupABMFromOdeFct& setup_func,
                 std::vector<std::vector<double>> household_distributions = {})
@@ -104,7 +104,7 @@ public:
         }
     }
 
-    Node<typename ABMGraph::NodeProperty>& get_abm_node_from_hybrid_edge(Edge<MigrationEdgeHybrid>& edge)
+    Node<typename ABMGraph::NodeProperty>& get_abm_node_from_hybrid_edge(Edge<MobilityEdgeHybrid>& edge)
     {
         auto start_idx = edge.start_node_idx;
         auto end_idx   = edge.end_node_idx;
@@ -129,7 +129,7 @@ public:
         }
     }
 
-    Node<typename ODEGraph::NodeProperty>& get_ode_node_from_hybrid_edge(Edge<MigrationEdgeHybrid>& edge)
+    Node<typename ODEGraph::NodeProperty>& get_ode_node_from_hybrid_edge(Edge<MobilityEdgeHybrid>& edge)
     {
         auto start_idx = edge.start_node_idx;
         auto end_idx   = edge.end_node_idx;

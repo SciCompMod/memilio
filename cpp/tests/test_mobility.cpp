@@ -198,7 +198,7 @@ TEST(TestMobility, ABMEdgeApplyMigration)
     mio::SimulationNode<mio::graph_abm::GraphSimulation> node1(t0, std::move(world1));
     mio::SimulationNode<mio::graph_abm::GraphSimulation> node2(t0, std::move(world2));
 
-    mio::MigrationEdgeABM edge;
+    mio::MobilityEdgeAgents edge;
 
     EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons_to_migrate().size(), 0);
     EXPECT_EQ(node1.get_simulation().get_graph_world().get_persons().size(), 2);

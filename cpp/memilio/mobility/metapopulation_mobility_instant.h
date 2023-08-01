@@ -309,10 +309,10 @@ private:
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
 
-class MigrationEdgeABM
+class MobilityEdgeAgents
 {
 public:
-    MigrationEdgeABM()
+    MobilityEdgeAgents()
     {
     }
 
@@ -322,8 +322,8 @@ public:
 };
 
 template <class Sim, std::enable_if_t<std::is_same<Sim, mio::graph_abm::GraphSimulation>::value, bool>>
-void MigrationEdgeABM::apply_migration(mio::abm::TimePoint /*t*/, mio::abm::TimeSpan /*dt*/,
-                                       SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MobilityEdgeAgents::apply_migration(mio::abm::TimePoint /*t*/, mio::abm::TimeSpan /*dt*/,
+                                         SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     size_t person_iter       = 0;
     auto& persons_to_migrate = node_from.get_simulation().get_graph_world().get_persons_to_migrate();
@@ -549,7 +549,7 @@ void evolve_model(Timepoint t, Timespan dt, SimulationNode<Sim>& node)
  */
 template <class Sim, class Timepoint, class Timespan, class Edge,
           std::enable_if_t<((std::is_same<Edge, MobilityEdgeCompartments>::value) ||
-                            (std::is_same<Edge, MigrationEdgeABM>::value)),
+                            (std::is_same<Edge, MobilityEdgeAgents>::value)),
                            bool> = true>
 void apply_migration(Timepoint t, Timespan dt, Edge& migrationEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)

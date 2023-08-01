@@ -105,7 +105,7 @@ TEST(TestGraphSimulation, stopsAtTmaxGraphABM)
     auto dt   = mio::abm::hours(12);
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(5);
 
-    mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MigrationEdgeABM> g;
+    mio::Graph<mio::SimulationNode<mio::graph_abm::GraphSimulation>, mio::MobilityEdgeAgents> g;
     g.add_node(0, t0, std::move(world1));
     g.add_node(1, t0, std::move(world2));
     g.add_edge(0, 1);
