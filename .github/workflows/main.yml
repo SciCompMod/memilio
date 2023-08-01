@@ -204,6 +204,8 @@ jobs:
 
   test-py-generation:
     if: github.event.pull_request.draft == false
+    matrix: 
+      version: ["3.8", "3.11"]
     needs: build-py-generation
     runs-on: ubuntu-latest
     steps:
@@ -225,6 +227,8 @@ jobs:
 
   build-py-surrogatemodel:
     if: github.event.pull_request.draft == false
+    matrix: 
+      version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64
@@ -247,6 +251,8 @@ jobs:
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
     needs: [build-py-surrogatemodel, build-py-simulation]
+    matrix: 
+      version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
