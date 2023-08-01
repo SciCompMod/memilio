@@ -173,7 +173,7 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
     governing regions etc. which is not necessary for the dataframe.
     Also checks for incomplete data.    
 
-    @param df_pop_raw old DataFrame
+    @param df_pop_raw Raw Population DataFrame read from regionalstatistik.de
     @param counties List of counties to be assigned in new DataFrame
     @param age_cols Age groups in old DataFrame
     @param idCountyidx indexes in old DataFrame where data of corresponding county starts
