@@ -62,6 +62,9 @@ jobs:
   test-py-plot:
     if: github.event.pull_request.draft == false
     needs: [build-py-plot, build-py-epidata]
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
