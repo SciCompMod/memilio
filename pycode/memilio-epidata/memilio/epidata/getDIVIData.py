@@ -208,7 +208,7 @@ def divi_data_sanity_checks(df=pd.DataFrame()):
     # check if size of dataframe is not unusal
     # data colletion starts at 24.04.2020
     # TODO: Number of reporting counties get less with time.
-    # Maybe we should look for a new method to sanitize the size of the DataFrame.S
+    # Maybe we should look for a new method to sanitize the size of the DataFrame.
     num_dates = (date.today() - date(2020, 4, 24)).days
     min_num_data = 380*num_dates  # not all 400 counties report every day
     max_num_data = 400*num_dates
