@@ -30,6 +30,9 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def impute_and_reduce_df(
         df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
@@ -272,7 +275,7 @@ def insert_column_by_map(df, col_to_map, new_col_name, map):
     @param map List of tuples of values in the column to be added and values in the given column
     @return dataframe df with column of state names correspomding to state ids
     """
-    df_new = df.copy()
+    df_new = df[:]
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
     df_new.insert(loc=loc_new_col, column=new_col_name,
                   value=df_new[col_to_map])

@@ -32,6 +32,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 # Merging of Counties that are reported differently, either separatedly or
 # summed, in different data sources
 CountyMerging = {
@@ -565,7 +568,7 @@ def merge_df_counties(
             type(separated_ids[0]))
     # extract rows of IDs that will be merged
     rows_merged = df[dd.EngEng['idCounty']].isin(separated_ids)
-    df_merged = df[rows_merged].copy()
+    df_merged = df[rows_merged]
     if not df_merged.empty:
         # set merged ID and county name
         if dd.EngEng['idCounty'] in columns:

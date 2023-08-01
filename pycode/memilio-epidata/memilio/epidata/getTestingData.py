@@ -30,6 +30,9 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 # Downloads testing data from RKI
 
 
@@ -84,8 +87,8 @@ def transform_weeks_to_dates(df_test):
     @return test data data frames with calender weeks replaced by dates.
     """
     # country-wide data
-    df_test[0] = df_test[0].rename(
-        columns={df_test[0].columns[0]: dd.EngEng['date']})
+    df_test[0].rename(
+        columns={df_test[0].columns[0]: dd.EngEng['date']}, inplace=True)
     for i in range(len(df_test[0])):
         # use %G insteaf of %Y (for year) and %V instead of %W (for month)
         # to get ISO week definition
@@ -93,8 +96,7 @@ def transform_weeks_to_dates(df_test):
             df_test[0].loc[i, dd.EngEng['date']] + '-4', "%V/%G-%w"), "%Y-%m-%d")
 
     # federal state-based data
-    df_test[1] = df_test[1].rename(
-        columns={df_test[1].columns[1]: dd.EngEng['date']})
+    df_test[1].rename(columns={df_test[1].columns[1]                      : dd.EngEng['date']}, inplace=True)
     for i in range(len(df_test[1])):
         datestr = str(df_test[1].loc[i, df_test[1].columns[2]]) + \
             "/" + str(df_test[1].loc[i, dd.EngEng['date']]) + '-4'
@@ -103,7 +105,7 @@ def transform_weeks_to_dates(df_test):
         df_test[1].loc[i, dd.EngEng['date']] = datetime.strftime(
             datetime.strptime(datestr, "%V/%G-%w"), "%Y-%m-%d")
     # drop specific column on week after merge in year/date column
-    df_test[1] = df_test[1].drop(columns=df_test[1].columns[2])
+    df_test[1].drop(columns=df_test[1].columns[2], inplace=True)
 
     return df_test
 
@@ -229,23 +231,22 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
                 "Time data can't be transformed to intended format")
 
     # drop columns
-    df_test[0] = df_test[0].drop(
+    df_test[0].drop(
         columns=['Anzahl Testungen', 'Positiv getestet',
-                 'Anzahl übermittelnder Labore'])
-    df_test[1] = df_test[1].drop(columns='Anzahl Gesamt')
+                 'Anzahl übermittelnder Labore'], inplace=True)
+    df_test[1].drop(columns='Anzahl Gesamt', inplace=True)
 
     # remove unknown locations
     df_test[1] = df_test[1][df_test[1].State != 'unbekannt']
-    df_test[1] = df_test[1].reset_index()
-    df_test[1] = df_test[1].drop(columns='index')
+    df_test[1].reset_index(drop=True, inplace=True)
 
     # correct positive rate to percentage
     df_test[0][dd.EngEng['positiveRate']
                ] = df_test[0][dd.EngEng['positiveRate']]/100
 
     # replace state names with IDs
-    df_test[1] = df_test[1].rename(
-        columns={dd.EngEng['state']: dd.EngEng['idState']})
+    df_test[1].rename(
+        columns={dd.EngEng['state']: dd.EngEng['idState']}, inplace=True)
     for stateName, stateID in geoger.get_state_names_and_ids():
         df_test[1].loc[df_test[1][dd.EngEng['idState']]
                        == stateName, dd.EngEng['idState']] = stateID
@@ -309,12 +310,12 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
         state_index = states_str[county_str[0:2]]
         df_local = pd.DataFrame(
             df_test[1].loc[df_test[1][dd.EngEng['idState']]
-                           == state_index].copy())
+                           == state_index])
         df_local.rename(
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties = pd.concat([df_test_counties, df_local.copy()])
+        df_test_counties = pd.concat([df_test_counties, df_local])
 
      # store positive rates for the all federal states
     filename = 'germany_counties_from_states_testpos'

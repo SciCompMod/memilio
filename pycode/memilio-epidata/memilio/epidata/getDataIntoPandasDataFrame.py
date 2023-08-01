@@ -44,6 +44,9 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def user_choice(message, default=False):
     while True:

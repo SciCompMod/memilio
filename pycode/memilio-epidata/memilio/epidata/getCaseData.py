@@ -186,8 +186,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 "Something went wrong, dataframe is empty for csv and geojson!")
 
         # drop columns that do not exist in data from github
-        df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
-                      "Bundesland", "Landkreis"], axis=1)
+        df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
+                 "Bundesland", "Landkreis"], axis=1, inplace=True)
     with progress_indicator.Spinner(message='Preparing DataFrame'):
         df = df.convert_dtypes()
 
@@ -270,9 +270,9 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         'all_germany': [dateToUse, {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
                         None, {}, ['Confirmed', 'Deaths', 'Recovered']],
         'infected_state': [[dateToUse, IdBundesland], {AnzahlFall: sum}, [IdBundesland],
-                           {dd.EngEng["idState"]: [k for k, v in dd.State.items()]}, ['Confirmed']],
+                           {dd.EngEng["idState"]: [k for k in dd.State.keys()]}, ['Confirmed']],
         'all_state': [[dateToUse, IdBundesland], {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum},
-                      [IdBundesland], {dd.EngEng["idState"]                                       : [k for k, v in dd.State.items()]},
+                      [IdBundesland], {dd.EngEng["idState"]: [k for k in dd.State.keys()]},
                       ['Confirmed', 'Deaths', 'Recovered']],
         'infected_county': [[dateToUse, IdLandkreis], {AnzahlFall: sum}, [IdLandkreis],
                             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))}, ['Confirmed']],

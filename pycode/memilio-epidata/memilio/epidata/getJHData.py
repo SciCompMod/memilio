@@ -26,11 +26,14 @@
 import os
 from datetime import date
 
-import pandas
+import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
+
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
 
 
 def get_jh_data(read_data=dd.defaultDict['read_data'],

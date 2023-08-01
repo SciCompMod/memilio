@@ -33,6 +33,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
@@ -475,8 +478,7 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(
-        data=mat_commuter_migration, columns=countykey_list)
-    df_commuter_migration.index = countykey_list
+        data=mat_commuter_migration, columns=countykey_list, index=countykey_list)
     commuter_sanity_checks(df_commuter_migration)
     filename = 'migration_bfa_' + str(ref_year)
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)

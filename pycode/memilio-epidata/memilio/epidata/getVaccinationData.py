@@ -33,6 +33,9 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 def download_vaccination_data(read_data, filename, directory):
 
@@ -116,9 +119,9 @@ def sanitizing_average_regions(
     # computation is done for all Age Groups seperately
     for age in age_groups:
         # create subframe with specific age group
-        df_age = df[df[dd.EngEng['ageRKI']] == age].copy()
+        df_age = df[df[dd.EngEng['ageRKI']] == age]
         # loop over all regions
-        for region, counties_list in to_county_map.items():
+        for counties_list in to_county_map.values():
             vacc_sums = df_age.loc[df_age[dd.EngEng['idCounty']].isin(
                 counties_list)].groupby(dd.EngEng['date'])[column_names].sum()
             # get sums of all vaccinations in this region and agegroup
@@ -174,7 +177,7 @@ def sanitizing_extrapolation_mobility(
         max_sanit_threshold_arr[kk] = min(1, aver_ratio[kk]+0.1)
 
     # create copy of dataframe
-    df_san = df.copy()
+    df_san = df[:]
 
     # aggregate total number of vaccinations per county and age group
     vacc_sums_nonsanit = df.groupby(
@@ -341,7 +344,7 @@ def sanitizing_extrapolation_mobility(
                 + str(id) + '. Exiting program.')
 
     # create copy only for possible comparison reasons now
-    df = df_san.copy()
+    df = df_san[:]
 
     # create cumulative sum
     groupby_list = [dd.EngEng['date'], dd.EngEng['idState'],
@@ -938,7 +941,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 age_old_to_all_ages_indices, min_all_ages,
                 all_ages_to_age_new_share)
 
-    df_data_ageinf_county_cs = df_data_ageinf_county_cs.reset_index(drop=True)
+    df_data_ageinf_county_cs.reset_index(drop=True, inplace=True)
 
     # store data for all counties
     filename = 'vacc_county_ageinf'
