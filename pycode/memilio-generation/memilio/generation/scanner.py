@@ -27,10 +27,11 @@ import os
 import subprocess
 import sys
 import tempfile
-from typing import TYPE_CHECKING, Any, Callable, Self
+from typing import TYPE_CHECKING, Any, Callable
 from warnings import catch_warnings
 
 from clang.cindex import *
+from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
 

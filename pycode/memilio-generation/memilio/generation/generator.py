@@ -25,7 +25,9 @@ from __future__ import annotations
 
 import os
 import string
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
+
+from typing_extensions import Self
 
 from memilio.generation.template import template_string as StringTemplates
 
