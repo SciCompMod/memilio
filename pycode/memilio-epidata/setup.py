@@ -76,7 +76,8 @@ setup(
         'pandas>=1.2.2',
         'matplotlib',
         'tables',
-        'numpy>=1.22',  # smaller numpy versions cause a security issue
+        # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+        'numpy>=1.22,<1.25',
         'openpyxl',
         'xlrd',
         'requests',
@@ -87,12 +88,13 @@ setup(
     ],
     extras_require={
         'dev': [
-            # smaller pyfakefs versions use deprecated functions for matplotlib versions >=3.4
-            'pyfakefs>=4.2.1',
+            # first support of python 3.11
+            'pyfakefs>=4.6',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
-            'pylint<=2.11.1',
-            'pylint_json2html<=0.3.0',
+            # pylint 2.16 creates problem with wrapt package version
+            'pylint>=2.13.0,<2.16',
+            'pylint_json2html==0.4.0',
         ],
     },
     cmdclass={
