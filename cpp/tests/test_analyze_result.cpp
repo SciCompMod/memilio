@@ -170,7 +170,7 @@ TEST(TestInterpolateGraph, basic)
 {
     using Model      = mio::osecir::Model;
     using Simulation = mio::Simulation<Model>;
-    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>();
+    auto g           = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdgeCompartments>();
     g.add_node(0, Model(1), 0.5);
     g.add_node(1, Model(1), 0.5);
     for (auto& n : g.nodes()) {

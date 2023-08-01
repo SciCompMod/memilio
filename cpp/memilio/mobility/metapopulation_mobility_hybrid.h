@@ -31,7 +31,7 @@ public:
     //used if start node is abm node, because then we do not need MigrationParameters
     MigrationEdgeHybrid(const AbmToOdeConversion& abm_to_ode_fct, const OdeToAbmConversion& ode_to_abm_fct,
                         const OdeToAbmMapping& ode_to_abm_mapping, size_t num_compartments)
-        : m_abm_to_ode_fct(abm_to_ode_fct)
+        : m_agents_to_compartments_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
         , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_migrated_compartments(num_compartments)
@@ -44,7 +44,7 @@ public:
                         const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(params)
         , m_migrated_compartments(params.get_coefficients().get_shape().rows())
-        , m_abm_to_ode_fct(abm_to_ode_fct)
+        , m_agents_to_compartments_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
         , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_start_node_is_abm(false)
@@ -55,7 +55,7 @@ public:
                         const OdeToAbmConversion& ode_to_abm_fct, const OdeToAbmMapping& ode_to_abm_mapping)
         : m_parameters(coeffs)
         , m_migrated_compartments(coeffs.rows())
-        , m_abm_to_ode_fct(abm_to_ode_fct)
+        , m_agents_to_compartments_fct(abm_to_ode_fct)
         , m_ode_to_abm_fct(ode_to_abm_fct)
         , m_ode_to_abm_mapping(ode_to_abm_mapping)
         , m_start_node_is_abm(false)
@@ -102,6 +102,7 @@ public:
                     find_value_reverse(node_ode.get_result(), m_migrated_compartments.get_last_time(), 1e-10, 1e-10);
                 calculate_migration_returns(m_migrated_compartments.get_last_value(), node_ode.get_simulation(), *total,
                                             m_migrated_compartments.get_last_time(), dt);
+                //QUESTION: Does m_migrated_compartmnets still have only one time point after applying calculate_migration_returns fct i.e. is the old value overwritten by the function
                 //the lower-order return calculation may in rare cases produce negative compartments,
                 //especially at the beginning of the simulation.
                 //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
@@ -206,8 +207,7 @@ public:
 private:
     boost::optional<MigrationParameters>
         m_parameters; ///< Parameters to calculated migrating compartments is start node is ode node
-    boost::optional<std::vector<std::unique_ptr<Agent>>>
-        m_migrated_agents; ///< Agents that have migrated to target node
+    std::vector<std::unique_ptr<Agent>> m_migrated_agents; ///< Agents that have migrated to target node
     TimeSeries<double> m_migrated_compartments; ///< compartments that have migrated to target node
     bool m_start_node_is_abm; ///< whether node from is an abm node
     AbmToOdeConversion

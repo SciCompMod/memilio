@@ -252,14 +252,14 @@ private:
 /** 
  * represents the migration between two nodes.
  */
-class MigrationEdge
+class MobilityEdgeCompartments
 {
 public:
     /**
      * create edge with coefficients.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
-    MigrationEdge(const MigrationParameters& params)
+    MobilityEdgeCompartments(const MigrationParameters& params)
         : m_parameters(params)
         , m_migrated(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
@@ -271,7 +271,7 @@ public:
      * create edge with coefficients.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
-    MigrationEdge(const Eigen::VectorXd& coeffs)
+    MobilityEdgeCompartments(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
         , m_migrated(coeffs.rows())
         , m_return_times(0)
@@ -457,7 +457,8 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migra
 }
 
 template <class Sim>
-void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MobilityEdgeCompartments::apply_migration(double t, double dt, SimulationNode<Sim>& node_from,
+                                               SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -544,12 +545,12 @@ void evolve_model(Timepoint t, Timespan dt, SimulationNode<Sim>& node)
 
 /**
  * edge functor for migration simulation.
- * @see MigrationEdge::apply_migration
+ * @see MobilityEdgeCompartments::apply_migration
  */
-template <
-    class Sim, class Timepoint, class Timespan, class Edge,
-    std::enable_if_t<((std::is_same<Edge, MigrationEdge>::value) || (std::is_same<Edge, MigrationEdgeABM>::value)),
-                     bool> = true>
+template <class Sim, class Timepoint, class Timespan, class Edge,
+          std::enable_if_t<((std::is_same<Edge, MobilityEdgeCompartments>::value) ||
+                            (std::is_same<Edge, MigrationEdgeABM>::value)),
+                           bool> = true>
 void apply_migration(Timepoint t, Timespan dt, Edge& migrationEdge, SimulationNode<Sim>& node_from,
                      SimulationNode<Sim>& node_to)
 {
@@ -567,8 +568,8 @@ void apply_migration(Timepoint t, Timespan dt, Edge& migrationEdge, SimulationNo
  * @{
  */
 template <class Sim, class Timepoint, class Timespan>
-GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>, Timepoint, Timespan>
-make_migration_sim(Timepoint t0, Timespan dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeCompartments>, Timepoint, Timespan>
+make_migration_sim(Timepoint t0, Timespan dt, const Graph<SimulationNode<Sim>, MobilityEdgeCompartments>& graph)
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Sim, Timepoint, Timespan>, &apply_migration<Sim>);
 }

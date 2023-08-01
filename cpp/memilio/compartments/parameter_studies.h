@@ -58,7 +58,7 @@ public:
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdgeCompartments>;
 
     /**
      * create study for graph of compartment models.
