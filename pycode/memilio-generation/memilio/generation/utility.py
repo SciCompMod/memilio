@@ -29,7 +29,7 @@ from typing import Any, List, TextIO
 import sys
 
 if sys.version_info >= (3, 9):
-    # For python 3.8 and newer
+    # For python 3.9 and newer
     import importlib.resources as importlib_resources
 else:
     # For older python versions
