@@ -26,6 +26,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/math/eigen.h"
 #include "memilio/io/result_io.h"
+#include <vector>
 
 int main()
 {
