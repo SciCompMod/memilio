@@ -47,6 +47,9 @@ target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 
+add_executable(compute_parameters compute_parameters.cpp)
+target_link_libraries(compute_parameters PRIVATE memilio )
+
 add_executable(lct_secir_compare lct_secir_compare.cpp)
 target_link_libraries(lct_secir_compare PRIVATE memilio lct_secir ode_secir ide_secir)
 
