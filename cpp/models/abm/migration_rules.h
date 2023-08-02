@@ -1,8 +1,8 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -33,62 +33,67 @@ namespace abm
 class Person;
 
 /**
- * @name rules for migration between locations.
- * @param p person the rule is applied to.
- * @param t current time.
- * @param dt length of the time step.
- * @param paras migration parameters.
- * @return location that the person migrates to if the rule is applied, the current location of the person 
+ * @name Rules for migration between Location%s.
+ * @param[in] p Person the rule is applied to.
+ * @param[in] t Current time.
+ * @param[in] dt Length of the time step.
+ * @param[in] params Migration parameters.
+ * @return Location that the Person migrates to if the rule is applied, the current Location of the person 
  * if the rule is not applied because of age, time, etc.
  * 
  * @{
  */
 /**
- * completely random migration to any other location.
+ * @brief Completely random migration to any other Location.
  */
 LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- * school age children go to school in the morning and return later in the day.
+ * @brief School age children go to school in the morning and return later in the day.
  */
 LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /** 
- adults may go shopping in their free time
+ * @brief Adults may go shopping in their free time.
  */
 LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- people might go to social events
+ * @brief Person%s might go to social events.
  */
 LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- adults go to worl in the mornign and return later in the day.
+ * @brief Adults go to work in the morning and return later in the day.
  */
 LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- * people who are in quarantine should go gome
+ * @brief Person%s who are in quarantine should go home.
  */
 LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
                               const MigrationParameters& /*params*/);
 
 /**
- * infected people may be hospitalized.
+ * @brief Infected Person%s may be hospitalized.
  */
 LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- * people in the hospital may be put in intensive care.
+ * @brief Person%s in the hospital may be put in intensive care.
  */
 LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 /**
- * people in the hospital/icu return home when they recover.
+ * @brief Person%s in the hospital/icu return home when they recover.
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
                                         const MigrationParameters& params);
+
+/**
+ * @brief Person%s in the icu go to cemetery when they are dead.
+ */
+LocationType get_buried(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 /**@}*/
 
 } // namespace abm

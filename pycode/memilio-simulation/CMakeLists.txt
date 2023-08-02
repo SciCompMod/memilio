@@ -4,12 +4,20 @@ project(memilio-python)
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
+include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
+
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
     include(FetchContent)
     FetchContent_Declare(pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11
-        GIT_TAG v2.5
+        GIT_TAG v2.11.1
     )
     FetchContent_GetProperties(pybind11)
 
@@ -43,7 +51,7 @@ pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
     memilio/simulation/epidemiology/damping_sampling.cpp
     memilio/simulation/epidemiology/uncertain_matrix.cpp
-    memilio/simulation/mobility/mobility.cpp
+    memilio/simulation/mobility/metapopulation_mobility_instant.cpp
     memilio/simulation/utils/date.cpp
     memilio/simulation/utils/logging.cpp
     memilio/simulation/utils/time_series.cpp

@@ -19,7 +19,7 @@
 */
 
 #include "ode_secirvvs/parameters_io.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/io.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
@@ -29,7 +29,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -56,7 +56,9 @@ namespace details
 template <class EpiDataEntry>
 int get_region_id(const EpiDataEntry& rki_entry)
 {
-    return rki_entry.county_id ? rki_entry.county_id->get() : (rki_entry.state_id ? rki_entry.state_id->get() : 0);
+    return rki_entry.county_id ? rki_entry.county_id->get()
+                               : (rki_entry.state_id ? rki_entry.state_id->get()
+                                                     : (rki_entry.district_id ? rki_entry.district_id->get() : 0));
 }
 
 IOResult<void> read_confirmed_cases_data(
@@ -351,7 +353,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 
     for (auto&& county_entry : population_data) {
         //accumulate population of states or country from population of counties
-        if (!county_entry.county_id) {
+        if (!county_entry.county_id && !county_entry.district_id) {
             return failure(StatusCode::InvalidFileFormat, "File with county population expected.");
         }
         //find region that this county belongs to
@@ -359,8 +361,9 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
-                    regions::de::StateId(r) == regions::de::get_state_id(*county_entry.county_id)) ||
-                   (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id);
+                    regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
+                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());
@@ -407,13 +410,12 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
         return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
     }
     auto max_date = max_date_entry->date;
-    auto max_full_date =
-        offset_date_by_days(max_date, days_until_effective1 - days_until_effective2 - vaccination_distance);
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
-            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(r)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(r));
+            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(r)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::StateId(r)) ||
+                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::DistrictId(r));
         });
         auto date_df = vacc_data_entry.date;
         if (it != vregion.end()) {
@@ -440,7 +442,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
                 auto offset_first_date =
                     offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
-                if (max_full_date >= offset_first_date) {
+                if (max_date >= offset_first_date) {
                     // Option 1: considered offset_first_date is available in input data frame
                     if (date_df == offset_first_date) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] =
@@ -456,11 +458,11 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                     days_plus = get_offset_in_days(offset_first_date, max_date);
                     if (date_df == offset_date_by_days(max_date, -1)) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
-                            (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
+                            days_plus * vacc_data_entry.num_vaccinations_completed;
                     }
                     else if (date_df == max_date) {
                         model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
-                            days_plus * vacc_data_entry.num_vaccinations_completed;
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
 
@@ -470,7 +472,7 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
                 // N susceptible, partially vaccinated individuals to 'SusceptibleImprovedImmunity' state at day d; see secir_vaccinated.h
                 auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
-                if (max_full_date >= offset_full_date) {
+                if (max_date >= offset_full_date) {
                     // Option 1: considered offset_full_date is available in input data frame
                     if (date_df == offset_full_date) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
@@ -480,13 +482,13 @@ IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string
                 else { // offset_full_date > max_full_date
                     // Option 2: considered offset_full_date is NOT available in input data frame
                     days_plus = get_offset_in_days(offset_full_date, max_date);
-                    if (date_df == offset_date_by_days(max_full_date, -1)) {
+                    if (date_df == offset_date_by_days(max_date, -1)) {
                         model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
-                            (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
-                    }
-                    else if (date_df == max_full_date) {
-                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
                             days_plus * vacc_data_entry.num_vaccinations_completed;
+                    }
+                    else if (date_df == max_date) {
+                        model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
+                            (days_plus + 1) * vacc_data_entry.num_vaccinations_completed;
                     }
                 }
             }

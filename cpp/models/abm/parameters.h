@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,9 +21,12 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "abm/age.h"
+#include "abm/mask_type.h"
 #include "abm/time.h"
-#include "abm/state.h"
+#include "abm/virus_variant.h"
+#include "abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/damping.h"
@@ -35,11 +38,14 @@ namespace mio
 namespace abm
 {
 
+/**
+ * @brief Time that a Person is infected but not yet infectious.
+ */
 struct IncubationPeriod {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -47,83 +53,59 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByCarrier {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+struct InfectedNoSymptomsToSymptoms {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByCarrier";
+        return "InfectedNoSymptomsToSymptoms";
     }
 };
 
-struct SusceptibleToExposedByInfected {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+struct InfectedNoSymptomsToRecovered {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
-        return "SusceptibleToExposedByInfected";
+        return "InfectedNoSymptomsToRecovered";
     }
 };
 
-struct CarrierToInfected {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+struct InfectedSymptomsToRecovered {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
-        return "CarrierToInfected";
+        return "InfectedSymptomsToRecovered";
     }
 };
 
-struct CarrierToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+struct InfectedSymptomsToSevere {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
-        return "CarrierToRecovered";
-    }
-};
-
-struct InfectedToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectedToRecovered";
-    }
-};
-
-struct InfectedToSevere {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectedToSevere";
+        return "InfectedSymptomsToSevere";
     }
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -132,10 +114,10 @@ struct SevereToCritical {
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -144,10 +126,10 @@ struct SevereToRecovered {
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -156,10 +138,10 @@ struct CriticalToRecovered {
 };
 
 struct CriticalToDead {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
     }
     static std::string name()
     {
@@ -168,22 +150,72 @@ struct CriticalToDead {
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 0.);
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.);
     }
     static std::string name()
     {
         return "RecoveredToSusceptible";
     }
 };
+/**
+ * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+ * Section 3.3.1 or see also supplementary materials Fig. S5.
+*/
+struct ViralLoadDistributionsParameters {
+    UniformDistribution<double>::ParamType viral_load_peak;
+    UniformDistribution<double>::ParamType viral_load_incline;
+    UniformDistribution<double>::ParamType viral_load_decline;
+};
 
-struct DetectInfection {
-    using Type = CustomIndexArray<double, AgeGroup, VaccinationState>;
+struct ViralLoadDistributions {
+    using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AgeGroup::Count, VaccinationState::Count}, 0.5);
+        Type default_val({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count},
+                         ViralLoadDistributionsParameters{{8.1, 8.1}, {2., 2.}, {-0.17, -0.17}});
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "ViralLoadDistributions";
+    }
+};
+
+/**
+ * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+*/
+struct InfectivityDistributionsParameters {
+    UniformDistribution<double>::ParamType infectivity_alpha;
+    UniformDistribution<double>::ParamType infectivity_beta;
+};
+
+struct InfectivityDistributions {
+    using Type = CustomIndexArray<InfectivityDistributionsParameters, VirusVariant, AgeGroup>;
+    static Type get_default()
+    {
+        Type default_val({VirusVariant::Count, AgeGroup::Count},
+                         InfectivityDistributionsParameters{{-7., -7.}, {1., 1.}});
+        return default_val;
+    }
+    static std::string name()
+    {
+        return "InfectivityDistributions";
+    }
+};
+
+/**
+ * @brief Probability that an Infection is detected.
+ */
+struct DetectInfection {
+    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
+    static Type get_default()
+    {
+        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 0.5);
     }
     static std::string name()
     {
@@ -192,18 +224,37 @@ struct DetectInfection {
 };
 
 /**
- * parameters of the infection that are the same everywhere within the world.
+ * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ */
+struct MaskProtection {
+    using Type = CustomIndexArray<UncertainValue, MaskType>;
+    static auto get_default()
+    {
+        return Type({MaskType::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "MaskProtection";
+    }
+};
+
+/**
+ * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
-                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
-                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection>;
 
+/**
+ * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
+ */
 struct MaximumContacts {
-    using Type = double;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
-        return std::numeric_limits<double>::max();
+        return std::numeric_limits<ScalarType>::max();
     }
     static std::string name()
     {
@@ -212,18 +263,52 @@ struct MaximumContacts {
 };
 
 /**
- * parameters of the infection that depend on the location.
- */
-using LocalInfectionParameters = ParameterSet<MaximumContacts>;
+ * contact rates
+*/
+struct ContactRates {
+    using Type = CustomIndexArray<ScalarType, AgeGroup, AgeGroup>;
+    static Type get_default()
+    {
+        return Type({AgeGroup::Count, AgeGroup::Count},
+                    1.0); // amount of contacts from AgeGroup a to AgeGroup b per day
+    }
+    static std::string name()
+    {
+        return "ContactRates";
+    }
+};
 
+/**
+ * aerosol transmission rates
+*/
+struct AerosolTransmissionRates {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default()
+    {
+        return Type({VirusVariant::Count}, 1.0); // amount of infections per m^3 per day
+    }
+    static std::string name()
+    {
+        return "AerosolTransmissionRates";
+    }
+};
+
+/**
+ * @brief Parameters of the Infection that depend on the Location.
+ */
+using LocalInfectionParameters = ParameterSet<MaximumContacts, ContactRates, AerosolTransmissionRates>;
+
+/**
+ * @brief Parameters that describe the reliability of a test.
+ */
 struct TestParameters {
-    double sensitivity;
-    double specificity;
+    UncertainValue sensitivity;
+    UncertainValue specificity;
 };
 
 struct GenericTest {
     using Type = TestParameters;
-    static constexpr Type get_default()
+    static Type get_default()
     {
         return Type{0.9, 0.99};
     }
@@ -233,9 +318,12 @@ struct GenericTest {
     }
 };
 
+/**
+ * @brief Reliability of an AntigenTest.
+ */
 struct AntigenTest : public GenericTest {
     using Type = TestParameters;
-    static constexpr Type get_default()
+    static Type get_default()
     {
         return Type{0.8, 0.88};
     }
@@ -245,9 +333,12 @@ struct AntigenTest : public GenericTest {
     }
 };
 
+/**
+ * @brief Reliability of a PCRTest.
+ */
 struct PCRTest : public GenericTest {
     using Type = TestParameters;
-    static constexpr Type get_default()
+    static Type get_default()
     {
         return Type{0.9, 0.99};
     }
@@ -258,7 +349,7 @@ struct PCRTest : public GenericTest {
 };
 
 /**
- * parameters that govern the migration between locations.
+ * @brief Starting date of interventions.
  */
 struct LockdownDate {
     using Type = TimePoint;
@@ -271,17 +362,25 @@ struct LockdownDate {
         return "LockdownDate";
     }
 };
+
+/**
+ * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
+ */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<double, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AgeGroup>(AgeGroup::Count, 1.0);
+        return Type({AgeGroup::Count}, 1.0);
     }
     static std::string name()
     {
         return "BasicShoppingRate";
     }
 };
+
+/**
+ * @brief Percentage of Person%s of the respective age going to work.
+ */
 struct WorkRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -293,6 +392,10 @@ struct WorkRatio {
         return "WorkRatio";
     }
 };
+
+/**
+ * @brief Percentage of Person%s of the respective age going to school.
+ */
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -304,6 +407,10 @@ struct SchoolRatio {
         return "SchoolRatio";
     }
 };
+
+/**
+ * @brief Parameter for the exponential distribution to decide if a Person goes to a social event.
+ */
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
@@ -316,6 +423,9 @@ struct SocialEventRate {
     }
 };
 
+/**
+ * @brief Earliest time that a Person can go to work.
+ */
 struct GotoWorkTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -328,6 +438,9 @@ struct GotoWorkTimeMinimum {
     }
 };
 
+/**
+ * @brief Latest time that a Person can go to work.
+ */
 struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -340,6 +453,9 @@ struct GotoWorkTimeMaximum {
     }
 };
 
+/**
+ * @brief Earliest time that a Person can go to school.
+ */
 struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -352,6 +468,9 @@ struct GotoSchoolTimeMinimum {
     }
 };
 
+/**
+ * @brief Latest time that a Person can go to school.
+ */
 struct GotoSchoolTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default()
@@ -365,7 +484,7 @@ struct GotoSchoolTimeMaximum {
 };
 
 /**
- * parameters that control the migration between locations.
+ * @brief Parameters that control the migration between Location%s.
  */
 using MigrationParameters =
     ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,

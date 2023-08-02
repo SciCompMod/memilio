@@ -22,7 +22,7 @@
 
 #include "abm/parameters.h"
 #include "abm/location.h"
-#include "abm/state.h"
+#include "abm/infection.h"
 #include "abm/location_type.h"
 
 #include "memilio/math/eigen.h"
@@ -35,20 +35,25 @@ namespace abm
 {
 
 /**
- * A trip describes a migration from one location to another location.
+ * @brief A trip describes a migration from one Location to another Location.
  */
 struct Trip {
-    /** person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved*/
-    uint32_t person_id;
-    /** time at which a person changes the location*/
-    TimePoint time;
-    /**location where the person migrates to */
-    LocationId migration_destination;
-    /**location where te person starts the trip*/
-    LocationId migration_origin;
-    /**If migration_destination consists of different cells, this gives the index of the cells the person migrates to.*/
-    std::vector<uint32_t> cells;
+    uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
+    World, where all Person%s are saved.*/
+    TimePoint time; ///< Time at which a Person changes the Location.
+    LocationId migration_destination; ///< Location where the Person migrates to.
+    LocationId migration_origin; ///< Location where the Person starts the Trip.
+    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    Cell%s the Person migrates to.*/
 
+    /**
+     * @brief Construct a new Trip.
+     * @param[in] id ID of the Person that makes the Trip.
+     * @param[in] time_new Time at which a Person changes the Location.
+     * @param[in] destination Location where the Person migrates to.
+     * @param[in] origin Location where the person starts the Trip.
+     * @param[in] input_cells The index of the Cell%s the Person migrates to.
+     */
     Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
          const std::vector<uint32_t>& input_cells = {})
     {
@@ -60,47 +65,51 @@ struct Trip {
     }
 };
 
+/**
+ * @brief A list of Trip%s a Person follows.
+ */
 class TripList
 {
 public:
     /**
-     * Construct empty trip list.
+     * @brief Construct empty TripList.
      */
     TripList();
 
-    /*
-     * Get the next trip.
+    /**
+     * @brief Get the next Trip.
      */
     const Trip& get_next_trip() const;
 
-    /*
-     * Get the time at which the next trip will happen.
+    /**
+     * @brief Get the time at which the next Trip will happen.
      */
     TimePoint get_next_trip_time() const;
 
     /**
-     * Add a trip to migration data.
+     * @brief Add a Trip to migration data.
+     * @param[in] trip The Trip to be added.
      */
     void add_trip(Trip trip);
 
-    /*
-     * Increment the current index to select the next trip.
+    /**
+     * @brief Increment the current index to select the next Trip.
      */
     void increase_index()
     {
         m_current_index++;
     }
 
-    /* 
-     * Get the length of the TripList.
+    /**
+     * @brief Get the length of the TripList.
      */
     size_t num_trips() const
     {
         return m_trips.size();
     }
 
-    /* 
-     * Get the current index.
+    /**
+     * @brief Get the current index.
      */
     uint32_t get_current_index() const
     {
@@ -108,8 +117,8 @@ public:
     }
 
 private:
-    std::vector<Trip> m_trips;
-    uint32_t m_current_index;
+    std::vector<Trip> m_trips; ///< The list of Trip%s a Person makes.
+    uint32_t m_current_index; ///< The index of the Trip a Person makes next.
 };
 
 } // namespace abm

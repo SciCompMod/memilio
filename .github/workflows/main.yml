@@ -1,18 +1,34 @@
 name: CI
 
-on: 
+on:
   schedule:
     - cron: "40 2 * * *"
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
       - version-*
+    paths-ignore:
+      - "**/memilio-epidata/**"
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - "**/memilio-epidata/**"
   workflow_dispatch:
 
 jobs:
+<<<<<<< HEAD
+=======
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - uses: pre-commit/action@v3.0.0
+
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
   build-cpp-gcc_clang:
     if: github.event.pull_request.draft == false
     strategy:
@@ -24,12 +40,12 @@ jobs:
           - version: "latest"
             os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-18.04"
+            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
-        with: 
+        with:
           compiler: ${{ matrix.compiler }}
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
@@ -41,7 +57,7 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-build
         with:
           compiler: gcc
@@ -62,9 +78,9 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
-        with: 
+        with:
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
 
@@ -72,9 +88,9 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-build
-        with: 
+        with:
           config: Release
           version: latest
           optional-dependencies: OFF
@@ -91,23 +107,23 @@ jobs:
           - version: "latest"
             os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-18.04"
+            os: "ubuntu-20.04"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
-        with: 
+        with:
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
-  
+
   test-linux-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/linux-test
-        with: 
+        with:
           build-artifact: build-cpp-linux-gcc-latest-Release-part
 
   test-cpp-msvc:
@@ -124,9 +140,9 @@ jobs:
             os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
-        with: 
+        with:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
 
   test-windows-no-optional-deps:
@@ -134,185 +150,188 @@ jobs:
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/windows-test
-        with: 
+        with:
           build-artifact: build-cpp-windows-msvc-latest-Release-part
 
-  build-py-epidata:
+  run_examples-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-20.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/linux-run_examples
+        with:
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
+
+  run_examples-cpp-msvc:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-msvc
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-2022"
+          - version: "min"
+            os: "windows-2019"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/windows-run_examples
+        with:
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
+
+  build-py-generation:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
-          package: epidata
+          package: generation
 
-  test-py-epidata:
-    if: github.event.pull_request.draft == false
-    needs: build-py-epidata
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-py
-        with: 
-          package: epidata
-          coverage: ON
-  
   build-py-simulation:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-py
         with:
           package: simulation
 
+  build-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-py
+        with:
+          package: surrogatemodel
+
+  test-py-generation:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
+    needs: build-py-generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with:
+          package: generation
+
   test-py-simulation:
     if: github.event.pull_request.draft == false
     needs: build-py-simulation
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-py
-        with: 
+        with:
           package: simulation
-          
+
+  test-py-surrogatemodel:
+    if: github.event.pull_request.draft == false
+    needs: [build-py-surrogatemodel, build-py-simulation]
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with:
+          package: surrogatemodel
+          coverage: ON
+
   test-docs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-docs
 
-  test-pylint-epidata:
-    if: github.event.pull_request.draft == false
-    needs: build-py-epidata
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-pylint
-        with:
-          package: epidata
-
-  download-data:
-    if: github.event.pull_request.draft == false
-    needs: build-py-epidata
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install python3-pip gnupg
-          python -m pip install --upgrade pip
-      - name: Download Python Wheels
-        uses: actions/download-artifact@v2
-        with:
-          name: python-wheels-epidata
-          path: pycode/wheelhouse
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Install Python Wheels
-        run: |
-          for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
-          for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-      - name: Dowload Data
-        run: |
-          mkdir -p data_dl
-          getcasedata -o data_dl
-          getpopuldata -o data_dl
-          getjhdata -o data_dl
-          getdividata -o data_dl
-          getcommutermobility -o data_dl
-          getvaccinationdata -o data_dl
-          gethospitalizationdata -o data_dl
-      - name: Upload Data
-        uses: actions/upload-artifact@v2
-        with:
-          name: data
-          path: |
-            data_dl/*.json
-            data_dl/Germany/*.json
-            data_dl/Spain/*.json
-            data_dl/France/*.json
-            data_dl/Italy*.json
-            data_dl/SouthKorea/*.json
-            data_dl/US/*.json
-            data_dl/China/*.json
-          retention-days: 1
-          
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-py-epidata, test-cpp-gcc_clang]
+    needs: [test-cpp-gcc_clang, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git curl
       - name: Download python coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
-          name: test-py-coverage-reports
+          name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-cpp-coverage-reports
       - name: Deploy to codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
-          files: ./pycode/test/coverage_python.xml,./coverage.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_python
+          files: ./coverage_python/**,./coverage.info
           verbose: true
 
   pages:
     if: github.event.pull_request.draft == false
-    needs: [test-py-epidata, test-cpp-gcc_clang, test-docs, test-pylint-epidata]
+    needs: [test-cpp-gcc_clang, test-docs, test-py-surrogatemodel]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install git
       - name: Download python coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
-          name: test-py-coverage-reports
+          name: test-py-coverage-reports-surrogatemodel
       - name: Download cpp coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-cpp-coverage-reports
       - name: Download documentation
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: documentation
           path: docs/html
-      - name: Download pylint report
-        uses: actions/download-artifact@v2
-        with:
-          name: pylint-report
-          path: pycode/build_pylint
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
-          cp ci_index/main_index.html public/index.html
+          cp docs/style.css public/style.css
+          cp docs/index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
           cp -r docs/html/* public/documentation
-      - name: Prepare pylint reports
-        run: |
-          mkdir -p public/pylint
-          cp pycode/build_pylint/pylint.html public/pylint/index.html
       - name: Prepare coverage reports
         run: |
           mkdir -p public/coverage
@@ -321,7 +340,7 @@ jobs:
           cp -r coverage_python/* public/coverage/python/
           cp -r coverage/* public/coverage/cpp/
       - name: Upload pages as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
         with:
           name: pages
@@ -334,4 +353,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-

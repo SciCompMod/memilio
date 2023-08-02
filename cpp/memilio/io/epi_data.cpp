@@ -24,6 +24,7 @@
 
 namespace mio
 {
+
 const std::array<const char*, 6> ConfirmedCasesDataEntry::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
                                                                              "A35-A59", "A60-A79", "A80+"};
 
@@ -34,25 +35,34 @@ const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
 const std::array<const char*, 6> VaccinationDataEntry::age_group_names = {"0-4",   "5-14",  "15-34",
                                                                           "35-59", "60-79", "80-99"};
 
-IOResult<std::vector<int>> get_county_ids(const std::string& path)
+IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county)
 {
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
-
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path));
     std::vector<int> id;
     id.reserve(population_data.size());
     for (auto&& entry : population_data) {
-        if (entry.county_id) {
-            id.push_back(entry.county_id->get());
+        if (is_node_for_county) {
+            if (entry.county_id) {
+                id.push_back(entry.county_id->get());
+            }
+            else {
+                return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
+            }
         }
         else {
-            return failure(StatusCode::InvalidValue, "Population data file is missing county ids.");
+            if (entry.district_id) {
+                id.push_back(entry.district_id->get());
+            }
+            else {
+                return failure(StatusCode::InvalidValue, "Population data file is missing district ids.");
+            }
         }
     }
-    //remove duplicate county ids
+
+    //remove duplicate node ids
     id.erase(std::unique(id.begin(), id.end()), id.end());
     return success(id);
 }
-
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

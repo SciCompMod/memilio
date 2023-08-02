@@ -30,7 +30,7 @@ MSVC_WARNING_DISABLE_PUSH(4268 4251)
 
 #include "hdf5.h"
 
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 
 namespace mio
 {

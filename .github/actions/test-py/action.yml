@@ -4,6 +4,10 @@ inputs:
   package:
     description: "Package to run the tests for."
     required: true
+  version:
+    description: "Python version to use for the test."
+    required: false
+    default: "3.8"
   coverage:
     description: "Generate coverage report from running the tests, ON or OFF, default OFF."
     required: false
@@ -15,21 +19,38 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install python3-pip gnupg
+        if [[ "${{ inputs.package }}" == "generation" ]]; then
+          sudo apt-get -qq -y install python3-pip gnupg clang libclang-dev cmake
+        else
+          sudo apt-get -qq -y install python3-pip gnupg
+        fi
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+    - name: Download additional Python Wheels for plot package
+      uses: actions/download-artifact@v3
+      if:  inputs.package == 'plot'
       with:
-        python-version: 3.8
+        name: python-wheels-epidata
+        path: pycode/wheelhouse
+    - name: Download Python Wheels for surrogatemodel
+      uses: actions/download-artifact@v3
+      if:  inputs.package == 'surrogatemodel'
+      with:
+        name: python-wheels-simulation
+        path: pycode/wheelhouse
+    - name: Set up Python ${{ inputs.version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.version }}
     - name: Install Python Wheels
       shell: bash
       run: |
-        for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+        export PYTHON_VERSION_NO_DOT=$(echo "${{ inputs.version }}" | sed 's/\.//g')
+        for pkg in `ls pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
         for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
         pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
     - name: Run unit tests
@@ -37,7 +58,7 @@ runs:
       run: |
         cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest
+          python -W ignore::DeprecationWarning -m coverage run --include=**/site-packages/memilio/* -m unittest
           python -m coverage report
           python -m coverage xml -o coverage_python.xml
           python -m coverage html -d coverage_python
@@ -56,13 +77,14 @@ runs:
           getcasesestimation --help
           getcommutermobility --help
           getvaccinationdata --help
+          gethospitalizationdata --help
         fi
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: test-py-coverage-reports
+        name: test-py-coverage-reports-${{ inputs.package }}
         path: |
-          pycode/coverage_python.xml
+          pycode/memilio-${{ inputs.package }}/**/coverage_python.xml
           coverage_python
-        retention-days: 1
+        retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}

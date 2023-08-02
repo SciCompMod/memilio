@@ -1,0 +1,16 @@
+exclude: ^(docs|cpp)/
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.3.0
+  hooks:
+    -   id: check-merge-conflict
+    -   id: check-yaml
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.2.2
+  hooks:
+    - id: pyupgrade
+      args: [--py37-plus]
+- repo: https://github.com/pre-commit/mirrors-autopep8
+  rev: v2.0.0
+  hooks:
+  -   id: autopep8

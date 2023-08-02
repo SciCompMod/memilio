@@ -1,0 +1,3 @@
+[{"Date":"2022-04-24","ID_District":1234,"Age_RKI":"A00-A04","Confirmed":1.0,"Deaths":0.0,"Recovered":0.0},
+{"Date":"2022-04-25","ID_District":1234,"Age_RKI":"A15-A34","Confirmed":20.0,"Deaths":1.0,"Recovered":5.0},
+{"Date":"2022-04-24","ID_District":1235,"Age_RKI":"A80+","Confirmed":15.0,"Deaths":3.0,"Recovered":2.0}]

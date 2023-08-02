@@ -40,21 +40,20 @@ namespace pymio
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
 template <class C>
-void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>&)
+void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&)
 {
 }
 template <class C, class T, class... Ts>
-void bind_single_tag_template_members(pybind11::module& m, pybind11::class_<C>& c)
+void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>& c)
 {
     std::string tname = pretty_name<T>();
     c.def(("size_" + tname).c_str(), &C::template size<T>);
 
+    // Catch warning ImportError: generic_type: type "" is already registered!
     try {
         bind_Index<T>(m, ("Index_" + tname).c_str());
     }
     catch (std::runtime_error& e) {
-        pybind11::print("Catched exception: ");
-        pybind11::print(e.what());
     }
     bind_single_tag_template_members<C, Ts...>(m, c); //next Tag
 }
@@ -136,7 +135,7 @@ void assign_scalar(C& self, const pybind11::object& indices, const T& value)
 
 // Bind members that are different for arrays with single or multi index.
 template <class C, class Tag>
-void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m, pybind11::class_<C>& c,
+void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m, pybind11::class_<C>& c,
                                                          std::string const& name)
 {
     c.def("size", [](const C& self) {
@@ -144,24 +143,24 @@ void bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m, py
     });
 }
 template <class C, class... Tags>
-std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module& m,
+std::enable_if_t<(sizeof...(Tags) > 1)> bind_single_or_multi_index_members_CustomIndexArray(pybind11::module_& m,
                                                                                             pybind11::class_<C>& c,
                                                                                             std::string const& name)
 {
     c.def("size", [](const C& self) {
         return self.size().indices; //tuple of single indices
     });
+
+    // Catch warning ImportError: generic_type: type "" is already registered!
     try {
         bind_MultiIndex<Tags...>(m, ("MultiIndex_" + name).c_str());
     }
     catch (std::runtime_error& e) {
-        pybind11::print("Catched exception: ");
-        pybind11::print(e.what());
     }
 }
 
 template <class Type, class... Tags>
-void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
+void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
 {
     using C     = typename mio::CustomIndexArray<Type, Tags...>;
     using Index = typename mio::CustomIndexArray<Type, Tags...>::Index;

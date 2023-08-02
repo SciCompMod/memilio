@@ -14,13 +14,13 @@ runs:
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: python-wheels-${{ inputs.package }}
     - name: Install Python Wheels
       shell: bash
       run: |
-        for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+        for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
         for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
         pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
     - name: Run pylint
@@ -31,8 +31,8 @@ runs:
         python setup.py pylint
         pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
     - name: Upload Pylint Report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: pylint-report
+        name: pylint-report-${{ inputs.package }}
         path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html
-        retention-days: 3
+        retention-days: 7

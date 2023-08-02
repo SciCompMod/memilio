@@ -29,8 +29,8 @@ class TestAbm(unittest.TestCase):
         sim = abm.Simulation(t0)
         world = sim.world
         self.assertEqual(len(world.persons), 0)
-        self.assertEqual(sum(map(len, world.locations)), 0)
-        self.assertEqual(len(sim.result), 1)
+        self.assertEqual(len(world.locations), 1)
+        self.assertEqual(len(sim.result), 0)
 
     def test_locations(self):
         t0 = abm.TimePoint(0)
@@ -38,16 +38,22 @@ class TestAbm(unittest.TestCase):
         world = sim.world
 
         home_id = world.add_location(abm.LocationType.Home)
+<<<<<<< HEAD
         social_event_id = world.add_location(abm.LocationType.SocialEvent)        
         self.assertEqual(sum(map(len, world.locations)), 2)
+=======
+        social_event_id = world.add_location(abm.LocationType.SocialEvent)
+        self.assertEqual(len(world.locations), 3)
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
 
-        home = world.locations[home_id.type][home_id.index]
+        home = world.locations[home_id.index]
         self.assertEqual(home.type, abm.LocationType.Home)
+
+        testing_ages = [abm.AgeGroup.Age0to4]
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
 
-        testing_ages = [abm.AgeGroup.Age0to4]
         testing_locations = [abm.LocationType.Home]
         testing_inf_states = []
         testing_crit = [abm.TestingCriteria(testing_ages, testing_locations, testing_inf_states)]
@@ -62,14 +68,25 @@ class TestAbm(unittest.TestCase):
         home_id = world.add_location(abm.LocationType.Home)
         social_event_id = world.add_location(abm.LocationType.SocialEvent)
 
+<<<<<<< HEAD
         p1 = world.add_person(home_id, abm.InfectionState.Carrier, abm.AgeGroup.Age15to34)
         p2 = world.add_person(social_event_id, abm.InfectionState.Recovered_Infected, abm.AgeGroup.Age80plus)
+=======
+        p1 = world.add_person(
+            home_id, abm.AgeGroup.Age15to34)
+        p2 = world.add_person(
+            social_event_id, abm.AgeGroup.Age80plus)
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
 
         #check persons
         self.assertEqual(len(world.persons), 2)
         self.assertEqual(p1.age, abm.AgeGroup.Age15to34)
+<<<<<<< HEAD
         self.assertEqual(p1.location_id, home_id)
         self.assertEqual(p2.infection_state, abm.InfectionState.Recovered_Infected)
+=======
+        self.assertEqual(p1.location.index, 1)
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
         self.assertEqual(world.persons[0], p1)
         self.assertEqual(world.persons[1], p2)
 
@@ -85,13 +102,14 @@ class TestAbm(unittest.TestCase):
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
         work_id = abm.LocationId(0, abm.LocationType.Work)
         p1 = world.add_person(
-            home_id, abm.InfectionState.Infected, abm.AgeGroup.Age0to4)
+            home_id, abm.AgeGroup.Age0to4)
         p2 = world.add_person(
-            home_id, abm.InfectionState.Recovered_Carrier, abm.AgeGroup.Age15to34)
+            home_id, abm.AgeGroup.Age15to34)
         for type in abm.LocationType.values():
             p1.set_assigned_location(abm.LocationId(0, type))
             p2.set_assigned_location(abm.LocationId(0, type))
 
+<<<<<<< HEAD
         #parameters so that the infected person doesn't randomly change state and gets tested reliably
         # DUE TO THE CURRENT IMPLEMENTATION OF DIFFERENT TEST TYPES, THIS IS NOT POSSIBLE, NEEDS TO BE CHANGED IN THE FUTURE
         social_event = world.locations[social_event_id.type][social_event_id.index]
@@ -101,6 +119,14 @@ class TestAbm(unittest.TestCase):
                                                     abm.VaccinationState.Unvaccinated] = 0.0
         world.infection_parameters.InfectedToRecovered[abm.AgeGroup.Age0to4,
                                                        abm.VaccinationState.Unvaccinated] = 0.0
+=======
+        social_event = world.locations[social_event_id.index]
+
+        world.infection_parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
+                                                            abm.VaccinationState.Unvaccinated] = 0.0
+        world.infection_parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, abm.AgeGroup.Age0to4,
+                                                               abm.VaccinationState.Unvaccinated] = 0.0
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
 
         #trips
         trip_list = abm.TripList()
@@ -115,11 +141,14 @@ class TestAbm(unittest.TestCase):
         sim.advance(t1)
         self.assertEqual(sim.result.get_num_time_points(), 25)
 
+<<<<<<< HEAD
         #check effect of trips
         #self.assertEqual(p1.location_id, home_id) #person 1 is tested when goging to social event
         #self.assertEqual(p1.is_in_quarantine, True)
         #self.assertEqual(p2.location_id, work_id) #person 2 goes to work
 
+=======
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
 
 if __name__ == '__main__':
     unittest.main()

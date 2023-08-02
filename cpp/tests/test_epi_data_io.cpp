@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 
-#include "abm/state.h"
+#include "abm/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
-#include "memilio/epidemiology/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
 #include "memilio/io/io.h"
@@ -28,6 +28,9 @@
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
+#include "ode_secirvvs/model.h"
+#include "ode_secirvvs/parameters_io.h"
+#include "memilio/utils/stl_util.h"
 #include "boost/optional/optional_io.hpp"
 #include <gmock/gmock-matchers.h>
 
@@ -65,7 +68,7 @@ TEST(TestEpiDataIo, read_rki)
     ASSERT_EQ(rki_data[0].num_confirmed, 1);
     ASSERT_EQ(rki_data[0].num_deaths, 2);
     ASSERT_EQ(rki_data[0].num_recovered, 3);
-    ASSERT_EQ(rki_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(rki_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(rki_data[0].state_id, boost::none);
 
     ASSERT_EQ(rki_data[1].age_group, mio::AgeGroup(0));
@@ -73,7 +76,7 @@ TEST(TestEpiDataIo, read_rki)
     ASSERT_EQ(rki_data[1].num_confirmed, 3);
     ASSERT_EQ(rki_data[1].num_deaths, 4);
     ASSERT_EQ(rki_data[1].num_recovered, 5);
-    ASSERT_EQ(rki_data[1].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(rki_data[1].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(rki_data[1].state_id, boost::none);
 }
 
@@ -108,11 +111,11 @@ TEST(TestEpiDataIo, read_divi)
     auto& divi_data = r.value();
     ASSERT_EQ(divi_data.size(), 2);
 
-    ASSERT_EQ(divi_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(divi_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_EQ(divi_data[0].date, mio::Date(2022, 10, 5));
     ASSERT_EQ(divi_data[0].num_icu, 10.0);
 
-    ASSERT_EQ(divi_data[1].county_id, mio::regions::de::CountyId(1002));
+    ASSERT_EQ(divi_data[1].county_id, mio::regions::CountyId(1002));
     ASSERT_EQ(divi_data[1].date, mio::Date(2022, 10, 7));
     ASSERT_EQ(divi_data[1].num_icu, 20.0);
 }
@@ -152,14 +155,14 @@ TEST(TestEpiDataIo, read_population)
     auto& population_data = r.value();
     ASSERT_EQ(population_data.size(), 2);
 
-    ASSERT_EQ(population_data[0].county_id, mio::regions::de::CountyId(1001));
+    ASSERT_EQ(population_data[0].county_id, mio::regions::CountyId(1001));
     ASSERT_THAT(population_data[0].population,
                 testing::ElementsAre(testing::DoubleEq(10.0 + 2 * 10.0 / 3), testing::DoubleEq(10.0 / 3 + 10.0),
                                      testing::DoubleEq(10.0 + 10.0 + 10.0 + 0.5 * 10.0),
                                      testing::DoubleEq(0.5 * 10.0 + 10.0 + 2 * 10.0 / 3),
                                      testing::DoubleEq(10.0 / 3 + 10.0 + 0.2 * 10.0), testing::DoubleEq(0.8 * 10.0)));
 
-    ASSERT_EQ(population_data[1].county_id, mio::regions::de::CountyId(1002));
+    ASSERT_EQ(population_data[1].county_id, mio::regions::CountyId(1002));
     ASSERT_THAT(population_data[1].population,
                 testing::ElementsAre(testing::DoubleEq(10.0 + 2 * 20.0 / 3), testing::DoubleEq(20.0 / 3 + 30.0),
                                      testing::DoubleEq(40.0 + 50.0 + 60.0 + 0.5 * 70.0),
@@ -188,7 +191,7 @@ TEST(TestEpiDataIo, read_population_error_age)
     ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::KeyNotFound));
 }
 
-TEST(TestEpiDataIo, get_county_ids)
+TEST(TestEpiDataIo, read_county_ids)
 {
     std::vector<int> true_ids = {
         1001,  1002,  1003,  1004,  1051,  1053,  1054,  1055,  1056,  1057,  1058,  1059,  1060,  1061,  1062,  2000,
@@ -218,11 +221,131 @@ TEST(TestEpiDataIo, get_county_ids)
         16061, 16062, 16063, 16064, 16065, 16066, 16067, 16068, 16069, 16070, 16071, 16072, 16073, 16074, 16075, 16076,
         16077};
 
-    std::string path = TEST_DATA_DIR;
-    auto read_ids    = mio::get_county_ids(path);
+    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
+    auto read_ids    = mio::get_node_ids(path, true);
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));
+}
+
+TEST(TestEpiDataIo, get_node_ids)
+{
+    std::vector<int> true_ids_district = {1234, 1235};
+
+    std::vector<int> true_ids_county = {1001};
+
+    std::string path       = mio::path_join(TEST_DATA_DIR, "test_current_population.json");
+    auto read_ids_district = mio::get_node_ids(path, false);
+    auto read_ids_county   = mio::get_node_ids(path, true);
+    ASSERT_THAT(print_wrap(read_ids_district), IsSuccess());
+    ASSERT_THAT(print_wrap(read_ids_county), IsSuccess());
+
+    EXPECT_THAT(read_ids_district.value(), testing::ElementsAreArray(true_ids_district));
+    EXPECT_THAT(read_ids_county.value(), testing::ElementsAreArray(true_ids_county));
+}
+
+TEST(TestEpiDataIo, read_divi_data)
+{
+    auto divi_data = mio::read_divi_data(mio::path_join(TEST_DATA_DIR, "test_county_divi.json")).value();
+
+    ASSERT_EQ(divi_data.size(), 4);
+
+    ASSERT_EQ(divi_data[0].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(divi_data[0].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(divi_data[0].num_icu, 0.5437);
+
+    ASSERT_EQ(divi_data[1].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(divi_data[1].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(divi_data[1].num_icu, 0.64532);
+
+    ASSERT_EQ(divi_data[2].district_id, mio::regions::DistrictId(1235));
+    ASSERT_EQ(divi_data[2].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(divi_data[2].num_icu, 0.3574);
+
+    ASSERT_EQ(divi_data[3].district_id, mio::regions::DistrictId(1235));
+    ASSERT_EQ(divi_data[3].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(divi_data[3].num_icu, 0.35437);
+}
+
+TEST(TestEpiDataIo, read_confirmed_cases_data)
+{
+    auto case_data = mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "test_cases_all_age.json")).value();
+
+    ASSERT_EQ(case_data.size(), 3);
+
+    ASSERT_EQ(case_data[0].age_group, mio::AgeGroup(0));
+    ASSERT_EQ(case_data[0].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(case_data[0].num_confirmed, 1);
+    ASSERT_EQ(case_data[0].num_deaths, 0);
+    ASSERT_EQ(case_data[0].num_recovered, 0);
+    ASSERT_EQ(case_data[0].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(case_data[0].county_id, boost::none);
+    ASSERT_EQ(case_data[0].state_id, boost::none);
+
+    ASSERT_EQ(case_data[1].age_group, mio::AgeGroup(2));
+    ASSERT_EQ(case_data[1].date, mio::Date(2022, 04, 25));
+    ASSERT_EQ(case_data[1].num_confirmed, 20);
+    ASSERT_EQ(case_data[1].num_deaths, 1);
+    ASSERT_EQ(case_data[1].num_recovered, 5);
+    ASSERT_EQ(case_data[1].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(case_data[1].county_id, boost::none);
+    ASSERT_EQ(case_data[1].state_id, boost::none);
+
+    ASSERT_EQ(case_data[2].age_group, mio::AgeGroup(5));
+    ASSERT_EQ(case_data[2].date, mio::Date(2022, 04, 24));
+    ASSERT_EQ(case_data[2].num_confirmed, 15);
+    ASSERT_EQ(case_data[2].num_deaths, 3);
+    ASSERT_EQ(case_data[2].num_recovered, 2);
+    ASSERT_EQ(case_data[2].district_id, mio::regions::DistrictId(1235));
+    ASSERT_EQ(case_data[2].county_id, boost::none);
+    ASSERT_EQ(case_data[2].state_id, boost::none);
+}
+
+TEST(TestEpiDataIO, read_vaccination_data)
+{
+    auto vacc_data = mio::read_vaccination_data(mio::path_join(TEST_DATA_DIR, "test_all_ageinf_vacc.json")).value();
+
+    ASSERT_EQ(vacc_data.size(), 2);
+
+    ASSERT_EQ(vacc_data[0].date, mio::Date(2022, 4, 12));
+    ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(0));
+    ASSERT_EQ(vacc_data[0].county_id, mio::regions::CountyId(1001));
+    ASSERT_EQ(vacc_data[0].district_id, mio::regions::DistrictId(1234));
+    ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 5.0);
+
+    ASSERT_EQ(vacc_data[1].date, mio::Date(2022, 4, 15));
+    ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(2));
+    ASSERT_EQ(vacc_data[1].county_id, boost::none);
+    ASSERT_EQ(vacc_data[1].district_id, mio::regions::DistrictId(1235));
+    ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 1.0);
+}
+
+TEST(TestEpiData, set_vaccination_data)
+{
+    auto num_age_groups = 1;
+    auto num_days       = 10;
+
+    std::vector<int> county_ids = {1001};
+    mio::osecirvvs::Model model(num_age_groups);
+    model.parameters.set<mio::osecirvvs::VaccinationGap>(3);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectivePartialImmunity>(1);
+    model.parameters.set<mio::osecirvvs::DaysUntilEffectiveImprovedImmunity>(2);
+    std::vector<mio::osecirvvs::Model> model_vector{model};
+
+    auto f = mio::osecirvvs::details::set_vaccination_data(model_vector,
+                                                           mio::path_join(TEST_DATA_DIR, "vaccination_test.json"),
+                                                           mio::Date(2022, 4, 15), county_ids, num_days);
+
+    auto expected_values_PV =
+        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 7, 8, 9, 9, 10, 12, 14, 16, 18, 20, 22).finished();
+
+    auto expected_values_FV =
+        (Eigen::ArrayXd(num_age_groups * (num_days + 1)) << 2, 4, 5, 5, 7, 8, 9, 9, 10, 12, 14).finished();
+
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFullVaccination>().array()),
+                MatrixNear(print_wrap(expected_values_FV), 1e-8, 1e-8));
+    ASSERT_THAT(print_wrap(model_vector[0].parameters.template get<mio::osecirvvs::DailyFirstVaccination>().array()),
+                MatrixNear(print_wrap(expected_values_PV), 1e-8, 1e-8));
 }
 
 TEST(TestEpiData, vaccination_data)
@@ -246,12 +369,12 @@ TEST(TestEpiData, vaccination_data)
 
     ASSERT_EQ(vacc_data[0].date, mio::Date(2021, 12, 1));
     ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(1));
-    ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1011));
+    ASSERT_EQ(vacc_data[0].county_id, mio::regions::CountyId(1011));
     ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 23.05);
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2021, 12, 2));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
-    ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
+    ASSERT_EQ(vacc_data[1].county_id, mio::regions::CountyId(1012));
     ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 12.0);
 }
 

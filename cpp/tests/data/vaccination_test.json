@@ -1,0 +1,11 @@
+[{"Date":"2022-04-12","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":1.0},
+{"Date":"2022-04-13","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":2.0},
+{"Date":"2022-04-14","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":4.0},
+{"Date":"2022-04-15","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":5.0},
+{"Date":"2022-04-16","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":5.0},
+{"Date":"2022-04-17","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":7.0},
+{"Date":"2022-04-18","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":8.0},
+{"Date":"2022-04-19","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":9.0},
+{"Date":"2022-04-20","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":9.0},
+{"Date":"2022-04-21","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":10.0},
+{"Date":"2022-04-22","ID_County":1001,"Age_RKI":"0-4","Vacc_partially":0.0,"Vacc_completed":12.0}]

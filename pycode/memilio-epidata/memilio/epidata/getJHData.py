@@ -67,7 +67,11 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    """
 
     filename = "FullData_JohnHopkins"
+    url = "https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv"
+    path = os.path.join(out_folder, filename + ".json")
+    df = gd.get_file(path, url, read_data, param_dict={}, interactive=True)
 
+<<<<<<< HEAD
     if read_data:
         file_in = os.path.join(out_folder, filename + ".json")
         # if once dowloaded just read json file
@@ -92,6 +96,10 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         # output data to not always download it
         if not no_raw:
             gd.write_dataframe(df, out_folder, filename, "json")
+=======
+    if not no_raw:
+        gd.write_dataframe(df, out_folder, filename, "json")
+>>>>>>> e13e4c705c931ad490aea943f701f918bdc8803b
 
     df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
     print("Available columns:", df.columns)

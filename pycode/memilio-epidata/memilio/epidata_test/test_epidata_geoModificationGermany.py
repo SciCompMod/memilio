@@ -22,6 +22,7 @@ import pandas as pd
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import progress_indicator
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
@@ -178,6 +179,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     def test_get_state_IDs(self):
         # zfill is false
