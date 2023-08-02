@@ -572,7 +572,8 @@ void assign_infection_states(mio::abm::World& world, mio::abm::TimePoint t0, Sca
                                                    infected_critical, recovered);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t0, infection_state));
+                                                         world.get_global_infection_parameters(), t0, infection_state),
+                                     t0);
         }
     }
 }
@@ -820,7 +821,7 @@ void print(T& data)
 
 int main()
 {
-    const fs::path input_dir = "H:/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
+    const fs::path input_dir = "~/Documents/INSIDeDemonstrator/INSIDe_Demonstrator_AreaList.csv";
     auto result              = run(input_dir);
 
     return 0;

@@ -126,7 +126,7 @@ public:
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
      */
-    void add_new_infection(Infection&& inf);
+    void add_new_infection(Infection&& inf, TimePoint current_time = TimePoint(0));
 
     /**
      * @brief Get the AgeGroup of this Person.

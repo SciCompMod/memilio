@@ -443,7 +443,8 @@ void assign_infection_state(mio::abm::World& world, mio::abm::TimePoint t, doubl
             determine_infection_state(exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
         if (infection_state != mio::abm::InfectionState::Susceptible)
             person.add_new_infection(mio::abm::Infection(mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         world.get_global_infection_parameters(), t, infection_state));
+                                                         world.get_global_infection_parameters(), t, infection_state),
+                                     t);
     }
 }
 

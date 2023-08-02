@@ -101,11 +101,11 @@ TEST(TestLocation, CacheExposureRate)
         auto location  = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
         auto infected1 = mio::abm::Person(home, age);
         infected1.add_new_infection(
-            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
+            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms), t);
         infected1.migrate_to(location, {0});
         auto infected2 = mio::abm::Person(home, age);
         infected2.add_new_infection(
-            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
+            mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms), t);
         infected2.migrate_to(location, {0, 1});
 
         //cache precomputed results

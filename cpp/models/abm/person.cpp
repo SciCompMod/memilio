@@ -58,7 +58,7 @@ void Person::interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters&
         m_location->interact(*this, t, dt, params);
     }
     m_time_at_location += dt;
-    change_time_since_transmission(old_infection_state, get_infection_state(t), dt, t);
+    change_time_since_transmission(old_infection_state, get_infection_state(t + dt), dt, t);
 }
 
 void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
@@ -95,9 +95,9 @@ InfectionState Person::get_infection_state(TimePoint t) const
     }
 }
 
-void Person::add_new_infection(Infection&& inf)
+void Person::add_new_infection(Infection&& inf, TimePoint current_time)
 {
-    m_time_since_transmission = TimePoint(0) - inf.get_infection_start();
+    m_time_since_transmission = current_time - inf.get_infection_start();
     m_infections.push_back(std::move(inf));
 }
 

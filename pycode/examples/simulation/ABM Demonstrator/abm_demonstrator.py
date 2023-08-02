@@ -440,7 +440,7 @@ def assign_infection_states(world, t0, exposed_pct, infected_no_symptoms_pct, in
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
         if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
             person.add_new_infection(Infection(VirusVariant.Wildtype, person.age,
-                                     world.infection_parameters, t0, abm.InfectionState(infection_state), False))
+                                     world.infection_parameters, t0, abm.InfectionState(infection_state), False), t0)
 
 
 def find_all_locations_of_type(world, type):
@@ -510,7 +510,7 @@ def convert_loc_id_to_string(loc_id):
     if int(loc_id[1]) < 10:
         index = "0" + index
 
-    return type + index
+    return "I" + type + index
 
 
 def get_agents_per_location(loc_id, agents):
@@ -567,7 +567,7 @@ def convert_infection_state_to_string(infection_state):
         raise Exception("Infection state not found")
 
 
-def write_infection_paths_to_file(path, log):
+def write_infection_paths_to_file_states(path, log):
     agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
     with open(path, 'w') as f:
         for id in agent_ids:
@@ -575,6 +575,23 @@ def write_infection_paths_to_file(path, log):
             for t in range(len(log[2])):
                 line += convert_infection_state_to_string(
                     log[2][t][id][3]) + " "
+            f.write(line)
+            f.write('\n')
+    f.close()
+
+
+def write_infection_paths_to_file(path, log):
+    agent_ids = [log[2][0][i][1] for i in range(len(log[2][0]))]
+    with open(path, 'w') as f:
+        f.write("Agent_id S E I_ns I_sy I_sev I_cri R D\n")
+        for id in agent_ids:
+            line = str(id) + " "
+            # times_per_state is number of time points per compartment: [S, E, I_ns, I_sy, I_sev, I_cri, R, D]
+            times_per_state = [0 for comp in range(8)]
+            for t in range(len(log[2])):
+                times_per_state[int(log[2][t][id][3])] += 1
+            for state in range(len(times_per_state)):
+                line += str(times_per_state[state]) + " "
             f.write(line)
             f.write('\n')
     f.close()

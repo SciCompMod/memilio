@@ -181,8 +181,8 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::Person>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
         .def("add_new_infection",
-             [](mio::abm::Person& self, mio::abm::Infection& infection) {
-                 self.add_new_infection(std::move(infection));
+             [](mio::abm::Person& self, mio::abm::Infection& infection, mio::abm::TimePoint t) {
+                 self.add_new_infection(std::move(infection), t);
              })
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
