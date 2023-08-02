@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
+* Authors: Anna Wendler, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,20 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PYMIO_PARAMETER_DISTRIBUTIONS_H
-#define PYMIO_PARAMETER_DISTRIBUTIONS_H
 
-#include "pybind11/pybind11.h"
-
-namespace pymio
+namespace mio
 {
 
-void bind_parameter_distribution(pybind11::module_& m, std::string const& name);
-
-void bind_parameter_distribution_normal(pybind11::module_& m, std::string const& name);
-
-void bind_parameter_distribution_uniform(pybind11::module_& m, std::string const& name);
-
-} // namespace pymio
-
-#endif //PYMIO_PARAMETER_DISTRIBUTIONS_H
+} // namespace mio

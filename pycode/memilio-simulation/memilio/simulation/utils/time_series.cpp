@@ -27,7 +27,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_time_series(py::module& m, std::string const& name)
+void bind_time_series(py::module_& m, std::string const& name)
 {
     py::class_<mio::TimeSeries<double>>(m, name.c_str())
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))

@@ -23,4 +23,6 @@ We recommend to use a virtual python environment to avoid dependency conflicts w
     source epi_venv/bin/activate
     pip install --upgrade pip
 
-Refer to the `Python documentation <https://docs.python.org/3/library/venv.html>`_ for more information about virtual environments.
+Refer to the `Python documentation <https://docs.python.org/3/library/venv.html>`_ for more information about virtual environments. 
+
+The packages are tested for Python 3.8 - 3.11.
