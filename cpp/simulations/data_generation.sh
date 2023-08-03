@@ -2,7 +2,7 @@
 # Run all scripts in memilio-epidata which are necessary to run the simulation files.
 
 # activate virtual_env 
-# The path to the virtual environment has to be adjusted individually
+# The path to the virtual environment activation function has to be adjusted manually
 # Otherwise the script can be called with -PATH_ENV Path argument, e.g.
 # sh data_generation.sh -PATH_ENV "YOUR/PATH/TO/VIRTUAL/ENV/activate"
 path_virtual_env= "YOUR/PATH/TO/VIRTUAL/ENV/activate" 
@@ -24,11 +24,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! [[ -f $path_virtual_env ]]
-then echo "Set path_virtual_env to an existing python venv." && exit
+then echo "Set path to virtual environment activation function to an existing python venv." && exit
 else source $path_virtual_env
 fi
 
-# path to memilio dir
+# path to MEmilio dir (assumes execution of the script from the `simulations` folder)
 cd ../..
 data_dir=$PWD/data/pydata
 mobility_dir=$PWD/data/mobility/
