@@ -359,6 +359,44 @@ public:
     }
 
     /**
+     * Percentage of infected commuters that are not detected.
+     */
+    double& get_commuter_nondetection()
+    {
+        return m_commuter_nondetection;
+    }
+    double get_commuter_nondetection() const
+    {
+        return m_commuter_nondetection;
+    }
+
+    /**
+     * Time in simulation before which no infected commuters are detected.
+     */
+    double& get_start_commuter_detection()
+    {
+        return m_start_commuter_detection;
+    }
+
+    double get_start_commuter_detection() const
+    {
+        return m_start_commuter_detection;
+    }
+
+    /**
+     * Time in simulation after which no infected commuters are detected.
+     */
+    double& get_end_commuter_detection()
+    {
+        return m_end_commuter_detection;
+    }
+
+    double get_end_commuter_detection() const
+    {
+        return m_end_commuter_detection;
+    }
+
+    /**
      * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
      */
     void apply_constraints()
@@ -578,6 +616,9 @@ public:
 
 private:
     AgeGroup m_num_groups;
+    double m_commuter_nondetection    = 0.0;
+    double m_start_commuter_detection = 0.0;
+    double m_end_commuter_detection   = 0.0;
 };
 
 /**

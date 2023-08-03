@@ -347,6 +347,33 @@ auto get_migration_factors(const Simulation<Base>& sim, double /*t*/, const Eige
     return factors;
 }
 
+template <class Base = mio::Simulation<Model>>
+auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+{
+    auto& model       = sim.get_model();
+    auto nondetection = 1.0;
+    if (time >= model.parameters.get_start_commuter_detection() &&
+        time < model.parameters.get_end_commuter_detection()) {
+        nondetection = (double)model.parameters.get_commuter_nondetection();
+    }
+    for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); ++i) {
+        auto INSi  = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptoms});
+        auto INSCi = model.populations.get_flat_index({i, InfectionState::InfectedNoSymptomsConfirmed});
+        auto ISyi  = model.populations.get_flat_index({i, InfectionState::InfectedSymptoms});
+        auto ISyCi = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsConfirmed});
+
+        //put detected commuters in their own compartment so they don't contribute to infections in their home node
+        sim.get_result().get_last_value()[INSi] -= migrated[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[INSCi] += migrated[INSi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyi] -= migrated[ISyi] * (1 - nondetection);
+        sim.get_result().get_last_value()[ISyCi] += migrated[ISyi] * (1 - nondetection);
+
+        //reduce the number of commuters
+        migrated[ISyi] *= nondetection;
+        migrated[INSi] *= nondetection;
+    }
+}
+
 } // namespace osecir
 } // namespace mio
 
