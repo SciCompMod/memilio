@@ -622,8 +622,17 @@ public:
     }
 
     /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
-     * @return Returns true if one ore more constraint was corrected, false otherwise.  
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
+     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     *
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
+     *            function can and will not set Parameters to meaningful values in an epidemiological or virological context,
+     *            as all models are designed to be transferable to multiple diseases. Consequently, only acceptable
+     *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
+     *            may often be necessary to have set meaningful values.
+     *
+     * @return Returns true if one ore more constraint were corrected, false otherwise.  
      */
     bool apply_constraints()
     {
