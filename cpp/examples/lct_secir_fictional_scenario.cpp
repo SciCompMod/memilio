@@ -28,43 +28,44 @@
 
 int main()
 {
-    using Vec           = mio::TimeSeries<ScalarType>::Vector;
-    int num_transitions = 10;
-    ScalarType dt       = 1;
+    using Vec          = mio::TimeSeries<ScalarType>::Vector;
+    int numTransitions = 10;
+    ScalarType dt      = 0.5;
     // Set vector that specifies the number of subcompartments
-    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+    std::vector<int> subcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
+    subcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 2;
+    subcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 3;
+    subcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 5;
+    mio::lsecir::InfectionState infectionStates(subcompartmentNumbers);
 
     // create TimeSeries with num_transitions elements where transitions needed for simulation will be stored
-    mio::TimeSeries<ScalarType> init(num_transitions);
+    mio::TimeSeries<ScalarType> init(numTransitions);
 
     // add time points for initialization of transitions
-    Vec vec_init(num_transitions);
-    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-    vec_init                                                                              = vec_init * dt;
+    Vec initTransitions(numTransitions);
+    initTransitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 15.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 5.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+    initTransitions[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+    initTransitions                                                                              = initTransitions * dt;
+
     // add initial time point to time series
-    init.add_time_point(-40, vec_init);
+    init.add_time_point(-40, initTransitions);
     // add further time points until time 0
     while (init.get_last_time() < 0) {
-        //vec_init *=  1.01;
-        init.add_time_point(init.get_last_time() + dt, vec_init);
+        //initTransitions *=  1.01;
+        init.add_time_point(init.get_last_time() + dt, initTransitions);
     }
-
-    auto E =
-        mio::lsecir::compute_compartments(std::move(init), mio::lsecir::InfectionStateBase::Exposed, InfState, 1 / 3.2,
-                                          Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed), dt);
-
-    std::cout << E[0] << ", " << E[1] << std::endl;
+    mio::lsecir::Initializer initializer(std::move(init), dt, infectionStates);
+    auto erg = initializer.compute_initializationvector(100000, 10);
+    for (int i = 0; i < infectionStates.get_count(); ++i) {
+        std::cout << erg[i] << ", ";
+    }
+    std::cout << "\n";
 }

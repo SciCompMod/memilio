@@ -156,7 +156,7 @@ struct StateAgeFunction {
      */
     virtual ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10)
     {
-        ScalarType support_max = 0;
+        ScalarType support_max = dt;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
             while (eval(support_max) >= tol) {

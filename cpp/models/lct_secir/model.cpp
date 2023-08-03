@@ -30,9 +30,9 @@ namespace mio
 namespace lsecir
 {
 
-Model::Model(Eigen::VectorXd init, const InfectionState InfectionState_init, const ParameterSet& Parameterset_init)
-    : parameters{Parameterset_init}
-    , infectionStates{InfectionState_init}
+Model::Model(Eigen::VectorXd init, const InfectionState infectionState_init, ParameterSet&& parameterset_init)
+    : parameters{parameterset_init}
+    , infectionStates{infectionState_init}
     , m_initial_values{std::move(init)}
 {
     m_N0 = m_initial_values.sum();

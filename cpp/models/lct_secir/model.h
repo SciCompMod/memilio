@@ -40,11 +40,11 @@ public:
      * @brief Constructor to create an LCT SECIR model.
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
-     * @param[in,out] InfectionState_init InfectionStates for the model, specifies number of Subcompartments for each infection state.
-     * @param[in, out] Parameterset_init Specifies Parameters necessary for the model. 
+     * @param[in,out] infectionState_init InfectionStates for the model, specifies number of Subcompartments for each infection state.
+     * @param[in, out] parameterset_init Specifies Parameters necessary for the model. 
      */
-    Model(Eigen::VectorXd init, const InfectionState InfectionState_init = InfectionState(),
-          const ParameterSet& Parameterset_init = ParameterSet());
+    Model(Eigen::VectorXd init, InfectionState infectionState_init = InfectionState(),
+          ParameterSet&& parameterset_init = ParameterSet());
 
     /**
      * @brief Checks constraints of the model inclusive check for model parameters.
