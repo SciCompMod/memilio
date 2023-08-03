@@ -65,7 +65,14 @@ public:
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 
-    
+    /**
+    *@brief After the simulation is finished and we get a resulting TimeSeries, this function uses the data to compute the reproduction number
+    *at an arbitrary time
+    *@param timept The time at which we want to compute the reproduction number
+    *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time
+    *@returns The reproduction number in the seir model
+    *@see The same functions in the model.h files of the secir and secirvvs models
+    */
 
     ScalarType get_reproduction_number(Eigen::Index timept, mio::TimeSeries<ScalarType> y)
     { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
