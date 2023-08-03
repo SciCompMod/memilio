@@ -5,7 +5,7 @@
 # The path to the virtual environment activation function has to be adjusted manually
 # Otherwise the script can be called with -PATH_ENV Path argument, e.g.
 # sh data_generation.sh -PATH_ENV "YOUR/PATH/TO/VIRTUAL/ENV/activate"
-path_virtual_env= "YOUR/PATH/TO/VIRTUAL/ENV/activate" 
+path_virtual_env="YOUR/PATH/TO/VIRTUAL/ENV/activate" 
 
 # Use/check for input argument
 while [[ $# -gt 0 ]]; do
@@ -31,12 +31,11 @@ fi
 # path to MEmilio dir (assumes execution of the script from the `simulations` folder)
 cd ../..
 data_dir=$PWD/data/pydata
-mobility_dir=$PWD/data/mobility/
 
 # download data
 cd "pycode/memilio-epidata"
 python setup.py install
 python memilio/epidata/getSimulationData.py -o $data_dir -m 7
-python memilio/epidata/transformMobilityData.py -o $mobility_dir
+python memilio/epidata/transformMobilityData.py -o $data_dir
 
 echo "Generation was succesful." 
