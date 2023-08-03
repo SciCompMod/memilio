@@ -176,12 +176,18 @@ TEST(TestSeir, get_reproduction_numbers)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.5, mio::SimulationTime(4)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
 
     model.check_constraints();
 
     Eigen::VectorXd checkReproductionNumbers(7);
-    checkReproductionNumbers << 2.328, 2.3279906878991881, 2.3279487809434576, 2.3277601483151549, 2.3269102025388899,
-        2.323058005241374, 2.318540062468307;
+    checkReproductionNumbers << 2.3280000000000003,
+                                2.3279906878991881,
+                                2.3279487809434576,
+                                2.3277601483151549,
+                                1.163455101269445,
+                                1.1615290026206868,
+                                1.1592700312341533;
 
     mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
 
