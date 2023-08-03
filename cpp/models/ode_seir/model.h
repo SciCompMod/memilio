@@ -65,6 +65,8 @@ public:
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 
+    
+
     ScalarType get_reproduction_number(Eigen::Index timept, mio::TimeSeries<ScalarType> y)
     { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
