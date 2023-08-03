@@ -54,13 +54,15 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = nb_inf_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = nb_icu_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = nb_rec_t0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = nb_dead_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
@@ -132,13 +134,15 @@ TEST(TestOdeSecir, checkPopulationConservation)
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 10;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]              = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]            = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = 10;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
