@@ -85,6 +85,10 @@ public:
         return y.get_value(timept)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
     }
 
+    /**
+    *@brief This function loops get_reproduction_numbers and returns all reproduction numbers
+    */
+
     Eigen::VectorXd get_reproduction_numbers(mio::TimeSeries<ScalarType> y)
     {
         auto num_time_points = y.get_num_time_points();
