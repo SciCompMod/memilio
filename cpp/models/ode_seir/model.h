@@ -23,6 +23,7 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
@@ -68,28 +69,34 @@ public:
     /**
     *@brief After the simulation is finished and we get a resulting TimeSeries, this function uses the data to compute the reproduction number
     *at an arbitrary time
-    *@param timept The time at which we want to compute the reproduction number
+    *@param timeindex The time at which we want to compute the reproduction number
     *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time
     *@returns The reproduction number in the seir model
     *@see The same functions in the model.h files of the secir and secirvvs models
     */
 
-    ScalarType get_reproduction_number(Eigen::Index timept, mio::TimeSeries<ScalarType> y)
-    { //Computes the reproduction number at a certain time (actually only needs number of susceptibles from the TimeSeries)
+    ScalarType get_reproduction_number(Eigen::Index timeindex, const mio::TimeSeries<ScalarType>& y)
+    { 
+        if(!(timeindex < y.get_num_time_points())){
+            mio::log_error("timeindex is out of range of the TimeSeries");
+        }
+
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
-        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timept)(0,0)*
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timeindex)(0,0)*
                                 this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
                                 this->populations.get_total();
 
-        return y.get_value(timept)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        return y.get_value(timeindex)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
     }
 
-    /**
-    *@brief This function loops get_reproduction_numbers and returns all reproduction numbers
+     /**
+    *@brief Compute the reproduction numbers for all time points based on the given TimeSeries.
+    *@param y The TimeSeries containing the SEIR model data 
+    *@returns vector containing all reproduction numbers
     */
 
-    Eigen::VectorXd get_reproduction_numbers(mio::TimeSeries<ScalarType> y)
+    Eigen::VectorXd get_reproduction_numbers(const mio::TimeSeries<ScalarType>& y)
     {
         auto num_time_points = y.get_num_time_points();
         Eigen::VectorXd temp(num_time_points);
