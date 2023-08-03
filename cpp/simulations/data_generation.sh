@@ -4,8 +4,8 @@
 # activate virtual_env 
 # The path to the virtual environment has to be adjusted individually
 # Otherwise the script can be called with -PATH_ENV Path argument, e.g.
-# sh data_generation.sh -PATH_ENV "HOME/Documents/virtualenv/bin/activate"
-path_virtual_env= "HOME/Documents/virtualenv/bin/activate" 
+# sh data_generation.sh -PATH_ENV "YOUR/PATH/TO/VIRTUAL/ENV/activate"
+path_virtual_env= "YOUR/PATH/TO/VIRTUAL/ENV/activate" 
 
 # Use/check for input argument
 while [[ $# -gt 0 ]]; do
