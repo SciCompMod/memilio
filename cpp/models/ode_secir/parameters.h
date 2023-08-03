@@ -383,10 +383,10 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < tol_times) {
+            if (this->get<IncubationTime>()[i] < 2 * tol_times) {
                 log_warning("Constraint check: Parameter IncubationTime changed from {:.4f} to {:.4f}",
                             this->get<IncubationTime>()[i], tol_times);
-                this->get<IncubationTime>()[i] = tol_times;
+                this->get<IncubationTime>()[i] = 2 * tol_times;
                 corrected                      = true;
             }
 
@@ -507,9 +507,9 @@ public:
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->get<IncubationTime>()[i] < tol_times) {
+            if (this->get<IncubationTime>()[i] < 2 * tol_times) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->get<IncubationTime>()[i], 2.0);
+                          this->get<IncubationTime>()[i], 2 * tol_times);
                 return true;
             }
 

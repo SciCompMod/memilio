@@ -839,15 +839,15 @@ TEST(Secir, apply_constraints_parameters)
 
     model.parameters.set<mio::osecir::IncubationTime>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime>()[indx_agegroup], 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecir::IncubationTime>()[indx_agegroup], 2e-4);
 
-    model.parameters.set<mio::osecir::SerialInterval>(1);
+    model.parameters.set<mio::osecir::SerialInterval>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
 
     model.parameters.set<mio::osecir::SerialInterval>(5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecir::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
 
     model.parameters.set<mio::osecir::TimeInfectedSymptoms>(1e-8);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);

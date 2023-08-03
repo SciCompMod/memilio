@@ -1026,15 +1026,15 @@ TEST(TestOdeSECIRVVS, apply_constraints_parameters)
 
     model.parameters.set<mio::osecirvvs::IncubationTime>(-2);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 1e-4);
+    EXPECT_EQ(model.parameters.get<mio::osecirvvs::IncubationTime>()[indx_agegroup], 2e-4);
 
-    model.parameters.set<mio::osecirvvs::SerialInterval>(1);
+    model.parameters.set<mio::osecirvvs::SerialInterval>(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
 
     model.parameters.set<mio::osecirvvs::SerialInterval>(5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
-    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 5e-5, 1e-14);
+    EXPECT_NEAR(model.parameters.get<mio::osecirvvs::SerialInterval>()[indx_agegroup], 0.00015, 1e-14);
 
     model.parameters.set<mio::osecirvvs::TimeInfectedSymptoms>(1e-5);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
