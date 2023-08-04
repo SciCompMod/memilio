@@ -115,7 +115,7 @@ if (MEMILIO_ENABLE_MPI)
 endif()
 
 if (MEMILIO_ENABLE_OPENMP)
-    find_package(OpenMP COMPONENTS CXX REQUIRED)
+    find_package(OpenMP REQUIRED COMPONENTS CXX)
 endif()
 
 #Random123 library for random number generators
