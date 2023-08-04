@@ -486,90 +486,90 @@ public:
      */
     int check_constraints() const
     {
-        if (this->template get<Seasonality>() < 0.0 || this->template get<Seasonality>() > 0.5) {
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
             log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
             return 1;
         }
 
-        if (this->template get<ICUCapacity>() < 0.0) {
+        if (this->template get<ICUCapacity<FP>>() < 0.0) {
             log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
             return 1;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
-            if (this->template get<IncubationTime>()[i] < 2.0) {
+            if (this->template get<IncubationTime<FP>>()[i] < 2.0) {
                 log_error("Constraint check: Parameter IncubationTime {:.4f} smaller {:.4f}",
-                          this->template get<IncubationTime>()[i], 2.0);
+                          this->template get<IncubationTime<FP>>()[i], 2.0);
                 return 1;
             }
 
-            if (2 * this->template get<SerialInterval>()[i] < this->template get<IncubationTime>()[i] + 1.0) {
+            if (2 * this->template get<SerialInterval<FP>>()[i] < this->template get<IncubationTime<FP>>()[i] + 1.0) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} smaller {:.4f}",
-                          this->template get<SerialInterval>()[i], 0.5 * this->template get<IncubationTime>()[i] + 0.5);
+                          this->template get<SerialInterval<FP>>()[i], 0.5 * this->template get<IncubationTime<FP>>()[i] + 0.5);
                 return 1;
             }
-            else if (this->template get<SerialInterval>()[i] > this->template get<IncubationTime>()[i] - 0.5) {
+            else if (this->template get<SerialInterval<FP>>()[i] > this->template get<IncubationTime<FP>>()[i] - 0.5) {
                 log_error("Constraint check: Parameter SerialInterval {:.4f} greater {:.4f}",
-                          this->template get<SerialInterval>()[i], this->template get<IncubationTime>()[i] - 0.5);
+                          this->template get<SerialInterval<FP>>()[i], this->template get<IncubationTime<FP>>()[i] - 0.5);
                 return 1;
             }
 
-            if (this->template get<TimeInfectedSymptoms>()[i] < 1.0) {
+            if (this->template get<TimeInfectedSymptoms<FP>>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}",
-                          this->template get<TimeInfectedSymptoms>()[i], 1.0);
+                          this->template get<TimeInfectedSymptoms<FP>>()[i], 1.0);
                 return 1;
             }
 
-            if (this->template get<TimeInfectedSevere>()[i] < 1.0) {
+            if (this->template get<TimeInfectedSevere<FP>>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}",
-                          this->template get<TimeInfectedSevere>()[i], 1.0);
+                          this->template get<TimeInfectedSevere<FP>>()[i], 1.0);
                 return 1;
             }
 
-            if (this->template get<TimeInfectedCritical>()[i] < 1.0) {
+            if (this->template get<TimeInfectedCritical<FP>>()[i] < 1.0) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}",
-                          this->template get<TimeInfectedCritical>()[i], 1.0);
+                          this->template get<TimeInfectedCritical<FP>>()[i], 1.0);
                 return 1;
             }
 
-            if (this->template get<TransmissionProbabilityOnContact>()[i] < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact>()[i] > 1.0) {
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
                           1);
                 return 1;
             }
 
-            if (this->template get<RelativeTransmissionNoSymptoms>()[i] < 0.0) {
+            if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] < 0.0) {
                 log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
                 return 1;
             }
 
-            if (this->template get<RecoveredPerInfectedNoSymptoms>()[i] < 0.0 ||
-                this->template get<RecoveredPerInfectedNoSymptoms>()[i] > 1.0) {
+            if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
                           1);
                 return 1;
             }
 
-            if (this->template get<RiskOfInfectionFromSymptomatic>()[i] < 0.0 ||
-                this->template get<RiskOfInfectionFromSymptomatic>()[i] > 1.0) {
+            if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
+                this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
                           1);
                 return 1;
             }
 
-            if (this->template get<SeverePerInfectedSymptoms>()[i] < 0.0 || this->template get<SeverePerInfectedSymptoms>()[i] > 1.0) {
+            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 || this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }
 
-            if (this->template get<CriticalPerSevere>()[i] < 0.0 || this->template get<CriticalPerSevere>()[i] > 1.0) {
+            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 || this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }
 
-            if (this->template get<DeathsPerCritical>()[i] < 0.0 || this->template get<DeathsPerCritical>()[i] > 1.0) {
+            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 || this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
                 return 1;
             }
