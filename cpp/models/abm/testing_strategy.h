@@ -177,7 +177,7 @@ public:
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
-     * @param[inout] rng RandomNumberGenerator for the person being tested.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the scheme.
@@ -229,7 +229,7 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
-     * @param[inout] rng RandomNumberGenerator for the person being tested.
+     * @param[inout] rng Person::RandomNumberGenerator for the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.

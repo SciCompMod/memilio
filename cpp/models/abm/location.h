@@ -160,7 +160,7 @@ public:
 
     /** 
      * @brief A Person interacts with the population at this Location and may become infected.
-     * @param[in, out] rng RandomNumberGenerator for this person.
+     * @param[in, out] rng Person::RandomNumberGenerator for this Person.
      * @param[in, out] person The Person that interacts with the population.
      * @param[in] dt Length of the current Simulation time step.
      * @param[in] global_params Global infection parameters.
