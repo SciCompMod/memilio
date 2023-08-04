@@ -37,11 +37,11 @@ class Model
 
 public:
     /**
-     * @brief Constructor to create an LCT SECIR model.
+     * @brief Constructor to create an LCT SECIR Model.
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
-     * @param[in,out] infectionState_init InfectionStates for the model, specifies number of Subcompartments for each infection state.
-     * @param[in, out] parameterset_init Specifies Parameters necessary for the model. 
+     * @param[in, out] infectionState_init InfectionStates for the Model, specifies number of Subcompartments for each infection state.
+     * @param[in, out] parameterset_init Specifies Parameters necessary for the Model. 
      */
     Model(Eigen::VectorXd init, InfectionState infectionState_init = InfectionState(),
           ParameterSet&& parameterset_init = ParameterSet());

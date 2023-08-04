@@ -62,7 +62,7 @@ int main()
         //initTransitions *=  1.01;
         init.add_time_point(init.get_last_time() + dt, initTransitions);
     }
-    mio::lsecir::Initializer initializer(std::move(init), dt, infectionStates);
+    mio::lsecir::Initializer initializer(std::move(init), infectionStates);
     auto erg = initializer.compute_initializationvector(100000, 10);
     for (int i = 0; i < infectionStates.get_count(); ++i) {
         std::cout << erg[i] << ", ";

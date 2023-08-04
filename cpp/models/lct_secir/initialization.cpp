@@ -20,17 +20,34 @@
 #include "lct_secir/initialization.h"
 #include "lct_secir/infection_state.h"
 #include "lct_secir/parameters.h"
-#include "memilio/math/eigen.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/config.h"
+#include "memilio/math/eigen.h"
+#include "memilio/math/floating_point.h"
+#include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 
 namespace mio
 {
 namespace lsecir
 {
-Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_Incoming_flow,
-                                                 ScalarType transition_rate)
+
+void Initializer::check_constraints() const
+{
+    if (!((int)InfectionTransition::Count == (int)m_flows.get_num_elements())) {
+        log_error("Initial condition size does not match Subcompartments.");
+    }
+
+    parameters.check_constraints();
+
+    for (int i = 1; i < m_flows.get_num_time_points(); i++) {
+        if (!(floating_point_equal(m_dt, m_flows.get_time(i) - m_flows.get_time(i - 1), 1.0, 1e-14))) {
+            log_error("Time points in flows have to be equidistant.");
+        }
+    }
+}
+
+Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,
+                                                 ScalarType transition_rate) const
 {
     int num_infectionstates = infectionStates.get_number(base);
     Eigen::VectorXd subcompartments(num_infectionstates);
@@ -53,10 +70,15 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
         // Determine relevant calculation area and corresponding index.
         calc_time       = erlang.get_support_max(m_dt);
         calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
+
+        if (num_time_points < calc_time_index) {
+            log_error("Initialization failed. Not enough time points for the transitions are given.");
+        }
+
         // Approximate integral with non-standard scheme.
         for (Eigen::Index i = num_time_points - calc_time_index; i < num_time_points; i++) {
             state_age = (num_time_points - i) * m_dt;
-            sum += erlang.eval(state_age) * m_flows[i][idx_Incoming_flow];
+            sum += erlang.eval(state_age) * m_flows[i][idx_incoming_flow];
         }
         subcompartments[j] = 1 / (num_infectionstates * transition_rate) * sum;
         sum                = 0;
@@ -64,7 +86,7 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
     return subcompartments;
 }
 
-ScalarType Initializer::compute_susceptibles(ScalarType total_population, ScalarType deaths)
+ScalarType Initializer::compute_susceptibles(ScalarType total_population, ScalarType deaths) const
 {
     // --- Compute force of infection at time -dt ---
     ScalarType force_of_infection = 0;
@@ -87,6 +109,10 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
     // Determine m_force_of_infection at time -m_dt which is the penultimate timepoint in m_flows.
     Eigen::Index time_point_num_minusdt = m_flows.get_num_time_points() - 1;
 
+    if (time_point_num_minusdt < calc_time_index) {
+        log_error("Initialization failed. Not enough time points for the transitions are given.");
+    }
+
     for (Eigen::Index i = time_point_num_minusdt - calc_time_index; i < time_point_num_minusdt; i++) {
         ScalarType state_age = (time_point_num_minusdt - i) * m_dt;
 
@@ -106,8 +132,10 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
            (m_dt * force_of_infection);
 }
 
-Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_population, ScalarType deaths)
+Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_population, ScalarType deaths) const
 {
+    check_constraints();
+
     int infectionStates_count = infectionStates.get_count();
     Eigen::VectorXd init(infectionStates_count);
 

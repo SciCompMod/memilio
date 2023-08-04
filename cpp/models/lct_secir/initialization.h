@@ -35,14 +35,19 @@ namespace lsecir
 {
 
 /**
- * @brief Class that defines an exponential decay function depending on the state age.
+ * @brief Class that defines an Erlang density function with the parameters rate and shape depending on the state age.
+ * Class is needed for the initialization of the subcompartments for LCT model.
+ * ErlangDensity is derived from StateAgeFunction but implements an additional parameter. 
+ * The shape parameter of the Erlang function is the parameter of the Stateagefunction and can be changed via the methods of StateAgeFunction. 
+ * The rate parameter is not designed to be changed.
  */
 struct ErlangDensity : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ExponentialDecay object
+     * @brief Constructs a new ErlangDensity object.
      * 
-     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @param[in] rate Parameter rate of the ErlangDensity.
+     * @param[in] shape Parameter shape of the ErlangDensity. For the Erlang distribution, shape has to be a positive integer.
      */
     ErlangDensity(ScalarType rate, unsigned int shape)
         : StateAgeFunction(shape)
@@ -51,9 +56,9 @@ struct ErlangDensity : public StateAgeFunction {
     }
 
     /**
-     * @brief Defines exponential decay function depending on state_age.
+     * @brief Defines ErlangDensity depending on state_age.
      *
-     * m_parameter defines how fast the exponential function decays.
+     * Parameters rate and shape are used.
      * 
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age. 
@@ -70,7 +75,7 @@ struct ErlangDensity : public StateAgeFunction {
 
 protected:
     /**
-     * @brief Implements clone for ExponentialDecay.
+     * @brief Implements clone for ErlangDensity.
      * 
      * @return Pointer to StateAgeFunction.
      */
@@ -83,14 +88,20 @@ protected:
 };
 
 /**
- * @brief Class that defines an exponential decay function depending on the state age.
+ * @brief Class that defines an ErlangSurvivalFunction function depending on the state age.
+ * Class is needed for the initialization of the Susceptible compartment from flows for theLCT model.
+ * A survival function is defined as 1 - cumulative density function.
+ * ErlangSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
+ * The shape parameter of the Erlang function is the parameter of the Stateagefunction and can be changed via the methods of StateAgeFunction. 
+ * The rate parameter is not designed to be changed.
  */
 struct ErlangSurvivalFunction : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ExponentialDecay object
-     * 
-     * @param[in] init_parameter Specifies the initial function parameter of the function.
+     * @brief Constructs a new ErlangSurvivalFunction object.
+     *
+     * @param[in] rate Parameter rate of the ErlangSurvivalFunction.
+     * @param[in] shape Parameter shape of the ErlangSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
      */
     ErlangSurvivalFunction(ScalarType rate, unsigned int shape)
         : StateAgeFunction(shape)
@@ -99,9 +110,9 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
     }
 
     /**
-     * @brief Defines exponential decay function depending on state_age.
+     * @brief Defines ErlangSurvivalFunction depending on state_age.
      *
-     * m_parameter defines how fast the exponential function decays.
+     * Parameters rate and shape are used.
      * 
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age. 
@@ -121,7 +132,7 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
 
 protected:
     /**
-     * @brief Implements clone for ExponentialDecay.
+     * @brief Implements clone for ErlangSurvivalFunction.
      * 
      * @return Pointer to StateAgeFunction.
      */
@@ -133,31 +144,79 @@ protected:
     ScalarType m_rate;
 };
 
+/**
+ * @brief Class that can be used to compute an initialization vector out of flows for a LCT Model.
+ */
 class Initializer
 {
 public:
     using ParameterSet = Parameters;
 
-    Initializer(TimeSeries<ScalarType>&& flows, ScalarType dt, InfectionState infectionState_init = InfectionState(),
+    /**
+     * @brief Constructs a new Initializer object.
+     *
+     * @param[in] flows Initalizing TimeSeries with flows fitting to these defined in InfectionTransition. 
+     *      Timesteps should be equidistant.
+     * @param[in, out] infectionState_init InfectionStates for the Initializer, specifies number of Subcompartments for each infection state.
+     * @param[in, out] parameterSet_init Specifies Parameters necessary for the Initializer.
+     */
+    Initializer(TimeSeries<ScalarType>&& flows, InfectionState infectionState_init = InfectionState(),
                 ParameterSet&& parameterSet_init = ParameterSet())
         : parameters(parameterSet_init)
         , infectionStates(infectionState_init)
         , m_flows(std::move(flows))
-        , m_dt(dt)
+
     {
+        m_dt = m_flows.get_time(1) - m_flows.get_time(0);
     }
 
-    Eigen::VectorXd compute_initializationvector(ScalarType total_population, ScalarType deaths);
+    /**
+     * @brief Core function of Initializer.
+     *
+     * Computes a vector that can be used for the initalization of an LCT model with the number of persons for each subcompartment.
+     *
+     * @param[in] total_population The total size of the considered population.
+     * @param[in] deaths Number of deceased people from the disease at time 0.
+     * @return Vector with a possible initialization for an LCT model computed out of the flows.
+     */
+    Eigen::VectorXd compute_initializationvector(ScalarType total_population, ScalarType deaths) const;
 
-    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    ParameterSet parameters{}; ///< ParameterSet with the Initalizers Parameters.
     InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.
-private:
-    Eigen::VectorXd compute_compartment(InfectionStateBase base, Eigen::Index idx_Incoming_flow,
-                                        ScalarType transition_rate);
 
-    ScalarType compute_susceptibles(ScalarType total_population, ScalarType deaths);
-    TimeSeries<ScalarType> m_flows;
-    ScalarType m_dt{};
+private:
+    /**
+     * @brief Checks constraints of the Initializer inclusive check for parameters.
+     */
+    void check_constraints() const;
+
+    /**
+     * @brief Computes a vector with the number of people in each compartment for one InfectionStateBase.
+     *
+     * With this function, partial result of compute_initializationvector are achieved.
+     *
+     * @param[in] base The InfectionStateBase for which the partial result should be calculated.
+     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow to the InfectionStateBase base.
+     * @param[in] transition_rate Specifies the transition rate of the InfectionsStateBase. Is equal to 1 / (expected Time in base).
+     * @return Vector with a possible initialization for the subcompartments of base.
+     */
+    Eigen::VectorXd compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,
+                                        ScalarType transition_rate) const;
+
+    /**
+     * @brief Computes a vector with the number of people in each compartment for one InfectionStateBase.
+     *
+     * With this function, a partial result of compute_initializationvector are achieved, namely the value for Susceptibles.
+     *
+     * @param[in] base The InfectionStateBase for which the partial result should be calculated.
+     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow to the InfectionStateBase base.
+     * @param[in] transition_rate Specifies the transition rate of the InfectionsStateBase. Is equal to 1 / (expected Time in base).
+     * @return Vector with a possible initialization for the subcompartments of base.
+     */
+    ScalarType compute_susceptibles(ScalarType total_population, ScalarType deaths) const;
+
+    TimeSeries<ScalarType> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
+    ScalarType m_dt{}; ///< Step size of the times in m_flows and time step for the approximation of the integral.
 };
 
 } // namespace lsecir
