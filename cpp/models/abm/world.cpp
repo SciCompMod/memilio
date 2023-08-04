@@ -73,9 +73,9 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
-        m_enhanced_migration_rules;
+        enhanced_migration_rules;
     for (auto rule : m_migration_rules) {
         //check if transition rule can be applied
         bool nonempty         = false;
@@ -88,14 +88,14 @@ void World::migration(TimePoint t, TimeSpan dt)
         }
 
         if (nonempty) {
-            m_enhanced_migration_rules.push_back(rule);
+            enhanced_migration_rules.push_back(rule);
         }
     }
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-        for (auto rule : m_migration_rules) {
+        for (auto rule : enhanced_migration_rules) {
             //check if transition rule can be applied
             auto target_type       = rule.first(personal_rng, *person, t, dt, m_migration_parameters);
             auto& target_location  = find_location(target_type, *person);

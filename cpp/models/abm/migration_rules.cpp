@@ -167,8 +167,8 @@ LocationType return_home_when_recovered(Person::RandomNumberGenerator& /*rng*/, 
     return current_loc;
 }
 
-LocationType get_buried(const Person& person, const TimePoint t, TimeSpan /*dt*/,
-                            const MigrationParameters& /*params*/)
+LocationType get_buried(Person::RandomNumberGenerator& /*rng*/, const Person& person, const TimePoint t,
+                        TimeSpan /*dt*/, const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {

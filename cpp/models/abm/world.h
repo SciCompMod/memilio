@@ -215,7 +215,8 @@ private:
     MigrationParameters m_migration_parameters; ///< Parameters that describe the migration between Location%s.
     TripList m_trip_list; ///< List of all Trip%s the Person%s do.
     bool m_use_migration_rules; ///< Whether migration rules are considered.
-    std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
+    std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
+                                           const MigrationParameters&),
                           std::vector<LocationType>>>
         m_migration_rules; ///< Rules that govern the migration between Location%s.
     LocationId m_cemetery_id; // Central cemetery for all dead persons.

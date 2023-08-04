@@ -22,6 +22,7 @@
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "memilio/utils/random_number_generator.h"
+#include "abm_helpers.h"
 
 TEST(TestInfection, init)
 {
@@ -72,9 +73,13 @@ TEST(TestInfection, init)
 
 TEST(TestInfection, getInfectionState)
 {
-    auto t = mio::abm::TimePoint(0);
+    auto loc   = mio::abm::Location(mio::abm::LocationType::Home, 0);
+    auto p     = make_test_person(loc);
+    auto rng   = mio::RandomNumberGenerator();
+    auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
+    auto t     = mio::abm::TimePoint(0);
     auto infection =
-        mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
+        mio::abm::Infection(p_rng, mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34,
                             mio::abm::GlobalInfectionParameters{}, t, mio::abm::InfectionState::Exposed, true);
     EXPECT_EQ(infection.get_infection_state(t), mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);

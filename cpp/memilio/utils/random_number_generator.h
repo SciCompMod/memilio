@@ -27,13 +27,13 @@
 #include "memilio/utils/span.h"
 #include "memilio/utils/type_safe.h"
 
-MSVC_WARNING_DISABLE_PUSH(4127)
+MSVC_WARNING_DISABLE_PUSH(4127) //conditional expression is constant
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wexpansion-to-defined") //Random123 handles the portability of this warning internally
 #include "Random123/array.h"
 #include "Random123/threefry.h"
 GCC_CLANG_DIAGNOSTIC(pop)
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 
 #include <cassert>
 #include <cstdint>
@@ -241,7 +241,7 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
     static_assert(N_BITS <= C_BITS, "Subsequence index must not be bigger than total sequence counter.");
     static_assert(N_BITS <= sizeof(UIntN) * BITS_PER_BYTE, "Subsequence index must be at least N bits");
 
-    assert(subsequence_idx <= (1 << N_BITS) && "Subsequence index is too large."); //(1 << N) is the same as (2^N)
+    assert(UIntC(subsequence_idx) <= (UIntC(1) << N_BITS) && "Subsequence index is too large."); //(1 << N) is the same as (2^N)
 
     //N high bits: subsequence idx
     //S low bits: subsequence counter

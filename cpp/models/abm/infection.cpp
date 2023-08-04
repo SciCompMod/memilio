@@ -41,7 +41,7 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
     m_viral_load.incline =
         vl_params.viral_load_incline.get_distribution_instance()(rng, vl_params.viral_load_incline.params);
     m_viral_load.decline =
-        vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline.params);
+        vl_params.viral_load_decline.get_distribution_instance()(rng, vl_params.viral_load_decline.params);
     m_viral_load.end_date =
         m_viral_load.start_date +
         days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
