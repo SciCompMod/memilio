@@ -20,9 +20,13 @@
 #ifndef SEIR_MODEL_H
 #define SEIR_MODEL_H
 
+#include "boost/outcome/boost_result.hpp"
+#include "boost/outcome/config.hpp"
+#include "boost/system/detail/error_code.hpp"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/io/io.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
@@ -75,10 +79,11 @@ public:
     *@see The same functions in the model.h files of the secir and secirvvs models
     */
 
-    ScalarType get_reproduction_number(Eigen::Index timeindex, const mio::TimeSeries<ScalarType>& y)
+    IOResult<double> get_reproduction_number(Eigen::Index timeindex, const mio::TimeSeries<ScalarType>& y) noexcept
     { 
         if(!( 0 <= timeindex && timeindex < y.get_num_time_points())){
             mio::log_error("timeindex is out of range of the TimeSeries");
+            return mio::failure(mio::StatusCode::OutOfRange);
         }
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
@@ -87,7 +92,10 @@ public:
                                 this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
                                 this->populations.get_total();
 
-        return y.get_value(timeindex)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        
+        double result = y.get_value(timeindex)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        
+        return mio::success(result);
     }
 
      /**
@@ -101,7 +109,7 @@ public:
         auto num_time_points = y.get_num_time_points();
         Eigen::VectorXd temp(num_time_points);
         for (int i = 0; i < num_time_points; i++) {
-            temp[i] = get_reproduction_number(i, y);
+            temp[i] = get_reproduction_number(i, y).value();
         }
         return temp;
     }
