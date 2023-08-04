@@ -111,8 +111,8 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
 template<typename FP=double>
 void draw_sample_demographics(Model<FP>& model)
 {
-    model.parameters.template get<ICUCapacity>().draw_sample();
-    model.parameters.template get<TestAndTraceCapacity>().draw_sample();
+    model.parameters.template get<ICUCapacity<FP>>().draw_sample();
+    model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         double group_total = model.populations.get_group_total(i);
@@ -140,37 +140,37 @@ void draw_sample_demographics(Model<FP>& model)
 template<typename FP=double>
 void draw_sample_infection(Model<FP>& model)
 {
-    model.parameters.template get<Seasonality>().draw_sample();
+    model.parameters.template get<Seasonality<FP>>().draw_sample();
 
     //not age dependent
-    model.parameters.template get<IncubationTime>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<SerialInterval>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<TimeInfectedSymptoms>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
-    model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<TimeInfectedSymptoms<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
+    model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)].draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.template get<IncubationTime>()[i] = model.parameters.template get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.template get<SerialInterval>()[i] = model.parameters.template get<SerialInterval>()[AgeGroup(0)];
-        model.parameters.template get<RelativeTransmissionNoSymptoms>()[i] =
-            model.parameters.template get<RelativeTransmissionNoSymptoms>()[AgeGroup(0)];
-        model.parameters.template get<RiskOfInfectionFromSymptomatic>()[i] =
-            model.parameters.template get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
-        model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[i] =
-            model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[AgeGroup(0)];
+        model.parameters.template get<IncubationTime<FP>>()[i] = model.parameters.template get<IncubationTime<FP>>()[AgeGroup(0)];
+        model.parameters.template get<SerialInterval<FP>>()[i] = model.parameters.template get<SerialInterval<FP>>()[AgeGroup(0)];
+        model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[i] =
+            model.parameters.template get<RelativeTransmissionNoSymptoms<FP>>()[AgeGroup(0)];
+        model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[i] =
+            model.parameters.template get<RiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)];
+        model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[i] =
+            model.parameters.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[AgeGroup(0)];
 
         //age dependent
-        model.parameters.template get<TimeInfectedSymptoms>()[i].draw_sample();
-        model.parameters.template get<TimeInfectedSevere>()[i].draw_sample();
-        model.parameters.template get<TimeInfectedCritical>()[i].draw_sample();
+        model.parameters.template get<TimeInfectedSymptoms<FP>>()[i].draw_sample();
+        model.parameters.template get<TimeInfectedSevere<FP>>()[i].draw_sample();
+        model.parameters.template get<TimeInfectedCritical<FP>>()[i].draw_sample();
 
-        model.parameters.template get<TransmissionProbabilityOnContact>()[i].draw_sample();
-        model.parameters.template get<RecoveredPerInfectedNoSymptoms>()[i].draw_sample();
-        model.parameters.template get<DeathsPerCritical>()[i].draw_sample();
-        model.parameters.template get<SeverePerInfectedSymptoms>()[i].draw_sample();
-        model.parameters.template get<CriticalPerSevere>()[i].draw_sample();
+        model.parameters.template get<TransmissionProbabilityOnContact<FP>>()[i].draw_sample();
+        model.parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].draw_sample();
+        model.parameters.template get<DeathsPerCritical<FP>>()[i].draw_sample();
+        model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i].draw_sample();
+        model.parameters.template get<CriticalPerSevere<FP>>()[i].draw_sample();
     }
 }
 
@@ -186,7 +186,7 @@ void draw_sample(Model<FP>& model)
 {
     draw_sample_infection(model);
     draw_sample_demographics(model);
-    model.parameters.template get<ContactPatterns>().draw_sample();
+    model.parameters.template get<ContactPatterns<FP>>().draw_sample();
     model.apply_constraints();
 }
 
