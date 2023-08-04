@@ -35,13 +35,13 @@ namespace oseir
     * define the model *
     ********************/
 template<typename FP=double>
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>, Parameters<FP>,FP>
+class Model : public CompartmentalModel<InfectionState, Populations<FP,InfectionState>, Parameters<FP>,FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>, Parameters<FP>,FP>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>, Parameters<FP>,FP>;
 
 public:
     Model()
-        : Base(Populations<FP>({InfectionState::Count}, 0.), ParameterSet<FP>())
+        : Base(Populations<FP,InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
@@ -50,18 +50,18 @@ public:
     {
         auto& params     = this->parameters;
         double coeffStoE = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                           params.template get<TransmissionProbabilityOnContact>() / this->populations.get_total();
+                           params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
 
         dydt[(size_t)InfectionState::Susceptible] =
             -coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Exposed] =
             coeffStoE * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] -
-            (1.0 / params.template get<TimeExposed>()) * y[(size_t)InfectionState::Exposed];
+            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed];
         dydt[(size_t)InfectionState::Infected] =
-            (1.0 / params.template get<TimeExposed>()) * y[(size_t)InfectionState::Exposed] -
-            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeExposed<FP>>()) * y[(size_t)InfectionState::Exposed] -
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
         dydt[(size_t)InfectionState::Recovered] =
-            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
     }
 };
 

@@ -126,16 +126,16 @@ public:
                       this->template get<TimeExposed<FP>>(), 0.0);
             return 1;
         }
-        if (this->template get<TimeInfected>() <= 0.0) {
+        if (this->template get<TimeInfected<FP>>() <= 0.0) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}",
                       this->template get<TimeInfected<FP>>(), 0.0);
             return 1;
         }
-        if (this->template get<TransmissionProbabilityOnContact>() < 0.0 ||
-            this->template get<TransmissionProbabilityOnContact>() > 1.0) {
+        if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
+            this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
             log_error(
                 "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
-                this->template get<TransmissionProbabilityOnContact>(), 0.0, 1.0);
+                this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return 1;
         }
         return 0;
