@@ -35,22 +35,22 @@ namespace oseair
 /********************
     * define the model *
     ********************/
-template<typename FP=ad::gt1s<double>::type>
-class Model : public CompartmentalModel<InfectionState, Populations<InfectionState>,
-                                        Parameters, FP>
+template<typename FP=double>
+class Model : public CompartmentalModel<InfectionState, Populations<FP,InfectionState>,
+                                        Parameters<FP>, FP>
 {
-    using Base = CompartmentalModel<InfectionState, mio::Populations<InfectionState>,
-                                    Parameters, FP>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<FP,InfectionState>,
+                                    Parameters<FP>, FP>;
 
 public:
     Model()
-        : Base(Populations<FP>({InfectionState::Count}, 0.), ParameterSet<FP>())
+        : Base(Populations<FP,InfectionState>({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> /* pop */,
-                         Eigen::Ref<const Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> y, ad::gt1s<double>::type /* t */,
-                         Eigen::Ref<Eigen::Matrix<ad::gt1s<double>::type,Eigen::Dynamic,1>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> /* pop */,
+                         Eigen::Ref<const Eigen::Matrix<FP,Eigen::Dynamic,1>> y, FP /* t */,
+                         Eigen::Ref<Eigen::Matrix<FP,Eigen::Dynamic,1>> dydt) const override
     {
         auto& params     = this->parameters;
         /*        double coeffStoE = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
@@ -67,14 +67,14 @@ public:
         dydt[(size_t)InfectionState::Recovered] =
             (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]; */
 
-        auto& alpha_a = params.template get<AlphaA>();
-        auto& alpha_i = params.template get<AlphaI>();
-        auto& kappa = params.template get<Kappa>();
-        auto& beta = params.template get<Beta>();
-        auto& mu = params.template get<Mu>();
-        auto& t_latent_inverse = params.template get<TLatentInverse>();
-        auto& rho = params.template get<Rho>();
-        auto& gamma = params.template get<Gamma>();
+        auto& alpha_a = params.template get<AlphaA<FP>>();
+        auto& alpha_i = params.template get<AlphaI<FP>>();
+        auto& kappa = params.template get<Kappa<FP>>();
+        auto& beta = params.template get<Beta<FP>>();
+        auto& mu = params.template get<Mu<FP>>();
+        auto& t_latent_inverse = params.template get<TLatentInverse<FP>>();
+        auto& rho = params.template get<Rho<FP>>();
+        auto& gamma = params.template get<Gamma<FP>>();
 
 
 

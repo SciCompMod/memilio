@@ -21,7 +21,7 @@
 #ifndef SEAIR_PARAMETERS_H
 #define SEAIR_PARAMETERS_H
 
-#include "memilio/utils/uncertain_value.h"
+//#include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/parameter_set.h"
 #include "ad/ad.hpp"
@@ -40,8 +40,9 @@ namespace oseair
 /**
  * @brief Social distancing.
  */
+template<typename FP=double>
 struct AlphaA {
-    using Type = ad::gt1s<double>::type;
+    using Type = FP;
   static Type get_default()
   {
     return Type(0.2);
@@ -56,8 +57,9 @@ struct AlphaA {
 /**
  * @brief Quarantining.
  */
+template<typename FP=double>
 struct AlphaI {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.2);
@@ -71,8 +73,9 @@ struct AlphaI {
 /**
  * @brief Rate of testing.
  */
+template<typename FP=double>
 struct Kappa {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.2);
@@ -87,8 +90,9 @@ struct Kappa {
 /**
  * @brief Recovery rate.
  */
+template<typename FP=double>
 struct Beta {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.0067);
@@ -102,8 +106,9 @@ struct Beta {
 /**
  * @brief Death Rate.
  */
+template<typename FP=double>
 struct Mu {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.0041);
@@ -118,8 +123,9 @@ struct Mu {
 /**
  * @brief Inverse of the latent period of the virus.
  */
+template<typename FP=double>
 struct TLatentInverse {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.5);
@@ -133,8 +139,9 @@ struct TLatentInverse {
 /**
  * @brief Infectious period for unconfirmed infected people.
  */
+template<typename FP=double>
 struct Rho {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.1);
@@ -149,8 +156,9 @@ struct Rho {
 /**
  * @brief Rate recovered people become susceptible again.
  */
+template<typename FP=double>
 struct Gamma {
-  using Type = ad::gt1s<double>::type;
+  using Type = FP;
   static Type get_default()
   {
     return Type(0.0);
@@ -167,8 +175,9 @@ struct Gamma {
 /**
      * @brief probability of getting infected from a contact
      */
+template<typename FP=double>
 struct TransmissionProbabilityOnContact {
-    using Type = ad::gt1s<double>::type;
+    using Type = FP;
     static Type get_default()
     {
         return Type(1.0);
@@ -182,8 +191,9 @@ struct TransmissionProbabilityOnContact {
 /**
      * @brief the latent time in day unit
      */
+template<typename FP=double>
 struct TimeExposed {
-    using Type = ad::gt1s<double>::type;
+    using Type = FP;
     static Type get_default()
     {
         return Type(5.2);
@@ -197,8 +207,9 @@ struct TimeExposed {
 /**
      * @brief the infectious time in day unit
      */
+template<typename FP=double>
 struct TimeInfected {
-    using Type = ad::gt1s<double>::type;
+    using Type = FP;
     static Type get_default()
     {
         return Type(6.0);
@@ -223,17 +234,18 @@ struct ContactPatterns {
         return "ContactPatterns";
     }
 };
-
-using ParametersBase = ParameterSet<AlphaA, AlphaI, Kappa, Beta, Mu, TLatentInverse, Rho, Gamma>;
+template<typename FP=double>
+using ParametersBase = ParameterSet<AlphaA<FP>, AlphaI<FP>, Kappa<FP>, Beta<FP>, Mu<FP>, TLatentInverse<FP>, Rho<FP>, Gamma<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-class Parameters : public ParametersBase
+template<typename FP=double>
+class Parameters : public ParametersBase<FP>
 {
 public:
     Parameters()
-        : ParametersBase()
+        : ParametersBase<FP>()
     {
     }
 
@@ -248,8 +260,8 @@ public:
     }
 
 private:
-    Parameters(ParametersBase&& base)
-        : ParametersBase(std::move(base))
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
     {
     }
 
@@ -261,7 +273,7 @@ public:
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+        BOOST_OUTCOME_TRY(base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 };

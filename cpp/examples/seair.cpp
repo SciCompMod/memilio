@@ -34,16 +34,17 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
+    using FP=double;
 
 
 
-    ad::gt1s<double>::type  t0   = 0;
-    ad::gt1s<double>::type  tmax = 100;
-    ad::gt1s<double>::type  dt   = 0.2;
+    FP  t0   = 0;
+    FP  tmax = 100;
+    FP  dt   = 0.2;
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
 
-    mio::oseair::Model<double> model;
+    mio::oseair::Model<FP> model;
     const double N = 327167434;// total population of the United States
 
     model.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = 0.9977558755803503;
@@ -62,7 +63,7 @@ int main()
 
 
 
-    auto seair = mio::simulate<mio::oseair::Model,ad::gt1s<double>::type>(t0, tmax, dt, model);
+    auto seair = mio::simulate<mio::oseair::Model<FP>,FP>(t0, tmax, dt, model);
 //    const std::string file_name = "seair.txt";
 //    std::cout << "Writing output to " << file_name << std::endl;
 //    mio::time_series_to_file(seair, file_name);
