@@ -53,12 +53,12 @@ public:
     * The Graph type that stores the parametes of the simulation.
     * This is the input of ParameterStudies.
     */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters>;
+    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MigrationParameters<double>>;
     /**
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge<double>>;
 
     /**
      * create study for graph of compartment models.

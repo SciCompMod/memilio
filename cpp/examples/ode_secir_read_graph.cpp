@@ -56,28 +56,29 @@ int main(int argc, char** argv)
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
+    using FP=double;
 
     double cont_freq = 10; // see Polymod study
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model model(1);
+    mio::osecir::Model<FP> model(1);
     mio::AgeGroup nb_groups = model.parameters.get_num_groups();
     double fact             = 1.0 / (double)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
-    params.set<mio::osecir::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<mio::osecir::ICUCapacity<FP>>(std::numeric_limits<double>::max());
     params.set<mio::osecir::StartDay>(0);
-    params.set<mio::osecir::Seasonality>(0);
+    params.set<mio::osecir::Seasonality<FP>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::osecir::IncubationTime>()[i]       = 5.2;
-        params.get<mio::osecir::TimeInfectedSymptoms>()[i] = 6.;
-        params.get<mio::osecir::SerialInterval>()[i]       = 4.2;
-        params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
-        params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
+        params.get<mio::osecir::IncubationTime<FP>>()[i]       = 5.2;
+        params.get<mio::osecir::TimeInfectedSymptoms<FP>>()[i] = 6.;
+        params.get<mio::osecir::SerialInterval<FP>>()[i]       = 4.2;
+        params.get<mio::osecir::TimeInfectedSevere<FP>>()[i]   = 12;
+        params.get<mio::osecir::TimeInfectedCritical<FP>>()[i] = 8;
 
         model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
         model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
@@ -89,18 +90,18 @@ int main(int argc, char** argv)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<FP>>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<FP>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<FP>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<FP>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<FP>>()[i]                = 0.3;
     }
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<FP>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    mio::Graph<mio::osecir::Model, mio::MigrationParameters> graph;
+    mio::Graph<mio::osecir::Model<FP>, mio::MigrationParameters<FP>> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(node, model);
     }
@@ -138,7 +139,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading Json Files..." << std::flush;
-    auto graph_read_result = mio::read_graph<mio::osecir::Model>("graph_parameters");
+    auto graph_read_result = mio::read_graph<mio::osecir::Model<FP>,FP>("graph_parameters");
 
     if (!graph_read_result) {
         std::cout << "Error: " << graph_read_result.error().formatted_message();
