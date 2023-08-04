@@ -52,6 +52,15 @@ public:
     /**
     * Random number generator of individual persons.
     * Increments the random number generator counter of the person when used.
+    * Does not store its own key or counter.
+    * Instead the key needs to be provided from the outside, so that the RNG
+    * for all persons share the same key.
+    * The counter is taken from the person.
+    * Person::RandomNumberGenerator is cheap to construct and transparent
+    * for the compiler to optimize, so we don't store the RNG persistently, only the 
+    * counter, so we don't need to store the key in each person. This increases
+    * consistency (if the key is changed after the person is created) and 
+    * reduces the memory required per person.
     * @see mio::RandomNumberGeneratorBase
     */
     class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
