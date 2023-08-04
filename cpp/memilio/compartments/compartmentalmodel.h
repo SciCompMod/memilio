@@ -168,7 +168,7 @@ public:
      */
     Eigen::Matrix<FP,Eigen::Dynamic,1> get_initial_values() const
     {
-        return populations.get_compartments();
+        return populations.get_compartments().template cast<FP>();
     }
 
     // TODO: if constexpr as soon as we open for C++17
