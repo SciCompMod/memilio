@@ -92,7 +92,7 @@ int main()
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
-    char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+    char vars[] = {'S', 'E', 'C', 'C', 'I', 'I', 'H', 'U', 'R', 'D'};
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
     printf("People in\n");
 
