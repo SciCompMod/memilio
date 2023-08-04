@@ -36,7 +36,7 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 
 def download_vaccination_data(read_data, filename, directory):
 
-    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
+    url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Deutschland_Landkreise_COVID-19-Impfungen.csv"
     path = os.path.join(directory + filename + ".json")
     df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
         'LandkreisId_Impfort': "string", 'Altersgruppe': "string", 'Impfschutz': int, 'Anzahl': int}}, interactive=True)
@@ -605,7 +605,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         print("Population data was not found. Download it from the internet.")
         population = gpd.get_population_data(
             read_data=False, file_format=file_format, out_folder=out_folder,
-            no_raw=no_raw, split_gender=False, merge_eisenach=True)
+            no_raw=no_raw, merge_eisenach=True)
 
     with progress_indicator.Spinner(message='Preparing Population data and age groups'):
         min_age_pop = []
@@ -820,8 +820,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             # commuter inflow from other counties as first weight to distribute
             # vaccinations from vaccination county to extrapolated home counties
             neighbors_mobility = gcm.get_neighbors_mobility_all(
-                direction='in', abs_tol=10, merge_eisenach=True,
-                out_folder=out_folder)
+                direction='in', abs_tol=10, out_folder=out_folder)
             df_data_agevacc_county_cs = sanitizing_extrapolation_mobility(
                 df_data_agevacc_county_cs, unique_age_groups_old,
                 vacc_column_names, population_old_ages, neighbors_mobility)

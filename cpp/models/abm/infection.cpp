@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: David Kerkmann, Sascha Korf
+* Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -33,17 +33,14 @@ Infection::Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionPara
 {
     m_viral_load.start_date = draw_infection_course(age, params, init_date, init_state);
 
-    auto vl_params    = params.get<ViralLoadDistributions>()[{
+    auto vl_params = params.get<ViralLoadDistributions>()[{
         virus, age, VaccinationState::Unvaccinated}]; // TODO: change vaccination state
+
     m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(vl_params.viral_load_peak.params);
     m_viral_load.incline =
         vl_params.viral_load_incline.get_distribution_instance()(vl_params.viral_load_incline.params);
     m_viral_load.decline =
         vl_params.viral_load_decline.get_distribution_instance()(vl_params.viral_load_decline.params);
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
-
     m_viral_load.end_date =
         m_viral_load.start_date +
         days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
@@ -71,7 +68,7 @@ ScalarType Infection::get_viral_load(TimePoint t) const
 
 ScalarType Infection::get_infectivity(TimePoint t) const
 {
-    if (m_viral_load.start_date >= t)
+    if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed)
         return 0;
     return 1 / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
@@ -196,7 +193,6 @@ void Infection::draw_infection_course_forward(AgeGroup age, const GlobalInfectio
 TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalInfectionParameters& params,
                                                     TimePoint init_date, InfectionState init_state)
 {
-    assert(init_state != InfectionState::Dead && "Cannot initialize dead person.");
 
     auto start_date = init_date;
     TimeSpan time_period{}; // time period for current infection state
@@ -253,6 +249,12 @@ TimePoint Infection::draw_infection_course_backward(AgeGroup age, const GlobalIn
                     m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
                 previous_state = InfectionState::InfectedCritical;
             }
+            break;
+
+        case InfectionState::Dead:
+            time_period    = days(params.get<CriticalToDead>()[{
+                m_virus_variant, age, VaccinationState::Unvaccinated}]); // TODO: subject to change
+            previous_state = InfectionState::InfectedCritical;
             break;
 
         default:

@@ -214,9 +214,12 @@ def get_file(
         if df.empty:
             raise DataError("Error: Dataframe is empty.")
     except AttributeError:
-        for i in range(len(df)):
-            if df[i].empty:
-                raise DataError("Error: Dataframe is empty.")
+        if isinstance(df, list) or isinstance(df, dict):
+            for i in df:
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
@@ -235,6 +238,7 @@ def cli(what):
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
     - no_raw
+    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -259,7 +263,7 @@ def cli(what):
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
+                "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
@@ -341,9 +345,29 @@ def cli(what):
             '-sd', '--sanitize_data', type=int, default=1,
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
-    args = parser.parse_args()
 
-    return vars(args)
+    parser.add_argument(
+        '--no-progress-indicators',
+        help='Disables all progress indicators (used for downloads etc.).',
+        action='store_true')
+
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
+
+        parser.add_argument(
+            '--password', type=str
+        )
+    args = vars(parser.parse_args())
+    # disable progress indicators globally, if the argument --no-progress-indicators was specified
+    progress_indicator.ProgressIndicator.disable_indicators(
+        args["no_progress_indicators"])
+    # remove the no_progress_indicators entry from the dict
+    # (after disabling indicators, its value is no longer usefull)
+    args.pop("no_progress_indicators")
+
+    return args
 
 
 def append_filename(

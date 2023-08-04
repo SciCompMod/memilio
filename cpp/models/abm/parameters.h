@@ -53,30 +53,6 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedNoSymptoms";
-    }
-};
-
-struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count, VaccinationState::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedSymptoms";
-    }
-};
-
 struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup, VaccinationState>;
     static Type get_default()
@@ -184,7 +160,11 @@ struct RecoveredToSusceptible {
         return "RecoveredToSusceptible";
     }
 };
-
+/**
+ * @brief Parameters for the ViralLoad course. Default values taken as constant values from the average from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+ * Section 3.3.1 or see also supplementary materials Fig. S5.
+*/
 struct ViralLoadDistributionsParameters {
     UniformDistribution<double>::ParamType viral_load_peak;
     UniformDistribution<double>::ParamType viral_load_incline;
@@ -205,6 +185,10 @@ struct ViralLoadDistributions {
     }
 };
 
+/**
+ * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
+*/
 struct InfectivityDistributionsParameters {
     UniformDistribution<double>::ParamType infectivity_alpha;
     UniformDistribution<double>::ParamType infectivity_beta;
@@ -258,11 +242,10 @@ struct MaskProtection {
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
-                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
-                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
