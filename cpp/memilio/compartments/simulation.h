@@ -143,10 +143,18 @@ public:
 
 protected:
     /**
-     * @brief setup the simulation with an ODE solver
-     * @param[in] model: An instance of a compartmental model
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
+     * @brief Set up a simulation for the given model and ODE system.
+     * The ODESystem defines both the initial values and right hand side of the ODE system. The class is required
+     * to have the two member functions `Eigen::VectorXd initial_values(const Model&)` and
+     * `void right_hand_side(const Model&, Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd>,
+     * double, Eigen::Ref<Eigen::VectorXd>)`. They are expected to behave similiar to
+     * CompartmentalModel::get_initial_values and CompartmentalModel::eval_right_hand_side, respectively, with an
+     * additional first argument that recieves a const& to the model of the Simulation.
+     * @param[in] model An instance of a compartmental model.
+     * @param[in] t0 Start time for the simulation.
+     * @param[in] dt Initial step size of integration.
+     * @param[in] sys An instance of ODESystem (by reference).
+     * @tparam ODESystem Type defining the initial values and right hand side of the ODE system.
      */
     template <class ODESystem>
     Simulation(Model const& model, double t0, double dt, ODESystem& sys)
@@ -174,15 +182,30 @@ public:
     using Base  = Simulation<M>;
 
     /**
-     * @brief setup the simulation with an ODE solver
-     * @param[in] model: An instance of a compartmental model
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
+     * @brief Set up the simulation with an ODE solver.
+     * @param[in] model An instance of a compartmental model.
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial step size of integration.
      */
     SimulationFlows(Model const& model, double t0 = 0., double dt = 0.1)
-        : SimulationFlows(model, t0, dt, std::make_unique<ODESystem>(model.populations.numel()))
+        : SimulationFlows(model, t0, dt, std::make_unique<ODESystem>(model.get_initial_values(), t0))
     {
     }
+
+    /**
+     * @brief Set up the simulation with an ODE solver.
+     * @param[in] other A SimulationFlows instance.
+     */
+    SimulationFlows(const SimulationFlows& other)
+        : SimulationFlows(other.get_model(), other.get_result().get_time(0), other.get_dt(),
+                          std::make_unique<ODESystem>(other.m_system->pop_result))
+    {
+    }
+
+    // Default constructors may be unsafe. Implement using private constructor as needed.
+    SimulationFlows(SimulationFlows&&)                 = delete;
+    SimulationFlows& operator=(const SimulationFlows&) = delete;
+    SimulationFlows& operator=(SimulationFlows&&)      = delete;
 
     /**
      * @brief get_result returns the values for all compartments within the
@@ -195,7 +218,7 @@ public:
     {
         // overwrite get_result from the base class, so that it also returns compartments (instead of flows)
         compute_population_results();
-        return m_result;
+        return m_system->pop_result;
     }
 
     /**
@@ -209,7 +232,7 @@ public:
     {
         // overwrite get_result from the base class, so that it also returns compartments (instead of flows)
         compute_population_results();
-        return m_result;
+        return m_system->pop_result;
     }
 
     /**
@@ -254,8 +277,19 @@ public:
 
 private:
     struct ODESystem {
-        ODESystem(const size_t population_size)
-            : pop(population_size)
+        /// @brief Set up ODESystem with initial conditions of the simulation.
+        ODESystem(Eigen::Ref<const Eigen::VectorXd> population0, ScalarType t0)
+            : pop(population0.size())
+            , pop_result(t0, population0)
+
+        {
+        }
+
+        /// @brief Set up ODESystem with results from another simulation.
+        ODESystem(const TimeSeries<ScalarType>& results)
+            : pop(results.get_num_elements())
+            , pop_result(results)
+
         {
         }
 
@@ -265,53 +299,63 @@ private:
                                     Eigen::Ref<Eigen::VectorXd> dflows_dt)
         {
             // compute current population
-            //   flows contains the accumulated outflows of each compartment for each target compartment at time t
-            //   using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change
-            //   in population from t0 to t
-            model.get_derivatives(flows, pop); // note: overwrites values in pop
-            //   add the initial value of the ODEs
-            pop += model.get_initial_values();
-            // compute current flows for the current population
+            //   flows contains the accumulated outflows of each compartment for each target compartment at time t.
+            //   Using that the ODEs are linear expressions of the flows, get_derivatives can compute the total change
+            //   in population from t0 to t.
+            //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
+            //   calculate the change in population starting from the last available time point in pop_result, instead
+            //   of starting at t0. To do that, the following difference of flows is used.
+            model.get_derivatives(flows - flow_result->get_value(pop_result.get_num_time_points() - 1),
+                                  pop); // note: overwrites values in pop
+            //   add the "initial" value of the ODEs (using last available time point in pop_result)
+            //     If no changes were made to the last value in pop_result outside of SimulationFlows, the following
+            //     line computes the same as `model.get_derivatives(flows, x); x += model.get_initial_values();`.
+            pop += pop_result.get_last_value();
+            // compute the current change in flows with respect to the current population
             dflows_dt.setZero();
             model.get_flows(pop, pop, t, dflows_dt); // this result is used by the integrator
         }
 
         /// @brief Stand-in for model.get_initial_values(), that returns the initial values for the flows.
-        inline Eigen::VectorXd initial_values(const Model& m)
+        inline Eigen::VectorXd initial_values(const Model& model)
         {
-            return m.get_initial_flows();
+            return model.get_initial_flows();
         }
 
         Eigen::VectorXd pop; ///< pre-allocated temporary, used in right_hand_side()
+        mio::TimeSeries<ScalarType> pop_result; ///< population result of the simulation
+        mio::TimeSeries<ScalarType>* flow_result; ///< pointer to the flow result of the simulation (computed by Base)
     };
 
+    /// @brief Internal constructor needed for correct initialization order (ODESystem -> Base -> SimulationFlows).
     SimulationFlows(Model const& model, double t0, double dt, std::unique_ptr<ODESystem> sys)
         : Base(model, t0, dt, *sys)
         , m_system(std::move(sys)) // take ownership of *sys
-        , m_result(t0, model.get_initial_values())
     {
+        // this pointer allows ODESystem::right_hand_side to depend on the (potentially modified) last result value
+        m_system->flow_result = &get_flows();
     }
 
     /**
      * @brief Computes the population based on the simulated flows.
      * Uses the same method as ODESystem::right_hand_side to compute the population given the flows and initil values.
-     * Adds time points to m_result until it has the same number of time points as flow result (get_flows()). Does not
-     * recalculate older values.
+     * Adds time points to m_system->pop_result until it has the same number of time points as flow result
+     * (get_flows()). Does not recalculate older values.
      */
     void compute_population_results() const
     {
         const auto& flows = get_flows();
         const auto& model = this->get_model();
+        auto& result      = m_system->pop_result;
         // calculate new time points
-        for (Eigen::Index i = m_result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
-            m_result.add_time_point(flows.get_time(i));
-            model.get_derivatives(flows.get_value(i), m_result.get_value(i));
-            m_result.get_value(i) += m_result.get_value(0);
+        for (Eigen::Index i = result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
+            result.add_time_point(flows.get_time(i));
+            model.get_derivatives(flows.get_value(i), result.get_value(i));
+            result.get_value(i) += result.get_value(0); // TODO: is "... += model.get_initial_values();" better here?
         }
     }
 
     std::unique_ptr<ODESystem> m_system; ///< instance of ODESystem supplied to Base constructor
-    mutable mio::TimeSeries<ScalarType> m_result; ///< population result of the simulation
 };
 
 /**
