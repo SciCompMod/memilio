@@ -30,8 +30,8 @@ namespace mio
 namespace lsecir
 {
 
-Model::Model(Eigen::VectorXd init, const InfectionState infectionState_init, ParameterSet&& parameterset_init)
-    : parameters{parameterset_init}
+Model::Model(Eigen::VectorXd init, const InfectionState infectionState_init, ParameterSet&& parameterSet_init)
+    : parameters{parameterSet_init}
     , infectionStates{infectionState_init}
     , m_initial_values{std::move(init)}
 {
@@ -42,6 +42,12 @@ void Model::check_constraints() const
 {
     if (!(infectionStates.get_count() == m_initial_values.size())) {
         log_error("Initial condition size does not match Subcompartments.");
+    }
+    for (int i = 0; i < infectionStates.get_count(); i++) {
+        if (m_initial_values[i] < 0) {
+            log_warning(
+                "Initial values for one subcompartment are less than zero. Simulation results are not realistic.");
+        }
     }
     parameters.check_constraints();
 }

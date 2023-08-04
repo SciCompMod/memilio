@@ -68,7 +68,7 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
         erlang.set_parameter(j + 1);
 
         // Determine relevant calculation area and corresponding index.
-        calc_time       = erlang.get_support_max(m_dt);
+        calc_time       = erlang.get_support_max(m_dt, 1e-8);
         calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
         if (num_time_points < calc_time_index) {
@@ -100,8 +100,8 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
         infectionStates.get_number(InfectionStateBase::InfectedSymptoms));
 
     // Determine the relevant calculation area = union of the supports of the relevant transitionDistributions.
-    ScalarType calc_time = std::max({transitionDistribution_InfectedNoSymptoms.get_support_max(m_dt),
-                                     transitionDistribution_InfectedSymptoms.get_support_max(m_dt)});
+    ScalarType calc_time = std::max({transitionDistribution_InfectedNoSymptoms.get_support_max(m_dt, 1e-8),
+                                     transitionDistribution_InfectedSymptoms.get_support_max(m_dt, 1e-8)});
     /* calc_time_index corresponds to the needed timesteps in sum. The -1 is because in the last summand all
      transitionDistributions evaluate to 0 (by definition of support_max).*/
     Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
@@ -141,6 +141,7 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
 
     //S
     init[0] = compute_susceptibles(total_population, deaths);
+
     //E
     init.segment(infectionStates.get_firstindex(InfectionStateBase::Exposed),
                  infectionStates.get_number(InfectionStateBase::Exposed)) =
@@ -177,6 +178,7 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
         log_warning("The calculation results in a negative number for the number of recoveries. Initializing with the "
                     "result may not make sense.");
     }
+
     //D
     init[infectionStates_count - 1] = deaths;
 

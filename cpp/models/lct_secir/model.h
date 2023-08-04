@@ -41,10 +41,10 @@ public:
      *
      * @param[in] init Vector with initial values for all infection states inclusive subcompartments.
      * @param[in, out] infectionState_init InfectionStates for the Model, specifies number of Subcompartments for each infection state.
-     * @param[in, out] parameterset_init Specifies Parameters necessary for the Model. 
+     * @param[in, out] parameterSet_init Specifies Parameters necessary for the Model. 
      */
     Model(Eigen::VectorXd init, InfectionState infectionState_init = InfectionState(),
-          ParameterSet&& parameterset_init = ParameterSet());
+          ParameterSet&& parameterSet_init = ParameterSet());
 
     /**
      * @brief Checks constraints of the model inclusive check for model parameters.

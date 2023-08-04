@@ -50,36 +50,38 @@ int main()
 
     // ---Perform simulation for the LCT SECIR model.---
     // Set vector that specifies the number of subcompartments
-    std::vector<int> SubcompartmentNumbers((int)mio::lsecir::InfectionStateBase::Count, 1);
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::Exposed]            = 20;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 20;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 20;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 20;
-    SubcompartmentNumbers[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 20;
-    mio::lsecir::InfectionState InfState(SubcompartmentNumbers);
+    std::vector<int> num_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
+    num_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = 20;
+    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = 20;
+    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSymptoms]   = 20;
+    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedSevere]     = 20;
+    num_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedCritical]   = 20;
+    mio::lsecir::InfectionState infectionStates(num_subcompartments);
 
     // define initial population distribution in infection states, one entry per Subcompartment
-    Eigen::VectorXd init_lct(InfState.get_count());
+    Eigen::VectorXd init_lct(infectionStates.get_count());
     // if jumpstart is true, lct model will be initialized just with individuals in the first subcompartments
     bool jumpstart = false;
     if (jumpstart) {
         for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-            init_lct[InfState.get_firstindex(i)] = init[i];
-            for (int j = InfState.get_firstindex(i) + 1; j < InfState.get_firstindex(i) + InfState.get_number(i); j++) {
+            init_lct[infectionStates.get_firstindex(i)] = init[i];
+            for (int j = infectionStates.get_firstindex(i) + 1;
+                 j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
                 init_lct[j] = 0;
             }
         }
     }
     else {
         for (int i = 0; i < (int)mio::lsecir::InfectionStateBase::Count; i++) {
-            for (int j = InfState.get_firstindex(i); j < InfState.get_firstindex(i) + InfState.get_number(i); j++) {
-                init_lct[j] = init[i] / InfState.get_number(i);
+            for (int j = infectionStates.get_firstindex(i);
+                 j < infectionStates.get_firstindex(i) + infectionStates.get_number(i); j++) {
+                init_lct[j] = init[i] / infectionStates.get_number(i);
             }
         }
     }
 
     // initialize model
-    mio::lsecir::Model model_lct(std::move(init_lct), InfState);
+    mio::lsecir::Model model_lct(std::move(init_lct), infectionStates);
 
     // Set Parameters of the model
     model_lct.parameters.get<mio::lsecir::TimeExposed>()            = 2 * 4.2 - 5.2;
