@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "benchmarks/simulation.h"
-#include "ode_secirvvs/model.h"
+#include "ode_seir/model.h"
 #include <string>
 
 const std::string config_path = "../../benchmarks/simulation.config";

@@ -293,7 +293,9 @@ private:
         {
         }
 
-        /// @brief Stand-in for model.eval_right_hand_side(...), that calculates the derivative of flows.
+        /** @brief Stand-in function for model.eval_right_hand_side(...), which computes the rate of change for the
+         *  flows in the compartment model.
+         */
         inline void right_hand_side(const Model& model, Eigen::Ref<const Eigen::VectorXd>,
                                     Eigen::Ref<const Eigen::VectorXd> flows, double t,
                                     Eigen::Ref<Eigen::VectorXd> dflows_dt)
@@ -337,10 +339,10 @@ private:
     }
 
     /**
-     * @brief Computes the population based on the simulated flows.
-     * Uses the same method as ODESystem::right_hand_side to compute the population given the flows and initil values.
-     * Adds time points to m_system->pop_result until it has the same number of time points as flow result
-     * (get_flows()). Does not recalculate older values.
+     * @brief Computes the distribution of the Population to the InfectionState%s based on the simulated flows.
+     * Uses the same method as ODESystem::right_hand_side to compute the population given the flows and initial values.
+     * Adds TimePoint%s to m_result until it has the same number of TimePoint%s as flow result (get_flows()). Does not
+     * recalculate older values.
      */
     void compute_population_results() const
     {
