@@ -77,7 +77,7 @@ public:
 
     ScalarType get_reproduction_number(Eigen::Index timeindex, const mio::TimeSeries<ScalarType>& y)
     { 
-        if(!( 0 <= timeindex || timeindex < y.get_num_time_points())){
+        if(!( 0 <= timeindex && timeindex < y.get_num_time_points())){
             mio::log_error("timeindex is out of range of the TimeSeries");
         }
 
