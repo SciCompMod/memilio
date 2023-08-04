@@ -388,11 +388,11 @@ TEST(TestMigrationRules, event_return)
     auto dt     = mio::abm::hours(3);
 
     mio::abm::Location home(mio::abm::LocationType::Home, 0);
-    mio::abm::Location shop(mio::abm::LocationType::SocialEvent, 0);
+    mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 0);
     auto p     = mio::abm::Person(rng, home, mio::abm::AgeGroup::Age15to34);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
     home.add_person(p);
-    p.migrate_to(shop);
+    p.migrate_to(social_event);
     p.interact(rng_p, t, dt, params);
 
     ASSERT_EQ(mio::abm::go_to_event(rng_p, p, t, dt, {}), mio::abm::LocationType::Home);
