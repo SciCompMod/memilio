@@ -30,6 +30,7 @@
 #include "memilio/compartments/simulation.h"
 
 #include <cmath>
+#include <cstdint>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -140,7 +141,12 @@ public:
         num_procs = 1;
         rank      = 0;
 #endif  
+        
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
         m_rng.synchronize();
+        thread_local_rng() = m_rng;
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
         auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
@@ -152,18 +158,16 @@ public:
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
             log(LogLevel::info, "ParameterStudies: run {}", run_idx);
 
-            //prepare rng for this run
-            //assume that sampling the graph uses the thread local rng and isn't multithreaded
-            auto initial_rng_counter =
-                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
-            m_rng.set_counter(initial_rng_counter);
-            thread_local_rng() = m_rng;
+            //prepare rng for this run by setting the counter to the right offset
+            //Add the old counter so that this call of run() produces different results
+            //from the previous call
+            auto run_rng_counter = m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(
+                                                             static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
+            thread_local_rng().set_counter(run_rng_counter);
 
             //sample
             auto sim = create_sampled_simulation(sample_graph);
-
-            m_rng = thread_local_rng();
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (m_rng.get_counter() - initial_rng_counter).get());
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (thread_local_rng().get_counter() - run_rng_counter).get());
 
             //perform run
             sim.advance(m_tmax);
@@ -171,6 +175,9 @@ public:
             //handle result and store
             ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
         }
+
+        //Set the counter of our RNG so that future calls of run() produce different parameters.
+        m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
 
 #ifdef MEMILIO_ENABLE_MPI
         //gather results
@@ -213,25 +220,32 @@ public:
         std::vector<SimulationGraph> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
         thread_local_rng() = m_rng;
 
         for (size_t i = 0; i < m_num_runs; i++) {
             log(LogLevel::info, "ParameterStudies: run {}", i);
 
-            //prepare rng for this run
-            //assume that sampling the graph uses the thread local rng and isn't multithreaded
-            auto initial_rng_counter =
-                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
-            thread_local_rng().set_counter(initial_rng_counter);
+            //prepare rng for this run by setting the counter to the right offset
+            //Add the old counter so that this call of run() produces different results
+            //from the previous call
+            auto run_rng_counter = m_rng.get_counter() +
+                                   rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
+            thread_local_rng().set_counter(run_rng_counter);
+
             auto sim = create_sampled_simulation(sample_graph);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (m_rng.get_counter() - initial_rng_counter).get());
+            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
+                (thread_local_rng().get_counter() - run_rng_counter).get());
 
             sim.advance(m_tmax);
 
             ensemble_result.emplace_back(std::move(sim).get_graph());
         }
 
-        m_rng = thread_local_rng();
+        //Set the counter of our RNG so that future calls of run() produce different parameters.
+        m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
 
         return ensemble_result;
     }
