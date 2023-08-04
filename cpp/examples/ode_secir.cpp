@@ -86,7 +86,7 @@ int main()
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'C', 'C_C', 'I', 'I_C', 'H', 'U', 'R', 'D'};
+        char vars[] = {'S', 'E', 'C', 'C', 'I', 'I', 'H', 'U', 'R', 'D'};
         printf("\n # t");
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
             printf(" %c", vars[k]);
