@@ -124,10 +124,10 @@ def generate_data(
     """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
 
-    In general, we have 8 different compartments. If we choose, 
+    In general, we have 10 different compartments. If we choose, 
     input_width = 5 and label_width = 20, the dataset has 
-    - input with dimension 5 x 8
-    - labels with dimension 20 x 8
+    - input with dimension 5 x 10
+    - labels with dimension 20 x 10
 
    @param num_runs Number of times, the function run_secir_simulation is called.
    @param path Path, where the dataset is saved to.
@@ -159,14 +159,14 @@ def generate_data(
     if normalize:
         # logarithmic normalization
         transformer = FunctionTransformer(np.log1p, validate=True)
-        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(8, -1)
+        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(10, -1)
         scaled_inputs = transformer.transform(inputs)
-        scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 8)
+        scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 10)
         scaled_inputs_list = scaled_inputs.tolist()
 
-        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(8, -1)
+        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(10, -1)
         scaled_labels = transformer.transform(labels)
-        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 8)
+        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 10)
         scaled_labels_list = scaled_labels.tolist()
 
         # cast dfs to tensors

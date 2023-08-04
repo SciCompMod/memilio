@@ -31,7 +31,7 @@ from memilio.surrogatemodel.ode_secir_simple import network_architectures
 
 def plot_compartment_prediction_model(
         inputs, labels, model=None, plot_compartment='InfectedSymptoms',
-        max_subplots=8):
+        max_subplots=10):
     """! Plot prediction of the model and label for one compartment.
 
     If model is none, we just plot the inputs and labels for the selected compartment without any predictions.  
@@ -168,7 +168,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     diff = pred - test_labels
     relative_err = (abs(diff))/abs(test_labels)
     # reshape [batch, time, features] -> [features, time * batch]
-    relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
+    relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(10, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
