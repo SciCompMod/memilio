@@ -72,8 +72,8 @@ public:
         * @param person Person who's counter will be used. 
         */
         RandomNumberGenerator(Key<uint64_t> key, Person& person)
-            : m_person(person)
-            , m_key(key)
+            : m_key(key)
+            , m_person(person)
         {
         }
 
@@ -113,8 +113,8 @@ public:
         }
 
     private:
-        Person& m_person;
         Key<uint64_t> m_key;
+        Person& m_person;
     };
 
     /**
