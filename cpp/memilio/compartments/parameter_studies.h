@@ -155,7 +155,7 @@ public:
             //prepare rng for this run
             //assume that sampling the graph uses the thread local rng and isn't multithreaded
             auto initial_rng_counter =
-                rng_subsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
+                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
             m_rng.set_counter(initial_rng_counter);
             thread_local_rng() = m_rng;
 
@@ -221,7 +221,7 @@ public:
             //prepare rng for this run
             //assume that sampling the graph uses the thread local rng and isn't multithreaded
             auto initial_rng_counter =
-                rng_subsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
+                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
             thread_local_rng().set_counter(initial_rng_counter);
             auto sim = create_sampled_simulation(sample_graph);
             log(LogLevel::info, "ParameterStudies: Generated {} random numbers.", (m_rng.get_counter() - initial_rng_counter).get());

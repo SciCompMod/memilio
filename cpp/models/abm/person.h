@@ -51,14 +51,14 @@ class Person
 public:
     /**
     * Random number generator of individual persons.
-    * Increments the rng counter of the person when used.
+    * Increments the random number generator counter of the person when used.
     * @see mio::RandomNumberGeneratorBase
     */
     class RandomNumberGenerator : public RandomNumberGeneratorBase<RandomNumberGenerator>
     {
     public:
         /**
-        * Creates a random number generator for a person.
+        * Creates a RandomNumberGenerator for a person.
         * @param key Key to be used by the generator.
         * @param person Person who's counter will be used. 
         */
@@ -69,9 +69,9 @@ public:
         }
 
         /**
-        * Creates a random number generator for a person.
-        * Uses the same key as another random number generator.
-        * @param rng Random number generator who's key will be used.
+        * Creates a RandomNumberGenerator for a person.
+        * Uses the same key as another RandomNumberGenerator.
+        * @param rng RandomNumberGenerator who's key will be used.
         * @param person Person who's counter will be used. 
         */
         RandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
@@ -92,7 +92,7 @@ public:
         */
         Counter<uint64_t> get_counter() const
         {
-            return rng_subsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
+            return rng_totalsequence_counter<uint64_t>(m_person.get_person_id(), m_person.get_rng_counter());
         }
 
         /**
@@ -110,7 +110,7 @@ public:
 
     /**
      * @brief Create a Person.
-     * @param[in, out] rng Random number generator.
+     * @param[in, out] rng RandomNumberGenerator.
      * @param[in, out] location Initial location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
@@ -312,7 +312,7 @@ public:
      * @brief Simulates a viral test and returns the test result of the Person.
      * If the test is positive, the Person has to quarantine.
      * If the test is negative, quarantine ends.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator of the person.
      * @param[in] t TimePoint of the test.
      * @param[in] params Sensitivity and specificity of the test method.
      * @return True if the test result of the Person is positive.
@@ -380,7 +380,7 @@ public:
 
     /**
      * @brief Checks whether the Person wears a Mask at the target Location.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator of the person.
      * @param[in] target The target Location.
      * @return Whether a Person wears a Mask at the Location.
      */
@@ -427,7 +427,7 @@ public:
     }
 
     /**
-    * Get this persons random number generator counter.
+    * Get this persons RandomNumberGenerator counter.
     * @see mio::abm::Person::RandomNumberGenerator.
     */
     Counter<uint32_t>& get_rng_counter()

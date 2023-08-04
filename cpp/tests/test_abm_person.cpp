@@ -277,9 +277,9 @@ TEST(Person, rng)
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(0));
 
     auto p_rng = mio::abm::Person::RandomNumberGenerator(rng, p);
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
+    ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{0}));
 
     p_rng();
     ASSERT_EQ(p.get_rng_counter(), mio::Counter<uint32_t>(1));
-    ASSERT_EQ(p_rng.get_counter(), mio::rng_subsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
+    ASSERT_EQ(p_rng.get_counter(), mio::rng_totalsequence_counter<uint64_t>(13, mio::Counter<uint32_t>{1}));
 }

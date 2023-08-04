@@ -53,7 +53,7 @@ public:
     /**
      * @brief Create an Infection for a single Person.
      * Draws a random infection course.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator for the person.
      * @param[in] virus Virus type of the Infection.
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] init_date Date of initializing the Infection.
@@ -111,7 +111,7 @@ private:
      * @brief Determine ViralLoad course and Infection course based on init_state.
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
      * subsequent #InfectionState%s.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator of the person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params GlobalInfectionParameters.
      * @param[in] init_date Date of initializing the Infection.
@@ -124,7 +124,7 @@ private:
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator of the person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params GlobalInfectionParameters.
      * @param[in] init_date Date of initializing the Infection.
@@ -136,7 +136,7 @@ private:
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
-     * @param[inout] rng Random number generator.
+     * @param[inout] rng RandomNumberGenerator of the person.
      * @param[in] age AgeGroup of the person.
      * @param[in] params GlobalInfectionParameters.
      * @param[in] init_date Date of initializing the Infection.

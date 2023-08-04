@@ -40,7 +40,7 @@ namespace abm
  * @tparam RNG Type that satisfies the UniformRandomBitGenerator concept.
  * @tparam T Type that represents the states.
  * @tparam NumTransitions Number of possible transitions.
- * @param[inout] rng Random number generator.
+ * @param[inout] rng RandomNumberGenerator.
  * @param[in] current_state Current state before transition.
  * @param[in] dt Length of the time step.
  * @param[in] transitions Array of pairs of new states and their rates (probabilities).

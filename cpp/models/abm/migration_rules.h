@@ -33,7 +33,7 @@ namespace abm
 
 /**
  * @name Rules for migration between Location%s.
- * @param[inout] rng Random number generator for the person.
+ * @param[inout] rng RandomNumberGenerator for the person.
  * @param[in] p Person the rule is applied to.
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.

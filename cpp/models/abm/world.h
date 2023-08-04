@@ -184,7 +184,7 @@ public:
     const TestingStrategy& get_testing_strategy() const;
 
     /**
-    * Get the random number generator used by this world for random events.
+    * Get the RandomNumberGenerator used by this world for random events.
     * Persons use their own generators with the same key as the global one. 
     * @return The random number generator.
     */
