@@ -19,6 +19,7 @@
 */
 #include "abm/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include <random>
 
@@ -65,15 +66,15 @@ void Simulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
-    #pragma omp parallel 
+    PRAGMA_OMP(parallel)
     {
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_result.get_num_elements());
-        #pragma omp for
+        PRAGMA_OMP(for)
         for (auto i = size_t(0); i < m_world.get_locations().size(); ++i) {
             auto&& location = m_world.get_locations()[i];
             sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
         }
-        #pragma omp critical
+        PRAGMA_OMP(critical)
         {
             m_result.get_last_value() += sum;
         }
