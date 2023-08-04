@@ -79,7 +79,7 @@ int main()
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secir = simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<double> secir = mio::simulate<mio::osecir::Model<double>,double>(t0, tmax, dt, model, integrator);
 
     bool print_to_terminal = true;
 
