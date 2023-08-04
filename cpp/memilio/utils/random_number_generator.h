@@ -77,9 +77,10 @@ namespace mio
 *
 * Because their state is simple, cRNG are well suited for parallel applications. To create n independent subsequences from
 * a total sequence of N samples you only need to create n counters, where counter i starts at i * (N / n).
+* Normal RNGs need special algorithms to efficiently generate subsequences, if it is possible at all.
 * The counter is of minimal size, it only needs to be big enough to fit the number of samples generated.
 * Often the subsequence index i is already available in some other form, e.g., the thread index or the agent index in an 
-* agent based model, so only the lower bits of the subsequence counters need to be stored. 
+* agent based model, so only a small amount of extra storage is needed for the subsequence counter. 
 * The key is shared between all subsequences. Modern CPU architectures also are very efficient at executing the hash and
 * encryption functions that are used as the generate function, increasing performance of the generator. 
 * 
@@ -91,11 +92,16 @@ namespace mio
 * of the subsequence counters starts at 0.
 * Generating a samples of k bits requires a key of at least k bits for sufficient randomness.
 * Example:
-* A 64 bit counter (uint64_t) and a 64 bit key produce 2^64 samples each with 64 bits.
-* A subsequence index of 32 bits (uint32_t), 2^32 subsequence counters with 32 bits each and a 64 bit key
-* produce 2^32 subsequences of 2^32 samples each with 64 bits.
+* * A 64 bit counter (uint64_t) and a 64 bit key produce 2^64 samples each with 64 bits. You need to store
+* one counter and one key.
+* * A subsequence index of 32 bits (uint32_t), subsequence counter with 32 bits and a 64 bit key
+* produce 2^32 subsequences of 2^32 samples each with 64 bits per sample. You need to store 2^32 subsequence indices, 
+* 2^32 subsequence counters and one key, but the counters are completely independent and thread safe. The subsequence index
+* and corresponding subsequence counter can also be stored together in one 64bit counter, e.g., the subsequence index is the 
+* high bits and subsequence counter is the low bits, see `rng_totalsequence_index()`.
 *
-* @see https://github.com/DEShawResearch/random123 for more information.
+* Also see https://github.com/DEShawResearch/random123 for more information on cRNGs and the specific cRNG
+* we use.
 * 
 * Classes deriving from this base class need to supply the key and counter by implementing
 * the functions
@@ -240,6 +246,10 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
     //N high bits: subsequence idx
     //S low bits: subsequence counter
     //=> C = N + S bits: total sequence counter
+    //example: 
+    //subsequence index uint32_t(181) = 0x000000B5
+    //subsequence counter uint32_t(41309) = 0x0000A15D
+    //total sequence counter = 0x000000B50000A15D
     const auto i = static_cast<UIntC>(subsequence_idx);
     const auto s = static_cast<UIntC>(counter.get());
     const auto c = (i << S_BITS) + s; //shift subsequence index to the high bits, add subsequence counter into low bits
