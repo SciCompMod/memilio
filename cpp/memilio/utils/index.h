@@ -20,6 +20,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
 
 namespace mio
@@ -53,10 +54,10 @@ class Index;
  *
  */
 template <typename CategoryTag>
-class Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,
-                           public OperatorComparison<Index<CategoryTag>>,
-                           public OperatorAdditionSubtraction<Index<CategoryTag>>,
-                           public OperatorScalarMultiplicationDivision<Index<CategoryTag>, size_t>
+class MEMILIO_ENABLE_EBO Index<CategoryTag> : public TypeSafe<size_t, Index<CategoryTag>>,
+                                              public OperatorComparison<Index<CategoryTag>>,
+                                              public OperatorAdditionSubtraction<Index<CategoryTag>>,
+                                              public OperatorScalarMultiplicationDivision<Index<CategoryTag>, size_t>
 {
 public:
     using TypeSafe<size_t, Index<CategoryTag>>::TypeSafe;

@@ -171,7 +171,7 @@ inline r123array2x32 to_r123_array(uint64_t i)
 * @tparam an unsigned integer type that determines the size of the key, i.e., the number of different sequences.
 */
 template <class T>
-struct Key : TypeSafe<T, Key<T>>, OperatorComparison<Key<T>> {
+struct MEMILIO_ENABLE_EBO Key : TypeSafe<T, Key<T>>, OperatorComparison<Key<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Key<T>>::TypeSafe;
 };
@@ -181,7 +181,7 @@ struct Key : TypeSafe<T, Key<T>>, OperatorComparison<Key<T>> {
 * @tparam an unsigned integer type that determines the size of the counter, i.e., the length of the random sequence.
 */
 template <class T>
-struct Counter : TypeSafe<T, Counter<T>>, OperatorComparison<Counter<T>>, OperatorAdditionSubtraction<Counter<T>> {
+struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>, OperatorComparison<Counter<T>>, OperatorAdditionSubtraction<Counter<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Counter<T>>::TypeSafe;
 };
