@@ -185,6 +185,7 @@ struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>, OperatorComparison<
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Counter<T>>::TypeSafe;
 };
+static_assert(sizeof(Counter<uint32_t>) == sizeof(uint32_t), "");
 
 template <class Derived>
 auto RandomNumberGeneratorBase<Derived>::operator()() -> result_type
