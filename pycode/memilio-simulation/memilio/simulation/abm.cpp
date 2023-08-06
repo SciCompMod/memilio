@@ -170,6 +170,7 @@ PYBIND11_MODULE(_simulation_abm, m)
                           self.get_infection_parameters() = params;
                       });
 
+    //copying and moving of ranges enabled below, see PYMIO_IGNORE_VALUE_TYPE
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
@@ -234,3 +235,6 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
         .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
 }
+
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_locations()))
+PYMIO_IGNORE_VALUE_TYPE(decltype(std::declval<mio::abm::World>().get_persons()))
