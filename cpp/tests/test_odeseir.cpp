@@ -194,7 +194,10 @@ TEST(TestSeir, get_reproduction_numbers)
     auto reproduction_numbers = model.get_reproduction_numbers(result);
 
     for (Eigen::Index i = 0; i < reproduction_numbers.size(); i++) {
-        EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);
+        EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);//Computes the correct numbers
     }
+
+    EXPECT_FALSE(model.get_reproduction_number(result.get_num_time_points(), result));//Test for an index that is out of range
+
 }
 

@@ -74,29 +74,29 @@ public:
     /**
     *@brief After the simulation is finished and we get a resulting TimeSeries, this function uses the data to compute the reproduction number
     *at an arbitrary time
-    *@param timeindex The time at which we want to compute the reproduction number
+    *@param t_idx The time at which we want to compute the reproduction number
     *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time
     *@returns The reproduction number in the seir model
     *@see The same functions in the model.h files of the secir and secirvvs models
     */
 
-    IOResult<double> get_reproduction_number(Eigen::Index timeindex, const mio::TimeSeries<ScalarType>& y) noexcept
+    IOResult<double> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
     { 
-        if(!( 0 <= timeindex && timeindex < y.get_num_time_points())){
+        if(!( 0 <= t_idx && t_idx < y.get_num_time_points())){
             mio::log_error("timeindex is out of range of the TimeSeries");
             return mio::failure(mio::StatusCode::OutOfRange);
         }
 
-        double timeindex_double = static_cast<double>(static_cast<size_t>(timeindex)); //Need this cast since get_matrix_at takes double as input parameter
+        double t_idx_double = static_cast<double>(static_cast<size_t>(t_idx)); //Need this cast since get_matrix_at takes double as input parameter
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
-        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timeindex_double)(0,0)*
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx_double)(0,0)*
                                 this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
                                 this->populations.get_total();
 
         
-        double result = y.get_value(timeindex)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        double result = y.get_value(t_idx)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
         
         return mio::success(result);
     }
