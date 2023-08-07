@@ -100,11 +100,11 @@ int main()
         double dummy = 0;
 
         for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
-            printf("\t %c[%d]: %.0f", vars[k], (int)i,
+            printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,
                    secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
             dummy += secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i];
         }
 
-        printf("\t %c_otal: %.0f\n", vars[k], dummy);
+        printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
     }
 }

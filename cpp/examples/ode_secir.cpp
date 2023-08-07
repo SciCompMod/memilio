@@ -91,7 +91,7 @@ int main()
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
             printf(" %s", vars[k].c_str());
         }
-        }
+
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
