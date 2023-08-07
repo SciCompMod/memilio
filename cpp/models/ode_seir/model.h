@@ -87,8 +87,7 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange);
         }
 
-        size_t timeindex_sizet = (size_t) timeindex; //Need this conversion since get_matrix has double input parameter
-        double timeindex_double = static_cast<double>(timeindex_sizet);
+        double timeindex_double = static_cast<double>(static_cast<size_t>(timeindex)); //Need this cast since get_matrix_at takes double as input parameter
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
