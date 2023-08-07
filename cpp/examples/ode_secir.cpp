@@ -86,10 +86,11 @@ int main()
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
-        char vars[] = {'S', 'E', 'C', 'C', 'I', 'I', 'H', 'U', 'R', 'D'};
+        std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
         printf("\n # t");
         for (size_t k = 0; k < (size_t)mio::osecir::InfectionState::Count; k++) {
-            printf(" %c", vars[k]);
+            printf(" %s", vars[k].c_str());
+        }
         }
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
