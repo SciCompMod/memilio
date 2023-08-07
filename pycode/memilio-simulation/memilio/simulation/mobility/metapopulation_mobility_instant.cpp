@@ -26,7 +26,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_migration_parameters(py::module& m, std::string const& name)
+void bind_migration_parameters(py::module_& m, std::string const& name)
 {
     py::class_<mio::MigrationParameters>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
@@ -39,7 +39,7 @@ void bind_migration_parameters(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal);
 }
 
-void bind_migration_parameter_edge(py::module& m, std::string const& name)
+void bind_migration_parameter_edge(py::module_& m, std::string const& name)
 {
     py::class_<mio::Edge<mio::MigrationParameters>>(m, name.c_str())
         .def_property_readonly("start_node_idx",
@@ -58,7 +58,7 @@ void bind_migration_parameter_edge(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal);
 }
 
-void bind_migration(py::module& m, std::string const& name)
+void bind_migration(py::module_& m, std::string const& name)
 {
     py::class_<mio::MigrationEdge>(m, name.c_str())
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
@@ -71,7 +71,7 @@ void bind_migration(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal);
 }
 
-void bind_migration_edge(py::module& m, std::string const& name)
+void bind_migration_edge(py::module_& m, std::string const& name)
 {
     py::class_<mio::Edge<mio::MigrationEdge>>(m, name.c_str())
         .def_property_readonly("start_node_idx",

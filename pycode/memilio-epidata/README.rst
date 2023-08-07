@@ -49,7 +49,7 @@ Required python packages:
 - pandas>=2.0.0
 - matplotlib
 - tables
-- numpy>=1.22
+- numpy>=1.22,<1.25
 - openpyxl
 - xlrd
 - requests
