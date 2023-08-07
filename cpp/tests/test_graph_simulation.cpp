@@ -23,6 +23,7 @@
 #include "memilio/compartments/simulation.h"
 #include "ode_seir/model.h"
 #include "gtest/gtest.h"
+#include "load_test_data.h"
 #include "gmock/gmock.h"
 
 class MockNodeFunc
@@ -221,15 +222,95 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     }
 }
 
+template <typename Graph>
+mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& model, double t0, double tmax, double dt)
+{
+    g.add_node(0, model, t0);
+    g.add_node(1, model, t0);
+    g.add_node(2, model, t0);
+    for (size_t county_idx_i = 0; county_idx_i < g.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
+            if (county_idx_i == county_idx_j)
+                continue;
+            g.add_edge(county_idx_i, county_idx_j, Eigen::VectorXd::Constant(4, 0.001));
+        }
+    }
+
+    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    sim.advance(tmax);
+
+    return sim;
+}
+
+TEST(TestGraphSimulation, consistencyFlowMobility)
+{
+
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.001;
+
+    mio::oseir::Model model;
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+
+    model.check_constraints();
+
+    auto sim_no_flows = create_simulation(
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax, dt);
+
+    auto sim_flows = create_simulation(
+        mio::Graph<mio::SimulationNode<mio::SimulationFlows<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax,
+        dt);
+
+    std::stringstream ss_sim_no_flows;
+    std::stringstream ss_sim_flows;
+
+    //test if all results of both simulations are equal for all nodes
+    for (size_t node_id = 0; node_id < sim_no_flows.get_graph().nodes().size(); ++node_id) {
+        sim_no_flows.get_graph().nodes()[node_id].property.get_result().print_table({"S", "E", "I", "R"}, 16, 7,
+                                                                                    ss_sim_no_flows);
+        sim_flows.get_graph().nodes()[node_id].property.get_result().print_table({"S", "E", "I", "R"}, 16, 7,
+                                                                                 ss_sim_flows);
+        EXPECT_EQ(ss_sim_flows.str(), ss_sim_no_flows.str());
+        ss_sim_flows.str("");
+        ss_sim_flows.clear();
+        ss_sim_no_flows.str("");
+        ss_sim_no_flows.clear();
+    }
+
+    // test all values from one node to the provided reference data for both simulations
+    const auto& res_sim = sim_flows.get_graph().nodes()[0].property.get_result();
+    const auto compare  = load_test_data_csv<ScalarType>("graphsimulation-compare.csv");
+    EXPECT_EQ(compare.size(), res_sim.get_num_time_points());
+    for (size_t t_indx = 0; t_indx < (size_t)res_sim.get_num_time_points(); t_indx++) {
+        EXPECT_NEAR(compare[t_indx][0], res_sim.get_time((Eigen::Index)t_indx), 1e-10);
+        auto temp_sol = res_sim.get_value((Eigen::Index)t_indx);
+        EXPECT_NEAR(compare[t_indx][1], temp_sol[0], 1e-10);
+        EXPECT_NEAR(compare[t_indx][2], temp_sol[1], 1e-10);
+        EXPECT_NEAR(compare[t_indx][3], temp_sol[2], 1e-10);
+    }
+}
+
 namespace
 {
 
 struct MoveOnly {
     MoveOnly();
-    MoveOnly(const MoveOnly&)            = delete;
+    MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     MoveOnly(MoveOnly&&)                 = default;
-    MoveOnly& operator=(MoveOnly&&)      = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
 using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
