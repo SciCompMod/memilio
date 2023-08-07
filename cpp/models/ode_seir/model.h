@@ -24,6 +24,7 @@
 #include "boost/outcome/config.hpp"
 #include "boost/system/detail/error_code.hpp"
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/io/io.h"
@@ -86,9 +87,12 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange);
         }
 
+        size_t timeindex_sizet = (size_t) timeindex; //Need this conversion since get_matrix has double input parameter
+        double timeindex_double = static_cast<double>(timeindex_sizet);
+
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
-        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timeindex)(0,0)*
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(timeindex_double)(0,0)*
                                 this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
                                 this->populations.get_total();
 
