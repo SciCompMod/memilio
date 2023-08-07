@@ -307,62 +307,141 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 template <class Base>
 double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
 {
-    //Get the contact patterns
-    mio::ContactMatrixGroup& contact_matrix = sim.get_model().parameters.template get<mio::osecir::ContactPatterns>();
+    auto const& params = sim.get_model().parameters;
+    size_t num_groups = (size_t)sim.get_model().parameters.get_num_groups();
+    
+    Eigen::MatrixXd F(5*num_groups, 5*num_groups);
+    Eigen::MatrixXd V(5*num_groups, 5*num_groups);
+    F = Eigen::MatrixXd::Zero(5*num_groups, 5*num_groups);//Initialize matrices F and V with zeroes
+    V = Eigen::MatrixXd::Zero(5*num_groups, 5*num_groups);
 
-    Eigen::VectorXd susceptibles_at_t((size_t)sim.get_model().parameters.get_num_groups());
+        auto test_and_trace_required = 0.0;
+        auto icu_occupancy = 0.0;
+        for (auto i = AgeGroup(0); i < (mio::AgeGroup) num_groups; ++i) {
+             auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
+            test_and_trace_required += (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+                                       sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms*(num_groups)+(size_t)i];
+            icu_occupancy += sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical*(num_groups)+(size_t)i];
+        }
 
-    // get susceptibles in different groups at time t
-    for (size_t agegrp = 0; agegrp < (size_t)sim.get_model().parameters.get_num_groups(); agegrp++) {
-        susceptibles_at_t[agegrp] = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
-                                                        (int)mio::osecir::InfectionState::Count * agegrp];
-    }
+    double season_val = (1 + params.template get<Seasonality>() *
+                             sin(3.141592653589793 * (std::fmod((sim.get_model().parameters.template get<StartDay>() + timept), 365.0) / 182.5 + 0.5)));
+    ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns>();
 
+    Eigen::MatrixXd cont_freq_eff(num_groups, num_groups);
+    Eigen::VectorXd divN(num_groups);
+    Eigen::VectorXd riskFromInfectedSymptomatic_derivatives(num_groups);
+    Eigen::VectorXd riskFromInfectedSymptomatic(num_groups);
 
+    for(Eigen::Index k = 0; k < num_groups; k++){
+        double temp = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)k] + 
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Exposed*(num_groups)+(size_t)k] +
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms*(num_groups)+(size_t)k] +
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms*(num_groups)+(size_t)k] +
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere*(num_groups)+(size_t)k]+
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical*(num_groups)+(size_t)k]+
+                    sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Recovered*(num_groups)+(size_t)k];
+        divN[k] = 1/temp;
 
-    //get population-sizes in the agegroups N_j
+        riskFromInfectedSymptomatic[k] = smoother_cosine(
+                    test_and_trace_required, params.template get<TestAndTraceCapacity>(), params.template get<TestAndTraceCapacity>() * 5,
+                    params.template get<RiskOfInfectionFromSymptomatic>()[k],
+                    params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]);
 
-    Eigen::VectorXd population_agegroups((size_t)sim.get_model().parameters.get_num_groups());
-    for (size_t agegrp = 0; agegrp < (size_t)sim.get_model().parameters.get_num_groups(); agegrp++) {
-        for (size_t infectionstate = 0; infectionstate < (size_t)mio::osecir::InfectionState::Count; infectionstate++)
-            population_agegroups[agegrp] +=
-                sim.get_result().get_value(timept)[infectionstate + (int)mio::osecir::InfectionState::Count * agegrp];
-    }
+        auto rateINS = 0.5 / (params.template get<IncubationTime>()[k] - params.template get<SerialInterval>()[k]);
 
-    mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>::InternalArrayType beta =
-        sim.get_model().parameters.template get<mio::osecir::RiskOfInfectionFromSymptomatic>().array();
-
-    //Contact matrix phi_{i,j}
-
-    //T_{I_j} = time in compartment infected = TimeInfectedSymptoms 
-    //T_{C_j} = time in compartment Carrier = IncubationTime 
-    //p_i = TransmissionProbabilityonContact
-    //beta = model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>().array() 
-
-    Eigen::MatrixXd eigenvalue_block((size_t)sim.get_model().parameters.get_num_groups(), (size_t)sim.get_model().parameters.get_num_groups());
-    //Initialize eigenvalue_block
-    for (int i = 0; i < eigenvalue_block.rows(); i++) {
-        for (int j = 0; j < eigenvalue_block.cols(); j++) {
-            eigenvalue_block(i, j) = susceptibles_at_t[i] *
-                                     sim.get_model().parameters.template get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] *
-                                     contact_matrix.get_matrix_at(timept)(i, j) * 1 / (population_agegroups[i]) *
-                                     (sim.get_model().parameters.template get<mio::osecir::IncubationTime>()[(mio::AgeGroup)j] +
-                                      beta[j] * sim.get_model().parameters.template get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)j]);
+        if(test_and_trace_required < params.template get<TestAndTraceCapacity>() || test_and_trace_required > 5*params.template get<TestAndTraceCapacity>()){
+            riskFromInfectedSymptomatic_derivatives[k] = 0;
+        }
+        else{
+            riskFromInfectedSymptomatic_derivatives[k] = -0.5*3.14159265358979323846*(params.template get<RiskOfInfectionFromSymptomatic>()[k]-params.template get<MaxRiskOfInfectionFromSymptomatic>()[k])/
+                                                        (4*params.template get<TestAndTraceCapacity>())*(1-params.template get<RecoveredPerInfectedNoSymptoms>())*
+                                                        rateINS*std::sin(3.14159265358979323846/(4*params.template get<TestAndTraceCapacity>())*(test_and_trace_required - params.template get<TestAndTraceCapacity>()));
+        }
+        for(Eigen::Index l = 0; l < num_groups; l++){
+            cont_freq_eff(l,k) = season_val * contact_matrix.get_matrix_at(timept)(static_cast<Eigen::Index>((size_t)l),
+                                                                 static_cast<Eigen::Index>((size_t)k));
         }
     }
 
-    Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+    //First initialize matrix F
 
-    ces.compute(eigenvalue_block);
-    const Eigen::VectorXcd tempvector = ces.eigenvalues();
+    for(Eigen::Index i = 0; i < params.get_num_groups(); i++){
 
-    Eigen::VectorXd tempvector1;
-    tempvector1.resize(tempvector.size());
-    //Do this later with some iterator
-    for (int i = 0; i < tempvector.size(); i++) {
-        tempvector1[i] = std::abs(tempvector[i]);
+        double temp = 0;
+        for(Eigen::Index k = 0; k < num_groups; k++){
+            temp += cont_freq_eff(i,k)*
+            sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms*(num_groups)+(size_t)k]*
+            riskFromInfectedSymptomatic_derivatives[k]*
+            divN[k];
+        }
+
+        for(Eigen::Index j = params.get_num_groups(); j < 2*params.get_num_groups(); j++){//Second block in first row of F (Denoted by A in the latex)
+            F(i,j) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
+                    params.template get<TransmissionProbabilityOnContact>()[i]*
+                    (cont_freq_eff(i,j)*params.template get<RelativeTransmissionNoSymptoms>()[j]*divN[j]+temp);
+        }
+
+        for(Eigen::Index j = 2*num_groups; j < 3*num_groups; j++){
+            F(i,j) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
+                    params.template get<TransmissionProbabilityOnContact>()[i]*cont_freq_eff(i,j)*riskFromInfectedSymptomatic[j]*divN[j];    
+        }
     }
-    return tempvector1.maxCoeff();
+
+    //Now initialize matrix V
+
+    for(Eigen::Index i = 0; i < num_groups; i++){
+
+        double rateE =
+                1.0 / (2 * params.template get<SerialInterval>()[i] - params.template get<IncubationTime>()[i]); // R2 = 1/(2SI-TINC)
+        double rateINS =
+                0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
+
+        double criticalPerSevereAdjusted =
+                smoother_cosine(icu_occupancy, 0.90 * params.template get<ICUCapacity>(), params.template get<ICUCapacity>(),
+                                params.template get<CriticalPerSevere>()[i], 0);
+        
+        V(i,i) = rateE;
+        V(i+num_groups, i) = -rateE;
+        V(i+num_groups,i+num_groups) = rateINS;
+        V(i+2*num_groups, i+num_groups) = -(1-(1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]))*rateINS;
+        V(i+2*num_groups, i+2*num_groups) = (1 / params.template get<TimeInfectedSymptoms>()[i]);
+        V(i+3*num_groups, i+2*num_groups) = -params.template get<SeverePerInfectedSymptoms>()[i] / params.template get<TimeInfectedSymptoms>()[i];
+        V(i+3*num_groups, i+3*num_groups) = 1 /(params.template get<TimeInfectedSevere>()[i]);
+        V(i+4*num_groups, i+3*num_groups) = - criticalPerSevereAdjusted/(params.template get<TimeInfectedSevere>()[i]);
+        V(i+4*num_groups, i+4*num_groups) = 1/(params.template get<TimeInfectedCritical>()[i]);
+
+        if(!(icu_occupancy < 0.9*params.template get<ICUCapacity>() || icu_occupancy > params.template get<ICUCapacity>)){
+            for(Eigen::Index j = 0; j < num_groups; j++){
+                V(i+4*num_groups, j+4*num_groups) -= sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere*num_groups +(size_t)i]/
+                params.template get<TimeInfectedSevere>()[i]*
+                0.5*params.template get<CriticalPerSevere>()[i]*3.141592653589793/(0.1*params.template get<ICUCapacity>())*
+                std::sin(3.141592653589793/(0.1*params.template get<ICUCapacity>())*(icu_occupancy-0.9*params.template get<ICUCapacity>()));
+            }
+        }
+
+        //Now try to invert the matrix V
+        V = V.inverse();
+
+        //Compute F*V
+        Eigen::MatrixXd NextGenMatrix(5*num_groups, 5*num_groups);
+        NextGenMatrix = F*V;
+
+        //Compute the biggest eigenvalue in absolute value
+         Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+
+        ces.compute(NextGenMatrix);
+        const Eigen::VectorXcd tempvector = ces.eigenvalues();
+
+        Eigen::VectorXd tempvector1;
+        tempvector1.resize(tempvector.size());
+        //Do this later with some iterator
+        for (int i = 0; i < tempvector.size(); i++) {
+             tempvector1[i] = std::abs(tempvector[i]);
+        }
+        return tempvector1.maxCoeff();
+    }
+    return 0;
 }
 
 //see declaration above
