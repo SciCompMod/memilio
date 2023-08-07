@@ -164,6 +164,7 @@ struct StateAgeFunction {
         ScalarType support_max = 0;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+            std::cout << "Computing... \n";
             while (eval(support_max) >= tol) {
                 support_max += dt;
             }
@@ -293,7 +294,8 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return m_parameter;
+        m_support_max = m_parameter;
+        return m_support_max;
     }
 
 protected:
@@ -355,11 +357,12 @@ struct ConstantFunction : public StateAgeFunction {
 
         unused(dt);
         unused(tol);
+        m_support_max = -2.0;
 
         log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
                   "of type b); see documentation of StateAgeFunction Base class.");
 
-        return (ScalarType)(-2);
+        return m_support_max;
     }
 
 protected:
