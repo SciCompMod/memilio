@@ -69,20 +69,20 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             save_data=False)
         self.assertEqual(len(data_1['inputs']), num_runs_1)
         self.assertEqual(len(data_1['inputs'][0]), input_width_1)
-        self.assertEqual(len(data_1['inputs'][0][0]), 10)
+        self.assertEqual(len(data_1['inputs'][0][0]), 8)
         self.assertEqual(len(data_1['labels']), num_runs_1)
         self.assertEqual(len(data_1['labels'][0]), label_width_1)
-        self.assertEqual(len(data_1['labels'][0][0]), 10)
+        self.assertEqual(len(data_1['labels'][0][0]), 8)
 
         data_2 = data_generation.generate_data(
             num_runs_2, self.path, input_width_2, label_width_2,
             save_data=False)
         self.assertEqual(len(data_2['inputs']), num_runs_2)
         self.assertEqual(len(data_2['inputs'][0]), input_width_2)
-        self.assertEqual(len(data_2['inputs'][0][0]), 10)
+        self.assertEqual(len(data_2['inputs'][0][0]), 8)
         self.assertEqual(len(data_2['labels']), num_runs_2)
         self.assertEqual(len(data_2['labels'][0]), label_width_2)
-        self.assertEqual(len(data_2['labels'][0][0]), 10)
+        self.assertEqual(len(data_2['labels'][0][0]), 8)
 
     def test_data_generation_save(self):
 
@@ -101,38 +101,38 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
         self.assertEqual(len(model_mlp_multi_input_single_output.layers), 5)
-        input_zero = np.zeros((1, 5, 10))
+        input_zero = np.zeros((1, 5, 8))
         output_zeros = model_mlp_multi_input_single_output(input_zero)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 1)
-        self.assertEqual(output_zeros.shape[2], 10)
+        self.assertEqual(output_zeros.shape[2], 8)
 
         model_lstm_single = network_architectures.lstm_network_multi_input_single_output()
         self.assertEqual(len(model_lstm_single.layers), 2)
-        input_zero = np.zeros((1, 1, 10))
+        input_zero = np.zeros((1, 1, 8))
         output_zeros = model_lstm_single(input_zero)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 1)
-        self.assertEqual(output_zeros.shape[2], 10)
+        self.assertEqual(output_zeros.shape[2], 8)
 
         label_width = 5
         model_cnn = network_architectures.cnn_multi_input_multi_output(
             label_width)
         self.assertEqual(len(model_cnn.layers), 4)
-        input_zero = np.zeros((1, 5, 10))
+        input_zero = np.zeros((1, 5, 8))
         output_zeros = model_cnn(input_zero)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 5)
-        self.assertEqual(output_zeros.shape[2], 10)
+        self.assertEqual(output_zeros.shape[2], 8)
 
         model_lstm_multi = network_architectures.lstm_multi_input_multi_output(
             label_width)
         self.assertEqual(len(model_lstm_multi.layers), 3)
-        input_zero = np.zeros((1, 5, 10))
+        input_zero = np.zeros((1, 5, 8))
         output_zeros = model_lstm_multi(input_zero)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 5)
-        self.assertEqual(output_zeros.shape[2], 10)
+        self.assertEqual(output_zeros.shape[2], 8)
 
     def test_network_fit(self):
 
@@ -165,7 +165,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             len(mlp_output.history['val_loss']), max_epochs)
         lstm_single_output = model.network_fit(
-            self.path, model=model_lstm_multi_input_single_output, max_epochs=max_epochs, plot=False)
+            self.path, model=model_lstm_multi_input_single_output,
+            max_epochs=max_epochs, plot=False)
         self.assertEqual(
             len(lstm_single_output.history['val_loss']), max_epochs)
 
