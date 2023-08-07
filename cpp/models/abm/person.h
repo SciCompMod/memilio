@@ -126,7 +126,7 @@ public:
      * @brief Adds a new Infection to the list of Infection%s.
      * @param[in] inf The new Infection.
      */
-    void add_new_infection(Infection&& inf);
+    void add_new_infection(Infection&& inf, TimePoint current_time = TimePoint(0));
 
     /**
      * @brief Get the AgeGroup of this Person.
@@ -369,12 +369,21 @@ public:
         return 1.; // put implementation in .cpp
     }
 
+    TimeSpan get_time_since_transmission()
+    {
+        return m_time_since_transmission;
+    };
+
 private:
+    void change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
+                                        const TimeSpan dt, TimePoint t);
+
     observer_ptr<Location> m_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
+    TimeSpan m_time_since_transmission;
     bool m_quarantine = false; ///< Whether the Person is currently in quarantine.
     AgeGroup m_age; ///< AgeGroup the Person belongs to.
     TimeSpan m_time_at_location; ///< Time the Person has spent at its current Location so far.

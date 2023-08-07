@@ -34,6 +34,7 @@ namespace abm
 Person::Person(Location& location, AgeGroup age, uint32_t person_id)
     : m_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
+    , m_time_since_transmission(std::numeric_limits<int>::max() / 2)
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(0)
@@ -52,10 +53,12 @@ Person::Person(Location& location, AgeGroup age, uint32_t person_id)
 
 void Person::interact(TimePoint t, TimeSpan dt, const GlobalInfectionParameters& params)
 {
+    auto old_infection_state = get_infection_state(t);
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible
         m_location->interact(*this, t, dt, params);
     }
     m_time_at_location += dt;
+    change_time_since_transmission(old_infection_state, get_infection_state(t + dt), dt, t);
 }
 
 void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
@@ -92,9 +95,36 @@ InfectionState Person::get_infection_state(TimePoint t) const
     }
 }
 
-void Person::add_new_infection(Infection&& inf)
+void Person::add_new_infection(Infection&& inf, TimePoint current_time)
 {
+    m_time_since_transmission = current_time - inf.get_infection_start();
     m_infections.push_back(std::move(inf));
+}
+
+void Person::change_time_since_transmission(const InfectionState curr_inf_state, const InfectionState new_inf_state,
+                                            const TimeSpan dt, TimePoint t)
+{
+    if (new_inf_state == InfectionState::Recovered || new_inf_state == InfectionState::Dead) {
+        m_time_since_transmission = mio::abm::TimeSpan(std::numeric_limits<int>::max() / 2);
+    }
+    else if (curr_inf_state != new_inf_state) {
+        if (new_inf_state == InfectionState::Exposed) {
+            m_time_since_transmission = mio::abm::TimeSpan(0);
+        }
+        else {
+            m_time_since_transmission += dt;
+        }
+    }
+    else {
+        if (is_infected(t)) {
+            if (m_time_since_transmission > mio::abm::TimeSpan(std::numeric_limits<int>::max() / 4)) {
+                m_time_since_transmission = mio::abm::TimeSpan(0);
+            }
+            else {
+                m_time_since_transmission += dt;
+            }
+        }
+    }
 }
 
 Location& Person::get_location()

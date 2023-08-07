@@ -22,7 +22,9 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
+//#include "memilio/utils/history.h"
 #include "abm/abm.h"
+#include "abm/household.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"
@@ -30,6 +32,44 @@
 #include <type_traits>
 
 namespace py = pybind11;
+
+//time point logger
+struct LogTimePoint : mio::LogAlways {
+    using Type = double;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        return sim.get_time().hours();
+    }
+};
+
+//LocationId logger
+struct LogLocationIds : mio::LogOnce {
+    using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationType, uint32_t>> location_ids{};
+        for (auto&& location : sim.get_world().get_locations()) {
+            location_ids.push_back(std::make_tuple(location.get_type(), location.get_index()));
+        }
+        return location_ids;
+    }
+};
+
+//agent logger
+struct LogPersonsPerLocationAndInfectionTime : mio::LogAlways {
+    using Type = std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        std::vector<std::tuple<mio::abm::LocationId, uint32_t, mio::abm::TimeSpan, mio::abm::InfectionState>>
+            location_ids_person{};
+        for (auto&& person : sim.get_world().get_persons()) {
+            location_ids_person.push_back(std::make_tuple(person.get_location().get_id(), person.get_person_id(),
+                                                          person.get_time_since_transmission(),
+                                                          person.get_infection_state(sim.get_time())));
+        }
+        return location_ids_person;
+    }
+};
 
 PYBIND11_MODULE(_simulation_abm, m)
 {
@@ -41,7 +81,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("InfectedSevere", mio::abm::InfectionState::InfectedSevere)
         .value("InfectedCritical", mio::abm::InfectionState::InfectedCritical)
         .value("Recovered", mio::abm::InfectionState::Recovered)
-        .value("Dead", mio::abm::InfectionState::Dead);
+        .value("Dead", mio::abm::InfectionState::Dead)
+        .value("Count", mio::abm::InfectionState::Count);
 
     pymio::iterable_enum<mio::abm::AgeGroup>(m, "AgeGroup")
         .value("Age0to4", mio::abm::AgeGroup::Age0to4)
@@ -67,7 +108,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("ICU", mio::abm::LocationType::ICU)
         .value("Car", mio::abm::LocationType::Car)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
-        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
+        .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact)
+        .value("Cemetery", mio::abm::LocationType::Cemetery);
 
     py::class_<mio::abm::TestParameters>(m, "TestParameters")
         .def(py::init<double, double>())
@@ -138,9 +180,27 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     py::class_<mio::abm::Person>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
+        .def("add_new_infection",
+             [](mio::abm::Person& self, mio::abm::Infection& infection, mio::abm::TimePoint t) {
+                 self.add_new_infection(std::move(infection), t);
+             })
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
+
+    py::class_<mio::abm::HouseholdMember>(m, "HouseholdMember")
+        .def(py::init<>())
+        .def("set_age_weight", &mio::abm::HouseholdMember::set_age_weight);
+
+    py::class_<mio::abm::Household>(m, "Household")
+        .def(py::init<>())
+        .def("add_members", &mio::abm::Household::add_members);
+
+    m.def("add_household_group_to_world", &mio::abm::add_household_group_to_world);
+
+    py::class_<mio::abm::HouseholdGroup>(m, "HouseholdGroup")
+        .def(py::init<>())
+        .def("add_households", &mio::abm::HouseholdGroup::add_households);
 
     py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
@@ -161,9 +221,16 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
 
+    py::class_<mio::abm::Infection>(m, "Infection")
+        .def(py::init<mio::abm::VirusVariant, mio::abm::AgeGroup, const mio::abm::GlobalInfectionParameters&,
+                      mio::abm::TimePoint, mio::abm::InfectionState, bool>());
+
     py::class_<mio::abm::Location>(m, "Location")
+        .def("set_capacity", &mio::abm::Location::set_capacity)
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
+        .def_property_readonly("population", &mio::abm::Location::get_subpopulations,
+                               py::return_value_policy::reference_internal)
         .def_property("infection_parameters",
                       py::overload_cast<>(&mio::abm::Location::get_infection_parameters, py::const_),
                       [](mio::abm::Location& self, mio::abm::LocalInfectionParameters params) {
@@ -196,6 +263,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
         .def("add_person", &mio::abm::World::add_person, py::arg("location_id"), py::arg("age_group"),
              py::return_value_policy::reference_internal)
+        .def("get_individualized_location",
+             py::overload_cast<mio::abm::LocationId>(&mio::abm::World::get_individualized_location, py::const_),
+             py::return_value_policy::reference_internal)
         .def_property_readonly("locations", &mio::abm::World::get_locations,
                                py::keep_alive<1, 0>{}) //keep this world alive while contents are referenced in ranges
         .def_property_readonly("persons", &mio::abm::World::get_persons, py::keep_alive<1, 0>{})
@@ -226,11 +296,48 @@ PYBIND11_MODULE(_simulation_abm, m)
             },
             py::return_value_policy::reference_internal);
 
+    m.def(
+        "set_viral_load_parameters",
+        [](mio::abm::GlobalInfectionParameters& infection_params, mio::abm::VirusVariant variant,
+           mio::abm::AgeGroup age, mio::abm::VaccinationState state, double min_peak, double max_peak,
+           double min_incline, double max_incline, double min_decline, double max_decline) {
+            infection_params.get<mio::abm::ViralLoadDistributions>()[{variant, age, state}] =
+                mio::abm::ViralLoadDistributionsParameters{
+                    {min_peak, max_peak}, {min_incline, max_incline}, {min_decline, max_decline}};
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "set_infectivity_parameters",
+        [](mio::abm::GlobalInfectionParameters& infection_params, mio::abm::VirusVariant variant,
+           mio::abm::AgeGroup age, double min_alpha, double max_alpha, double min_beta, double max_beta) {
+            infection_params.get<mio::abm::InfectivityDistributions>()[{variant, age}] =
+                mio::abm::InfectivityDistributionsParameters{{min_alpha, max_alpha}, {min_beta, max_beta}};
+        },
+        py::return_value_policy::reference_internal);
+
+    // m.def("get_instance", [](mio::abm::GlobalInfectionParameters& params) {
+    //     auto inf_params = params.get<mio::abm::InfectivityDistributions>()[{mio::abm::VirusVariant::Wildtype,
+    //                                                                         mio::abm::AgeGroup::Age80plus}];
+    //     return inf_params.infectivity_alpha.get_distribution_instance()(inf_params.infectivity_alpha.params);
+    // });
+
     py::class_<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
         .def("advance",
-             static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
-             py::arg("tmax"))
+             &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                                         LogPersonsPerLocationAndInfectionTime>>)
+        //.def("advance", &mio::abm::Simulation::advance)
         .def_property_readonly("result", &mio::abm::Simulation::get_result)
-        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world));
+        .def_property_readonly("world", py::overload_cast<>(&mio::abm::Simulation::get_world),
+                               py::return_value_policy::reference_internal);
+
+    py::class_<
+        mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds, LogPersonsPerLocationAndInfectionTime>>(
+        m, "History")
+        .def(py::init<>())
+        .def_property_readonly("log", [](mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                                      LogPersonsPerLocationAndInfectionTime>& self) {
+            return self.get_log();
+        });
 }
