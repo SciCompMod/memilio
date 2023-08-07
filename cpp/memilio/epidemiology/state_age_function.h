@@ -132,12 +132,17 @@ struct StateAgeFunction {
      * @brief Set the m_parameter object.
      * 
      * Can be used to set the m_parameter object, which specifies the used function.
+     * The m_parameter object influences the maximum support of the function. This is why we set 
+     * m_support_max = -1 after setting the m_parameter object so that the maximum support is updated 
+     * accordingly in get_support_max. 
      *
      *@param[in] new_parameter New parameter for StateAgeFunction.
      */
     void set_parameter(ScalarType new_parameter)
     {
         m_parameter = new_parameter;
+
+        m_support_max = -1;
     }
 
     /**
