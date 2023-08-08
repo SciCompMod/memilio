@@ -274,11 +274,15 @@ def activate_npis_based_on_incidence(
 
     If one of the former cases holds true, then the activation or lifting happens
     two days after the satisfaction of the criterion. This is in accordance with
-    case reporting that can only happen after the day has finished and as these
-    reports generally appeared in the morning for the previous day, the NPI can
-    not directly be activated or lifted that day but only on the next day. Hence
+    case reporting that can only happen after the day has finished (a 'delay' of one
+    day is introduced here) and as these reports generally appeared in the morning
+    for the previous day, the NPI was not directly be activated or lifted that same
+    day but only on the next day (another delay of one day). Hence,
     the incidence-dependent NPI is activated or lifted two days after the threshold
-    is/ is not exceeded. Please see the examples for a better understanding.
+    is/is not anymore exceeded, additionally considering the number of consecutive
+    days to implement or lift (see second paragraph above). 
+    
+    Please see the examples for a better understanding.
 
     Example (Threshold=3.5):
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
@@ -292,19 +296,20 @@ def activate_npis_based_on_incidence(
     With yesterdays incidence over threshold on days:
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
     With npi_lifting_days_threshold=2, npi_activation_days_threshold=1
-    NPI should be activated on days 4 and 9 and lifted on days 8 and 14
-    int_active should then be:
+    NPI should be activated on days 4 and 9 and lifted on days 8 and 14, i.e.,
+    int_active then is:
     [0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0]
     With npi_lifting_days_threshold=3, npi_activation_days_threshold=2
-    NPI should be activated on day 9 (and lifted on day 15; not in the vector)
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    NPI will be activated on day 10 (and would be lifted on day 15; 
+    which is not in the vector anymore), i.e., int_active then is:
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
     Another example:
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
     npi_lifting_days_threshold=3, npi_activation_days_threshold=1
-    NPI should be activated on day 2 and lifted on day 14
-    int_active should then be:
+    NPI will be activated on day 2 and lifted on day 14
+    int_active then be is:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
 
     Please also note that the first column will always returned as false
@@ -334,7 +339,8 @@ def activate_npis_based_on_incidence(
     # loop over every day
     for i in range(len(yesterdays_incid_over_threshold)):
         # Set int_active=0 where last npi_lifting_days_threshold+1 days did not exceed
-        # the threshold
+        # the threshold. Look only until the day before yesterday (max(...):i is exclusive sum for i)
+        # as we assume a necessary delay of 24h to implement an intervention (see explanation above)
         if yesterdays_incid_over_threshold[max(0, i-npi_lifting_days_threshold):i].values.sum() == 0:
             int_active[i] = 0
         # Set int_active=1 where last npi_activation_days_threshold+1 days did
