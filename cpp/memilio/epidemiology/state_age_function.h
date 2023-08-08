@@ -164,7 +164,6 @@ struct StateAgeFunction {
         ScalarType support_max = 0;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
-            std::cout << "Computing... \n";
             while (eval(support_max) >= tol) {
                 support_max += dt;
             }
