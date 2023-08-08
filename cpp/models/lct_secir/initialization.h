@@ -122,12 +122,11 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
         if (state_age <= 0) {
             return 1;
         }
-        int result = 0;
-        for (int j = 1; j < (int)m_parameter + 1; j++) {
-            result += m_rate * std::pow(m_rate * state_age, j - 1) / (boost::math::factorial<ScalarType>(j - 1)) *
-                      std::exp(-m_rate * state_age);
+        double result = 0;
+        for (int j = 0; j < (int)m_parameter; j++) {
+            result += std::pow(m_rate * state_age, j) / (boost::math::factorial<ScalarType>(j));
         }
-        return (1 / m_rate) * result;
+        return std::exp(-m_rate * state_age) * result;
     }
 
 protected:

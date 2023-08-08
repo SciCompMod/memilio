@@ -137,7 +137,9 @@ struct StateAgeFunction {
      */
     void set_parameter(ScalarType new_parameter)
     {
-        m_parameter = new_parameter;
+        m_parameter   = new_parameter;
+        m_support_max = -1.;
+        m_support_tol = -1.;
     }
 
     /**
@@ -159,8 +161,10 @@ struct StateAgeFunction {
         ScalarType support_max = dt;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
-            while (eval(support_max) >= tol) {
+            ScalarType a = 10;
+            while (a >= tol) {
                 support_max += dt;
+                a = eval(support_max);
             }
 
             m_support_max = support_max;

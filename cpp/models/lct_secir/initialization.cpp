@@ -44,6 +44,10 @@ void Initializer::check_constraints() const
             log_error("Time points in flows have to be equidistant.");
         }
     }
+
+    if (!(m_dt < 1)) {
+        log_warning("Step size was set very large. The result could be distorted.");
+    }
 }
 
 Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen::Index idx_incoming_flow,
@@ -68,11 +72,13 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
         erlang.set_parameter(j + 1);
 
         // Determine relevant calculation area and corresponding index.
-        calc_time       = erlang.get_support_max(m_dt, 1e-8);
+        calc_time       = erlang.get_support_max(m_dt, 1e-6);
         calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
 
         if (num_time_points < calc_time_index) {
-            log_error("Initialization failed. Not enough time points for the transitions are given.");
+            log_error("Initialization failed. Not enough time points for the transitions are given.  {} are needed but "
+                      "just {} are given.",
+                      calc_time_index, num_time_points);
         }
 
         // Approximate integral with non-standard scheme.
@@ -110,7 +116,9 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
     Eigen::Index time_point_num_minusdt = m_flows.get_num_time_points() - 1;
 
     if (time_point_num_minusdt < calc_time_index) {
-        log_error("Initialization failed. Not enough time points for the transitions are given.");
+        log_error("Initialization failed. Not enough time points for the transitions are given.  {} are needed but "
+                  "just {} are given.",
+                  calc_time_index, time_point_num_minusdt);
     }
 
     for (Eigen::Index i = time_point_num_minusdt - calc_time_index; i < time_point_num_minusdt; i++) {
