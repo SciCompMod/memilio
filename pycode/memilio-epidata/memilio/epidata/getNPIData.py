@@ -284,7 +284,7 @@ def activate_npis_based_on_incidence(
     
     Please see the examples for a better understanding.
 
-    Example (Threshold=3.5):
+    Example 1 (Threshold=3.5):
     local_incid=pd.Series([2, 4, 2, 4, 2, 2, 4, 4, 2, 4, 2, 2, 2, 2])
     Yesterdays incidence is over the threshold on following days:
     [?, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
@@ -295,21 +295,21 @@ def activate_npis_based_on_incidence(
 
     With yesterdays incidence over threshold on days:
     [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
-    With npi_lifting_days_threshold=2, npi_activation_days_threshold=1
-    NPI should be activated on days 4 and 9 and lifted on days 8 and 14, i.e.,
+    Example 1a) ... and npi_lifting_days_threshold=2, npi_activation_days_threshold=1,
+    the NPI will be activated on days 4 and 9 and lifted on days 8 and 14, i.e.,
     int_active then is:
     [0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0]
-    With npi_lifting_days_threshold=3, npi_activation_days_threshold=2
-    NPI will be activated on day 10 (and would be lifted on day 15; 
+    Example 1b) ... and npi_lifting_days_threshold=3, npi_activation_days_threshold=2,
+    the NPI will be activated on day 10 (and would be lifted on day 15; 
     which is not in the vector anymore), i.e., int_active then is:
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
-    Another example:
+    Example 2:
     With yesterday's incidence over threshold on days:
     [1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
-    npi_lifting_days_threshold=3, npi_activation_days_threshold=1
-    NPI will be activated on day 2 and lifted on day 14
-    int_active then be is:
+    and npi_lifting_days_threshold=3, npi_activation_days_threshold=1,
+    the NPI will be activated on day 2 and lifted on day 14, i.e.,
+    int_active then is:
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
 
     Please also note that the first column will always returned as false
@@ -514,11 +514,13 @@ def get_npi_data(fine_resolution=2,
 
     print('Download completed.')
 
+    # Compute column index of NPI start (columns with NPIs start with days 
+    # which are provided in format dYYYYMMDD).
     npi_start_col = np.where(
         df_npis_old.columns.str.contains('d2') == True)[0][0]
 
-    # get existing codes that are used
-    # for fine resolution we don't have codes M22 - M24 but are still listed in description
+    # get existing codes that are used; for fine resolution we don't
+    # have codes M22 - M24 but these are still listed in description
     if fine_resolution > 0:
         # count how many codes contain M22, M23 or M24
         num_nonexistent_codes = df_npis_desc['Variablenname'].str.count(
