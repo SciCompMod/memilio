@@ -93,9 +93,8 @@ def impute_and_reduce_df(
     idx = pd.date_range(start_date, end_date)
 
     # create list of all possible groupby columns combinations
-    unique_ids = []
-    for group_key in group_by_cols.keys():
-        unique_ids.append(group_by_cols[group_key])
+    unique_ids = [group_by_cols[group_key]
+                  for group_key in group_by_cols.keys()]
     unique_ids_comb = list(itertools.product(*unique_ids))
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
@@ -113,9 +112,8 @@ def impute_and_reduce_df(
 
         if len(df_local) > 0:
             # create values for first date
-            values = {}
-            for column in df_local.columns:
-                values[column] = df_local[column][0]
+            values = {column: df_local[column][0]
+                      for column in df_local.columns}
             # depending on 'start_w_firstval', missing values at the beginning
             # of the frame will either be set to zero or to the first available
             # value in the data frame
@@ -126,16 +124,16 @@ def impute_and_reduce_df(
             if impute == 'zeros':
                 # impute zeros at missing dates
                 df_local_new.fillna(values, inplace=True)
-            else:
+            elif impute == 'forward':
                 # fill values of missing dates based on last entry
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.ffill(inplace=True)
                 # fill value of the first date, if it doesn't exist yet
-                # has to be conducted in second step to not impute 'value'
-                # at first missing value if start is present
-                df_local_new.fillna(values, limit=1, inplace=True)
-                # fill remaining values (between first date and first
+                # and remaining values (between first date and first
                 # reported date of the df_local)
-                df_local_new.fillna(method='ffill', inplace=True)
+                df_local_new.fillna(values, inplace=True)
+            else:
+                raise ValueError(
+                    'Invalid imputation method. Expected zeros or forward. Got ' + str(impute) + '.')
 
             # compute 'moving average'-days moving average
             if moving_average > 0:

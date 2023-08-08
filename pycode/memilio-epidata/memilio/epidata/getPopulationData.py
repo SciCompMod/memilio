@@ -68,8 +68,9 @@ def read_population_data(username, password, read_data, directory):
         # navigate to file as in documentation
         twill.commands.follow('Themen')
         twill.commands.follow(filename[:2])
-        # wait 1 second to prevent error
-        time.sleep(1)
+        # wait 2 seconds to prevent error
+        # page needs some time to load
+        time.sleep(2)
         twill.commands.follow(filename.split('-')[0])
         twill.commands.follow(filename)
         # start 'Werteabruf'

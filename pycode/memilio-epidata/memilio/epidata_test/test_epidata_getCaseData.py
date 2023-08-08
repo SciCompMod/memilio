@@ -31,6 +31,9 @@ from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import progress_indicator
 
+# activate CoW for more predictable behaviour of pandas DataFrames
+pd.options.mode.copy_on_write = True
+
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
     path = '/home/Case_Data'
