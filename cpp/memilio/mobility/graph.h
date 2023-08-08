@@ -85,6 +85,15 @@ struct Node {
         , node_pt(std::forward<Args>(args)...)
     {
     }
+
+    Node(int node_id, double duration, NodePropertyT property_arg, NodePropertyT node_pt_arg)
+        : id{node_id}
+        , stay_duration(duration)
+        , property(property_arg)
+        , node_pt(node_pt_arg)
+    {
+    }
+
     int id;
     double stay_duration;
     NodePropertyT property;
@@ -204,6 +213,14 @@ public:
     Node<NodePropertyT>& add_node(int id, double duration_stay, Args&&... args)
     {
         m_nodes.emplace_back(id, duration_stay, std::forward<Args>(args)...);
+        return m_nodes.back();
+    }
+
+    // Ändere die Funktionsdeklaration von add_node
+    template <class ModelType>
+    Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
+    {
+        m_nodes.emplace_back(id, duration_stay, model1, model2);
         return m_nodes.back();
     }
 

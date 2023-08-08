@@ -215,6 +215,9 @@ IOResult<std::vector<std::vector<std::vector<int>>>> read_path_mobility(const st
                     arr[indx_x][indx_y].push_back(number);
                 }
             }
+            else {
+                arr[indx_x][indx_y].push_back(static_cast<int>(indx_x));
+            }
         }
     }
     catch (std::runtime_error& ex) {
