@@ -161,10 +161,8 @@ struct StateAgeFunction {
         ScalarType support_max = dt;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
-            ScalarType a = 10;
-            while (a >= tol) {
+            while (eval(support_max) >= tol) {
                 support_max += dt;
-                a = eval(support_max);
             }
 
             m_support_max = support_max;

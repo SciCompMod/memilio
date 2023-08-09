@@ -73,6 +73,34 @@ struct ErlangDensity : public StateAgeFunction {
                std::exp(-m_rate * state_age);
     }
 
+    /**
+     * @brief Computes the maximum of the support of the function. 
+     * 
+     * For small time steps and small variance of the density it is possible that dt is returned with the function of StateAgeFunction.
+     * StateAgeFunction is designed for survialfunctions, not for densities.
+     * Therefore with this function we calculate the smallest time value t where function(tau)=0 for all tau>t.
+     *
+     * @param[in] dt Time step size. 
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below. 
+     * @return ScalarType support_max
+     */
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
+    { // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger than the mean.
+        ScalarType mean        = m_parameter / m_rate;
+        ScalarType support_max = (ScalarType)dt * (int)(mean / dt);
+
+        if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
+            while (eval(support_max) >= tol) {
+                support_max += dt;
+            }
+
+            m_support_max = support_max;
+            m_support_tol = tol;
+        }
+
+        return m_support_max;
+    }
+
 protected:
     /**
      * @brief Implements clone for ErlangDensity.

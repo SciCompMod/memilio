@@ -48,7 +48,13 @@ int main()
     parameters.get<mio::lsecir::TransmissionProbabilityOnContact>() = 0.0733271;
 
     mio::ContactMatrixGroup& contact_matrix = parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 9.5));
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2.7463));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.));
+    /*contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 2 * 2.7463));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(-10.));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(4.9));
+    contact_matrix[0].add_damping(0., mio::SimulationTime(5.));
+    contact_matrix[0].finalize();*/
 
     parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>() = 1;
     parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>() = 0.3;
@@ -96,7 +102,7 @@ int main()
     init_transitions = init_transitions * dt_flows;
 
     // add initial time point to time series
-    init.add_time_point(-90, init_transitions);
+    init.add_time_point(-200, init_transitions);
     // add further time points until time 0
     while (init.get_last_time() < 0) {
         //init_transitions *=  1.01;
@@ -104,7 +110,7 @@ int main()
     }
 
     // Set vector that specifies the number of subcompartments.
-    int num_subcompartments = 7;
+    int num_subcompartments = 1;
     std::vector<int> vec_subcompartments((int)mio::lsecir::InfectionStateBase::Count, 1);
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::Exposed]            = num_subcompartments;
     vec_subcompartments[(int)mio::lsecir::InfectionStateBase::InfectedNoSymptoms] = num_subcompartments;
@@ -121,7 +127,7 @@ int main()
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model(std::move(init_compartments), infectionStates, std::move(parameters));
-    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, 10, 0.5, model);
+    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, 20, 0.5, model);
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 
@@ -130,11 +136,11 @@ int main()
     }
     if (save_result) {
         auto save_result_status_subcompartments =
-            mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_3.h5");
-        auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_fictional_3.h5");
+            mio::save_result({result}, {0}, 1, "result_lct_subcompartments_fictional_1.h5");
+        auto save_result_status = mio::save_result({populations}, {0}, 1, "result_lct_fictional_1.h5");
     }
 
-    /*// Perform an other simulation with a different number of subcompartments.
+    // Perform an other simulation with a different number of subcompartments.
     // Set vector that specifies the number of subcompartments.
     int num_subcompartments2 = 10;
     std::vector<int> vec_subcompartments2((int)mio::lsecir::InfectionStateBase::Count, 1);
@@ -151,7 +157,7 @@ int main()
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model2(std::move(init_compartments2), infectionStates2, std::move(parameters));
-    mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(0, 10, 0.5, model2);
+    mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(0, 20, 0.5, model2);
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations2 = model2.calculate_populations(result2);
 
@@ -162,5 +168,5 @@ int main()
         auto save_result_status_subcompartments2 =
             mio::save_result({result2}, {0}, 1, "result_lct_subcompartments_fictional_10.h5");
         auto save_result_status2 = mio::save_result({populations2}, {0}, 1, "result_lct_fictional_10.h5");
-    }*/
+    }
 }
