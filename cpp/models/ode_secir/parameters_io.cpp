@@ -280,8 +280,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 model[county].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
                     num_InfectedNoSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
                     num_InfectedSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
                     num_InfectedSevere[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[county][i];

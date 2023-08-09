@@ -229,13 +229,13 @@ TEST(TestGraph, set_edges)
             std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 
     auto e_work = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0, 0.66, 0.66, 0.66, 0.66, 0, 0, 0.66,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0)
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 0.66, 0.66,
+                   0.66, 0, 0.66, 0, 0, 0, 0.66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
                       .finished();
-    auto e_other =
-        (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0,
-         0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0, 2, 2, 2, 2, 0, 0, 2, 0)
-            .finished();
+    auto e_other = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 2, 2, 2, 0, 2, 0, 0, 0, 2,
+                    0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2,
+                    2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0)
+                       .finished();
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 
