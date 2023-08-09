@@ -292,7 +292,7 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     // test all values from one node to the provided reference data for both simulations
     const auto& res_sim = sim_flows.get_graph().nodes()[0].property.get_result();
     const auto compare  = load_test_data_csv<ScalarType>("graphsimulation-compare.csv");
-    EXPECT_EQ(compare.size(), res_sim.get_num_time_points());
+    EXPECT_EQ((size_t)compare.size(), (size_t)res_sim.get_num_time_points());
     for (size_t t_indx = 0; t_indx < (size_t)res_sim.get_num_time_points(); t_indx++) {
         EXPECT_NEAR(compare[t_indx][0], res_sim.get_time((Eigen::Index)t_indx), 1e-10);
         auto temp_sol = res_sim.get_value((Eigen::Index)t_indx);
