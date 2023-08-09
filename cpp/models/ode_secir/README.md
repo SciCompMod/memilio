@@ -1,4 +1,4 @@
-# ODE-based / SEIR- and SECIR-type models
+# ODE-based SECIR-type model
 
 This module models and simulates the epidemic using an ODE-based SECIR-type model approach. Unlike the agent based model that uses an particular agents, this model simulates the spread of COVID19 in a population with subpopulations being in different compartments such as 'Exposed', 'Infected' or 'Recovered'.
 
@@ -14,7 +14,25 @@ The model consists of the following major classes:
 
 Below is an overview of the model architecture and its compartments.
 
-![secir](https://github.com/DLR-SC/memilio/assets/69154294/288d03f4-17ee-47fc-9fcd-b30e04525f24)
+![secir_model](https://github.com/DLR-SC/memilio/assets/69154294/9e0ba2fb-f966-442f-86ca-b568d74b9311)
+| Parameter                   | Implementation | Description |
+|---------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| $\phi$                      |  `ContactPatterns`               | Daily contact rate |
+| $\rho$                      |  `TransmissionProbabilityOnContact`               | Transmission risk for people located in one of the susceptible compartments |
+| $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion of asymptomatic infected people who are not isolated |
+| $\xi_{I_{Sy}}$               | `riskFromInfectedSymptomatic`                | Proportion of infected people with symptomps who are not isolated. |
+| $N$                         | `Nj`   | Total population. |
+| $D_*$                         |  `-`  | Number of death people. `Nj` is directly calculated excluding death people. |
+| $\frac{1}{T_{E}}$                    |  `rateE`               | Time in days an individual stays in the Exposed compartment. |
+| $\frac{1}{T_{I_{NS}}}$                    |  `rateINS`               | Time in days an individual stays in the Infected No Symptoms compartment. |
+| $T_{I_{Sy}}$                    |  `TimeInfectedSymptoms`               | Time in days an individual stays in the Infected Symptoms compartment. |
+| $T_{I_{Sev}}$                       |  `TimeInfectedSevere`               | Time in days an individual stays in the Infected Severe compartment. |
+| $T_{I_{Cr}}$                       |  `TimeInfectedCritical`               | Time in days an individual stays in the Infected Critical compartment. |
+| $\mu_{I_{NS}}^{I_{Sy}}$              |   `1 - RecoveredPerInfectedNoSymptoms`              | Probability of transition from compartment Infected No Symptoms to Infected Symptoms. |  
+| $\mu_{I_{Sy}}^{I_{Sev}}$              |   `SeverePerInfectedSymptoms`              | Probability of transition from compartment Infected Symptoms to Infected Severe. |
+| $\mu_{I_{Sev}}^{I_{Cr}}$              |   `CriticalPerSevere`              | Probability of transition from compartment Infected Severe to Infected Critical. |  
+| $\mu_{I_{Cr}}^{D}$              |   `DeathsPerCritical`              | Probability of dying when located in compartment Infected Critical. |   
+
 
 ## Simulation
 
