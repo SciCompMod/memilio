@@ -565,14 +565,13 @@ def get_npi_data(fine_resolution=2,
 
         # drop 0 column if existent
         try:
-            df_npis_combinations_pre.drop(columns=0)
+            df_npis_combinations_pre.drop(columns='Unnamed: 0', inplace=True)
         except KeyError:
             pass
         # rename essential columns and throw away others
         columns_used = np.where(
             (df_npis_combinations_pre == 'x').any() == True)[0]
-        column_names = [
-            'Unnamed: ' + str(i) for i in range(columns_used[0], columns_used[-1]+1)]
+        column_names = list(df_npis_combinations_pre.columns[[i for i in columns_used]])
         rename_columns = {column_names[i]: i for i in range(len(column_names))}
         df_npis_combinations_pre.rename(columns=rename_columns, inplace=True)
         df_npis_combinations_pre = df_npis_combinations_pre[[
