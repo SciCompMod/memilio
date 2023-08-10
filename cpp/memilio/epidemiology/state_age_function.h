@@ -132,12 +132,17 @@ struct StateAgeFunction {
      * @brief Set the m_parameter object.
      * 
      * Can be used to set the m_parameter object, which specifies the used function.
+     * The m_parameter object influences the maximum support of the function. This is why we set 
+     * m_support_max = -1 after setting the m_parameter object so that the maximum support is updated 
+     * accordingly in get_support_max. 
      *
      *@param[in] new_parameter New parameter for StateAgeFunction.
      */
     void set_parameter(ScalarType new_parameter)
     {
         m_parameter = new_parameter;
+
+        m_support_max = -1;
     }
 
     /**
@@ -288,7 +293,8 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return m_parameter;
+        m_support_max = m_parameter;
+        return m_support_max;
     }
 
 protected:
@@ -350,11 +356,12 @@ struct ConstantFunction : public StateAgeFunction {
 
         unused(dt);
         unused(tol);
+        m_support_max = -2.0;
 
         log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
                   "of type b); see documentation of StateAgeFunction Base class.");
 
-        return (ScalarType)(-2);
+        return m_support_max;
     }
 
 protected:
