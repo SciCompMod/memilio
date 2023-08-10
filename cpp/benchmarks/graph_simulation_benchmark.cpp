@@ -113,25 +113,20 @@ void graph_sim_secirvvs(::benchmark::State& state)
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups);
 
     mio::Graph<mio::SimulationNode<mio::Simulation<mio::osecirvvs::Model>>, mio::MigrationEdge> g;
-    g.add_node(1001, model, cfg.t0);
-    g.add_node(1002, model, cfg.t0);
-    g.add_edge(0, 1,
-               Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
-    g.add_edge(1, 0,
-               Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
-    // for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
-    //     g.add_node(county_id, model, cfg.t0);
-    //     g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
-    // }
+    for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
+        g.add_node(county_id, model, cfg.t0);
+        g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
+    }
 
-    // for (size_t county_idx_i = 0; county_idx_i < g.nodes().size(); ++county_idx_i) {
-    //     for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
-    //         if (county_idx_i == county_idx_j)
-    //             continue;
-    //         g.add_edge(county_idx_i, county_idx_j,
-    //                    Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count, 0.01));
-    //     }
-    // }
+    for (size_t county_idx_i = 0; county_idx_i < g.nodes().size(); ++county_idx_i) {
+        for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
+            if (county_idx_i == county_idx_j)
+                continue;
+            g.add_edge(
+                county_idx_i, county_idx_j,
+                Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
+        }
+    }
 
     auto sim = mio::make_migration_sim(cfg.t0, cfg.dt, std::move(g));
 
