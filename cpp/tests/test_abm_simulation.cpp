@@ -77,12 +77,15 @@ TEST(TestSimulation, advance_subpopulation)
     auto world       = mio::abm::World();
     auto location_id = world.add_location(mio::abm::LocationType::School);
     auto& school     = world.get_individualized_location(location_id);
-    auto person1 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::Infected);
-    auto person2 =
-        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Infected);
-    auto person3 =
+    auto& person1 =
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person2 =
+        add_test_person(world, location_id, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
+    auto& person3 =
         add_test_person(world, location_id, mio::abm::AgeGroup::Age35to59, mio::abm::InfectionState::Exposed);
+    person1.set_assigned_location(location_id);
+    person2.set_assigned_location(location_id);
+    person3.set_assigned_location(location_id);
 
     auto sim = mio::abm::Simulation(mio::abm::TimePoint(0), std::move(world));
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50));
@@ -90,7 +93,7 @@ TEST(TestSimulation, advance_subpopulation)
     for (size_t i = 0; i < 51; i++) {
         auto v = school.get_subpopulations().get_value(i);
         // Check whether the number of persons in infected state at the location is consistent
-        ASSERT_LE(v[size_t(mio::abm::InfectionState::Infected)], 3);
+        ASSERT_LE(v[size_t(mio::abm::InfectionState::InfectedSymptoms)], 3);
         // Check the time evolution is correct
         ASSERT_EQ(school.get_subpopulations().get_time(i), ScalarType(i) / 24);
     }
@@ -120,7 +123,7 @@ TEST(TestSimulation, getWorldAndTimeConst)
     ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
     const mio::abm::World world_test{std::move(sim.get_world())};
-    EXPECT_EQ(world_test.get_locations().size(), 0);
+    EXPECT_EQ(world_test.get_locations().size(), 1);
 }
 
 TEST(TestSimulation, advanceWithHistory)

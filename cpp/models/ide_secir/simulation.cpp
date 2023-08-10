@@ -33,7 +33,7 @@ namespace isecir
 void Simulation::advance(ScalarType tmax)
 {
     mio::log_info("Simulating IDE-SECIR until t={} with dt = {}.", tmax, m_dt);
-    std::cout << "max supp: " << m_model->get_global_max_support(m_dt) << "\n";
+    std::cout << "max supp: " << m_model->get_global_support_max(m_dt) << "\n";
     m_model->initialize_solver(m_dt);
 
     // for every time step:

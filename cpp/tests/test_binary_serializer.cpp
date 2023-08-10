@@ -77,7 +77,7 @@ namespace
 {
 
 struct Foo {
-    int i;
+    int i = 0;
     template <class IOContext>
     void serialize(IOContext& io) const
     {

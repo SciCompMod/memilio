@@ -40,6 +40,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/config.h"
+#include "memilio/epidemiology/state_age_function.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include <iostream>
 #include <gtest/gtest.h>
@@ -180,14 +181,14 @@ TEST(IdeOdeSecir, compareIdeOde)
     // We set the funcparams so that they correspond to the above ODE model
     //TODO: We have to carefully set the default parameter or set the parameter for S to E explicitly to not have any surprises
     // when calculating the calc_time when computing compartments
-    // maybe we should check this in check constraints or set this max_support explicitly to 0 so that the user
+    // maybe we should check this in check constraints or set this support_max explicitly to 0 so that the user
     // doesn't have to think of this
-    mio::isecir::ExponentialDecay expdecay(10.0);
-    mio::isecir::StateAgeFunctionWrapper delaydistribution(expdecay);
-    std::vector<mio::isecir::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::ExponentialDecay expdecay(10.0);
+    mio::StateAgeFunctionWrapper delaydistribution(expdecay);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
     // TransitionDistribution from S to E is never used, put in default
     // see definition of rate_E in model.h of ODE; set funcparam to 1/rate_E
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_parameter(
         (2 * model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] -
          model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]));
     std::cout << "rate_E: "
@@ -195,27 +196,27 @@ TEST(IdeOdeSecir, compareIdeOde)
                       model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0])
               << "\n";
     // see definition of rate_E in model.h of ODE; set funcparam to 1/rate_INS
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms].set_parameter(
         2 * (model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] -
              model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]));
     std::cout << "rate_INS: "
               << 1 / (2 * (model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] -
                            model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]))
               << "\n";
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered].set_parameter(
         2 * (model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0] -
              model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0]));
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms>()[(mio::AgeGroup)0]);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedSevere>()[(mio::AgeGroup)0]);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]);
-    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_funcparam(
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered].set_parameter(
         1 / model_ode.parameters.get<mio::osecir::TimeInfectedCritical>()[(mio::AgeGroup)0]);
 
     model_ide.parameters.set<mio::isecir::TransitionDistributions>(vec_delaydistrib);
@@ -232,23 +233,23 @@ TEST(IdeOdeSecir, compareIdeOde)
     // model_ide.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix_ide);
 
     // Set further parameters
-    mio::isecir::ConstantFunction constfunc_proboncontact(
+    mio::ConstantFunction constfunc_proboncontact(
         model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[(mio::AgeGroup)0]);
-    mio::isecir::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
+    mio::StateAgeFunctionWrapper proboncontact(constfunc_proboncontact);
     model_ide.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(proboncontact);
 
-    mio::isecir::ConstantFunction constfunc_reltransnosy(
+    mio::ConstantFunction constfunc_reltransnosy(
         model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)0]);
-    mio::isecir::StateAgeFunctionWrapper reltransnosy(constfunc_reltransnosy);
+    mio::StateAgeFunctionWrapper reltransnosy(constfunc_reltransnosy);
     model_ide.parameters.set<mio::isecir::RelativeTransmissionNoSymptoms>(reltransnosy);
 
-    mio::isecir::ConstantFunction constfunc_riskofinf(
+    mio::ConstantFunction constfunc_riskofinf(
         model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]);
-    mio::isecir::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
+    mio::StateAgeFunctionWrapper riskofinf(constfunc_riskofinf);
     model_ide.parameters.set<mio::isecir::RiskOfInfectionFromSymptomatic>(riskofinf);
 
     // Set t0 for IDE simulation
-    // ScalarType t0_ide = 6 * model_ide.get_global_max_support(dt);
+    // ScalarType t0_ide = 6 * model_ide.get_global_support_max(dt);
     std::cout << "t0_ide: " << t0_ide << "\n";
 
     // Compute initial flows from results of ODE simulation
