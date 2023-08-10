@@ -565,7 +565,7 @@ def get_npi_data(fine_resolution=2,
 
         # drop 0 column if existent
         try:
-            df_npis_combinations_pre.drop(columns='Unnamed: 0', inplace=True)
+            df_npis_combinations_pre.drop(columns=0, inplace=True)
         except KeyError:
             pass
         # rename essential columns and throw away others
@@ -592,11 +592,6 @@ def get_npi_data(fine_resolution=2,
                 list(
                     npi_groups_combinations
                     [npi_groups_combinations == code].index))
-
-        # TODO: look at:
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M16_100', 'M16_100_1', 'M16_100_2', 'M16_100_3', 'M16_100_4', 'M16_100_5']))].iloc[:,npi_start_col:]==1)
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01a_020', 'M01a_020_1', 'M01a_020_2', 'M01a_020_3', 'M01a_020_4', 'M01a_020_5']))].iloc[:,npi_start_col:]==1)
-        # np.where(df_npis_old[df_npis_old.NPI_code.isin(pd.Series(['M01b_020', 'M01b_020_1', 'M01b_020_2', 'M01b_020_3', 'M01b_020_4', 'M01b_020_5']))].iloc[:,npi_start_col:]==1)
 
         # create hash table of main code to strictness rankings inside main
         # code and combination matrix inside the same strictness rank
@@ -1234,19 +1229,19 @@ def get_npi_data(fine_resolution=2,
 
 
 def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
-    """! Count multiply for all pairs of NPI codes how many times they were
+    """! Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
-    @param df_npis_old Initial data frame read from Corona Datenplattform.
-    @param df_count Dictionnary of main NPI codes with empty interaction
+    @param[in] df_npis_old Initial data frame read from Corona Datenplattform.
+    @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
          matrix (to be filled) for all codes under main code in df_count[maincode][1]
-    @param counties_considered County IDs for which initial data frame is 
+    @param[in] counties_considered County IDs for which initial data frame is 
         considered.
     """
     for county in counties_considered:
         df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
         # get column where dates start
-        npi_date_start_col = np.where(
+        npi_start_col = np.where(
             df_local.columns.str.startswith('d2') == True)[0][0]
         # prepare dictionnary for dates when code was mentioned
         code_dates = {}
@@ -1258,14 +1253,14 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
                 # get dates where NPI is mentioned as existing in potential intervention set
                 npi_rows = df_local.NPI_code.str.contains(code_list[code_idx])
                 npi_dates_in_df = np.where(
-                    df_local[npi_rows].iloc[:, npi_date_start_col:].max() > 0)[0]
+                    df_local[npi_rows].iloc[:, npi_start_col:].max() > 0)[0]
                 # store non-transforemed dates in code_dict
                 code_dates[code_list[code_idx]] = df_local.iloc[:,
-                                                                npi_date_start_col + npi_dates_in_df].columns
+                                                                npi_start_col + npi_dates_in_df].columns
 
                 # count number of multiply mentionned NPIs with different incidence thresholds for the same day
                 df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
-                                                                                          npi_date_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
+                                                                                          npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
         # no diag
         for maincode in df_count.keys():
