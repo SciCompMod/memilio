@@ -42,3 +42,6 @@ target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::
 
 add_executable(integrator_step_benchmark integrator_step.cpp)
 target_link_libraries(integrator_step_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
+
+add_executable(graph_simulation_benchmark graph_simulation_benchmark.cpp)
+target_link_libraries(graph_simulation_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
