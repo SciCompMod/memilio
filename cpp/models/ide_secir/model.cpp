@@ -60,7 +60,7 @@ void Model::initialize_solver(ScalarType dt)
     if (m_forceofinfection > 0) {
         m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
             m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
-            m_forceofinfection;
+            (dt * m_forceofinfection);
 
         //calculate other compartment sizes for t=0
         other_compartments_current_timestep(dt);
