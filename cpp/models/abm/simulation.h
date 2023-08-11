@@ -76,7 +76,8 @@ public:
         store_result_at(m_t);
         history.log(*this);
         while (m_t < tmax) {
-            evolve_world(tmax);
+            auto dt = evolve_world(tmax);
+            m_t += dt;
             store_result_at(m_t);
             history.log(*this);
         }
@@ -114,7 +115,7 @@ public:
 private:
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
-    void evolve_world(TimePoint tmax);
+    TimeSpan evolve_world(TimePoint tmax);
 
     World m_world; ///< The World to simulate.
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.

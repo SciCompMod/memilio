@@ -28,6 +28,8 @@
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
+#include <algorithm>
+#include <mutex>
 
 namespace mio
 {
@@ -47,7 +49,7 @@ Person& World::add_person(const LocationId id, AgeGroup age)
     m_persons.push_back(std::make_unique<Person>(m_rng, get_individualized_location(id), age, person_id));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
-    get_individualized_location(id).add_person(person);
+    // get_individualized_location(id).add_person(person);
     return person;
 }
 
@@ -57,21 +59,38 @@ void World::evolve(TimePoint t, TimeSpan dt)
     log_info("ABM World interaction.");
     interaction(t, dt);
     log_info("ABM World migration.");
-    migration(t, dt);
+    // migration(t, dt);
     end_step(t, dt);
 }
 
 void World::interaction(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(parallel for)
+    PRAGMA_OMP(parallel for schedule(dynamic, 50)) //dynamic 20
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
         person->interact(personal_rng, t, dt, m_infection_parameters);
+
+        for (auto rule : m_migration_rules) {
+            //check if transition rule can be applied
+            auto target_type       = rule.first(personal_rng, *person, t, dt, m_migration_parameters);
+            auto& target_location  = find_location(target_type, *person);
+            auto& current_location = person->get_location();
+            if (m_testing_strategy.run_strategy(personal_rng, *person, target_location, t)) {
+                if (target_location != current_location &&
+                    target_location.get_number_persons() < target_location.get_capacity().persons) {
+                    bool wears_mask = person->apply_mask_intervention(personal_rng, target_location);
+                    if (wears_mask) {
+                        person->migrate_to(target_location);
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
 
-void World::migration(TimePoint t, TimeSpan dt)
+void World::prepare()
 {
     std::vector<std::pair<LocationType (*)(Person::RandomNumberGenerator&, const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
@@ -91,11 +110,17 @@ void World::migration(TimePoint t, TimeSpan dt)
             enhanced_migration_rules.push_back(rule);
         }
     }
-    PRAGMA_OMP(parallel for)
+    m_migration_rules = enhanced_migration_rules;
+}
+
+void World::migration(TimePoint t, TimeSpan dt)
+{
+    PRAGMA_OMP(parallel for schedule(dynamic, 20)) //static?
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person = m_persons[i];
+        // person->stay();
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
-        for (auto rule : enhanced_migration_rules) {
+        for (auto rule : m_migration_rules) {
             //check if transition rule can be applied
             auto target_type       = rule.first(personal_rng, *person, t, dt, m_migration_parameters);
             auto& target_location  = find_location(target_type, *person);
@@ -136,20 +161,67 @@ void World::migration(TimePoint t, TimeSpan dt)
 void World::begin_step(TimePoint t, TimeSpan dt)
 {
     m_testing_strategy.update_activity_status(t);
-    PRAGMA_OMP(parallel for)
+    
+    //cache for next step so it stays constant during the step while subpopulations change
+    //otherwise we would have to cache all state changes during a step which uses more memory
+    PRAGMA_OMP(parallel for schedule(static)) //dynamic 20?
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
-        location->cache_exposure_rates(t, dt);
+        location->m_num_persons = 0;
+        for (auto&& cell : location->m_cells) {
+            cell.m_cached_exposure_rate_air.array().setZero();
+            cell.m_cached_exposure_rate_contacts.array().setZero();
     }
 }
 
-void World::end_step(TimePoint t, TimeSpan dt)
+    PRAGMA_OMP(parallel for schedule(dynamic, 50)) //static?
+    for (auto i = size_t(0); i < m_persons.size(); ++i) {
+        auto&& person = m_persons[i];
+        auto&& loc = person->m_location;
+
+
+        if (person->is_infected(t)) {
+            auto&& inf  = person->get_infection();
+            auto virus = inf.get_virus_variant();
+            auto age   = person->get_age();
+
+#ifdef MEMILIO_ENABLE_OPENMP
+            std::lock_guard<Location> lk(*loc);
+#endif
+            for (auto&& cell_idx : person->m_cells)
 {
-    PRAGMA_OMP(parallel for)
-    for (auto i = size_t(0); i < m_locations.size(); ++i) {
-        auto&& location = m_locations[i];
-        location->store_subpopulations(t + dt);
+                auto&& cell = loc->m_cells[cell_idx];
+
+                /* average infectivity over the time step 
+                 *  to second order accuracy using midpoint rule
+                */
+                cell.m_cached_exposure_rate_contacts[{virus, age}] += inf.get_infectivity(t + dt / 2);
+                auto air_factor = loc->m_capacity_adapted_transmission_risk ? cell.compute_space_per_person_relative() : 1.0;
+                cell.m_cached_exposure_rate_air[{virus}] += inf.get_infectivity(t + dt / 2) * air_factor;
+            }
+        }
+
+        ++loc->m_num_persons;
     }
+}
+
+void World::end_step(TimePoint , TimeSpan )
+{
+    // bool immediate = true;
+// #ifdef MEMILIO_ENABLE_OPENMP
+//     immediate = omp_get_num_threads() == 1;
+// #endif
+
+    // if ((t + dt).time_since_midnight() < dt) {
+    //     PRAGMA_OMP(parallel for schedule(dynamic, 20)) //dynamic 20?
+    //     for (auto i = size_t(0); i < m_locations.size(); ++i) {
+    //         auto&& location = m_locations[i];
+    //         // if (!immediate) {
+    //         //     location->add_remove_persons(m_persons);
+    //         // }
+    //             location->store_subpopulations(t + dt);
+    //     }
+    // }
 }
 
 auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, ConstLocationIterator>>
@@ -179,14 +251,14 @@ Location& World::find_location(LocationType type, const Person& person)
     return get_individualized_location({index, type});
 }
 
-size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
-{
-    return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
-                           [t, s, type](size_t running_sum, const std::unique_ptr<Location>& loc) {
-                               return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
-                                                              : running_sum;
-                           });
-}
+// size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
+// {
+//     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
+//                            [t, s, type](size_t running_sum, const std::unique_ptr<Location>& loc) {
+//                                return loc->get_type() == type ? running_sum + loc->get_subpopulation(t, s)
+//                                                               : running_sum;
+//                            });
+// }
 
 MigrationParameters& World::get_migration_parameters()
 {

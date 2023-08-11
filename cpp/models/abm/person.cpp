@@ -33,6 +33,7 @@ namespace abm
 
 Person::Person(mio::RandomNumberGenerator& rng, Location& location, AgeGroup age, uint32_t person_id)
     : m_location(&location)
+    // , m_old_location(&location)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_quarantine(false)
     , m_age(age)
@@ -61,12 +62,25 @@ void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, cons
 void Person::migrate_to(Location& loc_new, const std::vector<uint32_t>& cells)
 {
     if (*m_location != loc_new) {
-        m_location->remove_person(*this);
+//         bool immediate = true;
+// #ifdef MEMILIO_ENABLE_OPENMP
+//         immediate = omp_get_num_threads() == 1;
+// #endif
+
+        // if (immediate) {
+            // m_location->remove_person(*this);
+        // }
         m_location = &loc_new;
+        // m_old_location = m_location;
         m_cells    = cells;
-        loc_new.add_person(*this, cells);
+        // loc_new.add_person(*this, cells);
         m_time_at_location = TimeSpan(0);
     }
+}
+
+void Person::stay()
+{
+    // m_old_location = m_location;
 }
 
 bool Person::is_infected(TimePoint t) const

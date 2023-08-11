@@ -140,7 +140,7 @@ public:
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
+    // size_t get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const;
 
     /** 
      * @brief Get the MigrationParameters.
@@ -174,6 +174,8 @@ public:
      */
     void use_migration_rules(bool param);
     bool use_migration_rules() const;
+
+    void prepare();
 
     /** 
      * @brief Get the TestingStrategy.

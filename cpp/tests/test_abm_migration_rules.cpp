@@ -346,7 +346,7 @@ TEST(TestMigrationRules, shop_return)
     mio::abm::Location shop(mio::abm::LocationType::BasicsShop, 0);
     auto p     = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedNoSymptoms, t);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
-    home.add_person(p);
+    // home.add_person(p);
     p.migrate_to(shop);
     p.interact(rng_p, t, dt, params); //person only returns home after some time passed
 
@@ -391,7 +391,7 @@ TEST(TestMigrationRules, event_return)
     mio::abm::Location social_event(mio::abm::LocationType::SocialEvent, 0);
     auto p     = mio::abm::Person(rng, home, mio::abm::AgeGroup::Age15to34);
     auto rng_p = mio::abm::Person::RandomNumberGenerator(rng, p);
-    home.add_person(p);
+    // home.add_person(p);
     p.migrate_to(social_event);
     p.interact(rng_p, t, dt, params);
 

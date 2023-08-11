@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "abm/time.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/utils/random_number_generator.h"
@@ -37,11 +38,12 @@ Simulation::Simulation(TimePoint t, World&& world)
     initialize_locations(m_t);
 }
 
-void Simulation::initialize_locations(TimePoint t)
+void Simulation::initialize_locations(TimePoint)
 {
-    for (auto& location : m_world.get_locations()) {
-        location.initialize_subpopulations(t);
-    }
+    // for (auto& location : m_world.get_locations()) {
+    //     location.initialize_subpopulations(t);
+    // }
+    m_world.prepare();
 }
 
 void Simulation::advance(TimePoint tmax)
@@ -50,16 +52,19 @@ void Simulation::advance(TimePoint tmax)
     initialize_locations(m_t);
     store_result_at(m_t);
     while (m_t < tmax) {
-        evolve_world(tmax);
-        store_result_at(m_t);
+        auto dt = evolve_world(tmax);
+        m_t += dt;
+        if (m_t.time_since_midnight() < dt || m_t == tmax) {
+            store_result_at(m_t);
+        }
     }
 }
 
-void Simulation::evolve_world(TimePoint tmax)
+TimeSpan Simulation::evolve_world(TimePoint tmax)
 {
     auto dt = std::min(m_dt, tmax - m_t);
     m_world.evolve(m_t, dt);
-    m_t += m_dt;
+    return dt;
 }
 
 void Simulation::store_result_at(TimePoint t)
@@ -72,12 +77,16 @@ void Simulation::store_result_at(TimePoint t)
     PRAGMA_OMP(parallel)
     {
         //thread local sum of subpopulations, computed in parallel
+        //TODO: maybe we can use atomic increments instead of the reduction if necessary for scaling?
         Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_result.get_num_elements());
-        PRAGMA_OMP(for)
-        for (auto i = size_t(0); i < m_world.get_locations().size(); ++i) {
-            auto&& location = m_world.get_locations()[i];
-            sum += location.get_subpopulations().get_last_value().cast<ScalarType>();
+        auto persons = m_world.get_persons();
+        
+        PRAGMA_OMP(for schedule(dynamic, 50)) //static?
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto&& person = persons[i];
+            sum[Eigen::Index(person.get_infection_state(t))] += 1;
         }
+        
         //synchronized total sum
         PRAGMA_OMP(critical)
         {

@@ -820,7 +820,7 @@ mio::abm::Simulation create_sampled_simulation(const mio::abm::TimePoint& t0)
  * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns Any io error that occurs during reading or writing of files.
  */
-mio::IOResult<void> run(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
+mio::IOResult<void> run_abm_simulation_xx(const fs::path& result_dir, size_t num_runs, bool save_single_runs = true)
 {
 
     auto t0               = mio::abm::TimePoint(0); // Start time per simulation
@@ -889,7 +889,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    auto result = run(result_dir, num_runs, save_single_runs);
+    auto result = run_abm_simulation_xx(result_dir, num_runs, save_single_runs);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;

@@ -151,6 +151,8 @@ public:
      * */
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
+    void stay();
+
     /**
      * @brief Get the latest Infection of the Person.
      * @return The latest Infection of the Person.
@@ -444,8 +446,10 @@ public:
         return m_rng_counter;
     }
 
-private:
+// private:
+public:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
+    // observer_ptr<Location> m_old_location; ///< Current Location of the Person.
     std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
