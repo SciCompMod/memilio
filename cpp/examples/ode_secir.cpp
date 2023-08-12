@@ -101,5 +101,9 @@ int main()
         Eigen::VectorXd res_j = secir.get_last_value();
         printf("number total: %f",
                res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
+
+        mio::osecir::Simulation<> sim(model, 0.0);
+
+        std::cout<<mio::osecir::get_reproduction_numbers(sim)<<std::endl;
     }
 }

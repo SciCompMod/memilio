@@ -333,7 +333,7 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
     Eigen::VectorXd riskFromInfectedSymptomatic_derivatives(num_groups);
     Eigen::VectorXd riskFromInfectedSymptomatic(num_groups);
 
-    for(Eigen::Index k = 0; k < num_groups; k++){
+    for(Eigen::Index k = 0; k < (Eigen::Index)num_groups; k++){
         double temp = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)k] + 
                     sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Exposed*(num_groups)+(size_t)k] +
                     sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms*(num_groups)+(size_t)k] +
@@ -419,8 +419,8 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
                 std::sin(3.141592653589793/(0.1*params.template get<ICUCapacity>())*(icu_occupancy-0.9*params.template get<ICUCapacity>()));
             }
         }
-
-        //Now try to invert the matrix V
+    }
+    //Now try to invert the matrix V
         V = V.inverse();
 
         //Compute F*V
@@ -440,8 +440,6 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
              tempvector1[i] = std::abs(tempvector[i]);
         }
         return tempvector1.maxCoeff();
-    }
-    return 0;
 }
 
 //see declaration above
