@@ -87,8 +87,6 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange);
         }
 
-        double t_idx_double = static_cast<double>(static_cast<size_t>(t_idx)); //Need this cast since get_matrix_at takes double as input parameter
-
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
         ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx_double)(0,0)*
@@ -96,7 +94,7 @@ public:
                                 this->populations.get_total();
 
         
-        double result = y.get_value(t_idx)[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        double result = y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
         
         return mio::success(result);
     }
