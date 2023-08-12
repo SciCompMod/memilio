@@ -89,7 +89,7 @@ public:
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
-        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx_double)(0,0)*
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx)(0,0)*
                                 this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
                                 this->populations.get_total();
 
