@@ -376,21 +376,18 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
             riskFromInfectedSymptomatic_derivatives[k]*
             divN[k];
         }
-
-        std::cout<<F.size()<<" number of agegroups"<< num_groups<<std::endl;
-    }
     
-        /*
-        for(size_t j = params.get_num_groups(); j < 2*(size_t)params.get_num_groups(); j++){//Second block in first row of F (Denoted by A in the latex)
-            F(i,j) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
-                    params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i]*
+        
+        for(size_t j = 0; j < num_groups; j++){//Second block in first row of F (Denoted by A in the latex)
+            F(i,j+num_groups) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
+                    params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i];
                     (cont_freq_eff(i,j)*params.template get<RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)j]*divN[(size_t)j]+temp);
         }
-    }
+    
     
 
-        for(Eigen::Index j = 2*num_groups; j < (Eigen::Index)(3*num_groups); j++){
-            F(i,j) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
+        for(size_t j = 0; j < num_groups; j++){
+            F(i,j+2*num_groups) = sim.get_result().get_value(timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible*(num_groups)+(size_t)i]*
                     params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i]*cont_freq_eff(i,j)*riskFromInfectedSymptomatic[(size_t)j]*divN[(size_t)j];    
         }
     }
@@ -444,8 +441,8 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
         //Do this later with some iterator
         for (int i = 0; i < tempvector.size(); i++) {
              tempvector1[i] = std::abs(tempvector[i]);
-        }*/
-        return 0;
+        }
+        return tempvector1.maxCoeff();
 }
 
 //see declaration above

@@ -104,6 +104,6 @@ int main()
 
         mio::osecir::Simulation<> sim(model, 0.0);
 
-        std::cout<<mio::osecir::get_reproduction_numbers(sim)<<std::endl;
+        std::cout<<"Hello, this is important !"<<mio::osecir::get_reproduction_numbers(sim)<<std::endl;
     }
 }
