@@ -94,7 +94,7 @@ public:
                                 this->populations.get_total();
 
         
-        double result = y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
+        double result = y.get_value(static_cast<Eigen::Index>(static_cast<size_t>(t_idx)))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
         
         return mio::success(result);
     }
