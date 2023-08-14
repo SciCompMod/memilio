@@ -1246,6 +1246,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
         # prepare dictionnary for dates when code was mentioned
         code_dates = {}
         # run through all maincodes (i.e., first 3-4 characters like M01a or M11)
+        # diagonal entries
         for maincode in df_count.keys():
             code_list = df_count[maincode][1].columns
             # iterate over code/row indices 0 to n
@@ -1262,7 +1263,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
                 df_count[maincode][1].iloc[code_idx, code_idx] += df_local[npi_rows].iloc[:,
                                                                                           npi_start_col + npi_dates_in_df].sum().sum() - len(npi_dates_in_df)
 
-        # no diag
+        # offdiagonal entries (as before, use that code_dates has been filled for all diagonal entries, i.e., all codes)
         for maincode in df_count.keys():
             code_list = df_count[maincode][1].columns
             # iterate over rows in matrix df_count with code/row indices 0 to n
