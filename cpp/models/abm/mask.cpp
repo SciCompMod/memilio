@@ -18,10 +18,10 @@
 * limitations under the License.
 */
 
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/mask.h"
-#include "abm/time.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/mask.h"
+#include "models/abm/time.h"
 
 namespace mio
 {

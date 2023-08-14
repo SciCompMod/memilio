@@ -20,12 +20,12 @@
 #ifndef EPI_ABM_LOCATION_H
 #define EPI_ABM_LOCATION_H
 
-#include "abm/person.h"
-#include "abm/mask_type.h"
-#include "abm/parameters.h"
-#include "abm/location_type.h"
-#include "abm/infection_state.h"
-#include "abm/vaccine.h"
+#include "models/abm/person.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/location_type.h"
+#include "models/abm/infection_state.h"
+#include "models/abm/vaccine.h"
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -103,8 +103,8 @@ public:
      */
     Location(LocationId loc_id, uint32_t num_cells = 1);
 
-    Location(LocationType loc_type, uint32_t loc_index, uint32_t num_cells = 1)
-        : Location(LocationId{loc_index, loc_type}, num_cells)
+    Location(LocationType loc_type, uint32_t loc_index, uint32_t loc_world_id = 0, uint32_t num_cells = 1)
+        : Location(LocationId{loc_index, loc_type, loc_world_id}, num_cells)
     {
     }
 
@@ -137,6 +137,14 @@ public:
     unsigned get_index() const
     {
         return m_id.index;
+    }
+
+    /**
+     * @brief Get the world id of this Location.
+     */
+    unsigned get_world_id() const
+    {
+        return m_id.world_id;
     }
 
     /**

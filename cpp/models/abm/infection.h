@@ -20,10 +20,10 @@
 #ifndef EPI_ABM_INFECTION_H
 #define EPI_ABM_INFECTION_H
 
-#include "abm/time.h"
-#include "abm/infection_state.h"
-#include "abm/virus_variant.h"
-#include "abm/parameters.h"
+#include "models/abm/time.h"
+#include "models/abm/infection_state.h"
+#include "models/abm/virus_variant.h"
+#include "models/abm/parameters.h"
 
 #include <vector>
 

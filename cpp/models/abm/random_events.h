@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/time.h"
+#include "models/abm/time.h"
 #include "memilio/utils/random_number_generator.h"
 #include <algorithm>
 #include <array>

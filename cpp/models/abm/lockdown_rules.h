@@ -20,10 +20,10 @@
 #ifndef EPI_ABM_LOCKDOWN_RULES_H
 #define EPI_ABM_LOCKDOWN_RULES_H
 
-#include "abm/time.h"
-#include "abm/location_type.h"
-#include "abm/person.h"
-#include "abm/parameters.h"
+#include "models/abm/time.h"
+#include "models/abm/location_type.h"
+#include "models/abm/person.h"
+#include "models/abm/parameters.h"
 
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"

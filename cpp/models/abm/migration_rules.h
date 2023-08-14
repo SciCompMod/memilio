@@ -21,9 +21,9 @@
 #ifndef EPI_ABM_MIGRATION_RULES_H
 #define EPI_ABM_MIGRATION_RULES_H
 
-#include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/time.h"
+#include "models/abm/location_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/time.h"
 
 namespace mio
 {

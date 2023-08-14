@@ -19,7 +19,7 @@
 * limitations under the License.
 */
 
-#include "abm/testing_strategy.h"
+#include "models/abm/testing_strategy.h"
 #include "memilio/utils/random_number_generator.h"
 
 namespace mio

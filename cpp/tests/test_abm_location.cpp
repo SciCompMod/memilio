@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/infection.h"
+#include "models/abm/infection.h"
 #include "abm_helpers.h"
 #include <memory>
 
@@ -36,7 +36,7 @@ TEST(TestLocation, init)
 
 TEST(TestLocation, initCell)
 {
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 2);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 0, 2);
     ASSERT_EQ(location.get_cells().size(), 2);
 }
 
@@ -48,8 +48,8 @@ TEST(TestLocation, getIndex)
 
 TEST(TestLocation, addRemovePerson)
 {
-    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
-    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+    auto home     = mio::abm::Location(mio::abm::LocationType::Home, 0,0, 1);
+    auto location = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0,0, 3);
 
     auto person1 = make_test_person(home, mio::abm::AgeGroup::Age5to14, mio::abm::InfectionState::InfectedSymptoms);
     auto person2 = make_test_person(home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::InfectedSymptoms);
@@ -97,8 +97,8 @@ TEST(TestLocation, CacheExposureRate)
         mio::abm::GlobalInfectionParameters params;
 
         // setup a location with some chance of exposure
-        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 1);
-        auto location  = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0, 3);
+        auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0, 0, 1);
+        auto location  = mio::abm::Location(mio::abm::LocationType::PublicTransport, 0,0, 3);
         auto infected1 = mio::abm::Person(home, age);
         infected1.add_new_infection(
             mio::abm::Infection(variant, age, params, t, mio::abm::InfectionState::InfectedNoSymptoms));
@@ -195,7 +195,7 @@ TEST(TestLocation, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
-    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 3);
+    auto home = mio::abm::Location(mio::abm::LocationType::Home, 0, 0, 3);
     home.set_capacity(4, 264, 0); // Capacity for Cell 1
     home.set_capacity(2, 132, 1); // Capacity for Cell 2
     home.set_capacity(0, 0, 2); // Capacity for Cell 3

@@ -20,11 +20,11 @@
 #ifndef EPI_ABM_PARAMETERS_H
 #define EPI_ABM_PARAMETERS_H
 
-#include "abm/age.h"
-#include "abm/mask_type.h"
-#include "abm/time.h"
-#include "abm/virus_variant.h"
-#include "abm/vaccine.h"
+#include "models/abm/age.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/time.h"
+#include "models/abm/virus_variant.h"
+#include "models/abm/vaccine.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/eigen.h"

@@ -17,15 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/world.h"
-#include "abm/mask_type.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/migration_rules.h"
+#include "models/abm/world.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/person.h"
+#include "models/abm/location.h"
+#include "models/abm/migration_rules.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
-#include "abm/infection.h"
-#include "abm/vaccine.h"
+#include "models/abm/infection.h"
+#include "models/abm/vaccine.h"
 
 namespace mio
 {
@@ -34,7 +34,7 @@ namespace abm
 
 LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
-    LocationId id = {static_cast<uint32_t>(m_locations.size()), type};
+    LocationId id = {static_cast<uint32_t>(m_locations.size()), type, m_world_id};
     m_locations.emplace_back(std::make_unique<Location>(id, num_cells));
     return id;
 }
@@ -42,7 +42,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 Person& World::add_person(const LocationId id, AgeGroup age)
 {
     uint32_t person_id = static_cast<uint32_t>(m_persons.size());
-    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id));
+    m_persons.push_back(std::make_unique<Person>(get_individualized_location(id), age, person_id, m_world_id));
     auto& person = *m_persons.back();
     person.set_assigned_location(m_cemetery_id);
     get_individualized_location(id).add_person(person);
@@ -159,9 +159,10 @@ Location& World::get_individualized_location(LocationId id)
 
 Location& World::find_location(LocationType type, const Person& person)
 {
-    auto index = person.get_assigned_location_index(type);
+    auto index    = person.get_assigned_location_index(type);
+    auto world_id = person.get_assigned_location_world_id(type);
     assert(index != INVALID_LOCATION_INDEX && "unexpected error.");
-    return get_individualized_location({index, type});
+    return get_individualized_location({index, type, world_id});
 }
 
 size_t World::get_subpopulation_combined(TimePoint t, InfectionState s, LocationType type) const
@@ -181,6 +182,11 @@ MigrationParameters& World::get_migration_parameters()
 const MigrationParameters& World::get_migration_parameters() const
 {
     return m_migration_parameters;
+}
+
+uint32_t World::get_world_id()
+{
+    return m_world_id;
 }
 
 GlobalInfectionParameters& World::get_global_infection_parameters()

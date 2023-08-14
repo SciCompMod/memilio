@@ -141,7 +141,8 @@ public:
 #endif
 
         auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx = std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
         std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
@@ -154,7 +155,7 @@ public:
             //- the RNG has been freshly seeded/initialized before this call
             //- the seeds are identical on all MPI processes
             //- the block size of the RNG is sufficiently big to cover one run
-            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length 
+            //  (when in doubt, use a larger block size; fast-forwarding the RNG is cheap and the period length
             //   of the mt19937 RNG is huge)
             mio::thread_local_rng().forward_to_block(run_idx);
 
@@ -296,7 +297,7 @@ public:
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
-    mio::GraphSimulation<SimulationGraph> create_sampled_simulation(SampleGraphFunction sample_graph)
+    mio::GraphSimulation<SimulationGraph, double, double> create_sampled_simulation(SampleGraphFunction sample_graph)
     {
         SimulationGraph sim_graph;
 
@@ -316,7 +317,7 @@ private:
         //evenly distribute runs
         //lower processes do one more run if runs are not evenly distributable
         auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder = num_runs % num_procs;
+        auto remainder      = num_runs % num_procs;
 
         std::vector<size_t> run_distribution(num_procs);
         std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);

@@ -21,8 +21,8 @@
 #ifndef EPI_ABM_MASK_H
 #define EPI_ABM_MASK_H
 
-#include "abm/mask_type.h"
-#include "abm/time.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/time.h"
 
 namespace mio
 {
