@@ -18,17 +18,15 @@
 # limitations under the License.
 #############################################################################
 import os
-from datetime import date
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
 from memilio.epidata import customPlot
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mdfs
 from scipy.cluster import hierarchy
-from scipy.spatial.distance import pdist
-
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     """! Computes a score for a particular clustering based on the
@@ -56,6 +54,9 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
     clusters_perp = [[] for i in range(idx_to_cluster_idx.max()+1)]
     for ii in range(len(clusters)):
         clusters_perp[ii] = list(indices_all.difference(set(clusters[ii])))
+
+    ### old method
+    '''
     # extract correlation values of block diagonals and offdiagonals separ.
     corr_diag = []
     corr_offdiag = []
@@ -71,16 +72,24 @@ def evaluate_clustering(corr_mat, idx_to_cluster_idx, indices_all):
                       for i in range(len(corr_thresholds))])/len(corr_offdiag)*step_width
     p_offdiag = np.array([len(np.where(corr_diag < corr_thresholds[i])[0])
                          for i in range(len(corr_thresholds))])/len(corr_diag)*step_width
-    
-    print(p_diag.sum(), p_offdiag.sum())
+
 
     return clusters, p_diag.sum()+p_offdiag.sum()
+    '''
+    ### new method
+    if idx_to_cluster_idx.max() > 0:
+        sample_silhouette_values = silhouette_samples(corr_mat, idx_to_cluster_idx)
+
+    if (idx_to_cluster_idx.max() < 15):
+        return clusters, -1
+    else:
+        return clusters, sample_silhouette_values.min()
 
 # TODO: Used name 'methods' instead of 'metrics'. This is conform with documentation of hierarchy.linkage
     # and does not lead to confusion with metric used in pdist. To discuss!
 
 
-def compute_hierarch_clustering(corr_mat, corr_pairwdist,
+def compute_hierarch_clustering(corr_pairwdist,
                                 methods=['single', 'complete', 'average',
                                          'weighted', 'centroid', 'median',
                                          'ward']):
@@ -117,6 +126,7 @@ def compute_hierarch_clustering(corr_mat, corr_pairwdist,
         # TODO: Why was pdist(corr_mat) used as input for hierarchy.cophenet?
         # Shouldn't we use the same distance matrix as input both for linkage and cophenet?
         # To discuss!
+        # TODO: < or > max_coph_corr_dist?
         coph_corr_dist, coph_dist_mat = hierarchy.cophenet(
             cluster_hierarch, corr_pairwdist)
         scores[method] = coph_corr_dist
@@ -131,7 +141,7 @@ def compute_hierarch_clustering(corr_mat, corr_pairwdist,
         "Cophenetic correlation distance for method " + max_method + ": " +
         str(max_coph_corr_dist))
 
-    return cluster_hierarch, max_coph_dist_mat, scores
+    return cluster_hierarch, max_coph_dist_mat
 
 
 def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
@@ -172,10 +182,62 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
         n+=1
     
     # print scores on clustering
-    print("Number of clusters: " + str(len(clusters)) + "; evaluation number: " + str(round(np.nanmax(abs(np.array(total_eval_number))), 4)))
+    print("Number of clusters: " + str(len(clusters)) + "; evaluation number: " + str(round(np.nanmax(np.array(total_eval_number)), 4)))
 
-    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmax(abs(np.array(total_eval_number))))]
+    return npi_idx_to_cluster_idx_list[total_eval_number.index(np.nanmax(np.array(total_eval_number)))]
 
+def silhouette(X, cluster_sizes, cluster_labels, label):
+
+    if not isinstance(cluster_sizes, list):
+        cluster_sizes = [cluster_sizes]
+
+    plt.figure()
+
+    for n_clusters in cluster_sizes:
+
+        sample_silhouette_values = silhouette_samples(X, cluster_labels)
+
+        y_lower = 10
+        for i in range(n_clusters):
+            ith_cluster_silhouette_values = sample_silhouette_values[cluster_labels == i]
+
+            ith_cluster_silhouette_values.sort()
+
+            size_cluster_i = ith_cluster_silhouette_values.shape[0]
+            y_upper = y_lower + size_cluster_i
+
+            color = cm.hsv(float(i) / n_clusters)
+            plt.fill_betweenx(
+                np.arange(y_lower, y_upper),
+                0,
+                ith_cluster_silhouette_values,
+                facecolor=color,
+                edgecolor=color,
+                alpha=0.7,
+            )
+
+            plt.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+            y_lower = y_upper + 10
+
+        plt.xlabel("The silhouette coefficient values")
+        plt.ylabel("Cluster label")
+
+        plt.axvline(x=0, c='black', alpha = 0.3)
+        plt.axvline(x=0.25, c='black', alpha = 0.3)
+        plt.axvline(x=0.5, c='black', alpha = 0.3)
+        plt.axvline(x=0.75, c='black', alpha = 0.3)
+
+        plt.yticks([])  # Clear the yaxis labels / ticks
+        plt.xticks([-0.4,-0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+        plt.title(
+            "Silhouette analysis for " + label + " clustering with n_clusters = " + str(n_clusters),
+        )
+
+        plt.show(block=False)
+
+        return sample_silhouette_values
 
 def analyze_npi_data(
         read_data, make_plot, fine_resolution, npis, directory, file_format,
@@ -208,9 +270,8 @@ def analyze_npi_data(
         df_npis = df_npis.drop('Unnamed: 0', axis=1)
     except KeyError:
         pass
-    df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
+    #df_npis = mdfs.extract_subframe_based_on_dates(df_npis, date(2021,1,1), date(2021,6,1))
     npis = pd.read_json(os.path.join(directory, 'npis.json'))
-    # merge subcodes of considered npis (Do we want this? To discuss...)
         # get code levels (main/subcodes) and position of main codes
         # code_level = [i.count('_') for i in npi_codes]
         # main_code_pos = [i for i in range(len(code_level)) if code_level[i] == 1]
@@ -313,8 +374,11 @@ def analyze_npi_data(
         # to the others as one node in the #NPIs-used-dimensional space.
         # We compute the pairwise distances of these nodes. Then, nodes with
         # similar correlations towards all other nodes exhibit small distances
+        # TODO: difference between scipy.cluster.hierarchy.distance.pdist and scipy.spatial.distance.pdist?
         corr_pairwdist = hierarchy.distance.pdist(
             npis_corr, metric='euclidean')
+        
+        npi_codes_used = np.asarray(df_npis_used.iloc[:, 2:].columns)
 
         # compute hierarchical clustering (via best-suited method)
         compare_methods = True
@@ -322,59 +386,59 @@ def analyze_npi_data(
 
             # centroid
             method = 'centroid'
-            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
-                abs(npis_corr),
+            cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
                 corr_pairwdist,
                 method)
-            # # plot dendrogram
+            # plot dendrogram
             plt.figure()
             plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
             # plt.show()
             max_coph_dist = coph_dist_mat.max()
             # TODO: Discuss why abs(npis_corr) is used as input and not corr_pairwdist
-            flatten_hierarch_clustering(
+            npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in np.linspace(0.01, 1, 100)])
+                 for wg in np.linspace(0.01, 1, 500)])
+            
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
 
             # ward
             method = 'ward'
-            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
-                npis_corr,
+            cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
                 corr_pairwdist,
                 method)
             # plot dendrogram
             plt.figure()
             plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
-            plt.show()
             max_coph_dist = coph_dist_mat.max()
-            flatten_hierarch_clustering(
+            npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 abs(npis_corr), cluster_hierarch,
-                [wg * max_coph_dist for wg in np.linspace(0.01, 1, 100)])
+                [wg * max_coph_dist for wg in np.linspace(0.01, 1, 500)])
+            
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
 
             # average
             method = 'average'
-            cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
-                abs(npis_corr),
+            cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
                 corr_pairwdist,
                 method)
             # plot dendrogram
             plt.figure()
             plt.title(method)
             hierarchy.dendrogram(cluster_hierarch)
-            plt.show()
             max_coph_dist = coph_dist_mat.max()
-            flatten_hierarch_clustering(
+            npi_idx_to_cluster_idx = flatten_hierarch_clustering(
                 npis_corr, cluster_hierarch,
                 [wg * max_coph_dist
-                 for wg in np.linspace(0.01, 1, 100)])
+                 for wg in np.linspace(0.01, 1, 500)])       
+            
+            samples = silhouette(npis_corr, npi_idx_to_cluster_idx.max()+1, npi_idx_to_cluster_idx, label = method)
 
         # centroid
         method = 'centroid'
-        cluster_hierarch, coph_dist_mat, scores = compute_hierarch_clustering(
-            npis_corr,  # same result as abs(npis_corr)
+        cluster_hierarch, coph_dist_mat = compute_hierarch_clustering(
             corr_pairwdist,
             method)
         # plot dendrogram
