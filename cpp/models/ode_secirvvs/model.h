@@ -22,7 +22,6 @@
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
