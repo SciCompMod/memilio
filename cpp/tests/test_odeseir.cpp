@@ -193,7 +193,7 @@ TEST(TestSeir, get_reproduction_numbers)
 
     auto reproduction_numbers = model.get_reproduction_numbers(result);
 
-    for (double i = 0; i < reproduction_numbers.size(); i++) {
+    for (int i = 0; i < reproduction_numbers.size(); i++) {
         EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);//Computes the correct numbers
     }
 
