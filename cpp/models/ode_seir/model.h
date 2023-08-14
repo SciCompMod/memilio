@@ -77,8 +77,7 @@ public:
     IOResult<double> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
     { 
         if(!( 0 <= t_idx && t_idx < y.get_num_time_points())){
-            mio::log_error("t_idx is out of range of the TimeSeries");
-            return mio::failure(mio::StatusCode::OutOfRange, "t_idx is out of range of the TimeSeries");
+            return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
