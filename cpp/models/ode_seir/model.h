@@ -20,15 +20,9 @@
 #ifndef SEIR_MODEL_H
 #define SEIR_MODEL_H
 
-#include "boost/outcome/boost_result.hpp"
-#include "boost/outcome/config.hpp"
-#include "boost/system/detail/error_code.hpp"
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/io/io.h"
-#include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
@@ -73,18 +67,18 @@ public:
 
     /**
     *@brief After the simulation is finished and we get a resulting TimeSeries, this function uses the data to compute the reproduction number
-    *at an arbitrary time
-    *@param t_idx The time at which we want to compute the reproduction number
-    *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time
-    *@returns The reproduction number in the seir model
-    *@see The same functions in the model.h files of the secir and secirvvs models
+    *at an arbitrary time for this specific SEIR model.
+    *@param t_idx The time at which we want to compute the reproduction number.
+    *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time.
+    *@returns The reproduction number in the seir model.
+    *@see The same functions in the model.h files of the secir and secirvvs models.
     */
 
     IOResult<double> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
     { 
         if(!( 0 <= t_idx && t_idx < y.get_num_time_points())){
-            mio::log_error("timeindex is out of range of the TimeSeries");
-            return mio::failure(mio::StatusCode::OutOfRange);
+            mio::log_error("t_idx is out of range of the TimeSeries");
+            return mio::failure(mio::StatusCode::OutOfRange, "t_idx is out of range of the TimeSeries");
         }
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
