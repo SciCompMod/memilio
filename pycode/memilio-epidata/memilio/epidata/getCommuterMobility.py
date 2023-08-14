@@ -197,14 +197,16 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
             gd.write_dataframe(
                 commuter_migration_files[state_id_file], mobility_dir, filename, 'json')
 
-    countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
+    countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
     govkey_list = geoger.get_governing_regions()
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-
-    population = gPd.get_population_data(
-        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
+    if read_data:
+        population = pd.read_json(directory+'county_current_population.json')
+    else:
+        population = gPd.get_population_data(
+            out_folder=out_folder, merge_eisenach=True, read_data=read_data)
 
     countypop_list = list(population[dd.EngEng["population"]])
 
@@ -243,6 +245,12 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
                     for gov_region in range(len(gov_county_table)):
                         counties_migratedfrom.append(
                             np.zeros(len(gov_county_table[gov_region])))
+
+                    # merge eisenach and wartburgkreis
+                    commuter_migration_file.iloc[:, 2].replace(
+                        '16056', '16063', inplace=True)
+                    commuter_migration_file.iloc[:, 0].replace(
+                        '16056', '16063', inplace=True)
 
                     current_col = countykey2numlist[commuter_migration_file.iloc[i, 0]]
                     curr_county_migratedto = commuter_migration_file.iloc[i, 1]
@@ -449,30 +457,33 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
 
     # this is neither a very elegant nor a very general way to merge...
     # better options to be searched for!
-    merge_id = 16063
-    new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
-    old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
+    if 16056 in countykey_list:
+        merge_id = 16063
+        new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
+        old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
 
-    mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx,
-                                                                :] + mat_commuter_migration[old_idx, :]
-    mat_commuter_migration[:, new_idx] = mat_commuter_migration[:,
-                                                                new_idx] + mat_commuter_migration[:, old_idx]
-    mat_commuter_migration[new_idx, new_idx] = 0
+        mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx,
+                                                                    :] + mat_commuter_migration[old_idx, :]
+        mat_commuter_migration[:, new_idx] = mat_commuter_migration[:,
+                                                                    new_idx] + mat_commuter_migration[:, old_idx]
+        mat_commuter_migration[new_idx, new_idx] = 0
 
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
-    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
+        mat_commuter_migration = np.delete(
+            mat_commuter_migration, old_idx, axis=0)
+        mat_commuter_migration = np.delete(
+            mat_commuter_migration, old_idx, axis=1)
 
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(
         data=mat_commuter_migration, columns=countykey_list)
     df_commuter_migration.index = countykey_list
     commuter_sanity_checks(df_commuter_migration)
-    filename = 'migration_bfa_' + \
-        str(ref_year) + '_dim' + str(mat_commuter_migration.shape[0])
+    filename = 'migration_bfa_' + str(ref_year)
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
-    gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
+    directory = directory.split('pydata')[0] + 'mobility/'
+    gd.check_dir(directory)
     gd.write_dataframe(
-        df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
+        df_commuter_migration, directory,
         'commuter_migration_scaled_' + str(ref_year),
         'txt', {'sep': ' ', 'index': False, 'header': False})
 
@@ -491,7 +502,7 @@ def commuter_sanity_checks(df):
 
 def get_neighbors_mobility(
         countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder'], ref_year=2022):
+        out_folder=dd.defaultDict['out_folder'], ref_year=2022):
     '''! Returns the neighbors of a particular county ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -524,12 +535,8 @@ def get_neighbors_mobility(
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
     try:
-        if merge_eisenach:
-            commuter = gd.get_file(os.path.join(
-                directory, "migration_bfa_"+str(ref_year)+"_dim400.json"), None, True)
-        else:
-            commuter = gd.get_file(os.path.join(
-                directory, "migration_bfa_"+str(ref_year)+"_dim401.json"), None, True)
+        commuter = gd.get_file(os.path.join(
+            directory, "migration_bfa_"+str(ref_year)+"_dim400.json"), read_data=True)
     except FileNotFoundError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder, ref_year=ref_year)
@@ -556,7 +563,7 @@ def get_neighbors_mobility(
 
 def get_neighbors_mobility_all(
         direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
-        merge_eisenach=True, out_folder=dd.defaultDict['out_folder'], ref_year=2022):
+        out_folder=dd.defaultDict['out_folder'], ref_year=2022):
     '''! Returns the neighbors of all counties ID depening on the
     commuter mobility and given absolute and relative thresholds on the number
     of commuters.
@@ -580,15 +587,14 @@ def get_neighbors_mobility_all(
     '''
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
-    countyids = geoger.get_county_ids(merge_eisenach=merge_eisenach)
+    countyids = geoger.get_county_ids()
     neighbors_table = []
-    # TODO:
+    # TODO: performance has to be improved
     for id in countyids:
         neighbors_table.append(
             get_neighbors_mobility(
                 id, direction=direction, abs_tol=abs_tol,
                 rel_tol=rel_tol, tol_comb=tol_comb,
-                merge_eisenach=merge_eisenach,
                 out_folder=out_folder, ref_year=ref_year))
 
     return dict(zip(countyids, neighbors_table))
@@ -612,7 +618,7 @@ def main():
     arg_dict_commuter = {**arg_dict, "setup_dict": setup_dict}
 
     get_neighbors_mobility(
-        1001, abs_tol=0, rel_tol=0, tol_comb='or', merge_eisenach=True,
+        1001, abs_tol=0, rel_tol=0, tol_comb='or',
         out_folder=dd.defaultDict['out_folder'])
 
     get_commuter_data(**arg_dict_commuter)

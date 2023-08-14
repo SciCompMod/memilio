@@ -46,10 +46,10 @@ Dependencies
 
 Required python packages:
 
-- pandas<1.2.0
+- pandas>=1.2.2
 - matplotlib
 - tables
-- numpy>=1.22
+- numpy>=1.22,<1.25
 - openpyxl
 - xlrd
 - requests

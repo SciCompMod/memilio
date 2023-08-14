@@ -57,7 +57,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
  * @brief bind ParameterStudy for any model
  */
 template <class Simulation>
-void bind_ParameterStudy(py::module& m, std::string const& name)
+void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
