@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/graph_simulation_benchmark.h"
+#include "benchmarks/graph_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "benchmark/benchmark.h"
