@@ -118,7 +118,8 @@ TEST(TestFlows, SimulationFlows)
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
 
     model.check_constraints();
-    auto seir = simulate_flows(t0, tmax, dt, model);
+    auto IC   = std::make_shared<mio::DefaultIntegratorCore>();
+    auto seir = simulate_flows(t0, tmax, dt, model, IC);
     // verify results (computed using flows)
     auto results = seir[0].get_last_value();
     EXPECT_NEAR(results[0], 9660.5835936179408, 1e-14);
