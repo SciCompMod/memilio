@@ -547,7 +547,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto parameter_study =
         mio::ParameterStudy<mio::osecir::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
     auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble = parameter_study.run(
+    auto ensemble               = parameter_study.run(
         [](auto&& graph) {
             return draw_sample(graph);
         },
@@ -556,8 +556,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
             auto params = std::vector<mio::osecir::Model>{};
             params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                           std::back_inserter(params), [](auto&& node) {
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
@@ -568,13 +568,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             return std::make_pair(std::move(interpolated_result), std::move(params));
         });
 
-    if (ensemble.size() > 0){
+    if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
         ensemble_params.reserve(ensemble.size());
-        for (auto&& run: ensemble)
-        {
+        for (auto&& run : ensemble) {
             ensemble_results.emplace_back(std::move(run.first));
             ensemble_params.emplace_back(std::move(run.second));
         }
@@ -595,7 +594,7 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    mio::set_log_level(mio::LogLevel::warn);    
+    mio::set_log_level(mio::LogLevel::warn);
     mio::mpi::init();
 
     RunMode mode;

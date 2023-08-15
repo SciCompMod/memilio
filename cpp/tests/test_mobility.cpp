@@ -53,7 +53,7 @@ TEST(TestMobility, compareNoMigrationWithSingleIntegration)
     model2.populations.set_total(500);
 
     auto graph_sim = mio::make_migration_sim(
-        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MobilityEdgeCompartments>());
+        t0, dt, mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -133,7 +133,7 @@ TEST(TestMobility, edgeApplyMigration)
     mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
 
     //setup edge
-    mio::MobilityEdgeCompartments edge(Eigen::VectorXd::Constant(8, 0.1));
+    mio::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));
 
     //forward migration
     edge.apply_migration(t, 0.5, node1, node2);

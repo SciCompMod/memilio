@@ -281,7 +281,7 @@ TEST(DynamicNPIs, migration)
     mio::MigrationParameters parameters(coeffs);
     parameters.set_dynamic_npis_infected(npis);
 
-    mio::MobilityEdgeCompartments edge(parameters);
+    mio::MigrationEdge edge(parameters);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
 

@@ -115,7 +115,7 @@ TEST(TestSaveResult, save_result_with_params)
 {
     //rng needs to be reseeded right before using parallel parameterstudies
     //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto rng = mio::thread_local_rng();
+    auto rng                = mio::thread_local_rng();
     mio::thread_local_rng() = mio::RandomNumberGenerator();
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
@@ -231,7 +231,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
 {
     //rng needs to be reseeded right before using parallel parameterstudies
     //to keep the rest of the tests independent, we install a temporary RNG for this test
-    auto prev_rng = mio::thread_local_rng();
+    auto prev_rng           = mio::thread_local_rng();
     mio::thread_local_rng() = mio::RandomNumberGenerator();
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
