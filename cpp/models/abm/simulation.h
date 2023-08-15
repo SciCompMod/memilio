@@ -20,8 +20,8 @@
 #ifndef EPI_ABM_SIMULATOR_H
 #define EPI_ABM_SIMULATOR_H
 
-#include "abm/world.h"
-#include "abm/time.h"
+#include "models/abm/world.h"
+#include "models/abm/time.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/history.h"
 
@@ -111,11 +111,12 @@ public:
     }
 
 private:
+    World m_world; ///< The World to simulate.
     void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
     void evolve_world(TimePoint tmax);
 
-    World m_world; ///< The World to simulate.
+protected:
     TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.

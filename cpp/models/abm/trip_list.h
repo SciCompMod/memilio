@@ -20,10 +20,10 @@
 #ifndef EPI_ABM_TRIP_LIST_H
 #define EPI_ABM_TRIP_LIST_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/infection.h"
-#include "abm/location_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/location.h"
+#include "models/abm/infection.h"
+#include "models/abm/location_type.h"
 
 #include "memilio/math/eigen.h"
 #include <array>
@@ -40,10 +40,12 @@ namespace abm
 struct Trip {
     uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     World, where all Person%s are saved.*/
+    uint32_t person_world_id;
     TimePoint time; ///< Time at which a Person changes the Location.
     LocationId migration_destination; ///< Location where the Person migrates to.
     LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
+    std::vector<uint32_t>
+        cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
     Cell%s the Person migrates to.*/
 
     /**
@@ -55,9 +57,10 @@ struct Trip {
      * @param[in] input_cells The index of the Cell%s the Person migrates to.
      */
     Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
-         const std::vector<uint32_t>& input_cells = {})
+         const std::vector<uint32_t>& input_cells = {}, uint32_t world_id = 0)
     {
         person_id             = id;
+        person_world_id       = world_id;
         time                  = time_new;
         migration_destination = destination;
         migration_origin      = origin;

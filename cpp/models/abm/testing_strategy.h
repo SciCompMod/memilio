@@ -21,10 +21,10 @@
 #ifndef EPI_ABM_TESTING_SCHEME_H
 #define EPI_ABM_TESTING_SCHEME_H
 
-#include "abm/parameters.h"
-#include "abm/person.h"
-#include "abm/location.h"
-#include "abm/time.h"
+#include "models/abm/parameters.h"
+#include "models/abm/person.h"
+#include "models/abm/location.h"
+#include "models/abm/time.h"
 
 namespace mio
 {

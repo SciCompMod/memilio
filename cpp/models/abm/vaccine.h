@@ -20,7 +20,7 @@
 #ifndef EPI_ABM_VACCINE_H
 #define EPI_ABM_VACCINE_H
 
-#include "abm/time.h"
+#include "models/abm/time.h"
 
 #include <cstdint>
 

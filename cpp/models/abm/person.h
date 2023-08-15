@@ -20,14 +20,14 @@
 #ifndef EPI_ABM_PERSON_H
 #define EPI_ABM_PERSON_H
 
-#include "abm/age.h"
-#include "abm/location_type.h"
-#include "abm/parameters.h"
-#include "abm/time.h"
-#include "abm/infection.h"
-#include "abm/vaccine.h"
-#include "abm/mask_type.h"
-#include "abm/mask.h"
+#include "models/abm/age.h"
+#include "models/abm/location_type.h"
+#include "models/abm/parameters.h"
+#include "models/abm/time.h"
+#include "models/abm/infection.h"
+#include "models/abm/vaccine.h"
+#include "models/abm/mask_type.h"
+#include "models/abm/mask.h"
 
 #include "memilio/utils/memory.h"
 #include <functional>
@@ -53,15 +53,16 @@ public:
      * @param[in, out] location Initial location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
+     * @param[in] world_id Home world id of the person.
      */
-    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
+    explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID, uint32_t world_id = 0);
 
     /**
      * @brief Compare two Person%s.
      */
     bool operator==(const Person& other) const
     {
-        return (m_person_id == other.m_person_id);
+        return (m_person_id == other.m_person_id && m_world_id == other.m_world_id);
     }
 
     /** 
@@ -79,6 +80,14 @@ public:
      * @param[in] cells_new The Cell%s that the Person visits at the new Location.
      * */
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
+
+    /**
+     * @brief migrate to a different location in another world.
+     * @param[in] loc_new The new location of the person.
+     * @param[in] cells_new The new cells of the person.
+    */
+    void migrate_to_other_world(Location& loc_new, bool set_time_at_location,
+                                const std::vector<uint32_t>& cells_new = {0});
 
     /**
      * @brief Get the latest Infection of the Person.
@@ -187,10 +196,17 @@ public:
     uint32_t get_assigned_location_index(LocationType type) const;
 
     /**
+     * @brief Returns the world id of an assigned location of the person.
+     * Assume that a person has at most one assigned location of a certain location type.
+     * @param[in] type Location type of the assigned location.
+     */
+    uint32_t get_assigned_location_world_id(LocationType type) const;
+
+    /**
      * @brief Get the assigned Location%s of the Person.
      * @return A vector with the indices of the assigned Location%s of the Person.
      */
-    const std::vector<uint32_t>& get_assigned_locations() const
+    const std::vector<std::pair<uint32_t, uint32_t>>& get_assigned_locations() const
     {
         return m_assigned_locations;
     }
@@ -269,6 +285,11 @@ public:
      * @return The PersonID.
      */
     uint32_t get_person_id();
+
+    /**
+     * @brief Get the world id of the person.
+     */
+    uint32_t get_world_id();
 
     /**
      * @brief Get index of Cell%s of the Person.
@@ -371,7 +392,9 @@ public:
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.
-    std::vector<uint32_t> m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
+    //the first integer specifies the location index and the second the locations world id (does not need to match the person's world id)
+    std::vector<std::pair<uint32_t, uint32_t>>
+        m_assigned_locations; /**! Vector with the indices of the assigned Locations so that the 
     Person always visits the same Home or School etc. */
     std::vector<Vaccination> m_vaccinations; ///< Vector with all Vaccination%s the Person has received.
     std::vector<Infection> m_infections; ///< Vector with all Infection%s the Person had.
@@ -387,6 +410,8 @@ private:
     bool m_wears_mask = false; ///< Whether the Person currently wears a Mask.
     std::vector<ScalarType> m_mask_compliance; ///< Vector of Mask compliance values for all #LocationType%s.
     uint32_t m_person_id; ///< Id of the Person.
+    uint32_t m_world_id;
+    //bool m_is_active_in_world;
     std::vector<uint32_t> m_cells; ///< Vector with all Cell%s the Person visits at its current Location.
 };
 

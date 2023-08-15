@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "abm/infection.h"
+#include "models/abm/infection.h"
 #include <math.h>
 
 namespace mio

@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Julia Bicker, Daniel Abele
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,4 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "models/abm/parameters.h"
+#include "memilio/mobility/hybrid_graph.h"
+
+namespace mio
+{
+
+}

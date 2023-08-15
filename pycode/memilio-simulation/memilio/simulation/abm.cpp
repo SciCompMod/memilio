@@ -22,7 +22,7 @@
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
-#include "abm/abm.h"
+#include "models/abm/abm.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
 #include "pybind11/pybind11.h"

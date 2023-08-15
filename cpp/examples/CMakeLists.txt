@@ -35,6 +35,10 @@ target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
 
+add_executable(graph_abm_example graph_abm.cpp)
+target_link_libraries(graph_abm_example PRIVATE memilio graph_abm)
+target_link_libraries(graph_abm_example PRIVATE memilio abm)
+
 add_executable(twitter_migration_example twitter_migration.cpp)
 target_link_libraries(twitter_migration_example PRIVATE memilio ode_secir)
 

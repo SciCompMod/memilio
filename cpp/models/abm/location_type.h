@@ -48,7 +48,8 @@ enum class LocationType : std::uint32_t
     Count //last!
 };
 
-static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
+static constexpr uint32_t INVALID_LOCATION_INDEX    = std::numeric_limits<uint32_t>::max();
+static constexpr uint32_t INVALID_LOCATION_WORLD_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
@@ -57,15 +58,16 @@ static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>
 struct LocationId {
     uint32_t index;
     LocationType type;
+    uint32_t world_id;
 
     bool operator==(const LocationId& rhs) const
     {
-        return (index == rhs.index && type == rhs.type);
+        return (index == rhs.index && type == rhs.type && world_id == rhs.world_id);
     }
 
     bool operator!=(const LocationId& rhs) const
     {
-        return !(index == rhs.index && type == rhs.type);
+        return !(index == rhs.index && type == rhs.type && world_id == rhs.world_id);
     }
 };
 

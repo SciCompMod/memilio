@@ -57,10 +57,16 @@ add_library(memilio
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
     mobility/metapopulation_mobility_stochastic.cpp
+    mobility/metapopulation_mobility_hybrid.h
+    mobility/metapopulation_mobility_hybrid.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    mobility/hybrid_graph.h
+    mobility/hybrid_graph.cpp
+    mobility/hybrid_graph_simulation.h
+    mobility/hybrid_graph_simulation.cpp
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp

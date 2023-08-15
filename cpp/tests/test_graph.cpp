@@ -223,8 +223,8 @@ TEST(TestGraph, set_edges)
     const auto& read_function_edges = mock_read_mobility;
 
     auto result =
-        mio::set_edges<MockContactLocation, mio::osecir::Model, mio::MigrationParameters,
-                       mio::MigrationCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>(
+        mio::set_edges<MockContactLocation, mio::osecir::Model, mio::MigrationParameters, mio::MigrationCoefficientGroup,
+                       mio::osecir::InfectionState, decltype(read_function_edges)>(
             dir, params_graph, migrating_compartments, size_t(2), read_function_edges,
             std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.});
 

@@ -30,9 +30,9 @@
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-mio::IOResult<void>
-write_single_run_result(const int run,
-                        const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
+mio::IOResult<void> write_single_run_result(
+    const int run,
+    const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
@@ -150,7 +150,7 @@ int main()
         auto write_result_status = write_single_run_result(run, graph);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
-        }       
+        }
         return 0; //Result handler must return something, but only meaningful when using MPI.
     };
     parameter_study.run(sample_graph, handle_result);
