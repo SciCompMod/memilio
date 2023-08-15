@@ -892,8 +892,8 @@ def get_npi_data(fine_resolution=2,
         df_count_joint_codes[maincode][1] *= 0
     df_counted_joint_codes = count_code_multiplicities_init(df_npis_old, df_count_joint_codes,
                                                             counties_considered=counties_considered)
-    save_counter(df_counted_joint_codes, 'joint_codes', directory)
-    plot_counter('joint_codes', directory)
+    save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
+    plot_interaction_matrix('joint_codes', directory)
     plot_multiple_prescriptions('joint_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
@@ -1165,8 +1165,8 @@ def get_npi_data(fine_resolution=2,
                   '. Estimated time remaining: ' +
                   str(int(time_remain / 60)) + ' min.')
 
-    save_counter(df_count_deactivation, 'count_deactivation', directory)
-    plot_counter('count_deactivation', directory)
+    save_interaction_matrix(df_count_deactivation, 'count_deactivation', directory)
+    plot_interaction_matrix('count_deactivation', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
         print('WARNING: DataFrame starts with reported cases > 0 '
@@ -1176,11 +1176,11 @@ def get_npi_data(fine_resolution=2,
               'Please consider a start date of some weeks ahead of the '
               'time window to be analyzed for NPI\'s effects.')
 
-    save_counter(df_count_incid_depend, 'joint_codes_incid_depend', directory)
-    plot_counter('joint_codes_incid_depend', directory)
+    save_interaction_matrix(df_count_incid_depend, 'joint_codes_incid_depend', directory)
+    plot_interaction_matrix('joint_codes_incid_depend', directory)
 
-    save_counter(df_count_active, 'joint_codes_active', directory)
-    plot_counter('joint_codes_active', directory)
+    save_interaction_matrix(df_count_active, 'joint_codes_active', directory)
+    plot_interaction_matrix('joint_codes_active', directory)
 
     # print sub counters
     print('Sub task counters are: ')
@@ -1234,7 +1234,7 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
 
     @param[in] df_npis_old Initial data frame read from Corona Datenplattform.
     @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
-         matrix (to be filled) for all codes under main code in df_count[maincode][1]
+         matrix (to be filled) for all codes under main code in df_count[maincode][1].
     @param[in] counties_considered County IDs for which initial data frame is 
         considered.
     """
@@ -1299,40 +1299,62 @@ def count_codes(df_old, df_count, county):
     return df_count
 
 
-def save_counter(df_count, filename, directory):
-    # save results
+def save_interaction_matrix(df_interactions, filename, directory):
+    """! Saves interaction matrices for all subcodes in provided main codes.
+
+    @param[in] df_interactions Dictionnary of main NPI codes with interaction
+         matrix for all subcodes under main code in df_interactions[maincode][1].
+    @param[in] filename Filename to store result.
+    @param[in] directory Directory where to save data.
+    """
 
     writer = pd.ExcelWriter(
         os.path.join(directory, filename + '.xlsx'),
         engine='xlsxwriter')
-    for code in df_count.keys():
-        df_count[code][1].to_excel(writer, sheet_name=code)
+    for code in df_interactions.keys():
+        df_interactions[code][1].to_excel(writer, sheet_name=code)
     writer.close()
 
 # saves plot in folder directory/heatmaps_filename
 
 
-def plot_counter(filename, directory):
+def plot_interaction_matrix(filename, directory):
+    """! Reads interaction matrices from hard drive and writes heatmap plots
+         to hard drive.
+
+    @param[in] filename Filename to read results from.
+    @param[in] directory Directory where to read and save data.
+    """    
     target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
 
-    codelist = pd.ExcelFile(os.path.join(
-        directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+    try:   
+        codelist = pd.ExcelFile(os.path.join(
+            directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+    except:
+        raise FileNotFoundError('File ' + filename + ' not found.')
 
-    cmap = copy.copy(mpl.cm.get_cmap('OrRd'))
+    # invert color map elements for tab20c such that subcolors are shown
+    # from light to dark
+    cmap = copy.copy(mpl.cm.get_cmap('tab20b'))
+    colors = [cmap(i) for i in np.array([list(range(4*(i+1)-1,4*i-1,-1)) for i in range(5)]).flatten()]
+    colors = colors + [(0.6, 0.6, 0.6), (0.4, 0.4, 0.4),
+                       (0.2, 0.2, 0.2), (0, 0, 0)]
+    cmap = mpl.colors.ListedColormap(colors)
 
     for code in codelist:
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
             sheet_name=code, engine='openpyxl')
-        # set diag = 0
+        # set diag = 0, access (i,i+1) as first column contains index
         for i in range(df.shape[0]):
             df.iloc[i, i+1] = 0
+        # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()
         if filename != 'count_deactivation':
             # for count deactivation xlabel != ylabel
-            # else matrix is of squared form
+            # else matrix is of squared form and symmetric
             array_exclusion += np.transpose(array_exclusion)
         positions = [i for i in range(len(df.columns)-1)]
         plt.xticks(positions, df.columns.to_list()[1:], rotation='vertical')
@@ -1356,15 +1378,17 @@ def plot_counter(filename, directory):
             plt.ylabel('NPI')
             plt.title('Joint NPI prescriptions')
         else:
-            raise gd.DataError('unknown filename: '+filename)
+            raise gd.DataError('Unknown filename: ' + filename)
 
-        # set vmin = 1 so that only combinations that are simultaneously active at least on one day are in colour,
-        # else white
-        # set vmax = 300000, this should be larger than maxima in all dataframes,
-        # this way colours of heatmaps are comparable (e.g. between codes or between joint_codes and exclusions)
+        # Set vmin = 1 so that only combinations that are simultaneously active
+        # at least on one day are in color, else use white.
+        # Set vmax = 1e6 to be adjusted with colormap, this value is larger
+        # than the maximum in all dataframes, this way colors of heatmaps are 
+        # comparable across different visualizations
+        # (e.g. between codes or between joint_codes and exclusions)
 
         plt.imshow(array_exclusion, cmap=cmap,
-                   norm=mpl.colors.LogNorm(vmin=1, vmax=300000))
+                   norm=mpl.colors.LogNorm(vmin=1, vmax=1e6))
         plt.colorbar()
         plt.tight_layout()
         plt.savefig(
