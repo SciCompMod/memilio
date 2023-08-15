@@ -57,6 +57,10 @@ int main()
     // Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     mio::abm::GlobalInfectionParameters infection_params;
 
+    auto test = 2.0;
+
+    mio::unused(test);
+
     // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
     infection_params.get<mio::abm::IncubationPeriod>() = 4.;
 
