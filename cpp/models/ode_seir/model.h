@@ -23,9 +23,12 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/io/io.h"
+#include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
+#include <math.h>
 
 namespace mio
 {
@@ -66,38 +69,35 @@ public:
     }
 
     /**
-    *@brief After the simulation is finished and we get a resulting TimeSeries, this function uses the data to compute the reproduction number
-    *at an arbitrary time for this specific SEIR model.
-    *@param t_idx The time at which we want to compute the reproduction number.
-    *@param y The TimeSeries. We actually only use the number of Susceptibles at a given time.
-    *@returns The reproduction number in the seir model.
-    *@see The same functions in the model.h files of the secir and secirvvs models.
+    *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
+    *@param t_idx The index time at which the reproduction number is computed.
+    *@param y The TimeSeries obtained from the Model Simulation.
+    *@returns The computed reproduction number at the provided index time.
     */
-
-    IOResult<double> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
-    { 
-        if(!( 0 <= t_idx && t_idx < y.get_num_time_points())){
+    IOResult<double> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
+    {
+        if (!(0 <= t_idx && t_idx < static_cast<size_t>(y.get_num_time_points()))) {
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
         ScalarType TimeInfected = this->parameters.get<mio::oseir::TimeInfected>();
 
-        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx)(0,0)*
-                                this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>()/
-                                this->populations.get_total();
+        ScalarType coeffStoE = this->parameters.get<mio::oseir::ContactPatterns>().get_matrix_at(t_idx)(0, 0) *
+                               this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>() /
+                               this->populations.get_total();
 
-        
-        double result = y.get_value(static_cast<Eigen::Index>(static_cast<size_t>(t_idx)))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] * TimeInfected * coeffStoE;
-        
+        double result =
+            y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] *
+            TimeInfected * coeffStoE;
+
         return mio::success(result);
     }
 
-     /**
-    *@brief Compute the reproduction numbers for all time points based on the given TimeSeries.
-    *@param y The TimeSeries containing the SEIR model data 
+    /**
+    *@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
+    *@param y The TimeSeries obtained from the Model Simulation.
     *@returns vector containing all reproduction numbers
     */
-
     Eigen::VectorXd get_reproduction_numbers(const mio::TimeSeries<ScalarType>& y)
     {
         auto num_time_points = y.get_num_time_points();
@@ -108,8 +108,33 @@ public:
         return temp;
     }
 
+    /**
+    * @brief interpolate reproduction numbers at freely chosen time value that lies in between the time points of the given time series.
+    * values are linearly interpolated from their immediate neighbors from the old time points.
+    * @param y TimeSeries whose reproduction numbers we want to interpolate
+    * @param t_value double time at which we approximate the reproduction number
+    * @return interpolated reproduction number at given time value
+    */
+    IOResult<double> interpolate_reproduction_numbers(const mio::TimeSeries<ScalarType>& y, const double t_value)
+    {
+        if (t_value < -1 || t_value > y.get_num_time_points()) {
+            return mio::failure(
+                mio::StatusCode::OutOfRange,
+                "Cannot interpolate reproduction number too far outside computed horizon of the TimeSeries");
+        }
+        if (t_value < 0) {
+            return get_reproduction_number(0, y);
+        }
+        if (t_value > y.get_num_time_points() - 1) {
+            return get_reproduction_number(y.get_num_time_points() - 1, y);
+        }
+        double y1 = get_reproduction_number(floor(t_value), y).value();
+        double y2 = get_reproduction_number(ceil(t_value), y).value();
 
-    
+        double result = linear_interpolation(t_value, floor(t_value), ceil(t_value), y1, y2);
+
+        return mio::success(result);
+    }
 };
 
 } // namespace oseir

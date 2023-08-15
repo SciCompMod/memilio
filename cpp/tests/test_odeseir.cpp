@@ -150,7 +150,7 @@ TEST(TestSeir, check_constraints_parameters)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-    
+
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -176,18 +176,15 @@ TEST(TestSeir, get_reproduction_numbers)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.5, mio::SimulationTime(4)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
+    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(
+        0.5, mio::SimulationTime(
+                 4)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
 
     model.check_constraints();
 
     Eigen::VectorXd checkReproductionNumbers(7);
-    checkReproductionNumbers << 2.3280000000000003,
-                                2.3279906878991881,
-                                2.3279487809434576,
-                                2.3277601483151549,
-                                1.163455101269445,
-                                1.1615290026206868,
-                                1.1592700312341533;
+    checkReproductionNumbers << 2.3280000000000003, 2.3279906878991881, 2.3279487809434576, 2.3277601483151549,
+        1.163455101269445, 1.1615290026206868, 1.1592700312341533;
 
     mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
 
@@ -197,7 +194,6 @@ TEST(TestSeir, get_reproduction_numbers)
         EXPECT_NEAR(reproduction_numbers[i], checkReproductionNumbers[i], 1e-12);
     }
 
-    EXPECT_FALSE(model.get_reproduction_number(static_cast<double>(static_cast<size_t>(result.get_num_time_points())), result));//Test for an index that is out of range
-
+    EXPECT_FALSE(model.get_reproduction_number(static_cast<double>(static_cast<size_t>(result.get_num_time_points())),
+                                               result)); //Test for an index that is out of range
 }
-
