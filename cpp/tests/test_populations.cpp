@@ -60,7 +60,7 @@ TEST(TestPopulations, sizes)
     size_t num_compartments = (size_t)num_infType * (size_t)num_ageGroup * (size_t)num_continents;
     ASSERT_EQ(7 * 7 * 8, num_compartments);
 
-    mio::Populations<InfectionState, AgeGroup, Continent> m({num_infType, num_ageGroup, num_continents});
+    mio::Populations<double,InfectionState, AgeGroup, Continent> m({num_infType, num_ageGroup, num_continents});
 
     ASSERT_EQ(num_compartments, m.get_num_compartments());
     ASSERT_EQ(num_compartments, m.numel());

@@ -29,7 +29,7 @@
 
 TEST(TestUncertain, uncertain_value_basic)
 {
-    mio::UncertainValue val(3.0);
+    mio::UncertainValue<double> val(3.0);
     EXPECT_EQ(val, 3.0);
 
     val = 2.0;
@@ -38,13 +38,13 @@ TEST(TestUncertain, uncertain_value_basic)
 
 TEST(TestUncertain, uncertain_value_copy)
 {
-    mio::UncertainValue val(2.0);
+    mio::UncertainValue<double> val(2.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
     double upper_bound = (1 + dev_rel * 2.6) * val;
     val.set_distribution(mio::ParameterDistributionNormal(lower_bound, upper_bound, val, dev_rel * val));
 
-    mio::UncertainValue val2(val);
+    mio::UncertainValue<double> val2(val);
     EXPECT_EQ(val2, 2.0);
 
     EXPECT_NE(val.get_distribution().get(), val2.get_distribution().get()); // dists get copied
@@ -53,7 +53,7 @@ TEST(TestUncertain, uncertain_value_copy)
 
 TEST(TestUncertain, random_sample)
 {
-    mio::UncertainValue val(2.0);
+    mio::UncertainValue<double> val(2.0);
 
     auto mock_dist_ref = MockParameterDistributionRef<testing::StrictMock<MockParameterDistribution>>();
     EXPECT_CALL(mock_dist_ref.get_mock(), get_rand_sample())
@@ -73,7 +73,7 @@ TEST(TestUncertain, random_sample)
 
 TEST(TestUncertain, uncertain_value_assign)
 {
-    mio::UncertainValue val(3.0);
+    mio::UncertainValue<double> val(3.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
     double upper_bound = (1 + dev_rel * 2.6) * val;
@@ -83,10 +83,10 @@ TEST(TestUncertain, uncertain_value_assign)
     dval         = 4.0;
     EXPECT_EQ(val, 4.0);
 
-    mio::UncertainValue val2 = 4.0;
+    mio::UncertainValue<double> val2 = 4.0;
     EXPECT_EQ(val2, val); // only checks doubles, not dists
 
-    mio::UncertainValue val3;
+    mio::UncertainValue<double> val3;
     val3 = val;
 
     EXPECT_EQ(val3, val);
@@ -97,14 +97,14 @@ TEST(TestUncertain, uncertain_value_predef)
 {
     mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    mio::UncertainValue val(3.0);
+    mio::UncertainValue<double> val(3.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
     double upper_bound = (1 + dev_rel * 2.6) * val;
     val.set_distribution(mio::ParameterDistributionNormal(lower_bound, upper_bound, val, dev_rel * val));
 
     val.get_distribution().get()->add_predefined_sample(17111.0);
-    mio::UncertainValue val2(val);
+    mio::UncertainValue<double> val2(val);
     val.draw_sample();
     EXPECT_EQ(val, 17111.0);
 
@@ -124,7 +124,7 @@ TEST(TestUncertain, uncertain_matrix)
     }));
     contact_matrix.add_damping(0.7, mio::SimulationTime(30.));
 
-    mio::UncertainContactMatrix uncertain_mat{{contact_matrix}};
+    mio::UncertainContactMatrix<double> uncertain_mat{{contact_matrix}};
 
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(0, 1), 2);
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(1, 1), 4);
@@ -135,7 +135,7 @@ TEST(TestUncertain, uncertain_matrix)
                                               Eigen::VectorXd::Constant(2, 1.0));
 
     uncertain_mat.get_school_holiday_damping() = mio::DampingSampling(
-        mio::UncertainValue(1.), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(0.0),
+        mio::UncertainValue<double>(1.), mio::DampingLevel(1), mio::DampingType(0), mio::SimulationTime(0.0),
         std::vector<size_t>(1, size_t(0)), (Eigen::VectorXd(2) << 1.0, 0.0).finished());
     uncertain_mat.get_school_holidays().assign({{mio::SimulationTime(5.0), mio::SimulationTime(17.0)}});
 
