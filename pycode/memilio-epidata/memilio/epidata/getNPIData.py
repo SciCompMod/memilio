@@ -894,7 +894,6 @@ def get_npi_data(fine_resolution=2,
                                                             counties_considered=counties_considered)
     save_interaction_matrix(df_counted_joint_codes, 'joint_codes', directory)
     plot_interaction_matrix('joint_codes', directory)
-    plot_multiple_prescriptions('joint_codes', directory)
 
     # create dataframe to count multiple codes after incidence dependent (de-)activation
     df_incid_depend = pd.DataFrame()
@@ -1320,7 +1319,10 @@ def save_interaction_matrix(df_interactions, filename, directory):
 
 def plot_interaction_matrix(filename, directory):
     """! Reads interaction matrices from hard drive and writes heatmap plots
-         to hard drive.
+         to hard drive. Separates diagonal and offdiagonal entries as 
+         interactions inside one NPI are counted for all incidence dependent
+         sublevels while between NPIs only one interaction is counted if more
+         than one sublevel is mentioned on each of the sides.
 
     @param[in] filename Filename to read results from.
     @param[in] directory Directory where to read and save data.
@@ -1338,7 +1340,11 @@ def plot_interaction_matrix(filename, directory):
     # invert color map elements for tab20c such that subcolors are shown
     # from light to dark
     cmap = copy.copy(mpl.cm.get_cmap('tab20b'))
-    colors = [cmap(i) for i in np.array([list(range(4*(i+1)-1,4*i-1,-1)) for i in range(5)]).flatten()]
+    colors = [
+        cmap(i)
+        for i in np.array(
+            [list(range(4 * (i + 1) - 1, 4 * i - 1, -1)) for i in
+             range(5)]).flatten()]
     colors = colors + [(0.6, 0.6, 0.6), (0.4, 0.4, 0.4),
                        (0.2, 0.2, 0.2), (0, 0, 0)]
     cmap = mpl.colors.ListedColormap(colors)
@@ -1347,11 +1353,16 @@ def plot_interaction_matrix(filename, directory):
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
             sheet_name=code, engine='openpyxl')
-        # set diag = 0, access (i,i+1) as first column contains index
-        for i in range(df.shape[0]):
-            df.iloc[i, i+1] = 0
+
         # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()
+
+        # separate diag and offdiag
+        array_exclusion_diag = copy.deepcopy(array_exclusion.diagonal())
+        # set diag = 0
+        for i in range(array_exclusion.shape[0]):
+            array_exclusion[i, i] = 0
+
         if filename != 'count_deactivation':
             # for count deactivation xlabel != ylabel
             # else matrix is of squared form and symmetric
@@ -1380,50 +1391,34 @@ def plot_interaction_matrix(filename, directory):
         else:
             raise gd.DataError('Unknown filename: ' + filename)
 
+        ## plot offdiagonal (interactions between NPIs)
         # Set vmin = 1 so that only combinations that are simultaneously active
         # at least on one day are in color, else use white.
         # Set vmax = 1e6 to be adjusted with colormap, this value is larger
         # than the maximum in all dataframes, this way colors of heatmaps are 
         # comparable across different visualizations
         # (e.g. between codes or between joint_codes and exclusions)
-
         plt.imshow(array_exclusion, cmap=cmap,
                    norm=mpl.colors.LogNorm(vmin=1, vmax=1e6))
         plt.colorbar()
         plt.tight_layout()
         plt.savefig(
-            os.path.join(target_directory, filename + '_{}'.format(
+            os.path.join(target_directory, 'InterNPIs_' + filename + '_{}'.format(
                 code)), dpi=300)
         plt.close()
 
-
-def plot_multiple_prescriptions(filename, directory):
-    target_directory = os.path.join(
-        directory, 'heatmaps_mult_presc_' + filename)
-    if not os.path.exists(target_directory):
-        os.makedirs(target_directory)
-
-    codelist = pd.ExcelFile(os.path.join(
-        directory, filename + '.xlsx'), engine='openpyxl').sheet_names
-
-    cmap = copy.copy(mpl.cm.get_cmap('OrRd'))
-
-    for code in codelist:
-        df = pd.read_excel(
-            os.path.join(directory, filename + '.xlsx'),
-            sheet_name=code, engine='openpyxl')
-        array_exclusion = df.iloc[:, 1:].to_numpy()
-        fig = plt.figure()
+        ## plot diagonal (interactions between incidence levels of one NPIs)
+        plt.figure()
         positions = [i for i in range(len(df.columns)-1)]
         plt.yticks(positions, df.columns.to_list()[1:])
         plt.xticks([])
-        plt.imshow(np.array([array_exclusion.diagonal()]).T,
-                   cmap=cmap, norm=mpl.colors.LogNorm(vmin=1, vmax=50000))
+        plt.imshow(np.array([array_exclusion_diag]).T,
+                   cmap=cmap, norm=mpl.colors.LogNorm(vmin=1, vmax=1e6))
         plt.colorbar()
-        plt.title(code)
+        plt.title('Intra-NPI duplicates')
         plt.tight_layout()
         plt.savefig(
-            os.path.join(target_directory, filename + '_{}'.format(
+            os.path.join(target_directory, 'IntraNPIs_' + filename + '_{}'.format(
                 code)), dpi=300)
         plt.close()
 
