@@ -21,8 +21,10 @@
 #define SEIR_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
@@ -72,7 +74,7 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided index time.
     */
-    IOResult<double> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
+    IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
     {
         if (!(t_idx < static_cast<size_t>(y.get_num_time_points()))) {
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
@@ -101,36 +103,39 @@ public:
         auto num_time_points = y.get_num_time_points();
         Eigen::VectorXd temp(num_time_points);
         for (int i = 0; i < num_time_points; i++) {
-            temp[i] = get_reproduction_number(i, y).value();
+            temp[i] = get_reproduction_number(static_cast<size_t>(i), y).value();
         }
         return temp;
     }
 
     /**
-    * @brief interpolate reproduction numbers at freely chosen time value that lies in between the time points of the given time series.
-    * values are linearly interpolated from their immediate neighbors from the old time points.
-    * @param y TimeSeries whose reproduction numbers we want to interpolate
-    * @param t_value double time at which we approximate the reproduction number
-    * @return interpolated reproduction number at given time value
+    *@brief Computes the reproduction number at a given time point of the Model output obtained by the Simulation. If the particular time point is not inside the output, a linearly interpolated value is returned.
+    *@param t_idx The time point at which the reproduction number is computed.
+    *@param y The TimeSeries obtained from the Model Simulation.
+    *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
     */
-    IOResult<double> interpolate_reproduction_numbers(const mio::TimeSeries<ScalarType>& y, const double t_value)
+    IOResult<ScalarType> get_reproduction_number(double t_value, const mio::TimeSeries<ScalarType>& y) noexcept
     {
-        if (t_value < -1 || t_value > y.get_num_time_points()) {
-            return mio::failure(
-                mio::StatusCode::OutOfRange,
-                "Cannot interpolate reproduction number too far outside computed horizon of the TimeSeries");
+        if (t_value < y.get_time(0) || t_value > y.get_last_time()) {
+            return mio::failure(mio::StatusCode::OutOfRange,
+                                "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
         }
-        if (t_value < 0) {
-            return get_reproduction_number(0, y);
-        }
-        if (t_value > y.get_num_time_points() - 1) {
-            return get_reproduction_number(y.get_num_time_points() - 1, y);
-        }
-        double y1 = get_reproduction_number(floor(t_value), y).value();
-        double y2 = get_reproduction_number(ceil(t_value), y).value();
 
-        double result = linear_interpolation(t_value, floor(t_value), ceil(t_value), y1, y2);
+        if (t_value == y.get_time(0)) {
+            return mio::success(get_reproduction_number(static_cast<size_t>(0), y).value());
+        }
+        //Find timepts at closest earlier and later time
+        Eigen::Index temp_late = 0;
+        for (Eigen::Index i = 0; i < y.get_num_time_points(); i++) {
+            if (y.get_time(i) >= t_value) {
+                temp_late = i;
+                break;
+            }
+        }
+        double y1 = get_reproduction_number(static_cast<size_t>(temp_late - 1), y).value();
+        double y2 = get_reproduction_number(static_cast<size_t>(temp_late), y).value();
 
+        double result = linear_interpolation(t_value, y.get_time(temp_late - 1), y.get_time(temp_late), y1, y2);
         return mio::success(result);
     }
 };
