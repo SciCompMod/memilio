@@ -460,14 +460,11 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
         }
     }
     //Now try to invert the matrix V
-    std::cout << "F Matrix: " << F << std::endl;
     V = V.inverse();
-    std::cout << "INVERSE:" << V << std::endl;
 
     //Compute F*V
     Eigen::MatrixXd NextGenMatrix(5 * num_groups, 5 * num_groups);
     NextGenMatrix = F * V;
-    std::cout << "F TIMES V" << NextGenMatrix << std::endl;
 
     //Compute the biggest eigenvalue in absolute value
     Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
