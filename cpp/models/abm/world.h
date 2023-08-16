@@ -107,7 +107,6 @@ public:
     {
         auto obj = io.create_object("World");
         obj.add_element("NumAgeGroups", parameters.get_num_groups());
-        //obj.add_list("Locations", get_locations().begin(), get_locations().end());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
         for (size_t i = 0; i < trip_list.num_trips(); i++) {
@@ -115,6 +114,7 @@ public:
             trip_list.increase_index();
         }
         obj.add_list("Trips", trips.begin(), trips.end());
+        obj.add_list("Locations", get_locations().begin(), get_locations().end());
         obj.add_list("Persons", get_persons().begin(), get_persons().end());
         obj.add_element("UseMigrationRules", m_use_migration_rules);
     }

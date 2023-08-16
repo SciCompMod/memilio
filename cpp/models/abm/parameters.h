@@ -604,7 +604,8 @@ public:
                 return 1;
             }
 
-            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0) {
+            if (this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] < 0.0 ||
+                this->get<DetectInfection>()[{VirusVariant::Wildtype, i}] > 1.0) {
                 log_error("Constraint check: Parameter DetectInfection of age group {:.0f} smaller than {:d} or "
                           "larger than {:d}",
                           (size_t)i, 0, 1);
@@ -619,9 +620,11 @@ public:
                 return 1;
             }
 
-            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds()) {
-                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d}", (size_t)i,
-                          this->get<GotoWorkTimeMinimum>()[i].seconds());
+            if (this->get<GotoWorkTimeMaximum>()[i].seconds() < this->get<GotoWorkTimeMinimum>()[i].seconds() ||
+                this->get<GotoWorkTimeMaximum>()[i] > days(1)) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                          "than one day time span",
+                          (size_t)i, this->get<GotoWorkTimeMinimum>()[i].seconds());
                 return 1;
             }
 
@@ -633,16 +636,33 @@ public:
                 return 1;
             }
 
-            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds()) {
-                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d}", (size_t)i,
-                          this->get<GotoSchoolTimeMinimum>()[i].seconds());
+            if (this->get<GotoSchoolTimeMaximum>()[i].seconds() < this->get<GotoSchoolTimeMinimum>()[i].seconds() ||
+                this->get<GotoSchoolTimeMaximum>()[i] > days(1)) {
+                log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
+                          "than one day time span",
+                          (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
                 return 1;
             }
         }
 
         if (this->get<MaskProtection>()[MaskType::Community] < 0.0 ||
             this->get<MaskProtection>()[MaskType::Community] > 1.0) {
-            log_error("Constraint check: Parameter MaskProtection smaller {:d} or larger {:d}", 0, 1);
+            log_error(
+                "Constraint check: Parameter MaskProtection for MaskType Community is smaller {:d} or larger {:d}", 0,
+                1);
+            return 1;
+        }
+
+        if (this->get<MaskProtection>()[MaskType::FFP2] < 0.0 || this->get<MaskProtection>()[MaskType::FFP2] > 1.0) {
+            log_error("Constraint check: Parameter MaskProtection for MaskType FFP2 is smaller {:d} or larger {:d}", 0,
+                      1);
+            return 1;
+        }
+
+        if (this->get<MaskProtection>()[MaskType::Surgical] < 0.0 ||
+            this->get<MaskProtection>()[MaskType::Surgical] > 1.0) {
+            log_error("Constraint check: Parameter MaskProtection for MaskType Surgical smaller {:d} or larger {:d}", 0,
+                      1);
             return 1;
         }
 
