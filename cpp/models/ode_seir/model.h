@@ -23,12 +23,10 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/io/io.h"
 #include "memilio/math/interpolation.h"
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
-#include <math.h>
 
 namespace mio
 {
@@ -76,7 +74,7 @@ public:
     */
     IOResult<double> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
     {
-        if (!(0 <= t_idx && t_idx < static_cast<size_t>(y.get_num_time_points()))) {
+        if (!(t_idx < static_cast<size_t>(y.get_num_time_points()))) {
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 

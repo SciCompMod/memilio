@@ -197,3 +197,43 @@ TEST(TestSeir, get_reproduction_numbers)
     EXPECT_FALSE(model.get_reproduction_number(static_cast<double>(static_cast<size_t>(result.get_num_time_points())),
                                                result)); //Test for an index that is out of range
 }
+
+TEST(TestSeir, interpolate_reproduction_numbers)
+{
+    double t0   = 0;
+    double tmax = 1;
+    double dt   = 0.001;
+
+    mio::oseir::Model model;
+
+    double total_population                                                                            = 10000;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
+    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
+        total_population -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
+        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
+
+    model.parameters.set<mio::oseir::TimeExposed>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
+    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.5, mio::SimulationTime(4));
+
+    model.check_constraints();
+
+    mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
+
+    EXPECT_EQ(model.interpolate_reproduction_numbers(result, -0.5), model.get_reproduction_number(0, result));
+    EXPECT_EQ(
+        model.interpolate_reproduction_numbers(result, result.get_num_time_points() - 0.5),
+        model.get_reproduction_number(
+            result.get_num_time_points() - 1,
+            result)); //Interpolation should return the right respectively leftmost reproduction number if time desired time has distance at most one from these points
+    EXPECT_FALSE(model.interpolate_reproduction_numbers(result, -1.5)); //Test for indices out of range
+    EXPECT_FALSE(model.interpolate_reproduction_numbers(result, result.get_num_time_points() + 0.5));
+    EXPECT_EQ(model.interpolate_reproduction_numbers(result, 1.5).value(), 2.32796973442132285);
+    EXPECT_EQ(model.interpolate_reproduction_numbers(result, 4.75).value(), 1.16201052728287635);
+}
