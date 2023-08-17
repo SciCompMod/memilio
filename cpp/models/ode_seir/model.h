@@ -125,7 +125,7 @@ public:
 
         auto times = std::vector<ScalarType>(y.get_times().begin(), y.get_times().end());
 
-        double time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_idx));
+        ScalarType time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_idx));
 
         if (time_late == y.get_time(0)) {
             return mio::success(get_reproduction_number(time_late, y).value());
