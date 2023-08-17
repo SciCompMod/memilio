@@ -88,7 +88,7 @@ public:
                                this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>() /
                                this->populations.get_total();
 
-        double result =
+        ScalarType result =
             y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] *
             TimeInfected * coeffStoE;
 
@@ -116,25 +116,25 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
     */
-    IOResult<ScalarType> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y)
+    IOResult<ScalarType> get_reproduction_number(ScalarType t_idx, const mio::TimeSeries<ScalarType>& y)
     {
         if (t_idx < y.get_time(0) || t_idx > y.get_last_time()) {
             return mio::failure(mio::StatusCode::OutOfRange,
                                 "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
         }
 
-        auto times = std::vector<double>(y.get_times().begin(), y.get_times().end());
+        auto times = std::vector<ScalarType>(y.get_times().begin(), y.get_times().end());
 
-        size_t time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_idx));
+        double time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_idx));
 
         if (time_late == y.get_time(0)) {
             return mio::success(get_reproduction_number(time_late, y).value());
         }
 
-        double y1 = get_reproduction_number(time_late - 1, y).value();
-        double y2 = get_reproduction_number(time_late, y).value();
+        ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), y).value();
+        ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), y).value();
 
-        double result = linear_interpolation(t_idx, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
+        ScalarType result = linear_interpolation(t_idx, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
         return mio::success(result);
     }
 };
