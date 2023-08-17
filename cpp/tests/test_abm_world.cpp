@@ -438,50 +438,50 @@ TEST(TestWorld, copyWorld)
     ASSERT_EQ(copied_trip_data.get_next_trip().migration_origin, home_id);
 
     ASSERT_EQ(copied_world.get_locations().size(), 5);
-    // ASSERT_EQ(copied_world.get_locations()[1].get_index(), school_id1.index);
-    // ASSERT_EQ(copied_world.get_locations()[2].get_index(), school_id2.index);
-    // ASSERT_EQ(copied_world.get_locations()[3].get_index(), work_id.index);
-    // ASSERT_EQ(copied_world.get_locations()[4].get_index(), home_id.index);
+    ASSERT_EQ(copied_world.get_locations()[1].get_index(), school_id1.index);
+    ASSERT_EQ(copied_world.get_locations()[2].get_index(), school_id2.index);
+    ASSERT_EQ(copied_world.get_locations()[3].get_index(), work_id.index);
+    ASSERT_EQ(copied_world.get_locations()[4].get_index(), home_id.index);
     ASSERT_EQ(copied_world.get_locations()[1].get_number_persons(), 1);
     ASSERT_EQ(copied_world.get_locations()[2].get_number_persons(), 1);
     ASSERT_EQ(copied_world.get_locations()[3].get_number_persons(), 0);
     ASSERT_EQ(copied_world.get_locations()[4].get_number_persons(), 0);
-    // ASSERT_EQ(copied_world.get_locations()[1].get_npi_active(), true);
-    // ASSERT_EQ(copied_world.get_locations()[2].get_npi_active(), false);
-    // ASSERT_EQ(copied_world.get_locations()[3].get_npi_active(), false);
-    // ASSERT_EQ(copied_world.get_locations()[4].get_npi_active(), false);
-    // ASSERT_EQ(copied_world.get_locations()[1].get_required_mask(), mio::abm::MaskType::Surgical);
-    // ASSERT_EQ(copied_world.get_locations()[2].get_required_mask(), mio::abm::MaskType::FFP2);
-    // ASSERT_EQ(
-    //     copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-    //     1);
-    // ASSERT_EQ(copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0),
-    //                                                             mio::abm::InfectionState::Susceptible),
-    //           0);
-    // ASSERT_EQ(
-    //     copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-    //     0);
-    // ASSERT_EQ(copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0),
-    //                                                             mio::abm::InfectionState::Susceptible),
-    //           1);
-    // ASSERT_EQ(
-    //     copied_world.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-    //     0);
-    // ASSERT_EQ(
-    //     copied_world.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
-    //     0);
+    ASSERT_EQ(copied_world.get_locations()[1].get_npi_active(), true);
+    ASSERT_EQ(copied_world.get_locations()[2].get_npi_active(), false);
+    ASSERT_EQ(copied_world.get_locations()[3].get_npi_active(), false);
+    ASSERT_EQ(copied_world.get_locations()[4].get_npi_active(), false);
+    ASSERT_EQ(copied_world.get_locations()[1].get_required_mask(), mio::abm::MaskType::Surgical);
+    ASSERT_EQ(copied_world.get_locations()[2].get_required_mask(), mio::abm::MaskType::FFP2);
+    ASSERT_EQ(
+        copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
+        1);
+    ASSERT_EQ(copied_world.get_locations()[1].get_subpopulation(mio::abm::TimePoint(0),
+                                                                mio::abm::InfectionState::Susceptible),
+              0);
+    ASSERT_EQ(
+        copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
+        0);
+    ASSERT_EQ(copied_world.get_locations()[2].get_subpopulation(mio::abm::TimePoint(0),
+                                                                mio::abm::InfectionState::Susceptible),
+              1);
+    ASSERT_EQ(
+        copied_world.get_locations()[3].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
+        0);
+    ASSERT_EQ(
+        copied_world.get_locations()[4].get_subpopulation(mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed),
+        0);
 
     ASSERT_EQ(copied_world.get_persons().size(), 2);
     ASSERT_EQ(copied_world.get_persons()[0].get_location().get_index(), p1.get_location().get_index());
     ASSERT_EQ(copied_world.get_persons()[1].get_location().get_index(), p2.get_location().get_index());
     ASSERT_EQ(copied_world.get_persons()[0].get_location().get_type(), p1.get_location().get_type());
     ASSERT_EQ(copied_world.get_persons()[1].get_location().get_type(), p2.get_location().get_type());
-    // ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
-    //           p1.get_infection().get_infection_state(mio::abm::TimePoint(0)));
-    // ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home), 0);
-    // ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work), 0);
-    // ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home), 0.2);
-    // ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work), 0.2);
+    ASSERT_EQ(copied_world.get_persons()[0].get_infection().get_infection_state(mio::abm::TimePoint(0)),
+              p1.get_infection().get_infection_state(mio::abm::TimePoint(0)));
+    ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Home), 0);
+    ASSERT_EQ(copied_world.get_persons()[0].get_mask_compliance(mio::abm::LocationType::Work), 0);
+    ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Home), 0.2);
+    ASSERT_EQ(copied_world.get_persons()[1].get_mask_compliance(mio::abm::LocationType::Work), 0.2);
     ASSERT_EQ(&(world.get_persons()[0].get_location()), &(p1.get_location()));
     ASSERT_EQ(&(world.get_persons()[1].get_location()), &(p2.get_location()));
 
