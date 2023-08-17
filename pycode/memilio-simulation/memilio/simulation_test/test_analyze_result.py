@@ -51,8 +51,8 @@ class Test_AnalyzeResult(unittest.TestCase):
         graph = secir.ModelGraph()
         graph.add_node(0, model)
         graph.add_node(1, model)
-        graph.add_edge(0, 1, 0.01 * np.ones(8))
-        graph.add_edge(1, 0, 0.01 * np.ones(8))
+        graph.add_edge(0, 1, 0.01 * np.ones(10))
+        graph.add_edge(1, 0, 0.01 * np.ones(10))
 
         study = secir.ParameterStudy(graph, t0=0, tmax=2, dt=0.5, num_runs=3)
         r = study.run()

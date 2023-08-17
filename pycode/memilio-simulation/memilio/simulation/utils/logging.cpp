@@ -25,7 +25,7 @@ namespace py = pybind11;
 namespace pymio
 {
 
-void bind_logging(py::module& m, std::string const& name)
+void bind_logging(py::module_& m, std::string const& name)
 {
     py::enum_<mio::LogLevel>(m, name.c_str())
         .value("Off", mio::LogLevel::off)
