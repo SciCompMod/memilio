@@ -52,7 +52,7 @@ def parameter_study():
     model.parameters.CriticalPerSevere[secir.AgeGroup(0)] = 0.25
     model.parameters.DeathsPerCritical[secir.AgeGroup(0)] = 0.3
 
-    # two regions with different populations and with some migration between them
+    # two regions with different populations and with some mobility between them
     graph = secir.MigrationGraph()
     model.populations[secir.AgeGroup(0), secir.InfectionState.Exposed] = 100
     model.populations[secir.AgeGroup(
@@ -88,12 +88,12 @@ def parameter_study():
         2000)
     model.apply_constraints()
     graph.add_node(id=1, model=model, t0=t0)
-    migration_coefficients = 0.1 * np.ones(8)
-    migration_params = mio.MigrationParameters(migration_coefficients)
+    mobility_coefficients = 0.1 * np.ones(model.populations.numel())
+    mobility_params = mio.MigrationParameters(mobility_coefficients)
     # one coefficient per (age group x compartment)
-    graph.add_edge(0, 1, migration_params)
+    graph.add_edge(0, 1, mobility_params)
     # directed graph -> add both directions so coefficients can be different
-    graph.add_edge(1, 0, migration_params)
+    graph.add_edge(1, 0, mobility_params)
 
     # run simulation
     sim = secir.MigrationSimulation(graph, t0, dt=0.5)
