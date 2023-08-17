@@ -134,8 +134,6 @@ public:
         double y1 = get_reproduction_number(time_late - 1, y).value();
         double y2 = get_reproduction_number(time_late, y).value();
 
-        y.get_times();
-
         double result = linear_interpolation(t_idx, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
         return mio::success(result);
     }
