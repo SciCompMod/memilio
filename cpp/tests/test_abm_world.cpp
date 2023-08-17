@@ -427,15 +427,15 @@ TEST(TestWorld, copyWorld)
     ASSERT_EQ(copied_infection_params, 4.);
     ASSERT_EQ(copied_world.use_migration_rules(), false);
 
-    // mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
-    // ASSERT_EQ(copied_trip_data.num_trips(), 2);
-    // ASSERT_EQ(copied_trip_data.get_next_trip().person_id, p1.get_person_id());
-    // ASSERT_EQ(copied_trip_data.get_next_trip().migration_destination, school_id1);
-    // ASSERT_EQ(copied_trip_data.get_next_trip().migration_origin, home_id);
-    // copied_trip_data.increase_index();
-    // ASSERT_EQ(copied_trip_data.get_next_trip().person_id, p2.get_person_id());
-    // ASSERT_EQ(copied_trip_data.get_next_trip().migration_destination, work_id);
-    // ASSERT_EQ(copied_trip_data.get_next_trip().migration_origin, home_id);
+    mio::abm::TripList& copied_trip_data = copied_world.get_trip_list();
+    ASSERT_EQ(copied_trip_data.num_trips(), 2);
+    ASSERT_EQ(copied_trip_data.get_next_trip().person_id, p1.get_person_id());
+    ASSERT_EQ(copied_trip_data.get_next_trip().migration_destination, school_id1);
+    ASSERT_EQ(copied_trip_data.get_next_trip().migration_origin, home_id);
+    copied_trip_data.increase_index();
+    ASSERT_EQ(copied_trip_data.get_next_trip().person_id, p2.get_person_id());
+    ASSERT_EQ(copied_trip_data.get_next_trip().migration_destination, work_id);
+    ASSERT_EQ(copied_trip_data.get_next_trip().migration_origin, home_id);
 
     ASSERT_EQ(copied_world.get_locations().size(), 5);
     // ASSERT_EQ(copied_world.get_locations()[1].get_index(), school_id1.index);
@@ -488,10 +488,10 @@ TEST(TestWorld, copyWorld)
     // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
     ASSERT_NE(&(copied_world.parameters), &world.parameters);
 
-    // copied_trip_data = copied_world.get_trip_list();
-    // ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip1);
-    // copied_trip_data.increase_index();
-    // ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip2);
+    copied_trip_data = copied_world.get_trip_list();
+    ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip1);
+    copied_trip_data.increase_index();
+    ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip2);
 
     ASSERT_NE(&copied_world.get_locations()[1], &school1);
     ASSERT_NE(&copied_world.get_locations()[2], &school2);
