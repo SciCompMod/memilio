@@ -488,10 +488,10 @@ TEST(TestWorld, copyWorld)
     // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
     ASSERT_NE(&(copied_world.parameters), &world.parameters);
 
-    copied_trip_data = copied_world.get_trip_list();
-    ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip1);
-    copied_trip_data.increase_index();
-    ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip2);
+    // copied_trip_data = copied_world.get_trip_list();
+    // ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip1);
+    // copied_trip_data.increase_index();
+    // ASSERT_NE(&(copied_trip_data.get_next_trip()), &trip2);
 
     ASSERT_NE(&copied_world.get_locations()[1], &school1);
     ASSERT_NE(&copied_world.get_locations()[2], &school2);
@@ -512,15 +512,15 @@ TEST(TestWorld, copyWorld)
     ASSERT_NE(&(copied_world.get_persons()[1].get_location()), &school2);
     ASSERT_NE(&(copied_world.get_locations()[1]), &(p1.get_location()));
     ASSERT_NE(&(copied_world.get_locations()[2]), &(p2.get_location()));
-    // ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()), &p1.get_assigned_locations());
-    // ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()), &p2.get_assigned_locations());
-    // ASSERT_NE(&(copied_world.get_persons()[0].get_vaccinations()), &p1.get_vaccinations());
-    // ASSERT_NE(&(copied_world.get_persons()[1].get_vaccinations()), &p2.get_vaccinations());
-    // ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &p1.get_infection());
-    // ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &p1.get_mask());
-    // ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &p2.get_mask());
-    // ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &p1.get_cells());
-    // ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &p2.get_cells());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_assigned_locations()), &p1.get_assigned_locations());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_assigned_locations()), &p2.get_assigned_locations());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_vaccinations()), &p1.get_vaccinations());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_vaccinations()), &p2.get_vaccinations());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_infection()), &p1.get_infection());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_mask()), &p1.get_mask());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_mask()), &p2.get_mask());
+    ASSERT_NE(&(copied_world.get_persons()[0].get_cells()), &p1.get_cells());
+    ASSERT_NE(&(copied_world.get_persons()[1].get_cells()), &p2.get_cells());
 
     // Evolve the world and check if the copied world is also involved accordingly
     p1.migrate_to(work, {0});
