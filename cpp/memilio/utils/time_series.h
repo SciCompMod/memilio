@@ -508,7 +508,7 @@ inline Eigen::Index next_pow2(Eigen::Index i)
     i |= i >> 4;
     i |= i >> 8;
     i |= i >> 16;
-    IF_CONSTEXPR(sizeof(Eigen::Index) == 8)
+    if constexpr (sizeof(Eigen::Index) == 8)
     {
         i |= i >> 32;
     }
