@@ -133,7 +133,10 @@ def updateMobility2022(directory, mobility_file):
 
 def main():
     """! Main program entry."""
-    directory = dd.defaultDict['out_folder'].split('/pydata')[0]
+
+    arg_dict = gd.cli("commuter_official")
+
+    directory = arg_dict['out_folder'].split('/pydata')[0]
     directory = os.path.join(directory, 'mobility/')
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be

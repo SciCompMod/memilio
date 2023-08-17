@@ -18,4 +18,4 @@ Below is an overview of the model architecture and its compartments.
 | $T_{I}$                    |  `TimeInfected`               | Time in days an individual stays in the Infected compartment. |
 
 
-An example can be found in [examples/seir.cpp](../../examples/seir.cpp)
+An example can be found in [examples/ode_seir.cpp](../../examples/ode_seir.cpp)

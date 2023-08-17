@@ -33,6 +33,7 @@ Below is an overview of the model architecture and its compartments.
 ## Examples
 
 The extended model is used in the 2021_vaccination_sarscov2_delta_germany simulation. 
+An easier example can be found in [examples/ode_secirvvs.cpp](../../examples/ode_secirvvs.cpp)
 
 Examples of the basic SECIR model can be found at:
 

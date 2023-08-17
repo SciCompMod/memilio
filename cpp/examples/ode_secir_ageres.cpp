@@ -61,13 +61,15 @@ int main()
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * nb_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * nb_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * nb_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
@@ -90,7 +92,7 @@ int main()
 
     mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
-    char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+    std::vector<std::string> vars = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
     printf("People in\n");
 
@@ -98,11 +100,11 @@ int main()
         double dummy = 0;
 
         for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
-            printf("\t %c[%d]: %.0f", vars[k], (int)i,
+            printf("\t %s[%d]: %.0f", vars[k].c_str(), (int)i,
                    secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i]);
             dummy += secir.get_last_value()[k + (size_t)mio::osecir::InfectionState::Count * (int)i];
         }
 
-        printf("\t %c_otal: %.0f\n", vars[k], dummy);
+        printf("\t %s_otal: %.0f\n", vars[k].c_str(), dummy);
     }
 }

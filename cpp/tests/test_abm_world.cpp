@@ -23,7 +23,8 @@ TEST(TestWorld, init)
 {
     auto world = mio::abm::World();
 
-    ASSERT_THAT(world.get_locations(), testing::ElementsAre());
+    EXPECT_EQ(world.get_locations().size(), 1);
+    EXPECT_EQ(world.get_locations()[0].get_type(), mio::abm::LocationType::Cemetery);
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
@@ -35,8 +36,8 @@ TEST(TestWorld, addLocation)
     auto work_id    = world.add_location(mio::abm::LocationType::Work);
     auto home_id    = world.add_location(mio::abm::LocationType::Home);
 
-    ASSERT_EQ((int)school_id1.index, 0);
-    ASSERT_EQ((int)school_id2.index, 1);
+    ASSERT_EQ((int)school_id1.index, 1);
+    ASSERT_EQ((int)school_id2.index, 2);
 
     auto& school1 = world.get_individualized_location(school_id1);
     auto& school2 = world.get_individualized_location(school_id2);
@@ -51,10 +52,10 @@ TEST(TestWorld, addLocation)
     }
     ASSERT_EQ(count_schools, 2);
 
-    ASSERT_EQ(world.get_locations()[0], school1);
-    ASSERT_EQ(world.get_locations()[1], school2);
-    ASSERT_EQ(world.get_locations()[2], work);
-    ASSERT_EQ(world.get_locations()[3], home);
+    ASSERT_EQ(world.get_locations()[1], school1);
+    ASSERT_EQ(world.get_locations()[2], school2);
+    ASSERT_EQ(world.get_locations()[3], work);
+    ASSERT_EQ(world.get_locations()[4], home);
 }
 
 TEST(TestWorld, addPerson)
@@ -261,6 +262,7 @@ TEST(TestWorld, evolveMigration)
         p3.set_assigned_location(home_id);
         p4.set_assigned_location(home_id);
         p3.set_assigned_location(hospital_id);
+        p4.set_assigned_location(hospital_id);
         p5.set_assigned_location(event_id);
         p5.set_assigned_location(work_id);
         p5.set_assigned_location(home_id);
@@ -293,6 +295,57 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(work.get_number_persons(), 1);
         EXPECT_EQ(home.get_number_persons(), 2);
         EXPECT_EQ(hospital.get_number_persons(), 1);
+    }
+
+    // Test that a dead person cannot make a movement
+    {
+        auto t      = mio::abm::TimePoint(0);
+        auto dt     = mio::abm::days(1);
+        auto params = mio::abm::GlobalInfectionParameters{};
+        // Time to go from severe to critical infection is 1 day (dt).
+        params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
+                                                  mio::abm::VaccinationState::Unvaccinated}] = 1;
+        // Time to go from critical infection to dead state is 1/2 day (0.5 * dt).
+        params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79,
+                                                mio::abm::VaccinationState::Unvaccinated}] = 0.5 * 1;
+
+        auto world       = mio::abm::World(params);
+        auto home_id     = world.add_location(mio::abm::LocationType::Home);
+        auto work_id     = world.add_location(mio::abm::LocationType::Work);
+        auto icu_id      = world.add_location(mio::abm::LocationType::ICU);
+        auto hospital_id = world.add_location(mio::abm::LocationType::Hospital);
+        // Create a person that is dead at time t
+        auto& p_dead = add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t);
+        // Create a person that is severe at hospital and will be dead at time t + dt
+        auto& p_severe =
+            add_test_person(world, hospital_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Dead, t + dt);
+        p_dead.set_assigned_location(icu_id);
+        p_dead.set_assigned_location(work_id);
+        p_dead.set_assigned_location(home_id);
+        p_severe.set_assigned_location(hospital_id);
+        p_severe.set_assigned_location(icu_id);
+        p_severe.set_assigned_location(home_id);
+
+        // Add trip to see if a dead person can move outside of cemetery by scheduled
+        mio::abm::TripList& trip_list = world.get_trip_list();
+        mio::abm::Trip trip1(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id);
+        mio::abm::Trip trip2(p_dead.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        mio::abm::Trip trip3(p_severe.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id);
+        trip_list.add_trip(trip1);
+        trip_list.add_trip(trip2);
+        trip_list.add_trip(trip3);
+
+        // Check the dead person got burried and the severely infected person starts in Hospital
+        world.evolve(t, dt);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_severe.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Hospital);
+
+        // Check the dead person is still in Cemetery and the severely infected person dies and got burried
+        world.evolve(t + dt, dt);
+        EXPECT_EQ(p_dead.get_location().get_type(), mio::abm::LocationType::Cemetery);
+        EXPECT_EQ(p_severe.get_infection_state(t + dt), mio::abm::InfectionState::Dead);
+        EXPECT_EQ(p_severe.get_location().get_type(), mio::abm::LocationType::Cemetery);
     }
 }
 
