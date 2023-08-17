@@ -526,7 +526,13 @@ TEST(TestWorld, copyWorld)
     // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
     ASSERT_NE(&(copied_world.parameters), &world.parameters);
     
-    ASSERT_NE(&(copied_world.get_trip_list()), trip_data);
+    ASSERT_NE(&(copied_world.get_trip_list()), &trip_data);
+    copied_trip_data = copied_world.get_trip_list();
+    ASSERT_NE(&(copied_trip_data.get_next_trip().cells), &trip1.cells);
+    ASSERT_NE(&(copied_trip_data.get_next_trip().time), &trip1.time);
+    copied_trip_data.increase_index();
+    ASSERT_NE(&(copied_trip_data.get_next_trip().cells), &trip2.cells);
+    ASSERT_NE(&(copied_trip_data.get_next_trip().time), &trip2.time);
 
     ASSERT_NE(&copied_world.get_locations()[1], &school1);
     ASSERT_NE(&copied_world.get_locations()[2], &school2);
