@@ -132,9 +132,10 @@ struct StateAgeFunction {
      * @brief Set the m_parameter object.
      * 
      * Can be used to set the m_parameter object, which specifies the used function.
-     * The m_parameter object influences the maximum support of the function. This is why we set 
-     * m_support_max = -1 after setting the m_parameter object so that the maximum support is updated 
-     * accordingly in get_support_max. 
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_parameter object, the cached value has to be deleted. For details see get_support_max().
      *
      *@param[in] new_parameter New parameter for StateAgeFunction.
      */

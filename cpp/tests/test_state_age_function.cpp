@@ -104,8 +104,7 @@ TEST(TestStateAgeFunction, testGetSupportMax)
     ScalarType dt = 0.5;
 
     // test get_support_max for all derived classes as this method can be overridden
-    // we also check that the maximum support is correct after setting the parameter object
-    // of a StateAgeFunction
+    // Check that the maximum support is correct after setting the parameter object of a StateAgeFunction.
     mio::ExponentialDecay expdecay(1.0);
     EXPECT_NEAR(expdecay.get_support_max(dt), 23.5, 1e-14);
     expdecay.set_parameter(2.0);
