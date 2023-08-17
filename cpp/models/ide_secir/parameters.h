@@ -171,12 +171,10 @@ public:
      * @param dt Time step size which is used to get model specific StateAgeFunction%s support.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
-    bool check_constraints(ScalarType dt = 0.1) const
+    bool check_constraints() const
     {
         size_t check_eval_min = 50; // parameter defining minimal window on x-axis
-        for (size_t i = 0;
-             i < std::min(check_eval_min, (size_t)this->get<TransmissionProbabilityOnContact>().get_support_max(dt));
-             i++) {
+        for (size_t i = 0; i < check_eval_min; i++) {
             if (this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) < 0.0 ||
                 this->get<TransmissionProbabilityOnContact>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
@@ -186,9 +184,7 @@ public:
             }
         }
 
-        for (size_t i = 0;
-             i < std::min(check_eval_min, (size_t)this->get<RelativeTransmissionNoSymptoms>().get_support_max(dt));
-             i++) {
+        for (size_t i = 0; i < check_eval_min; i++) {
             if (this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) < 0.0 ||
                 this->get<RelativeTransmissionNoSymptoms>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
@@ -198,9 +194,7 @@ public:
             }
         }
 
-        for (size_t i = 0;
-             i < std::min(check_eval_min, (size_t)this->get<RiskOfInfectionFromSymptomatic>().get_support_max(dt));
-             i++) {
+        for (size_t i = 0; i < check_eval_min; i++) {
             if (this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) < 0.0 ||
                 this->get<RiskOfInfectionFromSymptomatic>().eval((ScalarType)i) > 1.0) {
                 log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
