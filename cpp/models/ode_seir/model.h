@@ -104,7 +104,7 @@ public:
     {
         auto num_time_points = y.get_num_time_points();
         Eigen::VectorXd temp(num_time_points);
-        for (size_t i = 0; i < (size_t)num_time_points; i++) {
+        for (size_t i = 0; i < static_cast<size_t>(num_time_points); i++) {
             temp[i] = get_reproduction_number(i, y).value();
         }
         return temp;
