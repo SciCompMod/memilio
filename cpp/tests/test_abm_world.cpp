@@ -169,6 +169,10 @@ TEST(TestWorld, evolveMigration)
         world.parameters
             .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
             2 * dt.days();
+        // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+        world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+        // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+        world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
         auto school_id = world.add_location(mio::abm::LocationType::School);
@@ -391,61 +395,61 @@ TEST(TestWorld, checkParameterConstraints)
     auto world  = mio::abm::World(NUM_AGE_GROUPS);
     auto params = world.parameters;
 
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 1.;
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 2.;
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]              = 1.;
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 3.;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 4.;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 5.;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 6.;
-    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 7.;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 8.;
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 9.;
-    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 10.;
-    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 0.3;
-    params.get<mio::abm::GotoWorkTimeMinimum>()[AGE_GROUP_35_TO_59] = mio::abm::hours(4);
-    params.get<mio::abm::GotoWorkTimeMaximum>()[AGE_GROUP_35_TO_59] = mio::abm::hours(8);
-    params.get<mio::abm::GotoSchoolTimeMinimum>()[AGE_GROUP_0_TO_4] = mio::abm::hours(3);
-    params.get<mio::abm::GotoSchoolTimeMaximum>()[AGE_GROUP_0_TO_4] = mio::abm::hours(6);
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]   = 4.;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]      = 5.;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]              = 6.;
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]             = 7.;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]                = 8.;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]           = 9.;
+    params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]        = 10.;
+    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]               = 0.3;
+    params.get<mio::abm::GotoWorkTimeMinimum>()[AGE_GROUP_35_TO_59]       = mio::abm::hours(4);
+    params.get<mio::abm::GotoWorkTimeMaximum>()[AGE_GROUP_35_TO_59]       = mio::abm::hours(8);
+    params.get<mio::abm::GotoSchoolTimeMinimum>()[AGE_GROUP_0_TO_4]       = mio::abm::hours(3);
+    params.get<mio::abm::GotoSchoolTimeMaximum>()[AGE_GROUP_0_TO_4]       = mio::abm::hours(6);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2] = 0.6;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
-    params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(0);
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
+    params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), 0);
 
     params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -1.;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 1.;
+    params.get<mio::abm::IncubationPeriod>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]             = 1.;
     params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -2.;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 2.;
+    params.get<mio::abm::InfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]  = 2.;
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -3.;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 3.;
-    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -4.;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]   = -4.;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 4.;
-    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -5.;
+    params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]    = -5.;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::InfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 5.;
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -6.;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]         = -6.;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 6.;
+    params.get<mio::abm::SevereToCritical>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]  = 6.;
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -7.;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 7.;
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -8.;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]    = -8.;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 8.;
+    params.get<mio::abm::CriticalToDead>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]      = 8.;
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -9.;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 9.;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]    = 9.;
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = -10.;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::RecoveredToSusceptible>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 10.;
-    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 1.1;
+    params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}]        = 1.1;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::DetectInfection>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_0_TO_4}] = 0.3;
-    
+
     params.get<mio::abm::GotoWorkTimeMinimum>()[AGE_GROUP_35_TO_59] = mio::abm::hours(30);
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::GotoWorkTimeMinimum>()[AGE_GROUP_35_TO_59] = mio::abm::hours(4);
@@ -458,13 +462,13 @@ TEST(TestWorld, checkParameterConstraints)
     params.get<mio::abm::GotoSchoolTimeMaximum>()[AGE_GROUP_0_TO_4] = mio::abm::hours(30);
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::GotoSchoolTimeMaximum>()[AGE_GROUP_0_TO_4] = mio::abm::hours(6);
-    
+
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 1.2;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2] = 1.2;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 1.2;
     ASSERT_EQ(params.check_constraints(), 1);
-    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2] = 0.6;
+    params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]     = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
     ASSERT_EQ(params.check_constraints(), 1);
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
@@ -574,9 +578,9 @@ TEST(TestWorld, copyWorld)
 
     // Assert the parameters, trips, locations, persons and their member variables of copied world are stored in different address of original world
     ASSERT_NE(&(copied_world.parameters), &world.parameters);
-    
+
     ASSERT_NE(&(copied_world.get_trip_list()), &trip_data);
-    
+
     ASSERT_NE(&copied_world.get_locations()[1], &school1);
     ASSERT_NE(&copied_world.get_locations()[2], &school2);
     ASSERT_NE(&copied_world.get_locations()[3], &work);

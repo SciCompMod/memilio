@@ -76,9 +76,13 @@ TEST(TestPerson, quarantine)
 {
     using testing::Return;
 
-    auto infection_parameters = mio::abm::Parameters(NUM_AGE_GROUPS);
-    auto home                 = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    auto work                 = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
+    auto parameters = mio::abm::Parameters(NUM_AGE_GROUPS);
+    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
+    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
+    parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
+    auto home                                    = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
+    auto work                                    = mio::abm::Location(mio::abm::LocationType::Work, 0, NUM_AGE_GROUPS);
 
     //setup rng mock so the person has a state transition to Recovered
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -92,20 +96,19 @@ TEST(TestPerson, quarantine)
 
     auto t_morning = mio::abm::TimePoint(0) + mio::abm::hours(7);
     auto dt        = mio::abm::hours(1);
-    infection_parameters
-        .get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_35_TO_59}] =
+    parameters.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_35_TO_59}] =
         0.5 * dt.days();
 
-    auto person = make_test_person(home, AGE_GROUP_35_TO_59, mio::abm::InfectionState::InfectedSymptoms, t_morning,
-                                   infection_parameters);
+    auto person =
+        make_test_person(home, AGE_GROUP_35_TO_59, mio::abm::InfectionState::InfectedSymptoms, t_morning, parameters);
 
     person.detect_infection(t_morning);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)), mio::abm::LocationType::Home);
+    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, parameters), mio::abm::LocationType::Home);
     ASSERT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
     person.remove_quarantine();
-    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)), mio::abm::LocationType::Work);
+    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, parameters), mio::abm::LocationType::Work);
 }
 
 TEST(TestPerson, get_tested)
