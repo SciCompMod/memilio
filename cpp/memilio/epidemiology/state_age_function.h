@@ -142,7 +142,7 @@ struct StateAgeFunction {
     {
         m_parameter = new_parameter;
 
-        m_support_max = -1;
+        m_support_max = -1.;
     }
 
     /**
@@ -161,7 +161,7 @@ struct StateAgeFunction {
      */
     virtual ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10)
     {
-        ScalarType support_max = 0;
+        ScalarType support_max = 0.;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
             while (eval(support_max) >= tol) {
@@ -356,7 +356,7 @@ struct ConstantFunction : public StateAgeFunction {
 
         unused(dt);
         unused(tol);
-        m_support_max = -2.0;
+        m_support_max = -2.;
 
         log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
                   "of type b); see documentation of StateAgeFunction Base class.");
