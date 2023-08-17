@@ -29,6 +29,8 @@
 #include "memilio/utils/time_series.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
+#include <algorithm>
+#include <iterator>
 
 namespace mio
 {
@@ -74,7 +76,7 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided index time.
     */
-    IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y) noexcept
+    IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y)
     {
         if (!(t_idx < static_cast<size_t>(y.get_num_time_points()))) {
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
@@ -102,8 +104,8 @@ public:
     {
         auto num_time_points = y.get_num_time_points();
         Eigen::VectorXd temp(num_time_points);
-        for (int i = 0; i < num_time_points; i++) {
-            temp[i] = get_reproduction_number(static_cast<size_t>(i), y).value();
+        for (size_t i = 0; i < (size_t)num_time_points; i++) {
+            temp[i] = get_reproduction_number(i, y).value();
         }
         return temp;
     }
@@ -114,28 +116,27 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
     */
-    IOResult<ScalarType> get_reproduction_number(double t_value, const mio::TimeSeries<ScalarType>& y) noexcept
+    IOResult<ScalarType> get_reproduction_number(double t_idx, const mio::TimeSeries<ScalarType>& y)
     {
-        if (t_value < y.get_time(0) || t_value > y.get_last_time()) {
+        if (t_idx < y.get_time(0) || t_idx > y.get_last_time()) {
             return mio::failure(mio::StatusCode::OutOfRange,
                                 "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
         }
 
-        if (t_value == y.get_time(0)) {
-            return mio::success(get_reproduction_number(static_cast<size_t>(0), y).value());
-        }
-        //Find timepts at closest earlier and later time
-        Eigen::Index temp_late = 0;
-        for (Eigen::Index i = 0; i < y.get_num_time_points(); i++) {
-            if (y.get_time(i) >= t_value) {
-                temp_late = i;
-                break;
-            }
-        }
-        double y1 = get_reproduction_number(static_cast<size_t>(temp_late - 1), y).value();
-        double y2 = get_reproduction_number(static_cast<size_t>(temp_late), y).value();
+        auto times = std::vector<double>(y.get_times().begin(), y.get_times().end());
 
-        double result = linear_interpolation(t_value, y.get_time(temp_late - 1), y.get_time(temp_late), y1, y2);
+        size_t time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_idx));
+
+        if (time_late == y.get_time(0)) {
+            return mio::success(get_reproduction_number(time_late, y).value());
+        }
+
+        double y1 = get_reproduction_number(time_late - 1, y).value();
+        double y2 = get_reproduction_number(time_late, y).value();
+
+        y.get_times();
+
+        double result = linear_interpolation(t_idx, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
         return mio::success(result);
     }
 };

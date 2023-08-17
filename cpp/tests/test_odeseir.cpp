@@ -150,7 +150,6 @@ TEST(TestSeir, check_constraints_parameters)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -226,14 +225,8 @@ TEST(TestSeir, interpolate_reproduction_numbers)
 
     mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
 
-    EXPECT_EQ(model.interpolate_reproduction_numbers(result, -0.5), model.get_reproduction_number(0, result));
-    EXPECT_EQ(
-        model.interpolate_reproduction_numbers(result, result.get_num_time_points() - 0.5),
-        model.get_reproduction_number(
-            result.get_num_time_points() - 1,
-            result)); //Interpolation should return the right respectively leftmost reproduction number if time desired time has distance at most one from these points
-    EXPECT_FALSE(model.interpolate_reproduction_numbers(result, -1.5)); //Test for indices out of range
-    EXPECT_FALSE(model.interpolate_reproduction_numbers(result, result.get_num_time_points() + 0.5));
-    EXPECT_EQ(model.interpolate_reproduction_numbers(result, 1.5).value(), 2.32796973442132285);
-    EXPECT_EQ(model.interpolate_reproduction_numbers(result, 4.75).value(), 1.16201052728287635);
+    EXPECT_FALSE(model.get_reproduction_number(-0.5, result)); //Test for indices out of range
+    EXPECT_FALSE(model.get_reproduction_number(result.get_num_time_points() - 0.5, result));
+    EXPECT_EQ(model.get_reproduction_number(1.5, result).value(), 2.32796973442132285);
+    EXPECT_EQ(model.get_reproduction_number(4.75, result).value(), 1.16201052728287635);
 }
