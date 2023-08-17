@@ -150,7 +150,6 @@ TEST(TestSeir, check_constraints_parameters)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(10.);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
-
     mio::set_log_level(mio::LogLevel::warn);
 }
 
