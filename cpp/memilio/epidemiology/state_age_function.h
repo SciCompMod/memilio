@@ -132,12 +132,18 @@ struct StateAgeFunction {
      * @brief Set the m_parameter object.
      * 
      * Can be used to set the m_parameter object, which specifies the used function.
+     * The maximum support of a function may be costly to evaluate. In order to not always reevaluate or recompute the
+     * support when the user asks for it, a cached value is used. If m_support_max is set to -1, the cached value is
+     * deleted and a recomputation is done the next time the user asks for the support. As the support (potentially)
+     * depends on the m_parameter object, the cached value has to be deleted. For details see get_support_max().
      *
      *@param[in] new_parameter New parameter for StateAgeFunction.
      */
     void set_parameter(ScalarType new_parameter)
     {
         m_parameter = new_parameter;
+
+        m_support_max = -1.;
     }
 
     /**
@@ -156,7 +162,7 @@ struct StateAgeFunction {
      */
     virtual ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10)
     {
-        ScalarType support_max = 0;
+        ScalarType support_max = 0.;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
             while (eval(support_max) >= tol) {
@@ -288,7 +294,8 @@ struct SmootherCosine : public StateAgeFunction {
     {
         unused(dt);
         unused(tol);
-        return m_parameter;
+        m_support_max = m_parameter;
+        return m_support_max;
     }
 
 protected:
@@ -350,11 +357,12 @@ struct ConstantFunction : public StateAgeFunction {
 
         unused(dt);
         unused(tol);
+        m_support_max = -2.;
 
         log_error("This function is not suited to be a TransitionDistribution. Do not call in case of StateAgeFunctions"
                   "of type b); see documentation of StateAgeFunction Base class.");
 
-        return (ScalarType)(-2);
+        return m_support_max;
     }
 
 protected:
