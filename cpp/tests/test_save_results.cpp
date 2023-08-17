@@ -18,16 +18,17 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
+#include "matchers.h"
+#include "temp_file_register.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/time_series.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/io/result_io.h"
-#include "temp_file_register.h"
 #include <gtest/gtest.h>
 #include <string>
-#include "matchers.h"
-#include "memilio/compartments/parameter_studies.h"
 
 TEST(TestSaveResult, save_result)
 {
@@ -112,6 +113,12 @@ TEST(TestSaveResult, save_result)
 
 TEST(TestSaveResult, save_result_with_params)
 {
+    //rng needs to be reseeded right before using parallel parameterstudies
+    //to keep the rest of the tests independent, we install a temporary RNG for this test
+    auto rng                = mio::thread_local_rng();
+    mio::thread_local_rng() = mio::RandomNumberGenerator();
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -131,13 +138,15 @@ TEST(TestSaveResult, save_result_with_params)
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -158,7 +167,7 @@ TEST(TestSaveResult, save_result_with_params)
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -172,12 +181,11 @@ TEST(TestSaveResult, save_result_with_params)
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto run_idx) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -190,7 +198,7 @@ TEST(TestSaveResult, save_result_with_params)
             save_result_status = save_result_with_params(ensemble_results.back(), ensemble_params.back(), {0, 1},
                                                          tmp_results_dir, run_idx);
 
-            ++run_idx;
+            return 0; //function needs to return something
         });
     ASSERT_TRUE(save_result_status);
     auto results_from_file = mio::read_result(tmp_results_dir + "/run0/Result.h5");
@@ -217,10 +225,18 @@ TEST(TestSaveResult, save_result_with_params)
                   .nodes()[0]
                   .property.parameters.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)],
               params.get<mio::osecir::SerialInterval>()[mio::Index<mio::AgeGroup>(1)]);
+
+    mio::thread_local_rng() = rng;
 }
 
 TEST(TestSaveResult, save_percentiles_and_sums)
 {
+    //rng needs to be reseeded right before using parallel parameterstudies
+    //to keep the rest of the tests independent, we install a temporary RNG for this test
+    auto prev_rng           = mio::thread_local_rng();
+    mio::thread_local_rng() = mio::RandomNumberGenerator();
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
     // set up parameter study
     double t0           = 0;
     double tmax         = 100;
@@ -240,13 +256,15 @@ TEST(TestSaveResult, save_percentiles_and_sums)
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 10.;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
@@ -267,7 +285,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto graph = mio::Graph<mio::osecir::Model, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs        = 3;
     auto parameter_study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph, 0.0, 2.0, 0.5, num_runs);
@@ -280,12 +298,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<mio::osecir::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto run_idx = size_t(0);
     parameter_study.run(
         [](auto&& g) {
             return draw_sample(g);
         },
-        [&](auto results_graph) {
+        [&](auto results_graph, auto /*run_idx*/) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -294,7 +311,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                            std::back_inserter(ensemble_params.back()), [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
-            ++run_idx;
+            return 0; //function needs to return something
         });
 
     auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
@@ -330,4 +347,6 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     ASSERT_TRUE(results_run2);
     auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
+
+    mio::thread_local_rng() = prev_rng;
 }

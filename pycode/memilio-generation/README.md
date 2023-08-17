@@ -39,7 +39,7 @@ Example:
 After processing as described in the previous paragraph, run the example with the command (path according to the current folder):
 
 ```bash
-python memilio/tools/seir.py 
+python memilio/tools/example_oseir.py 
 ```
 
 When working on a new model you can copy the example script and add an additional segment to the config.json.txt. The setup works similar to the example. Additionaly you can print the AST of your model into a file (Usefull for development/debugging).

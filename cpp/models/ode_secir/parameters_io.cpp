@@ -35,7 +35,7 @@ GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -280,8 +280,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
                 model[county].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
                     num_InfectedNoSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
                     num_InfectedSymptoms[county][i];
+                model[county].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
                 model[county].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
                     num_InfectedSevere[county][i];
                 model[county].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[county][i];
