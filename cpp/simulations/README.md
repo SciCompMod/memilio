@@ -16,4 +16,3 @@ must be given to the script. The path can either be set in the script or by call
 The script needs to be executed from the `simulations` folder directly by `./data_generation.sh`.
 
 - abm: An agent-based model using statistical data taken from Destatis (https://www-genesis.destatis.de/genesis/online?operation=statistic&levelindex=0&levelid=1627908577036&code=12211#abreadcrumb).
-
