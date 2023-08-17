@@ -169,10 +169,6 @@ TEST(TestWorld, evolveMigration)
         world.parameters
             .get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype, AGE_GROUP_15_TO_34}] =
             2 * dt.days();
-        // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-        world.parameters.get<mio::abm::AgeGroupGotoSchool>() = {AGE_GROUP_5_TO_14};
-        // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 or 35-59)
-        world.parameters.get<mio::abm::AgeGroupGotoWork>() = {AGE_GROUP_15_TO_34, AGE_GROUP_35_TO_59};
 
         auto home_id   = world.add_location(mio::abm::LocationType::Home);
         auto school_id = world.add_location(mio::abm::LocationType::School);

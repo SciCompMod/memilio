@@ -481,7 +481,7 @@ struct AgeGroupGotoSchool {
     using Type = std::set<AgeGroup>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return std::set<AgeGroup>{AgeGroup(0)};
+        return std::set<AgeGroup>{AgeGroup(1)};
     }
     static std::string name()
     {
@@ -496,7 +496,7 @@ struct AgeGroupGotoWork {
     using Type = std::set<AgeGroup>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return std::set<AgeGroup>{AgeGroup(0)};
+        return std::set<AgeGroup>{AgeGroup(2), AgeGroup(3)};
     }
     static std::string name()
     {
