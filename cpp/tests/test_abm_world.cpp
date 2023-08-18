@@ -19,7 +19,7 @@
 */
 
 #include "memilio/io/json_serializer.h"
-#include <json/value.h>
+#include "json/value.h"
 #include "abm_helpers.h"
 
 TEST(TestWorld, init)
