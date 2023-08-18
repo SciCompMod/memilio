@@ -915,9 +915,10 @@ def get_npi_data(fine_resolution=2,
     all_subcodes = []
     for maincode in df_npis_combinations.keys():
         all_subcodes += df_npis_combinations[maincode][1].columns.to_list()
+        # check (and validate) that element 0 and 1 in df_npis_combination match.
         if df_npis_combinations[maincode][1].columns.to_list() != list(
                 df_npis_combinations[maincode][0].keys()):
-            raise gd.DataError('Error')
+            raise gd.DataError('Error. Description and table do not match.')
 
     for countyID in counties_considered:
         cid = 0
@@ -960,6 +961,8 @@ def get_npi_data(fine_resolution=2,
         df_local_old = copy.deepcopy(df_npis_old[df_npis_old[dd.EngEng['idCounty']]
                                                  == countyID])
 
+        # get number of codes of one NPI (incidence indep. + dep.)
+        # for fine_resolution=1, inc_codes=1, for fine_res=2, inc_codes=6
         inc_codes = len(np.where(df_npis.columns.str.contains(
             npis[dd.EngEng['npiCode']][0]))[0])
 
@@ -967,10 +970,20 @@ def get_npi_data(fine_resolution=2,
         # The same NPI should not be prescribed multiple times at the same day
         # for different thresholds. In order to avoid contradictions, only
         # retain the strictest mentioned implementation.
+        print_details = True # define if details are printed (probably to be deactivated)
         for i in range(int(len(df_local_old)/inc_codes)):
+
+            # check if access is correct
+            if not all(
+                [npis[dd.EngEng['npiCode']][i * inc_codes] in npi_code_test
+                 for npi_code_test in df_local_old.iloc
+                 [inc_codes * i: inc_codes * (i + 1),
+                  npi_start_col - 1].to_list()]):
+                raise gd.DataError('Wrong NPI rows aggregated.')
+            
             sum_npi_inc = np.where(
                 df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
-            if len(sum_npi_inc[0]):
+            if len(sum_npi_inc[0]) and print_details:
                 print(
                     'Reduce multiple prescription in county ' + str(countyID) +
                     ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
