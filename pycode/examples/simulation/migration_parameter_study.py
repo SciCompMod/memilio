@@ -85,7 +85,7 @@ def parameter_study():
         2000)
     model.apply_constraints()
     graph.add_node(id=1, model=model)
-    migration_coefficients = 0.1 * np.ones(8)
+    migration_coefficients = 0.1 * np.ones(model.populations.numel())
     migration_params = mio.MigrationParameters(migration_coefficients)
     # one coefficient per (age group x compartment)
     graph.add_edge(0, 1, migration_params)
@@ -93,7 +93,7 @@ def parameter_study():
     graph.add_edge(1, 0, migration_params)
 
     # process the result of one run
-    def handle_result(graph):
+    def handle_result(graph, run_idx):
         print(f'run {handle_result.c}')
         handle_result.c = handle_result.c + 1
         for node_idx in range(graph.num_nodes):

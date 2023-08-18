@@ -79,7 +79,7 @@ public:
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
 
-        parameters.check_constraints(dt);
+        parameters.check_constraints();
     }
 
     void compute_initial_flows_from_compartments2(mio::TimeSeries<ScalarType> secihurd_ode, ScalarType t0_ide,
