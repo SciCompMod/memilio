@@ -318,7 +318,9 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Location");
-        obj.add_element("id", m_id.index);
+        obj.add_element("index", m_id.index);
+        obj.add_element("type", m_id.type);
+        obj.add_element("num_agegroups", m_num_agegroups);
     }
 
     /**
@@ -328,14 +330,15 @@ public:
     template <class IOContext>
     static IOResult<Location> deserialize(IOContext& io)
     {
-        auto obj   = io.expect_object("Location");
-        auto index = obj.expect_element("Index", Tag<uint32_t>{});
+        auto obj           = io.expect_object("Location");
+        auto index         = obj.expect_element("index", Tag<uint32_t>{});
+        auto num_agegroups = obj.expect_element("num_agegroups", Tag<size_t>{});
         return apply(
             io,
-            [](auto&& index_) {
-                return Location{index_};
+            [](auto&& index_, auto&& num_agegroups_) {
+                return Location{LocationId{index_, LocationType(0)}, num_agegroups_};
             },
-            index);
+            index, num_agegroups);
     }
 
     /**

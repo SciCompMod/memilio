@@ -72,7 +72,7 @@ struct Trip {
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Trip");
-        obj.add_element("id", person_id);
+        obj.add_element("person_id", person_id);
     }
 
     /**
@@ -83,7 +83,7 @@ struct Trip {
     static IOResult<Trip> deserialize(IOContext& io)
     {
         auto obj       = io.expect_object("Trip");
-        auto person_id = obj.expect_element("PersonID", Tag<uint32_t>{});
+        auto person_id = obj.expect_element("person_id", Tag<uint32_t>{});
         return apply(
             io,
             [](auto&& person_id_) {

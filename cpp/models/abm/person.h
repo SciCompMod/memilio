@@ -398,7 +398,7 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("Person");
-        obj.add_element("Index", m_person_id);
+        obj.add_element("id", m_person_id);
     }
 
     /**
@@ -409,11 +409,11 @@ public:
     static IOResult<Person> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Person");
-        auto id  = obj.expect_element("Index", Tag<uint32_t>{});
+        auto id  = obj.expect_element("id", Tag<uint32_t>{});
         return apply(
             io,
             [](auto&& id_) {
-                return Location{id_};
+                return Person{id_};
             },
             id);
     }

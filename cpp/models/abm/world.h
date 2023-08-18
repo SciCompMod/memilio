@@ -106,17 +106,17 @@ public:
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("World");
-        obj.add_element("NumAgeGroups", parameters.get_num_groups());
+        obj.add_element("num_agegroups", parameters.get_num_groups());
         std::vector<Trip> trips;
         TripList trip_list = get_trip_list();
         for (size_t i = 0; i < trip_list.num_trips(); i++) {
             trips.push_back(trip_list.get_next_trip());
             trip_list.increase_index();
         }
-        obj.add_list("Trips", trips.begin(), trips.end());
-        obj.add_list("Locations", get_locations().begin(), get_locations().end());
-        obj.add_list("Persons", get_persons().begin(), get_persons().end());
-        obj.add_element("UseMigrationRules", m_use_migration_rules);
+        obj.add_list("trips", trips.begin(), trips.end());
+        obj.add_list("locations", get_locations().begin(), get_locations().end());
+        obj.add_list("persons", get_persons().begin(), get_persons().end());
+        obj.add_element("use_migration_rules", m_use_migration_rules);
     }
 
     /**
@@ -127,11 +127,11 @@ public:
     static IOResult<World> deserialize(IOContext& io)
     {
         auto obj                 = io.expect_object("World");
-        auto size                = obj.expect_element("NumAgeGroups", Tag<size_t>{});
-        auto locations           = obj.expect_list("Locations", Tag<Location>{});
-        auto trip_list           = obj.expect_list("TripList", Tag<Trip>{});
-        auto persons             = obj.expect_list("Persons", Tag<Person>{});
-        auto use_migration_rules = obj.expect_element("UseMigrationRules", Tag<bool>{});
+        auto size                = obj.expect_element("num_agegroups", Tag<size_t>{});
+        auto locations           = obj.expect_list("locations", Tag<Location>{});
+        auto trip_list           = obj.expect_list("trips", Tag<Trip>{});
+        auto persons             = obj.expect_list("persons", Tag<Person>{});
+        auto use_migration_rules = obj.expect_element("use_migration_rules", Tag<bool>{});
         return apply(
             io,
             [](auto&& size_, auto&& locations_, auto&& trip_list_, auto&& persons_, auto&& use_migration_rule_) {

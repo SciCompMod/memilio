@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include "memilio/io/json_serializer.h"
+#include <json/value.h>
 #include "abm_helpers.h"
 
 TEST(TestPerson, init)
@@ -102,10 +105,12 @@ TEST(TestPerson, quarantine)
     person.detect_infection(t_morning);
 
     ASSERT_EQ(person.get_infection_state(t_morning), mio::abm::InfectionState::InfectedSymptoms);
-    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)), mio::abm::LocationType::Home);
+    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
+              mio::abm::LocationType::Home);
     ASSERT_EQ(person.get_infection_state(t_morning + dt), mio::abm::InfectionState::Recovered);
     person.remove_quarantine();
-    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)), mio::abm::LocationType::Work);
+    ASSERT_EQ(mio::abm::go_to_work(person, t_morning, dt, mio::abm::Parameters(NUM_AGE_GROUPS)),
+              mio::abm::LocationType::Work);
 }
 
 TEST(TestPerson, get_tested)
@@ -247,4 +252,14 @@ TEST(TestPerson, getProtectiveFactor)
     ASSERT_EQ(person_surgical.get_mask_protective_factor(params), 0.8);
     ASSERT_EQ(person_ffp2.get_mask_protective_factor(params), 0.9);
     ASSERT_EQ(person_without.get_mask_protective_factor(params), 0.);
+}
+
+TEST(TestPerson, serialize)
+{
+    auto location = mio::abm::Location(mio::abm::LocationType::School, 0, 6);
+    auto person   = make_test_person(location);
+    auto js       = mio::serialize_json(person);
+    Json::Value expected_json;
+    expected_json["id"] = Json::UInt(person.get_person_id());
+    ASSERT_EQ(js.value(), expected_json);
 }
