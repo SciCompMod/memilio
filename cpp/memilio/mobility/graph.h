@@ -216,7 +216,6 @@ public:
         return m_nodes.back();
     }
 
-    // Ändere die Funktionsdeklaration von add_node
     template <class ModelType>
     Node<NodePropertyT>& add_node(int id, double duration_stay, ModelType& model1, ModelType& model2)
     {

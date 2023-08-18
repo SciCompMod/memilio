@@ -116,9 +116,11 @@ public:
 
         auto min_dt    = 0.01;
         double t_begin = m_t - 1.;
-        auto num_nodes = m_graph.nodes().size();
-        Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> current_regions(num_nodes, num_nodes);
-        while (m_t - 1e-8 < t_max) {
+
+        // calc schedule for each edge
+        precompute_schedule();
+        const double epsilon = std::numeric_limits<double>::epsilon();
+        while (m_t - epsilon < t_max) {
 
             t_begin += 1;
             if (m_t + dt_first_mobility > t_max) {
@@ -129,129 +131,33 @@ public:
                 break;
             }
 
-            // simulate until first people start their mobility
-            // not necessary for mobility nodes since all people return at the end of the day
-            for (auto& n : m_graph.nodes()) {
-                m_node_func(m_t, dt_first_mobility, n.property);
-            }
-            m_t += dt_first_mobility;
-
-            current_regions.setZero();
-
-            // calc schedule for each edge
-            precompute_schedule();
-            size_t indx_edge     = 0;
             size_t indx_schedule = 0;
-            while (t_begin + 1 > m_t - 1e-7) {
+            while (t_begin + 1 > m_t + 1e-10) {
+                size_t indx_edge = 0;
                 for (auto& e : m_graph.edges()) {
-                    // Graph::NodeProperty node_from;
-                    // Graph::NodeProperty node_to;
-                    auto& node_from = mobility_schedule_edges[indx_edge][indx_schedule]
-                                          ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
-                                          : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
+                    // find start of mobility
+                    size_t first_mobility = std::distance(mobility_schedule_edges[indx_edge].begin(),
+                                                          std::find(mobility_schedule_edges[indx_edge].begin(),
+                                                                    mobility_schedule_edges[indx_edge].end(), true));
+                    if (indx_schedule >= first_mobility) {
+                        auto& node_from = mobility_schedule_edges[indx_edge][indx_schedule]
+                                              ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].node_pt
+                                              : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property;
 
-                    auto& node_to = mobility_schedule_edges[indx_edge][indx_schedule + 1]
-                                        ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].node_pt
-                                        : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].property;
+                        auto& node_to = mobility_schedule_edges[indx_edge][indx_schedule + 1]
+                                            ? m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].node_pt
+                                            : m_graph.nodes()[schedule_edges[indx_edge][indx_schedule + 1]].property;
 
-                    m_edge_func(m_t, min_dt, e.property, node_from, node_to, 1);
-
+                        if (indx_schedule == first_mobility)
+                            m_edge_func(m_t, min_dt, e.property, node_from, node_to, 0);
+                        else if (indx_schedule > first_mobility &&
+                                 indx_schedule < mobility_schedule_edges[indx_edge].size() - 1)
+                            m_edge_func(m_t, min_dt, e.property, node_from, node_to, 1);
+                        else
+                            m_edge_func(m_t, min_dt, e.property, node_from,
+                                        m_graph.nodes()[schedule_edges[indx_edge][indx_schedule]].property, 2);
+                    }
                     indx_edge++;
-
-                    // auto traveltime_per_region = round_second_decimal(e.traveltime / e.path.size());
-                    // if (traveltime_per_region < 0.01)
-                    //     traveltime_per_region = 0.01;
-
-                    // auto start_mobility =
-                    //     round_second_decimal(t_begin + 1 - 2 * (traveltime_per_region * e.path.size()) -
-                    //                          m_graph.nodes()[e.end_node_idx].stay_duration);
-                    // if (start_mobility < t_begin) {
-                    //     start_mobility = t_begin;
-                    // }
-
-                    // auto arrive_at = start_mobility + traveltime_per_region * e.path.size();
-
-                    // auto start_return = round_second_decimal(arrive_at + m_graph.nodes()[e.end_node_idx].stay_duration);
-                    // if (start_return + traveltime_per_region * e.path.size() > t_begin + 1) {
-                    //     start_return = t_begin + 1 - traveltime_per_region * e.path.size();
-                    // }
-
-                    // // diff between...
-                    // // way to
-                    // if (start_mobility - 1e-5 - m_t <= 0 && arrive_at - m_t + 1e-5 >= 0) {
-                    //     // start mobility
-                    //     if (std::abs(start_mobility - m_t) < 1e-5) {
-                    //         m_edge_func(m_t, min_dt, e.property, m_graph.nodes()[e.start_node_idx].property,
-                    //                     m_graph.nodes()[int(e.path[0])].node_pt, 0);
-                    //     }
-                    //     else if (start_mobility +
-                    //                  (current_regions(e.start_node_idx, e.end_node_idx) + 1) * traveltime_per_region <=
-                    //              m_t + 1e-5) {
-
-                    //         // move to next transition region
-                    //         if (current_regions(e.start_node_idx, e.end_node_idx) < e.path.size() - 1) {
-                    //             // time step must be equal to length of stay in region
-                    //             m_edge_func(
-                    //                 m_t, traveltime_per_region, e.property,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].node_pt,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx) + 1]]
-                    //                     .node_pt,
-                    //                 1);
-                    //             current_regions(e.start_node_idx, e.end_node_idx) += 1;
-                    //         }
-                    //         // move to destination
-                    //         else if (current_regions(e.start_node_idx, e.end_node_idx) == e.path.size() - 1) {
-                    //             if (e.path[current_regions(e.start_node_idx, e.end_node_idx)] != e.end_node_idx)
-                    //                 std::cout << "Destination is wrong. But is at "
-                    //                           << current_regions(e.start_node_idx, e.end_node_idx) << "\n";
-                    //             m_edge_func(
-                    //                 m_t, traveltime_per_region, e.property,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].node_pt,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].property,
-                    //                 1);
-                    //         }
-                    //     }
-                    // }
-                    // // and way back
-                    // else if (start_return - 1e-5 <= m_t) {
-                    //     auto region_num_backwards =
-                    //         e.path.size() - 1 - current_regions(e.start_node_idx, e.end_node_idx);
-
-                    //     // Start home trip
-                    //     if (std::abs(start_return - m_t) < 1e-5) {
-                    //         if (e.path[current_regions(e.start_node_idx, e.end_node_idx)] != e.end_node_idx)
-                    //             std::cout << "current county wrong. Should be at the destination. But is at "
-                    //                       << current_regions(e.start_node_idx, e.end_node_idx) << "\n";
-
-                    //         m_edge_func(m_t, min_dt, e.property, m_graph.nodes()[e.end_node_idx].property,
-                    //                     m_graph.nodes()[e.end_node_idx].node_pt, 0);
-                    //     }
-                    //     else if (std::abs(start_return + (region_num_backwards + 1) * traveltime_per_region - m_t) <
-                    //              1e-5) {
-
-                    //         // move to next transition region
-                    //         if (current_regions(e.start_node_idx, e.end_node_idx) > 0) {
-                    //             m_edge_func(
-                    //                 m_t, traveltime_per_region, e.property,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].node_pt,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx) - 1]]
-                    //                     .node_pt,
-                    //                 1);
-                    //             current_regions(e.start_node_idx, e.end_node_idx) -= 1;
-                    //         }
-                    //         // Include in home county
-                    //         else if (current_regions(e.start_node_idx, e.end_node_idx) == 0) {
-                    //             if (e.path[current_regions(e.start_node_idx, e.end_node_idx)] != e.start_node_idx)
-                    //                 std::cout << "Home county is wrong."
-                    //                           << "\n";
-                    //             m_edge_func(
-                    //                 m_t, traveltime_per_region, e.property,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].node_pt,
-                    //                 m_graph.nodes()[e.path[current_regions(e.start_node_idx, e.end_node_idx)]].property,
-                    //                 1);
-                    //         }
-                    //     }
-                    // }
                 }
 
                 // integrate nodes after mobility updates
@@ -339,6 +245,9 @@ private:
                 current_index += static_cast<size_t>((traveltime_per_region + epsilon) * 100);
             }
 
+            // stay in destination county
+            std::fill(schedule.begin() + current_index, schedule.end() - count_true, e.path[e.path.size() - 1]);
+
             // revert trip for return.
             std::fill(is_mobility_node.end() - count_true, is_mobility_node.end(), true);
 
@@ -348,8 +257,10 @@ private:
             // If all values are false, we get an error
             if (first_true != is_mobility_node.end() && last_true != is_mobility_node.rend()) {
                 int first_index = std::distance(is_mobility_node.begin(), first_true);
-                std::copy(schedule.begin() + first_index, schedule.begin() + first_index + count_true,
-                          schedule.end() - count_true);
+                std::vector<size_t> path_reversed(schedule.begin() + first_index,
+                                                  schedule.begin() + first_index + count_true);
+                std::reverse(path_reversed.begin(), path_reversed.end());
+                std::copy(path_reversed.begin(), path_reversed.end(), schedule.end() - count_true);
                 schedule_edges.push_back(schedule);
                 mobility_schedule_edges.push_back(is_mobility_node);
             }

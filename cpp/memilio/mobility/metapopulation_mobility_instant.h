@@ -515,8 +515,29 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
                 node_from.get_result().get_last_value()(i) = 0;
         }
     }
+    // option for last time point to remove time points
+    else if (mode == 2) {
+        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+        update_status_mobility(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+
+        node_from.get_result().get_last_value() -= m_migrated.get_last_value();
+        node_to.get_result().get_last_value() += m_migrated.get_last_value();
+
+        for (size_t i = 0; i < node_from.get_result().get_last_value().size(); ++i) {
+            if (node_from.get_result().get_last_value()(i) < 0)
+                node_from.get_result().get_last_value()(i) = 0;
+        }
+        for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
+            if (m_return_times.get_time(i) <= t) {
+                m_migrated.remove_time_point(i);
+                m_return_times.remove_time_point(i);
+            }
+        }
+    }
     else {
-        std::cout << "Invalid input mode. Should be 0,1 or 2."
+        std::cout << "Invalid input mode. Should be 0 or 1."
                   << "\n";
     }
 }
