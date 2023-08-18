@@ -98,7 +98,7 @@ class Simulation:
         relativeTransmissionNoSymptomsMax = 1
 
         # The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-        #  depends on incidence and test and trace capacity
+        # depends on incidence and test and trace capacity
         riskOfInfectionFromSymptomaticMin = 0.1
         riskOfInfectionFromSymptomaticMax = 0.3
         maxRiskOfInfectionFromSymptomaticMin = 0.3
@@ -200,8 +200,8 @@ class Simulation:
 
         self.graph = graph
 
-    def run2(self, num_runs=2):
-        mio.set_log_level(mio.LogLevel.Warning)
+    def run2(self, num_runs=10):
+        mio.set_log_level(mio.LogLevel.Off)
 
         # calculate tmax
         tmax = (
@@ -211,17 +211,56 @@ class Simulation:
                 self.start_date.year, self.start_date.month, self.start_date.
                 day)).days
 
-        results = []
+        def find_indices_of_true_values(boolean_array):
+            true_indices = np.where(boolean_array)[0]
+            return true_indices
 
-        def handle_result(graph):
-            test = interpolate_simulation_result(graph)
-            results.append(interpolate_simulation_result(graph))
+        def print_param(parameters):
+            for i in range(6):
+                A0 = secir.AgeGroup(i)
+                print("age group " + str(i))
+                print(parameters.RelativeTransmissionNoSymptoms[A0].value)
+                print(parameters.TransmissionProbabilityOnContact[A0].value)
+                print(parameters.RecoveredPerInfectedNoSymptoms[A0].value)
+                print(parameters.RiskOfInfectionFromSymptomatic[A0].value)
+                print(parameters.SeverePerInfectedSymptoms[A0].value)
+                print(parameters.CriticalPerSevere[A0].value)
+                print(parameters.DeathsPerCritical[A0].value)
+                print(parameters.MaxRiskOfInfectionFromSymptomatic[A0].value)
+                print(parameters.IncubationTime[A0].value)
+                print(parameters.TimeInfectedSymptoms[A0].value)
+                print(parameters.SerialInterval[A0].value)
+                print(parameters.TimeInfectedSevere[A0].value)
+                print(parameters.TimeInfectedCritical[A0].value)
+
+        # find_indices_of_true_values([np.any(np.isnan(graph.get_node(i).property.result.get_value(0))) for i in range(400)])
+
+        def handle_result(graph, run_idx):
+            group = secir.AgeGroup(0)
+            print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
+                0).property.model.parameters.TransmissionProbabilityOnContact[group].value))
+            print("compartments at t = {}:".format(
+                graph.get_node(0).property.result.get_time(0)))
+            print(graph.get_node(0).property.result.get_value(0))
+            print("compartments at t = {}:".format(
+                graph.get_node(0).property.result.get_last_time()))
+            print(graph.get_node(0).property.result.get_last_value())
+            if (any(np.any(np.isnan(graph.get_node(i).property.result.get_value(1))) for i in range(400))):
+                indx_nan = find_indices_of_true_values(
+                    [np.any(
+                        np.isnan(
+                            graph.get_node(i).property.result.get_value(1)))
+                     for i in range(400)])
+                print_param(graph.get_node(
+                    indx_nan[0]).property.model.parameters)
+            handle_result.c += 1
+        handle_result.c = 0
 
         study = secir.ParameterStudy(
             self.graph, 0., tmax, 0.5, num_runs)
         study.run(handle_result)
 
-        self.last_result = handle_result.interpolated
+        # self.last_result = handle_result.interpolated
         return [ts.as_ndarray() for ts in self.last_result]
 
         # self._param_study.run(dampings, dampings_school,
