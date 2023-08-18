@@ -24,7 +24,7 @@
 #include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = "../../benchmarks/graph_sim.config";
+const std::string config_path = "../../benchmarks/graph_simulation.config";
 
 mio::osecirvvs::Model create_model(size_t num_agegroups)
 {
@@ -81,10 +81,8 @@ mio::osecirvvs::Model create_model(size_t num_agegroups)
     model.parameters.get<mio::osecirvvs::TimeInfectedCritical>()[mio::AgeGroup(0)] = 7;
 
     //probabilities
-    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = 0.15;
-    model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = 0.5;
-    // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-    // depends on incidence and test and trace capacity
+    model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)]  = 0.15;
+    model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]    = 0.5;
     model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]    = 0.0;
     model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)] = 0.4;
     model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms>()[mio::AgeGroup(0)]    = 0.2;
@@ -118,6 +116,7 @@ void graph_sim_secirvvs(::benchmark::State& state)
         g.nodes()[county_id].property.get_simulation().set_integrator(std::make_shared<Integrator>());
     }
 
+    // Graph is always complete here
     for (size_t county_idx_i = 0; county_idx_i < g.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
             if (county_idx_i == county_idx_j)
@@ -138,16 +137,17 @@ void graph_sim_secirvvs(::benchmark::State& state)
 
 // register functions as a benchmarks and set a name
 // mitigate influence of cpu scaling
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 1/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 2/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Dummy 3/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 1/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 2/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt RK 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("simulate Graph Simulation adapt_rk");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore)->Name("Graph Simulation simple explicit euler");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore)->Name("Graph Simulation adapt_rk");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
-    ->Name("simulate Graph Simulation boost rk_ck54");
+    ->Name("Graph Simulation boost rk_ck54");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
-    ->Name("simulate Graph Simulation boost rk_dopri5");
+    ->Name("Graph Simulation boost rk_dopri5");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>)
-    ->Name("simulate Graph Simulation boost rkf78");
+    ->Name("Graph Simulation boost rkf78");
 // run all benchmarks
 BENCHMARK_MAIN();
