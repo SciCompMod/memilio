@@ -20,7 +20,6 @@
 #include "abm/infection.h"
 #include "abm_helpers.h"
 #include "memilio/io/json_serializer.h"
-#include "json/value.h"
 #include <memory>
 
 TEST(TestLocation, init)
