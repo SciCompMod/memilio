@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.11
     - uses: pre-commit/action@v3.0.0
 
   build-py-epidata:
@@ -62,6 +62,9 @@ jobs:
   test-py-plot:
     if: github.event.pull_request.draft == false
     needs: [build-py-plot, build-py-epidata]
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -104,24 +107,24 @@ jobs:
         with:
           name: python-wheels-epidata
           path: pycode/wheelhouse
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*cp38*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+          for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
           for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-      - name: Dowload Data
+      - name: Download Data
         run: |
           mkdir -p data_dl
-          getcasedata -o data_dl
-          getpopuldata -o data_dl
-          getjhdata -o data_dl
-          getdividata -o data_dl
-          getcommutermobility -o data_dl
-          getvaccinationdata -o data_dl
-          gethospitalizationdata -o data_dl
+          getcasedata -o data_dl --no-progress-indicators
+          getpopuldata -o data_dl --no-progress-indicators --username=${{ secrets.REGIODBUSER }} --password=${{ secrets.REGIODBPW }}
+          getjhdata -o data_dl --no-progress-indicators
+          getdividata -o data_dl --no-progress-indicators
+          getcommutermobility -o data_dl --no-progress-indicators
+          getvaccinationdata -o data_dl --no-progress-indicators
+          gethospitalizationdata -o data_dl --no-progress-indicators
       - name: Upload Data
         uses: actions/upload-artifact@v3
         with:

@@ -73,7 +73,7 @@ def parameter_study():
     print(model.parameters.ContactPatterns.cont_freq_mat[1].baseline)
     # process the result of one run
 
-    def handle_result(graph):
+    def handle_result(graph, run_idx):
         group = secir.AgeGroup(0)
         print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
             0).property.model.parameters.TransmissionProbabilityOnContact[group].value))
@@ -93,8 +93,8 @@ def parameter_study():
     graph = secir.ModelGraph()
     graph.add_node(0, model)
     graph.add_node(1, model)
-    graph.add_edge(0, 1, 0.01 * np.ones(8*num_groups))
-    graph.add_edge(1, 0, 0.01 * np.ones(8*num_groups))
+    graph.add_edge(0, 1, 0.01 * np.ones(model.populations.numel()*num_groups))
+    graph.add_edge(1, 0, 0.01 * np.ones(model.populations.numel()*num_groups))
 
     study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)

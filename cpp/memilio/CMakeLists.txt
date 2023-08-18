@@ -30,6 +30,7 @@ add_library(memilio
     io/json_serializer.cpp
     io/binary_serializer.h
     io/binary_serializer.cpp
+    io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
     io/result_io.h
@@ -89,7 +90,7 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(memilio PUBLIC cxx_std_14)
+target_compile_features(memilio PUBLIC cxx_std_17)
 target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking)
 target_compile_options(memilio
     PRIVATE

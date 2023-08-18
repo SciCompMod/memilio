@@ -40,7 +40,7 @@ public:
     *
     * @param[in, out] init TimeSeries with the initial values of the number of individuals, 
     *   which transit within one timestep dt_init from one compartment to another.
-    *   Possible transitions are specified in as InfectionTransition%s.
+    *   Possible transitions are specified in as #InfectionTransition%s.
     *   Considered points of times should have the distance dt_init and the last time point should be 0. 
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
@@ -72,27 +72,27 @@ public:
                 "Initialization failed. Number of elements in transition vector does not match the required number.");
         }
 
-        ScalarType max_support = std::max(
+        ScalarType support_max = std::max(
             {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToRecovered]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToInfectedSevere]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSymptomsToRecovered]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToInfectedCritical]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedSevereToRecovered]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToDead]
-                 .get_max_support(),
+                 .get_support_max(dt),
              parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedCriticalToRecovered]
-                 .get_max_support()});
+                 .get_support_max(dt)});
 
-        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(max_support / dt)) {
+        if (m_transitions.get_num_time_points() < (Eigen::Index)std::ceil(support_max / dt)) {
             log_error(
                 "Initialization failed. Not enough time points for transitions given before start of simulation.");
         }
@@ -120,11 +120,11 @@ public:
     /**
      * @brief Computes size of a flow.
      * 
-     * Computes size of one flow from InfectionTransition, specified in idx_InfectionTransitions, for the current 
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
      * last time value in m_transitions.
      *
-     * @param[in] idx_InfectionTransitions Specifies the considered flow from InfectionTransition.
-     * @param[in] idx_IncomingFlow Index of the flow in InfectionTransition, which goes to the considered starting
+     * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
+     * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
      *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
@@ -165,13 +165,13 @@ public:
      * Calculation is reasonable for all compartments except S, R, D. 
      * Therefore, we have alternative functions for those compartments.
      *
-     * @param[in] idx_InfectionState Specifies the considered InfectionState
-     * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to InfectionState in m_transitions. 
+     * @param[in] idx_InfectionState Specifies the considered #InfectionState
+     * @param[in] idx_IncomingFlow Specifies the index of the infoming flow to #InfectionState in m_transitions. 
      * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
-     *              related to a flow from the considered InfectionState to any other InfectionState.
+     *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
      * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
-     *              related to a flow from the considered InfectionState to any other InfectionState (in most cases to Recovered). 
+     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases to Recovered). 
      *              Necessary related probability is calculated via 1-probability[idx_TransitionDistribution1].
      * @param[in] dt Time discretization step size.
      */
@@ -200,7 +200,7 @@ public:
     TimeSeries<ScalarType>
         m_transitions; ///< TimeSeries containing points of time and the corresponding number of transitions.
     TimeSeries<ScalarType>
-        m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined InfectionState%s.
+        m_populations; ///< TimeSeries containing points of time and the corresponding number of people in defined #InfectionState%s.
 
 private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.

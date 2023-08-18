@@ -225,7 +225,16 @@ public:
     }
 
     /**
-     * @brief checks whether the population Parameters satisfy their corresponding constraints and applys them
+     * @brief Checks whether all compartments have non-negative values. 
+     * This function can be used to prevent slighly negative function values in compartment sizes that came out
+     * due to roundoff errors if, e.g., population sizes were computed in a complex way.
+     *
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
+     *            function can and will not set compartments to meaningful values in a sense of a particular scenario,
+     *            it only sets negative values to zero.
+     *
+     * @return Returns true if one ore more constraint were corrected, false otherwise.  
      */
     void apply_constraints()
     {
