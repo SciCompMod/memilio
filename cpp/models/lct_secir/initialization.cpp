@@ -92,11 +92,11 @@ Eigen::VectorXd Initializer::compute_compartment(InfectionStateBase base, Eigen:
     return subcompartments;
 }
 
-ScalarType Initializer::compute_susceptibles(ScalarType total_population, ScalarType deaths) const
+ScalarType Initializer::compute_susceptibles_old(ScalarType total_population, ScalarType deaths) const
 {
     // --- Compute force of infection at time -dt ---
     ScalarType force_of_infection = 0;
-    // Initialize transitionDistributions for E and C.
+    // Initialize transitionDistributions for C and I.
     ErlangSurvivalFunction transitionDistribution_InfectedNoSymptoms(
         infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms) *
             (1 / parameters.get<TimeInfectedNoSymptoms>()),
@@ -123,7 +123,6 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
 
     for (Eigen::Index i = time_point_num_minusdt - calc_time_index; i < time_point_num_minusdt; i++) {
         ScalarType state_age = (time_point_num_minusdt - i) * m_dt;
-
         force_of_infection += parameters.get<TransmissionProbabilityOnContact>() *
                               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(-m_dt)(0, 0) *
                               (parameters.get<RelativeTransmissionNoSymptoms>() *
@@ -140,15 +139,13 @@ ScalarType Initializer::compute_susceptibles(ScalarType total_population, Scalar
            (m_dt * force_of_infection);
 }
 
-Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_population, ScalarType deaths) const
+Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_population, ScalarType deaths,
+                                                          ScalarType total_confirmed_cases, bool old) const
 {
     check_constraints();
 
     int infectionStates_count = infectionStates.get_count();
     Eigen::VectorXd init(infectionStates_count);
-
-    //S
-    init[0] = compute_susceptibles(total_population, deaths);
 
     //E
     init.segment(infectionStates.get_firstindex(InfectionStateBase::Exposed),
@@ -180,11 +177,30 @@ Eigen::VectorXd Initializer::compute_initializationvector(ScalarType total_popul
                             Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
                             1 / parameters.get<TimeInfectedCritical>());
 
-    //R
-    init[infectionStates_count - 2] = total_population - deaths - init.segment(0, infectionStates_count - 2).sum();
-    if (init[infectionStates_count - 2] < 0) {
-        log_warning("The calculation results in a negative number for the number of recoveries. Initializing with the "
-                    "result may not make sense.");
+    if (old) {
+        //S
+        init[0] = compute_susceptibles_old(total_population, deaths);
+
+        //R
+        init[infectionStates_count - 2] = total_population - deaths - init.segment(0, infectionStates_count - 2).sum();
+        if (init[infectionStates_count - 2] < 0) {
+            log_warning(
+                "The calculation results in a negative number for the number of recoveries. Initializing with the "
+                "result may not make sense.");
+        }
+    }
+    else {
+        //R
+        // Number of recovered is equal to the cumulative number of confirmed cases minus the number of people who are infected at the moment.
+        init[infectionStates_count - 2] =
+            total_confirmed_cases - init.segment(infectionStates.get_firstindex(InfectionStateBase::InfectedSymptoms),
+                                                 infectionStates.get_number(InfectionStateBase::InfectedSymptoms) +
+                                                     infectionStates.get_number(InfectionStateBase::InfectedSevere) +
+                                                     infectionStates.get_number(InfectionStateBase::InfectedCritical))
+                                        .sum();
+
+        //S
+        init[0] = total_population - deaths - init.segment(1, infectionStates_count - 2).sum();
     }
 
     //D

@@ -21,6 +21,7 @@
 #include "lct_secir/infection_state.h"
 #include "lct_secir/initialization.h"
 #include "memilio/config.h"
+#include "memilio/epidemiology/state_age_function.h"
 
 #include <gtest/gtest.h>
 
@@ -31,7 +32,7 @@ TEST(TestInitializer, testErlang)
     ScalarType times[] = {0, 0.5, 3, 5.555, 20, 70.34};
     for (int r = 0; r < 4; r++) {
         for (int s = 0; s < 5; s++) {
-            mio::lsecir::ErlangSurvivalFunction survival(rate[r], shape[s]);
+            mio::ErlangSurvivalFunction survival(rate[r], shape[s]);
             EXPECT_EQ(survival.eval(0), 1.0);
             mio::lsecir::ErlangDensity density(rate[r], 1);
 

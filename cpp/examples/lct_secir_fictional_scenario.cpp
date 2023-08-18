@@ -26,6 +26,7 @@
 #include "memilio/config.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/time_series.h"
+#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include <iostream>
 
 int main()
@@ -73,7 +74,10 @@ int main()
     at the beginning of the simulation. Therefore we initalize the flows accordingly constant for 
     SusceptiblesToExposed and derive matching values for the other flows.*/
     // 7-Tage-Inzidenz at 15.10.2020 was 34.1, see https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Situationsberichte/Okt_2020/2020-10-15-de.pdf?__blob=publicationFile.
+    // 1.5 are the undetected cases
     ScalarType SusceptibleToExposed_const = (34.1 / 7) * total_population / 100000;
+    ScalarType total_confirmed_cases      = 341223;
+    ScalarType deaths                     = 9710;
     Vec init_transitions(num_transitions);
     init_transitions[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]        = SusceptibleToExposed_const;
     init_transitions[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms] = SusceptibleToExposed_const;
@@ -123,11 +127,14 @@ int main()
 
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
     mio::lsecir::Initializer initializer(std::move(init_copy), infectionStates, std::move(parameters));
-    auto init_compartments = initializer.compute_initializationvector(total_population, 10);
+    auto init_compartments = initializer.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model(std::move(init_compartments), infectionStates, std::move(parameters));
-    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(0, 20, 0.5, model);
+    mio::TimeSeries<ScalarType> result = mio::lsecir::simulate(
+        0, 20, 0.5, model,
+        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
+                                                                                                         0.1));
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations = model.calculate_populations(result);
 
@@ -153,11 +160,15 @@ int main()
 
     // Get initialization vector for LCT model with num_subcompartments subcompartments.
     mio::lsecir::Initializer initializer2(std::move(init), infectionStates2, std::move(parameters));
-    auto init_compartments2 = initializer2.compute_initializationvector(total_population, 10);
+    auto init_compartments2 =
+        initializer2.compute_initializationvector(total_population, deaths, total_confirmed_cases);
 
     // Initialize model and perform simulation.
     mio::lsecir::Model model2(std::move(init_compartments2), infectionStates2, std::move(parameters));
-    mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(0, 20, 0.5, model2);
+    mio::TimeSeries<ScalarType> result2 = mio::lsecir::simulate(
+        0, 20, 0.5, model2,
+        std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(1e-10, 1e-5, 0,
+                                                                                                         0.1));
     // Calculate result without division in subcompartments.
     mio::TimeSeries<ScalarType> populations2 = model2.calculate_populations(result2);
 

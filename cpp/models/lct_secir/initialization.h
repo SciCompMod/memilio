@@ -116,62 +116,6 @@ protected:
 };
 
 /**
- * @brief Class that defines an ErlangSurvivalFunction function depending on the state age.
- * Class is needed for the initialization of the Susceptible compartment from flows for theLCT model.
- * A survival function is defined as 1 - cumulative density function.
- * ErlangSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
- * The shape parameter of the Erlang function is the parameter of the Stateagefunction and can be changed via the methods of StateAgeFunction. 
- * The rate parameter is not designed to be changed.
- */
-struct ErlangSurvivalFunction : public StateAgeFunction {
-
-    /**
-     * @brief Constructs a new ErlangSurvivalFunction object.
-     *
-     * @param[in] rate Parameter rate of the ErlangSurvivalFunction.
-     * @param[in] shape Parameter shape of the ErlangSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
-     */
-    ErlangSurvivalFunction(ScalarType rate, unsigned int shape)
-        : StateAgeFunction(shape)
-    {
-        m_rate = rate;
-    }
-
-    /**
-     * @brief Defines ErlangSurvivalFunction depending on state_age.
-     *
-     * Parameters rate and shape are used.
-     * 
-     * @param[in] state_age Time at which the function is evaluated.
-     * @return Evaluation of the function at state_age. 
-     */
-    ScalarType eval(ScalarType state_age) override
-    {
-        if (state_age <= 0) {
-            return 1;
-        }
-        double result = 0;
-        for (int j = 0; j < (int)m_parameter; j++) {
-            result += std::pow(m_rate * state_age, j) / (boost::math::factorial<ScalarType>(j));
-        }
-        return std::exp(-m_rate * state_age) * result;
-    }
-
-protected:
-    /**
-     * @brief Implements clone for ErlangSurvivalFunction.
-     * 
-     * @return Pointer to StateAgeFunction.
-     */
-    StateAgeFunction* clone_impl() const override
-    {
-        return new ErlangSurvivalFunction(*this);
-    }
-
-    ScalarType m_rate;
-};
-
-/**
  * @brief Class that can be used to compute an initialization vector out of flows for a LCT Model.
  */
 class Initializer
@@ -206,7 +150,8 @@ public:
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @return Vector with a possible initialization for an LCT model computed out of the flows.
      */
-    Eigen::VectorXd compute_initializationvector(ScalarType total_population, ScalarType deaths) const;
+    Eigen::VectorXd compute_initializationvector(ScalarType total_population, ScalarType deaths,
+                                                 ScalarType total_confirmed_cases, bool old = false) const;
 
     ParameterSet parameters{}; ///< ParameterSet with the Initalizers Parameters.
     InfectionState infectionStates; ///< InfectionState specifies number of subcompartments.
@@ -240,7 +185,7 @@ private:
      * @param[in] transition_rate Specifies the transition rate of the InfectionsStateBase. Is equal to 1 / (expected Time in base).
      * @return Vector with a possible initialization for the subcompartments of base.
      */
-    ScalarType compute_susceptibles(ScalarType total_population, ScalarType deaths) const;
+    ScalarType compute_susceptibles_old(ScalarType total_population, ScalarType deaths) const;
 
     TimeSeries<ScalarType> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
     ScalarType m_dt{}; ///< Step size of the times in m_flows and time step for the approximation of the integral.

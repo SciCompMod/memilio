@@ -27,6 +27,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
+#include <boost/math/special_functions/factorials.hpp>
 
 namespace mio
 {
@@ -158,7 +159,7 @@ struct StateAgeFunction {
      */
     virtual ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10)
     {
-        ScalarType support_max = dt;
+        ScalarType support_max = 0;
 
         if (!floating_point_equal(m_support_tol, tol, 1e-14) || floating_point_equal(m_support_max, -1., 1e-14)) {
             while (eval(support_max) >= tol) {
@@ -303,6 +304,88 @@ protected:
     {
         return new SmootherCosine(*this);
     }
+};
+
+/**
+ * @brief Class that defines an ErlangSurvivalFunction function depending on the state age.
+ * A survival function is defined as 1 - cumulative density function.
+ * ErlangSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
+ * The shape parameter of the Erlang function is the parameter of the StateAgeFunction and can be changed and accessed via the methods of StateAgeFunction. 
+ * The rate parameter can be accessed via the mathods get_rate() and set_rate().
+ */
+struct ErlangSurvivalFunction : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new ErlangSurvivalFunction object.
+     *
+     * @param[in] rate Parameter rate of the ErlangSurvivalFunction.
+     * @param[in] shape Parameter shape of the ErlangSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
+     *  Choosing shape = 1 leads to an exponential function with parameter rate.
+     */
+    ErlangSurvivalFunction(ScalarType rate, unsigned int shape = 1)
+        : StateAgeFunction(shape)
+    {
+        m_rate = rate;
+    }
+
+    /**
+     * @brief Defines ErlangSurvivalFunction depending on state_age.
+     *
+     * Parameters rate and shape are used.
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        if (state_age <= 0) {
+            return 1;
+        }
+        double result = 0;
+        for (int j = 0; j < (int)m_parameter; j++) {
+            result += std::pow(m_rate * state_age, j) / (boost::math::factorial<ScalarType>(j));
+        }
+        return std::exp(-m_rate * state_age) * result;
+    }
+
+    /**
+     * @brief Get the m_rate object
+     * 
+     * Can be used to access the m_rate object, which specifies the used Erlang distribution.
+     * 
+     * @return ScalarType 
+     */
+    ScalarType get_rate() const
+    {
+        return m_rate;
+    }
+
+    /**
+     * @brief Set the m_rate object.
+     * 
+     * Can be used to set the m_rate object, which specifies the used Erlang distribution.
+     *
+     *@param[in] new_rate New rate parameter for the Erlang distribution.
+     */
+    void set_rate(ScalarType new_rate)
+    {
+        m_rate        = new_rate;
+        m_support_max = -1.;
+        m_support_tol = -1.;
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ErlangSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new ErlangSurvivalFunction(*this);
+    }
+
+    ScalarType m_rate;
 };
 
 /**
