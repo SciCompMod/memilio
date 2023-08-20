@@ -18,8 +18,6 @@
 * limitations under the License.
 */
 
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
 #include "abm/infection.h"
 #include "abm_helpers.h"
 #include <memory>
@@ -369,19 +367,4 @@ TEST(TestLocation, setNPIActive)
 
     location.set_npi_active(true);
     ASSERT_TRUE(location.get_npi_active());
-}
-
-TEST(TestLocation, serialize)
-{
-    auto location = mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS);
-    auto js       = mio::serialize_json(location);
-    Json::Value expected_json;
-    expected_json["index"]         = Json::UInt(0);
-    expected_json["type"]          = Json::UInt(mio::abm::LocationType::Home);
-    expected_json["num_agegroups"] = Json::UInt(NUM_AGE_GROUPS);
-    ASSERT_EQ(js.value(), expected_json);
-
-    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
-    ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), (mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS)));
 }

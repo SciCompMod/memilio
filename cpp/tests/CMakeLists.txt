@@ -26,11 +26,14 @@ set(TESTSOURCES
     test_time_series.cpp
     test_abm_household.cpp
     test_abm_infection.cpp
+    test_abm_location.cpp
     test_abm_lockdown_rules.cpp
     test_abm_masks.cpp
     test_abm_migration_rules.cpp
+    test_abm_person.cpp
     test_abm_simulation.cpp
     test_abm_testing_strategy.cpp
+    test_abm_world.cpp
     test_analyze_result.cpp
     test_contact_matrix.cpp
     test_type_safe.cpp
@@ -65,9 +68,6 @@ if(MEMILIO_HAS_JSONCPP)
 set(TESTSOURCES ${TESTSOURCES}
 test_json_serializer.cpp
 test_epi_data_io.cpp
-test_abm_location.cpp
-test_abm_person.cpp
-test_abm_world.cpp
 )
 endif()
 

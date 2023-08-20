@@ -18,8 +18,6 @@
 * limitations under the License.
 */
 
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
 #include "abm_helpers.h"
 
 TEST(TestWorld, init)
@@ -474,46 +472,6 @@ TEST(TestWorld, checkParameterConstraints)
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     ASSERT_EQ(params.check_constraints(), 1);
-}
-
-TEST(TestWorld, serializeTrip)
-{
-    auto world   = mio::abm::World(NUM_AGE_GROUPS);
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto& home   = world.get_individualized_location(home_id);
-    auto person  = make_test_person(home);
-    mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
-    auto js = mio::serialize_json(trip);
-    Json::Value expected_json;
-    expected_json["person_id"] = Json::UInt(person.get_person_id());
-    ASSERT_EQ(js.value(), expected_json);
-}
-
-TEST(TestWorld, serializeWorld)
-{
-    auto world   = mio::abm::World(NUM_AGE_GROUPS);
-    auto home_id = world.add_location(mio::abm::LocationType::Home);
-    auto work_id = world.add_location(mio::abm::LocationType::Work);
-    auto person  = world.add_person(home_id, AGE_GROUP_15_TO_34);
-    mio::abm::Trip trip(person.get_person_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), work_id, home_id);
-    world.get_trip_list().add_trip(trip);
-    auto js = mio::serialize_json(world);
-    Json::Value expected_json;
-    expected_json["num_agegroups"]                 = Json::UInt(NUM_AGE_GROUPS);
-    expected_json["trips"][0]["person_id"]        = Json::UInt(person.get_person_id());
-    expected_json["locations"][0]["index"]         = Json::UInt(0);
-    expected_json["locations"][0]["type"]          = Json::UInt(mio::abm::LocationType::Cemetery);
-    expected_json["locations"][0]["num_agegroups"] = Json::UInt(NUM_AGE_GROUPS);
-    expected_json["locations"][1]["index"]         = Json::UInt(1);
-    expected_json["locations"][1]["type"]          = Json::UInt(mio::abm::LocationType::Home);
-    expected_json["locations"][1]["num_agegroups"] = Json::UInt(NUM_AGE_GROUPS);
-    expected_json["locations"][2]["index"]         = Json::UInt(2);
-    expected_json["locations"][2]["type"]          = Json::UInt(mio::abm::LocationType::Work);
-    expected_json["locations"][2]["num_agegroups"] = Json::UInt(NUM_AGE_GROUPS);
-    expected_json["persons"][0]["id"]              = Json::UInt(person.get_person_id());
-    expected_json["use_migration_rules"]           = Json::Value(true);
-    ASSERT_EQ(js.value(), expected_json);
 }
 
 TEST(TestWorld, copyWorld)
