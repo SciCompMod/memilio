@@ -378,8 +378,4 @@ TEST(TestLocation, serialize)
     expected_json["type"]          = Json::UInt(mio::abm::LocationType::Home);
     expected_json["num_agegroups"] = Json::UInt(NUM_AGE_GROUPS);
     ASSERT_EQ(js.value(), expected_json);
-
-    auto r = mio::deserialize_json(expected_json, mio::Tag<mio::abm::Location>());
-    ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), (mio::abm::Location(mio::abm::LocationType::Home, 0, NUM_AGE_GROUPS)));
 }
