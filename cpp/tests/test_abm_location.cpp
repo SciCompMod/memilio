@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+#include "memilio/io/io.h"
+#include "memilio/io/json_serializer.h"
 #include "abm/infection.h"
 #include "abm_helpers.h"
 #include <memory>

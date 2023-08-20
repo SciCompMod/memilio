@@ -22,8 +22,6 @@
 
 #include "abm/abm.h"
 #include "abm/virus_variant.h"
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "matchers.h"
