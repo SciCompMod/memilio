@@ -18,8 +18,6 @@
 * limitations under the License.
 */
 
-#include "memilio/io/io.h"
-#include "memilio/io/json_serializer.h"
 #include "abm_helpers.h"
 
 TEST(TestPerson, init)
