@@ -19,9 +19,8 @@
 */
 #include "abm/infection.h"
 #include "abm_helpers.h"
-#include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
-#include "json/config.h"
+#include "memilio/io/io.h"
 #include <memory>
 
 TEST(TestLocation, init)
