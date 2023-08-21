@@ -37,15 +37,19 @@ Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_b
     , m_N{N_init}
     , m_deaths_before{Dead_before}
 {
-    // add first timepoint to m_populations at last time from m_transitions
-    m_populations.add_time_point<Eigen::VectorXd>(
-        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
+    // // add first timepoint to m_populations at last time from m_transitions
+    // m_populations.add_time_point<Eigen::VectorXd>(
+    //     m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
 }
 
 void Model::initialize_solver(ScalarType dt)
 {
     // TODO: think of where its best to add time point to m_populations,
     // especially wrt to check_constraints function
+    // add first timepoint to m_populations at last time from m_transitions
+    // fo now do it here to get the right time from m_transitions after initialization of flows
+    m_populations.add_time_point<Eigen::VectorXd>(
+        m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
 
     // compute deaths at time t0
     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)] =

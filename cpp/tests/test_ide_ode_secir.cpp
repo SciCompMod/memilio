@@ -48,7 +48,7 @@
 TEST(IdeOdeSecir, compareIdeOde)
 {
     ScalarType t0   = 0;
-    ScalarType tmax = 14.3;
+    ScalarType tmax = 14.03;
     ScalarType dt   = 0.01;
 
     ScalarType cont_freq = 10;
@@ -149,7 +149,7 @@ TEST(IdeOdeSecir, compareIdeOde)
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType N           = nb_total_t0;
-    ScalarType t0_ide      = 13.5;
+    ScalarType t0_ide      = 14.0;
     ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
                                          [(int)mio::osecir::InfectionState::Dead];
 
@@ -262,30 +262,29 @@ TEST(IdeOdeSecir, compareIdeOde)
 
     model_ide.check_constraints(dt);
 
-    std::cout << model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)]
-              << "\n";
+    // std::cout << model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)]
+    //           << "\n";
 
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Exposed)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Exposed)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)];
-    model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Recovered)] =
-        secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Recovered)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Susceptible)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Exposed)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Exposed)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedNoSymptoms)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSymptoms)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedSevere)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedSevere)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::InfectedCritical)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::InfectedCritical)];
+    // model_ide.m_populations.get_last_value()[Eigen::Index(mio::isecir::InfectionState::Recovered)] =
+    //     secihurd_ode[(t0_ide - t0) / dt][Eigen::Index(mio::isecir::InfectionState::Recovered)];
 
     // Carry out simulation
     std::cout << "Simulating now \n";
     mio::isecir::Simulation sim(model_ide, t0_ide, dt);
     sim.advance(tmax);
-    // sim.print_transitions();
+    sim.print_transitions();
     sim.print_compartments();
-    // sim.print_transitions();
     // mio::TimeSeries<ScalarType> secihurd_ide = sim.get_result();
 }
