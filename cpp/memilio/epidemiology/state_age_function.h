@@ -27,7 +27,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include <boost/math/special_functions/factorials.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 
 namespace mio
 {
@@ -307,29 +307,30 @@ protected:
 };
 
 /**
- * @brief Class that defines an ErlangSurvivalFunction function depending on the state age.
+ * @brief Class that defines an GammaSurvivalFunction function depending on the state age.
  * A survival function is defined as 1 - cumulative density function.
- * ErlangSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
- * The shape parameter of the Erlang function is the parameter of the StateAgeFunction and can be changed and accessed via the methods of StateAgeFunction. 
+ * GammaSurvivalFunction is derived from StateAgeFunction but implements an additional parameter. 
+ * The shape parameter of the Gamma function is the parameter of the StateAgeFunction and can be changed and accessed via the methods of StateAgeFunction. 
+ * If shape is an unsigned Integer, the Gamma distribution is an Erlang function.
  * The rate parameter can be accessed via the mathods get_rate() and set_rate().
  */
-struct ErlangSurvivalFunction : public StateAgeFunction {
+struct GammaSurvivalFunction : public StateAgeFunction {
 
     /**
-     * @brief Constructs a new ErlangSurvivalFunction object.
+     * @brief Constructs a new GammaSurvivalFunction object.
      *
-     * @param[in] rate Parameter rate of the ErlangSurvivalFunction.
-     * @param[in] shape Parameter shape of the ErlangSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
+     * @param[in] rate Parameter rate of the GammaSurvivalFunction.
+     * @param[in] shape Parameter shape of the GammaSurvivalFunction. For the Erlang distribution, shape has to be a positive integer.
      *  Choosing shape = 1 leads to an exponential function with parameter rate.
      */
-    ErlangSurvivalFunction(ScalarType rate, unsigned int shape = 1)
+    GammaSurvivalFunction(ScalarType rate, ScalarType shape = 1)
         : StateAgeFunction(shape)
     {
         m_rate = rate;
     }
 
     /**
-     * @brief Defines ErlangSurvivalFunction depending on state_age.
+     * @brief Defines GammaSurvivalFunction depending on state_age.
      *
      * Parameters rate and shape are used.
      * 
@@ -341,17 +342,13 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
         if (state_age <= 0) {
             return 1;
         }
-        double result = 0;
-        for (int j = 0; j < (int)m_parameter; j++) {
-            result += std::pow(m_rate * state_age, j) / (boost::math::factorial<ScalarType>(j));
-        }
-        return std::exp(-m_rate * state_age) * result;
+        return 1 - boost::math::gamma_p<ScalarType>(m_parameter, m_rate * state_age);
     }
 
     /**
      * @brief Get the m_rate object
      * 
-     * Can be used to access the m_rate object, which specifies the used Erlang distribution.
+     * Can be used to access the m_rate object, which specifies the used Gamma distribution.
      * 
      * @return ScalarType 
      */
@@ -363,9 +360,9 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
     /**
      * @brief Set the m_rate object.
      * 
-     * Can be used to set the m_rate object, which specifies the used Erlang distribution.
+     * Can be used to set the m_rate object, which specifies the used Gamma distribution.
      *
-     *@param[in] new_rate New rate parameter for the Erlang distribution.
+     *@param[in] new_rate New rate parameter for the Gamma distribution.
      */
     void set_rate(ScalarType new_rate)
     {
@@ -376,13 +373,13 @@ struct ErlangSurvivalFunction : public StateAgeFunction {
 
 protected:
     /**
-     * @brief Implements clone for ErlangSurvivalFunction.
+     * @brief Implements clone for GammaSurvivalFunction.
      * 
      * @return Pointer to StateAgeFunction.
      */
     StateAgeFunction* clone_impl() const override
     {
-        return new ErlangSurvivalFunction(*this);
+        return new GammaSurvivalFunction(*this);
     }
 
     ScalarType m_rate;

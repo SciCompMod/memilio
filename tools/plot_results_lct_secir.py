@@ -21,7 +21,7 @@
 functions to plot results of a simulation with a LCT SECIR model with subcompartments.
 There is also a method to compare different results of different models.
 
-The data to be plotted should be stored in a '../data/simulation_lct' folder as .h5 files. 
+The data to be plotted should be stored in a '../data/simulation_lct' folder as .h5 files.
 Data could be generated eg by executing the file ./cpp/examples/lct_secir_compare.cpp.
 """
 
@@ -49,7 +49,7 @@ def get_subcompartments():
 
 
 def plot_lct_subcompartments(file, save=True):
-    """ Plots the result of a simulation with an LCT SECIR model in an 4x2 Plot. 
+    """ Plots the result of a simulation with an LCT SECIR model in an 4x2 Plot.
         In each subplot, one compartment with one line per subcompartment is plotted.
 
     @param[in] file: path of the file (without file extension .h5) with the simulation result of an lct model with subcompartments.
@@ -105,10 +105,10 @@ def plot_lct_subcompartments(file, save=True):
 
 
 def plot_lct_result(file, compartment_idx=range(8), save=True):
-    """ Plots the result of a simulation with an LCT SECIR model in a single Plot for specified comparments. 
+    """ Plots the result of a simulation with an LCT SECIR model in a single Plot for specified comparments.
         The result should consist of accumulated numbers for subcompartments.
 
-    @param[in] file: path of the file (without file extension .h5) with the simulation result of an lct 
+    @param[in] file: path of the file (without file extension .h5) with the simulation result of an lct
         model with accumulated numbers for subcompartments.
     @param[in] compartment_idx: indexes of the compartments that should be plot, eg in form of a list.
     @param[in] save: if save is True, the plot is saved in a folder named Plots.
@@ -194,13 +194,14 @@ def compare_results(files, legendplot, save=True):
     # define some characteristics of the plot
     for i in range(8):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        axs[int(i/2), i % 2].set_ylim(bottom=0)
+        # axs[int(i/2), i % 2].set_ylim(bottom=0)
         axs[int(i/2), i % 2].set_xlim(left=0)
         axs[int(i/2), i % 2].grid(True, linestyle='--')
         axs[int(i/2), i % 2].legend(fontsize=8)
 
     fig.supxlabel('Time')
     fig.supylabel('Number of persons')
+    plt.tight_layout(pad=0, w_pad=0.5, h_pad=0)
 
     # save result
     if save:
@@ -254,14 +255,15 @@ def plot_new_infections(files, legendplot, save=True):
     plt.xlim(left=0)
     plt.legend(legendplot, fontsize=14)
     plt.grid(True, linestyle='--')
-
+    plt.tight_layout()
+    plt.show(block=True)
     # save result
     if save:
         if not os.path.isdir('Plots'):
             os.makedirs('Plots')
         plt.savefig('Plots/compare_incidence.png',
                     bbox_inches='tight', dpi=500)
-    plt.show()
+
     h5file.close()
 
 
@@ -271,14 +273,21 @@ if __name__ == '__main__':
         __file__), "..", "data", "simulation_lct")
 
     # plot results
-    arr = list(range(1, 5))
+    """arr = list(range(1, 5))
     arr.append(7)
     plot_lct_result(os.path.join(data_dir, "result_lct"), arr)
     plot_lct_subcompartments(file=os.path.join(
-        data_dir, "result_lct_subcompartments"), save=True)
+        data_dir, "result_lct_subcompartments"), save=True)"""
 
     # compare lct and ode model
-    compare_results([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
-                    legendplot=list(["LCT", "ODE"]), save=True)
-    plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
-                        legendplot=list(["LCT", "ODE"]), save=True)
+    compare_results([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
+                    legendplot=list(["LCT1", "LCT10"]), save=True)
+    """plot_new_infections([os.path.join(data_dir, "result_lct"), os.path.join(data_dir, "result_ode")],
+                        legendplot=list(["LCT", "ODE"]), save=True)"""
+    plot_new_infections([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_10")],
+                        legendplot=list(["LCT1", "LCT10"]), save=True)
+
+    # plot_new_infections([os.path.join(data_dir, "result_lct_real"), os.path.join(data_dir, "result_lct_initmean"), os.path.join(data_dir, "result_lct_initjump")],
+    #                    legendplot=list(["real", "mean", "jump"]), save=True)
+    # compare_results([os.path.join(data_dir, "result_lct_fictional_1"), os.path.join(data_dir, "result_lct_fictional_3"), os.path.join(data_dir, "result_lct_fictional_7"), os.path.join(data_dir, "result_lct_fictional_10")],
+    #                legendplot=list(["LCT1", "LCT3", "LCT7", "LCT10"]), save=True)

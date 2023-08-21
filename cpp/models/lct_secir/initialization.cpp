@@ -97,11 +97,11 @@ ScalarType Initializer::compute_susceptibles_old(ScalarType total_population, Sc
     // --- Compute force of infection at time -dt ---
     ScalarType force_of_infection = 0;
     // Initialize transitionDistributions for C and I.
-    ErlangSurvivalFunction transitionDistribution_InfectedNoSymptoms(
+    GammaSurvivalFunction transitionDistribution_InfectedNoSymptoms(
         infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms) *
             (1 / parameters.get<TimeInfectedNoSymptoms>()),
         infectionStates.get_number(InfectionStateBase::InfectedNoSymptoms));
-    ErlangSurvivalFunction transitionDistribution_InfectedSymptoms(
+    GammaSurvivalFunction transitionDistribution_InfectedSymptoms(
         infectionStates.get_number(InfectionStateBase::InfectedSymptoms) * (1 / parameters.get<TimeInfectedSymptoms>()),
         infectionStates.get_number(InfectionStateBase::InfectedSymptoms));
 

@@ -65,7 +65,7 @@ struct ErlangDensity : public StateAgeFunction {
      */
     ScalarType eval(ScalarType state_age) override
     {
-        if (state_age <= 0) {
+        if (state_age < 0) {
             return 0;
         }
         int shape = (int)m_parameter;
