@@ -21,7 +21,7 @@
 #include "boost/fusion/functional/invocation/invoke.hpp"
 #include "load_test_data.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/epidemiology/state_age_function.h"

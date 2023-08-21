@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "infection_state.h"
 #include "memilio/config.h"
@@ -349,7 +349,8 @@ void Model::compute_recovered()
 ScalarType Model::get_global_support_max(ScalarType dt) const
 {
     ScalarType global_support_max = std::max(
-        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+        {parameters.get<TransitionDistributions>()[(int)InfectionTransition::SusceptibleToExposed].get_support_max(dt),
+         parameters.get<TransitionDistributions>()[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
              .get_support_max(dt),
          parameters.get<TransitionDistributions>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
              .get_support_max(dt),

@@ -89,8 +89,9 @@ public:
         int num_transitions = (int)mio::isecir::InfectionTransition::Count;
 
         // get (global) support_max to determine how many flows in the past we have to compute
-        ScalarType global_support_max         = this->get_global_support_max(dt);
-        Eigen::Index global_support_max_index = std::ceil(global_support_max / dt);
+        ScalarType global_support_max = this->get_global_support_max(dt);
+        // TODO: this does not give us enough time points for simulation (without the +100), why??
+        Eigen::Index global_support_max_index = std::ceil(global_support_max / dt); // +100;
         std::cout << "Global support_max: " << global_support_max << "\n";
 
         // remove time point
@@ -102,12 +103,13 @@ public:
         // flow from S to E for -6*global_support_max, ..., 0 (directly from compartments)
         // add time points to init_transitions here
         for (int i = init_start_index; i <= t0_ide_index; i++) {
-            // std::cout << "i: " << i << "\n";
+            std::cout << "i: " << i << "\n";
             this->m_transitions.add_time_point(i * dt,
                                                mio::TimeSeries<ScalarType>::Vector::Constant(num_transitions, 0));
             this->m_transitions.get_last_value()[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)] =
                 secihurd_ode[i - 1][Eigen::Index(mio::isecir::InfectionState::Susceptible)] -
                 secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Susceptible)];
+            // std::cout << i << "\n";
         }
 
         // compute resulting flows as combination of change in compartments and previously computed flows
@@ -122,6 +124,7 @@ public:
                 secihurd_ode[i][Eigen::Index(mio::isecir::InfectionState::Exposed)] +
                 this->m_transitions[i - init_start_index]
                                    [Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)];
+            // std::cout << i << "\n";
             // std::cout << "Flow from E to C: "
             //           << this->m_transitions[i-init_start_index][Eigen::Index(
             //                  mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)]
@@ -183,6 +186,7 @@ public:
                 this->m_transitions[i - init_start_index]
                                    [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)];
         }
+        std::cout << "\n";
     }
 
     // define function that computes flows needed for initalization of IDE for a given result/compartments of the ODE model

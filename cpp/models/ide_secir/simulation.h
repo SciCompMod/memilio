@@ -22,7 +22,7 @@
 
 #include "ide_secir/parameters.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>

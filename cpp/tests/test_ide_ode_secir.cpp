@@ -33,7 +33,7 @@
 #include "boost/fusion/functional/invocation/invoke.hpp"
 #include "load_test_data.h"
 #include "ide_secir/infection_state.h"
-#include "ide_secir/model.h"
+#include "ide_secir/model_ide.h"
 #include "ide_secir/parameters.h"
 #include "ide_secir/simulation.h"
 #include "memilio/math/eigen.h"
@@ -48,7 +48,7 @@
 TEST(IdeOdeSecir, compareIdeOde)
 {
     ScalarType t0   = 0;
-    ScalarType tmax = 13.3;
+    ScalarType tmax = 14.3;
     ScalarType dt   = 0.01;
 
     ScalarType cont_freq = 10;
@@ -149,7 +149,7 @@ TEST(IdeOdeSecir, compareIdeOde)
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType N           = nb_total_t0;
-    ScalarType t0_ide      = 13;
+    ScalarType t0_ide      = 13.5;
     ScalarType Dead_before = secihurd_ode[(Eigen::Index)secihurd_ode.get_num_time_points() - (tmax - t0_ide) / dt - 2]
                                          [(int)mio::osecir::InfectionState::Dead];
 
@@ -183,10 +183,15 @@ TEST(IdeOdeSecir, compareIdeOde)
     // when calculating the calc_time when computing compartments
     // maybe we should check this in check constraints or set this support_max explicitly to 0 so that the user
     // doesn't have to think of this
+    // Why do we not need the distribution from S to E? Compartment S and the flow from S to E is calculated in another way and not via
+    // the compute_compartments/compute_flows Funktion.
     mio::ExponentialDecay expdecay(10.0);
     mio::StateAgeFunctionWrapper delaydistribution(expdecay);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-    // TransitionDistribution from S to E is never used, put in default
+    // TransitionDistribution from S to E is never used, use the same one as in TransitionDistribution from E to C
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_parameter(
+        (2 * model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] -
+         model_ode.parameters.get<mio::osecir::IncubationTime>()[(mio::AgeGroup)0]));
     // see definition of rate_E in model.h of ODE; set funcparam to 1/rate_E
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_parameter(
         (2 * model_ode.parameters.get<mio::osecir::SerialInterval>()[(mio::AgeGroup)0] -
