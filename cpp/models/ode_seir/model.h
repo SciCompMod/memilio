@@ -126,17 +126,17 @@ public:
 
         auto times = std::vector<ScalarType>(y.get_times().begin(), y.get_times().end());
 
-        ScalarType time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
+        auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
 
         if (time_late == y.get_time(0)) {
-            return mio::success(get_reproduction_number(time_late, y).value());
+            return mio::success(get_reproduction_number(y.get_time(0), y).value());
         }
 
         ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), y).value();
         ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), y).value();
 
-        ScalarType result = linear_interpolation(t_value, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
-        return mio::success(result);
+        auto result = linear_interpolation(t_value, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
+        return mio::success(static_cast<ScalarType>(result));
     }
 };
 
