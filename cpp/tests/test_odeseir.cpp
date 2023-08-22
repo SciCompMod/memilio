@@ -18,12 +18,16 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
+#include "memilio/config.h"
+#include "memilio/utils/time_series.h"
 #include "ode_seir/model.h"
 #include "ode_seir/infection_state.h"
 #include "ode_seir/parameters.h"
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <vector>
 
 TEST(TestSeir, simulateDefault)
 {
@@ -202,13 +206,13 @@ TEST(TestSeir, get_reproduction_numbers)
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
     model.parameters.get<mio::oseir::ContactPatterns>().add_damping(
         0.5, mio::SimulationTime(
-                 4)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
+                 0.6)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
 
     model.check_constraints();
 
     Eigen::VectorXd checkReproductionNumbers(7);
-    checkReproductionNumbers << 2.3280000000000003, 2.3279906878991881, 2.3279487809434576, 2.3277601483151549,
-        1.163455101269445, 1.1615290026206868, 1.1592700312341533;
+    checkReproductionNumbers << 1.9258478907262198, 1.9241017236517031, 1.9162226787480827, 1.8803730074762808,
+        1.7145319195349404, 1.177662053486763, 1.16129426162878;
 
     mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
 
@@ -224,13 +228,9 @@ TEST(TestSeir, get_reproduction_numbers)
 
 TEST(TestSeir, interpolate_reproduction_numbers)
 {
-    double t0   = 0;
-    double tmax = 1;
-    double dt   = 0.001;
-
     mio::oseir::Model model;
 
-    double total_population                                                                            = 10000;
+    double total_population = 10000; //Initialize compartments to get total population of 10000
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
@@ -244,14 +244,42 @@ TEST(TestSeir, interpolate_reproduction_numbers)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(0.5, mio::SimulationTime(4));
+    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(
+        0.5, mio::SimulationTime(
+                 0.5)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
 
-    model.check_constraints();
+    model.apply_constraints();
 
-    mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> result((int)mio::oseir::InfectionState::Count);
+    mio::TimeSeries<ScalarType>::Vector result_0(4);
+    mio::TimeSeries<ScalarType>::Vector result_1(4);
+    mio::TimeSeries<ScalarType>::Vector result_2(4);
+    mio::TimeSeries<ScalarType>::Vector result_3(4);
+    mio::TimeSeries<ScalarType>::Vector result_4(4);
+    mio::TimeSeries<ScalarType>::Vector result_5(4);
+    mio::TimeSeries<ScalarType>::Vector result_6(4);
+    mio::TimeSeries<ScalarType>::Vector result_7(4);
 
-    EXPECT_FALSE(model.get_reproduction_number(-0.5, result)); //Test for indices out of range
-    EXPECT_FALSE(model.get_reproduction_number(result.get_num_time_points() - 0.5, result));
-    EXPECT_EQ(model.get_reproduction_number(1.5, result).value(), 2.32796973442132285);
-    EXPECT_EQ(model.get_reproduction_number(4.75, result).value(), 1.16201052728287635);
+    result_0[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9700;
+    result_1[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9699.9709149074315;
+    result_2[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9699.8404009584538;
+    result_3[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9699.260556488618;
+    result_4[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9696.800490904101;
+    result_5[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9687.9435082620021;
+    result_6[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9679.5436372291661;
+    result_7[(Eigen::Index)mio::oseir::InfectionState::Susceptible] = 9678.5949381732935;
+
+    result.add_time_point(0, result_0);
+    result.add_time_point(0.001, result_1);
+    result.add_time_point(0.0055, result_2);
+    result.add_time_point(0.02575, result_3);
+    result.add_time_point(0.116875, result_4);
+    result.add_time_point(0.526938, result_5);
+    result.add_time_point(0.952226, result_6);
+    result.add_time_point(1, result_7);
+
+    EXPECT_FALSE(model.get_reproduction_number(result.get_time(0) - 0.5, result)); //Test for indices out of range
+    EXPECT_FALSE(model.get_reproduction_number(result.get_last_time() + 0.5, result));
+    EXPECT_EQ(model.get_reproduction_number(0.3, result).value(), 1.3695409350793410486);
+    EXPECT_EQ(model.get_reproduction_number(0.7, result).value(), 1.1621430429058086098);
 }
