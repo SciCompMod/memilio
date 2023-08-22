@@ -89,7 +89,7 @@ public:
                                this->parameters.get<mio::oseir::TransmissionProbabilityOnContact>() /
                                this->populations.get_total();
 
-        double result =
+        ScalarType result =
             y.get_value(static_cast<Eigen::Index>(t_idx))[(Eigen::Index)mio::oseir::InfectionState::Susceptible] *
             TimeInfected * coeffStoE;
 
