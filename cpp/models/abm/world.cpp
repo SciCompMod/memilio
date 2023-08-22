@@ -133,8 +133,8 @@ void World::migration(TimePoint t, TimeSpan dt)
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
                     m_movement_data.push_back({person->get_person_id(), current_location.get_index(),
-                                               target_location.get_index(), t, t + dt, trip.trip_mode,
-                                               trip.activity_type, person->get_infection_state(t)});
+                                               target_location.get_index(), t, t, trip.trip_mode, trip.activity_type,
+                                               person->get_infection_state(t)});
                     person->migrate_to(target_location);
                     migrations++;
                 }
