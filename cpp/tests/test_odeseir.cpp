@@ -240,7 +240,6 @@ TEST(TestSeir, interpolate_reproduction_numbers)
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
 
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
