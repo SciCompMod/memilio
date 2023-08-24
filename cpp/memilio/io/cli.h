@@ -31,7 +31,8 @@
 
 #include <memory>
 #include <string>
-#include <ostream>
+#include <sstream>
+#include <fstream>
 #include <iostream>
 #include <functional>
 
@@ -73,10 +74,38 @@ struct PrintOption {
     }
     static const std::string description()
     {
-        return "Use with other option name(s) without \"--\" as value(s). "
+        return "Use with parameter option name(s) without \"--\" as value(s). "
                "Prints the current values of specified options in their correct json format, "
                "then exits. Note that quotation marks may have to be escaped (\\\")";
     }
+};
+
+/// @brief a "parameter" (no Type) for the json import option
+struct ReadFromJson {
+    static const std::string name()
+    {
+        return "read_from_json";
+    }
+    static const std::string description()
+    {
+        return "Takes a filepath as value. Reads and assigns parameter option values from the specified json file.";
+    }
+};
+
+/// @brief a "parameter" (no Type) for the json export option
+struct WriteToJson {
+    static const std::string name()
+    {
+        return "write_to_json";
+    }
+    static const std::string description()
+    {
+        return "Takes a filepath as value. Writes current values of all parameter options to the specified json file.";
+    }
+};
+
+template <class... Others>
+struct PresetOptions : public typelist<Help, PrintOption, ReadFromJson, WriteToJson, Others...> {
 };
 
 /// @brief A Field that gets the name of a Parameter
@@ -133,6 +162,24 @@ struct Description {
     }
 };
 
+/// @brief A Field that matches either name or alias when used as `NameOrAliasMatcher<T>::get() == a_string`.
+template <class Parameter>
+struct NameOrAliasMatcher {
+    static NameOrAliasMatcher get()
+    {
+        return NameOrAliasMatcher<Parameter>{};
+    }
+    bool operator==(const std::string& other) const
+    {
+        return *this == other.data();
+    }
+    bool operator==(const char* other) const
+    {
+        return Name<Parameter>::get() == other || (Alias<Parameter>::get() != "" && Alias<Parameter>::get() == other);
+    }
+};
+
+/// @brief An Identifier is a string used to identify an option. Defines what is considered a name or alias.
 class Identifier : public std::string
 {
 public:
@@ -193,6 +240,14 @@ inline bool name_matches_parameter(const std::string& name)
     return (Name<Parameter>::get() == name) || (name.size() > 0 && Alias<Parameter>::get() == name);
 }
 
+/// @brief Helper struct to make write_help_impl write a seperator between presets and other options.
+struct Seperator {
+    static const std::string name()
+    {
+        return "\rParameter Options:";
+    }
+};
+
 /// @brief End recursion
 inline void write_help_impl(const typelist<>, std::ostream&)
 {
@@ -203,25 +258,27 @@ template <class T, class... Ts>
 void write_help_impl(const typelist<T, Ts...>, std::ostream& os)
 {
     // Max. space and offsets used to print everything nicely.
-    const size_t name_space         = 16;
-    const size_t alias_space        = 4;
+    const size_t name_space         = 16; // reserved space for name
+    const size_t alias_space        = 4; // reserved space for alias
     const size_t name_indent        = 4; // size of "  --"
     const size_t alias_indent       = 3; // size of "  -"
-    const size_t description_indent = 2;
+    const size_t description_indent = 2; // size of "  "
     // Get strings. Can assume name is not empty
     const std::string name        = Name<T>::get();
     const std::string description = Description<T>::get();
     const std::string alias       = Alias<T>::get();
     // Write name with "--" prefix and "  " indent
     os << "  --" << name;
-    if (name.size() <= name_space) {
-        os << std::string(name_space - name.size(), ' ');
-    }
-    else if (description.size() > 0 || alias.size() > 0) {
-        os << "\n" << std::string(name_space + name_indent, ' ');
+    if (description.size() > 0 || alias.size() > 0) {
+        if (name.size() <= name_space) {
+            os << std::string(name_space - name.size(), ' ');
+        }
+        else {
+            os << "\n" << std::string(name_space + name_indent, ' ');
+        }
     }
     // Write alias (if available) with "-" prefix and "  " indent
-    size_t space = alias_space - alias.size();
+    size_t space = std::max<size_t>(alias_space - alias.size(), 0);
     if (alias.size() > 0) {
         os << "  -" << alias;
     }
@@ -229,8 +286,10 @@ void write_help_impl(const typelist<T, Ts...>, std::ostream& os)
         space += alias_indent;
     }
     // Write description (if available) and end line indentation
-    os << std::string(space + description_indent, ' ');
-    os << description << "\n";
+    if (description.size() > 0) {
+        os << std::string(space + description_indent, ' ') << description;
+    }
+    os << "\n";
     // Write next entry
     write_help_impl(typelist<Ts...>(), os);
 }
@@ -250,12 +309,12 @@ void write_help(const std::string& executable_name, const Set<T...>& /* paramete
        << "Values must be entered as json values, i.e. the expression to the right of \"Name : \".\n"
        << "Options:\n";
     // print options recursively
-    write_help_impl(typelist<Help, PrintOption, T...>(), os);
+    write_help_impl(PresetOptions<Seperator, T...>(), os);
 }
 
 /// @brief End recursion
 template <template <class> /*Field */ class, class Set>
-mio::IOResult<void> set_param_impl(const typelist<>, Set&, const char* name, const std::string& /* args */)
+mio::IOResult<void> set_param_impl(const typelist<>, Set&, const char* name, const Json::Value& /* args */)
 {
     return mio::failure(mio::StatusCode::KeyNotFound, "No such option \"" + std::string(name) + "\".");
     // end recusrion
@@ -263,17 +322,11 @@ mio::IOResult<void> set_param_impl(const typelist<>, Set&, const char* name, con
 
 /// @brief Set the parameter given by name (or alias) to the json value given by args.
 template <template <class> class Field, class T, class... Ts, class Set>
-mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, const char* name, const std::string& args)
+mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, const char* name, const Json::Value& args)
 {
     if (Field<T>::get() == name) {
-        // read json value from args
-        Json::Value js;
-        std::string errors;
-        Json::CharReaderBuilder builder;
-        const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
-        parser->parse(args.c_str(), args.c_str() + args.size(), &js, &errors);
         // deserialize the json value to the parameter's type, then assign it
-        auto result = mio::deserialize_json(js, mio::Tag<typename T::Type>());
+        auto result = mio::deserialize_json(args, mio::Tag<typename T::Type>());
         if (result) {
             // assign the result to the parameter
             parameters.template get<T>() = result.value();
@@ -299,14 +352,15 @@ mio::IOResult<void> set_param_impl(const typelist<T, Ts...>, Set& parameters, co
  *
  * @param parameters The set containing the parameter to set.
  * @param identifier The identifier of the parameter.
- * @param args String containing a json value to be convertet to the matching parameter's type.
+ * @param args Json value to be convertet to the matching parameter's type.
  * @tparam T List of all parameters.
  * @tparam Set A parameter set.
  * @return Nothing if successfull, an error code otherwise.
  */
 template <class... T, template <class...> class Set>
-mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifier, const std::string& args)
+mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifier, const Json::Value& args)
 {
+    // recursively match parameter either by name or alias and (try to) set it to args
     if (identifier.is_name()) {
         return set_param_impl<Name>(typelist<T...>(), parameters, identifier.get_name(), args);
     }
@@ -316,6 +370,31 @@ mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifie
     else {
         return mio::failure(mio::StatusCode::KeyNotFound, "Expected an option, got \"" + identifier + "\".");
     }
+}
+
+/**
+ * @brief Set the parameter given by identifer to the json value given by args.
+ *
+ * The identifier must start with either "--" if it is a parameter's name, or with "-" if it is an alias.
+ * The function then recursively tries to match each parameter by this Field, and sets it accordningly.
+ *
+ * @param parameters The set containing the parameter to set.
+ * @param identifier The identifier of the parameter.
+ * @param args String containing a json value to be convertet to the matching parameter's type.
+ * @tparam T List of all parameters.
+ * @tparam Set A parameter set.
+ * @return Nothing if successfull, an error code otherwise.
+ */
+template <class... T, template <class...> class Set>
+mio::IOResult<void> set_param(Set<T...>& parameters, const Identifier& identifier, const std::string& args)
+{
+    // read json value from args, then pass it to set_param(..., Json::Value)
+    Json::Value js;
+    std::string errors;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
+    parser->parse(args.c_str(), args.c_str() + args.size(), &js, &errors);
+    return set_param(parameters, identifier, js);
 }
 
 /// @brief End recursion.
@@ -384,25 +463,27 @@ struct OptionVerifier {
 };
 
 /// @brief End recursion
-template <template <class> class Field, class... T>
-inline void verify_options_impl(typelist<>, typelist<T...>)
+template <template <class> class Field, class... Ts>
+inline void verify_options_impl(typelist<Ts...>, typelist<>, typelist<Ts...>)
 {
 }
 
 /// @brief Restart recursion for the next A. Skips symmetric matches by reducing T.
-template <template <class> class Field, class /* first T */, class... T, class A, class... As>
-inline void verify_options_impl(typelist<A, As...>, typelist<>)
+template <template <class> class Field, class T, class... Ts, class A, class... As>
+inline void verify_options_impl(typelist<T, Ts...>, typelist<A, As...>, typelist<>)
 {
-    verify_options_impl<Field, T...>(typelist<As...>(), typelist<T...>());
+    // reduce both T- and A-list by the first element, reset B-list
+    verify_options_impl<Field>(typelist<Ts...>(), typelist<As...>(), typelist<Ts...>());
 }
 
 /// @brief Recursively assert that the parameters do not contain duplicate or empty required Fields.
-template <template <class> class Field, class... T, class A, class... As, class B, class... Bs>
-inline void verify_options_impl(typelist<A, As...>, typelist<B, Bs...>)
+template <template <class> class Field, class... Ts, class A, class... As, class B, class... Bs>
+inline void verify_options_impl(typelist<Ts...>, typelist<A, As...>, typelist<B, Bs...>)
 {
     // TODO: make this a compile time check, e.g. with c++20's constexpr c_str
     OptionVerifier::verify<Field, A, B>();
-    verify_options_impl<Field, T...>(typelist<A, As...>(), typelist<Bs...>());
+    // reduce B-list by the first element
+    verify_options_impl<Field>(typelist<Ts...>(), typelist<A, As...>(), typelist<Bs...>());
 }
 
 /**
@@ -414,15 +495,49 @@ inline void verify_options_impl(typelist<A, As...>, typelist<B, Bs...>)
 template <class... T, template <class...> class Set>
 void verify_options(Set<T...> /* parameters */)
 {
-    verify_options_impl<Name, Help, PrintOption, T...>(typelist<Help, PrintOption, T...>(),
-                                                       typelist<Help, PrintOption, T...>());
-    verify_options_impl<Alias, Help, PrintOption, T...>(typelist<Help, PrintOption, T...>(),
-                                                        typelist<Help, PrintOption, T...>());
+    verify_options_impl<Name>(PresetOptions<T...>(), PresetOptions<T...>(), PresetOptions<T...>());
+    verify_options_impl<Alias>(PresetOptions<T...>(), PresetOptions<T...>(), PresetOptions<T...>());
 }
 
 } // namespace cli
 
 } // namespace details
+
+/**
+ * @brief Write a parameter set to the specified filepath.
+ * @param[in] parameters An instance of Set.
+ * @param[in] filepath The file to write the parameters into.
+ * @tparam Set A parameter set.
+ */
+template <class Set>
+IOResult<void> write_parameters_to_file(const Set& parameters, const std::string& filepath)
+{
+    return mio::write_json(filepath, parameters);
+}
+
+/**
+ * @brief Read parameters from the specified file into the given parameter set.
+ * @param[in, out] parameters An instance of Set<Parameters...>.
+ * @param[in] filepath The file to read the parameters from.
+ * @tparam Parameters A list of parameter types. 
+ * @tparam Set A parameter set template. Will be used as Set<Parameters...>.
+ */
+template <class... Parameters, template <class...> class Set>
+IOResult<void> read_parameters_from_file(Set<Parameters...>& parameters, const std::string& filepath)
+{
+    using namespace details::cli;
+    // read file into json value
+    auto json_result = mio::read_json(filepath);
+    if (!json_result) {
+        return mio::failure(json_result.error());
+    }
+    // set each parameter manually
+    for (auto itr = json_result.value().begin(); itr != json_result.value().end(); itr++) {
+        BOOST_OUTCOME_TRY(set_param_impl<details::cli::NameOrAliasMatcher>(typelist<Parameters...>{}, parameters,
+                                                                           itr.name().c_str(), *itr));
+    }
+    return mio::success();
+}
 
 /**
  * @brief A cli that takes json values and stores them in a parameter set.
@@ -435,14 +550,16 @@ void verify_options(Set<T...> /* parameters */)
  * a) have a list of (parameter) types as template arguments itself, e.g. ParameterSet<TypeA, TypeB,...>,
  * b) where each type has a member `Type` and `static const std::string name()`,
  * c) and Set has a member function `template <class T> T::Type& get()`.
+ * d) Set has to implement a serialize function (see [README](cpp/memilio/io/README.md)).
  * Optionally, each type may have an "alias" or "description" member of the same type as "name".
  * Each name, alias or description should be ASCII only and not contain any control characters.
  *
- * @param executable_name Name of the executable. Usually argv[0] from the main is a good choice.
- * @param argc Argument count, must be the length of argv. Can be directly passed from main.
- * @param argv Argument list for the Programm. Can be directly passed from main.
- * @param parameters An instance of the parameter set.
- * @tparam Set A parameter set. 
+ * @param[in] executable_name Name of the executable. Usually argv[0] from the main is a good choice.
+ * @param[in] argc Argument count, must be the length of argv. Can be directly passed from main.
+ * @param[in] argv Argument list for the Programm. Can be directly passed from main.
+ * @param[in,out] parameters An instance of the parameter set.
+ * @param[in] os Output stream to write to. Default: std::cout.
+ * @tparam Set A parameter set.
  * @return Nothing if no errors occured, the error code otherwise.
  */
 template <class Set>
@@ -489,8 +606,17 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
         for (; (i < argc) && !Identifier(argv[i]).is_option(); i++) {
             arguments.append(" ").append(argv[i]);
         }
+        // handle built-in options
+        if (identifier.matches_parameter<ReadFromJson>()) {
+            BOOST_OUTCOME_TRY(read_parameters_from_file(parameters, arguments));
+        }
+        else if (identifier.matches_parameter<WriteToJson>()) {
+            BOOST_OUTCOME_TRY(write_parameters_to_file(parameters, arguments));
+        }
         // (try to) set the parameter, to the value given by arguments
-        BOOST_OUTCOME_TRY(set_param(parameters, identifier, arguments));
+        else {
+            BOOST_OUTCOME_TRY(set_param(parameters, identifier, arguments));
+        }
     }
     return mio::success();
 }
@@ -506,15 +632,16 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
  * a) have a list of (parameter) types as template arguments itself, e.g. ParameterSet<TypeA, TypeB,...>,
  * b) where each type has a member `Type` and `static const std::string name()`,
  * c) and Set has a member function `template <class T> T::Type& get()`.
+ * d) Set has to implement a serialize function (see [README](cpp/memilio/io/README.md)).
  * Optionally, each type may have an "alias" or "description" member of the same type as "name".
  * Each name, alias or description should be ASCII only and not contain any control characters.
  *
- * @param executable_name Name of the executable. Usually argv[0] from the main is a good choice.
- * @param argc Argument count, must be the length of argv. Can be directly passed from main.
- * @param argv Argument list for the Programm. Can be directly passed from main.
- * @param parameters An instance of the parameter set.
+ * @param[in] executable_name Name of the executable. Usually argv[0] from the main is a good choice.
+ * @param[in] argc Argument count, must be the length of argv. Can be directly passed from main.
+ * @param[in] argv Argument list for the Programm. Can be directly passed from main.
+ * @param[in] os Output stream to write to. Default: std::cout.
  * @tparam Parameters A list of parameter types. 
- * @tparam Set A parameter set. 
+ * @tparam Set A parameter set template. Will be used as Set<Parameters...>. Default: mio::ParameterSet.
  * @return An instance of Set<Parameters...> if no errors occured, the error code otherwise.
  */
 template <class... Parameters, template <class...> class Set = ParameterSet>
@@ -522,13 +649,15 @@ mio::IOResult<Set<Parameters...>> command_line_interface(const std::string& exec
                                                          char** argv, std::ostream& os = std::cout)
 {
     static_assert(sizeof...(Parameters) != 0, "At least one Parameter is required.");
-    Set<Parameters...> parameters;
+    // create a new parameter set, and pass it and all other arguments to the main cli function
+    Set<Parameters...> parameters{};
     auto result = command_line_interface(executable_name, argc, argv, parameters, os);
+    // check the result, return parameters if appropriate
     if (result) {
         return mio::IOResult<Set<Parameters...>>(mio::success(std::move(parameters)));
     }
     else {
-        return mio::IOResult<Set<Parameters...>>(mio::failure(result.error().code(), result.error().message()));
+        return mio::IOResult<Set<Parameters...>>(mio::failure(result.error()));
     }
 }
 

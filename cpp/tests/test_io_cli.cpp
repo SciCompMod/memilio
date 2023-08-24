@@ -21,6 +21,7 @@
 */
 #include "memilio/config.h"
 #include "memilio/io/cli.h"
+#include "temp_file_register.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -119,6 +120,23 @@ struct NoName {
     // const static std::string description()
 };
 
+void make_argv(const std::vector<std::string> values, char** argv, int argc)
+{
+    for (int i = 0; i < argc; i++) {
+        const auto n = values[i].size() + 1;
+        argv[i]      = new char[n];
+        for (unsigned j = 0; j < n; j++) {
+            argv[i][j] = values[i][j];
+        }
+    }
+}
+void free_argv(char** argv, int argc)
+{
+    for (int i = 0; i < argc; i++) {
+        delete[] argv[i];
+    }
+}
+
 using Params = mio::ParameterSet<A, B, C, D>;
 // using BadParams = mio::ParameterSet<A, CollisionA>;
 TEST(TestCLI, test_option_verifier)
@@ -168,17 +186,17 @@ TEST(TestCLI, test_set_param)
 {
     Params p;
     // set by name
-    EXPECT_TRUE(mio::details::cli::set_param(p, "--A", "5.2"));
+    EXPECT_TRUE(mio::details::cli::set_param(p, "--A", std::string("5.2")));
     EXPECT_EQ(p.get<A>(), 5.2);
     // set by alias
-    EXPECT_TRUE(mio::details::cli::set_param(p, "-a", "2.7"));
+    EXPECT_TRUE(mio::details::cli::set_param(p, "-a", std::string("2.7")));
     EXPECT_EQ(p.get<A>(), 2.7);
     // Errors
-    EXPECT_EQ(mio::details::cli::set_param(p, "--A", "definitely a double").error().formatted_message(),
+    EXPECT_EQ(mio::details::cli::set_param(p, "--A", std::string("definitely a double")).error().formatted_message(),
               "Invalid type: While setting \"A\": Json value is not a double.");
-    EXPECT_EQ(mio::details::cli::set_param(p, "NoName", "").error().formatted_message(),
+    EXPECT_EQ(mio::details::cli::set_param(p, "NoName", std::string()).error().formatted_message(),
               "Key not found: Expected an option, got \"NoName\".");
-    EXPECT_EQ(mio::details::cli::set_param(p, "--NoName", "").error().formatted_message(),
+    EXPECT_EQ(mio::details::cli::set_param(p, "--NoName", std::string()).error().formatted_message(),
               "Key not found: No such option \"NoName\".");
 }
 
@@ -188,12 +206,14 @@ TEST(TestCLI, test_write_help)
     const std::string help =
         "Usage: TestSuite <option> <value> ...\nValues must be entered as json values, i.e. the expression to the "
         "right of \"Name : \".\nOptions:\n  --help              -h     Show this dialogue and exit.\n  --print_option  "
-        "           Use with other option name(s) without \"--\" as value(s). Prints the current values of specified "
-        "options in their correct json format, then exits. Note that quotation marks may have to be escaped (\\\")\n  "
-        "--A                 -a     This is A.\n  --B                        This is B. It has a needlessly long "
-        "description that will most probably not fit into a single line on your terminal window, unless maybe on an "
-        "ultrawide display.\n  --C has a name that is too long\n                      -c     \n  --D                   "
-        "     \n";
+        "           Use with parameter option name(s) without \"--\" as value(s). Prints the current values of "
+        "specified options in their correct json format, then exits. Note that quotation marks may have to be escaped "
+        "(\\\")\n  --read_from_json           Takes a filepath as value. Reads and assigns parameter option values "
+        "from the specified json file.\n  --write_to_json            Takes a filepath as value. Writes current values "
+        "of all parameter options to the specified json file.\n  --\rParameter Options:\n  --A                 -a     "
+        "This is A.\n  --B                        This is B. It has a needlessly long description that will most "
+        "probably not fit into a single line on your terminal window, unless maybe on an ultrawide display.\n  --C has "
+        "a name that is too long\n                      -c\n  --D\n";
     // call write help directly
     mio::details::cli::write_help("TestSuite", Params(), ss);
     EXPECT_EQ(ss.str(), help);
@@ -210,19 +230,61 @@ TEST(TestCLI, test_print_options)
     std::vector<std::string> args{"", "--print_option", "a", "D"};
     const int argc = 4;
     char* argv[argc];
-    for (int i = 0; i < argc; i++) {
-        const auto n = args[i].size() + 1;
-        argv[i]      = new char[n];
-        for (unsigned j = 0; j < n; j++) {
-            argv[i][j] = args[i][j];
-        }
-    }
+    make_argv(args, argv, argc);
+
     Params p;
     EXPECT_EXIT((void)mio::command_line_interface("TestSuite", argc, argv, p, std::cerr), testing::ExitedWithCode(0),
                 testing::StrEq("Option a:\n0.0\nOption D:\n[]\n"));
-    for (int i = 0; i < argc; i++) {
-        delete[] argv[i];
-    }
+    free_argv(argv, argc);
+}
+
+TEST(TestCLI, test_import_export)
+{
+    TempFileRegister file_register;
+    auto tmpfile                = file_register.get_unique_path("TestCLI-%%%%-%%%%.json");
+    const std::string read_json = "{\"a\":5.4,\"D\":[\"d\",\"D\"]}";
+    const std::string write_json =
+        "{\n\t\"A\" : 5.4000000000000004,\n\t\"B\" : \"\",\n\t\"C has a name that is too long\" : "
+        "[],\n\t\"D\" : \n\t[\n\t\t\"d\",\n\t\t\"D\"\n\t]\n}";
+    Params p{};
+
+    // write json input into tmpfile
+    std::ofstream ofile(tmpfile);
+    ofile << read_json;
+    ofile.close();
+
+    // test invalid file
+    ASSERT_FALSE(mio::read_parameters_from_file(p, ""));
+
+    // read tmpfile into p, then test its values
+    ASSERT_TRUE(mio::read_parameters_from_file(p, tmpfile));
+    EXPECT_EQ(p.get<A>(), 5.4);
+    EXPECT_EQ(p.get<B>(), "");
+    EXPECT_EQ(p.get<C>().size(), 0);
+    EXPECT_EQ(p.get<D>().front(), "d");
+    EXPECT_EQ(p.get<D>().back(), "D");
+
+    // write the parameters back to tmpfile, check file contents
+    ASSERT_TRUE(mio::write_parameters_to_file(p, tmpfile));
+    std::ifstream ifile(tmpfile);
+    std::string content{std::istreambuf_iterator<char>(ifile), std::istreambuf_iterator<char>()};
+    ifile.close();
+    EXPECT_EQ(content, write_json);
+
+    // do read/write again using cli
+    ofile.open(tmpfile);
+    ofile << read_json;
+    ofile.close();
+    std::vector<std::string> args{"", "--read_from_json", tmpfile, "--write_to_json", tmpfile};
+    const int argc = 5;
+    char* argv[argc];
+    make_argv(args, argv, argc);
+    ASSERT_TRUE(mio::command_line_interface("", argc, argv, p));
+    free_argv(argv, argc);
+    ifile.open(tmpfile);
+    content.assign(std::istreambuf_iterator<char>(ifile), std::istreambuf_iterator<char>());
+    ifile.close();
+    EXPECT_EQ(content, write_json);
 }
 
 TEST(TestCLI, test_command_line_interface)
@@ -233,13 +295,7 @@ TEST(TestCLI, test_command_line_interface)
         "[0,", "8,", "15]", "--D", "[\"Hello \",\"World!\"]"};
     const int argc = 11;
     char* argv[argc];
-    for (int i = 0; i < argc; i++) {
-        const auto n = args[i].size() + 1;
-        argv[i]      = new char[n];
-        for (unsigned j = 0; j < n; j++) {
-            argv[i][j] = args[i][j];
-        }
-    }
+    make_argv(args, argv, argc);
     // trigger fail
     // by error in set_param
     EXPECT_FALSE(mio::command_line_interface<A>("TestSuite", argc, argv));
@@ -270,9 +326,7 @@ TEST(TestCLI, test_command_line_interface)
     EXPECT_EQ(p.get<D>().front(), "Hello ");
     EXPECT_EQ(p.get<D>().back(), "World!");
     // deallocate argv
-    for (int i = 0; i < argc; i++) {
-        delete[] argv[i];
-    }
+    free_argv(argv, argc);
 }
 
 #endif // MEMILIO_HAS_JSONCPP
