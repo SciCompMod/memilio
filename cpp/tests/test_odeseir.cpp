@@ -226,7 +226,7 @@ TEST(TestSeir, get_reproduction_numbers)
                                                result)); //Test for an index that is out of range
 }
 
-TEST(TestSeir, interpolate_reproduction_numbers)
+TEST(TestSeir, get_reproduction_number)
 {
     mio::oseir::Model model;
 
@@ -279,6 +279,8 @@ TEST(TestSeir, interpolate_reproduction_numbers)
 
     EXPECT_FALSE(model.get_reproduction_number(result.get_time(0) - 0.5, result)); //Test for indices out of range
     EXPECT_FALSE(model.get_reproduction_number(result.get_last_time() + 0.5, result));
+    EXPECT_FALSE(model.get_reproduction_number((size_t)result.get_num_time_points(), result));
     EXPECT_EQ(model.get_reproduction_number(0.3, result).value(), 1.3695409350793410486);
     EXPECT_EQ(model.get_reproduction_number(0.7, result).value(), 1.1621430429058086098);
+    EXPECT_EQ(model.get_reproduction_number((size_t)0, result).value(), 1.745999999999999774);
 }
