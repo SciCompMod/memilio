@@ -67,7 +67,6 @@ void World::interaction(TimePoint t, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    int migrations = 0;
     std::vector<std::pair<LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&),
                           std::vector<LocationType>>>
         m_enhanced_migration_rules;
@@ -99,7 +98,6 @@ void World::migration(TimePoint t, TimeSpan dt)
                         bool wears_mask = person->apply_mask_intervention(target_location);
                         if (wears_mask) {
                             person->migrate_to(target_location);
-                            migrations++;
                         }
                         break;
                     }
@@ -123,13 +121,11 @@ void World::migration(TimePoint t, TimeSpan dt)
                 if (m_testing_strategy.run_strategy(*person, target_location, t)) {
                     person->apply_mask_intervention(target_location);
                     person->migrate_to(target_location);
-                    migrations++;
                 }
             }
             m_trip_list.increase_index();
         }
     }
-    printf("%d migrations\n", migrations);
     if (t.days() < (t + dt).days()) {
         m_trip_list.reset_index();
     }

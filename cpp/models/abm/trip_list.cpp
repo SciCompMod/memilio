@@ -50,7 +50,7 @@ void TripList::use_weekday_trips_on_weekend()
     m_trips_weekend = m_trips_weekday;
 }
 
-void TripList::add_trip(Trip trip, bool weekend /*= false*/)
+void TripList::add_trip(Trip trip, bool weekend)
 {
     //Trips are sorted by time.
     //Also include the person id in the comparison so different persons can make trips at the same time.
