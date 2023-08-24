@@ -124,13 +124,13 @@ public:
                                 "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
         }
 
+        if (t_value == y.get_time(0)) {
+            return mio::success(get_reproduction_number((size_t)0, y).value());
+        }
+
         auto times = std::vector<ScalarType>(y.get_times().begin(), y.get_times().end());
 
         auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
-
-        if (time_late == y.get_time(0)) {
-            return mio::success(get_reproduction_number(y.get_time(0), y).value());
-        }
 
         ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), y).value();
         ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), y).value();

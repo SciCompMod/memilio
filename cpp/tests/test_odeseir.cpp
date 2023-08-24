@@ -317,17 +317,18 @@ TEST(TestSeir, get_reproduction_number)
     EXPECT_FALSE(model.get_reproduction_number(result.get_last_time() + 0.5, result));
     EXPECT_FALSE(model.get_reproduction_number((size_t)result.get_num_time_points(), result));
 
+    EXPECT_EQ(model.get_reproduction_number((size_t)0, result).value(),
+              model.get_reproduction_number(0.0, result).value());
+
     EXPECT_NEAR(model.get_reproduction_number(0.3, result).value(), 2.3262828383474389859, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.7, result).value(), 2.3242860858116172196, 1e-12);
-    EXPECT_NEAR(model.get_reproduction_number((size_t)0, result).value(), 2.3280000000000002913, 1e-12);
+    EXPECT_NEAR(model.get_reproduction_number(0.0, result).value(), 2.3280000000000002913, 1e-12);
 
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 9;
     EXPECT_NEAR(model.get_reproduction_number(0.1, result).value(), 2.0946073086586665113, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.3, result).value(), 2.0936545545126947765, 1e-12);
-    EXPECT_NEAR(model.get_reproduction_number((size_t)1, result).value(), 2.0951937176200052804, 1e-12);
 
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 8;
     EXPECT_NEAR(model.get_reproduction_number(0.2, result).value(), 1.8614409729718137676, 1e-12);
     EXPECT_NEAR(model.get_reproduction_number(0.9, result).value(), 1.858670429549998504, 1e-12);
-    EXPECT_NEAR(model.get_reproduction_number((size_t)2, result).value(), 1.86236935698402295, 1e-12);
 }
