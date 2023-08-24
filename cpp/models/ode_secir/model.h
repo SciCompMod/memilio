@@ -314,11 +314,11 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
     Eigen::MatrixXd F(5 * num_groups, 5 * num_groups);
     Eigen::MatrixXd V(5 * num_groups, 5 * num_groups);
     F = Eigen::MatrixXd::Zero(5 * num_groups, 5 * num_groups); //Initialize matrices F and V with zeroes
-    V = Eigen::MatrixXd::Zero(5 * num_groups, 5 * num_groups);
+    V = Eigen::MatrixXd::Zero(5 * num_groups, 5 * num_groups); //
 
     auto test_and_trace_required = 0.0;
     auto icu_occupancy           = 0.0;
-    for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
+    for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) { //
         auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
         test_and_trace_required +=
             (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
@@ -328,16 +328,20 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
             timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical * (num_groups) + (size_t)i];
     }
 
+    //checked until here
+
     double season_val =
         (1 + params.template get<Seasonality>() *
                  sin(3.141592653589793 *
                      (std::fmod((sim.get_model().parameters.template get<StartDay>() + timept), 365.0) / 182.5 + 0.5)));
-    ContactMatrixGroup const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns>();
+    ContactMatrixGroup const& contact_matrix =
+        sim.get_model().parameters.template get<ContactPatterns>(); //checked until here
 
     Eigen::MatrixXd cont_freq_eff(num_groups, num_groups);
+    Eigen::MatrixXd riskFromInfectedSymptomatic_derivatives(num_groups, num_groups);
     Eigen::VectorXd divN(num_groups);
-    Eigen::VectorXd riskFromInfectedSymptomatic_derivatives(num_groups);
     Eigen::VectorXd riskFromInfectedSymptomatic(num_groups);
+    Eigen::VectorXd rateINS(num_groups);
 
     for (mio::AgeGroup k = 0; k < (mio::AgeGroup)num_groups; k++) {
         double temp =
@@ -355,30 +359,35 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
                 timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical * (num_groups) + (size_t)k] +
             sim.get_result().get_value(
                 timept)[(Eigen::Index)mio::osecir::InfectionState::Recovered * (num_groups) + (size_t)k];
-        divN[(size_t)k] = 1 / temp;
+        divN[(size_t)k] = 1 / temp; //checked until here
 
         riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
             test_and_trace_required, params.template get<TestAndTraceCapacity>(),
             (params.template get<TestAndTraceCapacity>()) * 5, params.template get<RiskOfInfectionFromSymptomatic>()[k],
-            params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]);
+            params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]); //checked until here
 
-        auto rateINS =
+        rateINS[(size_t)k] =
             0.5 / (params.template get<IncubationTime>()[k] - params.template get<SerialInterval>()[(mio::AgeGroup)k]);
+        //checked until here
 
-        if (test_and_trace_required < params.template get<TestAndTraceCapacity>() ||
-            test_and_trace_required > 5 * params.template get<TestAndTraceCapacity>()) {
-            riskFromInfectedSymptomatic_derivatives[(size_t)k] = 0;
+        for (mio::AgeGroup l = 0; l < (mio::AgeGroup)num_groups; l++) {
+            if (test_and_trace_required < params.template get<TestAndTraceCapacity>() ||
+                test_and_trace_required > 5 * params.template get<TestAndTraceCapacity>()) {
+                riskFromInfectedSymptomatic_derivatives((size_t)k, (size_t)l) = 0;
+            }
+            else {
+                riskFromInfectedSymptomatic_derivatives((size_t)k, (size_t)l) =
+                    -0.5 * 3.14159265358979323846 *
+                    (params.template get<MaxRiskOfInfectionFromSymptomatic>()[k] -
+                     params.template get<RiskOfInfectionFromSymptomatic>()[k]) /
+                    (4 * params.template get<TestAndTraceCapacity>()) *
+                    (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[l]) * rateINS[(size_t)l] *
+                    std::sin(3.14159265358979323846 / (4 * params.template get<TestAndTraceCapacity>()) *
+                             (test_and_trace_required - params.template get<TestAndTraceCapacity>()));
+            }
         }
-        else {
-            riskFromInfectedSymptomatic_derivatives[(size_t)k] =
-                -0.5 * 3.14159265358979323846 *
-                (params.template get<RiskOfInfectionFromSymptomatic>()[k] -
-                 params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]) /
-                (4 * params.template get<TestAndTraceCapacity>()) *
-                (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[k]) * rateINS *
-                std::sin(3.14159265358979323846 / (4 * params.template get<TestAndTraceCapacity>()) *
-                         (test_and_trace_required - params.template get<TestAndTraceCapacity>()));
-        }
+        //checked until here
+
         for (Eigen::Index l = 0; l < (Eigen::Index)num_groups; l++) {
             cont_freq_eff(l, (size_t)k) =
                 season_val * contact_matrix.get_matrix_at(timept)(static_cast<Eigen::Index>((size_t)l),
@@ -390,16 +399,17 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
 
     for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
 
-        double temp = 0;
-        for (Eigen::Index k = 0; k < (Eigen::Index)num_groups; k++) {
-            temp +=
-                cont_freq_eff(i, k) *
-                sim.get_result().get_value(
-                    timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms * (num_groups) + (size_t)k] *
-                riskFromInfectedSymptomatic_derivatives[k] * divN[k];
-        }
-
         for (size_t j = 0; j < num_groups; j++) { //Second block in first row of F (Denoted by A in the latex)
+
+            double temp = 0;
+            for (Eigen::Index k = 0; k < (Eigen::Index)num_groups; k++) {
+                temp += cont_freq_eff(i, k) *
+                        sim.get_result().get_value(
+                            timept)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms * (num_groups) +
+                                    (size_t)k] *
+                        riskFromInfectedSymptomatic_derivatives(k, j) * divN[k];
+            }
+
             F(i, j + num_groups) =
                 sim.get_result().get_value(
                     timept)[(Eigen::Index)mio::osecir::InfectionState::Susceptible * (num_groups) + (size_t)i] *
@@ -416,25 +426,23 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
                 params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] * cont_freq_eff(i, j) *
                 riskFromInfectedSymptomatic[(size_t)j] * divN[(size_t)j];
         }
-    }
+    } //checked until here
     //Now initialize matrix V
 
     for (Eigen::Index i = 0; i < (Eigen::Index)num_groups; i++) {
 
-        double rateE   = 1.0 / (2 * params.template get<SerialInterval>()[(mio::AgeGroup)i] -
+        double rateE = 1.0 / (2 * params.template get<SerialInterval>()[(mio::AgeGroup)i] -
                               params.template get<IncubationTime>()[(mio::AgeGroup)i]); // R2 = 1/(2SI-TINC)
-        double rateINS = 0.5 / (params.template get<IncubationTime>()[(mio::AgeGroup)i] -
-                                params.template get<SerialInterval>()[(mio::AgeGroup)i]); // R3 = 1/(2(TINC-SI))
 
         double criticalPerSevereAdjusted = smoother_cosine(
             icu_occupancy, 0.90 * params.template get<ICUCapacity>(), params.template get<ICUCapacity>(),
-            params.template get<CriticalPerSevere>()[(mio::AgeGroup)i], 0);
+            params.template get<CriticalPerSevere>()[(mio::AgeGroup)i], 0); //checked until here
 
         V(i, i)                           = rateE;
         V(i + num_groups, i)              = -rateE;
-        V(i + num_groups, i + num_groups) = rateINS;
+        V(i + num_groups, i + num_groups) = rateINS[i];
         V(i + 2 * num_groups, i + num_groups) =
-            -(1 - (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)i])) * rateINS;
+            -(1 - params.template get<RecoveredPerInfectedNoSymptoms>()[(mio::AgeGroup)i]) * rateINS[i];
         V(i + 2 * num_groups, i + 2 * num_groups) = (1 / params.template get<TimeInfectedSymptoms>()[(mio::AgeGroup)i]);
         V(i + 3 * num_groups, i + 2 * num_groups) =
             -params.template get<SeverePerInfectedSymptoms>()[(mio::AgeGroup)i] /
