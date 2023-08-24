@@ -243,9 +243,6 @@ TEST(TestSeir, get_reproduction_number)
     model.parameters.set<mio::oseir::TimeInfected>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
     model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
-    model.parameters.get<mio::oseir::ContactPatterns>().add_damping(
-        0.5, mio::SimulationTime(
-                 0.5)); //Added damping so we can observe an instantaneous reduction by 50% of the reproduction numbers
 
     model.apply_constraints();
 
@@ -280,7 +277,7 @@ TEST(TestSeir, get_reproduction_number)
     EXPECT_FALSE(model.get_reproduction_number(result.get_time(0) - 0.5, result)); //Test for indices out of range
     EXPECT_FALSE(model.get_reproduction_number(result.get_last_time() + 0.5, result));
     EXPECT_FALSE(model.get_reproduction_number((size_t)result.get_num_time_points(), result));
-    EXPECT_EQ(model.get_reproduction_number(0.3, result).value(), 1.3695409350793410486);
-    EXPECT_EQ(model.get_reproduction_number(0.7, result).value(), 1.1621430429058086098);
-    EXPECT_EQ(model.get_reproduction_number((size_t)0, result).value(), 1.745999999999999774);
+    EXPECT_EQ(model.get_reproduction_number(0.3, result).value(), 2.3262828383474389859);
+    EXPECT_EQ(model.get_reproduction_number(0.7, result).value(), 2.3242860858116172196);
+    EXPECT_EQ(model.get_reproduction_number((size_t)0, result).value(), 2.3280000000000002913);
 }
