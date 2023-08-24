@@ -152,7 +152,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
 
     py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
-        .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint,
+        .def(py::init<const std::vector<mio::abm::TestingCriteria<mio::abm::LocationType>>&, mio::abm::TimeSpan, mio::abm::TimePoint,
                       mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))

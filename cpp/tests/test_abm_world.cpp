@@ -369,11 +369,10 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
-    auto testing_criteria = mio::abm::TestingCriteria({}, {}, {});
+    auto testing_criteria = mio::abm::TestingCriteria<mio::abm::LocationType>({}, {mio::abm::LocationType::Home}, {});
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
     testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-    testing_criteria.add_location_type(mio::abm::LocationType::Home);
-    testing_criteria.add_location_type(mio::abm::LocationType::Work);
+    testing_criteria.add_location(mio::abm::LocationType::Work);
 
     const auto testing_frequency = mio::abm::days(1);
     const auto start_date        = mio::abm::TimePoint(20);
