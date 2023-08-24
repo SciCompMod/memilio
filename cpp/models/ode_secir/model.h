@@ -357,11 +357,10 @@ double get_reproduction_number(const Simulation<Base>& sim, Eigen::Index timept)
                 timept)[(Eigen::Index)mio::osecir::InfectionState::Recovered * (num_groups) + (size_t)k];
         divN[(size_t)k] = 1 / temp;
 
-        riskFromInfectedSymptomatic[(size_t)k] =
-            smoother_cosine(test_and_trace_required, (size_t)params.template get<TestAndTraceCapacity>(),
-                            (size_t)(params.template get<TestAndTraceCapacity>()) * 5,
-                            params.template get<RiskOfInfectionFromSymptomatic>()[k],
-                            params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]);
+        riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
+            test_and_trace_required, params.template get<TestAndTraceCapacity>(),
+            (params.template get<TestAndTraceCapacity>()) * 5, params.template get<RiskOfInfectionFromSymptomatic>()[k],
+            params.template get<MaxRiskOfInfectionFromSymptomatic>()[k]);
 
         auto rateINS =
             0.5 / (params.template get<IncubationTime>()[k] - params.template get<SerialInterval>()[(mio::AgeGroup)k]);
