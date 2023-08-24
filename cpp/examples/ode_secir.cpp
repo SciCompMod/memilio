@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "ode_secir/infection_state.h"
 #include "ode_secir/model.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
@@ -109,5 +110,6 @@ int main()
         sim.advance(50);
 
         std::cout << "Reproduction number: " << mio::osecir::get_reproduction_numbers(sim) << std::endl;
+        std::cout << "\n" << std::endl;
     }
 }
