@@ -275,6 +275,8 @@ TEST(TestWorld, evolveMigration)
         data.add_trip(trip2);
         data.add_trip(trip3);
 
+        data.use_weekday_trips_on_weekend();
+
         ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
             mock_exponential_dist;
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
@@ -290,10 +292,10 @@ TEST(TestWorld, evolveMigration)
         EXPECT_EQ(p2.get_location(), event);
         EXPECT_EQ(p3.get_location(), hospital);
         EXPECT_EQ(p4.get_location(), home);
-        EXPECT_EQ(p5.get_location(), home);
-        EXPECT_EQ(event.get_number_persons(), 1);
+        EXPECT_EQ(p5.get_location(), event);
+        EXPECT_EQ(event.get_number_persons(), 2);
         EXPECT_EQ(work.get_number_persons(), 1);
-        EXPECT_EQ(home.get_number_persons(), 2);
+        EXPECT_EQ(home.get_number_persons(), 1);
         EXPECT_EQ(hospital.get_number_persons(), 1);
     }
 
@@ -365,7 +367,7 @@ TEST(TestWorldTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto& work        = world.get_individualized_location(work_id);
     auto current_time = mio::abm::TimePoint(0);
     auto person       = add_test_person(world, home_id, mio::abm::AgeGroup::Age15to34,
-                                        mio::abm::InfectionState::InfectedSymptoms, current_time);
+                                  mio::abm::InfectionState::InfectedSymptoms, current_time);
     person.set_assigned_location(home);
     person.set_assigned_location(work);
 
