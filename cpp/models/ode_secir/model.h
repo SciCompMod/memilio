@@ -327,12 +327,11 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     auto icu_occupancy           = 0.0;
     for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
         auto rateINS = 0.5 / (params.template get<IncubationTime>()[i] - params.template get<SerialInterval>()[i]);
-        test_and_trace_required +=
-            (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms * (num_groups) + (size_t)i];
-        icu_occupancy += sim.get_result().get_value(
-            t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical * (num_groups) + (size_t)i];
+        test_and_trace_required += (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[i]) * rateINS *
+                                   sim.get_result().get_value(t_idx)[(Eigen::Index)InfectionState::InfectedNoSymptoms +
+                                                                     (Eigen::Index)InfectionState::Count * (size_t)i];
+        icu_occupancy += sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical +
+                                                           (Eigen::Index)InfectionState::Count * (size_t)i];
     }
 
     double season_val =
@@ -348,21 +347,20 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     Eigen::VectorXd rateINS(num_groups);
 
     for (mio::AgeGroup k = 0; k < (mio::AgeGroup)num_groups; k++) {
-        double temp =
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::Exposed * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical * (num_groups) + (size_t)k] +
-            sim.get_result().get_value(
-                t_idx)[(Eigen::Index)mio::osecir::InfectionState::Recovered * (num_groups) + (size_t)k];
+        double temp = sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Exposed +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedCritical +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k] +
+                      sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Recovered +
+                                                        (Eigen::Index)InfectionState::Count * (size_t)k];
         divN[(size_t)k] = 1 / temp;
 
         riskFromInfectedSymptomatic[(size_t)k] = smoother_cosine(
@@ -405,16 +403,15 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
             double temp = 0;
             for (Eigen::Index k = 0; k < (Eigen::Index)num_groups; k++) {
-                temp +=
-                    cont_freq_eff(i, k) *
-                    sim.get_result().get_value(
-                        t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms * (num_groups) + (size_t)k] *
-                    riskFromInfectedSymptomatic_derivatives(k, j) * divN[k];
+                temp += cont_freq_eff(i, k) *
+                        sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSymptoms +
+                                                          (Eigen::Index)InfectionState::Count * (size_t)k] *
+                        riskFromInfectedSymptomatic_derivatives(k, j) * divN[k];
             }
 
             F(i, j + num_groups) =
-                sim.get_result().get_value(
-                    t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible * (num_groups) + (size_t)i] *
+                sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
+                                                  (Eigen::Index)InfectionState::Count * (size_t)i] *
                 params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] *
                 (cont_freq_eff(i, j) * params.template get<RelativeTransmissionNoSymptoms>()[(mio::AgeGroup)j] *
                      divN[(size_t)j] +
@@ -423,8 +420,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
         for (size_t j = 0; j < num_groups; j++) {
             F(i, j + 2 * num_groups) =
-                sim.get_result().get_value(
-                    t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible * (num_groups) + (size_t)i] *
+                sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::Susceptible +
+                                                  (Eigen::Index)InfectionState::Count * (size_t)i] *
                 params.template get<TransmissionProbabilityOnContact>()[(mio::AgeGroup)i] * cont_freq_eff(i, j) *
                 riskFromInfectedSymptomatic[(size_t)j] * divN[(size_t)j];
         }
@@ -438,7 +435,7 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
 
         double criticalPerSevereAdjusted = smoother_cosine(
             icu_occupancy, 0.90 * params.template get<ICUCapacity>(), params.template get<ICUCapacity>(),
-            params.template get<CriticalPerSevere>()[(mio::AgeGroup)i], 0); //checked until here
+            params.template get<CriticalPerSevere>()[(mio::AgeGroup)i], 0);
 
         V(i, i)                           = rateE;
         V(i + num_groups, i)              = -rateE;
@@ -458,8 +455,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
               icu_occupancy > (double)(params.template get<ICUCapacity>()))) {
             for (size_t j = 0; j < num_groups; j++) {
                 V(i + 4 * num_groups, j + 4 * num_groups) -=
-                    sim.get_result().get_value(
-                        t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere * num_groups + (size_t)i] /
+                    sim.get_result().get_value(t_idx)[(Eigen::Index)mio::osecir::InfectionState::InfectedSevere +
+                                                      (Eigen::Index)InfectionState::Count * (size_t)i] /
                     params.template get<TimeInfectedSevere>()[(mio::AgeGroup)i] * 0.5 *
                     params.template get<CriticalPerSevere>()[(mio::AgeGroup)i] * 3.141592653589793 /
                     (0.1 * params.template get<ICUCapacity>()) *
@@ -506,7 +503,7 @@ Eigen::VectorXd get_reproduction_numbers(const Simulation<Base>& sim)
 {
     Eigen::VectorXd temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
-        temp[i] = get_reproduction_number(sim, (Eigen::Index)i).value();
+        temp[i] = get_reproduction_number((size_t)i, sim).value();
     }
     return temp;
 }
@@ -525,13 +522,13 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
                             "Cannot interpolate reproduction number outside computed horizon of the TimeSeries");
     }
 
+    if (t_value == sim.get_result().get_time(0)) {
+        return mio::success(get_reproduction_number((size_t)0, sim));
+    }
+
     auto times = std::vector<ScalarType>(sim.get_result().get_times().begin(), sim.get_result().get_times().end());
 
     auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
-
-    if (time_late == sim.get_result().get_time(0)) {
-        return mio::success(get_reproduction_number(sim.get_result().get_time(0), sim).value());
-    }
 
     ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), sim).value();
     ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), sim).value();
