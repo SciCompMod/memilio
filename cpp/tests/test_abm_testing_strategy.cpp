@@ -79,7 +79,7 @@ TEST(TestTestingScheme, runScheme)
     const auto test_type        = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_criterias, testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criterias[0], testing_min_time, start_date, end_date, test_type, probability);
 
     ASSERT_EQ(testing_scheme.is_active(), false);
     testing_scheme.update_activity_status(mio::abm::TimePoint(10));
@@ -91,7 +91,7 @@ TEST(TestTestingScheme, runScheme)
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
     std::vector<mio::abm::LocationType> test_location_types2     = {mio::abm::LocationType::Home};
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_location_types2, test_infection_states2);
-    testing_scheme.add_testing_criteria(testing_criteria2);
+    testing_scheme.set_testing_criteria(testing_criteria2);
 
     mio::abm::Location loc_home(mio::abm::LocationType::Home, 0);
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
@@ -100,24 +100,27 @@ TEST(TestTestingScheme, runScheme)
     auto person2 =
         make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
     auto rng_person2 = mio::abm::Person::RandomNumberGenerator(rng, person2);
+    auto person3 =
+        make_test_person(loc_home, mio::abm::AgeGroup::Age15to34, mio::abm::InfectionState::Recovered);
+    auto rng_person3 = mio::abm::Person::RandomNumberGenerator(rng, person3);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.7))
-        .WillOnce(testing::Return(0.5))
-        .WillOnce(testing::Return(0.9));
-    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
-              false); // Person tests and tests positive
-    ASSERT_EQ(testing_scheme.run_scheme(rng_person2, person2, loc_work, start_date),
-              true); // Person tests and  tests negative
-    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
-              true); // Person is in quarantine and wants to go home -> can do so
-    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_work, start_date), true); // Person doesn't test
+        .Times(testing::Exactly(6))
+        .WillOnce(testing::Return(0.7)) //person 1 check
+        .WillOnce(testing::Return(0.5)) //person 2 check
+        .WillOnce(testing::Return(0.7)) //person 2 check
+        .WillOnce(testing::Return(0.5)) //person 2 test
+        .WillOnce(testing::Return(0.7)) //person 3 check
+        .WillOnce(testing::Return(1.0)) //person 3 test
+    ;
 
-    testing_scheme.add_testing_criteria(testing_criteria1);
-    testing_scheme.remove_testing_criteria(testing_criteria1);
-    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date), true);
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person1, person1, loc_home, start_date),
+              true); // Person not tested
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person2, person2, loc_work, start_date),
+              true); // Person not tested
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person2, person2, loc_home, start_date),
+              true); // Person tests and tests negative
+    ASSERT_EQ(testing_scheme.run_scheme(rng_person3, person3, loc_home, start_date),
+              false); // Person tests and tests (false) positive
 }

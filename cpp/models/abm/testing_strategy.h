@@ -144,7 +144,7 @@ public:
      * @param test_type The type of test to be performed.
      * @param probability Probability of the test to be performed if a testing rule applies.
      */
-    TestingScheme(const std::vector<TestingCriteria>& testing_criteria, TimeSpan minimal_time_since_last_test,
+    TestingScheme(const TestingCriteria& testing_criteria, TimeSpan minimal_time_since_last_test,
                   TimePoint start_date, TimePoint end_date, const GenericTest& test_type, ScalarType probability);
 
     /**
@@ -156,13 +156,7 @@ public:
      * @brief Add a TestingCriteria to the set of TestingCriteria that are checked for testing.
      * @param[in] criteria TestingCriteria to be added.
      */
-    void add_testing_criteria(const TestingCriteria criteria);
-
-    /**
-     * @brief Remove a TestingCriteria from the set of TestingCriteria that are checked for testing.
-     * @param[in] criteria TestingCriteria to be removed.
-     */
-    void remove_testing_criteria(const TestingCriteria criteria);
+    void set_testing_criteria(const TestingCriteria criteria);
 
     /**
      * @brief Get the activity status of the scheme.
@@ -187,7 +181,7 @@ public:
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t) const;
 
 private:
-    std::vector<TestingCriteria> m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
+    TestingCriteria m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.

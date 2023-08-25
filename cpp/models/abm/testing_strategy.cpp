@@ -99,7 +99,7 @@ bool TestingCriteria::has_requested_infection_state(const Person& p, TimePoint t
     return m_infection_states.none() || m_infection_states[size_t(p.get_infection_state(t))];
 }
 
-TestingScheme::TestingScheme(const std::vector<TestingCriteria>& testing_criteria,
+TestingScheme::TestingScheme(const TestingCriteria& testing_criteria,
                              TimeSpan minimal_time_since_last_test, TimePoint start_date, TimePoint end_date,
                              const GenericTest& test_type, double probability)
     : m_testing_criteria(testing_criteria)
@@ -122,17 +122,9 @@ bool TestingScheme::operator==(const TestingScheme& other) const
     //To be adjusted and also TestType should be static.
 }
 
-void TestingScheme::add_testing_criteria(const TestingCriteria criteria)
+void TestingScheme::set_testing_criteria(const TestingCriteria criteria)
 {
-    if (std::find(m_testing_criteria.begin(), m_testing_criteria.end(), criteria) == m_testing_criteria.end()) {
-        m_testing_criteria.push_back(criteria);
-    }
-}
-
-void TestingScheme::remove_testing_criteria(const TestingCriteria criteria)
-{
-    auto last = std::remove(m_testing_criteria.begin(), m_testing_criteria.end(), criteria);
-    m_testing_criteria.erase(last, m_testing_criteria.end());
+    m_testing_criteria = criteria;
 }
 
 bool TestingScheme::is_active() const
@@ -150,10 +142,7 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
     if (person.get_time_since_negative_test() > m_minimal_time_since_last_test) {
         double random = UniformDistribution<double>::get_instance()(rng);
         if (random < m_probability) {
-            if (std::any_of(m_testing_criteria.begin(), m_testing_criteria.end(),
-                            [&person, &location, t](TestingCriteria tr) {
-                                return tr.evaluate(person, location, t);
-                            })) {
+            if (m_testing_criteria.evaluate(person, location, t)) {
                 return !person.get_tested(rng, t, m_test_type.get_default());
             }
         }
