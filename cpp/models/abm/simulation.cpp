@@ -40,10 +40,6 @@ Simulation::Simulation(TimePoint t, World&& world)
 
 void Simulation::initialize_locations(TimePoint)
 {
-    // for (auto& location : m_world.get_locations()) {
-    //     location.initialize_subpopulations(t);
-    // }
-    m_world.prepare();
 }
 
 void Simulation::advance(TimePoint tmax)
