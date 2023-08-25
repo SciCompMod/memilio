@@ -26,6 +26,7 @@
 #include "abm/location.h"
 #include "abm/time.h"
 #include "memilio/utils/random_number_generator.h"
+#include <bitset>
 
 namespace mio
 {
@@ -120,11 +121,11 @@ private:
      */
     bool has_requested_infection_state(const Person& p, TimePoint t) const;
 
-    std::vector<AgeGroup> m_ages; ///< Set of #AgeGroup%s that are either allowed or required to be tested.
-    std::vector<LocationType> m_location_types; /**< Set of #LocationState%s that are either allowed or required to be 
-    tested.*/
-    std::vector<InfectionState> m_infection_states; /**< Set of #InfectionState%s that are either allowed or required to
-    be tested.*/
+    std::bitset<size_t(AgeGroup::Count)> m_ages; ///< #AgeGroup%s that are either allowed or required to be tested.
+    std::bitset<size_t(LocationType::Count)> m_location_types; /**< #LocationType%s that are either allowed or required 
+    to be tested. */
+    std::bitset<size_t(InfectionState::Count)> m_infection_states; /**< #InfectionState%s that are either allowed or required
+    to be tested.*/
 };
 
 /**

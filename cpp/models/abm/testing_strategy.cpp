@@ -27,67 +27,56 @@ namespace mio
 namespace abm
 {
 
+template<class E>
+std::bitset<size_t(E::Count)> vector_to_bitset(const std::vector<E>& vec)
+{
+    std::bitset<size_t(E::Count)> bs;
+    for (E e : vec) {
+        bs.set(size_t(e), true);
+    }
+    return bs;
+}
+
 TestingCriteria::TestingCriteria(const std::vector<AgeGroup>& ages, const std::vector<LocationType>& location_types,
                                  const std::vector<InfectionState>& infection_states)
-    : m_ages(ages)
-    , m_location_types(location_types)
-    , m_infection_states(infection_states)
+    : m_ages(vector_to_bitset(ages))
+    , m_location_types(vector_to_bitset(location_types))
+    , m_infection_states(vector_to_bitset(infection_states))
 {
 }
 
 bool TestingCriteria::operator==(TestingCriteria other) const
 {
-    auto to_compare_ages             = this->m_ages;
-    auto to_compare_infection_states = this->m_infection_states;
-    auto to_compare_location_types   = this->m_location_types;
-
-    std::sort(to_compare_ages.begin(), to_compare_ages.end());
-    std::sort(other.m_ages.begin(), other.m_ages.end());
-    std::sort(to_compare_infection_states.begin(), to_compare_infection_states.end());
-    std::sort(other.m_infection_states.begin(), other.m_infection_states.end());
-    std::sort(to_compare_location_types.begin(), to_compare_location_types.end());
-    std::sort(other.m_location_types.begin(), other.m_location_types.end());
-
-    return to_compare_ages == other.m_ages && to_compare_location_types == other.m_location_types &&
-           to_compare_infection_states == other.m_infection_states;
+    return std::tie(m_ages, m_location_types, m_infection_states) == std::tie(other.m_ages, other.m_location_types, other.m_infection_states);
 }
 
 void TestingCriteria::add_age_group(const AgeGroup age_group)
 {
-    if (std::find(m_ages.begin(), m_ages.end(), age_group) == m_ages.end()) {
-        m_ages.push_back(age_group);
-    }
+    m_ages.set(size_t(age_group), true);
 }
 
 void TestingCriteria::remove_age_group(const AgeGroup age_group)
 {
-    auto last = std::remove(m_ages.begin(), m_ages.end(), age_group);
-    m_ages.erase(last, m_ages.end());
+    m_ages.set(size_t(age_group), false);
 }
 
 void TestingCriteria::add_location_type(const LocationType location_type)
 {
-    if (std::find(m_location_types.begin(), m_location_types.end(), location_type) == m_location_types.end()) {
-        m_location_types.push_back(location_type);
-    }
+    m_location_types.set(size_t(location_type), true);
 }
 void TestingCriteria::remove_location_type(const LocationType location_type)
 {
-    auto last = std::remove(m_location_types.begin(), m_location_types.end(), location_type);
-    m_location_types.erase(last, m_location_types.end());
+    m_location_types.set(size_t(location_type), false);
 }
 
 void TestingCriteria::add_infection_state(const InfectionState infection_state)
 {
-    if (std::find(m_infection_states.begin(), m_infection_states.end(), infection_state) == m_infection_states.end()) {
-        m_infection_states.push_back(infection_state);
-    }
+    m_infection_states.set(size_t(infection_state), true);
 }
 
 void TestingCriteria::remove_infection_state(const InfectionState infection_state)
 {
-    auto last = std::remove(m_infection_states.begin(), m_infection_states.end(), infection_state);
-    m_infection_states.erase(last, m_infection_states.end());
+    m_infection_states.set(size_t(infection_state), false);
 }
 
 bool TestingCriteria::evaluate(const Person& p, const Location& l, TimePoint t) const
@@ -97,27 +86,17 @@ bool TestingCriteria::evaluate(const Person& p, const Location& l, TimePoint t) 
 
 bool TestingCriteria::has_requested_age(const Person& p) const
 {
-    if (m_ages.empty()) {
-        return true; // no condition on the age
-    }
-    return std::find(m_ages.begin(), m_ages.end(), p.get_age()) != m_ages.end();
+    return m_ages.none() || m_ages[size_t(p.get_age())];
 }
 
 bool TestingCriteria::is_requested_location_type(const Location& l) const
 {
-    if (m_location_types.empty()) {
-        return true; // no condition on the location
-    }
-    return std::find(m_location_types.begin(), m_location_types.end(), l.get_type()) != m_location_types.end();
+    return m_location_types.none() || m_location_types[size_t(l.get_type())];
 }
 
 bool TestingCriteria::has_requested_infection_state(const Person& p, TimePoint t) const
 {
-    if (m_infection_states.empty()) {
-        return true; // no condition on infection state
-    }
-    return std::find(m_infection_states.begin(), m_infection_states.end(), p.get_infection_state(t)) !=
-           m_infection_states.end();
+    return m_infection_states.none() || m_infection_states[size_t(p.get_infection_state(t))];
 }
 
 TestingScheme::TestingScheme(const std::vector<TestingCriteria>& testing_criteria,
