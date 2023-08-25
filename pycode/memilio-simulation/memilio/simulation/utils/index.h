@@ -45,7 +45,7 @@ std::enable_if_t<std::is_enum<Tag>::value> bind_Index_members_if_enum(pybind11::
 
 // bind an index for a single tag
 template <class Tag>
-void bind_Index(pybind11::module& m, std::string const& name)
+void bind_Index(pybind11::module_& m, std::string const& name)
 {
     decltype(auto) c = pymio::bind_class<mio::Index<Tag>>(m, name.c_str());
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
@@ -66,7 +66,7 @@ mio::Index<Tag> extract_index(pybind11::tuple& t)
 
 // bind an index for more than one tag
 template <class... Tags>
-void bind_MultiIndex(pybind11::module& m, std::string const& name)
+void bind_MultiIndex(pybind11::module_& m, std::string const& name)
 {
     using C          = mio::Index<Tags...>;
     decltype(auto) c = pymio::bind_class<C>(m, name.c_str());

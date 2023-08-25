@@ -32,7 +32,7 @@ namespace pymio
  * @brief bind a compartmental model for any Populations and Parameters class
  */
 template <class InfectionState, class Populations, class Parameters>
-void bind_CompartmentalModel(pybind11::module& m, std::string const& name)
+void bind_CompartmentalModel(pybind11::module_& m, std::string const& name)
 {
     using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
     pymio::bind_class<Model>(m, name.c_str())

@@ -33,7 +33,7 @@ namespace pymio
  * @brief bind GraphSimulation for any node and edge type
  */
 template <class Graph>
-void bind_GraphSimulation(pybind11::module& m, std::string const& name)
+void bind_GraphSimulation(pybind11::module_& m, std::string const& name)
 {
     using GS = mio::GraphSimulation<Graph>;
     pymio::bind_class<GS>(m, name.c_str())

@@ -29,7 +29,7 @@ namespace pymio
 {
 
 template <class ParameterSet>
-auto bind_ParameterSet(pybind11::module& m, std::string const& name)
+auto bind_ParameterSet(pybind11::module_& m, std::string const& name)
 {
     decltype(auto) c = pymio::bind_class<ParameterSet>(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {

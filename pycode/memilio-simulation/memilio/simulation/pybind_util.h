@@ -117,7 +117,7 @@ void bind_shape_property(C& cl)
 }
 
 template <class Range>
-auto bind_Range(pybind11::module& m, const std::string& class_name)
+auto bind_Range(pybind11::module_& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
@@ -157,7 +157,7 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
 //requires the class to have a member `Count`
 //adds a static `values` method to the enum class that returns an iterable list of the values
 template <class E, class... Args>
-auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
+auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
 

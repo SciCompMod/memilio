@@ -29,7 +29,7 @@ namespace isecir
 {
 
 /**
- * @brief The InfectionState enum describes the possible
+ * @brief The #InfectionState enum describes the possible
  * categories for the infectious state of persons
  */
 enum class InfectionState
@@ -46,7 +46,7 @@ enum class InfectionState
 };
 
 /**
- * @brief The InfectionTransition enum describes the possible
+ * @brief The #InfectionTransition enum describes the possible
  * transitions of the infectious state of persons.
  */
 enum class InfectionTransition

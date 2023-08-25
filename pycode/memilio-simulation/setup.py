@@ -24,5 +24,10 @@ setup(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
     install_requires=[],
-    extras_require={'dev': ['numpy >= 1.22'], },
+    extras_require={
+        'dev': [
+            # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
+            'numpy>=1.22,<1.25',
+        ],
+    },
     long_description='', test_suite='memilio.simulation_test',)

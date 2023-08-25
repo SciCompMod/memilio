@@ -30,7 +30,7 @@ namespace pymio
 {
 
 template <class Simulation>
-void bind_MigrationGraph(pybind11::module& m, std::string const& name)
+void bind_MigrationGraph(pybind11::module_& m, std::string const& name)
 {
     using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
     pymio::bind_class<G>(m, name.c_str())
@@ -78,16 +78,16 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
             pybind11::return_value_policy::reference_internal);
 }
 
-void bind_migration_parameters(pybind11::module& m, std::string const& name);
+void bind_migration_parameters(pybind11::module_& m, std::string const& name);
 
-void bind_migration_parameter_edge(pybind11::module& m, std::string const& name);
+void bind_migration_parameter_edge(pybind11::module_& m, std::string const& name);
 
-void bind_migration(pybind11::module& m, std::string const& name);
+void bind_migration(pybind11::module_& m, std::string const& name);
 
-void bind_migration_edge(pybind11::module& m, std::string const& name);
+void bind_migration_edge(pybind11::module_& m, std::string const& name);
 
 template <typename Model>
-void bind_ModelNode(pybind11::module& m, std::string const& name)
+void bind_ModelNode(pybind11::module_& m, std::string const& name)
 {
     pymio::bind_class<mio::Node<Model>>(m, name.c_str())
         .def_property_readonly("id",
@@ -103,7 +103,7 @@ void bind_ModelNode(pybind11::module& m, std::string const& name)
 }
 
 template <typename Simulation>
-void bind_SimulationNode(pybind11::module& m, std::string const& name)
+void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 {
     pymio::bind_class<mio::Node<mio::SimulationNode<Simulation>>>(m, name.c_str())
         .def_property_readonly("id",
@@ -122,7 +122,7 @@ void bind_SimulationNode(pybind11::module& m, std::string const& name)
  * @brief bind Graph for any node and edge type
  */
 template <class Model>
-void bind_ModelGraph(pybind11::module& m, std::string const& name)
+void bind_ModelGraph(pybind11::module_& m, std::string const& name)
 {
     using G = mio::Graph<Model, mio::MigrationParameters>;
     pymio::bind_class<G>(m, name.c_str())
