@@ -49,7 +49,7 @@ public:
     * @param[in] Dead_before The total number of deaths at the time point - dt_init.
     * @param[in, out] Parameterset_init Used Parameters for simulation. 
     */
-    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
+    Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before, std::vector<ScalarType> SECIHUR0,
           const ParameterSet& Parameterset_init = ParameterSet());
 
     /**
@@ -177,7 +177,6 @@ public:
                 this->m_transitions[i - init_start_index]
                                    [Eigen::Index(mio::isecir::InfectionTransition::InfectedCriticalToDead)];
         }
-        std::cout << "\n";
     }
 
     // define function that computes flows needed for initalization of IDE for a given result/compartments of the ODE model
@@ -370,6 +369,7 @@ private:
     ScalarType m_forceofinfection{0}; ///< Force of infection term needed for numerical scheme.
     ScalarType m_N{0}; ///< Total population size of the considered region.
     ScalarType m_deaths_before{0}; ///< Deaths before start of simulation (at time -m_dt).
+    std::vector<ScalarType> m_SECIHUR0;
 };
 
 } // namespace isecir

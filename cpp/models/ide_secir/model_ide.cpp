@@ -29,13 +29,14 @@ namespace mio
 namespace isecir
 {
 
-Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before,
+Model::Model(TimeSeries<ScalarType>&& init, ScalarType N_init, ScalarType Dead_before, std::vector<ScalarType> SECIHUR0,
              const ParameterSet& Parameterset_init)
     : parameters{Parameterset_init}
     , m_transitions{std::move(init)}
     , m_populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
     , m_N{N_init}
     , m_deaths_before{Dead_before}
+    , m_SECIHUR0{SECIHUR0}
 {
     // // add first timepoint to m_populations at last time from m_transitions
     // m_populations.add_time_point<Eigen::VectorXd>(
@@ -48,6 +49,8 @@ void Model::initialize_solver(ScalarType dt)
     // especially wrt to check_constraints function
     // add first timepoint to m_populations at last time from m_transitions
     // fo now do it here to get the right time from m_transitions after initialization of flows
+    // but this way we can't write in m_populations
+    // another way would be to leave it in the constructor and overwrite it after initializing the flows
     m_populations.add_time_point<Eigen::VectorXd>(
         m_transitions.get_last_time(), TimeSeries<ScalarType>::Vector::Constant((int)InfectionState::Count, 0));
 
@@ -59,25 +62,34 @@ void Model::initialize_solver(ScalarType dt)
     // use m_forceofinfection at -m_dt to be consistent with further calculations of S (see compute_susceptibles()),
     // where also the value of m_forceofinfection for the previous timestep is used
     update_forceofinfection(dt, true);
-    std::cout << "\n";
+    std::cout << "Force of infection at -dt: " << m_forceofinfection << "\n";
 
     if (m_forceofinfection > 0) {
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
-            m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
-            (dt * m_forceofinfection);
-
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] =
+        //     m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] /
+        //     (dt * m_forceofinfection);
+        // std::cout << "Flow from S to E at time 0: "
+        //           << m_transitions.get_last_value()[Eigen::Index(InfectionTransition::SusceptibleToExposed)] << "\n";
         //calculate other compartment sizes for t=0
-        other_compartments_current_timestep(dt);
+        std::cout << "Setting compartments at time 0. \n";
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)]        = m_SECIHUR0[0];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)]            = m_SECIHUR0[1];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] = m_SECIHUR0[2];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)]   = m_SECIHUR0[3];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)]     = m_SECIHUR0[4];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)]   = m_SECIHUR0[5];
+        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)]          = m_SECIHUR0[6];
+        // other_compartments_current_timestep(dt);
 
-        //R; need an initial value for R, therefore do not calculate via compute_recovered()
-        m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
-            m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
-            m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
+        // //R; need an initial value for R, therefore do not calculate via compute_recovered()
+        // m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Recovered)] =
+        //     m_N - m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Exposed)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedNoSymptoms)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSymptoms)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedSevere)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::InfectedCritical)] -
+        //     m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
     }
     else if (m_populations[Eigen::Index(0)][Eigen::Index(InfectionState::Susceptible)] > 1e-12) {
         //take initialized value for Susceptibles if value can't be calculated via the standard formula
@@ -272,11 +284,6 @@ void Model::update_forceofinfection(ScalarType dt, bool initialization)
                       state_age)) *
                  m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] *
                  parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age));
-        // std::cout << "sigma1: " << m_transitions[i + 1][Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms)]
-        //           << "\n";
-        // std::cout << "sigma2: "
-        //           << m_transitions[i + 1][Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)]
-        //           << "\n";
     }
     m_forceofinfection = 1 / (m_N - deaths) * m_forceofinfection;
 }
