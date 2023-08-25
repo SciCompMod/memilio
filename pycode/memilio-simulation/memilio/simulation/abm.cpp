@@ -69,7 +69,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("PublicTransport", mio::abm::LocationType::PublicTransport)
         .value("TransportWithoutContact", mio::abm::LocationType::TransportWithoutContact);
 
-    py::class_<mio::abm::TestParameters>(m, "TestParameters")
+    pymio::bind_class<mio::abm::TestParameters>(m, "TestParameters")
         .def(py::init<double, double>())
         .def_readwrite("sensitivity", &mio::abm::TestParameters::sensitivity)
         .def_readwrite("specificity", &mio::abm::TestParameters::specificity);
@@ -82,7 +82,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_ParameterSet<mio::abm::LocalInfectionParameters>(m, "LocalInfectionParameters").def(py::init<>());
     pymio::bind_ParameterSet<mio::abm::MigrationParameters>(m, "MigrationParameters").def(py::init<>());
 
-    py::class_<mio::abm::TimeSpan>(m, "TimeSpan")
+    pymio::bind_class<mio::abm::TimeSpan>(m, "TimeSpan")
         .def(py::init<int>(), py::arg("seconds") = 0)
         .def_property_readonly("seconds", &mio::abm::TimeSpan::seconds)
         .def_property_readonly("hours", &mio::abm::TimeSpan::hours)
@@ -107,7 +107,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("hours", &mio::abm::hours);
     m.def("days", py::overload_cast<int>(&mio::abm::days));
 
-    py::class_<mio::abm::TimePoint>(m, "TimePoint")
+    pymio::bind_class<mio::abm::TimePoint>(m, "TimePoint")
         .def(py::init<int>(), py::arg("seconds") = 0)
         .def_property_readonly("seconds", &mio::abm::TimePoint::seconds)
         .def_property_readonly("days", &mio::abm::TimePoint::days)
@@ -127,7 +127,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self - mio::abm::TimeSpan{})
         .def(py::self -= mio::abm::TimeSpan{});
 
-    py::class_<mio::abm::LocationId>(m, "LocationId")
+    pymio::bind_class<mio::abm::LocationId>(m, "LocationId")
         .def(py::init([](uint32_t idx, mio::abm::LocationType type) {
             return mio::abm::LocationId{idx, type};
         }))
@@ -136,32 +136,32 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self == py::self)
         .def(py::self != py::self);
 
-    py::class_<mio::abm::Person>(m, "Person")
+    pymio::bind_class<mio::abm::Person>(m, "Person")
         .def("set_assigned_location", py::overload_cast<mio::abm::LocationId>(&mio::abm::Person::set_assigned_location))
         .def_property_readonly("location", py::overload_cast<>(&mio::abm::Person::get_location, py::const_))
         .def_property_readonly("age", &mio::abm::Person::get_age)
         .def_property_readonly("is_in_quarantine", &mio::abm::Person::is_in_quarantine);
 
-    py::class_<mio::abm::TestingCriteria>(m, "TestingCriteria")
+    pymio::bind_class<mio::abm::TestingCriteria>(m, "TestingCriteria")
         .def(py::init<const std::vector<mio::abm::AgeGroup>&, const std::vector<mio::abm::LocationType>&,
                       const std::vector<mio::abm::InfectionState>&>(),
              py::arg("age_groups"), py::arg("location_types"), py::arg("infection_states"));
 
-    py::class_<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
-    py::class_<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
-    py::class_<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
+    pymio::bind_class<mio::abm::GenericTest>(m, "GenericTest").def(py::init<>());
+    pymio::bind_class<mio::abm::AntigenTest, mio::abm::GenericTest>(m, "AntigenTest").def(py::init<>());
+    pymio::bind_class<mio::abm::PCRTest, mio::abm::GenericTest>(m, "PCRTest").def(py::init<>());
 
-    py::class_<mio::abm::TestingScheme>(m, "TestingScheme")
+    pymio::bind_class<mio::abm::TestingScheme>(m, "TestingScheme")
         .def(py::init<const std::vector<mio::abm::TestingCriteria>&, mio::abm::TimeSpan, mio::abm::TimePoint,
                       mio::abm::TimePoint, const mio::abm::GenericTest&, double>(),
              py::arg("testing_criteria"), py::arg("testing_min_time_since_last_test"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_type"), py::arg("probability"))
         .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
-    py::class_<mio::abm::TestingStrategy>(m, "TestingStrategy")
+    pymio::bind_class<mio::abm::TestingStrategy>(m, "TestingStrategy")
         .def(py::init<const std::vector<mio::abm::TestingScheme>&>());
 
-    py::class_<mio::abm::Location>(m, "Location")
+    pymio::bind_class<mio::abm::Location>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
         .def_property_readonly("index", &mio::abm::Location::get_index)
         .def_property("infection_parameters",
@@ -173,7 +173,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_locations())>(m, "_WorldLocationsRange");
     pymio::bind_Range<decltype(std::declval<mio::abm::World>().get_persons())>(m, "_WorldPersonsRange");
 
-    py::class_<mio::abm::Trip>(m, "Trip")
+    pymio::bind_class<mio::abm::Trip>(m, "Trip")
         .def(py::init<uint32_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId,
                       std::vector<uint32_t>>(),
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
@@ -184,13 +184,13 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("origin", &mio::abm::Trip::migration_origin)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
-    py::class_<mio::abm::TripList>(m, "TripList")
+    pymio::bind_class<mio::abm::TripList>(m, "TripList")
         .def(py::init<>())
         .def("add_trip", &mio::abm::TripList::add_trip)
         .def_property_readonly("next_trip", &mio::abm::TripList::get_next_trip)
         .def_property_readonly("num_trips", &mio::abm::TripList::num_trips);
 
-    py::class_<mio::abm::World>(m, "World")
+    pymio::bind_class<mio::abm::World>(m, "World")
         .def(py::init<mio::abm::GlobalInfectionParameters>(),
              py::arg("infection_parameters") = mio::abm::GlobalInfectionParameters{})
         .def("add_location", &mio::abm::World::add_location, py::arg("location_type"), py::arg("num_cells") = 1)
@@ -226,7 +226,7 @@ PYBIND11_MODULE(_simulation_abm, m)
             },
             py::return_value_policy::reference_internal);
 
-    py::class_<mio::abm::Simulation>(m, "Simulation")
+    pymio::bind_class<mio::abm::Simulation>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint>())
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),

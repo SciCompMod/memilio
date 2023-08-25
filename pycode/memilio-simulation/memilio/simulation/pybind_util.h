@@ -24,13 +24,16 @@
 #include "pickle_serializer.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/io.h"
+#include "memilio/utils/metaprogramming.h"
 
 #include "pybind11/pybind11.h"
 
 namespace pymio
 {
 
-// bind class and add pickling based on memilio serialization framework
+template <class IOContext, class T>
+using is_serializable = mio::conjunction<mio::has_serialize<IOContext, T>, mio::has_deserialize<IOContext, T>>;
+
 template <class T, class... Args>
 void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 {
@@ -58,13 +61,10 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
 template <class T, class... Args>
 decltype(auto) bind_class(pybind11::module& m, std::string const& name)
 {
-    // Deduce if the class is serializable
-    bool is_serializable =
-        mio::has_serialize<mio::JsonContext, T>::value && mio::has_deserialize<mio::JsonContext, T>::value;
-
     decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+    
     // Bind the class depending on its features
-    if (is_serializable) {
+    if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
         pybind_pickle_class<T, Args...>(cls);
     }
     return cls;
@@ -165,7 +165,7 @@ auto iterable_enum(pybind11::module_& m, const std::string& name, Args&&... args
     //not meant to be used directly by users, so name starts with _
     struct Values {
     };
-    bind_class<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
+    pybind11::class_<Values>(m, ("_" + name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__",
              [](Values& /*self*/) {
                  return E(0);
