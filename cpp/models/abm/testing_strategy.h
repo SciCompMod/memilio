@@ -136,7 +136,7 @@ class TestingScheme
 public:
     /**
      * @brief Create a TestingScheme.
-     * @param[in] testing_criteria Vector of TestingCriteria that are checked for testing.
+     * @param[in] testing_criteria TestingCriteria for whether this TestingScheme applies.
      * @param[in] minimal_time_since_last_test TimeSpan of how often this scheme applies, i. e., when a new test is
      * performed after a Person's last test.
      * @param start_date Starting date of the scheme.
@@ -153,7 +153,7 @@ public:
     bool operator==(const TestingScheme& other) const;
 
     /**
-     * @brief Add a TestingCriteria to the set of TestingCriteria that are checked for testing.
+     * @brief Set the TestingCriteria that is checked whether this TestingScheme applies.
      * @param[in] criteria TestingCriteria to be added.
      */
     void set_testing_criteria(const TestingCriteria criteria);
@@ -181,7 +181,7 @@ public:
     bool run_scheme(Person::RandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t) const;
 
 private:
-    TestingCriteria m_testing_criteria; ///< Vector with all TestingCriteria of the scheme.
+    TestingCriteria m_testing_criteria; ///< The TestingCriteria of the scheme.
     TimeSpan m_minimal_time_since_last_test; ///< Shortest period of time between two tests.
     TimePoint m_start_date; ///< Starting date of the scheme.
     TimePoint m_end_date; ///< Ending date of the scheme.

@@ -312,8 +312,7 @@ void create_assign_locations(mio::abm::World& world)
     world.get_individualized_location(event).set_capacity(100, 375);
 
     std::vector<mio::abm::LocationType> test_at_social_event = {mio::abm::LocationType::SocialEvent};
-    auto testing_criteria =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_social_event, {})};
+    auto testing_criteria = mio::abm::TestingCriteria({}, test_at_social_event, {});
     auto testing_min_time = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
     auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
@@ -322,7 +321,7 @@ void create_assign_locations(mio::abm::World& world)
     assign_uniform_distribution(probability, 0.5, 1.0);
 
     auto test_type      = mio::abm::AntigenTest();
-    auto testing_scheme = mio::abm::TestingScheme(testing_criteria[0], testing_min_time, start_date, end_date, test_type,
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, testing_min_time, start_date, end_date, test_type,
                                                   probability.draw_sample());
 
     world.get_testing_strategy().add_testing_scheme(testing_scheme);
@@ -415,21 +414,19 @@ void create_assign_locations(mio::abm::World& world)
 
     // add the testing schemes for school and work
     auto test_at_school = std::vector<mio::abm::LocationType>{mio::abm::LocationType::School};
-    auto testing_criteria_school =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_school, {})};
+    auto testing_criteria_school = mio::abm::TestingCriteria({}, test_at_school, {});
 
     testing_min_time           = mio::abm::days(7);
-    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school[0], testing_min_time, start_date,
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, testing_min_time, start_date,
                                                          end_date, test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_school);
 
     auto test_at_work = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
-    auto testing_criteria_work =
-        std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+    auto testing_criteria_work = mio::abm::TestingCriteria({}, test_at_work, {});
 
     assign_uniform_distribution(probability, 0.1, 0.5);
     testing_min_time         = mio::abm::days(1);
-    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work[0], testing_min_time, start_date, end_date,
+    auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, testing_min_time, start_date, end_date,
                                                        test_type, probability.draw_sample());
     world.get_testing_strategy().add_testing_scheme(testing_scheme_work);
 }

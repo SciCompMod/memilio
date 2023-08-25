@@ -70,7 +70,6 @@ TEST(TestTestingScheme, runScheme)
                                                                 mio::abm::LocationType::Work};
 
     auto testing_criteria1 = mio::abm::TestingCriteria({}, test_location_types1, test_infection_states1);
-    std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
     const auto testing_min_time = mio::abm::days(1);
     const auto start_date       = mio::abm::TimePoint(0);
@@ -79,7 +78,7 @@ TEST(TestTestingScheme, runScheme)
     const auto test_type        = mio::abm::PCRTest();
 
     auto testing_scheme =
-        mio::abm::TestingScheme(testing_criterias[0], testing_min_time, start_date, end_date, test_type, probability);
+        mio::abm::TestingScheme(testing_criteria1, testing_min_time, start_date, end_date, test_type, probability);
 
     ASSERT_EQ(testing_scheme.is_active(), false);
     testing_scheme.update_activity_status(mio::abm::TimePoint(10));
