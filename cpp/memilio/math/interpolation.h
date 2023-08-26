@@ -20,7 +20,7 @@
 #ifndef INTERPOLATION_H_
 #define INTERPOLATION_H_
 #include <vector>
-#include <iostream>
+#include <algorithm>
 
 namespace mio
 {
