@@ -20,6 +20,7 @@
 #ifndef INTERPOLATION_H_
 #define INTERPOLATION_H_
 #include <vector>
+#include <iostream>
 
 namespace mio
 {
@@ -44,31 +45,33 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 /**
  * @brief Linear interpolation between two point of a dataset, which is represented by a vector of pairs of node and value.
  * @param[in] vector Vector of pairs of node and value.
- * @param[in] node The node whose value need to be found.
+ * @param[in] x_eval Location to evaluate interpolation.
  * @param[out] unnamed Interpolation result.
  */
 template <typename X, typename Y>
-Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>>& vector, const X& node)
+Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>> vector, const X& x_eval)
 {
     // If the vector is empty or has only 1 node, return 0
     if (vector.empty() || vector.size() == 1) {
+        throw std::invalid_argument(
+            "The vector provided in linear_interpolation_of_data_set() must have larger than 2 nodes");
         return 0.0;
     }
 
-    std::vector<std::pair<X, X>> copy_vector(vector);
+    std::vector<std::pair<X, Y>> copy_vector(vector);
     sort(copy_vector.begin(), copy_vector.end());
 
-    // Find the corresponding section of the node in the data set
-    std::size_t counter = 0;
-    while ((counter < copy_vector.size() - 1) && (copy_vector[counter].first < node)) {
-        counter++;
-    }
-    
-    // If the current days interval are between two identifiable points in the dataset.
-    if (node <= copy_vector[counter].first && counter > 0) {
-        return copy_vector[counter - 1].second + (copy_vector[counter - 1].second - copy_vector[counter].second) /
-                                                     (copy_vector[counter - 1].first - copy_vector[counter].first) *
-                                                     (node - copy_vector[counter - 1].first);
+    // Find the corresponding upper position of the node in the data set
+    size_t upper_pos = std::upper_bound(copy_vector.begin(), copy_vector.end(), x_eval,
+                                        [](double value, const std::pair<X, Y>& node) {
+                                            return value <= node.first;
+                                        }) -
+                       copy_vector.begin();
+
+    // If the x_eval are between two identifiable nodes in the dataset.
+    if (upper_pos < copy_vector.size() && upper_pos > 0) {
+        return linear_interpolation(x_eval, copy_vector[upper_pos - 1].first, copy_vector[upper_pos].first,
+                                    copy_vector[upper_pos - 1].second, copy_vector[upper_pos].second);
     }
     return 0.0;
 }

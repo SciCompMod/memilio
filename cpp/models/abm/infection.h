@@ -55,12 +55,13 @@ public:
      * @param[in] age AgeGroup to determine the ViralLoad course.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
-     * @param[in] detected [Default: false] If the Infection is detected.
-     * @param[in] latest_protection The pair value of last type of protection (previous infection/vaccination) and TimePoint of that protection.
+     * @param[in] latest_protection [Default: {ExposureType::NoProtection, TimePoint(0)}] The pair value of last ExposureType (previous Infection/Vaccination) and TimePoint of that protection.
+     * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(VirusVariant virus, AgeGroup age, const GlobalInfectionParameters& params, TimePoint start_date,
-              InfectionState start_state = InfectionState::Exposed, bool detected = false,
-              std::pair<ProtectionType, TimePoint> latest_protection = {ProtectionType::NoProtection, TimePoint(0)});
+              InfectionState start_state                           = InfectionState::Exposed,
+              std::pair<ExposureType, TimePoint> latest_protection = {ExposureType::NoProtection, TimePoint(0)},
+              bool detected                                        = false);
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -107,7 +108,7 @@ public:
     /**
      * @returns Get the start date of the infection.
     */
-    TimePoint get_init_date() const;
+    TimePoint get_start_date() const;
 
 private:
     /**
@@ -121,8 +122,7 @@ private:
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
-                                    InfectionState start_state,
-                                    std::pair<ProtectionType, TimePoint> latest_protection);
+                                    InfectionState start_state, std::pair<ExposureType, TimePoint> latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.
@@ -133,7 +133,7 @@ private:
      */
     void draw_infection_course_forward(AgeGroup age, const GlobalInfectionParameters& params, TimePoint init_date,
                                        InfectionState start_state,
-                                       std::pair<ProtectionType, TimePoint> latest_protection);
+                                       std::pair<ExposureType, TimePoint> latest_protection);
 
     /**
      * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.

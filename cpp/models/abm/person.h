@@ -81,8 +81,8 @@ public:
     void migrate_to(Location& loc_new, const std::vector<uint32_t>& cells_new = {0});
 
     /**
-     * @brief the latest Infection% of the Person.
-     * @return The latest Infection% of the Person.
+     * @brief Get the latest #Infection of the Person.
+     * @return The latest #Infection of the Person.
      */
     Infection& get_infection()
     {
@@ -348,28 +348,28 @@ public:
     }
 
     /**
-     * @brief Get the multiplicative factor on how likely an infection is due to the immune system.
+     * @brief Get the multiplicative factor on how likely an #Infection is due to the immune system.
      * @param[in] t TimePoint of check.
      * @param[in] virus VirusVariant to check
      * @param[in] params GlobalInfectionParameters in the model.
-     * @returns Protection factor for general infection of the immune system to the given VirusVariant at the given TimePoint.
+     * @returns Protection factor for general #Infection of the immune system to the given VirusVariant at the given TimePoint.
      */
     ScalarType get_protection_factor(TimePoint t, VirusVariant virus, const GlobalInfectionParameters& params) const;
 
     /**
-     * @brief Add a new vaccination
-     * @param[in] v ProtectionType (i.e vaccine) that is taken by the person. 
-     * @param[in] t TimePoint of vaccination.
+     * @brief Add a new #Vaccination
+     * @param[in] v ExposureType (i.e vaccine type) that the person has.  
+     * @param[in] t TimePoint of the Vaccination.
     */
-    void add_new_vaccination(ProtectionType v, TimePoint t)
+    void add_new_vaccination(ExposureType v, TimePoint t)
     {
         m_vaccinations.push_back(Vaccination(v, t));
     }
 
     /**
-     * @brief Get the latest infection/vaccination and its initial TimePoint of the Person. 
+     * @brief Get the latest #Infection or #Vaccination and its initial TimePoint of the Person. 
     */
-    std::pair<ProtectionType, TimePoint> get_latest_protection() const;
+    std::pair<ExposureType, TimePoint> get_latest_protection() const;
 
 private:
     observer_ptr<Location> m_location; ///< Current Location of the Person.

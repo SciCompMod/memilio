@@ -30,29 +30,29 @@ namespace abm
 {
 
 /** 
- * Vaccine in ABM.
+ * @brief #ExposureType in ABM.
  * can be used as 0-based index
  */
-enum class ProtectionType : std::uint32_t
+enum class ExposureType : std::uint32_t
 {
     NoProtection     = 0,
     NaturalInfection = 1,
-    GenericVaccine   = 2, // Represent the Pfizer vaccine
+    GenericVaccine   = 2,
     Count //last!!
 };
 
 /**
- * A vaccination is a tuple of TimePoint and ProtectionType.
- * The TimePoint describes the time of administration of the Vaccine.
+ * @brief A tuple of #TimePoint and #ExposureType (i.e. type of the Vaccine).
+ * The #TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
-    Vaccination(ProtectionType pt, TimePoint t)
+    Vaccination(ExposureType exposure_type, TimePoint t)
+        : exposure_type(exposure_type)
+        , time(t)
     {
-        protection_type = pt;
-        time            = t;
     }
 
-    ProtectionType protection_type;
+    ExposureType exposure_type;
     TimePoint time;
 };
 

@@ -53,30 +53,6 @@ struct IncubationPeriod {
     }
 };
 
-struct SusceptibleToExposedByInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedNoSymptoms";
-    }
-};
-
-struct SusceptibleToExposedByInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
-    static Type get_default()
-    {
-        return Type({VirusVariant::Count, AgeGroup::Count}, 1.);
-    }
-    static std::string name()
-    {
-        return "SusceptibleToExposedByInfectedSymptoms";
-    }
-};
-
 struct InfectedNoSymptomsToSymptoms {
     using Type = CustomIndexArray<UncertainValue, VirusVariant, AgeGroup>;
     static Type get_default()
@@ -248,7 +224,7 @@ struct DetectInfection {
 };
 
 /**
- * @brief Effectiveness of a Mask of a certain MaskType against an Infection.
+ * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
     using Type = CustomIndexArray<UncertainValue, MaskType>;
@@ -265,17 +241,16 @@ struct MaskProtection {
 using InputFunctionForProtectionLevel = std::function<ScalarType(ScalarType)>;
 
 /**
- * @brief Personal protection factor after infection and vaccination, which depends on type of vaccine
- * age group and virus variant. Its value is between 0 and 1. 
+ * @brief Personal protection factor against #Infection% after #Infection and #Vaccination, which depends on type of vaccine,
+ * age group and virus variant. Its value is between 0 and 1.
  */
 struct InfectionProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count},
-                    [](ScalarType /*days*/) -> ScalarType {
-                        return 0;
-                    });
+        return Type({ExposureType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
     }
     static std::string name()
     {
@@ -284,17 +259,16 @@ struct InfectionProtectionFactor {
 };
 
 /**
- * @brief Personal protective factor against severe symptoms after infection and vaccination, which depends on type of vaccine
+ * @brief Personal protective factor against severe symptoms after #Infection and #Vaccination, which depends on type of vaccine,
  * age group and virus variant. Its value is between 0 and 1.
  */
 struct SeverityProtectionFactor {
-    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ProtectionType, AgeGroup, VirusVariant>;
+    using Type = CustomIndexArray<InputFunctionForProtectionLevel, ExposureType, AgeGroup, VirusVariant>;
     static auto get_default()
     {
-        return Type({ProtectionType::Count, AgeGroup::Count, VirusVariant::Count},
-                    [](ScalarType /*days*/) -> ScalarType {
-                        return 0;
-                    });
+        return Type({ExposureType::Count, AgeGroup::Count, VirusVariant::Count}, [](ScalarType /*days*/) -> ScalarType {
+            return 0;
+        });
     }
     static std::string name()
     {
@@ -323,11 +297,11 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters of the Infection that are the same everywhere within the World.
  */
 using GlobalInfectionParameters =
-    ParameterSet<IncubationPeriod, SusceptibleToExposedByInfectedNoSymptoms, SusceptibleToExposedByInfectedSymptoms,
-                 InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToRecovered,
-                 InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered, CriticalToDead, CriticalToRecovered,
-                 RecoveredToSusceptible, ViralLoadDistributions, InfectivityDistributions, DetectInfection,
-                 MaskProtection, InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor>;
+    ParameterSet<IncubationPeriod, InfectedNoSymptomsToSymptoms, InfectedNoSymptomsToRecovered,
+                 InfectedSymptomsToRecovered, InfectedSymptomsToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, ViralLoadDistributions,
+                 InfectivityDistributions, DetectInfection, MaskProtection, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
