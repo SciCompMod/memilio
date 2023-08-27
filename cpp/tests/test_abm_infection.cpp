@@ -74,10 +74,6 @@ TEST(TestInfection, getPersonalProtectiveFactor)
 
     mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
 
-    auto factor = params.get<mio::abm::InfectionProtectionFactor>()[{
-        mio::abm::ExposureType::Count, mio::abm::AgeGroup::Count, mio::abm::VirusVariant::Count}](3);
-    ASSERT_NEAR(factor, 0, 0.0001);
-
     // Test linear interpolation with one node
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
@@ -134,8 +130,4 @@ TEST(TestInfection, getPersonalProtectiveFactor)
     ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
-}
-
-TEST(TestInfection, get)
-{
 }

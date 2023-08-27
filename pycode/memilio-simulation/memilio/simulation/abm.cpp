@@ -52,9 +52,9 @@ PYBIND11_MODULE(_simulation_abm, m)
         .value("Age80plus", mio::abm::AgeGroup::Age80plus);
 
     pymio::iterable_enum<mio::abm::ExposureType>(m, "ExposureType")
-        .value("Age0to4", mio::abm::ExposureType::NoProtection)
-        .value("Age5to14", mio::abm::ExposureType::NaturalInfection)
-        .value("Age15to34", mio::abm::ExposureType::GenericVaccine);
+        .value("NoProtection", mio::abm::ExposureType::NoProtection)
+        .value("NaturalInfection", mio::abm::ExposureType::NaturalInfection)
+        .value("GenericVaccine", mio::abm::ExposureType::GenericVaccine);
 
     pymio::iterable_enum<mio::abm::VirusVariant>(m, "VirusVariant").value("Wildtype", mio::abm::VirusVariant::Wildtype);
 
