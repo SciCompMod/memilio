@@ -432,7 +432,7 @@ TEST(IdeSecir, checkProportionRecoveredDeath)
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-    // Initialize two models.
+    // Initialize model.
     mio::isecir::Model model(std::move(init), N, Dead_before);
 
     // Set working parameters.
