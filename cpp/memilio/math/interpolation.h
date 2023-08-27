@@ -21,6 +21,7 @@
 #define INTERPOLATION_H_
 #include <vector>
 #include <algorithm>
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -43,7 +44,8 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 }
 
 /**
- * @brief Linear interpolation between two point of a dataset, which is represented by a vector of pairs of node and value.
+ * @brief Linear interpolation between two points of a dataset, which is represented by a vector of pairs of node and value.
+ * Return 0 if there is less than two points in the dataset.
  * @param[in] vector Vector of pairs of node and value.
  * @param[in] x_eval Location to evaluate interpolation.
  * @param[out] unnamed Interpolation result.
@@ -53,8 +55,7 @@ Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>> vector, co
 {
     // If the vector is empty or has only 1 node, return 0
     if (vector.empty() || vector.size() == 1) {
-        throw std::invalid_argument(
-            "The vector provided in linear_interpolation_of_data_set() must have larger than 2 nodes");
+        log_error("The vector provided in linear_interpolation_of_data_set() must have larger than 2 nodes");
         return 0.0;
     }
 

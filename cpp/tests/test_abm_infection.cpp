@@ -43,7 +43,8 @@ TEST(TestInfection, init)
         .WillRepeatedly(testing::Return(1.0));
 
     auto infection = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age15to34, params,
-                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed, {}, true);
+                                         mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed,
+                                         {mio::abm::ExposureType::NaturalInfection, mio::abm::TimePoint(0)}, true);
 
     EXPECT_EQ(infection.get_virus_variant(), mio::abm::VirusVariant::Wildtype);
     EXPECT_EQ(infection.is_detected(), true);
@@ -69,9 +70,24 @@ TEST(TestInfection, getPersonalProtectiveFactor)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
     auto person   = mio::abm::Person(location, mio::abm::AgeGroup::Age15to34);
+    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
 
     mio::abm::GlobalInfectionParameters params = mio::abm::GlobalInfectionParameters();
 
+    auto factor = params.get<mio::abm::InfectionProtectionFactor>()[{
+        mio::abm::ExposureType::Count, mio::abm::AgeGroup::Count, mio::abm::VirusVariant::Count}](3);
+    ASSERT_NEAR(factor, 0, 0.0001);
+
+    // Test linear interpolation with one node
+    params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
+                                                       mio::abm::VirusVariant::Wildtype}] =
+        [](ScalarType days) -> ScalarType {
+        return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}}, days);
+    };
+    auto t = mio::abm::TimePoint(6 * 24 * 60 * 60);
+    ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
+
+    // Test get_protection_factor()
     params.get<mio::abm::InfectionProtectionFactor>()[{mio::abm::ExposureType::GenericVaccine, person.get_age(),
                                                        mio::abm::VirusVariant::Wildtype}] =
         [](ScalarType days) -> ScalarType {
@@ -85,16 +101,16 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         [](ScalarType days) -> ScalarType {
         return mio::linear_interpolation_of_data_set<ScalarType, ScalarType>({{2, 0.91}, {30, 0.81}}, days);
     };
-    person.add_new_vaccination(mio::abm::ExposureType::GenericVaccine, mio::abm::TimePoint(0));
-    auto latest_protection = person.get_latest_protection();
 
-    auto t = mio::abm::TimePoint(2 * 24 * 60 * 60);
+    t = mio::abm::TimePoint(2 * 24 * 60 * 60);
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
     t = mio::abm::TimePoint(15 * 24 * 60 * 60);
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     ASSERT_NEAR(person.get_protection_factor(t, mio::abm::VirusVariant::Wildtype, params), 0, 0.0001);
 
+    // Test Parameter SeverityProtectionFactor
+    auto latest_protection          = person.get_latest_protection();
     t                               = mio::abm::TimePoint(2 * 24 * 60 * 60);
     auto severity_protection_factor = params.get<mio::abm::SeverityProtectionFactor>()[{
         latest_protection.first, mio::abm::AgeGroup::Age15to34, mio::abm::VirusVariant::Wildtype}](
@@ -111,10 +127,15 @@ TEST(TestInfection, getPersonalProtectiveFactor)
         t.days() - latest_protection.second.days());
     ASSERT_NEAR(severity_protection_factor, 0, 0.0001);
 
+    // Test Parameter HighViralLoadProtectionFactor
     t = mio::abm::TimePoint(2 * 24 * 60 * 60);
     ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
     t = mio::abm::TimePoint(15 * 24 * 60 * 60);
     ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0.8635, 0.0001);
     t = mio::abm::TimePoint(40 * 24 * 60 * 60);
     ASSERT_NEAR(params.get<mio::abm::HighViralLoadProtectionFactor>()(t.days()), 0, 0.0001);
+}
+
+TEST(TestInfection, get)
+{
 }
