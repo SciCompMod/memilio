@@ -69,12 +69,16 @@ Y linear_interpolation_of_data_set(const std::vector<std::pair<X, Y>> vector, co
                                         }) -
                        copy_vector.begin();
 
+    if (upper_pos == 0) {
+        return copy_vector[upper_pos].second;
+    }
+
     // If the x_eval are between two identifiable nodes in the dataset.
-    if (upper_pos < copy_vector.size() && upper_pos > 0) {
+    if (upper_pos < copy_vector.size()) {
         return linear_interpolation(x_eval, copy_vector[upper_pos - 1].first, copy_vector[upper_pos].first,
                                     copy_vector[upper_pos - 1].second, copy_vector[upper_pos].second);
     }
-    return 0.0;
+    return 0;
 }
 
 } // namespace mio
