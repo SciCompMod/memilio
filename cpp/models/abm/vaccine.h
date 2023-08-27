@@ -46,8 +46,8 @@ enum class ExposureType : std::uint32_t
  * The #TimePoint describes the time of administration of the Vaccine.
 */
 struct Vaccination {
-    Vaccination(ExposureType exposure_type, TimePoint t)
-        : exposure_type(exposure_type)
+    Vaccination(ExposureType exposure, TimePoint t)
+        : exposure_type(exposure)
         , time(t)
     {
     }
