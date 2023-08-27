@@ -109,18 +109,6 @@ public:
     {
     }
 
-    Location(const Location& other)
-        : m_id(LocationId(other.m_id))
-        , m_num_agegroups(AgeGroup(other.m_num_agegroups))
-        , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
-        , m_parameters(other.m_parameters)
-        , m_subpopulations(TimeSeries<ScalarType>(other.m_subpopulations))
-        , m_cells(std::vector<Cell>(other.m_cells))
-        , m_required_mask(MaskType(other.m_required_mask))
-        , m_npi_active(other.m_npi_active)
-    {
-    }
-
     /**
      * @brief Compare two Location%s.
      */

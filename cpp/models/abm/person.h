@@ -50,32 +50,17 @@ class Person
 public:
     /**
      * @brief Create a Person.
-     * @param[in, out] location Initial location of the Person.
+     * @param[in, out] location Initial Location of the Person.
      * @param[in] age The AgeGroup of the Person.
      * @param[in] person_id Index of the Person.
      */
     explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
-    Person(const Person& other, Location& location)
-        : m_location(&location)
-        , m_assigned_locations(std::vector<uint32_t>(other.m_assigned_locations))
-        , m_vaccinations(std::vector<Vaccination>(other.m_vaccinations))
-        , m_infections(std::vector<Infection>(other.m_infections))
-        , m_quarantine(other.m_quarantine)
-        , m_age(AgeGroup(other.m_age))
-        , m_time_at_location(TimeSpan(other.m_time_at_location))
-        , m_random_workgroup(other.m_random_workgroup)
-        , m_random_schoolgroup(other.m_random_schoolgroup)
-        , m_random_goto_work_hour(other.m_random_goto_work_hour)
-        , m_random_goto_school_hour(other.m_random_goto_school_hour)
-        , m_time_since_negative_test(TimeSpan(other.m_time_since_negative_test))
-        , m_mask(Mask(other.get_mask()))
-        , m_wears_mask(other.m_wears_mask)
-        , m_mask_compliance(std::vector<ScalarType>(other.m_mask_compliance))
-        , m_person_id(other.m_person_id)
-        , m_cells(std::vector<uint32_t>(other.m_cells))
-    {
-    }
+    /**
+     * @brief Create a copy of a Person in a new Location.
+     * @param[in, out] location The new Location of the Person.
+     */
+    Person(const Person& other, Location& location);
 
     /**
      * @brief Compare two Person%s.
