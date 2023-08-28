@@ -42,18 +42,6 @@ Location::Location(LocationId loc_id, size_t num_agegroups, uint32_t num_cells)
     assert(num_cells > 0 && "Number of cells has to be larger than 0.");
 }
 
-Location::Location(const Location& other)
-    : m_id(other.m_id)
-    , m_num_agegroups(other.m_num_agegroups)
-    , m_capacity_adapted_transmission_risk(other.m_capacity_adapted_transmission_risk)
-    , m_parameters(other.m_parameters)
-    , m_subpopulations(other.m_subpopulations)
-    , m_cells(other.m_cells)
-    , m_required_mask(other.m_required_mask)
-    , m_npi_active(other.m_npi_active)
-{
-}
-
 ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVariant virus, AgeGroup age_receiver) const
 {
     ScalarType prob = 0;
