@@ -68,10 +68,10 @@ TEST(TestInfection, getInfectionState)
 
 TEST(TestInfection, drawInfectionCourseBackward)
 {
-    auto t      = mio::abm::TimePoint(0);
+    auto t      = mio::abm::TimePoint(1);
     auto dt     = mio::abm::days(1);
     auto params = mio::abm::GlobalInfectionParameters{};
-    
+
     // Time to go from all infected states to recover is 1 day (dt).
     params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}]   = 1;
     params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}] = 1;
@@ -80,14 +80,41 @@ TEST(TestInfection, drawInfectionCourseBackward)
     params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
                                                            mio::abm::AgeGroup::Age60to79}]                         = 1;
 
-    auto world  = mio::abm::World(params);
-    auto icu_id = world.add_location(mio::abm::LocationType::ICU);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(14))
+        .WillOnce(testing::Return(0.1)) // Transition to InfectedNoSymptoms
+        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.1))
+        .WillOnce(testing::Return(0.3)) // Transition to InfectedSymptoms
+        .WillOnce(testing::Return(0.3))
+        .WillOnce(testing::Return(0.3))
+        .WillOnce(testing::Return(0.3))
+        .WillOnce(testing::Return(0.3))
+        .WillOnce(testing::Return(0.3))
+        .WillOnce(testing::Return(0.6)) // Transition to InfectedSevere
+        .WillRepeatedly(testing::Return(0.9)); // Transition to InfectedCritical
 
-    // Create a person that is dead at time t
-    auto& p_recover =
-        add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Recovered, t + dt);
+    auto infection1 = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, params,
+                                          mio::abm::TimePoint(t + dt), mio::abm::InfectionState::Recovered,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection2 = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, params,
+                                          mio::abm::TimePoint(t + dt), mio::abm::InfectionState::Recovered,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection3 = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, params,
+                                          mio::abm::TimePoint(t + dt), mio::abm::InfectionState::Recovered,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
+    auto infection4 = mio::abm::Infection(mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79, params,
+                                          mio::abm::TimePoint(t + dt), mio::abm::InfectionState::Recovered,
+                                          {mio::abm::ExposureType::NoProtection, mio::abm::TimePoint(0)}, false);
 
-    EXPECT_EQ(p_recover.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
+    EXPECT_EQ(infection1.get_infection_state(t), mio::abm::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(infection3.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
+    EXPECT_EQ(infection4.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
 }
 
 TEST(TestInfection, getPersonalProtectiveFactor)
