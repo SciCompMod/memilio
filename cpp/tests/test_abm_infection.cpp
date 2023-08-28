@@ -66,6 +66,30 @@ TEST(TestInfection, getInfectionState)
     EXPECT_EQ(infection.get_infection_state(t - mio::abm::TimeSpan(1)), mio::abm::InfectionState::Susceptible);
 }
 
+TEST(TestInfection, drawInfectionCourseBackward)
+{
+    auto t      = mio::abm::TimePoint(0);
+    auto dt     = mio::abm::days(1);
+    auto params = mio::abm::GlobalInfectionParameters{};
+    
+    // Time to go from all infected states to recover is 1 day (dt).
+    params.get<mio::abm::SevereToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}]   = 1;
+    params.get<mio::abm::CriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype, mio::abm::AgeGroup::Age60to79}] = 1;
+    params.get<mio::abm::InfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                         mio::abm::AgeGroup::Age60to79}]                           = 1;
+    params.get<mio::abm::InfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                           mio::abm::AgeGroup::Age60to79}]                         = 1;
+
+    auto world  = mio::abm::World(params);
+    auto icu_id = world.add_location(mio::abm::LocationType::ICU);
+
+    // Create a person that is dead at time t
+    auto& p_recover =
+        add_test_person(world, icu_id, mio::abm::AgeGroup::Age60to79, mio::abm::InfectionState::Recovered, t + dt);
+
+    EXPECT_EQ(p_recover.get_infection_state(t), mio::abm::InfectionState::InfectedCritical);
+}
+
 TEST(TestInfection, getPersonalProtectiveFactor)
 {
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0);
