@@ -109,6 +109,8 @@ public:
     {
     }
 
+    Location(const Location& other);
+
     /**
      * @brief Compare two Location%s.
      */
