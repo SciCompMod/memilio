@@ -86,7 +86,7 @@ def plot_compartment_prediction_model(
     plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
 
 
-def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
+def network_fit(path, model, max_epochs=30, early_stop=100, plot=True):
     """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     @param path path of the dataset. 
@@ -116,7 +116,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
                                                       mode='min')
 
     model.compile(
-        loss=tf.keras.losses.MeanSquaredError(),
+        loss=tf.keras.losses.MeanAbsolutePercentageError(),
         optimizer=tf.keras.optimizers.Adam(),
         metrics=[tf.keras.metrics.MeanAbsoluteError()])
 
@@ -131,6 +131,7 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
             plot_compartment='InfectedSymptoms', max_subplots=3)
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
+        print('mean: ',  df.mean())
     return history
 
 
@@ -223,9 +224,9 @@ if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
         os.path.dirname(os.path.realpath(path)))), 'data')
-    max_epochs = 400
+    max_epochs = 1500
 
-    model = "LSTM"
+    model = "CNN"
     if model == "Dense":
         model = network_architectures.mlp_multi_input_single_output()
     elif model == "LSTM":
