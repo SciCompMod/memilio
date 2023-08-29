@@ -194,7 +194,7 @@ def generate_data(
 
     all_days = []
     for i in range(num_runs):
-        dampingday = random.randint(5, 15)
+        dampingday = random.randint(5, 25)
         all_days.append(dampingday)
 
     for i in range(number_of_populations):
@@ -267,7 +267,7 @@ def generate_data(
 
 
 # def get_population(path="data\pydata\Germany\county_population_dim401.json"):
-def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population_dim401.json"):
+def get_population(path="/home/schm_a45/Documents/Code/memilio/memilio/data/pydata/Germany/county_population.json"):
 
     with open(path) as f:
         data = json.load(f)
@@ -377,11 +377,11 @@ if __name__ == "__main__":
     path_data = os.path.join(
         os.path.dirname(
             os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'data/data_GNN_401pop_one_var_damp_30days_1k')
+        'data/data_GNN_400pop_one_var_damp_30days_1k')
 
     input_width = 5
-    days = 30
+    days = 35
     num_runs = 1000
-    number_of_populations = 401
+    number_of_populations = 400
     generate_data(num_runs, path_data, input_width,
                   days, number_of_populations)
