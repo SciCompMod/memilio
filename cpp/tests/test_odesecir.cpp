@@ -19,6 +19,7 @@
 */
 #include "matchers.h"
 #include "load_test_data.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
 #include "ode_secir/infection_state.h"
@@ -30,6 +31,10 @@
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 #include <iomanip>
+
+#include <fstream>
+#include <sstream>
+#include <string>
 
 TEST(TestOdeSecir, compareWithPreviousRun)
 {
@@ -845,43 +850,198 @@ TEST(Secir, get_reproduction_numbers)
         model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
     }
 
-    mio::TimeSeries<ScalarType> result2((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_0((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_1((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_2((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_3((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_4((int)mio::osecir::InfectionState::Count * num_groups);
     mio::TimeSeries<ScalarType>::Vector result_5((int)mio::osecir::InfectionState::Count * num_groups);
-
-    result2.add_time_point(0);
-    result2.add_time_point(0.10000000000000000555);
-    result2.add_time_point(0.2000000000000000111);
-    result2.add_time_point(0.37998522153999991779);
-    result2.add_time_point(0.58252400303872020615);
-    result2.add_time_point(0.840598918925461569);
-    result2.add_time_point(1);
+    mio::TimeSeries<ScalarType>::Vector result_6((int)mio::osecir::InfectionState::Count * num_groups);
 
     model.apply_constraints();
 
-    mio::osecir::Simulation<> sim(model, 0.0);
-    sim.get_result() = mio::osecir::simulate(0.0, 1.0, 0.1, sim.get_model());
-
     Eigen::VectorXd checkReproductionNumbers(7);
-    checkReproductionNumbers << 2.2133845556677478328, 2.2052093712280766979, 2.1968200810071096818,
-        2.1860904268363854364, 2.1741376314186342533, 2.1596181962620226713, 2.1477337085932473038;
+    checkReproductionNumbers << 3.5761724798649777, 3.581750004470881, 3.6693223331151632, 3.8776795891796976,
+        4.15201838947476, 4.5161115327154775, 4.7182920477874752;
+
+    result_0 << 3000, 400, 50, 50, 0, 0, 0, 0, 4000, 350, 50, 100, 0, 0, 0, 0, 1500, 200, 100, 100, 50, 50, 0, 0;
+
+    result_1 << 2986.2412449968583132, 401.24167503358188469, 59.770932967055152574, 51.623527357069470156,
+        0.17417985114868939078, 0.00022729149070066577247, 0.94821218285069908127, 3.1994478027648586745e-07,
+        3981.6549933291448724, 357.29614039080206567, 58.339589387963329159, 100.73549052293542161,
+        0.34417787494279222793, 0.00045098330804711045904, 1.6291568747836127073, 6.3611987013077957036e-07,
+        1493.1206224984291566, 200.62083751679094235, 101.22767332092990955, 102.82956804964119613,
+        49.824323129635679663, 49.431134850148950477, 2.7357775149744210097, 0.21006311944956934656;
+
+    result_2 << 2971.5583317377245294, 403.35498239845526314, 69.116677006335692113, 53.650269608953109923,
+        0.35280513579635025545, 0.00091208866793335101591, 1.9660194590816646443, 2.5649852579872425173e-06,
+        3962.0777756502998272, 365.58091501551371039, 66.510165358127906643, 101.83063681480560092,
+        0.68789659464275298983, 0.0017941695505704748168, 3.31081132947206358, 5.0675877399838152961e-06,
+        1485.7791658688622647, 201.67749119922763157, 102.42114485557715398, 105.66531768774794386,
+        49.660202843865796751, 48.869781815291510441, 5.5091572488792639462, 0.41773848054833506716;
+
+    result_3 << 2942.856400298596327, 409.2171592213586564, 85.012918471965662093, 58.235842719339657947,
+        0.68957046457456350197, 0.0033215276324750873937, 3.9847696050448093708, 1.7691487346664204683e-05,
+        3923.8085337314628305, 382.81666733073143405, 80.907942542827129273, 104.66793072132175269,
+        1.3092281281810831395, 0.0064233169718593535052, 6.4832397042377349905, 3.4524266497013886116e-05,
+        1471.4282001492981635, 204.6085796106793282, 104.52885257313833733, 110.78105275523925854,
+        49.393601382744165562, 47.878118436204538, 10.595987399938755047, 0.78560769275720121474;
+
+    result_4 << 2907.2133871888117937, 418.67505276798732439, 101.7329866471358315, 64.706265603136884579,
+        1.0991226964708620262, 0.0079167447918022521014, 6.5652040345289455203, 6.4317136376874475324e-05,
+        3876.2845162517492099, 405.41241335635135101, 96.834733693923240594, 109.13012902817443717,
+        2.0196012540506989019, 0.014990460834193003459, 10.30349232671609272, 0.00012362820069712732282,
+        1453.6066935944058969, 209.33752638399366219, 106.91548231859164275, 116.55417450338485708,
+        49.137205561836246659, 46.790465736158964205, 16.467779593518763193, 1.1906723081098882222;
+
+    result_5 << 2857.0921695713273039, 434.42077730666193247, 121.68015133798982674, 74.740676897795324862,
+        1.6806059449234134195, 0.016874713703690334687, 10.368548031693284983, 0.00019619590458404766956,
+        3809.4562260951038297, 438.24759156052596154, 117.03004188242431383, 116.6701099172634315,
+        2.9553258740962409234, 0.03104121600854261448, 15.609294091390772508, 0.00036936318682803968632,
+        1428.5460847856636519, 217.21038865333096624, 110.10383240778212155, 123.94324598867467557,
+        48.876141778624635492, 45.44704198659943728, 24.179729493339525703, 1.6935349059846935837;
+
+    result_6 << 2823.7964337008384064, 445.79789336833465541, 133.43010492139592316, 81.843963977092016648,
+        2.0791484574835688015, 0.024289771848477689081, 13.027831825199973181, 0.00033397780653605783387,
+        3765.0619116011184815, 460.26765919119901582, 129.57755483037871613, 122.32995280769675617,
+        3.5572150886264348735, 0.043856585969950019621, 19.161229559313984083, 0.00062033569677932126878,
+        1411.8982168504192032, 222.8989466841673277, 112.20485190056430724, 128.5349283083724572, 48.751006448572013596,
+        44.640554954647143404, 29.074588258609818325, 1.9969065946475592632;
+
+    result.add_time_point(0, result_0);
+    result.add_time_point(0.10000000000000000555, result_1);
+    result.add_time_point(0.2000000000000000111, result_2);
+    result.add_time_point(0.37998522153999991779, result_3);
+    result.add_time_point(0.58252400303872020615, result_4);
+    result.add_time_point(0.840598918925461569, result_5);
+    result.add_time_point(1, result_6);
+
+    mio::osecir::Simulation<> sim(model, 0.0);
+    sim.get_result() = result;
 
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
-        //EXPECT_NEAR(checkReproductionNumbers[i], mio::osecir::get_reproduction_numbers(sim)[i], 1e-15);
-        std::cout << "Susceptibles0: "
-                  << sim.get_result().get_value(i)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms];
-        std::cout << "Susceptibles1: "
-                  << sim.get_result().get_value(i)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms +
-                                                   (Eigen::Index)mio::osecir::InfectionState::Count];
-        std::cout << "Susceptibles2: "
-                  << sim.get_result().get_value(i)[(Eigen::Index)mio::osecir::InfectionState::InfectedNoSymptoms +
-                                                   2 * (Eigen::Index)mio::osecir::InfectionState::Count];
-        std::cout << "reproduction number: " << mio::osecir::get_reproduction_number((size_t)i, sim).value();
+        EXPECT_NEAR(checkReproductionNumbers[i], mio::osecir::get_reproduction_numbers(sim)[i], 1e-12);
     }
+}
+
+TEST(Secir, get_reproduction_number)
+{
+    size_t num_groups = 3;
+    mio::osecir::Model model((int)num_groups);
+
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 10));
+
+    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::Seasonality>(0.2);
+
+    //total population of 10.000
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}]        = 3000;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = 400;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]   = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}]     = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
+
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible}]        = 4000;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Exposed}]            = 350;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedNoSymptoms}] = 50;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSevere}]     = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedCritical}]   = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
+
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}]        = 1500;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Exposed}]            = 200;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSevere}]     = 50;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedCritical}]   = 50;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
+
+    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
+    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity>()              = 35;
+    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
+    model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
+    model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
+
+    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
+        model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
+        model.parameters.get<mio::osecir::TimeInfectedSymptoms>()[i] = 5.8;
+        model.parameters.get<mio::osecir::SerialInterval>()[i]       = 4.2;
+        model.parameters.get<mio::osecir::TimeInfectedSevere>()[i]   = 9.5;
+        model.parameters.get<mio::osecir::TimeInfectedCritical>()[i] = 7.1;
+
+        model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()[i]  = 0.05;
+        model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()[i]    = 0.7;
+        model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()[i]    = 0.09;
+        model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()[i]    = 0.25;
+        model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>()[i] = 0.45;
+        model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()[i]         = 0.2;
+        model.parameters.get<mio::osecir::CriticalPerSevere>()[i]                 = 0.25;
+        model.parameters.get<mio::osecir::DeathsPerCritical>()[i]                 = 0.3;
+    }
+
+    mio::TimeSeries<ScalarType> result((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_0((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_1((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_2((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_3((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_4((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_5((int)mio::osecir::InfectionState::Count * num_groups);
+    mio::TimeSeries<ScalarType>::Vector result_6((int)mio::osecir::InfectionState::Count * num_groups);
+
+    model.apply_constraints();
+
+    result_0 << 3000, 400, 50, 50, 0, 0, 0, 0, 4000, 350, 50, 100, 0, 0, 0, 0, 1500, 200, 100, 100, 50, 50, 0, 0;
+
+    result_1 << 2900, 500, 50, 50, 0, 0, 0, 0, 4000, 350, 50, 100, 0, 0, 0, 0, 1500, 200, 100, 100, 50, 50, 0, 0;
+
+    result_2 << 2850, 550, 50, 50, 0, 0, 0, 0, 4000, 350, 0, 150, 0, 0, 0, 0, 1500, 200, 100, 100, 50, 50, 0, 0;
+
+    result_3 << 2850, 550, 50, 50, 0, 0, 0, 0, 4000, 350, 0, 150, 0, 0, 0, 0, 1300, 400, 100, 100, 50, 50, 0, 0;
+
+    result_4 << 2800, 600, 50, 50, 0, 0, 0, 0, 4000, 300, 0, 200, 0, 0, 0, 0, 1300, 400, 100, 100, 50, 50, 0, 0;
+
+    result_5 << 2800, 600, 50, 50, 0, 0, 0, 0, 4000, 300, 0, 200, 0, 0, 0, 0, 1300, 400, 100, 100, 50, 50, 0, 0;
+
+    result_6 << 2700, 600, 100, 100, 0, 0, 0, 0, 4000, 300, 0, 200, 0, 0, 0, 0, 1300, 400, 100, 100, 0, 100, 0, 0;
+
+    result.add_time_point(0, result_0);
+    result.add_time_point(0.1000000000000000000, result_1);
+    result.add_time_point(0.2000000000000000000, result_2);
+    result.add_time_point(0.4000000000000000000, result_3);
+    result.add_time_point(0.6000000000000000000, result_4);
+    result.add_time_point(0.8000000000000000000, result_5);
+    result.add_time_point(1, result_6);
+
+    mio::osecir::Simulation<> sim(model, 0.0);
+    sim.get_result() = result;
+
+    //    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_time(0) - 0.5, sim)); //Test for indices out of range
+    //  EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_last_time() + 0.5, sim));
+    //EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)result.get_num_time_points(), sim));
+
+    EXPECT_EQ(mio::osecir::get_reproduction_number((size_t)0, sim).value(),
+              mio::osecir::get_reproduction_number(0.0, sim).value());
+
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.5175469781728519,
+                1e-12); //Test one function for integer timepoints
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.0819621748964341, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.0469388034901952, 1e-12);
+
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.4932023890682649, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.0719242621131642, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 2.9985324856106601, 1e-12);
 }
 
 TEST(Secir, get_migration_factors)

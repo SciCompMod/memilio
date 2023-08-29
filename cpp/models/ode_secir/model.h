@@ -523,7 +523,7 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
     }
 
     if (t_value == sim.get_result().get_time(0)) {
-        return mio::success(get_reproduction_number((size_t)0, sim));
+        return mio::success(get_reproduction_number((size_t)0, sim).value());
     }
 
     auto times = std::vector<ScalarType>(sim.get_result().get_times().begin(), sim.get_result().get_times().end());
