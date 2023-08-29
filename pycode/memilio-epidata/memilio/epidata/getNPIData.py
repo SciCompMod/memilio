@@ -924,6 +924,7 @@ def get_npi_data(fine_resolution=2,
         cid = 0
         countyidx += 1
 
+        ## compute incidence for given county and store in other data frame
         if fine_resolution > 0:
             # compute incidence based on previous data frames
             df_infec_local = copy.deepcopy(
@@ -950,7 +951,6 @@ def get_npi_data(fine_resolution=2,
             df_infec_local = df_infec_local[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
                 df_infec_local[dd.EngEng['date']] <= end_date_new)].reset_index()
 
-            local_incid = copy.deepcopy(df_infec_local['Incidence'])
             # Count counties with start cases >= 1:
             # In this case NPI activation cannot be ensured to work as expected
             if cases_first_value >= 1:
@@ -966,10 +966,12 @@ def get_npi_data(fine_resolution=2,
         inc_codes = len(np.where(df_npis.columns.str.contains(
             npis[dd.EngEng['npiCode']][0]))[0])
 
-        # Consistency of incidence dependent NPIs:
+        # Consistency of incidence independent and dependent NPIs:
         # The same NPI should not be prescribed multiple times at the same day
-        # for different thresholds. In order to avoid contradictions, only
-        # retain the strictest mentioned implementation.
+        # for different incidence-dependent thresholds or incidence-independently. 
+        # In order to avoid contradictions, only retain the strictest mentioned
+        # implementation. Incidence-independent is always stricter than any
+        # incidence-dependent implementation.
         print_details = True # define if details are printed (probably to be deactivated)
         for i in range(int(len(df_local_old)/inc_codes)):
 
@@ -983,7 +985,7 @@ def get_npi_data(fine_resolution=2,
             
             sum_npi_inc = np.where(
                 df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
-            if len(sum_npi_inc[0]) and print_details:
+            if (len(sum_npi_inc[0]) > 0) and print_details:
                 print(
                     'Reduce multiple prescription in county ' + str(countyID) +
                     ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
@@ -1058,6 +1060,9 @@ def get_npi_data(fine_resolution=2,
             npis_idx_start = list(
                 df_local_new.columns).index(
                 npis[dd.EngEng['npiCode']][0])
+            
+            # extract local incidence from local frame
+            local_incid = copy.deepcopy(df_infec_local['Incidence'])
 
             # iterate through all NPIs and activate if incidence threshold
             # is exceeded
@@ -1080,6 +1085,8 @@ def get_npi_data(fine_resolution=2,
             # merge incidence dependent NPIs to have only one column for each subcode
             df_merged = df_local_new.iloc[:, :2].copy()
             for subcode in all_subcodes:
+                # extract columns which have the subcode as part of the column 
+                # name and sum over all these subcodes
                 df_merged[subcode] = df_local_new.filter(
                     regex=subcode).sum(axis=1)
             # strictness deactivation is done with this merged dataframe
@@ -1087,17 +1094,20 @@ def get_npi_data(fine_resolution=2,
             df_incid_depend = pd.concat(
                 [df_incid_depend, copy.deepcopy(df_merged)])
 
-            if df_merged.max()[2:].max() > 1:
+            if df_merged.iloc[:,2:].max().max() > 1:
                 raise gd.DataError('Error in merging...')
 
-            # Remove conflicting NPIs according to strictness index of Corona-Datenplattform and exclusion criteria
-            # defined in df_npis_combinations
+            ## Remove conflicting NPIs according to strictness index of Corona-
+            ## Datenplattform and exclusion criteria defined in df_npis_combinations
             for maincode in df_npis_combinations.keys():
                 # get all subcodes
                 subcodes = list(df_npis_combinations[maincode][0].keys())
+                subcodes_strictness_values = list(df_npis_combinations[maincode][0].values())
+                if len(subcodes) != len(subcodes_strictness_values):
+                    raise gd.DataError('Subcode and strictness array inconsistent.')
                 # sort index reversely with the strictest (highest) index first
                 idx_strictness_sorted_rev = np.argsort(
-                    list(df_npis_combinations[maincode][0].values()))[::-1]
+                    subcodes_strictness_values)[::-1]
                 for i in range(len(idx_strictness_sorted_rev)-1):
                     # get index of NPI of a certain strictness
                     idx_strictness = idx_strictness_sorted_rev[i]
@@ -1116,14 +1126,15 @@ def get_npi_data(fine_resolution=2,
                         # only consider those codes which cannot be combined;
                         # for these, values of 1 have to be set to 0
                         subcodes_nocombi = list(
-                            subcodes_nocombi
-                            [subcodes_nocombi == 0].index)
+                            subcodes_nocombi[subcodes_nocombi == 0].index)
 
                         # intersect non-combinable subcodes with less strict subcodes
                         subcodes_deactivation = np.sort(
                             list(set(codes_less_strict).intersection(subcodes_nocombi)))
 
                         for nocombi_code in subcodes_deactivation:
+                            # check where the less strict NPI is mentioned, only 
+                            # considering rows where the stricter NPI is mentioned.
                             days_deact = np.where(
                                 df_merged.loc[subcode_active, nocombi_code] > 0)[0]
                             if len(days_deact) > 0:
@@ -1132,6 +1143,9 @@ def get_npi_data(fine_resolution=2,
                                 print('\t' + str(nocombi_code) + ' due to ' +
                                       str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
                                 print('\n')
+                                # take subcode_active rows as days_deact is
+                                # numbering inside subcode_active rows only, 
+                                # not numbering on the whole df_merge data frame
                                 df_merged.loc[subcode_active, nocombi_code] = 0
                                 df_count_deactivation[maincode][1].loc[idx_strictness,
                                                                        nocombi_code] += len(days_deact)
