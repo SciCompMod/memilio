@@ -109,7 +109,7 @@ public:
     {
     }
 
-    Location(const Location& other);
+    Location copy_location();
 
     /**
      * @brief Compare two Location%s.

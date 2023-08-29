@@ -57,10 +57,10 @@ public:
     explicit Person(Location& location, AgeGroup age, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
-     * @brief Create a copy of a Person in a new Location.
+     * @brief Create a copy of the current Person with a new Location.
      * @param[in, out] location The new Location of the Person.
      */
-    Person(const Person& other, Location& location);
+    Person copy_person(Location& location);
 
     /**
      * @brief Compare two Person%s.
