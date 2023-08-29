@@ -8,43 +8,40 @@
 # sum of the weights of the incoming edges of each node is equal to 1."
 
 
-import os
-import pickle
-import spektral
-import torch
-
-import torch.nn as nn
-import numpy as np
-import pandas as pd
-
-from spektral.layers.convolutional import GCNConv
-# from torch_geometric.nn import GCNConv
-import time
-
 import tensorflow as tf
-from keras.layers import Dense
-from keras.losses import MeanAbsolutePercentageError, MeanSquaredError
-from keras.metrics import mean_absolute_percentage_error
-from keras.models import Model
-from keras.optimizers import Adam
+import time
+from spektral.layers.convolutional import GCNConv
+import pandas as pd
+import numpy as np
+import torch.nn as nn
+import torch
+import spektral
+import pickle
+import os
 
-from sklearn.model_selection import KFold
 
-from spektral.data import BatchLoader, MixedLoader
-
-from data_generator_withoutdampings_all401 import get_population
+import warnings
+# import silence_tensorflow.auto
+import tensorflow as tf
+from sklearn.preprocessing import FunctionTransformer
+from spektral.layers import GlobalAttentionPool
+from sklearn.model_selection import train_test_split
+from keras.regularizers import l2
+from keras.layers import TimeDistributed, Input, LSTM, Lambda, Dense, Reshape, Concatenate, Dropout, Flatten
 from memilio.simulation.secir import InfectionState
-
+from data_generator_withoutdampings_all401 import get_population
+from spektral.data import BatchLoader, MixedLoader
+from sklearn.model_selection import KFold
+from keras.optimizers import Adam
+from keras.models import Model
+from keras.metrics import mean_absolute_percentage_error
+from keras.losses import MeanAbsolutePercentageError, MeanSquaredError
+from keras.layers import Dense
 
 # GAR
-from keras.layers import TimeDistributed, Input, LSTM, Lambda, Dense, Reshape, Concatenate, Dropout, Flatten, Reshape
-from keras.models import Model
-from keras.regularizers import l2
-from sklearn.model_selection import train_test_split
-from spektral.layers import GlobalAttentionPool
 
 
-from sklearn.preprocessing import FunctionTransformer
+# warnings.filterwarnings('ignore')
 
 ######### Load data #############################################
 path = os.path.dirname(os.path.realpath(__file__))
@@ -136,7 +133,7 @@ for i in range(len_dataset):
 # for spektral gcn layer
 
 class MPNN(Model):
-    def __init__(self, nfeat, nhid, nout, n_nodes, dropout):
+    def __init__(self, nfeat, nhid, nout, n_day, dropout):
         super().__init__()
         # self.n_nodes = n_nodes
 
@@ -183,13 +180,14 @@ class MPNN(Model):
             x = (self.dense2(x))
             lst.append(x)
 
-        x = self.lstm(np.asarray(lst))
+        # x = self.rehape1(np.asarray(lst))
+        x = self.lstm(np.asarray(lst).reshape(1, 5, (400*48)))
 
         x = self.dense3(np.expand_dims((np.asarray(x).flatten()), axis=0))
         x = self.reshape(x)
+        # x = x[0]
 
-        # np als outout ein problem ?? -> sorgt das für das gradient problem ?
-        return np.squeeze(x)
+        return x
 
 #######################################################################################
 
@@ -212,6 +210,23 @@ def train_step(inputs, target):
     return loss, acc
 
 
+# def evaluate(inputs, target):
+#     output =  []
+#     for x_te, a_te, e_te, labels_te in zip(inputs[0], inputs[1], inputs[2], target):
+#         input_i = (x_te, a_te, e_te)
+
+#         pred = model(input_i, training=False)
+#         outs = (
+#             loss_fn(labels_te, pred),
+#             tf.reduce_mean(mean_absolute_percentage_error(labels_te, pred)),
+#             len(labels_te),  # Keep track of batch size
+#         )
+#         output.append(outs)
+
+#         output = np.array(output)
+#     return np.average(output[:, :-1], 0, weights=output[:, -1])
+
+
 def evaluate(inputs, target):
     output = []
 
@@ -227,37 +242,55 @@ def evaluate(inputs, target):
     return np.average(output[:, :-1], 0, weights=output[:, -1])
 
 
+# def test_evaluation(inputs, target, n_days):
+
+#     pred = model(inputs, training=False)
+#     n_nodes = pred.shape[0]
+#     mean_per_batch = []
+
+#     for batch_p, batch_t in zip(pred, target):
+#         MAPE_v = []
+#         for v_p, v_t in zip(batch_p, batch_t):
+
+#             pred_ = tf.reshape(v_p, (n_days, 48))
+#             target_ = tf.reshape(v_t, (n_days, 48))
+
+#             diff = pred_ - target_
+#             relative_err = (abs(diff))/abs(target_)
+#             relative_err_transformed = np.asarray(
+#                 relative_err).transpose().reshape(8, -1)
+#             relative_err_means_percentage = relative_err_transformed.mean(
+#                 axis=1) * 100
+
+#             MAPE_v.append(relative_err_means_percentage)
+
+#         mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
+
+#     mean_percentage = pd.DataFrame(
+#         data=np.asarray(mean_per_batch).transpose().mean(axis=1),
+#         index=[str(compartment).split('.')[1]
+#                for compartment in InfectionState.values()],
+#         columns=['Percentage Error'])
+
+#     return mean_percentage
+
+
 def test_evaluation(inputs, target, n_days):
 
     pred = model(inputs, training=False)
+    n_nodes = pred.shape[0]
 
-    mean_per_batch = []
+    pred_ = tf.reshape(pred, (n_nodes, n_days, 48))
+    target_ = tf.reshape(target, (n_nodes, n_days, 48))
 
-    for batch_p, batch_t in zip(pred, target):
-        MAPE_v = []
-        for v_p, v_t in zip(batch_p, batch_t):
+    diff = pred_ - target_
+    relative_err = (abs(diff))/abs(target_)
+    relative_err_transformed = np.asarray(
+        relative_err).transpose().reshape(8, -1)
+    relative_err_means_percentage = relative_err_transformed.mean(
+        axis=1) * 100
 
-            pred_ = tf.reshape(v_p, (n_days, 48))
-            target_ = tf.reshape(v_t, (n_days, 48))
-
-            diff = pred_ - target_
-            relative_err = (abs(diff))/abs(target_)
-            relative_err_transformed = np.asarray(
-                relative_err).transpose().reshape(8, -1)
-            relative_err_means_percentage = relative_err_transformed.mean(
-                axis=1) * 100
-
-            MAPE_v.append(relative_err_means_percentage)
-
-        mean_per_batch.append(np.asarray(MAPE_v).transpose().mean(axis=1))
-
-    mean_percentage = pd.DataFrame(
-        data=np.asarray(mean_per_batch).transpose().mean(axis=1),
-        index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
-        columns=['Percentage Error'])
-
-    return mean_percentage
+    return relative_err_means_percentage
 
 
 ########## instead if dataloader: transform graph data to necessary form ############
@@ -304,13 +337,13 @@ dropout = 0.3
 nhid = 64
 nfeat = node_features.shape[3]
 nout = data.n_labels
-n_days = node_labels.shape[1]
+n_days = 31  # flexibel machen
 
-epochs = 10
-es_patience = 10
+epochs = 50
+es_patience = 100
 lr = 0.001
 batch_size = 32
-steps_per_epoch = 23
+# steps_per_epoch = 23
 loss_fn = MeanAbsolutePercentageError()
 optimizer = Adam(lr=lr)
 
@@ -324,8 +357,6 @@ model = MPNN(nfeat, nhid, nout, n_nodes, dropout)
 
 
 start = time.perf_counter()
-
-
 epoch = step = 0
 best_val_loss = np.inf
 best_weights = None
@@ -333,51 +364,147 @@ patience = es_patience
 results = []
 losses_history = []
 val_losses_history = []
-# start = time.perf_counter()
-for x_t, a_t, e_t, labels_t, x_v, a_v, e_v, labels_v in zip(
-        data_tr_input_tuple[0],
-        data_tr_input_tuple[1],
-        data_tr_input_tuple[2],
-        data_tr_labels,
-        data_va_input_tuple[0],
-        data_va_input_tuple[1],
-        data_va_input_tuple[2],
-        data_va_labels):
 
-    step += 1
-    inputs_tr = (x_t, a_t, e_t)
-    loss, acc = train_step(inputs_tr, labels_t)
-    results.append((loss, acc))
-    if step == steps_per_epoch:
-        step = 0
-        epoch += 1
+train_dataset = tf.data.Dataset.from_tensor_slices(
+    (data_tr_input_tuple, data_tr_labels))
+train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
+
+val_dataset = tf.data.Dataset.from_tensor_slices(
+    (data_va_input_tuple, data_va_labels))
+val_dataset = val_dataset.batch(batch_size)
+
+model = MPNN(nfeat, nhid, nout, n_nodes, dropout)
+for epoch in range(epochs):
+
+    print('\nStart of epoch %d' % (epoch,))
+
+    # for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+    #     x_t = x_batch_train[0]
+    #     a_t = x_batch_train[1]
+    #     e_t = x_batch_train[2]
+
+    #     batch_results = []
+    #     batch_predictions = []
+    #     for i, (x_t_i, a_t_i, e_t_i, labels) in enumerate(
+    #             zip(x_t, a_t, e_t, y_batch_train)):
+    #         inputs = (x_t_i, a_t_i, e_t_i)
+
+    #         with tf.GradientTape() as tape:
+    #             predictions = model(inputs)
+    #             batch_predictions.append(predictions)
+    #     loss = loss_fn(y_batch_train, tf.convert_to_tensor(batch_predictions)) + sum(model.losses)
+
+    #     gradients = tape.gradient(loss, model.trainable_variables)
+    #     optimizer.apply_gradients(
+    #             zip(gradients, model.trainable_variables))
+
+    #         # loss, acc = train_step(inputs, labels)
+
+    #     batch_results.append(loss)
+    #     print(
+    #             "Step {} - in batch number: {:.3f} done".format(len(batch_results), len(results)))
+    #     results.append(np.mean(np.asarray(batch_results)))
+
+    for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+        x_t = x_batch_train[0]
+        a_t = x_batch_train[1]
+        e_t = x_batch_train[2]
+
+        batch_results = []
+        batch_predictions = []
+        for i, (x_t_i, a_t_i, e_t_i, labels) in enumerate(
+                zip(x_t, a_t, e_t, y_batch_train)):
+            inputs = (x_t_i, a_t_i, e_t_i)
+
+            with tf.GradientTape() as tape:
+                predictions = model(inputs)
+                batch_predictions.append(predictions)
+        loss = loss_fn(labels, predictions) + sum(model.losses)
+
+        gradients = tape.gradient(loss, model.trainable_variables[11:])
+        optimizer.apply_gradients(
+            zip(gradients, model.trainable_variables[11:]))
+
+        # loss, acc = train_step(inputs, labels)
+
+        batch_results.append(loss)
+        print(
+            "Step {} - in batch number: {:.3f} done".format(len(batch_results), len(results)))
+        results.append(np.mean(np.asarray(batch_results)))
 
         # Compute validation loss and accuracy
-        inputs_va = (x_v, a_v, e_v)
-        val_loss, val_acc = evaluate(inputs_va, labels_v)
-        print(
-            "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
-                epoch, *np.mean(results, 0), val_loss, val_acc
-            )
-        )
+    for x_batch_val, y_batch_val in (val_dataset):
+        x_v = x_batch_val[0]
+        a_v = x_batch_val[1]
+        e_v = x_batch_val[2]
 
-        # Check if loss improved for early stopping
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience = es_patience
-            print("New best val_loss {:.3f}".format(val_loss))
-            best_weights = model.get_weights()
-        else:
-            patience -= 1
-            if patience == 0:
-                print(
-                    "Early stopping (best val_loss: {})".format(
-                        best_val_loss))
-                break
-        results = []
-        losses_history.append(loss)
-        val_losses_history.append(val_loss)
+        validation_batch_result = []
+        for x_v_i, a_v_i, e_v_i, labels in zip(
+                x_v, a_v, e_v, y_batch_val):
+            inputs_va = (x_v_i, a_v_i, e_v_i)
+            val_loss, val_acc = evaluate(inputs_va, y_batch_val)
+            validation_batch_result.append(val_loss)
+    print("Ep. {} - Loss: {:.3f}  - Val loss: {:.3f}".format(epoch,
+                                                             np.mean(np.asarray(batch_results)), np.asarray(validation_batch_result).mean()))
+
+    losses_history.append(loss)
+    val_losses_history.append(val_loss)
 elapsed = time.perf_counter() - start
+
+
+# start = time.perf_counter()
+# epoch = step = 0
+# best_val_loss = np.inf
+# best_weights = None
+# patience = es_patience
+# results = []
+# losses_history = []
+# val_losses_history = []
+# # start = time.perf_counter()
+# for x_t, a_t, e_t, labels_t, x_v, a_v, e_v, labels_v in zip(
+#         data_tr_input_tuple[0],
+#         data_tr_input_tuple[1],
+#         data_tr_input_tuple[2],
+#         data_tr_labels,
+#         data_va_input_tuple[0],
+#         data_va_input_tuple[1],
+#         data_va_input_tuple[2],
+#         data_va_labels):
+
+#     step += 1
+#     inputs_tr = (x_t, a_t, e_t)
+#     loss, acc = train_step(inputs_tr, labels_t)
+#     results.append((loss, acc))
+#     if step == steps_per_epoch:
+#         step = 0
+#         epoch += 1
+
+#         # Compute validation loss and accuracy
+#         inputs_va = (x_v, a_v, e_v)
+#         val_loss, val_acc = evaluate(inputs_va, labels_v)
+#         print(
+#             "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
+#                 epoch, *np.mean(results, 0), val_loss, val_acc
+#             )
+#         )
+
+#         # Check if loss improved for early stopping
+#         if val_loss < best_val_loss:
+#             best_val_loss = val_loss
+#             patience = es_patience
+#             print("New best val_loss {:.3f}".format(val_loss))
+#             best_weights = model.get_weights()
+#         else:
+#             patience -= 1
+#             if patience == 0:
+#                 print(
+#                     "Early stopping (best val_loss: {})".format(
+#                         best_val_loss))
+#                 break
+#         results = []
+#         losses_history.append(loss)
+#         val_losses_history.append(val_loss)
+# elapsed = time.perf_counter() - start
 ################################################################################
 # Evaluate model
 ################################################################################
@@ -386,12 +513,51 @@ start = time.perf_counter()
 model.set_weights(best_weights)  # Load best model
 
 
-test_loss, test_acc = evaluate(data_te_input_tuple)
+# test_loss, test_acc = evaluate(data_te_input_tuple, data_te_labels)
 
-test_MAPE = test_evaluation(data_te_input_tuple, n_days)
+
+losses = []
+for x_te, a_te, e_te, labels_te in zip(
+        data_te_input_tuple[0],
+        data_te_input_tuple[1],
+        data_te_input_tuple[2],
+        data_te_labels):
+
+    inputs = (x_te, a_te, e_te)
+    target = labels_te
+    test_loss, test_acc = evaluate(inputs, target)
+
+    losses.append(test_loss)
 print(
-    "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
-        test_loss, test_acc))
+    "Done. Test loss: {:.4f}".format(
+        np.asarray(losses).mean()))
+
+
+n_days = 31
+MAPES_array = []
+for x_te, a_te, e_te, labels_te in zip(
+        data_te_input_tuple[0],
+        data_te_input_tuple[1],
+        data_te_input_tuple[2],
+        data_te_labels):
+
+    inputs = (x_te, a_te, e_te)
+    target = labels_te
+    test_MAPE = test_evaluation(inputs, target,  n_days)
+
+    MAPES_array.append(test_MAPE)
+
+mean_percentage = pd.DataFrame(
+    data=np.asarray(MAPES_array).transpose().mean(axis=1),
+    index=[str(compartment).split('.')[1]
+           for compartment in InfectionState.values()],
+    columns=['Percentage Error'])
+
+print(mean_percentage)
+
+
+# test_MAPE = test_evaluation(data_te_input_tuple, data_te_features,  n_days)
+
 
 elapsed_test = time.perf_counter() - start
 
