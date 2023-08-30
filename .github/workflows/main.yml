@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - uses: pre-commit/action@v3.0.0
 
   build-cpp-gcc_clang:
@@ -202,16 +202,6 @@ jobs:
         with:
           package: generation
 
-  test-py-generation:
-    if: github.event.pull_request.draft == false
-    needs: build-py-generation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/test-py
-        with:
-          package: generation
-
   build-py-simulation:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -234,9 +224,25 @@ jobs:
         with:
           package: surrogatemodel
 
+  test-py-generation:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
+    needs: build-py-generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/test-py
+        with:
+          package: generation
+
   test-py-simulation:
     if: github.event.pull_request.draft == false
     needs: build-py-simulation
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -247,6 +253,9 @@ jobs:
   test-py-surrogatemodel:
     if: github.event.pull_request.draft == false
     needs: [build-py-surrogatemodel, build-py-simulation]
+    strategy:
+      matrix: 
+        version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

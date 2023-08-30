@@ -32,15 +32,18 @@ namespace osecir
  */
 enum class InfectionState
 {
-    Susceptible        = 0,
-    Exposed            = 1,
-    InfectedNoSymptoms = 2,
-    InfectedSymptoms   = 3,
-    InfectedSevere     = 4,
-    InfectedCritical   = 5,
-    Recovered          = 6,
-    Dead               = 7,
-    Count              = 8
+    Susceptible = 0,
+    Exposed,
+    InfectedNoSymptoms,
+    InfectedNoSymptomsConfirmed,
+    InfectedSymptoms,
+    InfectedSymptomsConfirmed,
+    InfectedSevere,
+    InfectedCritical,
+    Recovered,
+    Dead,
+
+    Count
 };
 
 } // namespace osecir

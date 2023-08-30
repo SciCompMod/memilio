@@ -31,7 +31,7 @@ namespace pymio
  * @brief bind Simulation for any number model
  */
 template <class Simulation>
-void bind_Simulation(pybind11::module& m, std::string const& name)
+void bind_Simulation(pybind11::module_& m, std::string const& name)
 {
     pybind11::class_<Simulation>(m, name.c_str())
         .def(pybind11::init<const typename Simulation::Model&, double, double>(), pybind11::arg("model"),
