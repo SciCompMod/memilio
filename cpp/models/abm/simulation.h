@@ -70,15 +70,14 @@ public:
     template <typename History>
     void advance(TimePoint tmax, History& history)
     {
-        mio::unused(history);
         //log initial system state
         initialize_locations(m_t);
         store_result_at(m_t);
-        // history.log(*this);
+        history.log(*this);
         while (m_t < tmax) {
             evolve_world(tmax);
             store_result_at(m_t);
-            // history.log(*this);
+            history.log(*this);
         }
     }
 
