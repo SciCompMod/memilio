@@ -165,7 +165,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             len(mlp_output.history['val_loss']), max_epochs)
         lstm_single_output = model.network_fit(
-            self.path, model=model_lstm_multi_input_single_output, max_epochs=max_epochs, plot=False)
+            self.path, model=model_lstm_multi_input_single_output,
+            max_epochs=max_epochs, plot=False)
         self.assertEqual(
             len(lstm_single_output.history['val_loss']), max_epochs)
 

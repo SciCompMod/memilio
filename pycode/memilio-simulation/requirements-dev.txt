@@ -1,1 +1,1 @@
-numpy >= 1.21
+numpy>=1.22,<1.25  # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
