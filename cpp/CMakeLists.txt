@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(memilio VERSION 0.1.0)
+project(memilio VERSION 0.7.0)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
@@ -15,6 +15,7 @@ option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
 option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
+option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -117,6 +118,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirvvs)
+    add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
     add_subdirectory(models/ode_seir)
 endif()

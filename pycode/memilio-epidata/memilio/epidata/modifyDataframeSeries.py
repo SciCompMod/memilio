@@ -188,7 +188,7 @@ def impute_and_reduce_df(
 
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, groupby_list,
-        new_column_labels, compute_cumsum):
+        column_identifiers_to_names_dict, compute_cumsum):
     """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
@@ -196,17 +196,25 @@ def split_column_based_on_values(
     @param column_to_split identifier of the column for which separate values will define separate dataframes
     @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
     @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
-    @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
+    @param column_identifiers_to_names_dict Dict for new labels of resulting columns.
     @param compute_cumsum Computes cumulative sum in new generated columns
     @return a dataframe with the new splitted columns
     """
-    # TODO: Maybe we should input a map e.g. 1->Vacc_partially, 2->Vacc_completed etc. This is more future proof.
-    # check number of given names and correct if necessary
     column_identifiers = sorted(df_to_split[column_to_split].unique())
-    i = 2
-    while len(column_identifiers) > len(new_column_labels):
-        new_column_labels.append(new_column_labels[-1]+'_'+str(i))
-        i += 1
+    new_column_labels = []
+    # for column identifiers not in column_identifiers_to_names_dict.keys()
+    # use the dict value with key 'additional identifiers' and add _2,_3,_4...
+    key_to_start_count = [
+        key for key, value in column_identifiers_to_names_dict.items()
+        if value == column_identifiers_to_names_dict['additional identifiers']][0]
+
+    for i in column_identifiers:
+        if i in column_identifiers_to_names_dict.keys():
+            new_column_labels.append(column_identifiers_to_names_dict[i])
+        else:
+            new_column_labels.append(
+                column_identifiers_to_names_dict['additional identifiers'] + '_' +
+                str(i - key_to_start_count + 1))
 
     # create empty copy of the df_to_split
     df_joined = pd.DataFrame(

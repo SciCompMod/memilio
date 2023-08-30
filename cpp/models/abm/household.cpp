@@ -30,9 +30,9 @@ namespace abm
 namespace
 {
 /**
- * Picks an age from a custom index array with a weight for each age group according to a discrete distribution.
- * @param age_groups A custom index array with the weights.
- * @return The picked age group.
+ * @brief Picks an age from a CustomIndexArray with a weight for each AgeGroup according to a discrete distribution.
+ * @param[in] age_groups A CustomIndexArray with the weights.
+ * @return The picked AgeGroup.
  */
 AgeGroup pick_age_group_from_age_distribution(const CustomIndexArray<int, AgeGroup>& age_groups)
 {
@@ -68,7 +68,7 @@ void add_household_to_world(World& world, const Household& household)
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
-            auto& person   = world.add_person(home, InfectionState::Susceptible, age_group);
+            auto& person   = world.add_person(home, age_group);
             person.set_assigned_location(home);
         }
     }

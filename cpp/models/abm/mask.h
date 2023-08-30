@@ -28,45 +28,53 @@ namespace mio
 {
 namespace abm
 {
+/**
+ * @brief Reduces the probability that a Person becomes infected.
+ * Every Person has a Mask that reduces the probability of becoming infected when wearing this Mask.
+ */
 class Mask
 {
 public:
+    /**
+     * @brief Construct a new Mask of a certain type.
+     * @param[in] type The type of the Mask.
+     */
     Mask(MaskType type);
 
     /**
-    * get the type of the mask 
-    */
+     * @brief Get the MaskType of this Mask.
+     */
     MaskType get_type() const
     {
         return m_type;
     }
 
     /**
-    * get the time the mask was used
-    */
+     * @brief Get the length of time this Mask has been used.
+     */
     const TimeSpan& get_time_used() const
     {
         return m_time_used;
     }
 
     /**
-    * @brief increase the time the mask was used by a timestep
-    * @param dt the length of the timestep
-    */
+     * @brief Increase the time this Mask was used by a timestep.
+     * @param[in] dt The length of the timestep.
+     */
     void increase_time_used(TimeSpan dt)
     {
         m_time_used += dt;
     }
 
     /**
-    * @brief change the type of the mask and reset the time it was used
-    * @param new_mask_type the type of the new mask
-    */
+     * @brief Change the type of the Mask and reset the time it was used.
+     * @param[in] new_mask_type The type of the new Mask.
+     */
     void change_mask(MaskType new_mask_type);
 
 private:
-    MaskType m_type;
-    TimeSpan m_time_used;
+    MaskType m_type; ///< Type of the Mask.
+    TimeSpan m_time_used; ///< Length of time the Mask has been used.
 };
 } // namespace abm
 } // namespace mio

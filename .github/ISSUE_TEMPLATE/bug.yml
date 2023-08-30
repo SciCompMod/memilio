@@ -1,0 +1,69 @@
+name: "🐛 Bug report"
+description: "Use this template to report bugs."
+labels:
+  - "class::bug"
+body:
+  - type: markdown
+    attributes:
+      value: "Please check our [existing issues](https://github.com/DLR-SC/memilio/issues) beforehand."
+  - type: textarea
+    id: bug-desc
+    attributes:
+      label: Bug description
+      description: |
+        Describe the bug.
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: Which operating system are you using?
+      options:
+        - Windows
+        - Linux
+        - Mac
+        - Github (CI, Actions, etc.)
+        - Any
+    validations:
+      required: true
+  - type: textarea
+    id: bug-reprod
+    attributes:
+      label: To reproduce
+      description: |
+        List the steps to reproduce the bug.
+      placeholder: |
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Build software via '....'
+        3. Execute program '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code.
+      render: zsh
+  - type: textarea
+    id: add_info
+    attributes:
+      label: Add any relevant information, e.g. used compiler, screenshots.
+      render: zsh
+      placeholder: |
+        - Compiler: [e.g. gcc 10]
+        - Used libraries [e.g. HDF5 1.10.7,  OpenMPI 4.1.4, ...]
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      description: Add Labels and add this issue to a project.
+      options:
+        - label: "Attached labels, especially loc:: or model:: labels."
+          required: false
+        - label: Linked to project
+          required: false

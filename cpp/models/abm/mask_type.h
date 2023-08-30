@@ -29,7 +29,7 @@ namespace abm
 {
 
 /**
- * type of a mask
+ * @brief Type of a Mask.
  */
 enum class MaskType : std::uint32_t
 {

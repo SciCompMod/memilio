@@ -83,23 +83,51 @@ constexpr bool negation_v = negation<Trait>::value;
 /**@}*/
 
 /**
- * conjunction (logical and) of zero or more type traits with bool values.
- * Does boolean shortcircuiting as expected. 
+ * conjunction (logical and) of zero or more type traits with boolean values.
+ * Does boolean shortcircuiting (like regular `if`) as expected. 
  * see https://en.cppreference.com/w/cpp/types/conjunction.
  * @{
  */
 template <class...>
 struct conjunction : std::true_type {
+    //conjunction of no elements is true like in c++17
 };
 template <class B1>
 struct conjunction<B1> : B1 {
+    //conjunction of one element is identity
 };
 template <class B1, class... Bn>
 struct conjunction<B1, Bn...> : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {
+    //conjunction of multiple elements is equal to the first element iff the first element is false.
+    //otherwise its equal to the conjunction of the remaining elements.
 };
 template <class... Bs>
 constexpr bool conjunction_v = conjunction<Bs...>::value;
 /**@}*/
+
+/**
+* disjunction (logical or) of zero or more type traits with boolean values.
+* Does boolean shortcircuiting (like regular `if`) as expected.
+* see https://en.cppreference.com/w/cpp/types/disjunction.
+* @{
+*/
+template<class...>
+struct disjunction : std::false_type {
+    //disjunction of no element is false like in c++17
+};
+template <class B1>
+struct disjunction<B1> : B1 {
+    //disjunction of one element is identity
+};
+template<class B1, class... Bn>
+struct disjunction<B1, Bn...> : std::conditional<bool(B1::value), B1, disjunction<Bn...>> {
+    //disjunction of mutliple elements is equal to the first element if the first element is true.
+    //otherwise its equal to the disjunction of the remaining elements.
+};
+template<class... Bn>
+constexpr bool disjunction_v = disjunction<Bn...>::value;
+/**@}*/
+
 
 namespace details
 {

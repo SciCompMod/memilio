@@ -61,7 +61,9 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
     if not read_data:
 
-        df_weather_old = gd.loadCsv('', 'wetterdaten', '.csv')
+        df_weather_old = pd.read_csv(
+            'https://opendata.arcgis.com/datasets/wetterdaten.csv', sep=',',
+            header=0, dtype=None)
         df_weather_old.rename(dd.GerEng, axis=1, inplace=True)
         col_old = ['kr_tamm_',  # average temperature
                    'kr_tadn_',  # temperature minimum

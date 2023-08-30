@@ -25,9 +25,9 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/io/io.h"
+#include "memilio/io/serializer_base.h"
 #include "memilio/utils/metaprogramming.h"
 #include "json/json.h"
-#include "boost/optional.hpp"
 #include <fstream>
 #include <utility>
 #include <limits>
@@ -198,68 +198,9 @@ struct JsonType<const char*> : std::true_type {
 /**@}*/
 
 /**
- * Base class for implementations of serialization framework concepts.
- * Stores status and flags.
- */
-class JsonBase
-{
-public:
-    /**
-     * Constructor that sets status and flags.
-     */
-    JsonBase(std::shared_ptr<IOStatus> status, int flags)
-        : m_status(status)
-        , m_flags(flags)
-    {
-        assert(status && "Status must not be null.");
-    }
-
-    /**
-     * Flags that determine the behavior of serialization.
-     * @see mio::IOFlags
-     */
-    int flags() const
-    {
-        return m_flags;
-    }
-
-    /**
-     * Set flags that determine the behavior of serialization.
-     * @see mio::IOFlags
-     */
-    void set_flags(int f)
-    {
-        m_flags = f;
-    }
-
-    /**
-     * The current status of serialization.
-     * Contains errors that occurred.
-     */
-    const IOStatus& status() const
-    {
-        return *m_status;
-    }
-
-    /**
-     * Set the current status of serialization.
-     */
-    void set_error(const IOStatus& status)
-    {
-        if (*m_status) {
-            *m_status = status;
-        }
-    }
-
-protected:
-    std::shared_ptr<IOStatus> m_status;
-    int m_flags;
-};
-
-/**
  * Implementation of the IOObject concept for JSON format.
  */
-class JsonObject : public JsonBase
+class JsonObject : public SerializerBase
 {
 public:
     /**
@@ -268,8 +209,8 @@ public:
      * @param value reference to the json value that will store the data.
      * @param flags flags to determine the behavior of serialization.
      */
-    JsonObject(const std::shared_ptr<IOStatus>& status, Json::Value& value, int flags)
-        : JsonBase{status, flags}
+    JsonObject(Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
+        : SerializerBase{status, flags}
         , m_value{value}
     {
     }
@@ -356,7 +297,7 @@ private:
 /**
  * Implemenetation of IOContext concept for JSON format.
  */
-class JsonContext : public JsonBase
+class JsonContext : public SerializerBase
 {
 public:
     /**
@@ -366,7 +307,7 @@ public:
      * @param flags flags to determine behavior of serialization.
      */
     JsonContext(const std::shared_ptr<IOStatus>& status, int flags)
-        : JsonBase{status, flags}
+        : SerializerBase{status, flags}
         , m_value{}
     {
     }
@@ -379,7 +320,7 @@ public:
      * @param flags flags to determine behavior of serialization.
      */
     JsonContext(const Json::Value& value, const std::shared_ptr<IOStatus>& status, int flags)
-        : JsonBase(status, flags)
+        : SerializerBase(status, flags)
         , m_value(value)
     {
     }
@@ -395,7 +336,7 @@ public:
     {
         mio::unused(type);
         m_value = Json::Value(Json::objectValue);
-        return {m_status, m_value, m_flags};
+        return {m_value, m_status, m_flags};
     }
 
     /**
@@ -411,7 +352,7 @@ public:
         if (!m_value.isObject()) {
             *m_status = IOStatus(StatusCode::InvalidType, "Json value must be an object.");
         }
-        return JsonObject(m_status, m_value, m_flags);
+        return JsonObject(m_value, m_status, m_flags);
     }
 
     /**

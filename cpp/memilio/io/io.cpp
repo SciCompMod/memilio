@@ -23,7 +23,7 @@
 
 MSVC_WARNING_DISABLE_PUSH(4268)
 #include <boost/filesystem.hpp>
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 
 namespace mio
 {

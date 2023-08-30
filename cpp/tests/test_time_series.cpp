@@ -149,6 +149,7 @@ TYPED_TEST(TestTimeSeries, constAccess)
     ASSERT_EQ(print_wrap(ts[0]), print_wrap(constref[0]));
 }
 
+#ifndef NDEBUG
 TYPED_TEST(TestTimeSeries, createInvalidDim)
 {
     if (std::is_signed<Eigen::Index>::value) {
@@ -156,7 +157,7 @@ TYPED_TEST(TestTimeSeries, createInvalidDim)
             mio::TimeSeries<TypeParam> ts(-1);
             return ts;
         };
-        ASSERT_DEBUG_DEATH(create(), ".*");
+        ASSERT_DEATH(create(), ".*");
     }
 }
 
@@ -166,10 +167,11 @@ TYPED_TEST(TestTimeSeries, accessInvalidRange)
     for (Eigen::Index i = 0; i < 123; i++) {
         ts.add_time_point();
     }
-    ASSERT_DEBUG_DEATH(ts.get_value(-1), testing::ContainsRegex(".*"));
-    ASSERT_DEBUG_DEATH(ts.get_value(123), testing::ContainsRegex(".*"));
-    ASSERT_DEBUG_DEATH(ts.get_value(1231556), testing::ContainsRegex(".*"));
+    ASSERT_DEATH(ts.get_value(-1), testing::ContainsRegex(".*"));
+    ASSERT_DEATH(ts.get_value(123), testing::ContainsRegex(".*"));
+    ASSERT_DEATH(ts.get_value(1231556), testing::ContainsRegex(".*"));
 }
+#endif
 
 TYPED_TEST(TestTimeSeries, data)
 {

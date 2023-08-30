@@ -17,7 +17,7 @@ if(MEMILIO_USE_BUNDLED_PYBIND11)
     include(FetchContent)
     FetchContent_Declare(pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11
-        GIT_TAG v2.5
+        GIT_TAG v2.11.1
     )
     FetchContent_GetProperties(pybind11)
 
@@ -51,7 +51,7 @@ pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
     memilio/simulation/epidemiology/damping_sampling.cpp
     memilio/simulation/epidemiology/uncertain_matrix.cpp
-    memilio/simulation/mobility/meta_mobility_instant.cpp
+    memilio/simulation/mobility/metapopulation_mobility_instant.cpp
     memilio/simulation/utils/date.cpp
     memilio/simulation/utils/logging.cpp
     memilio/simulation/utils/time_series.cpp

@@ -18,11 +18,12 @@
 # limitations under the License.
 #############################################################################
 import os
+import json
 import sys
-import unittest
 from datetime import date, datetime
 from io import StringIO
-from unittest.mock import call, patch
+import unittest
+from unittest.mock import patch, PropertyMock
 
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
@@ -52,75 +53,22 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 "Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-26T00:00:00Z", "NeuGenesen": -9, "AnzahlGenesen": 0, "IstErkrankungsbeginn": 0, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null }\
 ]}""")
 
+    # use hospitalization data file to test get_file
+    here = os.path.dirname(os.path.abspath(__file__))
+    test_data_file = os.path.join(
+        here, "test_data", "TestSetFullHospitalizationData.json")
+    # Load JSON file data to a python dict object.
+    with open(test_data_file) as file_object:
+        dict_object = json.load(file_object)
+
+    test_string_file = json.dumps(dict_object)
+
     def setUp(self):
         self.setUpPyfakefs()
-        # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
-        del sys.argv[1:]
-        # TODO:Is this is a good way to solve this?
 
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.urlopen')
-    def test_load_geojson_error(self, mock_urlopen):
-
-        mock_urlopen.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadGeojson("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.geojson' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_excel')
-    def test_load_Excel_error(self, mock_urlopen):
-
-        mock_urlopen.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadExcel("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.xls' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
-    def test_load_csv_error(self, mock_csv):
-        # return an empty dataframe
-        mock_csv.return_value = pd.DataFrame()
-
-        df_test = gd.loadCsv("targetFileName")
-        expected_call = [
-            call(
-                'https://opendata.arcgis.com/datasets/' +
-                "targetFileName" + '.csv', sep=',',  header=0, encoding=None, dtype=None)]
-        mock_csv.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-        df_test = gd.loadCsv(
-            "targetFileName",
-            apiUrl='https://opendata.arcgis.com/datasets/different/',
-            extension='.notcsv')
-        expected_call = [
-            call(
-                'https://opendata.arcgis.com/datasets/different/' +
-                "targetFileName" + '.notcsv', sep=',',  header=0, encoding=None, dtype=None)]
-        mock_csv.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
-    def test_load_csv_working(self, mock_csv):
-        mock_csv.side_effect = OSError
-
-        with self.assertRaises(FileNotFoundError) as error:
-            gd.loadCsv("targetFileName")
-
-        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
-            "targetFileName" + '.csv' + " could not be opened."
-
-        self.assertEqual(str(error.exception), error_message)
+    def write_data(self, path_to_file):
+        with open(path_to_file, 'w') as f:
+            f.write(self.test_string_file)
 
     def test_cli_correct_default(self):
 
@@ -497,7 +445,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         self.assertEqual(fread, self.test_string_json_timeasstring)
 
         # TODO: Why does check of hdf5 not work?
-        #gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
+        # gd.write_dataframe(df, self.path, "test_hdf", 'hdf5')
         # file = "test_hdf.h5"
         # self.assertEqual(len(os.listdir(self.path)), 3)
         # self.assertEqual(os.listdir(self.path), [file])
@@ -560,13 +508,15 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         arg_dict_jh = {**arg_dict_all, **arg_dict_data_download}
 
+        arg_dict_popul = {**arg_dict_all, "username": None, "password": None}
+
         getVaccinationData.main()
         mock_vaccination.assert_called()
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
 
         getPopulationData.main()
         mock_popul.assert_called()
-        mock_popul.assert_called_with(**arg_dict_all)
+        mock_popul.assert_called_with(**arg_dict_popul)
 
         getCaseData.main()
         mock_cases.assert_called()
@@ -583,6 +533,76 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         getJHData.main()
         mock_jh.assert_called()
         mock_jh.assert_called_with(**arg_dict_jh)
+
+    def test_get_file_read(self):
+        # first test with read_data = True. get_file should return the json file as dataframe
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = ''
+        read_data = True
+        param_dict = {}
+
+        # write file
+        gd.check_dir(self.path)
+        self.write_data(filepath)
+
+        df = gd.get_file(filepath, url, read_data, param_dict)
+
+        # check if non-empty dataframe is returned (Error is raised if dataframe is empty)
+        self.assertEqual(
+            str(type(df)), "<class 'pandas.core.frame.DataFrame'>")
+
+    @patch('pandas.read_json')
+    def test_get_file_empty_df(self, mock_json):
+
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = ''
+        read_data = True
+        param_dict = {}
+
+        # return empty dataframe
+        mock_json.return_value = pd.DataFrame()
+
+        # get_file should raise an error if returned dataframe is empty
+        with self.assertRaises(gd.DataError) as error:
+            gd.get_file(filepath, url, read_data, param_dict)
+
+        error_message = "Error: Dataframe is empty."
+        self.assertEqual(str(error.exception), error_message)
+
+    @patch('requests.get')
+    @patch('builtins.input')
+    @patch('pandas.read_json')
+    def test_get_file_user_input(self, mock_json, mock_in, mock_request):
+
+        filepath = os.path.join(self.path, 'test_file.json')
+        url = 'test_url.com'
+        read_data = True
+        param_dict = {}
+
+        # test with user input 'N'; get_file should raise filenotfounderror
+        mock_json.side_effect = FileNotFoundError
+        mock_in.return_value = 'N'
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
+
+        error_message = "Error: The file from " + filepath + \
+            " does not exist. Call program without -r flag to get it."
+        self.assertEqual(str(error.exception), error_message)
+
+        # test with user input 'y'; get file should try to download from url
+        mock_in.return_value = 'y'
+        # url should not be opened here. Instead raise a 404 Error
+        type(mock_request).status_code = PropertyMock(return_value=404)
+
+        with self.assertRaises(FileNotFoundError) as error:
+            gd.get_file(filepath, url, read_data, param_dict, interactive=True)
+
+        error_message = 'Error: URL test_url.com could not be opened.'
+        self.assertEqual(str(error.exception), error_message)
+
+        # check call count
+        self.assertEqual(mock_in.call_count, 2)
 
 
 if __name__ == '__main__':

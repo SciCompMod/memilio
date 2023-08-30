@@ -1,39 +1,25 @@
-## Merge Request - GuideLine Checklist 
+# Changes and Information
 
-**Guideline** to check code before resolve WIP and approval, respectively.
-As many checkboxes as possible should be ticked.
+Please **briefly list the changes** made, additional Information and what the Reviewer should look out for:
 
-### Checks by code author:
-Always to be checked:
-* [ ] There is at least one issue associated with the pull request.
-* [ ] The branch follows the naming conventions as defined in the [git workflow](git-workflow).
-* [ ] New code adheres with the [coding guidelines](coding-guidelines)
-* [ ] Make sure that the [pre-commit linting/style checks pass](https://github.com/DLR-SC/memilio/wiki).
+-
 
-If functions were changed or functionality was added:
-* [ ] Tests for new functionality has been added
-* [ ] A local test was succesful
+## Merge Request - Guideline Checklist
 
-If new functionality was added:
-* [ ] There is appropriate **documentation** of your work. (use doxygen style comments)
+Please check our [git workflow](https://github.com/DLR-SC/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
-If new third party software is used:
-* [ ] Did you pay attention to its license? Please remember to add it to the wiki after successful merging.
+### Checks by code author
 
-If new mathematical methods or epidemiological terms are used:
-* [ ] Are new methods referenced? Did you provide further documentation? Has the glossary been updated? 
+- [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
+- [ ] New code adheres to [coding guidelines](https://github.com/DLR-SC/memilio/wiki/Coding-guidelines)
+- [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
+- [ ] Tests are added for new functionality and a local test run was successful
+- [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
+- [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
 
-The following questions are addressed in the documentation if need be: 
-* [ ] Developers (what did you do?, how can it be maintained?)
-* [ ] For users (how to use your work?)
-* [ ] For admins (how to install and configure your work?)
+### Checks by code reviewer(s)
 
-* For documentation: Please write or update the Readme in the current working directory!
-
-### Checks by code reviewer(s):
-* [ ] Is the code clean of development artifacts e.g., unnecessary comments, prints, ...
-* [ ] The ticket goals for each associated issue are reached or problems are clearly addressed (i.e., a new issue was introduced).
-* [ ] There are appropriate **unit tests** and they pass.
-* [ ] The git history is clean and linearized for the merge request. All reviewers should squash commits and write a simple and meaningful commit message.
-* [ ] Coverage report for new code is acceptable. 
-
+- [ ] Corresponding issue(s) is/are linked and addressed
+- [ ] Code is clean of development artifacts (no deactivated or commented code lines, no debugging printouts, etc.)
+- [ ] Appropriate **unit tests** have been added, CI passes and code coverage is acceptable (did not decrease)
+- [ ] No large data files added in the whole history of commits(files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)

@@ -21,7 +21,7 @@
 
 // wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
 // (GDB doesn't support calling the overloaded operator())
-int get_element(Eigen::MatrixXd const& m, int i, int j)
+double get_element(Eigen::MatrixXd const& m, int i, int j)
 {
     return m(i, j);
 }

@@ -33,7 +33,7 @@ MSVC_WARNING_DISABLE_PUSH(4127)
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp"
-MSVC_WARNING_POP
+MSVC_WARNING_POP()
 GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace mio

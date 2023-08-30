@@ -45,6 +45,7 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
         m_result.add_time_point();
         step_okay &= m_core->step(m_f, m_result[i], t, dt_eff, m_result[i + 1]);
         m_result.get_last_time() = t;
+        m_next_dt                = dt_eff;
 
         ++i;
 

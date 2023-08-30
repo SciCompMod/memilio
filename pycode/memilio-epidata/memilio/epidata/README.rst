@@ -21,7 +21,6 @@ Sources
 
     If the data on github is not available we download the case data from rki from
     https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/e408ccf8878541a7ab6f6077a42fd811_0
-    In this case the provided data is either geojson or csv.
 
 
   - Vaccination data (RKI-V)
@@ -157,15 +156,15 @@ RKI-C          Germany     cases_all_state_gender              infected, deaths,
 RKI-C          Germany     cases_all_county_age                infected, deaths, recovered over time for different age ranges and counties
 RKI-C          Germany     cases_all_county_gender             infected, deaths, recovered over time for different genders counties
 
-RKI-V          Germany     all_county_vacc                     administered vaccinations per county (first, second and third shot without age resolution)
-RKI-V          Germany     all_states_vacc                     administered vaccinations per state (first, second and third shot without age resolution)
-RKI-V          Germany     all_county_agevacc_vacc             administered vaccinations per county (first, second and third shot for age groups as in input
+RKI-V          Germany     vacc_county                         administered vaccinations per county (first, second and third shot without age resolution)
+RKI-V          Germany     vacc_states                         administered vaccinations per state (first, second and third shot without age resolution)
+RKI-V          Germany     vacc_county_agevacc                 administered vaccinations per county (first, second and third shot for age groups as in input
                                                                data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_states_agevacc_vacc             administered vaccinations per state (first, second and third shot for age groups as in input
+RKI-V          Germany     vacc_states_agevacc                 administered vaccinations per state (first, second and third shot for age groups as in input
                                                                data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_county_ageinf_vacc              administered vaccinations per county (first, second and third shot for age groups as in cases
+RKI-V          Germany     vacc_county_ageinf                  administered vaccinations per county (first, second and third shot for age groups as in cases
                                                                data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
-RKI-V          Germany     all_states_ageinf_vacc              administered vaccinations per state (first, second and third shot for age groups as in cases
+RKI-V          Germany     vacc_states_ageinf                  administered vaccinations per state (first, second and third shot for age groups as in cases
                                                                data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
 
 RKI-T          Germany     germany_testpos                     potive rates of tests over time for germany

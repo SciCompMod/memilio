@@ -29,7 +29,6 @@ from datetime import date
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import requests
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getCaseData as gcd
@@ -63,7 +62,7 @@ WARNING: This file is experimental and has not been tested.
     @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
     @param start_date Date of first date in dataframe. Default 2020-01-01.
     @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.data_path
     @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
     @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.    
@@ -84,8 +83,9 @@ WARNING: This file is experimental and has not been tested.
             rep_date)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, file_format, out_folder, no_raw,
-                        start_date, end_date, impute_dates, moving_average, make_plot_jh)
+        gjd.get_jh_data(
+            read_data, file_format, out_folder, no_raw, start_date, end_date,
+            impute_dates, moving_average, make_plot_jh)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -209,7 +209,15 @@ def compare_estimated_and_rki_deathsnumbers(
     @param make_plot Defines if plots are generated
 
     """
-    df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="%Y-%m-%d")
+    try:
+        df_cases['Date'] = pd.to_datetime(df_cases['Date'], format="ISO8601")
+    except ValueError:
+        try:
+            df_cases['Date'] = pd.to_datetime(
+                df_cases['Date'], format="%Y-%m-%d")
+        except:
+            raise gd.DataError(
+                "Time data can't be transformed to intended format")
     # we set january 2020 to week 1
     # 2020 had 53 weeks
     # meaning weak 45 is first week in 2021
@@ -234,14 +242,10 @@ def compare_estimated_and_rki_deathsnumbers(
     df_jh_week.rename(
         columns={'deaths_daily': 'Deaths_weekly'}, inplace=True)
 
-    # download weekly deaths numbers from rki
-    if not read_data:
-        download_weekly_deaths_numbers(data_path)
+    df_dict = download_weekly_deaths_numbers(
+        sheet_names=['COVID_Todesfälle'], data_path=data_path)
 
-    df_real_deaths_per_week = gd.loadExcel(
-        "Cases_deaths_weekly", apiUrl=data_path, extension=".xlsx",
-        param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week = df_dict['COVID_Todesfälle']
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -313,17 +317,11 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
     @param read_data False or True. Defines if data is read from file or downloaded.
     """
 
-    if not read_data:
-        download_weekly_deaths_numbers(data_path)
+    df_dict = download_weekly_deaths_numbers(sheet_names=[
+                                             'COVID_Todesfälle_KW_AG10', 'COVID_Todesfälle_KW_AG20_G'], data_path=data_path)
 
-    df_real_deaths_per_week_age = gd.loadExcel(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG10', "header": 0,
-                    "engine": 'openpyxl'})
-    df_real_deaths_per_week_gender = gd.loadExcel(
-        'Cases_deaths_weekly', apiUrl=data_path, extension='.xlsx',
-        param_dict={'sheet_name': 'COVID_Todesfälle_KW_AG20_G', "header": 0,
-                    "engine": 'openpyxl'})
+    df_real_deaths_per_week_age = df_dict['COVID_Todesfälle_KW_AG10']
+    df_real_deaths_per_week_gender = df_dict['COVID_Todesfälle_KW_AG20_G']
     df_real_deaths_per_week_age.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'AG 0-9 Jahre': 'age 0-9 years',
@@ -375,21 +373,25 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
         'cases_weekly_deaths_gender_resolved', 'json')
 
 
-def download_weekly_deaths_numbers(data_path):
+def download_weekly_deaths_numbers(sheet_names, data_path):
     """!Downloads excel file from RKI webpage
-
+    @param sheet_names List. Sheet names to be returned.
     @param data_path Path where to store the file.
+
+    @return dict of dataframes with sheetnames as keys.
     """
 
-    name_file = "Cases_deaths_weekly.xlsx"
+    name_file = "Cases_deaths_weekly"
     url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/" \
           "COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
 
-    # data_path: path where to safe Excel-file
-    r = requests.get(url)
-    filename = os.path.join(data_path, name_file)
-    with open(filename, 'wb') as output_file:
-        output_file.write(r.content)
+    # Either download excel file from url or read json file from filepath.
+    # Since sheet_names is a list of names get file returns a dict
+    # with sheet_names as keys and their corresponding dataframes as values.
+    df_dict = gd.get_file(filepath=data_path + name_file + '.json', url=url, read_data=False,
+                          param_dict={'sheet_name': sheet_names, 'header': 0, 'engine': 'openpyxl'})
+
+    return df_dict
 
 
 def main():

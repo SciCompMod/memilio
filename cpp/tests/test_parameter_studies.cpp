@@ -21,7 +21,7 @@
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 #include <stdio.h>
@@ -282,13 +282,15 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8.;
 
         model.populations.set_total(num_total_t0);
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = num_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = num_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = num_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = num_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = num_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = num_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = num_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = num_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = num_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = num_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = num_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = num_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = num_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = num_dead_t0;
         model.populations.set_difference_from_total({i, mio::osecir::InfectionState::Susceptible}, num_total_t0);
 
         params.get<mio::osecir::TransmissionProbabilityOnContact>()[i] = 0.05;

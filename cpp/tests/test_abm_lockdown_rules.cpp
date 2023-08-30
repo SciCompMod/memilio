@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_abm.h"
+#include "abm_helpers.h"
 
 TEST(TestLockdownRules, school_closure)
 {
@@ -41,10 +41,10 @@ TEST(TestLockdownRules, school_closure)
         .WillOnce(testing::Return(0.2))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p1 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
+    auto p1 = mio::abm::Person(home, mio::abm::AgeGroup::Age5to14);
     p1.set_assigned_location(home);
     p1.set_assigned_location(school);
-    auto p2 = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
+    auto p2 = mio::abm::Person(home, mio::abm::AgeGroup::Age5to14);
     p2.set_assigned_location(home);
     p2.set_assigned_location(school);
     mio::abm::MigrationParameters params;
@@ -72,7 +72,7 @@ TEST(TestLockdownRules, school_opening)
         .WillOnce(testing::Return(0.6))
         .WillOnce(testing::Return(0.6))
         .WillRepeatedly(testing::Return(1.0));
-    auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
+    auto p = mio::abm::Person(home, mio::abm::AgeGroup::Age5to14);
     p.set_assigned_location(home);
     p.set_assigned_location(school);
     mio::abm::MigrationParameters params;
@@ -104,8 +104,8 @@ TEST(TestLockdownRules, home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto person1 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, {});
-    auto person2 = mio::abm::Person(home, mio::abm::InfectionState::Susceptible, mio::abm::AgeGroup::Age15to34, {});
+    auto person1 = mio::abm::Person(home, mio::abm::AgeGroup::Age15to34);
+    auto person2 = mio::abm::Person(home, mio::abm::AgeGroup::Age15to34);
     person1.set_assigned_location(home);
     person1.set_assigned_location(work);
     person2.set_assigned_location(home);
@@ -133,7 +133,7 @@ TEST(TestLockdownRules, no_home_office)
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age15to34, {});
+    auto p = mio::abm::Person(home, mio::abm::AgeGroup::Age15to34);
     p.set_assigned_location(home);
     p.set_assigned_location(work);
     mio::abm::MigrationParameters params;
@@ -151,7 +151,7 @@ TEST(TestLockdownRules, social_event_closure)
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::hours(19);
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0);
-    auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
+    auto p         = mio::abm::Person(home, mio::abm::AgeGroup::Age5to14);
     p.set_assigned_location(home);
     p.set_assigned_location(event);
     mio::abm::MigrationParameters params;
@@ -169,7 +169,7 @@ TEST(TestLockdownRules, social_events_opening)
     auto t_evening = mio::abm::TimePoint(0) + mio::abm::days(1) + mio::abm::hours(19);
     auto home      = mio::abm::Location(mio::abm::LocationType::Home, 0);
     auto event     = mio::abm::Location(mio::abm::LocationType::SocialEvent, 0);
-    auto p         = mio::abm::Person(home, mio::abm::InfectionState::Carrier, mio::abm::AgeGroup::Age5to14, {});
+    auto p         = mio::abm::Person(home, mio::abm::AgeGroup::Age5to14);
     p.set_assigned_location(event);
     p.set_assigned_location(home);
     mio::abm::MigrationParameters params;

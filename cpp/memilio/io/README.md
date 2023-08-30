@@ -117,3 +117,11 @@ more efficiently than the provided general free functions.
 
 - HDF5 support classes for C++
 - Reading of mobility matrix files
+
+## The command line interface
+
+We provide a function `mio::command_line_interface` in the header `memilio/io/cli.h`, that can be used to write to or read from a parameter set. It can take parameters from command line arguments (i.e. the content of `argv` in the main function), and assign them to or get them from a `mio::ParameterSet`. A small example can be seen in `cpp/examples/cli.cpp`.
+
+The command line interface (CLI) provides a help dialogue that can be invoked by the argument `--help` or `-h`, and the option `--print_option`. The help option shows the basic usage of the CLI, and lists each parameter by name, as well as any alias and description. "--print_option" can be used with a (space seperated) list of parameter names or aliases (without dashes) to print the current values each parameter to the terminal. In general, an option is defined as a string, which consists either of two dashes followed by a parameter name (e.g. --help), or a single dash followed by its alias (e.g. -h).
+
+To set the value of a parameter from the command line, first type the corresponding option (see --help), followed by the value that should be assigned (reference --print_option). Values are given as a Json value corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted, e.g. the Json string `"some string"` must be entered as `\"some string\"` or `'"some string"'`.

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/mobility/meta_mobility_instant.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "ode_secir/parameter_space.h"
@@ -25,25 +25,34 @@
 #include <data_dir.h>
 #include <iostream>
 
-void print_usage()
+std::string setup(int argc, char** argv, const std::string data_dir)
 {
-    std::cout << "Usage: read_graph MIGRATION_FILE"
-              << "\n\n";
-    std::cout << "This example performs a simulation based on twitter "
-                 "migration data."
-              << std::endl;
+    if (argc == 2) {
+        std::cout << "Using file " << argv[1] << " in data/mobility." << std::endl;
+        return mio::path_join(data_dir, "mobility", (std::string)argv[1]);
+    }
+    else {
+        if (argc > 2) {
+            mio::log_error("Too many arguments given.");
+        }
+        else {
+            mio::log_warning("No arguments given.");
+        }
+        std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
+        std::cout << "Usage: read_graph MIGRATION_FILE"
+                  << "\n\n";
+        std::cout << "This example performs a simulation based on twitter "
+                     "migration data."
+                  << std::endl;
+        return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
+    }
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 2) {
-        print_usage();
-        return -1;
-    }
+    std::string data_dir = DATA_DIR;
+    std::string filename = setup(argc, argv, data_dir);
 
-    std::string dir = DATA_DIR;
-
-    auto filename   = mio::path_join(dir, "migration", (std::string)argv[1]);
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -70,13 +79,15 @@ int main(int argc, char** argv)
         params.get<mio::osecir::TimeInfectedSevere>()[i]   = 12;
         params.get<mio::osecir::TimeInfectedCritical>()[i] = 8;
 
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * nb_exp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * nb_car_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * nb_inf_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * nb_hosp_t0;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * nb_icu_t0;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * nb_rec_t0;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * nb_dead_t0;
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
@@ -114,7 +125,7 @@ int main(int argc, char** argv)
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
             graph.add_edge(row, col,
-                           Eigen::VectorXd::Constant(8 * (size_t)nb_groups,
+                           Eigen::VectorXd::Constant(10 * (size_t)nb_groups,
                                                      twitter_migration_2018(row, col) /
                                                          graph.nodes()[row].property.populations.get_total()));
         }

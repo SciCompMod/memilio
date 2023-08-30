@@ -1,0 +1,38 @@
+name: "Linux Examples"
+description: "Run the C++ examples on linux."
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the unit test binary."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
+        sudo apt-get -qq update
+    - name: Download examples directory
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp
+    - name: extract examples archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -xzf build.tar.gz
+    - name: Run examples
+      shell: bash
+      run: |
+        cd cpp/build/bin
+        sudo chmod -R a+x ./
+        numberoffiles=$(ls -dq *_example | wc -l)
+        if [[ "$numberoffiles" -gt "0" ]]; then 
+          echo "Running Linux examples."
+          find . -name "*_example" -print0  | xargs -0 -n1 -P 1 -t bash -c || exit 1   
+        else
+          echo "No Files found with name _example, abort."
+          exit 1
+        fi

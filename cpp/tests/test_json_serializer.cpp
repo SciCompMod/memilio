@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/custom_index_array.h"
@@ -300,7 +301,7 @@ TEST(TestJsonSerializer, normal_distribution)
     expected_value["LowerBound"]        = 0.0;
     expected_value["UpperBound"]        = 1.0;
     expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
-    auto js                             = mio::serialize_json(dist);
+    auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
@@ -316,7 +317,7 @@ TEST(TestJsonSerializer, uniform_distribution)
     expected_value["LowerBound"]        = 0.0;
     expected_value["UpperBound"]        = 1.0;
     expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
-    auto js                             = mio::serialize_json(dist);
+    auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});

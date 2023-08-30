@@ -20,6 +20,7 @@
 #ifndef EPI_TIME_SERIES_H
 #define EPI_TIME_SERIES_H
 
+#include "memilio/io/io.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/stl_util.h"
@@ -450,6 +451,29 @@ public:
         *os << '\n' << self.get_valid_block();
     }
 
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("TimeSeries");
+        obj.add_element("NumTimePoints", m_num_time_points);
+        obj.add_element("Data", get_valid_block());
+    }
+
+    template<class IOContext>
+    static IOResult<TimeSeries> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("TimeSeries");
+        auto nt = obj.expect_element("NumTimePoints", Tag<Eigen::Index>{});
+        auto data = obj.expect_element("Data", Tag<Matrix>{});
+        return apply(io, [](auto&& nt_, auto&& data_) {
+            auto ts = TimeSeries(data_.rows() - 1);
+            ts.m_data.resize(data_.rows(), data_.cols());
+            ts.m_data = data_;
+            ts.m_num_time_points = nt_;
+            return ts;
+        }, nt, data);
+    }
+
 private:
     void add_time_point_noinit()
     {
@@ -484,7 +508,7 @@ inline Eigen::Index next_pow2(Eigen::Index i)
     i |= i >> 4;
     i |= i >> 8;
     i |= i >> 16;
-    IF_CONSTEXPR(sizeof(Eigen::Index) == 8)
+    if constexpr (sizeof(Eigen::Index) == 8)
     {
         i |= i >> 32;
     }

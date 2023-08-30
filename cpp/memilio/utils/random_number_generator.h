@@ -21,6 +21,7 @@
 #define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 
 #include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/span.h"
 
 #include <cassert>
@@ -33,8 +34,11 @@ namespace mio
 {
 
 /**
- * models a uniform_random_bit_generator.
- * keeps track of its seeds so they can be logged or set.
+ * Models a uniform_random_bit_generator.
+ * Keeps track of its seeds so they can be logged or set.
+ * The generated sequence can be segmented into blocks that can help to reproduce 
+ * simulations involving random numbers by reliably generating a specific part 
+ * of the sequence or to assign each thread/process a different sequence.
  * @see thread_local_rng for a static instance.
  */
 class RandomNumberGenerator
@@ -52,6 +56,7 @@ public:
     }
     result_type operator()()
     {
+        ++m_num_generated;
         return m_rng();
     }
 
@@ -71,27 +76,85 @@ public:
     {
         return m_seeds;
     }
+
+    /**
+    * Seed this random number generator.
+    * Starts a new random sequence at block 0.
+    * @param seeds at least one seed, e.g., generated using std::random_device. More seeds increase quality.
+    */
     void seed(const std::vector<unsigned int>& seeds)
     {
+        assert(seeds.size() > 0);
         m_seeds = seeds;
         std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
         m_rng.seed(sseq);
+        m_num_generated = 0;
+    }
+
+    /**
+    * Set the seeds in all MPI processes the same as in the root.
+    */
+    void synchronize_seeds()
+    {
+#ifdef MEMILIO_ENABLE_MPI
+        int rank;
+        MPI_Comm_rank(mpi::get_world(), &rank);
+        int num_seeds;
+        if (rank == 0) {
+            num_seeds = int(m_seeds.size());
+        }
+        MPI_Bcast(&num_seeds, 1, MPI_INT, 0, mpi::get_world());
+        if (rank != 0) {
+            m_seeds.assign(num_seeds, 0);
+        }
+        MPI_Bcast(m_seeds.data(), num_seeds, MPI_UNSIGNED, 0, mpi::get_world());
+#endif
+    }
+
+    /**
+    * Get/Set the the size of blocks of the generated sequence.
+    * This affects the number of samples skipped by forward_to_block().
+    * Skipping samples is an O(n) operation, where n is the number of skipped samples, so choose the block size with care.
+    * @{
+    */
+    void set_block_size(size_t block_size)
+    {
+        m_block_size = block_size;
+    }
+    size_t get_block_size() const
+    {
+        return m_block_size;
+    }
+    /**@}*/
+
+    /**
+    * Forward to block index i.
+    * Skips numbers in the generated sequence up to the beginning of the block.
+    * The next number generated will be element block_size * i of the random sequence.
+    * This operation is O(n), where n is the number of skipped samples, so choose the block size with care.
+    * @param i block index. May not be a block that is already passed or started.
+    */
+    void forward_to_block(size_t block_idx)
+    {
+        assert(block_idx * m_block_size >= m_num_generated &&
+               "Can't forward to a previous block or one that is started.");
+        auto num_remaining = m_block_size * block_idx - m_num_generated;
+        m_rng.discard(num_remaining);
+        m_num_generated += num_remaining;
     }
 
 private:
     std::vector<unsigned int> m_seeds;
     std::mt19937_64 m_rng;
+    size_t m_block_size = 1'000'000; ///< number of samples in a block, will be skipped by forward_to_block
+    size_t m_num_generated = 0; ///< number of samples generated (or skipped) since the last seed
 };
 
 /**
  * get a random number generator that is static and local to this thread.
  * @return a random number generator that is static and local to this thread.
  */
-inline RandomNumberGenerator& thread_local_rng()
-{
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
-}
+RandomNumberGenerator& thread_local_rng();
 
 inline void log_rng_seeds(const RandomNumberGenerator& rng, LogLevel level)
 {
@@ -134,12 +197,31 @@ public:
      * The type that contains the parameters of the distribution.
      * The template parameter must be constructible from this type.
      */
-    using ParamType = typename DistT::param_type;
+    struct ParamType {
+        using DistType = DistributionAdapter<DistT>;
 
+        template <typename... Ps,
+                  typename std::enable_if_t<std::is_constructible<typename DistT::param_type, Ps...>::value>* = nullptr>
+        ParamType(Ps&&... ps)
+            : params(std::forward<Ps>(ps)...)
+        {
+        }
+
+        /**
+        * get a static thread local instance of the contained Distribution class.
+        * Calls DistributionAdapter::get_instance().
+        */
+        static DistributionAdapter& get_distribution_instance()
+        {
+            return DistType::get_instance();
+        }
+
+        typename DistT::param_type params;
+    };
     /**
      * The function that generates a random value from the distribution with the specified parameters.
      */
-    using GeneratorFunction = std::function<ResultType(const ParamType& p)>;
+    using GeneratorFunction = std::function<ResultType(const typename DistT::param_type& p)>;
 
     /**
      * the default generator function invokes an instance of the template parameter
@@ -162,7 +244,7 @@ public:
     template <class... T>
     ResultType operator()(T&&... params)
     {
-        return m_generator(ParamType{std::forward<T>(params)...});
+        return m_generator(typename DistT::param_type{std::forward<T>(params)...});
     }
 
     /**

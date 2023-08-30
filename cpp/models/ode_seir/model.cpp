@@ -19,7 +19,10 @@
 */
 #include "ode_seir/model.h"
 
+namespace mio
+{
 namespace oseir
 {
 
 } // namespace oseir
+} // namespace mio

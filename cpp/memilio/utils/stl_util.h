@@ -169,6 +169,14 @@ using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
 template <class T>
 using has_eq_op = is_expression_valid<eq_op_t, T>;
 
+/**
+ * meta function to check type T for beeing an iterator
+ */
+template <class T>
+using is_iterator_expr_t = typename std::iterator_traits<T>::iterator_category;
+template <class T>
+using is_iterator = is_expression_valid<is_iterator_expr_t, T>;
+
 namespace details
 {
 /**

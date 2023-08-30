@@ -24,6 +24,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
+#include "memilio/utils/stl_util.h"
 
 #include <vector>
 #include <array>
@@ -185,11 +186,12 @@ public:
     /**
      * Initializes array with values from a range.
      * Each element of the array will be assigned the corresponding value from the range.
+     * @tparam Iter Iterator class.
      * @param dims dimensions of the array.
      * @param b begin of the range of values.
      * @param e end of the range of values.
      */
-    template <class Iter>
+    template <class Iter, typename std::enable_if_t<is_iterator<Iter>::value>* = nullptr>
     CustomIndexArray(Index const& dims, Iter b, Iter e)
         : m_dimensions(dims)
         , m_numel(product(dims))

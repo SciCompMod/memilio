@@ -32,7 +32,7 @@ namespace mio
 {
 namespace iseir
 {
-class IdeSeirModel
+class Model
 {
     using Pa = ParametersBase;
 
@@ -50,7 +50,7 @@ public:
         * @param[in] dt_init The size of the time step used for numerical simulation.
         * @param[in] N_init The population of the considered region. 
         */
-    IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init = Pa());
+    Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init = Pa());
 
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.

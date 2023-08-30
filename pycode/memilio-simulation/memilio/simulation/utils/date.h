@@ -25,7 +25,7 @@
 namespace pymio
 {
 
-void bind_date(pybind11::module& m, std::string const& name);
+void bind_date(pybind11::module_& m, std::string const& name);
 
 } // namespace pymio
 

@@ -34,36 +34,37 @@ namespace abm
 {
 
 /**
- * LockdownRules implements non phamarceutical interventions via dampings.
- * For interventions, people are randomly divided into groups, e.g. one group works at home and the other group still goes to work.
- * The probability with which a person belongs to a certain group is time dependet. This change
- * in probabilty is implemented by using dampings.
+ * @file LockdownRules implements non phamarceutical interventions via Dampings.
+ * For interventions, Person%s are randomly divided into groups, e.g. one group works at home and the other group still
+ * goes to work.
+ * The probability with which a Person belongs to a certain group is time-dependent. This change
+ * in probabilty is implemented by using Dampings.
  */
 
 /**
- * Persons who are in home office are staying at home instead of going to work.
- * @param t_begin begin of the intervention
- * @param p percentage of people that work in home office
- * @param params migration parameters that include damping
+ * @brief Person%s who are in home office are staying at home instead of going to work.
+ * @param[in] t_begin Begin of the intervention.
+ * @param[in] p Percentage of Person%s that work in home office.
+ * @param[in, out] params Migration parameters that include Damping.
  */
 void set_home_office(TimePoint t_begin, double p, MigrationParameters& params);
 
 /**
- * If schools are closed, students stay at home instead of going to school.
- * @param t_begin begin of the intervention
- * @param p percentage of people that are homeschooled
- * @param params migration parameters that include damping
+ * @brief If schools are closed, students stay at home instead of going to school.
+ * @param[in] t_begin Begin of the intervention.
+ * @param[in] p Percentage of Person%s that are homeschooled.
+ * @param[in,out] params Migration parameters that include Damping.
  */
 void set_school_closure(TimePoint t_begin, double p, MigrationParameters& params);
 
 /** 
- * During lockdown people join social events less often.
- * If a person joins a social event is a random event (exponentially distributed).
- * The damping changes the parameter of the exponential distribution, where a damping of 0 corresponds to no damping
- * and a damping of 1 means that no social events are happening.
- * @param t_begin begin of the intervention
- * @param p damping between 0 and 1 that changes the parameter of the exponential distribution
- * @param params migration parameters that include damping
+ * @brief During lockdown Person%s join social events less often.
+ * Whether a Person joins a social event is a random event (exponentially distributed).
+ * The Damping changes the parameter of the exponential distribution, where a Damping of 0 corresponds to no Damping
+ * and a Damping of 1 means that no social events are happening.
+ * @param[in] t_begin Begin of the intervention.
+ * @param[in] p Damping between 0 and 1 that changes the parameter of the exponential distribution.
+ * @param[in,out] params Migration parameters that include Damping.
  */
 void close_social_events(TimePoint t_begin, double p, MigrationParameters& params);
 

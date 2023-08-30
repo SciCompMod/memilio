@@ -22,134 +22,204 @@
 @brief Tools to convert data to pandas dataframes
 
 This tool contains
-- load geojson format
+- load excel format
 - load csv format
 - organizes the command line interface
 - check if directory exists and if not creates it
 - writes pandas dataframe to file of three different formats
 """
 
+import os
 import argparse
 import datetime
-import json
-import os
+import requests
+import magic
+import urllib3
 from io import BytesIO
-from urllib.request import urlopen
 from zipfile import ZipFile
+from warnings import warn
 
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import progress_indicator
 
 
-def loadGeojson(
-        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='geojson'):
-    """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
-    This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
-    data item ID into a pandas DataFrame and returns the DataFrame. Trivial
-    information gets removed by JSON normalization and dropping of always
-    constant data fields.
-
-    @param targetFileName -- File name without ending, for ArcGIS use public data item ID (string)
-    @param apiUrl -- URL to file (default: ArcGIS data sets API URL (string, default
-              'https://opendata.arcgis.com/datasets/'))
-    @param extension -- Data format extension (string, default 'geojson')
-    return dataframe
-    """
-    url = apiUrl + targetFileName + '.' + extension
-
-    try:
-        with urlopen(url) as res:
-            data = json.loads(res.read().decode())
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
-
-    # Shape data:
-    df = pd.json_normalize(data, 'features')
-
-    # Make-up (removing trivial information):
-    df.drop(columns=['type', 'geometry'], inplace=True)
-    df.rename(columns=lambda s: s[11:], inplace=True)
-
-    return df
-
-
-def loadCsv(
-        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-        extension='.csv', param_dict={}):
-    """! Loads data sets in CSV format. (pandas DataFrame)
-    This routine loads data sets (default from ArcGIS) in CSV format of the given public data
-    item ID into a pandas DataFrame and returns the DataFrame.
-
-    @param targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
-    @param apiUrl -- API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    @param extension -- Data format extension (string, default '.csv')
-    @param param_dict -- Defines the parameter for read_csv:
-            "sep": Delimiter to use (string, default ',')
-            "header": Row to use for column labels (Use None if there is no header) (int, default 0)
-            "encoding": Encoding to use for UTF when reading (string, default None)
-            "dtype": Data type for data or column (dict of column -> type, default None)
-    @return dataframe 
-    """
-
-    url = apiUrl + targetFileName + extension
-    param_dict_default = {"sep": ',', "header": 0,
-                          "encoding": None, 'dtype': None}
-
-    for k in param_dict_default:
-        if k not in param_dict:
-            param_dict[k] = param_dict_default[k]
-
-    try:
-        df = pd.read_csv(url, **param_dict)
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
-
-    return df
-
-
-def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-              extension='.xls', param_dict={}):
-    """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
-
-    This routine loads data sets (default from ArcGIS) in Excel format of the given public data
-    item ID into a pandas DataFrame and returns the DataFrame.
-
-    Keyword arguments:
-    targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
-    apiUrl -- API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default '.xls')
-    param_dict -- Defines the parameter for read_excel:
-            "sheetname": sheet from Excel file which should be in DataFrame
-            (string (sheetname) or integer (zero-indexed sheet position), default 0)
-            "header": row to use for column labels (Use None if there is no header) (int, default 0)
-            "engine": defines engine for reading (str, default 'openpyxl')
-    """
-    url = apiUrl + targetFileName + extension
-    param_dict_default = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
-
-    for k in param_dict_default:
-        if k not in param_dict:
-            param_dict[k] = param_dict_default[k]
-
-    try:
-        if extension == '.zip':
-            file_compressed = ZipFile(
-                BytesIO(urlopen(url).read())).filelist[0].filename
-            df = pd.read_excel(
-                ZipFile(BytesIO(urlopen(url).read())).open(file_compressed),
-                **param_dict)
+def user_choice(message, default=False):
+    while True:
+        user_input = input(message + " (y/n): ")[0].lower()
+        if user_input == "y":
+            return True
+        elif user_input == "n":
+            return False
         else:
-            df = pd.read_excel(url, **param_dict)
-    except OSError as err:
-        raise FileNotFoundError(
-            "ERROR: URL " + url + " could not be opened.") from err
+            print("Please answer with y (yes) or n (no)")
 
+
+def download_file(
+        url, chunk_size=1024, timeout=None, progress_function=None,
+        verify=True):
+    """! Download a file using GET over HTTP.
+
+    @param url Full url of the file to download.
+    @param chunk_size Number of Bytes downloaded at once. Only used when a
+        progress_function is specified. For a good display of progress, this
+        size should be about the speed of your internet connection in Bytes/s.
+        Can be set to None to let the server decide the chunk size (may be
+        equal to the file size).
+    @param timeout Timeout in seconds for the GET request.
+    @param progress_function Function called regularly, with the current
+        download progress in [0,1] as a float argument.
+    @param verify bool or "interactive". If False, ignores the connection's
+        security. If True, only starts downloads from secure connections, and
+        insecure connections raise a FileNotFoundError. If "interactive",
+        prompts the user whether or not to allow insecure connections.
+    @return File as BytesIO
+    """
+    if verify not in [True, False, "interactive"]:
+        warn('Invalid input for argument verify. Expected True, False, or'
+             ' "interactive", got ' + str(verify) + '.'
+             ' Proceeding with "verify=True".', category=RuntimeWarning)
+        verify = True
+    # send GET request as stream so the content is not downloaded at once
+    try:
+        req = requests.get(
+            url, stream=True, timeout=timeout,
+            verify=verify in [True, "interactive"])
+    except OSError:
+        if verify == "interactive" and user_choice(
+            url +
+            " could not be opened due to an insecure connection. "
+                "Do you want to open it anyways?\n"):
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            req = requests.get(url, stream=True, timeout=timeout, verify=False)
+        else:
+            raise FileNotFoundError(
+                "Error: URL " + url + " could not be opened.")
+    if req.status_code != 200:  # e.g. 404
+        raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
+    # get file size from http header
+    # this is only the number of bytes downloaded, the size of the actual file
+    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+    # by iter_content)
+    file_size = int(req.headers.get('content-length'))
+    file = bytearray()  # file to be downloaded
+    if progress_function:
+        progress = 0
+        # download file as bytes via iter_content
+        for chunk in req.iter_content(chunk_size=chunk_size):
+            file += chunk  # append chunk to file
+            # note: len(chunk) may be larger (e.g. encoding)
+            # or smaller (for the last chunk) than chunk_size
+            progress = min(progress+chunk_size, file_size)
+            progress_function(progress/file_size)
+    else:  # download without tracking progress
+        for chunk in req.iter_content(chunk_size=None):
+            file += chunk  # append chunk to file
+    # return the downloaded content as file like object
+    return BytesIO(file)
+
+
+def extract_zip(file, **param_dict):
+    """! reads a zip file and returns a list of dataframes for every file in the zip folder.
+    If only one file is readable for func_to_use a single dataframe is returned instead of a list with one entry.
+
+    @param file String. Path to Zipfile to read.
+    @param param_dict Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+
+    @return list od all dataframes (one for each file).
+    """
+    with ZipFile(file, 'r') as zipObj:
+        names = zipObj.namelist()
+        all_dfs = [[] for i in range(len(names))]
+        for i in range(len(names)):
+            with zipObj.open(names[i]) as file2:
+                try:
+                    all_dfs[i] = pd.read_excel(file2.read(), **param_dict)
+                except:
+                    pass
+    if len(all_dfs) == 1:
+        all_dfs = all_dfs[0]
+    return all_dfs
+
+
+def get_file(
+        filepath='', url='', read_data=dd.defaultDict['read_data'],
+        param_dict={},
+        interactive=False):
+    """! Loads data from filepath and stores it in a pandas dataframe.
+    If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
+    Uses the progress indicator to give feedback.
+
+    @param filepath String. Filepath from where the data is read.
+    @param url String. URL to download the dataset.
+    @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
+    @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
+
+    @return pandas dataframe
+    """
+    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
+    param_dict_zip = {}
+
+    filetype_dict = {
+        'text': pd.read_csv,
+        'Composite Document File V2 Document': pd.read_excel,
+        'Excel': pd.read_excel, 'Zip': extract_zip}
+    param_dict_dict = {
+        pd.read_csv: param_dict_csv, pd.read_excel: param_dict_excel,
+        extract_zip: param_dict_zip}
+
+    if read_data:
+        try:
+            df = pd.read_json(filepath)
+        except FileNotFoundError:
+            if interactive and user_choice(
+                "Warning: The file: " + filepath +
+                " does not exist in the directory. Do you want to download "
+                    "the file from " + url + " instead?\n"):
+                df = get_file(filepath=filepath, url=url,
+                              read_data=False, param_dict={})
+            else:
+                error_message = "Error: The file from " + filepath + \
+                    " does not exist. Call program without -r flag to get it."
+                raise FileNotFoundError(error_message)
+    else:
+        try:  # to download file from url and show download progress
+            with progress_indicator.Percentage(message="Downloading " + url) as p:
+                file = download_file(
+                    url, 1024, None, p.set_progress,
+                    verify="interactive" if interactive else True)
+                # read first 2048 bytes to find file type
+                ftype = magic.from_buffer(file.read(2048))
+                # set pointer back to starting position
+                file.seek(0)
+                # find file type in dict and use function to read
+                func_to_use = [
+                    val for key, val in filetype_dict.items()
+                    if key in ftype]
+                # use different default dict for different functions
+                dict_to_use = param_dict_dict[func_to_use[0]]
+                # adjust dict
+                for k in dict_to_use:
+                    if k not in param_dict:
+                        param_dict[k] = dict_to_use[k]
+                # create dataframe
+                df = func_to_use[0](file, **param_dict)
+        except OSError:
+            raise FileNotFoundError(
+                "Error: URL " + url + " could not be opened.")
+    try:
+        if df.empty:
+            raise DataError("Error: Dataframe is empty.")
+    except AttributeError:
+        if isinstance(df, list) or isinstance(df, dict):
+            for i in df:
+                if df[i].empty:
+                    raise DataError("Error: Dataframe is empty.")
+        else:
+            raise DataError("Could not catch type of df: " + str(type(df)))
     return df
 
 
@@ -168,6 +238,7 @@ def cli(what):
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
     - no_raw
+    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -192,7 +263,7 @@ def cli(what):
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
                 "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
                 "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources'],
+                "population": ['Download population data from official sources', 'username'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
@@ -274,14 +345,42 @@ def cli(what):
             '-sd', '--sanitize_data', type=int, default=1,
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
-    args = parser.parse_args()
 
-    return vars(args)
+    parser.add_argument(
+        '--no-progress-indicators',
+        help='Disables all progress indicators (used for downloads etc.).',
+        action='store_true')
+
+    if 'username' in what_list:
+        parser.add_argument(
+            '--username', type=str
+        )
+
+        parser.add_argument(
+            '--password', type=str
+        )
+    args = vars(parser.parse_args())
+    # disable progress indicators globally, if the argument --no-progress-indicators was specified
+    progress_indicator.ProgressIndicator.disable_indicators(
+        args["no_progress_indicators"])
+    # remove the no_progress_indicators entry from the dict
+    # (after disabling indicators, its value is no longer usefull)
+    args.pop("no_progress_indicators")
+
+    return args
 
 
-def append_filename(filename, impute_dates, moving_average):
+def append_filename(
+        filename='', impute_dates=False, moving_average=0, split_berlin=False,
+        rep_date=False):
     """! Creates consistent file names for all output.
     """
+    # split_berlin and repdate especially for case data
+    if split_berlin:
+        filename = filename + '_split_berlin'
+    if rep_date:
+        filename = filename + '_repdate'
+
     if moving_average > 0:
         filename = filename + '_ma' + str(moving_average)
     elif impute_dates:
