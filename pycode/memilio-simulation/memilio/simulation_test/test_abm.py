@@ -108,11 +108,12 @@ class TestAbm(unittest.TestCase):
                                                                abm.VaccinationState.Unvaccinated] = 0.0
 
         # trips
+        weekend = False
         trip_list = abm.TripList()
         trip_list.add_trip(abm.Trip(0, abm.TimePoint(
-            0) + abm.hours(8), social_event_id, home_id))
+            0) + abm.hours(8), social_event_id, home_id), weekend)
         trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
-                           abm.hours(8), work_id, home_id))
+                           abm.hours(8), work_id, home_id), weekend)
         world.trip_list = trip_list
         world.use_migration_rules = False
         self.assertEqual(world.trip_list.num_trips, 2)
