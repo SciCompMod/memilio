@@ -811,8 +811,8 @@ TEST(Secir, get_reproduction_numbers)
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSevere}]     = 0;
     model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedCritical}]   = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Recovered}]          = 0;
+    model.populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Dead}]               = 0;
 
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Susceptible}]        = 1500;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Exposed}]            = 200;
@@ -820,18 +820,8 @@ TEST(Secir, get_reproduction_numbers)
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSymptoms}]   = 100;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedSevere}]     = 50;
     model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::InfectedCritical}]   = 50;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]          = 0;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]               = 0;
-
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact>()  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical>()                 = 0.3;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Recovered}]          = 0;
+    model.populations[{mio::AgeGroup(2), mio::osecir::InfectionState::Dead}]               = 0;
 
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_groups; i++) {
         model.parameters.get<mio::osecir::IncubationTime>()[i]       = 5.2;
@@ -862,8 +852,8 @@ TEST(Secir, get_reproduction_numbers)
     model.apply_constraints();
 
     Eigen::VectorXd checkReproductionNumbers(7);
-    checkReproductionNumbers << 3.5761724798649777, 3.581750004470881, 3.6693223331151632, 3.8776795891796976,
-        4.15201838947476, 4.5161115327154775, 4.7182920477874752;
+    checkReproductionNumbers << 3.7417747463385571, 3.7146918917498386, 3.6864528889471364, 3.6409596914789653,
+        3.5870229607659483, 3.5154768089526982, 3.4647286447599575;
 
     result_0 << 3000, 400, 50, 50, 0, 0, 0, 0, 4000, 350, 50, 100, 0, 0, 0, 0, 1500, 200, 100, 100, 50, 50, 0, 0;
 
