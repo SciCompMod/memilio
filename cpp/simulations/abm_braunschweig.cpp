@@ -144,7 +144,7 @@ mio::abm::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-void create_world_from_data(mio::abm::World& world, const std::string& filename)
+void create_world_from_data(mio::abm::World& world, const std::string& filename, const mio::abm::TimePoint t0)
 {
     int max_number_persons = 10000;
     // Open File
@@ -176,6 +176,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
 
     std::map<uint32_t, mio::abm::LocationId> locations = {};
     std::map<uint32_t, mio::abm::Person&> persons      = {};
+    std::map<uint32_t, std::pair<uint32_t, uint32_t>> starting_locations;
 
     // For the world we need: One Hospital, One ICU, One Home for each unique householdID, One Person for each person_id with respective age and home_id
 
@@ -191,6 +192,7 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
     int number_of_persons = 0;
     int number_lines      = 0;
     int number_trips      = 0;
+
     while (std::getline(fin, line) && number_of_persons < max_number_persons) {
         row.clear();
 
@@ -199,7 +201,34 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
         uint32_t person_id          = row[index["puid"]];
-        uint32_t age                = row[index["age"]];
+        uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
+        uint32_t trip_start         = row[index["start_time"]];
+
+        auto it_person = starting_locations.find(person_id);
+        if (it_person == starting_locations.end()) {
+            starting_locations.insert({person_id, std::make_pair(target_location_id, trip_start)});
+            number_of_persons++;
+        }
+        else {
+            if (it_person->second.second <= trip_start && trip_start <= t0.hours()) {
+                it_person->second.first  = target_location_id;
+                it_person->second.second = trip_start;
+            }
+        }
+        number_lines++;
+    }
+
+    fin.clear();
+    fin.seekg(0);
+    std::getline(fin, line); // Skip header row
+
+    while (std::getline(fin, line) && number_trips < number_lines) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
         uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         uint32_t activity_end       = row[index["activity_end"]];
@@ -214,16 +243,6 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
             home = it_home->second;
         }
 
-        auto it_person = persons.find(person_id);
-        if (it_person == persons.end()) {
-            auto& person = world.add_person(home, determine_age_group(age));
-            person.set_assigned_location(home);
-            person.set_assigned_location(hospital);
-            person.set_assigned_location(icu);
-            persons.insert({person_id, person});
-            number_of_persons++;
-        }
-
         mio::abm::LocationId location;
         auto it_location = locations.find(
             target_location_id); // Check if location already exists also for home which have the same id (home_id = target_location_id)
@@ -233,11 +252,13 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
                 1); // Assume one place has one activity, this may be untrue but not important for now(?)
             locations.insert({target_location_id, location});
         }
-        number_lines++;
+        number_trips++;
     }
     fin.clear();
     fin.seekg(0);
     std::getline(fin, line); // Skip header row
+
+    number_trips = 0;
 
     while (std::getline(fin, line) && number_trips < number_lines) {
         row.clear();
@@ -247,23 +268,40 @@ void create_world_from_data(mio::abm::World& world, const std::string& filename)
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
         uint32_t person_id          = row[index["puid"]];
+        uint32_t age                = row[index["age"]];
+        uint32_t home_id            = row[index["huid"]];
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
         uint32_t trip_start         = row[index["start_time"]];
 
         // Add the trip to the trip list person and location must exist at this point
-        auto person          = persons.find(person_id)->second;
         auto target_location = locations.find(target_location_id)->second;
         auto start_location  = locations.find(start_location_id)->second;
 
-        person.set_assigned_location(
+        auto it_person = persons.find(person_id);
+
+        if (it_person == persons.end()) {
+            auto starting_location_id = starting_locations.find(person_id)->second.first;
+            auto starting_location    = locations.find(starting_location_id)->second;
+            auto& person              = world.add_person(starting_location, determine_age_group(age));
+            auto home                 = locations.find(home_id)->second;
+            person.set_assigned_location(starting_location);
+            person.set_assigned_location(home);
+            person.set_assigned_location(hospital);
+            person.set_assigned_location(icu);
+            persons.insert({person_id, person});
+            number_of_persons++;
+            it_person = persons.find(person_id);
+        }
+
+        it_person->second.set_assigned_location(
             target_location); //This assumes that we only have in each tripchain only one location type for each person
         if (locations.find(start_location_id) == locations.end()) {
             // For trips where the start location is not known use Home instead
-            start_location = {person.get_assigned_location_index(mio::abm::LocationType::Home),
+            start_location = {it_person->second.get_assigned_location_index(mio::abm::LocationType::Home),
                               mio::abm::LocationType::Home};
         }
-        world.get_trip_list().add_trip(mio::abm::Trip(person.get_person_id(),
+        world.get_trip_list().add_trip(mio::abm::Trip(it_person->second.get_person_id(),
                                                       mio::abm::TimePoint(0) + mio::abm::hours(trip_start),
                                                       target_location, start_location));
         number_trips++;
