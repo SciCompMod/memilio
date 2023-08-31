@@ -315,6 +315,11 @@ double get_infections_relative(const Simulation<Base>& sim, double /*t*/, const 
 template <class Base>
 IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base>& sim)
 {
+
+    if (!(t_idx < static_cast<size_t>(sim.get_result().get_num_time_points()))) {
+        return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
+    }
+
     auto const& params = sim.get_model().parameters;
     size_t num_groups  = (size_t)sim.get_model().parameters.get_num_groups();
 

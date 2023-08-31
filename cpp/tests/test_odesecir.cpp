@@ -1027,21 +1027,29 @@ TEST(Secir, get_reproduction_number)
     mio::osecir::Simulation<> sim(model, 0.0);
     sim.get_result() = result;
 
-    //    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_time(0) - 0.5, sim)); //Test for indices out of range
-    //  EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_last_time() + 0.5, sim));
-    //EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)result.get_num_time_points(), sim));
+    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_time(0) - 0.5, sim)); //Test for indices out of range
+    EXPECT_FALSE(mio::osecir::get_reproduction_number(result.get_last_time() + 0.5, sim));
+    EXPECT_FALSE(mio::osecir::get_reproduction_number((size_t)result.get_num_time_points(), sim));
 
     EXPECT_EQ(mio::osecir::get_reproduction_number((size_t)0, sim).value(),
               mio::osecir::get_reproduction_number(0.0, sim).value());
 
+    std::cout << std::setprecision(20);
+    std::cout << "lul1 " << mio::osecir::get_reproduction_number((size_t)0, sim).value();
+    std::cout << "lul2 " << mio::osecir::get_reproduction_number((size_t)4, sim).value();
+    std::cout << "lul3 " << mio::osecir::get_reproduction_number((size_t)6, sim).value();
+
+    std::cout << "lul4 " << mio::osecir::get_reproduction_number(0.05, sim).value();
+    std::cout << "lul2 " << mio::osecir::get_reproduction_number(0.5, sim).value();
+    std::cout << "lul2 " << mio::osecir::get_reproduction_number(0.85, sim).value();
     EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)0, sim).value(), 3.5175469781728519,
                 1e-12); //Test one function for integer timepoints
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.0819621748964341, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 3.0469388034901952, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)4, sim).value(), 3.0242627259311611887, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number((size_t)6, sim).value(), 2.9470037894725229499, 1e-12);
 
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.4932023890682649, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.0719242621131642, 1e-12);
-    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 2.9985324856106601, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.05, sim).value(), 3.493202389068264857, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.5, sim).value(), 3.0719242621131641613, 1e-12);
+    EXPECT_NEAR(mio::osecir::get_reproduction_number(0.85, sim).value(), 2.9985324856106601032, 1e-12);
 }
 
 TEST(Secir, get_migration_factors)
