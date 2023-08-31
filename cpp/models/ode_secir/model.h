@@ -401,7 +401,6 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
     }
 
     //Initialize the matrix F
-
     for (size_t i = 0; i < (size_t)params.get_num_groups(); i++) {
 
         for (size_t j = 0; j < num_groups; j++) {
@@ -431,8 +430,8 @@ IOResult<ScalarType> get_reproduction_number(size_t t_idx, const Simulation<Base
                 riskFromInfectedSymptomatic[(size_t)j] * divN[(size_t)j];
         }
     }
-    //Initialize the matrix V
 
+    //Initialize the matrix V
     for (Eigen::Index i = 0; i < (Eigen::Index)num_groups; i++) {
 
         double rateE = 1.0 / (2 * params.template get<SerialInterval>()[(mio::AgeGroup)i] -
