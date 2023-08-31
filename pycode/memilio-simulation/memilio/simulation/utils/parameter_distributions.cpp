@@ -28,7 +28,7 @@ namespace pymio
 
 void bind_parameter_distribution(py::module_& m, std::string const& name)
 {
-    py::class_<mio::ParameterDistribution>(m, name.c_str())
+    bind_class_optional_serialize<mio::ParameterDistribution>(m, name.c_str())
         .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
                       &mio::ParameterDistribution::set_lower_bound)
         .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,
@@ -40,7 +40,7 @@ void bind_parameter_distribution(py::module_& m, std::string const& name)
 
 void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, name.c_str())
+    bind_class_optional_serialize<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, name.c_str())
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
              py::arg("std_dev"))
         .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
@@ -51,7 +51,7 @@ void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
 
 void bind_parameter_distribution_uniform(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, name.c_str())
+    bind_class_optional_serialize<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, name.c_str())
         .def(py::init<>())
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 }

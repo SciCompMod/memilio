@@ -28,7 +28,7 @@ namespace pymio
 
 void bind_date(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::Date>(m, name.c_str())
+    bind_class<mio::Date>(m, name.c_str())
         .def(py::init<int, int, int>(), py::arg("year"), py::arg("month"), py::arg("day"))
         .def_readwrite("year", &mio::Date::year)
         .def_readwrite("month", &mio::Date::month)

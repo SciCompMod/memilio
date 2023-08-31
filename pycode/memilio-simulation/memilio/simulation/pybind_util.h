@@ -57,16 +57,51 @@ void pybind_pickle_class(pybind11::class_<T, Args...>& cls)
             }
         }));
 }
+/// @brief 
+// template <class Target, class... Args>
+// struct Serializable {
+//     template <class T>
+//     using serialize_expr = decltype(mio::serialize_pickle(std::declval<T&>()));
 
+//     template <class T>
+//     using deserialize_expr = decltype(mio::deserialize_pickle(std::declval<pybind11::tuple>(), std::declval<mio::Tag<T>>()));
+
+//     template <class T>
+//     constexpr static bool is_serializable_v = mio::conjunction_v<mio::is_expression_valid<serialize_expr, T>, mio::is_expression_valid<deserialize_expr, T>>;
+
+//     template <class T = Target>
+//     static const std::enable_if_t<is_serializable_v<T>, std::string> get(pybind11::class_<T, Args...>& cls)
+//     {
+//         pybind_pickle_class<T, Args...>(cls);
+//         return "";
+//     }
+
+//     template <class T = Target>
+//     static const std::enable_if_t<!is_serializable_v<T>, std::string> get(pybind11::class_<T, Args...>& cls)
+//     {
+//         return "";
+//     }
+// };
+
+// Bind classes with optional support for pickling
 template <class T, class... Args>
-decltype(auto) bind_class(pybind11::module& m, std::string const& name)
+decltype(auto) bind_class_optional_serialize(pybind11::module& m, std::string const& name)
 {
     decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
-    
+
     // Bind the class depending on its features
     if constexpr (is_serializable<mio::PickleSerializer, T>::value) {
         pybind_pickle_class<T, Args...>(cls);
     }
+    return cls;
+}
+
+// Bind classes with support for pickling
+template <class T, class... Args>
+decltype(auto) bind_class(pybind11::module& m, std::string const& name)
+{
+    decltype(auto) cls = pybind11::class_<T, Args...>(m, name.c_str());
+    pybind_pickle_class<T, Args...>(cls);
     return cls;
 }
 
@@ -123,7 +158,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    bind_class<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__",
             [](Iterator& self) -> auto&& {
@@ -137,7 +172,7 @@ auto bind_Range(pybind11::module_& m, const std::string& class_name)
             pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    bind_class<Range>(m, class_name.c_str())
+    pybind11::class_<Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {

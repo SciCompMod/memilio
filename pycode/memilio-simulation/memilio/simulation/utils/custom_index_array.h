@@ -164,7 +164,7 @@ void bind_CustomIndexArray(pybind11::module_& m, std::string const& name)
 {
     using C          = typename mio::CustomIndexArray<Type, Tags...>;
     using Index      = typename mio::CustomIndexArray<Type, Tags...>::Index;
-    decltype(auto) c = pymio::bind_class<C>(m, name.c_str());
+    decltype(auto) c = bind_class<C>(m, name.c_str());
     c.def(pybind11::init([](Index const& sizes, Type const& val) {
          return C(sizes, val);
      }))

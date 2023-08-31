@@ -41,10 +41,10 @@ PYBIND11_MODULE(_simulation, m)
 {
     pymio::bind_date(m, "Date");
 
-    auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
+    auto damping_class = pymio::bind_class<mio::SquareDamping>(m, "Damping");
     pymio::bind_damping_members(damping_class);
 
-    auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
+    auto dampings_class = pymio::bind_class<mio::SquareDampings>(m, "Dampings");
     pymio::bind_dampings_members(dampings_class);
 
     pymio::bind_time_series(m, "TimeSeries");
@@ -55,11 +55,11 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_value(m, "UncertainValue");
 
-    auto contact_matrix_class = py::class_<mio::ContactMatrix>(m, "ContactMatrix");
+    auto contact_matrix_class = pymio::bind_class<mio::ContactMatrix>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
     contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
 
-    auto contact_matrix_group_class = py::class_<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
+    auto contact_matrix_group_class = pymio::bind_class<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
@@ -67,16 +67,16 @@ PYBIND11_MODULE(_simulation, m)
 
     pymio::bind_uncertain_contact_matrix(m, "UncertainContactMatrix");
 
-    auto migration_damping_class = py::class_<mio::VectorDamping>(m, "MigrationDamping");
+    auto migration_damping_class = pymio::bind_class<mio::VectorDamping>(m, "MigrationDamping");
     pymio::bind_damping_members(migration_damping_class);
 
-    auto migration_dampings_class = py::class_<mio::VectorDampings>(m, "MigrationDampings");
+    auto migration_dampings_class = pymio::bind_class<mio::VectorDampings>(m, "MigrationDampings");
     pymio::bind_dampings_members(migration_dampings_class);
 
-    auto migration_coeffs_class = py::class_<mio::MigrationCoefficients>(m, "MigrationCoefficients");
+    auto migration_coeffs_class = pymio::bind_class<mio::MigrationCoefficients>(m, "MigrationCoefficients");
     pymio::bind_damping_expression_members(migration_coeffs_class);
 
-    auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
+    auto migration_coeff_group_class = pymio::bind_class<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
 
     pymio::bind_migration_parameters(m, "MigrationParameters");

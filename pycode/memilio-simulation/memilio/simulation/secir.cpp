@@ -59,7 +59,7 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
 template <class Simulation>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
+    pymio::bind_class_optional_serialize<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
@@ -187,7 +187,7 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::osecir::InfectionState>;
     pymio::bind_Population(m, "SecirPopulation", mio::Tag<mio::osecir::Model::Populations>{});
-    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    pymio::bind_class<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
     pymio::bind_CompartmentalModel<mio::osecir::InfectionState, SecirPopulations, mio::osecir::Parameters>(m,
                                                                                                            "ModelBase");
     pymio::bind_class<mio::osecir::Model,
@@ -230,6 +230,6 @@ PYBIND11_MODULE(_simulation_secir, m)
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
-
+    
     m.attr("__version__") = "dev";
 }

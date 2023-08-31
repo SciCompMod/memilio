@@ -19,6 +19,7 @@
 */
 #include "utils/time_series.h"
 #include "memilio/utils/time_series.h"
+#include "pybind_util.h"
 
 #include "pybind11/eigen.h"
 
@@ -29,7 +30,7 @@ namespace pymio
 
 void bind_time_series(py::module_& m, std::string const& name)
 {
-    py::class_<mio::TimeSeries<double>>(m, name.c_str())
+    bind_class<mio::TimeSeries<double>>(m, name.c_str())
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
         .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
         .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)

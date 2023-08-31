@@ -64,14 +64,14 @@ PYBIND11_MODULE(_simulation_oseir, m)
 
     pymio::bind_ParameterSet<mio::oseir::ParametersBase>(m, "ParametersBase");
 
-    py::class_<mio::oseir::Parameters, mio::oseir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::oseir::Parameters, mio::oseir::ParametersBase>(m, "Parameters")
         .def(py::init<>())
         .def("check_constraints", &mio::oseir::Parameters::check_constraints);
 
     using Populations = mio::Populations<mio::oseir::InfectionState>;
     pymio::bind_Population(m, "Population", mio::Tag<mio::oseir::Model::Populations>{});
     pymio::bind_CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>(m, "ModelBase");
-    py::class_<mio::oseir::Model,
+    pymio::bind_class_optional_serialize<mio::oseir::Model,
                mio::CompartmentalModel<mio::oseir::InfectionState, Populations, mio::oseir::Parameters>>(m, "Model")
         .def(py::init<>());
 
