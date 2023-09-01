@@ -1083,18 +1083,18 @@ def get_npi_data(fine_resolution=2,
                         = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
 
             # merge incidence dependent NPIs to have only one column for each subcode
-            df_merged = df_local_new.iloc[:, :2].copy()
+            df_local_new_merged = df_local_new.iloc[:, :2].copy()
             for subcode in all_subcodes:
                 # extract columns which have the subcode as part of the column 
                 # name and sum over all these subcodes
-                df_merged[subcode] = df_local_new.filter(
+                df_local_new_merged[subcode] = df_local_new.filter(
                     regex=subcode).sum(axis=1)
             # strictness deactivation is done with this merged dataframe
 
             df_incid_depend = pd.concat(
-                [df_incid_depend, copy.deepcopy(df_merged)])
+                [df_incid_depend, copy.deepcopy(df_local_new_merged)])
 
-            if df_merged.iloc[:,2:].max().max() > 1:
+            if df_local_new_merged.iloc[:,2:].max().max() > 1:
                 raise gd.DataError('Error in merging...')
 
             ## Remove conflicting NPIs according to strictness index of Corona-
@@ -1115,7 +1115,7 @@ def get_npi_data(fine_resolution=2,
                     subcode = subcodes[idx_strictness]
 
                     # get indices of days where subcode is active
-                    subcode_active = np.where(df_merged.loc[:, subcode] > 0)[0]
+                    subcode_active = np.where(df_local_new_merged.loc[:, subcode] > 0)[0]
 
                     if len(subcode_active) > 0:
                         # get indices of less strict NPIs
@@ -1136,7 +1136,7 @@ def get_npi_data(fine_resolution=2,
                             # check where the less strict NPI is mentioned, only 
                             # considering rows where the stricter NPI is mentioned.
                             days_deact = np.where(
-                                df_merged.loc[subcode_active, nocombi_code] > 0)[0]
+                                df_local_new_merged.loc[subcode_active, nocombi_code] > 0)[0]
                             if len(days_deact) > 0:
                                 print('Deactivating for ' +
                                       'County ' + str(countyID))
@@ -1145,26 +1145,27 @@ def get_npi_data(fine_resolution=2,
                                 print('\n')
                                 # take subcode_active rows as days_deact is
                                 # numbering inside subcode_active rows only, 
-                                # not numbering on the whole df_merge data frame
-                                df_merged.loc[subcode_active, nocombi_code] = 0
+                                # not numbering on the whole df_local_new_merged
+                                # data frame
+                                df_local_new_merged.loc[subcode_active, nocombi_code] = 0
                                 df_count_deactivation[maincode][1].loc[idx_strictness,
                                                                        nocombi_code] += len(days_deact)
 
             # count joint codes from after strictness based deactivation
-            df_count_active = count_codes(df_merged, df_count_active, countyID)
+            df_count_active = count_code_multiplicities_merged(df_local_new_merged, df_count_active, countyID)
 
             # count joint codes from after incidence based activation
-            df_count_incid_depend = count_codes(
+            df_count_incid_depend = count_code_multiplicities_merged(
                 df_incid_depend, df_count_incid_depend, countyID)
 
             # for fine resolution = 1 only consider merged dataframe
             if fine_resolution == 1:
-                df_local_new = df_merged.copy()
+                df_local_new = df_local_new_merged.copy()
             else:
                 # multiply subcode columns with incidence dependent subcode columns in df_local_new
                 for subcode in all_subcodes:
                     for incidcode in ['', '_1', '_2', '_3', '_4', '_5']:
-                        df_local_new[subcode+incidcode] *= df_merged[subcode]
+                        df_local_new[subcode+incidcode] *= df_local_new_merged[subcode]
 
         counters[cid] += time.perf_counter()-start_time
         cid += 1
@@ -1254,18 +1255,18 @@ def get_npi_data(fine_resolution=2,
     return df_npis
 
 
-def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
+def count_code_multiplicities_init(df_npis_input, df_count, counties_considered):
     """! Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
-    @param[in] df_npis_old Initial data frame read from Corona Datenplattform.
+    @param[in] df_npis_input Initial data frame read from Corona Datenplattform.
     @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
          matrix (to be filled) for all codes under main code in df_count[maincode][1].
     @param[in] counties_considered County IDs for which initial data frame is 
         considered.
     """
     for county in counties_considered:
-        df_local = df_npis_old[df_npis_old[dd.EngEng['idCounty']] == county]
+        df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
         # get column where dates start
         npi_start_col = np.where(
             df_local.columns.str.startswith('d2') == True)[0][0]
@@ -1304,8 +1305,16 @@ def count_code_multiplicities_init(df_npis_old, df_count, counties_considered):
     return df_count
 
 
-def count_codes(df_old, df_count, county):
-    df_local = df_old[df_old[dd.EngEng['idCounty']] == county]
+def count_code_multiplicities_merged(df_npis_input, df_count, county):
+    """! Count for all pairs of NPI codes how many times they were
+    mentioned or active at the same day in a transformed data frame.
+
+    @param[in] df_npis_input Initial data frame read from Corona Datenplattform.
+    @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
+         matrix (to be filled) for all codes under main code in df_count[maincode][1].
+    @param[in] County CountyID with which input data frame df_count is changed.
+    """    
+    df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
     code_dict = {}
     for maincode in df_count.keys():
         for column in df_count[maincode][1].columns:
