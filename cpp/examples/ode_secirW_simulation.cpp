@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
 #include "ode_secirvvs/model.h"
 #include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/parameters.h"
@@ -119,15 +120,22 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     array_assign_uniform_distribution(params.get<mio::osecirvvs::TimeInfectedCritical>(), timeInfectedCriticalMin,
                                       timeInfectedCriticalMax);
 
-    const double transmissionProbabilityOnContactMin[] = {0.14, 0.15, 0.12,
-                                                          0.1,  0.08, 0.16}; // doi.org/10.21203/rs.3.rs-1729679/v1
-    const double transmissionProbabilityOnContactMax[] = {0.15, 0.18, 0.16,
-                                                          0.13, 0.16, 0.18}; // doi.org/10.21203/rs.3.rs-1729679/v1
+    // const double transmissionProbabilityOnContactMin[] = {0.10, 0.15, 0.12,
+    //                                                       0.1,  0.08, 0.16}; // doi.org/10.21203/rs.3.rs-1729679/v1
+    // const double transmissionProbabilityOnContactMax[] = {0.14, 0.18, 0.16,
+    //                                                       0.13, 0.16, 0.18}; // doi.org/10.21203/rs.3.rs-1729679/v1
+
+    double fac_variant                                 = 1.94; // https://doi.org/10.7554/eLife.78933
+    const double transmissionProbabilityOnContactMin[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
+                                                          0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
+
+    const double transmissionProbabilityOnContactMax[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
+                                                          0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
 
     const double relativeTransmissionNoSymptomsMin[]  = {0.6, 0.55, 0.65,
-                                                         0.7, 0.75, 0.85}; // doi.org/10.1101/2022.05.05.22274697
+                                                        0.7, 0.75, 0.85}; // doi.org/10.1101/2022.05.05.22274697
     const double relativeTransmissionNoSymptomsMax[]  = {0.8, 0.75,  0.8,
-                                                         0.8, 0.825, 0.9}; // doi.org/10.1101/2022.05.05.22274697
+                                                        0.8, 0.825, 0.9}; // doi.org/10.1101/2022.05.05.22274697
     const double riskOfInfectionFromSymptomaticMin    = 0.0; // beta (depends on incidence and test and trace capacity)
     const double riskOfInfectionFromSymptomaticMax    = 0.2;
     const double maxRiskOfInfectionFromSymptomaticMin = 0.4;
@@ -138,20 +146,25 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     const double recoveredPerInfectedNoSymptomsMax[] = {0.4, 0.45, 0.35,
                                                         0.3, 0.25, 0.15}; // doi.org/10.1101/2022.05.05.22274697
     const double severePerInfectedSymptomsMin[]      = {0.054, 0.005, 0.01, 0.013,
-                                                        0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
+                                                   0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
     const double severePerInfectedSymptomsMax[]      = {0.054, 0.005, 0.01, 0.013,
-                                                        0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
+                                                   0.076, 0.251}; // doi.org/10.2807/1560-7917.ES.2022.27.22.2200396
 
-    const double criticalPerSevereMin[] = {
-        0.0511, 0.0686, 0.0491, 0.114,
-        0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
-    const double criticalPerSevereMax[] = {
-        0.0511, 0.0686, 0.0491, 0.114,
-        0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
-    const double deathsPerCriticalMin[] = {0.00, 0.00, 0.10,
-                                           0.10, 0.30, 0.5}; // improvable doi.org/10.1371/journal.pcbi.1010054
-    const double deathsPerCriticalMax[] = {0.10, 0.10, 0.18,
-                                           0.18, 0.50, 0.7}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    // const double criticalPerSevereMin[] = {
+    //     0.0511, 0.0686, 0.0491, 0.114,
+    //     0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
+    // const double criticalPerSevereMax[] = {
+    //     0.0511, 0.0686, 0.0491, 0.114,
+    //     0.1495, 0.0674}; // www.sozialministerium.at/dam/jcr:f472e977-e1bf-415f-95e1-35a1b53e608d/Factsheet_Coronavirus_Hospitalisierungen.pdf
+    // const double deathsPerCriticalMin[] = {0.00, 0.00, 0.10,
+    //                                        0.10, 0.30, 0.5}; // improvable doi.org/10.1371/journal.pcbi.1010054
+    // const double deathsPerCriticalMax[] = {0.10, 0.10, 0.18,
+    //                                        0.18, 0.50, 0.7}; // improvable doi.org/10.1371/journal.pcbi.1010054
+
+    const double criticalPerSevereMin[] = {0.05, 0.05, 0.05, 0.10, 0.25, 0.35};
+    const double criticalPerSevereMax[] = {0.10, 0.10, 0.10, 0.20, 0.35, 0.45};
+    const double deathsPerCriticalMin[] = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5};
+    const double deathsPerCriticalMax[] = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
     const double reducExposedPartialImmunityMin           = 0.569; // doi.org/10.1136/bmj-2022-071502
     const double reducExposedPartialImmunityMax           = 0.637; // doi.org/10.1136/bmj-2022-071502
@@ -241,8 +254,8 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params)
     array_assign_uniform_distribution(params.get<mio::osecirvvs::ImmunityInterval2>(), ImmunityInterval2Min,
                                       ImmunityInterval2Max);
 
-    // params.get<mio::osecirvvs::ImmunityInterval1>() = 30.0;
-    // params.get<mio::osecirvvs::ImmunityInterval2>() = 60.0;
+    params.get<mio::osecirvvs::ImmunityInterval1>() = 30.0;
+    params.get<mio::osecirvvs::ImmunityInterval2>() = 60.0;
 
     params.get<mio::osecirvvs::WaningPartialImmunity>()  = 30.0;
     params.get<mio::osecirvvs::WaningImprovedImmunity>() = 60.0;
@@ -373,27 +386,27 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     // //         physical_distancing_other(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
     // // }
 
-    // narrow = 0.0;
+    narrow = 0.0;
     // //local dynamic NPIs
-    // auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
-    // auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms>();
+    auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
 
-    // dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0, 0.0));
-    // dynamic_npi_dampings.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    // dynamic_npi_dampings.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    // dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0, 0.0));
+    dynamic_npi_dampings.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
 
-    // auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling>();
-    // dynamic_npi_dampings2.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
-    // dynamic_npi_dampings2.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    // dynamic_npi_dampings2.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    // dynamic_npi_dampings2.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling>();
+    dynamic_npi_dampings2.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
 
-    // dynamic_npis.set_interval(mio::SimulationTime(1.0));
-    // dynamic_npis.set_duration(mio::SimulationTime(14.0));
-    // dynamic_npis.set_base_value(100'000);
-    // dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
-    // dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
+    dynamic_npis.set_interval(mio::SimulationTime(1.0));
+    dynamic_npis.set_duration(mio::SimulationTime(14.0));
+    dynamic_npis.set_base_value(100'000);
+    dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
+    dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = mio::UncertainValue();
@@ -420,22 +433,22 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  */
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters& params)
 {
-    //TODO: io error handling
-    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    auto contact_transport_status = mio::read_mobility_plain(data_dir.string() + "//contacts//contacts_transport.txt");
+    auto contact_matrix_transport = contact_transport_status.value();
+    auto contact_matrices         = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
 
         if (contact_location.second == "other") {
-            // substract contact from transport
-            Eigen::MatrixXd scalar_matrix   = Eigen::MatrixXd::Zero(3, 3);
-            scalar_matrix.block(0, 0, 3, 2) = Eigen::MatrixXd::Constant(3, 2, 0.12);
-            scalar_matrix.col(2)            = Eigen::VectorXd::Constant(3, 0.06);
-            baseline.block(2, 2, 3, 3)      = baseline.block(2, 2, 3, 3) - scalar_matrix;
+            contact_matrices[size_t(contact_location.first)].get_baseline() = baseline - contact_matrix_transport;
+            contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
         }
-        contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
+        else {
+            contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
+            contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
+        }
     }
     params.get<mio::osecirvvs::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
 
@@ -449,17 +462,19 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int num_days)
+mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int num_days, bool masks)
 {
     std::string data_dir         = "/localdata1/test/memilio//data";
     std::string traveltimes_path = "/localdata1/test/memilio/travel_times_pathes.txt";
     std::string durations_path   = "/localdata1/test/memilio/activity_duration_work.txt";
-    auto start_date              = mio::Date(2022, 8, 1);
-    auto end_date                = mio::Date(2022, 11, 1);
+    auto mobility_data_commuter =
+        mio::read_mobility_plain(("/localdata1/test/memilio/commuter_migration_with_locals.txt"));
+    auto mob_data   = mobility_data_commuter.value();
+    auto start_date = mio::Date(2022, 8, 1);
+    auto end_date   = mio::Date(2022, 11, 1);
 
     // global parameters
     const int num_age_groups = 6;
-
     mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
 
     // Nodes
@@ -468,7 +483,6 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
     auto params_status                     = set_covid_parameters(params);
     auto contacts_status                   = set_contact_matrices(data_dir, params);
-    // auto npi_status                        = set_npis(start_date, end_date, params);
     params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
 
     // Set nodes
@@ -497,7 +511,6 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
                                             "/localdata1/test/memilio/data", num_days);
 
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-        // for (size_t node_idx = 0; node_idx < 5; ++node_idx) {
 
         auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
 
@@ -506,9 +519,16 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
         tnt_value       = mio::UncertainValue(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
 
-        auto id = int(mio::regions::CountyId(node_ids[node_idx]));
+        // scale local contact matrices
+        double scaling_factor_infected = mob_data.row(node_idx).sum() / nodes[node_idx].populations.get_total();
+        auto& contact_matrices_local   = nodes[node_idx].parameters.template get<mio::osecirvvs::ContactPatterns>();
+        for (auto& contact_matrix : contact_matrices_local.get_cont_freq_mat()) {
+            contact_matrix.get_baseline() *= scaling_factor_infected;
+            contact_matrix.get_minimum() *= scaling_factor_infected;
+        }
 
         //holiday periods
+        auto id              = int(mio::regions::CountyId(node_ids[node_idx]));
         auto holiday_periods = mio::regions::get_holidays(mio::regions::get_state_id(id), start_date, end_date);
         auto& contacts       = nodes[node_idx].parameters.template get<mio::osecirvvs::ContactPatterns>();
         contacts.get_school_holidays() =
@@ -531,35 +551,36 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
             }
         }
 
-        // adapt node for public transport
+        // Add mobility node
         auto node_pt = nodes[node_idx];
         node_pt.populations.set_total(0);
+        auto contact_transport_status = mio::read_mobility_plain(data_dir + "//contacts//contacts_transport.txt");
+        auto contact_matrix_transport = contact_transport_status.value();
 
-        // create contact matrix
-        Eigen::MatrixXd baseline(6, 6);
-        baseline.setZero();
-        for (int row = 2; row <= 4; ++row) {
-            for (int col = 2; col <= 4; ++col) {
-                if (col == 4) {
-                    baseline(row, col) = 23 * 0.2;
-                }
-                else {
-                    baseline(row, col) = 23 * 0.4;
-                }
-            }
-        }
+        // scale with length of stay
+        ScalarType avg_traveltime = 0.0116;
+        contact_matrix_transport *= 1 / avg_traveltime;
+
         // set contact matrix
         auto contact_matrices              = mio::ContactMatrixGroup(1, size_t(params.get_num_groups()));
-        contact_matrices[0].get_baseline() = baseline;
+        contact_matrices[0].get_baseline() = contact_matrix_transport;
         contact_matrices[0].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
         node_pt.parameters.get<mio::osecirvvs::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
-        auto& params_mobility                                     = node_pt.parameters;
-        auto npi_status                                           = set_npis(start_date, end_date, params_mobility);
+
+        // reduce transmission on contact due to mask obligation in mobility node
+        if (masks) {
+            for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+                node_pt.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i] =
+                    node_pt.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact>()[i] / 1000;
+            }
+        }
+        auto& params_mobility = node_pt.parameters;
 
         params_graph.add_node(node_ids[node_idx], duration_stay((Eigen::Index)node_idx), nodes[node_idx], node_pt);
     }
 
     // Edges
+    ScalarType theshold_edges   = 4e-3; //4e-5
     auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                    mio::osecirvvs::InfectionState::ExposedNaive,
                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
@@ -574,15 +595,8 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // mobility between nodes
-    auto mobility_data_commuter =
-        mio::read_mobility_plain(("/localdata1/test/memilio/commuter_migration_with_locals.txt"));
-    auto mob_data = mobility_data_commuter.value();
-    auto mobility_data_twitter =
-        mio::read_mobility_plain(("/localdata1/test/memilio/data/mobility/twitter_scaled_1252.txt"));
-    const char delimiter   = ',';
     auto read_travel_times = mio::read_mobility_plain(traveltimes_path);
     auto travel_times      = read_travel_times.value();
-
     auto read_paths_mobility =
         mio::read_path_mobility("/localdata1/test/memilio/wegketten_ohne_komma.txt"); // wegketten_ohne_komma.txt
     auto path_mobility = read_paths_mobility.value();
@@ -618,7 +632,7 @@ mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> get_graph(const int 
                 std::cout << "falsch"
                           << "\n";
 
-            if (commuter_coeff_ij > 4e-5) {
+            if (commuter_coeff_ij > theshold_edges) {
                 params_graph.add_edge(county_idx_i, county_idx_j, travel_times(county_idx_i, county_idx_j),
                                       path_mobility[county_idx_i][county_idx_j], std::move(mobility_coeffs));
             }
@@ -639,11 +653,11 @@ int main(int argc, char** argv)
     // TODO: No vacc currently
     mio::set_log_level(mio::LogLevel::critical);
     const auto t0       = 0.;
-    const auto num_days = 92.0;
+    const auto num_days = 50;
     const auto dt       = 0.5;
-    const int num_runs  = 1;
+    const int num_runs  = 50;
 
-    auto params_graph = get_graph(num_days);
+    auto params_graph = get_graph(num_days, true);
 
     auto write_graph_status = write_graph(params_graph, "/localdata1/test/memilio/save_graph");
 
@@ -653,7 +667,6 @@ int main(int argc, char** argv)
     });
 
     // parameter study
-
     auto parameter_study =
         mio::ParameterStudy<mio::osecirvvs::Simulation<>>(params_graph, 0.0, num_days, 0.5, num_runs);
     auto save_single_run_result = mio::IOResult<void>(mio::success());
@@ -666,12 +679,12 @@ int main(int argc, char** argv)
             auto params              = std::vector<mio::osecirvvs::Model>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
+                           [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
             save_single_run_result = save_result_with_params(interpolated_result, params, county_ids,
-                                                                           "/localdata1/test/memilio/test", run_idx);
+                                                             "/localdata1/test/memilio/test", run_idx);
 
             std::cout << "run " << run_idx << " complete." << std::endl;
             return std::make_pair(interpolated_result, params);

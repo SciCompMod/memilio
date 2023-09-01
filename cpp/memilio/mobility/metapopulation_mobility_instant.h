@@ -536,6 +536,13 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             }
         }
     }
+    // just update status of migrated
+    else if (mode == 3) {
+        Eigen::Index idx                = m_return_times.get_num_time_points() - 1;
+        IntegratorCore& integrator_node = node_from.get_simulation().get_integrator();
+        update_status_mobility(m_migrated[idx], node_from.get_simulation(), integrator_node,
+                               node_from.get_result().get_last_value(), t, dt);
+    }
     else {
         std::cout << "Invalid input mode. Should be 0 or 1."
                   << "\n";
